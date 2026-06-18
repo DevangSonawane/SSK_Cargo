@@ -32,30 +32,71 @@ class ClientHomeScreen extends ConsumerWidget {
               child: const BannerCard(),
             ),
             const SizedBox(height: 18),
-            Row(
-              children: [
-                Text(
-                  'View all',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w600,
-                      ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'View all',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.black45,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Refreshing dashboard...'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.refresh_rounded),
+                          color: Colors.black54,
+                          tooltip: 'Refresh',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const PackageTrackingCard(
+                      packageName: 'MacBook Air M3',
+                      trackingId: 'TRK-SSK-20489',
+                      fromLocation: 'Mumbai Warehouse',
+                      toLocation: 'Pune Distribution Center',
+                      status: 'Your package is in transit',
+                    ),
+                    const SizedBox(height: 12),
+                    const PackageTrackingCard(
+                      packageName: 'Apple iPhone 15 Pro',
+                      trackingId: 'TRK-SSK-20841',
+                      fromLocation: 'Navi Mumbai Hub',
+                      toLocation: 'Bangalore Tech Park',
+                      status: 'Arriving at next checkpoint',
+                    ),
+                    const SizedBox(height: 12),
+                    const PackageTrackingCard(
+                      packageName: 'Office Chair Set',
+                      trackingId: 'TRK-SSK-21077',
+                      fromLocation: 'Delhi DC-3',
+                      toLocation: 'Jaipur Office',
+                      status: 'Awaiting dispatch',
+                    ),
+                    const SizedBox(height: 12),
+                    const PackageTrackingCard(
+                      packageName: 'Printer Cartridge Box',
+                      trackingId: 'TRK-SSK-21330',
+                      fromLocation: 'Pune Cargo Yard',
+                      toLocation: 'Hyderabad Retail Store',
+                      status: 'Out for pickup',
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Refreshing dashboard...'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.refresh_rounded),
-                  color: Colors.black54,
-                  tooltip: 'Refresh',
-                ),
-              ],
+              ),
             ),
           ],
         ),

@@ -276,6 +276,251 @@ class TrackingMockCard extends StatelessWidget {
   }
 }
 
+class PackageTrackingCard extends StatelessWidget {
+  const PackageTrackingCard({
+    super.key,
+    required this.packageName,
+    required this.trackingId,
+    required this.fromLocation,
+    required this.toLocation,
+    required this.status,
+  });
+
+  final String packageName;
+  final String trackingId;
+  final String fromLocation;
+  final String toLocation;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEFEFF),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF0F3F7)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3D9),
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(7),
+                  child: Image.asset(
+                    'assets/package.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      packageName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF121826),
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '#Tracking ID: $trackingId',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black45,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {},
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+                icon: const Icon(Icons.more_horiz_rounded, size: 22),
+                color: Colors.black45,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 14,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 3),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.16),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF6C63FF),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 2,
+                      height: 30,
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE7E6FF),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEDEBFF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB8B3FF),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'From:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black38,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      fromLocation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFF1C2430),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Shipping to:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black38,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      toLocation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFF1C2430),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFECEFF3)),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 5),
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C63FF).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Status:',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFF1C2430),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  status,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class TruckIllustration extends StatelessWidget {
   const TruckIllustration({super.key});
 

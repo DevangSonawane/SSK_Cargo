@@ -71,6 +71,7 @@ flutter:
     - assets/trucks/inter-city.png
     - assets/trucks/intra-city.png
     - "assets/client/test.png"
+    - "assets/package.png"
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
