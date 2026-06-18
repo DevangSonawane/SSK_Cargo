@@ -56,7 +56,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () => context.go('/login'),
+                    onPressed: () => context.go('/access'),
                     child: const Text('Skip'),
                   ),
                 ],
@@ -136,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         );
                         return;
                       }
-                      context.go('/login');
+                      context.go('/access');
                     },
                     child: Text(_index < _pages.length - 1 ? 'Next' : 'Get started'),
                   ),

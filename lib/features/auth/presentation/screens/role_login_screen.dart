@@ -19,7 +19,16 @@ class RoleLoginScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 18),
+              InkWell(
+                onTap: () => context.go('/access'),
+                borderRadius: BorderRadius.circular(999),
+                child: const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Icon(Icons.arrow_back_rounded, size: 20),
+                ),
+              ),
+              const SizedBox(height: 14),
               Text(
                 'Welcome to SSK',
                 style: Theme.of(context).textTheme.headlineLarge,

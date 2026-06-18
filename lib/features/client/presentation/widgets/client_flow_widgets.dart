@@ -37,6 +37,37 @@ class VehicleOption {
   final String assetPath;
 }
 
+const vehicleOptions = <VehicleOption>[
+  VehicleOption(
+    label: 'Small truck',
+    capacity: 'Up to 500 kg',
+    price: '₹899',
+    accentColor: Color(0xFF2FA56E),
+    assetPath: 'assets/trucks/small truck.png',
+  ),
+  VehicleOption(
+    label: 'Medium truck',
+    capacity: 'Up to 1.5 ton',
+    price: '₹1,499',
+    accentColor: Color(0xFF1F88C9),
+    assetPath: 'assets/trucks/medium truck.png',
+  ),
+  VehicleOption(
+    label: 'Big truck',
+    capacity: 'Up to 3 ton',
+    price: '₹2,299',
+    accentColor: Color(0xFF7A5AF8),
+    assetPath: 'assets/trucks/big truck.png',
+  ),
+  VehicleOption(
+    label: 'Truck pooling',
+    capacity: 'Shared capacity',
+    price: '₹499',
+    accentColor: Color(0xFFF59E0B),
+    assetPath: 'assets/trucks/truck pooling.png',
+  ),
+];
+
 class TrackingDemoShipment {
   const TrackingDemoShipment({
     required this.packageName,
@@ -328,18 +359,21 @@ class BannerCard extends StatelessWidget {
 
 Future<void> showTripTypeSheet(
   BuildContext context, {
+  TripType? initialTripType,
+  int? initialVehicleIndex,
   VoidCallback? onOpen,
   VoidCallback? onClose,
 }) async {
   onOpen?.call();
   try {
-    final tripType = await showModalBottomSheet<TripType>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const TripTypeSheet(),
-    );
+    final tripType = initialTripType ??
+        await showModalBottomSheet<TripType>(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => const TripTypeSheet(),
+        );
     if (tripType == null || !context.mounted) return;
 
     final bookingData = await Navigator.of(context).push<BookingData>(
@@ -351,7 +385,10 @@ Future<void> showTripTypeSheet(
 
     final vehicle = await Navigator.of(context).push<VehicleOption>(
       MaterialPageRoute(
-        builder: (context) => SelectVehicleScreen(bookingData: bookingData),
+        builder: (context) => SelectVehicleScreen(
+          bookingData: bookingData,
+          initialIndex: initialVehicleIndex ?? 0,
+        ),
       ),
     );
     if (vehicle == null || !context.mounted) return;
@@ -363,11 +400,15 @@ Future<void> showTripTypeSheet(
 
 Future<void> showBookingFlow(
   BuildContext context, {
+  TripType? initialTripType,
+  int? initialVehicleIndex,
   VoidCallback? onOpen,
   VoidCallback? onClose,
 }) async {
   await showTripTypeSheet(
     context,
+    initialTripType: initialTripType,
+    initialVehicleIndex: initialVehicleIndex,
     onOpen: onOpen,
     onClose: onClose,
   );
@@ -1450,51 +1491,28 @@ class SelectVehicleScreen extends StatefulWidget {
   const SelectVehicleScreen({
     super.key,
     required this.bookingData,
+    this.initialIndex = 0,
   });
 
   final BookingData bookingData;
+  final int initialIndex;
 
   @override
   State<SelectVehicleScreen> createState() => _SelectVehicleScreenState();
 }
 
 class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
-  static const List<VehicleOption> _options = [
-    VehicleOption(
-      label: 'Small truck',
-      capacity: 'Up to 500 kg',
-      price: '₹899',
-      accentColor: Color(0xFF2FA56E),
-      assetPath: 'assets/trucks/small truck.png',
-    ),
-    VehicleOption(
-      label: 'Medium truck',
-      capacity: 'Up to 1.5 ton',
-      price: '₹1,499',
-      accentColor: Color(0xFF1F88C9),
-      assetPath: 'assets/trucks/medium truck.png',
-    ),
-    VehicleOption(
-      label: 'Big truck',
-      capacity: 'Up to 3 ton',
-      price: '₹2,299',
-      accentColor: Color(0xFF7A5AF8),
-      assetPath: 'assets/trucks/big truck.png',
-    ),
-    VehicleOption(
-      label: 'Truck pooling',
-      capacity: 'Shared capacity',
-      price: '₹499',
-      accentColor: Color(0xFFF59E0B),
-      assetPath: 'assets/trucks/truck pooling.png',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex.clamp(0, vehicleOptions.length - 1).toInt();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final selected = _options[_selectedIndex];
+    final selected = vehicleOptions[_selectedIndex];
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Scaffold(
@@ -1543,7 +1561,7 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                         ),
                   ),
                   const SizedBox(height: 10),
-                  ..._options.asMap().entries.map(
+                  ...vehicleOptions.asMap().entries.map(
                         (entry) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _VehicleOptionTile(
