@@ -428,43 +428,47 @@ class SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    return DraggableScrollableSheet(
-      initialChildSize: 0.46,
-      minChildSize: 0.36,
-      maxChildSize: 0.86,
-      expand: false,
-      builder: (context, controller) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          ),
-          child: SingleChildScrollView(
-            controller: controller,
-            padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + bottomInset),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 54,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDDE7EF),
-                      borderRadius: BorderRadius.circular(999),
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.46,
+        minChildSize: 0.36,
+        maxChildSize: 0.86,
+        expand: false,
+        builder: (context, controller) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: SingleChildScrollView(
+              controller: controller,
+              padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + bottomInset),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 54,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDE7EF),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(title, style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 18),
-                child,
-              ],
+                  const SizedBox(height: 16),
+                  Text(title, style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 18),
+                  child,
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -474,49 +478,53 @@ class TripTypeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.fromLTRB(20, 10, 20, 18 + bottomInset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 46,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDE7EF),
-                borderRadius: BorderRadius.circular(999),
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.fromLTRB(20, 10, 20, 18 + bottomInset),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 46,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDE7EF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Choose trip type',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 16,
-                ),
-          ),
-          const SizedBox(height: 12),
-          _TripTypeRow(
-            imagePath: 'assets/trucks/intra-city.png',
-            label: 'Inter city',
-            helperText: 'Move between cities',
-            onTap: () => Navigator.of(context).pop(TripType.interCity),
-          ),
-          const SizedBox(height: 10),
-          _TripTypeRow(
-            imagePath: 'assets/trucks/inter-city.png',
-            label: 'Intra city',
-            helperText: 'Deliver within the city',
-            onTap: () => Navigator.of(context).pop(TripType.intraCity),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(
+              'Choose trip type',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 16,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _TripTypeRow(
+              imagePath: 'assets/trucks/intra-city.png',
+              label: 'Inter city',
+              helperText: 'Move between cities',
+              onTap: () => Navigator.of(context).pop(TripType.interCity),
+            ),
+            const SizedBox(height: 10),
+            _TripTypeRow(
+              imagePath: 'assets/trucks/inter-city.png',
+              label: 'Intra city',
+              helperText: 'Deliver within the city',
+              onTap: () => Navigator.of(context).pop(TripType.intraCity),
+            ),
+          ],
+        ),
       ),
     );
   }
