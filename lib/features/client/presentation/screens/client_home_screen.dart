@@ -15,7 +15,10 @@ class ClientHomeScreen extends StatelessWidget {
           children: [
             const LocationArc(),
             const SizedBox(height: 20),
-            const BannerCard(),
+            GestureDetector(
+              onTap: () => showTripTypeSheet(context),
+              child: const BannerCard(),
+            ),
             const SizedBox(height: 18),
             Row(
               children: [

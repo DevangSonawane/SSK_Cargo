@@ -136,13 +136,52 @@ class BannerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/client/test.png',
+    return SizedBox(
       width: double.infinity,
-      fit: BoxFit.fitWidth,
-      alignment: Alignment.topCenter,
+      child: const AspectRatio(
+        aspectRatio: 2,
+        child: Image(
+          image: AssetImage('assets/client/test.png'),
+          fit: BoxFit.fill,
+        ),
+      ),
     );
   }
+}
+
+Future<void> showTripTypeSheet(BuildContext context) async {
+  final tripType = await showModalBottomSheet<TripType>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const TripTypeSheet(),
+  );
+  if (tripType == null || !context.mounted) return;
+
+  final bookingData = await showModalBottomSheet<BookingData>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => BookingLocationSheet(tripType: tripType),
+  );
+  if (bookingData == null || !context.mounted) return;
+
+  final truckSize = await showModalBottomSheet<TruckSize>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => TruckSizeSheet(bookingData: bookingData),
+  );
+  if (truckSize == null || !context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Booked ${truckSize.label} for ${bookingData.from} to ${bookingData.to}',
+      ),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
 }
 
 class TrackingMockCard extends StatelessWidget {
@@ -410,24 +449,93 @@ class TripTypeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SheetContainer(
-      title: 'Choose trip type',
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OptionTile(
-            icon: Icons.alt_route_rounded,
-            title: 'Inter city',
-            subtitle: 'For routes between cities and longer distance cargo.',
-            onTap: () => Navigator.of(context).pop(TripType.interCity),
+          Center(
+            child: Container(
+              width: 46,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDE7EF),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Choose trip type',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 16,
+                ),
           ),
           const SizedBox(height: 12),
-          OptionTile(
-            icon: Icons.location_city_rounded,
-            title: 'Intra city',
-            subtitle: 'For local deliveries within the same city.',
+          _TripTypeRow(
+            imagePath: 'assets/trucks/inter-city.png',
+            label: 'Inter city',
+            onTap: () => Navigator.of(context).pop(TripType.interCity),
+          ),
+          const SizedBox(height: 10),
+          _TripTypeRow(
+            imagePath: 'assets/trucks/intra-city.png',
+            label: 'Intra city',
             onTap: () => Navigator.of(context).pop(TripType.intraCity),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TripTypeRow extends StatelessWidget {
+  const _TripTypeRow({
+    required this.imagePath,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String imagePath;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Image.asset(
+              imagePath,
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 15,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -560,7 +668,7 @@ class ClientBottomBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
         decoration: const BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -572,32 +680,42 @@ class ClientBottomBar extends StatelessWidget {
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            NavItem(
-              label: 'Home',
-              assetPath: 'assets/home.png',
-              selected: currentIndex == 0,
-              onTap: () => onTap(0),
+            Expanded(
+              child: NavItem(
+                label: 'Home',
+                assetPath: 'assets/home.png',
+                selected: currentIndex == 0,
+                onTap: () => onTap(0),
+              ),
             ),
-            NavItem(
-              label: 'Delivery',
-              assetPath: 'assets/delivery-truck.png',
-              assetSize: 22,
-              selected: currentIndex == 1,
-              onTap: () => onTap(1),
+            const SizedBox(width: 12),
+            Expanded(
+              child: NavItem(
+                label: 'Delivery',
+                assetPath: 'assets/delivery-truck.png',
+                assetSize: 22,
+                selected: currentIndex == 1,
+                onTap: () => onTap(1),
+              ),
             ),
-            NavItem(
-              label: 'Tracking',
-              assetPath: 'assets/tracking.png',
-              selected: currentIndex == 2,
-              onTap: () => onTap(2),
+            const SizedBox(width: 12),
+            Expanded(
+              child: NavItem(
+                label: 'Tracking',
+                assetPath: 'assets/tracking.png',
+                selected: currentIndex == 2,
+                onTap: () => onTap(2),
+              ),
             ),
-            NavItem(
-              label: 'Profile',
-              assetPath: 'assets/user.png',
-              selected: currentIndex == 3,
-              onTap: () => onTap(3),
+            const SizedBox(width: 12),
+            Expanded(
+              child: NavItem(
+                label: 'Profile',
+                assetPath: 'assets/user.png',
+                selected: currentIndex == 3,
+                onTap: () => onTap(3),
+              ),
             ),
           ],
         ),
@@ -629,42 +747,40 @@ class NavItem extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final color = selected ? scheme.primary : Colors.black45;
 
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 6, bottom: 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Center(
-                  child: assetPath != null
-                      ? Image.asset(
-                          assetPath!,
-                          width: assetSize,
-                          height: assetSize,
-                          fit: BoxFit.contain,
-                          color: color,
-                          colorBlendMode: BlendMode.srcIn,
-                        )
-                      : Icon(icon, size: 20, color: color),
-                ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 2, bottom: 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Center(
+                child: assetPath != null
+                    ? Image.asset(
+                        assetPath!,
+                        width: assetSize,
+                        height: assetSize,
+                        fit: BoxFit.contain,
+                        color: color,
+                        colorBlendMode: BlendMode.srcIn,
+                      )
+                    : Icon(icon, size: 20, color: color),
               ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

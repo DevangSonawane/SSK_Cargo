@@ -68,6 +68,8 @@ flutter:
     - assets/delivery-truck.png
     - assets/tracking.png
     - assets/user.png
+    - assets/trucks/inter-city.png
+    - assets/trucks/intra-city.png
     - "assets/client/test.png"
 
   # An image asset can refer to one or more resolution-specific "variants", see
