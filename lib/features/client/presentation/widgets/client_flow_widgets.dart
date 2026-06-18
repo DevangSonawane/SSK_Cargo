@@ -1023,6 +1023,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
   Widget build(BuildContext context) {
     final isInterCity = widget.tripType == TripType.interCity;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final bookBottomPadding = bottomInset > 0 ? bottomInset + 36.0 : 44.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -1041,20 +1042,9 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                           onTap: () => Navigator.of(context).pop(),
                           borderRadius: BorderRadius.circular(999),
                           child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFE8EDF2)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.04),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.centerLeft,
                             child: const Icon(Icons.arrow_back_rounded, size: 18),
                           ),
                         ),
@@ -1093,8 +1083,8 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                 ),
                                 Container(
                                   width: 2,
-                                  height: 44,
-                                  margin: const EdgeInsets.symmetric(vertical: 5),
+                                  height: 56,
+                                  margin: const EdgeInsets.symmetric(vertical: 4),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFD9E0E7),
                                     borderRadius: BorderRadius.circular(99),
@@ -1117,7 +1107,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                               children: [
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.all(9),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF5F7FB),
                                     borderRadius: BorderRadius.circular(16),
@@ -1128,7 +1118,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                       Text(
                                         isInterCity ? 'shesh Katagi · 9372341983' : 'Current location',
                                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontSize: 14,
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w700,
                                               color: const Color(0xFF1C2430),
                                             ),
@@ -1142,7 +1132,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                               color: Colors.black54,
-                                              fontSize: 12,
+                                              fontSize: 11,
                                             ),
                                       ),
                                     ],
@@ -1151,7 +1141,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                 const SizedBox(height: 8),
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
@@ -1162,30 +1152,30 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                       Expanded(
                                         child: TextField(
                                           controller: _toController,
-                                          decoration: InputDecoration(
-                                            hintText: 'Where is your Drop ?',
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                                  color: Colors.black38,
-                                                  fontSize: 14,
+                                            decoration: InputDecoration(
+                                              hintText: 'Where is your Drop ?',
+                                              border: InputBorder.none,
+                                              isDense: true,
+                                              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                    color: Colors.black38,
+                                                    fontSize: 13,
+                                                  ),
+                                            ),
+                                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                  color: const Color(0xFF1C2430),
+                                                  fontSize: 13,
                                                 ),
                                           ),
-                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                                color: const Color(0xFF1C2430),
-                                                fontSize: 14,
-                                              ),
-                                        ),
                                       ),
                                       IconButton(
                                         onPressed: () {},
                                         visualDensity: VisualDensity.compact,
-                                        constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+                                        constraints: const BoxConstraints.tightFor(width: 24, height: 24),
                                         padding: EdgeInsets.zero,
                                         icon: const Icon(
                                           Icons.mic_none_rounded,
                                           color: Color(0xFF2D6EF2),
-                                          size: 18,
+                                          size: 16,
                                         ),
                                       ),
                                     ],
@@ -1223,6 +1213,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                     Text(
                       'Recent addresses',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF101828),
                           ),
@@ -1246,7 +1237,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
+              padding: EdgeInsets.fromLTRB(18, 10, 18, bookBottomPadding),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -1299,24 +1290,23 @@ class _ActionShortcutTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 10 : 12,
-          vertical: compact ? 10 : 14,
+          horizontal: compact ? 8 : 12,
+          vertical: compact ? 8 : 14,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFEAEFF4)),
         ),
         child: Row(
           children: [
-            Image.asset(assetPath, width: compact ? 18 : 22, height: compact ? 18 : 22),
-            SizedBox(width: compact ? 8 : 10),
+            Image.asset(assetPath, width: compact ? 16 : 22, height: compact ? 16 : 22),
+            SizedBox(width: compact ? 6 : 10),
             Expanded(
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: compact ? 12 : null,
+                      fontSize: compact ? 11 : null,
                       color: const Color(0xFF1C2430),
                     ),
               ),
@@ -1370,7 +1360,7 @@ class _RecentAddressTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -1381,7 +1371,7 @@ class _RecentAddressTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.black54,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                   ),
                 ],
