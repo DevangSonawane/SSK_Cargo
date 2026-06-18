@@ -1496,16 +1496,16 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
   Widget build(BuildContext context) {
     final selected = _options[_selectedIndex];
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    final proceedBottomPadding = bottomInset > 0 ? bottomInset + 24.0 : 32.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1528,13 +1528,14 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                       pickupSubtitle: widget.bookingData.to,
                       dropValue: widget.bookingData.to,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Text(
                       'Select your vehicle',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             color: const Color(0xFF101828),
+                            letterSpacing: 0.1,
                           ),
                     ),
                     const SizedBox(height: 10),
@@ -1552,8 +1553,9 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(18, 10, 18, proceedBottomPadding),
+            SafeArea(
+              top: false,
+              minimum: EdgeInsets.fromLTRB(18, 8, 18, bottomInset + 18),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -1589,30 +1591,35 @@ class _VehicleOptionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? option.accentColor.withValues(alpha: 0.08) : const Color(0xFFF8FBFE),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? option.accentColor.withValues(alpha: 0.55) : const Color(0xFFE7EEF5),
-            width: selected ? 1.4 : 1,
+            color: selected ? option.accentColor : const Color(0xFFE7EEF5),
+            width: selected ? 1.8 : 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: selected ? 0.045 : 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: option.accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
+            AnimatedScale(
+              duration: const Duration(milliseconds: 180),
+              scale: selected ? 1.14 : 1.0,
+              curve: Curves.easeOutBack,
+              child: SizedBox(
+                width: 72,
+                height: 72,
                 child: Image.asset(option.assetPath, fit: BoxFit.contain),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1648,21 +1655,14 @@ class _VehicleOptionTile extends StatelessWidget {
                         color: const Color(0xFF101828),
                       ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? option.accentColor : Colors.transparent,
-                    border: Border.all(
-                      color: selected ? option.accentColor : Colors.black26,
-                      width: 1.4,
-                    ),
-                  ),
-                  child: selected
-                      ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
-                      : null,
+                const SizedBox(height: 2),
+                Text(
+                  selected ? 'Selected' : '',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: selected ? option.accentColor : Colors.transparent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
