@@ -43,11 +43,46 @@ class TrackingDetailsScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 86),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...shipment.timeline.asMap().entries.map(
+                                  (entry) => Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: entry.key == shipment.timeline.length - 1 ? 0 : 16,
+                                    ),
+                                    child: _TimelineStepItem(
+                                      step: entry.value,
+                                      showConnector: entry.key != shipment.timeline.length - 1,
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        ),
+                      ),
                       Positioned(
-                        left: 14,
-                        right: 14,
-                        bottom: 8,
-                        child: _TimelinePanel(shipment: shipment),
+                        left: 18,
+                        right: 18,
+                        bottom: 14,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: FilledButton(
+                            onPressed: () {},
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              backgroundColor: const Color(0xFF6C63FF),
+                            ),
+                            child: const Text(
+                              'Live Tracking',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -243,70 +278,6 @@ class _CompactSummaryCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TimelinePanel extends StatelessWidget {
-  const _TimelinePanel({required this.shipment});
-
-  final TrackingDemoShipment shipment;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 248,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFECEFF3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: shipment.timeline.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final step = shipment.timeline[index];
-                  return _TimelineStepItem(
-                    step: step,
-                    showConnector: index != shipment.timeline.length - 1,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: () {},
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  backgroundColor: const Color(0xFF6C63FF),
-                ),
-                child: const Text(
-                  'Live Tracking',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
