@@ -326,12 +326,10 @@ Future<void> showTripTypeSheet(
     );
     if (tripType == null || !context.mounted) return;
 
-    final bookingData = await showModalBottomSheet<BookingData>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => BookingLocationSheet(tripType: tripType),
+    final bookingData = await Navigator.of(context).push<BookingData>(
+      MaterialPageRoute(
+        builder: (context) => BookingLocationScreen(tripType: tripType),
+      ),
     );
     if (bookingData == null || !context.mounted) return;
 
@@ -1000,8 +998,8 @@ class _TripTypeRow extends StatelessWidget {
   }
 }
 
-class BookingLocationSheet extends StatefulWidget {
-  const BookingLocationSheet({
+class BookingLocationScreen extends StatefulWidget {
+  const BookingLocationScreen({
     super.key,
     required this.tripType,
   });
@@ -1009,59 +1007,389 @@ class BookingLocationSheet extends StatefulWidget {
   final TripType tripType;
 
   @override
-  State<BookingLocationSheet> createState() => _BookingLocationSheetState();
+  State<BookingLocationScreen> createState() => _BookingLocationScreenState();
 }
 
-class _BookingLocationSheetState extends State<BookingLocationSheet> {
-  final _fromController = TextEditingController(text: 'Current location');
+class _BookingLocationScreenState extends State<BookingLocationScreen> {
   final _toController = TextEditingController();
 
   @override
   void dispose() {
-    _fromController.dispose();
     _toController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SheetContainer(
-      title: widget.tripType == TripType.interCity
-          ? 'Inter city booking'
-          : 'Intra city booking',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _fromController,
-            decoration: _inputDecoration(context, label: 'Current location'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _toController,
-            decoration: _inputDecoration(context, label: 'Go to'),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop(
-                  BookingData(
-                    from: _fromController.text.trim().isEmpty
-                        ? 'Current location'
-                        : _fromController.text.trim(),
-                    to: _toController.text.trim().isEmpty
-                        ? 'Dummy location'
-                        : _toController.text.trim(),
-                    tripType: widget.tripType,
-                  ),
-                );
-              },
-              child: const Text('Book'),
+    final isInterCity = widget.tripType == TripType.interCity;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFE8EDF2)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.arrow_back_rounded, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFEAEFF4)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF2FA56E),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 2,
+                                  height: 44,
+                                  margin: const EdgeInsets.symmetric(vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD9E0E7),
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                ),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFE23A4B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F7FB),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isInterCity ? 'shesh Katagi · 9372341983' : 'Current location',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF1C2430),
+                                            ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        isInterCity
+                                            ? 'Ghanshyam Enclave, 1303/1304, N...'
+                                            : 'Current location will appear here',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              color: Colors.black54,
+                                              fontSize: 12,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: const Color(0xFF2D6EF2), width: 1.2),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _toController,
+                                          decoration: InputDecoration(
+                                            hintText: 'Where is your Drop ?',
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                  color: Colors.black38,
+                                                  fontSize: 14,
+                                                ),
+                                          ),
+                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                                color: const Color(0xFF1C2430),
+                                                fontSize: 14,
+                                              ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {},
+                                        visualDensity: VisualDensity.compact,
+                                        constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+                                        padding: EdgeInsets.zero,
+                                        icon: const Icon(
+                                          Icons.mic_none_rounded,
+                                          color: Color(0xFF2D6EF2),
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ActionShortcutTile(
+                            assetPath: 'assets/gps.png',
+                            title: 'Select on map',
+                            onTap: () {},
+                            compact: true,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _ActionShortcutTile(
+                            assetPath: 'assets/heart.png',
+                            title: 'Saved addresses',
+                            onTap: () {},
+                            compact: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Recent addresses',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF101828),
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    ..._recentAddresses.asMap().entries.expand(
+                          (entry) => [
+                            _RecentAddressTile(
+                              title: entry.value.$1,
+                              subtitle: entry.value.$2,
+                              onTap: () {
+                                _toController.text = entry.value.$2;
+                              },
+                            ),
+                            if (entry.key != _recentAddresses.length - 1)
+                              const SizedBox(height: 8),
+                          ],
+                        ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                      BookingData(
+                        from: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
+                        to: _toController.text.trim().isEmpty
+                            ? 'Dummy location'
+                            : _toController.text.trim(),
+                        tripType: widget.tripType,
+                      ),
+                    );
+                  },
+                  child: const Text('Book'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+const List<(String, String)> _recentAddresses = [
+    ('Home', 'Ghanshyam Enclave, 1303/1304, Nagpur'),
+    ('Office', 'Orbit Plaza, IT Park Road, Nagpur'),
+    ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
+    ('Client Site', 'Laxmi Nagar, Near Metro Station'),
+  ];
+
+class _ActionShortcutTile extends StatelessWidget {
+  const _ActionShortcutTile({
+    required this.assetPath,
+    required this.title,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  final String assetPath;
+  final String title;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 12,
+          vertical: compact ? 10 : 14,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEAEFF4)),
+        ),
+        child: Row(
+          children: [
+            Image.asset(assetPath, width: compact ? 18 : 22, height: compact ? 18 : 22),
+            SizedBox(width: compact ? 8 : 10),
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: compact ? 12 : null,
+                      color: const Color(0xFF1C2430),
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentAddressTile extends StatelessWidget {
+  const _RecentAddressTile({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEAEFF4)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F4F8),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.location_on_rounded, color: Color(0xFF2FA56E)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+          ],
+        ),
       ),
     );
   }
@@ -1244,30 +1572,4 @@ class NavItem extends StatelessWidget {
       ),
     );
   }
-}
-
-InputDecoration _inputDecoration(
-  BuildContext context, {
-  required String label,
-}) {
-  return InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: const Color(0xFFF8FBFE),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(18),
-      borderSide: BorderSide.none,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(18),
-      borderSide: const BorderSide(color: Color(0xFFE6EDF3)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(18),
-      borderSide: BorderSide(
-        color: Theme.of(context).colorScheme.primary,
-        width: 1.4,
-      ),
-    ),
-  );
 }
