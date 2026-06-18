@@ -1501,61 +1501,65 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
-        child: Column(
+        child: Stack(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: () => Navigator.of(context).pop(),
-                          borderRadius: BorderRadius.circular(999),
-                          child: const SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: Icon(Icons.arrow_back_rounded, size: 18),
+            SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                12,
+                18,
+                132 + bottomInset,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(999),
+                        child: const SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: Icon(Icons.arrow_back_rounded, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _BookingSummaryCard(
+                    pickupTitle: widget.bookingData.from,
+                    pickupSubtitle: widget.bookingData.to,
+                    dropValue: widget.bookingData.to,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Select your vehicle',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF101828),
+                          letterSpacing: 0.1,
+                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  ..._options.asMap().entries.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _VehicleOptionTile(
+                            option: entry.value,
+                            selected: _selectedIndex == entry.key,
+                            onTap: () => setState(() => _selectedIndex = entry.key),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _BookingSummaryCard(
-                      pickupTitle: widget.bookingData.from,
-                      pickupSubtitle: widget.bookingData.to,
-                      dropValue: widget.bookingData.to,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Select your vehicle',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF101828),
-                            letterSpacing: 0.1,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    ..._options.asMap().entries.map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _VehicleOptionTile(
-                              option: entry.value,
-                              selected: _selectedIndex == entry.key,
-                              onTap: () => setState(() => _selectedIndex = entry.key),
-                            ),
-                          ),
-                        ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            SafeArea(
-              top: false,
-              minimum: EdgeInsets.fromLTRB(18, 8, 18, bottomInset + 18),
+            Positioned(
+              left: 18,
+              right: 18,
+              bottom: bottomInset + 44,
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
