@@ -21,6 +21,22 @@ class TruckSize {
   final IconData icon;
 }
 
+class VehicleOption {
+  const VehicleOption({
+    required this.label,
+    required this.capacity,
+    required this.price,
+    required this.icon,
+    required this.accentColor,
+  });
+
+  final String label;
+  final String capacity;
+  final String price;
+  final IconData icon;
+  final Color accentColor;
+}
+
 class TrackingDemoShipment {
   const TrackingDemoShipment({
     required this.packageName,
@@ -333,14 +349,12 @@ Future<void> showTripTypeSheet(
     );
     if (bookingData == null || !context.mounted) return;
 
-    final truckSize = await showModalBottomSheet<TruckSize>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TruckSizeSheet(bookingData: bookingData),
+    final vehicle = await Navigator.of(context).push<VehicleOption>(
+      MaterialPageRoute(
+        builder: (context) => SelectVehicleScreen(bookingData: bookingData),
+      ),
     );
-    if (truckSize == null || !context.mounted) return;
+    if (vehicle == null || !context.mounted) return;
 
   } finally {
     onClose?.call();
@@ -1051,141 +1065,12 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFEAEFF4)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 18,
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF2FA56E),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 2,
-                                  height: 56,
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFD9E0E7),
-                                    borderRadius: BorderRadius.circular(99),
-                                  ),
-                                ),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFE23A4B),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(9),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5F7FB),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        isInterCity ? 'Aarav Mehta · 9823419076' : 'Current location',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF1C2430),
-                                            ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        isInterCity
-                                            ? 'Ghanshyam Enclave, 1303/1304, N...'
-                                            : 'Current location will appear here',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                              color: Colors.black54,
-                                              fontSize: 11,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: const Color(0xFF2D6EF2), width: 1.2),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _toController,
-                                            decoration: InputDecoration(
-                                              hintText: 'Where is your Drop ?',
-                                              border: InputBorder.none,
-                                              isDense: true,
-                                              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                                    color: Colors.black38,
-                                                    fontSize: 13,
-                                                  ),
-                                            ),
-                                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                                  color: const Color(0xFF1C2430),
-                                                  fontSize: 13,
-                                                ),
-                                          ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () {},
-                                        visualDensity: VisualDensity.compact,
-                                        constraints: const BoxConstraints.tightFor(width: 24, height: 24),
-                                        padding: EdgeInsets.zero,
-                                        icon: const Icon(
-                                          Icons.mic_none_rounded,
-                                          color: Color(0xFF2D6EF2),
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    _BookingSummaryCard(
+                      pickupTitle: isInterCity ? 'Aarav Mehta · 9823419076' : 'Current location',
+                      pickupSubtitle: isInterCity
+                          ? 'Ghanshyam Enclave, 1303/1304, N...'
+                          : 'Current location will appear here',
+                      dropController: _toController,
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -1267,6 +1152,169 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BookingSummaryCard extends StatelessWidget {
+  const _BookingSummaryCard({
+    required this.pickupTitle,
+    required this.pickupSubtitle,
+    this.dropController,
+    this.dropValue,
+  });
+
+  final String pickupTitle;
+  final String pickupSubtitle;
+  final TextEditingController? dropController;
+  final String? dropValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEAEFF4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 18,
+            child: Column(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2FA56E),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 2,
+                  height: 56,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD9E0E7),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE23A4B),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F7FB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pickupTitle,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1C2430),
+                            ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        pickupSubtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.black54,
+                              fontSize: 11,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF2D6EF2), width: 1.2),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: dropController == null
+                            ? Text(
+                                dropValue ?? 'Where is your Drop ?',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: const Color(0xFF1C2430),
+                                      fontSize: 13,
+                                    ),
+                              )
+                            : TextField(
+                                controller: dropController,
+                                decoration: InputDecoration(
+                                  hintText: 'Where is your Drop ?',
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: Colors.black38,
+                                        fontSize: 13,
+                                      ),
+                                ),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: const Color(0xFF1C2430),
+                                      fontSize: 13,
+                                    ),
+                              ),
+                      ),
+                      if (dropController != null)
+                        IconButton(
+                          onPressed: () {},
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(width: 24, height: 24),
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
+                            Icons.mic_none_rounded,
+                            color: Color(0xFF2D6EF2),
+                            size: 16,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1398,8 +1446,8 @@ class _RecentAddressTile extends StatelessWidget {
   }
 }
 
-class TruckSizeSheet extends StatelessWidget {
-  const TruckSizeSheet({
+class SelectVehicleScreen extends StatefulWidget {
+  const SelectVehicleScreen({
     super.key,
     required this.bookingData,
   });
@@ -1407,37 +1455,216 @@ class TruckSizeSheet extends StatelessWidget {
   final BookingData bookingData;
 
   @override
-  Widget build(BuildContext context) {
-    const trucks = [
-      TruckSize(label: 'Small truck', icon: Icons.local_shipping_rounded),
-      TruckSize(label: 'Medium truck', icon: Icons.inventory_2_rounded),
-      TruckSize(label: 'Big truck', icon: Icons.delivery_dining_rounded),
-      TruckSize(label: 'Truck pooling', icon: Icons.groups_rounded),
-    ];
+  State<SelectVehicleScreen> createState() => _SelectVehicleScreenState();
+}
 
-    return SheetContainer(
-      title: 'Choose truck size',
-      child: Column(
-        children: [
-          Text(
-            '${bookingData.from} to ${bookingData.to}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
+class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
+  int _selectedIndex = 0;
+
+  static const List<VehicleOption> _options = [
+    VehicleOption(
+      label: 'Small truck',
+      capacity: 'Up to 500 kg',
+      price: '₹899',
+      icon: Icons.local_shipping_rounded,
+      accentColor: Color(0xFF2FA56E),
+    ),
+    VehicleOption(
+      label: 'Medium truck',
+      capacity: 'Up to 1.5 ton',
+      price: '₹1,499',
+      icon: Icons.inventory_2_rounded,
+      accentColor: Color(0xFF1F88C9),
+    ),
+    VehicleOption(
+      label: 'Big truck',
+      capacity: 'Up to 3 ton',
+      price: '₹2,299',
+      icon: Icons.delivery_dining_rounded,
+      accentColor: Color(0xFF7A5AF8),
+    ),
+    VehicleOption(
+      label: 'Truck pooling',
+      capacity: 'Shared capacity',
+      price: '₹499',
+      icon: Icons.groups_rounded,
+      accentColor: Color(0xFFF59E0B),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = _options[_selectedIndex];
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final proceedBottomPadding = bottomInset > 0 ? bottomInset + 24.0 : 32.0;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(999),
+                          child: const SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Icon(Icons.arrow_back_rounded, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _BookingSummaryCard(
+                      pickupTitle: widget.bookingData.from,
+                      pickupSubtitle: widget.bookingData.to,
+                      dropValue: widget.bookingData.to,
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Select your vehicle',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF101828),
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    ..._options.asMap().entries.map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _VehicleOptionTile(
+                              option: entry.value,
+                              selected: _selectedIndex == entry.key,
+                              onTap: () => setState(() => _selectedIndex = entry.key),
+                            ),
+                          ),
+                        ),
+                  ],
                 ),
-          ),
-          const SizedBox(height: 16),
-          ...trucks.map(
-            (truck) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: OptionTile(
-                icon: truck.icon,
-                title: truck.label,
-                subtitle: 'Best for your selected route and cargo size.',
-                onTap: () => Navigator.of(context).pop(truck),
               ),
             ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(18, 10, 18, proceedBottomPadding),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(selected);
+                  },
+                  child: Text('Proceed with ${selected.label}'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VehicleOptionTile extends StatelessWidget {
+  const _VehicleOptionTile({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final VehicleOption option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? option.accentColor.withValues(alpha: 0.08) : const Color(0xFFF8FBFE),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? option.accentColor.withValues(alpha: 0.55) : const Color(0xFFE7EEF5),
+            width: selected ? 1.4 : 1,
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: option.accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(option.icon, color: option.accentColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    option.label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF101828),
+                        ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    option.capacity,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  option.price,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? option.accentColor : Colors.transparent,
+                    border: Border.all(
+                      color: selected ? option.accentColor : Colors.black26,
+                      width: 1.4,
+                    ),
+                  ),
+                  child: selected
+                      ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
+                      : null,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
