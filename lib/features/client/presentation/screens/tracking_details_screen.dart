@@ -131,6 +131,7 @@ class _LiveTrackingView extends StatelessWidget {
     return Stack(
       children: [
         const Positioned.fill(child: TrackingMapBackdrop()),
+        const Positioned.fill(child: _LiveRouteOverlay()),
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
@@ -151,49 +152,58 @@ class _LiveTrackingView extends StatelessWidget {
           child: Stack(
             children: [
               Positioned(
-                left: 16,
+                left: 14,
                 top: 4,
                 child: InkWell(
                   onTap: onBack,
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFECEFF3)),
                     ),
                     child: const Icon(Icons.arrow_back_rounded, size: 20),
                   ),
                 ),
               ),
               Positioned(
-                top: 8,
+                top: 10,
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.90),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFECEFF3)),
-                    ),
-                    child: Text(
-                      'Live Tracking',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF101828),
-                          ),
-                    ),
+                  child: Text(
+                    'Live Tracking',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF111111),
+                        ),
                   ),
                 ),
               ),
               Positioned(
-                left: 14,
                 right: 14,
-                bottom: 12,
+                top: 110,
+                child: Column(
+                  children: [
+                    _ZoomButton(
+                      icon: Icons.remove,
+                      onTap: () {},
+                    ),
+                    const SizedBox(height: 10),
+                    _ZoomButton(
+                      icon: Icons.add,
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: _LiveInfoCard(shipment: shipment),
               ),
             ],
@@ -213,16 +223,15 @@ class _LiveInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFECEFF3)),
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -230,57 +239,81 @@ class _LiveInfoCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 56,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE1E5EB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
           Text(
             'Package information',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
+                  fontSize: 18,
                   color: const Color(0xFF101828),
                 ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF6F8FB),
+              color: const Color(0xFFF2F4FA),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Delivery type',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black45,
-                        fontSize: 10,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Inter city',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                ),
-                const SizedBox(height: 10),
                 Row(
                   children: [
-                    Text(
-                      'Package weight',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black45,
-                            fontSize: 10,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivery Type:',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.black45,
+                                  fontSize: 11,
+                                ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Express delivery',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
-                    Text(
-                      shipment.weight,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Package weight:',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.black45,
+                                  fontSize: 11,
+                                ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            shipment.weight,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -290,23 +323,21 @@ class _LiveInfoCard extends StatelessWidget {
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFAFBFD),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFECEFF3)),
+              color: const Color(0xFF0B0B14),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3D9),
+                    color: const Color(0xFFF4F4F4),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFE7B1)),
                   ),
-                  child: const Icon(Icons.local_shipping_rounded, color: Color(0xFFF3A62B)),
+                  child: const Icon(Icons.person_rounded, color: Color(0xFF6C63FF)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -318,34 +349,33 @@ class _LiveInfoCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
+                              color: Colors.white,
                             ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Delivery man',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.black45,
+                              color: Colors.white70,
                               fontSize: 11,
                             ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          _ContactChip(
-                            icon: Icons.chat_bubble_outline_rounded,
-                            label: 'Chat',
-                            onTap: () {},
-                          ),
-                          const SizedBox(width: 10),
-                          _ContactChip(
-                            icon: Icons.call_rounded,
-                            label: 'Call',
-                            onTap: () {},
-                          ),
-                        ],
-                      ),
                     ],
                   ),
+                ),
+                const SizedBox(width: 12),
+                Row(
+                  children: [
+                    _ContactIconButton(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      onTap: () {},
+                    ),
+                    const SizedBox(width: 10),
+                    _ContactIconButton(
+                      icon: Icons.call_rounded,
+                      onTap: () {},
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -682,15 +712,13 @@ class _TimelineStepItem extends StatelessWidget {
   }
 }
 
-class _ContactChip extends StatelessWidget {
-  const _ContactChip({
+class _ContactIconButton extends StatelessWidget {
+  const _ContactIconButton({
     required this.icon,
-    required this.label,
     required this.onTap,
   });
 
   final IconData icon;
-  final String label;
   final VoidCallback onTap;
 
   @override
@@ -699,30 +727,93 @@ class _ContactChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFE7EEF5)),
+          shape: BoxShape.circle,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFF6C63FF)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF1C2430),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-            ),
-          ],
+        child: Icon(
+          icon,
+          size: 18,
+          color: const Color(0xFF6C63FF),
         ),
       ),
     );
   }
+}
+
+class _ZoomButton extends StatelessWidget {
+  const _ZoomButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
+        child: Icon(icon, size: 24, color: const Color(0xFF111111)),
+      ),
+    );
+  }
+}
+
+class _LiveRouteOverlay extends StatelessWidget {
+  const _LiveRouteOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _LiveRoutePainter(),
+    );
+  }
+}
+
+class _LiveRoutePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final pathPaint = Paint()
+      ..color = const Color(0xFF6C63FF).withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final startGlow = Paint()..color = const Color(0xFF6C63FF).withValues(alpha: 0.16);
+    final startCore = Paint()..color = const Color(0xFF6C63FF);
+    final endCore = Paint()..color = const Color(0xFF6C63FF);
+
+    final path = Path()
+      ..moveTo(size.width * 0.28, size.height * 0.66)
+      ..quadraticBezierTo(size.width * 0.34, size.height * 0.45, size.width * 0.50, size.height * 0.40)
+      ..quadraticBezierTo(size.width * 0.62, size.height * 0.36, size.width * 0.74, size.height * 0.28);
+
+    canvas.drawPath(path, pathPaint);
+
+    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 28, startGlow);
+    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 12, startCore);
+    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 5, Paint()..color = Colors.white);
+
+    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 18, startGlow);
+    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 10, endCore);
+    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 4, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class TrackingMapBackdrop extends StatelessWidget {

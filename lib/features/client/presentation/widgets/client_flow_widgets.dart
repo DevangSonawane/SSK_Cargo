@@ -344,14 +344,6 @@ Future<void> showTripTypeSheet(
     );
     if (truckSize == null || !context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Booked ${truckSize.label} for ${bookingData.from} to ${bookingData.to}',
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   } finally {
     onClose?.call();
   }

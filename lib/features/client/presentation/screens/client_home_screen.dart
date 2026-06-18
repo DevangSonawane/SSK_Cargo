@@ -5,11 +5,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../widgets/client_flow_widgets.dart';
 
-class ClientHomeScreen extends ConsumerWidget {
+class ClientHomeScreen extends ConsumerStatefulWidget {
   const ClientHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientHomeScreen> createState() => _ClientHomeScreenState();
+}
+
+class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
+  double _refreshTurns = 0;
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 2, 20, 16),
@@ -50,14 +57,16 @@ class ClientHomeScreen extends ConsumerWidget {
                         const Spacer(),
                         IconButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Refreshing dashboard...'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            setState(() {
+                              _refreshTurns += 1;
+                            });
                           },
-                          icon: const Icon(Icons.refresh_rounded),
+                          icon: AnimatedRotation(
+                            turns: _refreshTurns,
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOut,
+                            child: const Icon(Icons.refresh_rounded),
+                          ),
                           color: Colors.black54,
                           tooltip: 'Refresh',
                         ),
