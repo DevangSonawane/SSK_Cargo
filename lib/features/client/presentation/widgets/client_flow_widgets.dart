@@ -428,10 +428,9 @@ class SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    return SafeArea(
-      top: false,
-      bottom: true,
+    final bottomInset = _sheetBottomInset(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: DraggableScrollableSheet(
         initialChildSize: 0.46,
         minChildSize: 0.36,
@@ -445,7 +444,7 @@ class SheetContainer extends StatelessWidget {
             ),
             child: SingleChildScrollView(
               controller: controller,
-              padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + bottomInset),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -478,16 +477,15 @@ class TripTypeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    return SafeArea(
-      top: false,
-      bottom: true,
+    final bottomInset = _sheetBottomInset(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: EdgeInsets.fromLTRB(20, 10, 20, 18 + bottomInset),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,6 +526,11 @@ class TripTypeSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+double _sheetBottomInset(BuildContext context) {
+  final viewPadding = MediaQuery.of(context).viewPadding.bottom;
+  return viewPadding > 0 ? viewPadding + 28 : 28;
 }
 
 class _TripTypeRow extends StatelessWidget {
