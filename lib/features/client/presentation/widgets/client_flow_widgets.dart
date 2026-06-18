@@ -26,15 +26,15 @@ class VehicleOption {
     required this.label,
     required this.capacity,
     required this.price,
-    required this.icon,
     required this.accentColor,
+    required this.assetPath,
   });
 
   final String label;
   final String capacity;
   final String price;
-  final IconData icon;
   final Color accentColor;
+  final String assetPath;
 }
 
 class TrackingDemoShipment {
@@ -1466,29 +1466,29 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
       label: 'Small truck',
       capacity: 'Up to 500 kg',
       price: '₹899',
-      icon: Icons.local_shipping_rounded,
       accentColor: Color(0xFF2FA56E),
+      assetPath: 'assets/trucks/small truck.png',
     ),
     VehicleOption(
       label: 'Medium truck',
       capacity: 'Up to 1.5 ton',
       price: '₹1,499',
-      icon: Icons.inventory_2_rounded,
       accentColor: Color(0xFF1F88C9),
+      assetPath: 'assets/trucks/medium truck.png',
     ),
     VehicleOption(
       label: 'Big truck',
       capacity: 'Up to 3 ton',
       price: '₹2,299',
-      icon: Icons.delivery_dining_rounded,
       accentColor: Color(0xFF7A5AF8),
+      assetPath: 'assets/trucks/big truck.png',
     ),
     VehicleOption(
       label: 'Truck pooling',
       capacity: 'Shared capacity',
       price: '₹499',
-      icon: Icons.groups_rounded,
       accentColor: Color(0xFFF59E0B),
+      assetPath: 'assets/trucks/truck pooling.png',
     ),
   ];
 
@@ -1607,7 +1607,10 @@ class _VehicleOptionTile extends StatelessWidget {
                 color: option.accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Icon(option.icon, color: option.accentColor),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Image.asset(option.assetPath, fit: BoxFit.contain),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
