@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color seedGreen = Color(0xFF2FA56E);
@@ -22,29 +21,27 @@ class AppTheme {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      textTheme: GoogleFonts.interTextTheme(
-        const TextTheme(
-          headlineLarge: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1.0,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.6,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-          bodyLarge: TextStyle(fontSize: 16, height: 1.35),
-          bodyMedium: TextStyle(fontSize: 14, height: 1.35),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 34,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -1.0,
         ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.6,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: TextStyle(fontSize: 16, height: 1.35),
+        bodyMedium: TextStyle(fontSize: 14, height: 1.35),
       ),
     );
   }

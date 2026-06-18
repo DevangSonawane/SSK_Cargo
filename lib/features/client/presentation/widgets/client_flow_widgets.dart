@@ -1734,9 +1734,8 @@ class ClientBottomBar extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: NavItem(
-                label: 'Delivery',
-                assetPath: 'assets/delivery-truck.png',
-                assetSize: 22,
+                label: 'Activity',
+                assetPath: 'assets/tracking.png',
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
@@ -1744,19 +1743,10 @@ class ClientBottomBar extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: NavItem(
-                label: 'Tracking',
-                assetPath: 'assets/tracking.png',
-                selected: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NavItem(
                 label: 'Profile',
                 assetPath: 'assets/user.png',
-                selected: currentIndex == 3,
-                onTap: () => onTap(3),
+                selected: currentIndex == 2,
+                onTap: () => onTap(2),
               ),
             ),
           ],

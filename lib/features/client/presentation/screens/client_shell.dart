@@ -13,23 +13,51 @@ class ClientShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isBottomNavVisible = ref.watch(bottomNavVisibleProvider);
+    final currentIndex = _visibleTabIndex(navigationShell.currentIndex);
 
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: isBottomNavVisible
           ? ClientBottomBar(
-              currentIndex: navigationShell.currentIndex,
+              currentIndex: currentIndex,
               onTap: (index) {
-                if (index == navigationShell.currentIndex) {
+                final branchIndex = _branchIndexForVisibleTab(index);
+                if (branchIndex == navigationShell.currentIndex) {
                   return;
                 }
                 navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
+                  branchIndex,
+                  initialLocation: branchIndex == navigationShell.currentIndex,
                 );
               },
             )
           : const SizedBox.shrink(),
     );
+  }
+}
+
+int _visibleTabIndex(int branchIndex) {
+  switch (branchIndex) {
+    case 0:
+      return 0;
+    case 2:
+      return 1;
+    case 3:
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+int _branchIndexForVisibleTab(int visibleIndex) {
+  switch (visibleIndex) {
+    case 0:
+      return 0;
+    case 1:
+      return 2;
+    case 2:
+      return 3;
+    default:
+      return 0;
   }
 }

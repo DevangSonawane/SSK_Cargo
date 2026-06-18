@@ -14,6 +14,13 @@ class ClientHomeScreen extends ConsumerStatefulWidget {
 class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   double _refreshTurns = 0;
   TripType _selectedTripType = TripType.interCity;
+  final TextEditingController _whereToController = TextEditingController();
+
+  @override
+  void dispose() {
+    _whereToController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +36,35 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 setState(() {
                   _selectedTripType = value;
                 });
+              },
+            ),
+            const SizedBox(height: 14),
+            _WhereToPill(controller: _whereToController),
+            const SizedBox(height: 12),
+            const _RecentAddressCard(),
+            const SizedBox(height: 16),
+            Text(
+              'Vehicles we provide',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              itemCount: vehicleOptions.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.95,
+              ),
+              itemBuilder: (context, index) {
+                final vehicle = vehicleOptions[index];
+                return _VehiclePreviewTile(vehicle: vehicle);
               },
             ),
             const SizedBox(height: 18),
@@ -78,6 +114,49 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _VehiclePreviewTile extends StatelessWidget {
+  const _VehiclePreviewTile({
+    required this.vehicle,
+  });
+
+  final VehicleOption vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: double.infinity,
+          height: 88,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Center(
+            child: Image.asset(
+              vehicle.assetPath,
+              width: 64,
+              height: 64,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          vehicle.label,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
+        ),
+      ],
     );
   }
 }
@@ -175,6 +254,153 @@ class _TripModeLabel extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WhereToPill extends StatelessWidget {
+  const _WhereToPill({
+    required this.controller,
+  });
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F6FA),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Icon(
+              Icons.search_rounded,
+              size: 18,
+              color: Color(0xFF667085),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              textInputAction: TextInputAction.search,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF101828),
+                  ),
+              decoration: const InputDecoration(
+                hintText: 'Where to?',
+                hintStyle: TextStyle(
+                  color: Color(0xFF9AA4B2),
+                  fontWeight: FontWeight.w600,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: Color(0xFF9AA4B2),
+          ),
+        ],
+        ),
+    );
+  }
+}
+
+class _RecentAddressCard extends StatelessWidget {
+  const _RecentAddressCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.location_on_rounded,
+              color: Color(0xFF2D6EF2),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recent address',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF667085),
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Ghanshyam Enclave, 1303/1304, Nagpur',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF101828),
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Home',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
