@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/client_flow_widgets.dart';
 
-class TrackingDetailsScreen extends StatelessWidget {
+class TrackingDetailsScreen extends StatefulWidget {
   const TrackingDetailsScreen({
     super.key,
     required this.shipment,
@@ -11,76 +11,99 @@ class TrackingDetailsScreen extends StatelessWidget {
   final TrackingDemoShipment shipment;
 
   @override
+  State<TrackingDetailsScreen> createState() => _TrackingDetailsScreenState();
+}
+
+class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
+  bool _isLiveTracking = false;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CompactSummaryCard(shipment: shipment),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Stack(
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: _isLiveTracking
+            ? _LiveTrackingView(
+                key: const ValueKey('live'),
+                shipment: widget.shipment,
+                onBack: () => setState(() => _isLiveTracking = false),
+              )
+            : SafeArea(
+                key: const ValueKey('details'),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Positioned.fill(child: TrackingMapBackdrop()),
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.18),
-                                Colors.white.withValues(alpha: 0.46),
-                                Colors.white.withValues(alpha: 0.84),
-                              ],
-                              stops: const [0.0, 0.42, 1.0],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 86),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...shipment.timeline.asMap().entries.map(
-                                  (entry) => Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: entry.key == shipment.timeline.length - 1 ? 0 : 16,
-                                    ),
-                                    child: _TimelineStepItem(
-                                      step: entry.value,
-                                      showConnector: entry.key != shipment.timeline.length - 1,
+                      _CompactSummaryCard(shipment: widget.shipment),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: Stack(
+                            children: [
+                              const Positioned.fill(child: TrackingMapBackdrop()),
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.18),
+                                        Colors.white.withValues(alpha: 0.46),
+                                        Colors.white.withValues(alpha: 0.84),
+                                      ],
+                                      stops: const [0.0, 0.42, 1.0],
                                     ),
                                   ),
                                 ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: 18,
-                        right: 18,
-                        bottom: 14,
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: FilledButton(
-                            onPressed: () {},
-                            style: FilledButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(999),
                               ),
-                              backgroundColor: const Color(0xFF6C63FF),
-                            ),
-                            child: const Text(
-                              'Live Tracking',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                            ),
+                              SingleChildScrollView(
+                                padding: const EdgeInsets.fromLTRB(18, 18, 18, 86),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ...widget.shipment.timeline.asMap().entries.map(
+                                          (entry) => Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: entry.key == widget.shipment.timeline.length - 1
+                                                  ? 0
+                                                  : 16,
+                                            ),
+                                            child: _TimelineStepItem(
+                                              step: entry.value,
+                                              showConnector:
+                                                  entry.key != widget.shipment.timeline.length - 1,
+                                            ),
+                                          ),
+                                        ),
+                                  ],
+                                ),
+                              ),
+                              Positioned(
+                                left: 18,
+                                right: 18,
+                                bottom: 14,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: FilledButton(
+                                    onPressed: () => setState(() => _isLiveTracking = true),
+                                    style: FilledButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      backgroundColor: const Color(0xFF6C63FF),
+                                    ),
+                                    child: const Text(
+                                      'Live Tracking',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -88,9 +111,246 @@ class TrackingDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _LiveTrackingView extends StatelessWidget {
+  const _LiveTrackingView({
+    super.key,
+    required this.shipment,
+    required this.onBack,
+  });
+
+  final TrackingDemoShipment shipment;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const Positioned.fill(child: TrackingMapBackdrop()),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: 0.12),
+                  Colors.white.withValues(alpha: 0.36),
+                  Colors.white.withValues(alpha: 0.66),
+                ],
+                stops: const [0.0, 0.42, 1.0],
+              ),
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Stack(
+            children: [
+              Positioned(
+                left: 16,
+                top: 4,
+                child: InkWell(
+                  onTap: onBack,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFECEFF3)),
+                    ),
+                    child: const Icon(Icons.arrow_back_rounded, size: 20),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.90),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFECEFF3)),
+                    ),
+                    child: Text(
+                      'Live Tracking',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF101828),
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 12,
+                child: _LiveInfoCard(shipment: shipment),
+              ),
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _LiveInfoCard extends StatelessWidget {
+  const _LiveInfoCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFECEFF3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Package information',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF101828),
+                ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F8FB),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Delivery type',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.black45,
+                        fontSize: 10,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Inter city',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(
+                      'Package weight',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black45,
+                            fontSize: 10,
+                          ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      shipment.weight,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFBFD),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFECEFF3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3D9),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFFE7B1)),
+                  ),
+                  child: const Icon(Icons.local_shipping_rounded, color: Color(0xFFF3A62B)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Rahul Patil',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Delivery man',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.black45,
+                              fontSize: 11,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _ContactChip(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            label: 'Chat',
+                            onTap: () {},
+                          ),
+                          const SizedBox(width: 10),
+                          _ContactChip(
+                            icon: Icons.call_rounded,
+                            label: 'Call',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -418,6 +678,49 @@ class _TimelineStepItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ContactChip extends StatelessWidget {
+  const _ContactChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFE7EEF5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: const Color(0xFF6C63FF)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF1C2430),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
