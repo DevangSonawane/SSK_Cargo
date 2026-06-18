@@ -1196,15 +1196,24 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                             title: 'Select on map',
                             onTap: () {},
                             compact: true,
+                            iconSize: 18,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(
+                          height: 30,
+                          child: VerticalDivider(
+                            width: 10,
+                            thickness: 1,
+                            color: Color(0xFFEAEFF4),
+                          ),
+                        ),
                         Expanded(
                           child: _ActionShortcutTile(
                             assetPath: 'assets/heart.png',
                             title: 'Saved addresses',
                             onTap: () {},
                             compact: true,
+                            iconSize: 16,
                           ),
                         ),
                       ],
@@ -1276,12 +1285,14 @@ class _ActionShortcutTile extends StatelessWidget {
     required this.title,
     required this.onTap,
     this.compact = false,
+    this.iconSize,
   });
 
   final String assetPath;
   final String title;
   final VoidCallback onTap;
   final bool compact;
+  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -1297,21 +1308,29 @@ class _ActionShortcutTile extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
         ),
-        child: Row(
-          children: [
-            Image.asset(assetPath, width: compact ? 16 : 22, height: compact ? 16 : 22),
-            SizedBox(width: compact ? 6 : 10),
-            Expanded(
-              child: Text(
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Image.asset(
+                assetPath,
+                width: iconSize ?? (compact ? 16 : 22),
+                height: iconSize ?? (compact ? 16 : 22),
+              ),
+              SizedBox(width: compact ? 6 : 10),
+              Text(
                 title,
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       fontSize: compact ? 11 : null,
                       color: const Color(0xFF1C2430),
                     ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1333,24 +1352,19 @@ class _RecentAddressTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFEAEFF4)),
-        ),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F4F8),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.location_on_rounded, color: Color(0xFF2FA56E)),
+              child: const Icon(Icons.location_on_rounded, color: Color(0xFF2FA56E), size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1360,7 +1374,7 @@ class _RecentAddressTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -1377,7 +1391,6 @@ class _RecentAddressTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
           ],
         ),
       ),
