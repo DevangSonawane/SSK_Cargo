@@ -149,38 +149,62 @@ class BannerCard extends StatelessWidget {
   }
 }
 
-Future<void> showTripTypeSheet(BuildContext context) async {
-  final tripType = await showModalBottomSheet<TripType>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => const TripTypeSheet(),
-  );
-  if (tripType == null || !context.mounted) return;
+Future<void> showTripTypeSheet(
+  BuildContext context, {
+  VoidCallback? onOpen,
+  VoidCallback? onClose,
+}) async {
+  onOpen?.call();
+  try {
+    final tripType = await showModalBottomSheet<TripType>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const TripTypeSheet(),
+    );
+    if (tripType == null || !context.mounted) return;
 
-  final bookingData = await showModalBottomSheet<BookingData>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => BookingLocationSheet(tripType: tripType),
-  );
-  if (bookingData == null || !context.mounted) return;
+    final bookingData = await showModalBottomSheet<BookingData>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BookingLocationSheet(tripType: tripType),
+    );
+    if (bookingData == null || !context.mounted) return;
 
-  final truckSize = await showModalBottomSheet<TruckSize>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => TruckSizeSheet(bookingData: bookingData),
-  );
-  if (truckSize == null || !context.mounted) return;
+    final truckSize = await showModalBottomSheet<TruckSize>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TruckSizeSheet(bookingData: bookingData),
+    );
+    if (truckSize == null || !context.mounted) return;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Booked ${truckSize.label} for ${bookingData.from} to ${bookingData.to}',
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Booked ${truckSize.label} for ${bookingData.from} to ${bookingData.to}',
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
-      behavior: SnackBarBehavior.floating,
-    ),
+    );
+  } finally {
+    onClose?.call();
+  }
+}
+
+Future<void> showBookingFlow(
+  BuildContext context, {
+  VoidCallback? onOpen,
+  VoidCallback? onClose,
+}) async {
+  await showTripTypeSheet(
+    context,
+    onOpen: onOpen,
+    onClose: onClose,
   );
 }
 
@@ -404,6 +428,7 @@ class SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return DraggableScrollableSheet(
       initialChildSize: 0.46,
       minChildSize: 0.36,
@@ -417,7 +442,7 @@ class SheetContainer extends StatelessWidget {
           ),
           child: SingleChildScrollView(
             controller: controller,
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+            padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + bottomInset),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -449,12 +474,13 @@ class TripTypeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, 18 + bottomInset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,14 +504,16 @@ class TripTypeSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _TripTypeRow(
-            imagePath: 'assets/trucks/inter-city.png',
+            imagePath: 'assets/trucks/intra-city.png',
             label: 'Inter city',
+            helperText: 'Move between cities',
             onTap: () => Navigator.of(context).pop(TripType.interCity),
           ),
           const SizedBox(height: 10),
           _TripTypeRow(
-            imagePath: 'assets/trucks/intra-city.png',
+            imagePath: 'assets/trucks/inter-city.png',
             label: 'Intra city',
+            helperText: 'Deliver within the city',
             onTap: () => Navigator.of(context).pop(TripType.intraCity),
           ),
         ],
@@ -498,37 +526,55 @@ class _TripTypeRow extends StatelessWidget {
   const _TripTypeRow({
     required this.imagePath,
     required this.label,
+    required this.helperText,
     required this.onTap,
   });
 
   final String imagePath;
   final String label;
+  final String helperText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        constraints: const BoxConstraints(minHeight: 84),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F6F8),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
         child: Row(
           children: [
             Image.asset(
               imagePath,
-              width: 30,
-              height: 30,
+              width: 54,
+              height: 54,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
+                    helperText,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
                     label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 15,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                         ),
                   ),
                 ],
@@ -785,41 +831,6 @@ class NavItem extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> showBookingFlow(BuildContext context) async {
-  final tripType = await showModalBottomSheet<TripType>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => const TripTypeSheet(),
-  );
-  if (tripType == null || !context.mounted) return;
-
-  final bookingData = await showModalBottomSheet<BookingData>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => BookingLocationSheet(tripType: tripType),
-  );
-  if (bookingData == null || !context.mounted) return;
-
-  final truckSize = await showModalBottomSheet<TruckSize>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => TruckSizeSheet(bookingData: bookingData),
-  );
-  if (truckSize == null || !context.mounted) return;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Booked ${truckSize.label} for ${bookingData.from} to ${bookingData.to}',
-      ),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
 }
 
 InputDecoration _inputDecoration(

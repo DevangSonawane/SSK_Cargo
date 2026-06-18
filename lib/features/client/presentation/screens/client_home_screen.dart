@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/app_providers.dart';
 import '../widgets/client_flow_widgets.dart';
 
-class ClientHomeScreen extends StatelessWidget {
+class ClientHomeScreen extends ConsumerWidget {
   const ClientHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 2, 20, 16),
@@ -16,7 +18,17 @@ class ClientHomeScreen extends StatelessWidget {
             const LocationArc(),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () => showTripTypeSheet(context),
+              onTap: () async {
+                await showBookingFlow(
+                  context,
+                  onOpen: () => ref.read(bottomNavVisibleProvider.notifier).state = false,
+                  onClose: () {
+                    if (context.mounted) {
+                      ref.read(bottomNavVisibleProvider.notifier).state = true;
+                    }
+                  },
+                );
+              },
               child: const BannerCard(),
             ),
             const SizedBox(height: 18),

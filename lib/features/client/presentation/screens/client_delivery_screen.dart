@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/app_providers.dart';
 import '../widgets/client_flow_widgets.dart';
 
-class ClientDeliveryScreen extends StatelessWidget {
+class ClientDeliveryScreen extends ConsumerWidget {
   const ClientDeliveryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -25,7 +27,15 @@ class ClientDeliveryScreen extends StatelessWidget {
             const BannerCard(),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => showBookingFlow(context),
+              onPressed: () => showBookingFlow(
+                context,
+                onOpen: () => ref.read(bottomNavVisibleProvider.notifier).state = false,
+                onClose: () {
+                  if (context.mounted) {
+                    ref.read(bottomNavVisibleProvider.notifier).state = true;
+                  }
+                },
+              ),
               icon: const Icon(Icons.add),
               label: const Text('Book a shipment'),
             ),
