@@ -1116,7 +1116,7 @@ class _BookingLocationScreenState extends State<BookingLocationScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        isInterCity ? 'shesh Katagi · 9372341983' : 'Current location',
+                                        isInterCity ? 'Aarav Mehta · 9823419076' : 'Current location',
                                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
