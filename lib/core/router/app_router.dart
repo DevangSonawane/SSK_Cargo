@@ -7,6 +7,8 @@ import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
+import '../../features/client/presentation/screens/tracking_details_screen.dart';
+import '../../features/client/presentation/widgets/client_flow_widgets.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 
@@ -26,6 +28,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => const NoTransitionPage(child: RoleLoginScreen()),
+      ),
+      GoRoute(
+        path: '/client/tracking/details',
+        pageBuilder: (context, state) {
+          final shipment = state.extra as TrackingDemoShipment?;
+          return NoTransitionPage(
+            child: TrackingDetailsScreen(
+              shipment: shipment ?? trackingDemoShipments.first,
+            ),
+          );
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

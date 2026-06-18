@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../widgets/client_flow_widgets.dart';
 
 class ClientTrackingScreen extends StatelessWidget {
   const ClientTrackingScreen({super.key});
@@ -6,37 +9,49 @@ class ClientTrackingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 108,
-                height: 108,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(34),
-                ),
-                child: Icon(
-                  Icons.track_changes_rounded,
-                  size: 54,
-                  color: Theme.of(context).colorScheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 2, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tracking',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your active shipments are listed below.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.black54,
+                  ),
+            ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ...trackingDemoShipments.asMap().entries.expand(
+                          (entry) => [
+                            PackageTrackingCard(
+                              shipment: entry.value,
+                              onTap: () {
+                                context.push(
+                                  '/client/tracking/details',
+                                  extra: entry.value,
+                                );
+                              },
+                            ),
+                            if (entry.key != trackingDemoShipments.length - 1)
+                              const SizedBox(height: 12),
+                          ],
+                        ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Text('Tracking', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 10),
-              Text(
-                'Active shipments and map-based tracking will live here.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.black54,
-                    ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

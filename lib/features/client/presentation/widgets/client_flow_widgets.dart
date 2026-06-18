@@ -21,6 +21,167 @@ class TruckSize {
   final IconData icon;
 }
 
+class TrackingDemoShipment {
+  const TrackingDemoShipment({
+    required this.packageName,
+    required this.trackingId,
+    required this.fromLocation,
+    required this.toLocation,
+    required this.status,
+    required this.customerName,
+    required this.weight,
+    required this.timeline,
+  });
+
+  final String packageName;
+  final String trackingId;
+  final String fromLocation;
+  final String toLocation;
+  final String status;
+  final String customerName;
+  final String weight;
+  final List<TrackingTimelineStep> timeline;
+}
+
+class TrackingTimelineStep {
+  const TrackingTimelineStep({
+    required this.title,
+    required this.subtitle,
+    required this.completed,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool completed;
+}
+
+const trackingDemoShipments = <TrackingDemoShipment>[
+  TrackingDemoShipment(
+    packageName: 'MacBook Air M3',
+    trackingId: 'TRK-SSK-20489',
+    fromLocation: 'Mumbai Warehouse',
+    toLocation: 'Pune Distribution Center',
+    status: 'Your package is in transit',
+    customerName: 'Aarav Mehta',
+    weight: '2.40 KG',
+    timeline: [
+      TrackingTimelineStep(
+        title: 'Tracking Number Created',
+        subtitle: 'Mumbai Warehouse',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'In Transit',
+        subtitle: 'Pune Gateway Hub',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'Out for Delivery',
+        subtitle: 'Pune Distribution Center',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'Delivered',
+        subtitle: 'Awaiting final handoff',
+        completed: false,
+      ),
+    ],
+  ),
+  TrackingDemoShipment(
+    packageName: 'Apple iPhone 15 Pro',
+    trackingId: 'TRK-SSK-20841',
+    fromLocation: 'Navi Mumbai Hub',
+    toLocation: 'Bangalore Tech Park',
+    status: 'Arriving at next checkpoint',
+    customerName: 'Karan Shah',
+    weight: '1.15 KG',
+    timeline: [
+      TrackingTimelineStep(
+        title: 'Tracking Number Created',
+        subtitle: 'Navi Mumbai Hub',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'In Transit',
+        subtitle: 'Kolhapur Sorting Center',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'Out for Delivery',
+        subtitle: 'Bangalore Tech Park',
+        completed: false,
+      ),
+      TrackingTimelineStep(
+        title: 'Delivered',
+        subtitle: 'Final confirmation pending',
+        completed: false,
+      ),
+    ],
+  ),
+  TrackingDemoShipment(
+    packageName: 'Office Chair Set',
+    trackingId: 'TRK-SSK-21077',
+    fromLocation: 'Delhi DC-3',
+    toLocation: 'Jaipur Office',
+    status: 'Awaiting dispatch',
+    customerName: 'Neha Kapoor',
+    weight: '8.60 KG',
+    timeline: [
+      TrackingTimelineStep(
+        title: 'Tracking Number Created',
+        subtitle: 'Delhi DC-3',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'In Transit',
+        subtitle: 'Load assigned',
+        completed: false,
+      ),
+      TrackingTimelineStep(
+        title: 'Out for Delivery',
+        subtitle: 'Queue for pickup',
+        completed: false,
+      ),
+      TrackingTimelineStep(
+        title: 'Delivered',
+        subtitle: 'Not started yet',
+        completed: false,
+      ),
+    ],
+  ),
+  TrackingDemoShipment(
+    packageName: 'Printer Cartridge Box',
+    trackingId: 'TRK-SSK-21330',
+    fromLocation: 'Pune Cargo Yard',
+    toLocation: 'Hyderabad Retail Store',
+    status: 'Out for pickup',
+    customerName: 'Rohan Kulkarni',
+    weight: '4.05 KG',
+    timeline: [
+      TrackingTimelineStep(
+        title: 'Tracking Number Created',
+        subtitle: 'Pune Cargo Yard',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'In Transit',
+        subtitle: 'Pickup scheduled',
+        completed: false,
+      ),
+      TrackingTimelineStep(
+        title: 'Out for Delivery',
+        subtitle: 'Not started',
+        completed: false,
+      ),
+      TrackingTimelineStep(
+        title: 'Delivered',
+        subtitle: 'Pending',
+        completed: false,
+      ),
+    ],
+  ),
+];
+
 class PillTag extends StatelessWidget {
   const PillTag({
     super.key,
@@ -279,22 +440,16 @@ class TrackingMockCard extends StatelessWidget {
 class PackageTrackingCard extends StatelessWidget {
   const PackageTrackingCard({
     super.key,
-    required this.packageName,
-    required this.trackingId,
-    required this.fromLocation,
-    required this.toLocation,
-    required this.status,
+    required this.shipment,
+    this.onTap,
   });
 
-  final String packageName;
-  final String trackingId;
-  final String fromLocation;
-  final String toLocation;
-  final String status;
+  final TrackingDemoShipment shipment;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -336,7 +491,7 @@ class PackageTrackingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      packageName,
+                      shipment.packageName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -345,7 +500,7 @@ class PackageTrackingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '#Tracking ID: $trackingId',
+                      '#Tracking ID: ${shipment.trackingId}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.black45,
                             fontSize: 10,
@@ -437,7 +592,7 @@ class PackageTrackingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      fromLocation,
+                      shipment.fromLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -457,7 +612,7 @@ class PackageTrackingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      toLocation,
+                      shipment.toLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -474,9 +629,9 @@ class PackageTrackingCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFECEFF3)),
           const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Container(
                 margin: const EdgeInsets.only(top: 5),
                 width: 7,
@@ -505,7 +660,7 @@ class PackageTrackingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  status,
+                  shipment.status,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: const Color(0xFF1C2430),
                         fontWeight: FontWeight.w500,
@@ -517,6 +672,16 @@ class PackageTrackingCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: card,
     );
   }
 }
