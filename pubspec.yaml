@@ -68,6 +68,7 @@ flutter:
     - assets/delivery-truck.png
     - assets/tracking.png
     - assets/user.png
+    - assets/Logo.png
     - assets/trucks/inter-city.png
     - assets/trucks/intra-city.png
     - "assets/trucks/small truck.png"
@@ -76,6 +77,7 @@ flutter:
     - "assets/trucks/truck pooling.png"
     - assets/gps.png
     - assets/heart.png
+    - assets/loginscreenimg.png
     - "assets/client/test.png"
     - "assets/package.png"
 
