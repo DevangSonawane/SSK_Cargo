@@ -119,16 +119,16 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 22),
                       Container(
-                        padding: const EdgeInsets.all(18),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(32),
+                          borderRadius: BorderRadius.circular(28),
                           border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 30,
-                              offset: const Offset(0, 16),
+                              blurRadius: 24,
+                              offset: const Offset(0, 12),
                             ),
                           ],
                         ),
@@ -141,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     (role) => Expanded(
                                       child: Padding(
                                         padding: EdgeInsets.only(
-                                          right: role == SignupRole.values.last ? 0 : 10,
+                                          right: role == SignupRole.values.last ? 0 : 8,
                                         ),
                                         child: _RoleCard(
                                           meta: _roleData[role]!,
@@ -153,93 +153,19 @@ class _SignupScreenState extends State<SignupScreen> {
                                   )
                                   .toList(),
                             ),
-                            const SizedBox(height: 18),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 280),
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
-                              transitionBuilder: (child, animation) {
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0, 0.04),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
+                            const SizedBox(height: 14),
+                            ...meta.fields.map(
+                              (field) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: TextField(
+                                  keyboardType: field.keyboardType,
+                                  obscureText: field.obscure,
+                                  decoration: _fieldDecoration(
+                                    label: field.label,
+                                    icon: field.icon,
+                                    accent: meta.accent,
                                   ),
-                                );
-                              },
-                              child: Column(
-                                key: ValueKey(_role),
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: meta.accent.withValues(alpha: 0.10),
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 52,
-                                          height: 52,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(18),
-                                          ),
-                                          child: Icon(
-                                            meta.icon,
-                                            color: meta.accent,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                meta.title,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge
-                                                    ?.copyWith(
-                                                      color: const Color(0xFF17324D),
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                meta.subtitle,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: Colors.black54,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  ...meta.fields.map(
-                                    (field) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 14),
-                                      child: TextField(
-                                        keyboardType: field.keyboardType,
-                                        obscureText: field.obscure,
-                                        decoration: _fieldDecoration(
-                                          label: field.label,
-                                          icon: field.icon,
-                                          accent: meta.accent,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -360,25 +286,26 @@ class _RoleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(18),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: selected ? meta.accent.withValues(alpha: 0.10) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? meta.accent.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
           ),
         ),
         child: Column(
           children: [
-            Icon(meta.icon, color: selected ? meta.accent : const Color(0xFF94A3B8)),
-            const SizedBox(height: 8),
+            Icon(meta.icon, size: 20, color: selected ? meta.accent : const Color(0xFF94A3B8)),
+            const SizedBox(height: 6),
             Text(
               meta.title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontSize: 12,
                     color: const Color(0xFF17324D),
                     fontWeight: FontWeight.w700,
                   ),
