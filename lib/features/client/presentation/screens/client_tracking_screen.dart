@@ -64,11 +64,11 @@ class _TrackingHeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF5D36F5),
+        color: const Color(0xFF2FA56E),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5D36F5).withValues(alpha: 0.24),
+            color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),

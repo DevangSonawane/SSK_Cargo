@@ -94,7 +94,7 @@ class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(999),
                                       ),
-                                      backgroundColor: const Color(0xFF6C63FF),
+                                      backgroundColor: const Color(0xFF2FA56E),
                                     ),
                                     child: const Text(
                                       'Live Tracking',
@@ -337,7 +337,7 @@ class _LiveInfoCard extends StatelessWidget {
                     color: const Color(0xFFF4F4F4),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person_rounded, color: Color(0xFF6C63FF)),
+                  child: const Icon(Icons.person_rounded, color: Color(0xFF2FA56E)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -489,7 +489,7 @@ class _CompactSummaryCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF6C63FF)),
+                        const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF2FA56E)),
                       ],
                     ),
                   ],
@@ -536,7 +536,7 @@ class _CompactSummaryCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF2EFFF),
+                      color: const Color(0xFFE0F4E8),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Row(
@@ -546,7 +546,7 @@ class _CompactSummaryCard extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF6C63FF),
+                              color: Color(0xFF2FA56E),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -657,7 +657,7 @@ class _TimelineStepItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = step.completed ? const Color(0xFF6C63FF) : const Color(0xFFE0DDFB);
+    final activeColor = step.completed ? const Color(0xFF2FA56E) : const Color(0xFFE0F4E8);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,7 +678,7 @@ class _TimelineStepItem extends StatelessWidget {
                 height: 38,
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE7E6FF),
+                  color: const Color(0xFFE0F4E8),
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -736,7 +736,7 @@ class _ContactIconButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color: const Color(0xFF6C63FF),
+          color: const Color(0xFF2FA56E),
         ),
       ),
     );
@@ -786,15 +786,15 @@ class _LiveRoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final pathPaint = Paint()
-      ..color = const Color(0xFF6C63FF).withValues(alpha: 0.85)
+      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    final startGlow = Paint()..color = const Color(0xFF6C63FF).withValues(alpha: 0.16);
-    final startCore = Paint()..color = const Color(0xFF6C63FF);
-    final endCore = Paint()..color = const Color(0xFF6C63FF);
+    final startGlow = Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.16);
+    final startCore = Paint()..color = const Color(0xFF2FA56E);
+    final endCore = Paint()..color = const Color(0xFF2FA56E);
 
     final path = Path()
       ..moveTo(size.width * 0.28, size.height * 0.66)
@@ -856,7 +856,7 @@ class _TrackingMapPainter extends CustomPainter {
 
     final nodePaint = Paint()..color = const Color(0xFFF9FBFD);
     final nodeBorderPaint = Paint()
-      ..color = const Color(0xFFE0E7F0)
+      ..color = const Color(0xFFCFEFDB)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -897,7 +897,7 @@ class _TrackingMapPainter extends CustomPainter {
     for (final node in nodes) {
       canvas.drawCircle(node, 11, nodePaint);
       canvas.drawCircle(node, 11, nodeBorderPaint);
-      canvas.drawCircle(node, 3.5, Paint()..color = const Color(0xFFCBD5E1));
+      canvas.drawCircle(node, 3.5, Paint()..color = const Color(0xFF2FA56E));
     }
 
     final gridPaint = Paint()

@@ -580,7 +580,7 @@ class PackageTrackingCard extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6C63FF).withValues(alpha: 0.16),
+                        color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -588,7 +588,7 @@ class PackageTrackingCard extends StatelessWidget {
                           width: 4,
                           height: 4,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF6C63FF),
+                            color: Color(0xFF2FA56E),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -599,7 +599,7 @@ class PackageTrackingCard extends StatelessWidget {
                       height: 30,
                       margin: const EdgeInsets.symmetric(vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE7E6FF),
+                        color: const Color(0xFFE0F4E8),
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
@@ -607,7 +607,7 @@ class PackageTrackingCard extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDEBFF),
+                        color: const Color(0xFFE0F4E8),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -615,7 +615,7 @@ class PackageTrackingCard extends StatelessWidget {
                           width: 4,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB8B3FF),
+                            color: const Color(0xFF2FA56E),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -683,15 +683,15 @@ class PackageTrackingCard extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 5),
                 width: 7,
                 height: 7,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6C63FF).withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2FA56E),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2FA56E).withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                   ],
                 ),
               ),
