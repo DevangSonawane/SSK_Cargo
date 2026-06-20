@@ -34,9 +34,10 @@ class LoginScreen extends StatelessWidget {
           SafeArea(
             child: Stack(
               children: [
-                Center(
+                Align(
+                  alignment: Alignment.topCenter,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 420),
                       child: Column(
@@ -46,31 +47,37 @@ class LoginScreen extends StatelessWidget {
                             children: [
                               IconButton(
                                 onPressed: () => context.go('/access'),
-                                icon: const Icon(Icons.arrow_back_rounded),
-                                tooltip: 'Back',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              tooltip: 'Back',
                               ),
                               const Spacer(),
-                              TextButton(
+                              FilledButton(
                                 onPressed: () => context.go('/signup'),
-                                style: TextButton.styleFrom(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2FA56E),
                                   foregroundColor: Colors.white,
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
                                   ),
+                                  shape: const StadiumBorder(),
                                 ),
-                                child: const Text('Sign up'),
+                                child: const Text(
+                                  'Sign up',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Center(
                             child: Image.asset(
                               'assets/Logo.png',
-                              width: 250,
+                              width: 320,
                               fit: BoxFit.contain,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           TextField(
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
@@ -88,7 +95,7 @@ class LoginScreen extends StatelessWidget {
                               icon: Icons.lock_rounded,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton(
