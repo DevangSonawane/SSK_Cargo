@@ -9,184 +9,222 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _controller = PageController();
   int _index = 0;
 
-  final _pages = const [
-    _OnboardingData(
-      title: 'Book cargo in a few taps',
-      description:
-          'Find the right truck, confirm locations, and keep the full booking flow simple.',
-      icon: Icons.route_rounded,
+  static const _pages = <_OnboardingPage>[
+    _OnboardingPage(
+      image: 'assets/ssk_cargo/assets/images/onboard1.png',
+      title: 'Safe & Secure Delivery',
+      subtitle:
+          'Your goods are protected with trusted transportation and secure handling.',
+      accent: Color(0xFF10B981),
     ),
-    _OnboardingData(
-      title: 'Track every movement',
-      description:
-          'Watch shipments move from pickup to delivery with status updates in one place.',
-      icon: Icons.my_location_rounded,
+    _OnboardingPage(
+      image: 'assets/ssk_cargo/assets/images/onboard2.png',
+      title: 'Real-Time Tracking',
+      subtitle:
+          'Track your shipment live and stay updated throughout the journey.',
+      accent: Color(0xFF1F88C9),
     ),
-    _OnboardingData(
-      title: 'Built for clients first',
-      description:
-          'Start with the client journey now, then we can expand to broker and driver flows later.',
-      icon: Icons.verified_user_rounded,
+    _OnboardingPage(
+      image: 'assets/ssk_cargo/assets/images/onboard3.png',
+      title: 'Fast Pickup & Drop',
+      subtitle:
+          'Book cargo transportation quickly and get deliveries completed on time.',
+      accent: Color(0xFF2FA56E),
     ),
   ];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void _goNext() {
+    if (_index < _pages.length - 1) {
+      setState(() => _index += 1);
+      return;
+    }
+
+    context.go('/access');
   }
 
   @override
   Widget build(BuildContext context) {
+    final page = _pages[_index];
+
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 18),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  _RoleBadge(
-                    label: 'SSK',
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => context.go('/access'),
-                    child: const Text('Skip'),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (value) => setState(() => _index = value),
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  final page = _pages[index];
-                  return Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 152,
-                          height: 152,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFFE6F7FF), Color(0xFFEAFBF1)],
-                            ),
-                            borderRadius: BorderRadius.circular(44),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Expanded(
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 360),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
+                            child: child,
                           ),
-                          child: Icon(page.icon, size: 72, color: const Color(0xFF1F88C9)),
+                        );
+                      },
+                      child: SizedBox(
+                        key: ValueKey(page.image),
+                        height: 390,
+                        width: double.infinity,
+                        child: Image.asset(
+                          page.image,
+                          fit: BoxFit.contain,
+                          alignment: Alignment.topCenter,
                         ),
-                        const SizedBox(height: 30),
-                        Text(
-                          page.title,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          page.description,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Colors.black54,
-                              ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  ...List.generate(
-                    _pages.length,
-                    (dotIndex) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      margin: const EdgeInsets.only(right: 8),
-                      width: _index == dotIndex ? 24 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _index == dotIndex
-                            ? Theme.of(context).colorScheme.primary
-                            : const Color(0xFFD9E4EE),
-                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: () {
-                      if (_index < _pages.length - 1) {
-                        _controller.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 240),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: _index == i ? 22 : 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: _index == i ? page.accent : const Color(0xFFE3E8EF),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.08),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
                         );
-                        return;
-                      }
-                      context.go('/access');
-                    },
-                    child: Text(_index < _pages.length - 1 ? 'Next' : 'Get started'),
-                  ),
-                ],
+                      },
+                      child: Text(
+                        page.title,
+                        key: ValueKey(page.title),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                          height: 1.15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 280),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.04),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          page.subtitle,
+                          key: ValueKey(page.subtitle),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            color: Colors.grey.shade600,
+                            height: 1.55,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _goNext,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2FA56E),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          _index == _pages.length - 1 ? 'Get Started' : 'Next',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: () => context.go('/access'),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          foregroundColor: const Color(0xFF111827),
+                        ),
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 22),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _OnboardingData {
-  const _OnboardingData({
+class _OnboardingPage {
+  const _OnboardingPage({
+    required this.image,
     required this.title,
-    required this.description,
-    required this.icon,
+    required this.subtitle,
+    required this.accent,
   });
 
+  final String image;
   final String title;
-  final String description;
-  final IconData icon;
-}
-
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({
-    required this.label,
-    required this.color,
-  });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
+  final String subtitle;
+  final Color accent;
 }

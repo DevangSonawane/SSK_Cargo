@@ -78,6 +78,7 @@ flutter:
     - assets/gps.png
     - assets/heart.png
     - assets/loginscreenimg.png
+    - assets/ssk_cargo/assets/images/
     - "assets/client/test.png"
     - "assets/package.png"
 
