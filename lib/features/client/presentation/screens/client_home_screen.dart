@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,13 +27,16 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 2, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _TripHeader(
               selectedTripType: _selectedTripType,
               onTripTypeChanged: (value) {
+                if (_selectedTripType != value) {
+                  HapticFeedback.lightImpact();
+                }
                 setState(() {
                   _selectedTripType = value;
                 });
@@ -58,9 +62,9 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 4,
+                mainAxisSpacing: 10,
                 crossAxisSpacing: 8,
-                childAspectRatio: 0.95,
+                childAspectRatio: 1.45,
               ),
               itemBuilder: (context, index) {
                 final vehicle = vehicleOptions[index];
@@ -132,7 +136,7 @@ class _VehiclePreviewTile extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          height: 88,
+          height: 84,
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(18),
@@ -140,20 +144,21 @@ class _VehiclePreviewTile extends StatelessWidget {
           child: Center(
             child: Image.asset(
               vehicle.assetPath,
-              width: 64,
-              height: 64,
+              width: 58,
+              height: 58,
               fit: BoxFit.contain,
             ),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           vehicle.label,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF101828),
+                height: 1.1,
               ),
         ),
       ],
@@ -174,39 +179,36 @@ class _TripHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _TripModeLabel(
-                  label: 'Inter city',
-                  imagePath: 'assets/trucks/inter-city.png',
-                  selected: selectedTripType == TripType.interCity,
-                  onTap: () => onTripTypeChanged(TripType.interCity),
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _TripModeLabel(
+                    label: 'Inter city',
+                    imagePath: 'assets/trucks/inter-city.png',
+                    selected: selectedTripType == TripType.interCity,
+                    onTap: () => onTripTypeChanged(TripType.interCity),
+                  ),
                 ),
-              ),
-              Container(
-                width: 1,
-                height: 28,
-                color: const Color(0xFFE3E8EF),
-              ),
-              Expanded(
-                child: _TripModeLabel(
-                  label: 'Intra city',
-                  imagePath: 'assets/trucks/intra-city.png',
-                  selected: selectedTripType == TripType.intraCity,
-                  onTap: () => onTripTypeChanged(TripType.intraCity),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: const Color(0xFFE3E8EF),
                 ),
-              ),
-            ],
-          ),
-          Container(
-            width: double.infinity,
-            height: 1,
-            color: const Color(0xFFE3E8EF),
+                Expanded(
+                  child: _TripModeLabel(
+                    label: 'Intra city',
+                    imagePath: 'assets/trucks/intra-city.png',
+                    selected: selectedTripType == TripType.intraCity,
+                    onTap: () => onTripTypeChanged(TripType.intraCity),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -233,24 +235,42 @@ class _TripModeLabel extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              imagePath,
-              width: 20,
-              height: 20,
-              fit: BoxFit.contain,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  imagePath,
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? const Color(0xFF101828) : const Color(0xFF9AA4B2),
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: selected ? const Color(0xFF101828) : const Color(0xFF9AA4B2),
-                  ),
+            const SizedBox(height: 1),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              height: 2,
+              width: selected ? 30 : 0,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2FA56E),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
           ],
         ),
