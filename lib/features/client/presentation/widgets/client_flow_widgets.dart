@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/app_providers.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -1053,7 +1055,7 @@ class _TripTypeRow extends StatelessWidget {
   }
 }
 
-class BookingLocationScreen extends StatefulWidget {
+class BookingLocationScreen extends ConsumerStatefulWidget {
   const BookingLocationScreen({
     super.key,
     required this.tripType,
@@ -1062,14 +1064,22 @@ class BookingLocationScreen extends StatefulWidget {
   final TripType tripType;
 
   @override
-  State<BookingLocationScreen> createState() => _BookingLocationScreenState();
+  ConsumerState<BookingLocationScreen> createState() =>
+      _BookingLocationScreenState();
 }
 
-class _BookingLocationScreenState extends State<BookingLocationScreen> {
+class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   final _toController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    ref.read(bottomNavVisibleProvider.notifier).state = false;
+  }
+
+  @override
   void dispose() {
+    ref.read(bottomNavVisibleProvider.notifier).state = true;
     _toController.dispose();
     super.dispose();
   }
@@ -1234,7 +1244,9 @@ class _BookingSummaryCard extends StatelessWidget {
           SizedBox(
             width: 18,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 2),
                 Container(
                   width: 8,
                   height: 8,
@@ -1245,7 +1257,16 @@ class _BookingSummaryCard extends StatelessWidget {
                 ),
                 Container(
                   width: 2,
-                  height: 56,
+                  height: 36,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD9E0E7),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                Container(
+                  width: 2,
+                  height: 16,
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFD9E0E7),
@@ -1286,14 +1307,36 @@ class _BookingSummaryCard extends StatelessWidget {
                             ),
                       ),
                       const SizedBox(height: 3),
-                      Text(
-                        pickupSubtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.black54,
-                              fontSize: 11,
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 12,
+                            color: Color(0xFF98A2B3),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              pickupSubtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.black54,
+                                    fontSize: 11,
+                                  ),
                             ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '58 km',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF98A2B3),
+                                  height: 1,
+                                ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1366,6 +1409,12 @@ const List<(String, String)> _recentAddresses = [
     ('Office', 'Orbit Plaza, IT Park Road, Nagpur'),
     ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
     ('Client Site', 'Laxmi Nagar, Near Metro Station'),
+    ('Pickup Point', 'Nandanvan Main Road, Nagpur'),
+    ('Factory', 'Butibori Industrial Area, Nagpur'),
+    ('Retail Store', 'Sitabuldi Market, Nagpur'),
+    ('Branch', 'Wardha Road Business Park'),
+    ('Drop Hub', 'MIHAN Cargo Terminal, Nagpur'),
+    ('Residence', 'Hingna T Point, Nagpur'),
   ];
 
 class _ActionShortcutTile extends StatelessWidget {
@@ -1446,14 +1495,25 @@ class _RecentAddressTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F4F8),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.location_on_rounded, color: Color(0xFF2FA56E), size: 18),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  color: Color(0xFF98A2B3),
+                  size: 14,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '58 km',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF98A2B3),
+                        height: 1,
+                      ),
+                ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1577,14 +1637,35 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
             Positioned(
               left: 18,
               right: 18,
-              bottom: bottomInset + 44,
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(selected);
-                  },
-                  child: Text('Proceed with ${selected.label}'),
+              bottom: bottomInset + 12,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.14),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(selected);
+                      },
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: Text('Proceed with ${selected.label}'),
+                    ),
+                  ),
                 ),
               ),
             ),

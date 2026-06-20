@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/app_providers.dart';
 import '../widgets/client_flow_widgets.dart';
 
 class ClientHomeScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,24 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   void dispose() {
     _whereToController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openBookingLocation() async {
+    HapticFeedback.lightImpact();
+    ref.read(bottomNavVisibleProvider.notifier).state = false;
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BookingLocationScreen(
+            tripType: _selectedTripType,
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        ref.read(bottomNavVisibleProvider.notifier).state = true;
+      }
+    }
   }
 
   @override
@@ -68,7 +87,12 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
               ),
               itemBuilder: (context, index) {
                 final vehicle = vehicleOptions[index];
-                return _VehiclePreviewTile(vehicle: vehicle);
+                return _VehiclePreviewTile(
+                  vehicle: vehicle,
+                  onTap: () {
+                    _openBookingLocation();
+                  },
+                );
               },
             ),
             const SizedBox(height: 18),
@@ -125,43 +149,49 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
 class _VehiclePreviewTile extends StatelessWidget {
   const _VehiclePreviewTile({
     required this.vehicle,
+    required this.onTap,
   });
 
   final VehicleOption vehicle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: double.infinity,
-          height: 84,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Center(
-            child: Image.asset(
-              vehicle.assetPath,
-              width: 58,
-              height: 58,
-              fit: BoxFit.contain,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 84,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Center(
+              child: Image.asset(
+                vehicle.assetPath,
+                width: 58,
+                height: 58,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          vehicle.label,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
-                height: 1.1,
-              ),
-        ),
-      ],
+          const SizedBox(height: 1),
+          Text(
+            vehicle.label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF101828),
+                  height: 1.1,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
