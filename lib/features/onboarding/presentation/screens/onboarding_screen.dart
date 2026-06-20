@@ -13,21 +13,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _pages = <_OnboardingPage>[
     _OnboardingPage(
-      image: 'assets/ssk_cargo/assets/images/onboard1.png',
+      image: 'assets/images/onboard1.png',
       title: 'Safe & Secure Delivery',
       subtitle:
           'Your goods are protected with trusted transportation and secure handling.',
       accent: Color(0xFF10B981),
     ),
     _OnboardingPage(
-      image: 'assets/ssk_cargo/assets/images/onboard2.png',
+      image: 'assets/images/onboard2.png',
       title: 'Real-Time Tracking',
       subtitle:
           'Track your shipment live and stay updated throughout the journey.',
       accent: Color(0xFF1F88C9),
     ),
     _OnboardingPage(
-      image: 'assets/ssk_cargo/assets/images/onboard3.png',
+      image: 'assets/images/onboard3.png',
       title: 'Fast Pickup & Drop',
       subtitle:
           'Book cargo transportation quickly and get deliveries completed on time.',

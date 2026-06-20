@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
                 );
               },
               child: Image.asset(
-                'assets/ssk_cargo/assets/images/ssk_truck.png',
+                'assets/images/ssk_truck.png',
                 width: truckWidth,
                 fit: BoxFit.contain,
               ),
