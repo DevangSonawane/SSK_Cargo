@@ -832,7 +832,7 @@ class _LiveRoutePainter extends CustomPainter {
     final startCore = Paint()..color = const Color(0xFF2FA56E);
     final endCore = Paint()..color = const Color(0xFF2FA56E);
     final endGlow = Paint()
-      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.28 + (pulse * 0.30));
+      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.35 + (pulse * 0.40));
 
     final path = Path()
       ..moveTo(size.width * 0.28, size.height * 0.66)
@@ -876,18 +876,32 @@ class _LiveRoutePainter extends CustomPainter {
       }
     }
 
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 32, startGlow);
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 14, startCore);
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 5, Paint()..color = Colors.white);
+    final startCenter = Offset(size.width * 0.28, size.height * 0.66);
+    final startOuter = 28 + (pulse * 10);
+    final startInner = 12 + (pulse * 2.5);
+
+    canvas.drawCircle(
+      startCenter,
+      startOuter,
+      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.10 + (pulse * 0.12)),
+    );
+    canvas.drawCircle(startCenter, 34 + (pulse * 6), startGlow);
+    canvas.drawCircle(startCenter, startInner, startCore);
+    canvas.drawCircle(startCenter, 4.5, Paint()..color = Colors.white);
 
     final endCenter = Offset(size.width * 0.74, size.height * 0.28);
-    final glowRadius = 22 + (pulse * 12);
-    final coreRadius = 11 + (pulse * 2.4);
+    final glowRadius = 28 + (pulse * 14);
+    final coreRadius = 12 + (pulse * 3.0);
 
+    canvas.drawCircle(
+      endCenter,
+      glowRadius + 10,
+      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.10 + (pulse * 0.14)),
+    );
     canvas.drawCircle(endCenter, glowRadius, endGlow);
-    canvas.drawCircle(endCenter, 24, startGlow);
+    canvas.drawCircle(endCenter, 26 + (pulse * 4), startGlow);
     canvas.drawCircle(endCenter, coreRadius, endCore);
-    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 4, Paint()..color = Colors.white);
+    canvas.drawCircle(endCenter, 4.5, Paint()..color = Colors.white);
   }
 
   @override
