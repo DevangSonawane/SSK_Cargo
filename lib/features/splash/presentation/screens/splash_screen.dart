@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _timer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
-      context.go('/onboarding');
+      context.go('/access');
     });
   }
 
