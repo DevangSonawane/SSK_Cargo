@@ -116,7 +116,7 @@ class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
   }
 }
 
-class _LiveTrackingView extends StatelessWidget {
+class _LiveTrackingView extends StatefulWidget {
   const _LiveTrackingView({
     super.key,
     required this.shipment,
@@ -127,11 +127,41 @@ class _LiveTrackingView extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
+  State<_LiveTrackingView> createState() => _LiveTrackingViewState();
+}
+
+class _LiveTrackingViewState extends State<_LiveTrackingView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         const Positioned.fill(child: TrackingMapBackdrop()),
-        const Positioned.fill(child: _LiveRouteOverlay()),
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, _) {
+              return _LiveRouteOverlay(pulse: _pulseController.value);
+            },
+          ),
+        ),
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
@@ -155,7 +185,7 @@ class _LiveTrackingView extends StatelessWidget {
                 left: 14,
                 top: 4,
                 child: InkWell(
-                  onTap: onBack,
+                  onTap: widget.onBack,
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
                     width: 42,
@@ -204,7 +234,7 @@ class _LiveTrackingView extends StatelessWidget {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: _LiveInfoCard(shipment: shipment),
+                child: _LiveInfoCard(shipment: widget.shipment),
               ),
             ],
           ),
@@ -772,29 +802,37 @@ class _ZoomButton extends StatelessWidget {
 }
 
 class _LiveRouteOverlay extends StatelessWidget {
-  const _LiveRouteOverlay();
+  const _LiveRouteOverlay({required this.pulse});
+
+  final double pulse;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _LiveRoutePainter(),
+      painter: _LiveRoutePainter(pulse: pulse),
     );
   }
 }
 
 class _LiveRoutePainter extends CustomPainter {
+  const _LiveRoutePainter({required this.pulse});
+
+  final double pulse;
+
   @override
   void paint(Canvas canvas, Size size) {
     final pathPaint = Paint()
       ..color = const Color(0xFF2FA56E).withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
+      ..strokeWidth = 7
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    final startGlow = Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.16);
+    final startGlow = Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.24);
     final startCore = Paint()..color = const Color(0xFF2FA56E);
     final endCore = Paint()..color = const Color(0xFF2FA56E);
+    final endGlow = Paint()
+      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.28 + (pulse * 0.30));
 
     final path = Path()
       ..moveTo(size.width * 0.28, size.height * 0.66)
@@ -803,17 +841,57 @@ class _LiveRoutePainter extends CustomPainter {
 
     canvas.drawPath(path, pathPaint);
 
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 28, startGlow);
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 12, startCore);
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isNotEmpty) {
+      final metric = metrics.first;
+      final animatedOffset = metric.length * pulse;
+
+      for (double offset = 0; offset < metric.length; offset += 18) {
+        final sample = metric.getTangentForOffset((offset + animatedOffset) % metric.length);
+        if (sample == null) continue;
+
+        final t = (offset / metric.length);
+        final alpha = (0.06 + (1 - t) * 0.18) * (0.65 + pulse * 0.35);
+        final radius = 2.2 + ((1 - t) * 1.6);
+
+        canvas.drawCircle(
+          sample.position,
+          radius,
+          Paint()..color = const Color(0xFF2FA56E).withValues(alpha: alpha),
+        );
+      }
+
+      final livePoint = metric.getTangentForOffset(animatedOffset);
+      if (livePoint != null) {
+        canvas.drawCircle(
+          livePoint.position,
+          11 + (pulse * 5),
+          Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.18 + (pulse * 0.18)),
+        );
+        canvas.drawCircle(
+          livePoint.position,
+          5.5,
+          Paint()..color = Colors.white,
+        );
+      }
+    }
+
+    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 32, startGlow);
+    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 14, startCore);
     canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.66), 5, Paint()..color = Colors.white);
 
-    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 18, startGlow);
-    canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 10, endCore);
+    final endCenter = Offset(size.width * 0.74, size.height * 0.28);
+    final glowRadius = 22 + (pulse * 12);
+    final coreRadius = 11 + (pulse * 2.4);
+
+    canvas.drawCircle(endCenter, glowRadius, endGlow);
+    canvas.drawCircle(endCenter, 24, startGlow);
+    canvas.drawCircle(endCenter, coreRadius, endCore);
     canvas.drawCircle(Offset(size.width * 0.74, size.height * 0.28), 4, Paint()..color = Colors.white);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _LiveRoutePainter oldDelegate) => oldDelegate.pulse != pulse;
 }
 
 class TrackingMapBackdrop extends StatelessWidget {
