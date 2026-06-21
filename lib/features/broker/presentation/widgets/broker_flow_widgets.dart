@@ -1025,16 +1025,17 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final meta = _vehicleCardMeta(vehicle.status);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE1E5EB)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -1043,76 +1044,94 @@ class VehicleCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      vehicle.assetPath,
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: meta.iconBackground,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            vehicle.assetPath,
+                            width: 34,
+                            height: 34,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              vehicle.plateNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontSize: 18,
+                                    color: const Color(0xFF1A365D),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${vehicle.label} • ${vehicle.assignedDriverName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 13,
+                                    color: const Color(0xFF667085),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                 ),
-                const SizedBox(height: 6),
+                ),
+                const SizedBox(width: 10),
                 _VehicleStatusBadge(
                   label: vehicleStatusLabel(vehicle.status),
-                  backgroundColor: vehicleStatusBackground(vehicle.status),
-                  textColor: vehicleStatusColor(vehicle.status),
+                  backgroundColor: meta.badgeBackground,
+                  textColor: meta.badgeText,
                 ),
               ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    vehicle.label,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 17,
-                          color: const Color(0xFF101828),
-                          fontWeight: FontWeight.w800,
-                        ),
+            const SizedBox(height: 18),
+            Container(
+              height: 1,
+              color: const Color(0xFFE8EDF2),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _VehicleStatBlock(
+                    label: 'Capacity',
+                    value: vehicle.capacity,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    vehicle.plateNumber,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
-                          color: const Color(0xFF667085),
-                          fontWeight: FontWeight.w600,
-                        ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: _VehicleStatBlock(
+                    label: meta.secondaryLabel,
+                    value: meta.secondaryValue,
+                    valueColor: meta.secondaryValueColor,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    vehicle.capacity,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
-                          color: const Color(0xFF98A2B3),
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Assigned to ${vehicle.assignedDriverName}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 13,
-                          color: const Color(0xFF98A2B3),
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1153,6 +1172,97 @@ class _VehicleStatusBadge extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _VehicleStatBlock extends StatelessWidget {
+  const _VehicleStatBlock({
+    required this.label,
+    required this.value,
+    this.valueColor = const Color(0xFF0B1C30),
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: const Color(0xFF667085),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: valueColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VehicleCardMeta {
+  const _VehicleCardMeta({
+    required this.iconBackground,
+    required this.badgeBackground,
+    required this.badgeText,
+    required this.secondaryLabel,
+    required this.secondaryValue,
+    required this.secondaryValueColor,
+  });
+
+  final Color iconBackground;
+  final Color badgeBackground;
+  final Color badgeText;
+  final String secondaryLabel;
+  final String secondaryValue;
+  final Color secondaryValueColor;
+}
+
+_VehicleCardMeta _vehicleCardMeta(BrokerVehicleStatus status) {
+  switch (status) {
+    case BrokerVehicleStatus.idle:
+      return const _VehicleCardMeta(
+        iconBackground: Color(0xFFEFF6FF),
+        badgeBackground: Color(0xFFE8F4EC),
+        badgeText: Color(0xFF2FA56E),
+        secondaryLabel: 'Location',
+        secondaryValue: 'Main Hub A',
+        secondaryValueColor: Color(0xFF0B1C30),
+      );
+    case BrokerVehicleStatus.onTrip:
+      return const _VehicleCardMeta(
+        iconBackground: Color(0xFFEFF6FF),
+        badgeBackground: Color(0xFFFFF0DB),
+        badgeText: Color(0xFFB45309),
+        secondaryLabel: 'Heading To',
+        secondaryValue: 'In transit',
+        secondaryValueColor: Color(0xFF0B1C30),
+      );
+    case BrokerVehicleStatus.maintenance:
+      return const _VehicleCardMeta(
+        iconBackground: Color(0xFFFFF1F1),
+        badgeBackground: Color(0xFFFDECEC),
+        badgeText: Color(0xFFD92D20),
+        secondaryLabel: 'Last Known',
+        secondaryValue: 'Service Bay',
+        secondaryValueColor: Color(0xFFD92D20),
+      );
   }
 }
 
