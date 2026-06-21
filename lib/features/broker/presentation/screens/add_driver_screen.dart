@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -15,6 +16,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _licenseController = TextEditingController();
+  final _vehicleNumberController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _vehicleType;
 
@@ -23,6 +25,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _licenseController.dispose();
+    _vehicleNumberController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,6 +38,11 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         title: const Text('Add driver'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          onPressed: () => context.go('/broker/profile'),
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Back',
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -120,6 +128,14 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
           ),
           const SizedBox(height: 12),
           TextField(
+            controller: _vehicleNumberController,
+            decoration: const InputDecoration(
+              labelText: 'Vehicle number',
+              prefixIcon: Icon(Icons.pin_rounded),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
             controller: _passwordController,
             obscureText: true,
             decoration: const InputDecoration(
@@ -147,9 +163,11 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         ? 'DL-0000-NEW'
                         : _licenseController.text.trim(),
                     vehicleType: selectedVehicle,
+                    assignedVehicle: _vehicleNumberController.text.trim().isEmpty
+                        ? 'Unassigned'
+                        : _vehicleNumberController.text.trim(),
                     status: BrokerDriverStatus.offline,
                     currentLocation: 'Offline until login',
-                    assignedVehicle: 'Unassigned',
                     onTripSince: '',
                     currentBookingRef: '',
                   ),
@@ -163,7 +181,10 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               ),
               child: const Text(
                 'Create driver',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-enum SignupRole { broker, client, driver }
+enum SignupRole { broker, client }
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,21 +11,21 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  SignupRole _role = SignupRole.client;
+  SignupRole _role = SignupRole.broker;
 
   static const _roleData = <SignupRole, _RoleMeta>{
     SignupRole.broker: _RoleMeta(
       title: 'Broker',
-      subtitle: 'Manage loads, rates, and booking operations.',
+      subtitle: 'Register your broker profile and verify your identity.',
       accent: Color(0xFF1F88C9),
       icon: Icons.handshake_rounded,
       fields: [
-        _FieldMeta('Full name', Icons.person_rounded, TextInputType.name),
-        _FieldMeta('Company name', Icons.domain_rounded, TextInputType.text),
-        _FieldMeta('Business email', Icons.email_rounded, TextInputType.emailAddress),
-        _FieldMeta('Phone number', Icons.phone_rounded, TextInputType.phone),
-        _FieldMeta('GST / tax ID', Icons.badge_rounded, TextInputType.text),
-        _FieldMeta('Password', Icons.lock_rounded, TextInputType.visiblePassword, obscure: true),
+        _FieldMeta('Name', Icons.person_rounded, TextInputType.name),
+        _FieldMeta('Phone', Icons.phone_rounded, TextInputType.phone),
+        _FieldMeta('Email', Icons.email_rounded, TextInputType.emailAddress),
+        _FieldMeta('Aadhaar card', Icons.badge_rounded, TextInputType.number),
+        _FieldMeta('PAN card', Icons.credit_card_rounded, TextInputType.text),
+        _FieldMeta('Driver license', Icons.drive_file_rename_outline_rounded, TextInputType.text),
       ],
     ),
     SignupRole.client: _RoleMeta(
@@ -38,19 +38,6 @@ class _SignupScreenState extends State<SignupScreen> {
         _FieldMeta('Email address', Icons.email_rounded, TextInputType.emailAddress),
         _FieldMeta('Phone number', Icons.phone_rounded, TextInputType.phone),
         _FieldMeta('Company / organization', Icons.apartment_rounded, TextInputType.text),
-        _FieldMeta('Password', Icons.lock_rounded, TextInputType.visiblePassword, obscure: true),
-      ],
-    ),
-    SignupRole.driver: _RoleMeta(
-      title: 'Driver',
-      subtitle: 'Accept trips, manage routes, and update deliveries.',
-      accent: Color(0xFF7A5AF8),
-      icon: Icons.local_shipping_rounded,
-      fields: [
-        _FieldMeta('Full name', Icons.person_rounded, TextInputType.name),
-        _FieldMeta('Mobile number', Icons.phone_rounded, TextInputType.phone),
-        _FieldMeta('Driver license no.', Icons.badge_rounded, TextInputType.text),
-        _FieldMeta('Vehicle type', Icons.local_shipping_rounded, TextInputType.text),
         _FieldMeta('Password', Icons.lock_rounded, TextInputType.visiblePassword, obscure: true),
       ],
     ),
@@ -166,6 +153,31 @@ class _SignupScreenState extends State<SignupScreen> {
                                     accent: meta.accent,
                                   ),
                                 ),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFD6E3FF)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.verified_user_rounded, size: 18, color: Color(0xFF1F88C9)),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Next: verify Aadhaar after registration',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: const Color(0xFF1A365D),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 6),
