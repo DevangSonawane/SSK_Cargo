@@ -4,6 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/access_entry_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/broker/presentation/screens/add_driver_screen.dart';
+import '../../features/broker/presentation/screens/add_vehicle_screen.dart';
+import '../../features/broker/presentation/screens/broker_history_screen.dart';
+import '../../features/broker/presentation/screens/broker_home_screen.dart';
+import '../../features/broker/presentation/screens/broker_profile_screen.dart';
+import '../../features/broker/presentation/screens/broker_shell.dart';
+import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
+import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
+import '../../features/broker/presentation/screens/driver_detail_screen.dart';
+import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/client/presentation/screens/client_delivery_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
@@ -41,6 +51,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             child: TrackingDetailsScreen(
               shipment: shipment ?? trackingDemoShipments.first,
             ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/broker/profile',
+        pageBuilder: (context, state) => const NoTransitionPage(child: BrokerProfileScreen()),
+      ),
+      GoRoute(
+        path: '/broker/vehicles/add',
+        pageBuilder: (context, state) => const NoTransitionPage(child: AddVehicleScreen()),
+      ),
+      GoRoute(
+        path: '/broker/drivers/add',
+        pageBuilder: (context, state) => const NoTransitionPage(child: AddDriverScreen()),
+      ),
+      GoRoute(
+        path: '/broker/drivers/:id',
+        pageBuilder: (context, state) {
+          final extraDriver = state.extra as BrokerDriver?;
+          final driverId = state.pathParameters['id'];
+          final driver = extraDriver ??
+              ref.read(brokerDriversProvider).firstWhere(
+                    (driver) => driver.id == driverId,
+                    orElse: () => mockBrokerDrivers.first,
+                  );
+          return NoTransitionPage(
+            child: DriverDetailScreen(driver: driver),
           );
         },
       ),
@@ -82,6 +119,49 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/client/profile',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: ClientProfileScreen()),
+              ),
+            ],
+          ),
+        ],
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return BrokerShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/broker/home',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerHomeScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/broker/vehicles',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerVehiclesScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/broker/tracking',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerTrackingScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/broker/history',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerHistoryScreen()),
               ),
             ],
           ),

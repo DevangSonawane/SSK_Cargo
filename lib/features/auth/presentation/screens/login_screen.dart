@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class LoginScreen extends StatelessWidget {
+import '../../../../core/providers/app_providers.dart';
+
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -104,9 +107,31 @@ class LoginScreen extends StatelessWidget {
                                 shape: const StadiumBorder(),
                               ),
                               onPressed: () {
+                                ref.read(selectedRoleProvider.notifier).state = AppRole.client;
                                 context.go('/client/home');
                               },
                               child: const Text('Login'),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                ref.read(selectedRoleProvider.notifier).state = AppRole.broker;
+                                context.go('/broker/home');
+                              },
+                              icon: const Icon(Icons.business_center_rounded),
+                              label: const Text(
+                                'Broker',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF1F88C9),
+                                side: const BorderSide(color: Color(0xFF1F88C9)),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: const StadiumBorder(),
+                              ),
                             ),
                           ),
                         ],
