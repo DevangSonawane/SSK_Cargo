@@ -761,7 +761,7 @@ class BrokerRequestCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      request.clientName,
+                      request.productName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: const Color(0xFF1A365D),
                             fontSize: 15,
@@ -834,7 +834,7 @@ class BrokerRequestCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${request.productName} • ${request.weight} • ${request.vehicleType}',
+                    '${request.weight} • ${request.vehicleType}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
