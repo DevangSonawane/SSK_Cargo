@@ -804,7 +804,7 @@ class BrokerRequestCard extends StatelessWidget {
                     _LoadPoint(
                       label: 'Pickup',
                       icon: Icons.location_on_rounded,
-                      iconColor: const Color(0xFF1A365D),
+                      iconColor: const Color(0xFF1F88C9),
                       place: request.from,
                       timeText: request.requestedAt,
                     ),
@@ -812,7 +812,7 @@ class BrokerRequestCard extends StatelessWidget {
                     _LoadPoint(
                       label: 'Drop-off',
                       icon: Icons.near_me_rounded,
-                      iconColor: const Color(0xFF875200),
+                      iconColor: const Color(0xFF1F88C9),
                       place: request.to,
                       timeText: '',
                     ),
@@ -872,8 +872,8 @@ class BrokerRequestCard extends StatelessWidget {
                   onPressed: onAccept,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    backgroundColor: const Color(0xFFFFB55C),
-                    foregroundColor: const Color(0xFF744600),
+                    backgroundColor: const Color(0xFF1F88C9),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -903,7 +903,7 @@ class _RouteLine extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: const Color(0xFF1A365D).withValues(alpha: 0.18),
+            color: const Color(0xFF1F88C9).withValues(alpha: 0.18),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -911,7 +911,7 @@ class _RouteLine extends StatelessWidget {
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: Color(0xFF1A365D),
+                color: Color(0xFF1F88C9),
                 shape: BoxShape.circle,
               ),
             ),
@@ -930,7 +930,7 @@ class _RouteLine extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFB55C).withValues(alpha: 0.20),
+            color: const Color(0xFF1F88C9).withValues(alpha: 0.20),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -938,7 +938,7 @@ class _RouteLine extends StatelessWidget {
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: Color(0xFF875200),
+                color: Color(0xFF1F88C9),
                 shape: BoxShape.circle,
               ),
             ),
@@ -1171,163 +1171,185 @@ class DriverListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = _driverCardMeta(driver);
-    final statusColor = driverStatusColor(driver.status);
-    final avatarBg = driverAvatarColor(driver.status);
-    final avatarText = driverAvatarTextColor(driver.status);
+    final visuals = _driverCardVisuals(driver.status);
 
     return InkWell(
       onTap: onTap,
       onLongPress: onRemove,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          color: visuals.backgroundColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: visuals.borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 14,
-              offset: const Offset(0, 10),
+              color: const Color(0xFF1A365D).withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DriverAvatar(
-                  initials: _initials(driver.name),
-                  backgroundColor: avatarBg,
-                  textColor: avatarText,
-                  statusColor: statusColor,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        child: Opacity(
+          opacity: visuals.opacity,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 560;
+
+              final rightColumn = Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            driver.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontSize: 15,
-                                  color: const Color(0xFF101828),
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          _DriverCardMetaChip(label: 'ID: ${driver.id}'),
-                        ],
+                      _DriverActionIconButton(
+                        icon: Icons.edit_rounded,
+                        backgroundColor: const Color(0xFFE9EFF8),
+                        iconColor: const Color(0xFF1A365D),
+                        onPressed: onTap,
+                        tooltip: 'Edit driver',
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        meta.statusLine,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 12,
-                              color: statusColor,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      const SizedBox(width: 8),
+                      _DriverActionIconButton(
+                        icon: Icons.delete_rounded,
+                        backgroundColor: const Color(0xFFFDEDED),
+                        iconColor: const Color(0xFFD92D20),
+                        onPressed: onRemove,
+                        tooltip: 'Delete driver',
                       ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_rounded,
-                            size: 13,
-                            color: Color(0xFF98A2B3),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: onTap,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: visuals.ctaBackgroundColor,
+                          foregroundColor: visuals.ctaForegroundColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          minimumSize: const Size(0, 38),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              driver.currentLocation,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 11,
-                                    color: const Color(0xFF667085),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                          ),
-                        ],
+                        ),
+                        child: Text(
+                          meta.ctaLabel,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _DriverFooterBlock(
-                    label: 'Phone',
-                    value: driver.phone,
+                ],
+              );
+
+              final leftColumn = Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _DriverAvatar(
+                    initials: _initials(driver.name),
+                    backgroundColor: visuals.avatarBackgroundColor,
+                    textColor: visuals.avatarTextColor,
+                    statusColor: visuals.statusDotColor,
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _DriverFooterBlock(
-                    label: 'Last seen',
-                    value: meta.lastSeen,
-                    alignRight: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _DriverActionIconButton(
-                  icon: Icons.edit_rounded,
-                  backgroundColor: const Color(0xFFEAF4FD),
-                  iconColor: const Color(0xFF1F88C9),
-                  onPressed: onTap,
-                  tooltip: 'Edit driver',
-                ),
-                const SizedBox(width: 8),
-                _DriverActionIconButton(
-                  icon: Icons.delete_rounded,
-                  backgroundColor: const Color(0xFFFEE4E2),
-                  iconColor: const Color(0xFFD92D20),
-                  onPressed: onRemove,
-                  tooltip: 'Remove driver',
-                ),
-                const Spacer(),
-                Flexible(
-                  child: FilledButton.icon(
-                    onPressed: onTap,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: statusColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      minimumSize: const Size(0, 42),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              driver.name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontSize: 15,
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            _DriverCardMetaChip(label: 'ID: ${driver.id.toUpperCase()}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              meta.statusIcon,
+                              size: 18,
+                              color: visuals.statusTextColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                meta.statusLine,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 12,
+                                      color: visuals.statusTextColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              size: 16,
+                              color: Color(0xFF667085),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                driver.currentLocation,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontSize: 11,
+                                      color: const Color(0xFF667085),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    icon: Icon(meta.ctaIcon, size: 18),
-                    label: Text(
-                      meta.ctaLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              );
+
+              if (isWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: leftColumn),
+                    const SizedBox(width: 16),
+                    rightColumn,
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  leftColumn,
+                  const SizedBox(height: 14),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: rightColumn,
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1385,51 +1407,6 @@ class _DriverAvatar extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DriverFooterBlock extends StatelessWidget {
-  const _DriverFooterBlock({
-    required this.label,
-    required this.value,
-    this.alignRight = false,
-  });
-
-  final String label;
-  final String value;
-  final bool alignRight;
-
-  @override
-  Widget build(BuildContext context) {
-    final crossAxisAlignment = alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final textAlign = alignRight ? TextAlign.right : TextAlign.left;
-
-    return Column(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Text(
-          label,
-          textAlign: textAlign,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 10,
-                color: const Color(0xFF98A2B3),
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          textAlign: textAlign,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 11,
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-      ],
     );
   }
 }
@@ -1496,35 +1473,106 @@ class _DriverCardMetaChip extends StatelessWidget {
   }
 }
 
+class _DriverCardVisuals {
+  const _DriverCardVisuals({
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.avatarBackgroundColor,
+    required this.avatarTextColor,
+    required this.statusDotColor,
+    required this.statusTextColor,
+    required this.ctaBackgroundColor,
+    required this.ctaForegroundColor,
+    required this.opacity,
+  });
+
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color avatarBackgroundColor;
+  final Color avatarTextColor;
+  final Color statusDotColor;
+  final Color statusTextColor;
+  final Color ctaBackgroundColor;
+  final Color ctaForegroundColor;
+  final double opacity;
+}
+
+_DriverCardVisuals _driverCardVisuals(BrokerDriverStatus status) {
+  switch (status) {
+    case BrokerDriverStatus.onTrip:
+      return const _DriverCardVisuals(
+        backgroundColor: Color(0xFFF8F9FF),
+        borderColor: Color(0xFFC4C6CF),
+        avatarBackgroundColor: Color(0xFFD6E3FF),
+        avatarTextColor: Color(0xFF002045),
+        statusDotColor: Color(0xFF22C55E),
+        statusTextColor: Color(0xFF1A365D),
+        ctaBackgroundColor: Color(0xFF1A365D),
+        ctaForegroundColor: Colors.white,
+        opacity: 1,
+      );
+    case BrokerDriverStatus.idle:
+      return const _DriverCardVisuals(
+        backgroundColor: Color(0xFFF8F9FF),
+        borderColor: Color(0xFFC4C6CF),
+        avatarBackgroundColor: Color(0xFFFEECC8),
+        avatarTextColor: Color(0xFF875200),
+        statusDotColor: Color(0xFFF59E0B),
+        statusTextColor: Color(0xFF875200),
+        ctaBackgroundColor: Color(0xFF875200),
+        ctaForegroundColor: Colors.white,
+        opacity: 1,
+      );
+    case BrokerDriverStatus.offline:
+      return const _DriverCardVisuals(
+        backgroundColor: Color(0xFFEFF4FF),
+        borderColor: Color(0xFFC4C6CF),
+        avatarBackgroundColor: Color(0xFFE5E7EB),
+        avatarTextColor: Color(0xFF667085),
+        statusDotColor: Color(0xFF9CA3AF),
+        statusTextColor: Color(0xFF667085),
+        ctaBackgroundColor: Color(0xFF667085),
+        ctaForegroundColor: Colors.white,
+        opacity: 0.8,
+      );
+  }
+}
+
 class _DriverCardMeta {
   const _DriverCardMeta({
     required this.statusLine,
     required this.lastSeen,
     required this.ctaLabel,
     required this.ctaIcon,
+    required this.statusIcon,
   });
 
   final String statusLine;
   final String lastSeen;
   final String ctaLabel;
   final IconData ctaIcon;
+  final IconData statusIcon;
 }
 
 _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
   switch (driver.status) {
     case BrokerDriverStatus.onTrip:
       return _DriverCardMeta(
-        statusLine: 'Active on booking ${driver.currentBookingRef}',
+        statusLine: driver.currentBookingRef.isEmpty
+            ? 'Active on trip'
+            : 'Active on Booking ${driver.currentBookingRef}',
         lastSeen: driver.onTripSince.isEmpty ? 'Just now' : '${driver.onTripSince} ago',
         ctaLabel: 'View Map',
         ctaIcon: Icons.map_outlined,
+        statusIcon: Icons.check_circle,
       );
     case BrokerDriverStatus.idle:
       return _DriverCardMeta(
-        statusLine: 'Idle and ready for assignment',
+        statusLine: 'Idle - Awaiting Assignment',
         lastSeen: '14 mins ago',
         ctaLabel: 'Assign Load',
         ctaIcon: Icons.add_task_rounded,
+        statusIcon: Icons.schedule,
       );
     case BrokerDriverStatus.offline:
       return _DriverCardMeta(
@@ -1532,6 +1580,7 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
         lastSeen: 'Not available',
         ctaLabel: 'View Details',
         ctaIcon: Icons.info_outline_rounded,
+        statusIcon: Icons.do_not_disturb_on_outlined,
       );
   }
 }
