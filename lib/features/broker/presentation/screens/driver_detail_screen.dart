@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../widgets/broker_flow_widgets.dart';
 
@@ -26,7 +27,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
             ? _DriverLiveView(
                 key: const ValueKey('live'),
                 driver: widget.driver,
-                onBack: () => setState(() => _isLiveView = false),
+                onBack: () => context.go('/broker/tracking'),
               )
             : SafeArea(
                 key: const ValueKey('detail'),

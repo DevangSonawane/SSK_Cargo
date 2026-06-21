@@ -24,15 +24,17 @@ class BrokerTrackingScreen extends ConsumerWidget {
                   ),
             ),
             const Spacer(),
-            FilledButton.icon(
+            FilledButton(
               onPressed: () => context.push('/broker/drivers/add'),
-              icon: const Icon(Icons.add),
-              label: const Text('Add driver'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1F88C9),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                shape: const StadiumBorder(),
+                fixedSize: const Size(40, 40),
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              child: const Icon(Icons.add, size: 18),
             ),
           ],
         ),
@@ -54,7 +56,7 @@ class BrokerTrackingScreen extends ConsumerWidget {
                         .toList();
                   },
                 ),
-                if (entry.key != drivers.length - 1) const SizedBox(height: 12),
+                if (entry.key != drivers.length - 1) const SizedBox(height: 10),
               ],
             ),
       ],
