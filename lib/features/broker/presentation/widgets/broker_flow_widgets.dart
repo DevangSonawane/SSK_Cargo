@@ -727,16 +727,16 @@ class BrokerRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: const Color(0xFFFEFEFF),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE8EDF2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF1A365D).withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -746,121 +746,118 @@ class BrokerRequestCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  request.clientInitials,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF1F88C9),
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      maskPersonName(request.clientName),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121826),
+                      'Load ID: #${request.id.toUpperCase()}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF667085),
+                            fontSize: 11,
+                            letterSpacing: 0.2,
+                            fontWeight: FontWeight.w600,
                           ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
-                      request.requestedAt,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF98A2B3),
-                            fontWeight: FontWeight.w500,
+                      request.clientName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: const Color(0xFF1A365D),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
                           ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD6E3FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  request.value,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF002045),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const SizedBox(
+                width: 28,
+                child: _RouteLine(),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LoadPoint(
+                      label: 'Pickup',
+                      icon: Icons.location_on_rounded,
+                      iconColor: const Color(0xFF1A365D),
+                      place: request.from,
+                      timeText: request.requestedAt,
+                    ),
+                    const SizedBox(height: 14),
+                    _LoadPoint(
+                      label: 'Drop-off',
+                      icon: Icons.near_me_rounded,
+                      iconColor: const Color(0xFF875200),
+                      place: request.to,
+                      timeText: '',
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            request.productName,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w800,
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF4FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF667085)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${request.productName} • ${request.weight} • ${request.vehicleType}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF0B1C30),
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
                 ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              StatusPill(
-                label: request.weight,
-                backgroundColor: const Color(0xFFF5F7FB),
-                textColor: const Color(0xFF667085),
-                icon: Icons.scale_rounded,
-              ),
-              const SizedBox(width: 8),
-              StatusPill(
-                label: request.vehicleType,
-                backgroundColor: const Color(0xFFEFF6FF),
-                textColor: const Color(0xFF1F88C9),
-                icon: Icons.local_shipping_rounded,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _RouteRow(
-            from: request.from,
-            to: request.to,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${request.distance} • ${request.etaText}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  request.value,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF1F88C9),
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF3)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: onReject,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFE23A4B),
-                    side: const BorderSide(color: Color(0xFFE23A4B)),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    minimumSize: const Size.fromHeight(48),
+                    foregroundColor: const Color(0xFFBA1A1A),
+                    side: const BorderSide(color: Color(0xFFBA1A1A)),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: const Text(
@@ -869,20 +866,21 @@ class BrokerRequestCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
                   onPressed: onAccept,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F88C9),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    minimumSize: const Size.fromHeight(48),
+                    backgroundColor: const Color(0xFFFFB55C),
+                    foregroundColor: const Color(0xFF744600),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: const Text(
                     'Accept',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -894,71 +892,86 @@ class BrokerRequestCard extends StatelessWidget {
   }
 }
 
-class _RouteRow extends StatelessWidget {
-  const _RouteRow({
-    required this.from,
-    required this.to,
+class _RouteLine extends StatelessWidget {
+  const _RouteLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A365D).withValues(alpha: 0.18),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A365D),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+        Container(
+          width: 2,
+          height: 54,
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF74777F).withValues(alpha: 0.30),
+            borderRadius: BorderRadius.circular(99),
+          ),
+        ),
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFB55C).withValues(alpha: 0.20),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: Color(0xFF875200),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoadPoint extends StatelessWidget {
+  const _LoadPoint({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.place,
+    required this.timeText,
   });
 
-  final String from;
-  final String to;
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final String place;
+  final String timeText;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 16,
-          child: Column(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2FA56E),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                width: 2,
-                height: 26,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F4E8),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8EDF2),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF98A2B3),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 18, color: iconColor),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -966,36 +979,32 @@ class _RouteRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'From',
+                label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: const Color(0xFF667085),
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
               ),
               const SizedBox(height: 2),
               Text(
-                from,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'To',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                place,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF0B1C30),
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                to,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
+              if (timeText.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  timeText,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontSize: 11,
+                      ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1161,116 +1170,369 @@ class DriverListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final meta = _driverCardMeta(driver);
+    final statusColor = driverStatusColor(driver.status);
+    final avatarBg = driverAvatarColor(driver.status);
+    final avatarText = driverAvatarTextColor(driver.status);
+
     return InkWell(
       onTap: onTap,
       onLongPress: onRemove,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(color: const Color(0xFFE8EDF2)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 8),
+              blurRadius: 14,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: driverAvatarColor(driver.status),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                _initials(driver.name),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 12,
-                      color: driverAvatarTextColor(driver.status),
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    driver.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 14,
-                          color: const Color(0xFF101828),
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  Row(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DriverAvatar(
+                  initials: _initials(driver.name),
+                  backgroundColor: avatarBg,
+                  textColor: avatarText,
+                  statusColor: statusColor,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        driver.phone,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 11,
-                              color: const Color(0xFF667085),
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                      if (driver.currentBookingRef.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            driver.currentBookingRef,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  color: const Color(0xFF98A2B3),
-                                  fontWeight: FontWeight.w600,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            driver.name,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontSize: 15,
+                                  color: const Color(0xFF101828),
+                                  fontWeight: FontWeight.w800,
                                 ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF98A2B3)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          driver.currentLocation,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 10,
-                                color: const Color(0xFF98A2B3),
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
+                          _DriverCardMetaChip(label: 'ID: ${driver.id}'),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        meta.statusLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 12,
+                              color: statusColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_rounded,
+                            size: 13,
+                            color: Color(0xFF98A2B3),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              driver.currentLocation,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 11,
+                                    color: const Color(0xFF667085),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: 2),
-            IconButton(
-              onPressed: onTap,
-              icon: const Icon(Icons.chevron_right_rounded),
-              color: const Color(0xFF98A2B3),
-              tooltip: 'Open driver details',
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _DriverFooterBlock(
+                    label: 'Phone',
+                    value: driver.phone,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DriverFooterBlock(
+                    label: 'Last seen',
+                    value: meta.lastSeen,
+                    alignRight: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _DriverActionIconButton(
+                  icon: Icons.edit_rounded,
+                  backgroundColor: const Color(0xFFEAF4FD),
+                  iconColor: const Color(0xFF1F88C9),
+                  onPressed: onTap,
+                  tooltip: 'Edit driver',
+                ),
+                const SizedBox(width: 8),
+                _DriverActionIconButton(
+                  icon: Icons.delete_rounded,
+                  backgroundColor: const Color(0xFFFEE4E2),
+                  iconColor: const Color(0xFFD92D20),
+                  onPressed: onRemove,
+                  tooltip: 'Remove driver',
+                ),
+                const Spacer(),
+                Flexible(
+                  child: FilledButton.icon(
+                    onPressed: onTap,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: statusColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      minimumSize: const Size(0, 42),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: Icon(meta.ctaIcon, size: 18),
+                    label: Text(
+                      meta.ctaLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _DriverAvatar extends StatelessWidget {
+  const _DriverAvatar({
+    required this.initials,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.statusColor,
+  });
+
+  final String initials;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 13,
+                    color: textColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverFooterBlock extends StatelessWidget {
+  const _DriverFooterBlock({
+    required this.label,
+    required this.value,
+    this.alignRight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool alignRight;
+
+  @override
+  Widget build(BuildContext context) {
+    final crossAxisAlignment = alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final textAlign = alignRight ? TextAlign.right : TextAlign.left;
+
+    return Column(
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Text(
+          label,
+          textAlign: textAlign,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+                color: const Color(0xFF98A2B3),
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          textAlign: textAlign,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 11,
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DriverActionIconButton extends StatelessWidget {
+  const _DriverActionIconButton({
+    required this.icon,
+    required this.backgroundColor,
+    required this.iconColor,
+    required this.onPressed,
+    required this.tooltip,
+  });
+
+  final IconData icon;
+  final Color backgroundColor;
+  final Color iconColor;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverCardMetaChip extends StatelessWidget {
+  const _DriverCardMetaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F4F7),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 10,
+              color: const Color(0xFF344054),
+              fontWeight: FontWeight.w700,
+            ),
+      ),
+    );
+  }
+}
+
+class _DriverCardMeta {
+  const _DriverCardMeta({
+    required this.statusLine,
+    required this.lastSeen,
+    required this.ctaLabel,
+    required this.ctaIcon,
+  });
+
+  final String statusLine;
+  final String lastSeen;
+  final String ctaLabel;
+  final IconData ctaIcon;
+}
+
+_DriverCardMeta _driverCardMeta(BrokerDriver driver) {
+  switch (driver.status) {
+    case BrokerDriverStatus.onTrip:
+      return _DriverCardMeta(
+        statusLine: 'Active on booking ${driver.currentBookingRef}',
+        lastSeen: driver.onTripSince.isEmpty ? 'Just now' : '${driver.onTripSince} ago',
+        ctaLabel: 'View Map',
+        ctaIcon: Icons.map_outlined,
+      );
+    case BrokerDriverStatus.idle:
+      return _DriverCardMeta(
+        statusLine: 'Idle and ready for assignment',
+        lastSeen: '14 mins ago',
+        ctaLabel: 'Assign Load',
+        ctaIcon: Icons.add_task_rounded,
+      );
+    case BrokerDriverStatus.offline:
+      return _DriverCardMeta(
+        statusLine: 'Offline',
+        lastSeen: 'Not available',
+        ctaLabel: 'View Details',
+        ctaIcon: Icons.info_outline_rounded,
+      );
   }
 }
 
