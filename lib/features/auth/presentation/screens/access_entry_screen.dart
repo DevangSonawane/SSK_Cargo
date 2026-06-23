@@ -43,8 +43,8 @@ class _AccessEntryScreenState extends State<AccessEntryScreen> {
                   ),
                   const SizedBox(height: 32),
                   _ChoiceCard(
-                    title: 'Book a vehicle',
-                    subtitle: 'Plan a cargo move quickly.',
+                    title: 'Continue as a client',
+                    subtitle: 'Book a vehicle and manage shipments.',
                     icon: Icons.local_shipping_rounded,
                     accentColor: const Color(0xFF1F88C9),
                     selected: _selectedIndex == 0,
@@ -52,8 +52,8 @@ class _AccessEntryScreenState extends State<AccessEntryScreen> {
                   ),
                   const SizedBox(height: 12),
                   _ChoiceCard(
-                    title: 'Register yourself',
-                    subtitle: 'Go to the login screen and continue as a client.',
+                    title: 'Continue as a broker',
+                    subtitle: 'Create a broker account and manage your fleet.',
                     icon: Icons.person_add_alt_1_rounded,
                     accentColor: const Color(0xFF2FA56E),
                     selected: _selectedIndex == 1,
@@ -78,16 +78,23 @@ class _AccessEntryScreenState extends State<AccessEntryScreen> {
                               width: double.infinity,
                               child: FilledButton(
                                 onPressed: () {
-                                  if (_selectedIndex == 1) {
+                                  if (_selectedIndex == 0) {
                                     context.go('/login');
                                     return;
                                   }
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('This option is not ready yet.'),
-                                    ),
-                                  );
+                                  if (_selectedIndex == 1) {
+                                    context.go('/broker/login');
+                                    return;
+                                  }
+
+                                  if (_selectedIndex == 2) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('This option is not ready yet.'),
+                                      ),
+                                    );
+                                  }
                                 },
                                 child: const Text('Continue'),
                               ),

@@ -10,6 +10,26 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return _AuthLoginScreen(role: AppRole.client);
+  }
+}
+
+class BrokerLoginScreen extends ConsumerWidget {
+  const BrokerLoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _AuthLoginScreen(role: AppRole.broker);
+  }
+}
+
+class _AuthLoginScreen extends ConsumerWidget {
+  const _AuthLoginScreen({required this.role});
+
+  final AppRole role;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -132,57 +152,65 @@ class LoginScreen extends ConsumerWidget {
                                             shape: const StadiumBorder(),
                                           ),
                                           onPressed: () {
-                                            ref.read(selectedRoleProvider.notifier).state = AppRole.client;
-                                            context.go('/client/home');
+                                            ref.read(selectedRoleProvider.notifier).state = role;
+                                            context.go(
+                                              role == AppRole.broker ? '/broker/home' : '/client/home',
+                                            );
                                           },
                                           child: const Text('Login'),
                                         ),
                                       ),
                                       const SizedBox(height: 10),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            ref.read(selectedRoleProvider.notifier).state = AppRole.broker;
-                                            context.go('/broker/home');
-                                          },
-                                          icon: const Icon(Icons.business_center_rounded),
-                                          label: const Text(
-                                            'Broker',
-                                            style: TextStyle(fontWeight: FontWeight.w700),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: OutlinedButton.icon(
+                                              onPressed: () {
+                                                // TODO: wire Google auth flow.
+                                              },
+                                              icon: SvgPicture.asset(
+                                                'assets/google_logo.svg',
+                                                width: 18,
+                                                height: 18,
+                                              ),
+                                              label: const Text(
+                                                'Google',
+                                                style: TextStyle(fontWeight: FontWeight.w700),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFF1B2A3A),
+                                                side: const BorderSide(color: Color(0xFFD7DDE5)),
+                                                backgroundColor: Colors.white.withValues(alpha: 0.82),
+                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                shape: const StadiumBorder(),
+                                              ),
+                                            ),
                                           ),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(0xFF1F88C9),
-                                            side: const BorderSide(color: Color(0xFF1F88C9)),
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
-                                            shape: const StadiumBorder(),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                          child: OutlinedButton.icon(
+                                              onPressed: () {
+                                                // TODO: wire Apple auth flow.
+                                              },
+                                              icon: const Icon(
+                                                Icons.apple,
+                                                size: 22,
+                                                color: Color(0xFF1B2A3A),
+                                              ),
+                                              label: const Text(
+                                                'Apple',
+                                                style: TextStyle(fontWeight: FontWeight.w700),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFF1B2A3A),
+                                                side: const BorderSide(color: Color(0xFFD7DDE5)),
+                                                backgroundColor: Colors.white.withValues(alpha: 0.82),
+                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                shape: const StadiumBorder(),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            // TODO: wire Google auth flow.
-                                          },
-                                          icon: SvgPicture.asset(
-                                            'assets/google_logo.svg',
-                                            width: 20,
-                                            height: 20,
-                                          ),
-                                          label: const Text(
-                                            'Login with Google',
-                                            style: TextStyle(fontWeight: FontWeight.w700),
-                                          ),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(0xFF1B2A3A),
-                                            side: const BorderSide(color: Color(0xFFD7DDE5)),
-                                            backgroundColor: Colors.white.withValues(alpha: 0.82),
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
-                                            shape: const StadiumBorder(),
-                                          ),
-                                        ),
+                                        ],
                                       ),
                                       const SizedBox(height: 18),
                                       Center(

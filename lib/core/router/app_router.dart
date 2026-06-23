@@ -36,6 +36,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
       ),
       GoRoute(
+        path: '/broker/login',
+        pageBuilder: (context, state) => const NoTransitionPage(child: BrokerLoginScreen()),
+      ),
+      GoRoute(
         path: '/signup',
         pageBuilder: (context, state) => const NoTransitionPage(child: SignupScreen()),
       ),
