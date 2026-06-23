@@ -30,12 +30,16 @@ class _AuthLoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final backgroundImage = role == AppRole.broker
+        ? 'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png'
+        : 'assets/IMG_1750.PNG';
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset(
-            'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png',
+            backgroundImage,
             fit: BoxFit.cover,
             alignment: Alignment.center,
             errorBuilder: (context, error, stackTrace) {
@@ -226,7 +230,9 @@ class _AuthLoginScreen extends ConsumerWidget {
                                               ),
                                             ),
                                             TextButton(
-                                              onPressed: () => context.go('/signup'),
+                                              onPressed: () => context.go(
+                                                role == AppRole.broker ? '/broker/signup' : '/client/signup',
+                                              ),
                                               style: TextButton.styleFrom(
                                                 padding: EdgeInsets.zero,
                                                 minimumSize: Size.zero,

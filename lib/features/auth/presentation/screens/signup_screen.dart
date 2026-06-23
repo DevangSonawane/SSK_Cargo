@@ -4,14 +4,28 @@ import 'package:go_router/go_router.dart';
 enum SignupRole { broker, client }
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({
+    super.key,
+    this.initialRole,
+  });
+
+  final SignupRole? initialRole;
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  SignupRole _role = SignupRole.broker;
+  late SignupRole _role;
+
+  bool get _isRoleLocked => widget.initialRole != null;
+  SignupRole get _lockedRole => widget.initialRole ?? _role;
+
+  @override
+  void initState() {
+    super.initState();
+    _role = widget.initialRole ?? SignupRole.broker;
+  }
 
   static const _roleData = <SignupRole, _RoleMeta>{
     SignupRole.broker: _RoleMeta(
@@ -50,7 +64,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final meta = _roleData[_role]!;
+    final activeMeta = _roleData[_lockedRole]!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
@@ -60,7 +74,7 @@ class _SignupScreenState extends State<SignupScreen> {
             top: -70,
             right: -50,
             child: _DecorBlob(
-              color: meta.accent.withValues(alpha: 0.10),
+              color: activeMeta.accent.withValues(alpha: 0.10),
               size: 180,
             ),
           ),
@@ -99,7 +113,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose a role and we’ll tailor the signup flow to it.',
+                        _isRoleLocked
+                            ? 'Fill in the details for ${activeMeta.title.toLowerCase()}.'
+                            : 'Choose a role and we’ll tailor the signup flow to it.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: Colors.black54,
                             ),
@@ -122,26 +138,28 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Row(
-                              children: SignupRole.values
-                                  .map(
-                                    (role) => Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.only(
-                                          right: role == SignupRole.values.last ? 0 : 8,
-                                        ),
-                                        child: _RoleCard(
-                                          meta: _roleData[role]!,
-                                          selected: _role == role,
-                                          onTap: () => _setRole(role),
+                            if (!_isRoleLocked) ...[
+                              Row(
+                                children: SignupRole.values
+                                    .map(
+                                      (role) => Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.only(
+                                            right: role == SignupRole.values.last ? 0 : 8,
+                                          ),
+                                          child: _RoleCard(
+                                            meta: _roleData[role]!,
+                                            selected: _role == role,
+                                            onTap: () => _setRole(role),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 14),
-                            ...meta.fields.map(
+                                    )
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                            ...activeMeta.fields.map(
                               (field) => Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: TextField(
@@ -150,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   decoration: _fieldDecoration(
                                     label: field.label,
                                     icon: field.icon,
-                                    accent: meta.accent,
+                                    accent: activeMeta.accent,
                                   ),
                                 ),
                               ),
@@ -187,7 +205,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               child: ElevatedButton(
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: meta.accent,
+                                  backgroundColor: activeMeta.accent,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
@@ -205,7 +223,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextButton(
-                              onPressed: () => context.go('/login'),
+                              onPressed: () => context.go(
+                                _role == SignupRole.broker ? '/broker/login' : '/login',
+                              ),
                               style: TextButton.styleFrom(
                                 foregroundColor: const Color(0xFF17324D),
                                 textStyle: const TextStyle(fontWeight: FontWeight.w700),
