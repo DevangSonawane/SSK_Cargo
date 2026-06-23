@@ -39,6 +39,7 @@ dependencies:
   go_router: ^16.0.0
   retrofit: ^4.7.0
   google_fonts: ^6.3.0
+  flutter_svg: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,9 @@ flutter:
     - assets/gps.png
     - assets/heart.png
     - assets/loginscreenimg.png
+    - assets/login_screen_image.png
+    - assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png
+    - assets/google_logo.svg
     - assets/images/
     - "assets/client/test.png"
     - "assets/package.png"
