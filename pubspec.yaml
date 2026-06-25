@@ -84,6 +84,7 @@ flutter:
     - assets/IMG_1750.PNG
     - assets/google_logo.svg
     - assets/images/
+    - assets/selectionscreen/
     - "assets/client/test.png"
     - "assets/package.png"
 
