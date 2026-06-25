@@ -13,7 +13,6 @@ class AccessEntryScreen extends StatelessWidget {
       body: Stack(
         children: [
           const _BackgroundDecor(),
-          const _BottomDecor(),
           SafeArea(
             top: false,
             child: LayoutBuilder(
@@ -90,34 +89,36 @@ class AccessEntryScreen extends StatelessWidget {
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontSize: 14,
                                   height: 1.2,
+                                  fontWeight: FontWeight.w400,
                                   color: const Color(0xFF4B5563),
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 18),
                               _AccessChoiceCard(
-                                title: 'Continue as',
-                                accentTitle: 'Client',
+                                title: 'Client',
                                 description: 'Book truck, manage shipments & more',
                                 imagePath: 'assets/selectionscreen/client.png',
                                 icon: Icons.person_rounded,
                                 accentColor: const Color(0xFF6AAE5B),
+                                arrowIcon: Icons.chevron_right_rounded,
                                 onTap: () => context.go('/login'),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _AccessChoiceCard(
-                                title: 'Continue as',
-                                accentTitle: 'Broker',
+                                title: 'Broker',
                                 description: 'Connect with transporters, grow your business',
                                 imagePath: 'assets/selectionscreen/broker.png',
                                 icon: Icons.handshake_rounded,
                                 accentColor: const Color(0xFF6AAE5B),
+                                arrowIcon: Icons.chevron_right_rounded,
                                 onTap: () => context.go('/broker/login'),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _TrackingChoiceCard(
                                 title: 'GPS Tracking',
                                 description: 'Track your vehicle in real-time',
                                 imagePath: 'assets/selectionscreen/gps.png',
+                                arrowIcon: Icons.chevron_right_rounded,
                                 onTap: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -145,20 +146,20 @@ class AccessEntryScreen extends StatelessWidget {
 class _AccessChoiceCard extends StatelessWidget {
   const _AccessChoiceCard({
     required this.title,
-    required this.accentTitle,
     required this.description,
     required this.imagePath,
     required this.icon,
     required this.accentColor,
+    required this.arrowIcon,
     required this.onTap,
   });
 
   final String title;
-  final String accentTitle;
   final String description;
   final String imagePath;
   final IconData icon;
   final Color accentColor;
+  final IconData arrowIcon;
   final VoidCallback onTap;
 
   @override
@@ -169,30 +170,31 @@ class _AccessChoiceCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: 8,
+            flex: 10,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(18.8)),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerLeft,
-                    width: double.infinity,
+                  Positioned.fill(
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerLeft,
+                    ),
                   ),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
-                      width: 56,
+                      width: 124,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                           colors: [
                             Colors.transparent,
-                            Colors.white.withValues(alpha: 0.10),
-                            Colors.white.withValues(alpha: 0.28),
+                            Colors.white.withValues(alpha: 0.22),
+                            Colors.white,
                           ],
                         ),
                       ),
@@ -202,71 +204,52 @@ class _AccessChoiceCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
           Expanded(
-            flex: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
-                      ),
-                ),
-                Text(
-                  accentTitle,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF2E7D32),
-                        height: 1.05,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 22,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(10),
+            flex: 10,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 10,
-                        height: 1.15,
-                        color: const Color(0xFF4B5563),
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: 0.22),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                  const SizedBox(height: 2),
+                  Container(
+                    width: 22,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 10,
+                          height: 1.15,
+                          color: const Color(0xFF4B5563),
+                        ),
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white,
-                size: 18,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                arrowIcon,
+                color: accentColor,
+                size: 28,
               ),
             ),
           ),
@@ -281,12 +264,14 @@ class _TrackingChoiceCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.imagePath,
+    required this.arrowIcon,
     required this.onTap,
   });
 
   final String title;
   final String description;
   final String imagePath;
+  final IconData arrowIcon;
   final VoidCallback onTap;
 
   @override
@@ -299,30 +284,31 @@ class _TrackingChoiceCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: 8,
+            flex: 10,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(18.8)),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerLeft,
-                    width: double.infinity,
+                  Positioned.fill(
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerLeft,
+                    ),
                   ),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
-                      width: 56,
+                      width: 124,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                           colors: [
                             Colors.transparent,
-                            Colors.white.withValues(alpha: 0.10),
-                            Colors.white.withValues(alpha: 0.28),
+                            Colors.white.withValues(alpha: 0.22),
+                            Colors.white,
                           ],
                         ),
                       ),
@@ -332,45 +318,42 @@ class _TrackingChoiceCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
           Expanded(
-            flex: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
-                      ),
-                ),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 10,
-                        height: 1.15,
-                        color: const Color(0xFF4B5563),
-                      ),
-                ),
-              ],
+            flex: 10,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
+                  ),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 10,
+                          height: 1.15,
+                          color: const Color(0xFF4B5563),
+                        ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                arrowIcon,
                 color: accentColor,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white,
-                size: 18,
+                size: 28,
               ),
             ),
           ),
@@ -394,7 +377,7 @@ class _ChoiceCardFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
       elevation: 0,
       child: InkWell(
@@ -402,20 +385,33 @@ class _ChoiceCardFrame extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: SizedBox(
           height: fixedHeight,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFD5E7D2)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6AAE5B).withValues(alpha: 0.10),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFFE3E8EF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: child,
+                child: Container(
+                  margin: const EdgeInsets.all(1.2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18.8),
+                  ),
+                  child: child,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -448,99 +444,7 @@ class _BackgroundDecor extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: -40,
-            left: -90,
-            child: Container(
-              width: 240,
-              height: 140,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF6AAE5B).withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _BottomDecor extends StatelessWidget {
-  const _BottomDecor();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: SizedBox(
-          height: 120,
-          width: double.infinity,
-          child: Stack(
-            children: [
-              Positioned(
-                bottom: -30,
-                left: -20,
-                child: _GlowCircle(
-                  size: 110,
-                  color: const Color(0xFF6AAE5B).withValues(alpha: 0.12),
-                ),
-              ),
-              Positioned(
-                bottom: -20,
-                left: 92,
-                child: _GlowCircle(
-                  size: 70,
-                  color: const Color(0xFF6AAE5B).withValues(alpha: 0.08),
-                ),
-              ),
-              Positioned(
-                bottom: -42,
-                right: -12,
-                child: _GlowCircle(
-                  size: 140,
-                  color: const Color(0xFF6AAE5B).withValues(alpha: 0.10),
-                ),
-              ),
-              Positioned(
-                bottom: 10,
-                right: 84,
-                child: _GlowCircle(
-                  size: 48,
-                  color: const Color(0xFF6AAE5B).withValues(alpha: 0.06),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlowCircle extends StatelessWidget {
-  const _GlowCircle({
-    required this.size,
-    required this.color,
-  });
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
       ),
     );
   }
