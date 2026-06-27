@@ -43,11 +43,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/signup',
         pageBuilder: (context, state) {
           final roleParam = state.uri.queryParameters['role'];
-          final initialRole = roleParam == 'broker'
-              ? SignupRole.broker
-              : roleParam == 'client'
-                  ? SignupRole.client
-                  : null;
+          final initialRole = switch (roleParam) {
+            'broker' => SignupRole.broker,
+            'client' => SignupRole.client,
+            'driver' => SignupRole.driver,
+            _ => null,
+          };
 
           return NoTransitionPage(
             child: SignupScreen(initialRole: initialRole),
@@ -64,6 +65,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/broker/signup',
         pageBuilder: (context, state) => const NoTransitionPage(
           child: SignupScreen(initialRole: SignupRole.broker),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/signup',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: SignupScreen(initialRole: SignupRole.driver),
         ),
       ),
       GoRoute(

@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer' as developer;
 
 final dioProvider = Provider<Dio>((ref) {
   return Dio(
     BaseOptions(
-      baseUrl: 'https://api.ssk.local',
+      baseUrl: 'https://gadidosti-backend.onrender.com',
+      contentType: Headers.jsonContentType,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       sendTimeout: const Duration(seconds: 15),
@@ -15,14 +17,139 @@ final dioProvider = Provider<Dio>((ref) {
   );
 });
 
+class ApiException implements Exception {
+  const ApiException(this.message, {this.statusCode});
+
+  final String message;
+  final int? statusCode;
+
+  @override
+  String toString() => 'ApiException($statusCode): $message';
+}
+
 class SskApiClient {
   SskApiClient(this._dio);
 
   final Dio _dio;
 
-  Future<Map<String, dynamic>> ping() async {
-    final response = await _dio.get<Map<String, dynamic>>('/ping');
-    return response.data ?? <String, dynamic>{};
+  Future<Map<String, dynamic>> health() async {
+    return _request(() => _dio.get<Map<String, dynamic>>('/api/health'));
+  }
+
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    developer.log(
+      'POST /api/auth/login baseUrl=${_dio.options.baseUrl} email=$email passwordLength=${password.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    required String role,
+  }) async {
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/register',
+        data: {
+          'name': name,
+          'email': email,
+          'phone': phone?.isEmpty == true ? null : phone,
+          'password': password,
+          'role': role,
+        }..removeWhere((key, value) => value == null),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> logout({
+    required String accessToken,
+    String? refreshToken,
+    bool allDevices = false,
+  }) async {
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/logout',
+        data: {
+          if (refreshToken != null && refreshToken.isNotEmpty) 'refresh_token': refreshToken,
+          'all_devices': allDevices,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getProfile({
+    required String accessToken,
+  }) async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/user/profile',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _request(
+    Future<Response<Map<String, dynamic>>> Function() call,
+  ) async {
+    try {
+      final response = await call();
+      developer.log(
+        'Request succeeded status=${response.statusCode} path=${response.requestOptions.path}',
+        name: 'SSK.API',
+      );
+      return response.data ?? <String, dynamic>{};
+    } on DioException catch (error) {
+      developer.log(
+        'Request failed status=${error.response?.statusCode} path=${error.requestOptions.path} data=${error.response?.data}',
+        name: 'SSK.API',
+      );
+      throw ApiException(
+        _extractMessage(error),
+        statusCode: error.response?.statusCode,
+      );
+    }
+  }
+
+  String _extractMessage(DioException error) {
+    final responseData = error.response?.data;
+    if (responseData is Map<String, dynamic>) {
+      final message = responseData['message'];
+      if (message != null) {
+        return message.toString();
+      }
+      final errors = responseData['errors'];
+      if (errors != null) {
+        return errors.toString();
+      }
+    }
+    if (responseData != null) {
+      return responseData.toString();
+    }
+    return error.message ?? 'Request failed';
   }
 }
 

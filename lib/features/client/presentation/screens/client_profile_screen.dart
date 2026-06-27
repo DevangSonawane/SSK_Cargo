@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ClientProfileScreen extends StatelessWidget {
+import '../../../auth/presentation/controllers/auth_controller.dart';
+
+class ClientProfileScreen extends ConsumerWidget {
   const ClientProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(authSessionProvider).valueOrNull;
+    final user = session?.user;
+    final displayName = user?.displayName ?? 'Client';
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -19,7 +26,7 @@ class ClientProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Aarav',
+                      displayName.split(' ').first,
                       textAlign: TextAlign.left,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontSize: 26,
@@ -28,13 +35,13 @@ class ClientProfileScreen extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      'Mehta',
+                      displayName.contains(' ') ? displayName.split(' ').skip(1).join(' ') : 'Profile',
                       textAlign: TextAlign.left,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF101828),
-                      ),
+                          ),
                     ),
                   ],
                 ),
@@ -48,12 +55,24 @@ class ClientProfileScreen extends StatelessWidget {
                     border: Border.all(color: const Color(0xFFE5EAF0), width: 1.2),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    'assets/user.png',
-                    fit: BoxFit.cover,
-                  ),
+                  child: user?.profileImage == null
+                      ? Image.asset('assets/user.png', fit: BoxFit.cover)
+                      : Image.network(
+                          user!.profileImage!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset('assets/user.png', fit: BoxFit.cover);
+                          },
+                        ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              user?.email ?? 'No account connected yet',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
             ),
             const SizedBox(height: 22),
             Row(
@@ -87,45 +106,20 @@ class ClientProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(
-              title: 'Send a gift',
-              icon: Icons.card_giftcard_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Earning by driving or delivering',
-              icon: Icons.local_shipping_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Refer friends',
-              icon: Icons.group_add_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Unlock details',
-              icon: Icons.lock_open_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
               title: 'Manage account',
               icon: Icons.manage_accounts_rounded,
               onTap: () {},
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(
-              title: 'Legal',
-              icon: Icons.description_rounded,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
               title: 'Logout',
               icon: Icons.logout_rounded,
-              onTap: () => context.go('/login'),
+              onTap: () async {
+                await ref.read(authSessionProvider.notifier).logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
               titleColor: const Color(0xFFE23A4B),
               iconColor: const Color(0xFFE23A4B),
             ),

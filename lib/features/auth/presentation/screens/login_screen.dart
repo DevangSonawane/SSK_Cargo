@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -23,14 +26,95 @@ class BrokerLoginScreen extends ConsumerWidget {
   }
 }
 
-class _AuthLoginScreen extends ConsumerWidget {
+class _AuthLoginScreen extends ConsumerStatefulWidget {
   const _AuthLoginScreen({required this.role});
 
   final AppRole role;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final backgroundImage = role == AppRole.broker
+  ConsumerState<_AuthLoginScreen> createState() => _AuthLoginScreenState();
+}
+
+class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isSubmitting = false;
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter both email and password.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      developer.log(
+        'Submitting login for $email as ${widget.role.name}',
+        name: 'SSK.Auth',
+      );
+      final session = await ref.read(authSessionProvider.notifier).login(
+            email: email,
+            password: password,
+          );
+
+      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(session.user.role);
+
+      if (!mounted) {
+        return;
+      }
+
+      developer.log(
+        'Login success role=${session.user.role} route=${_routeForRole(session.user.role)}',
+        name: 'SSK.Auth',
+      );
+      context.go(_routeForRole(session.user.role));
+    } on ApiException catch (error) {
+      developer.log(
+        'Login failed status=${error.statusCode} message=${error.message}',
+        name: 'SSK.Auth',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      developer.log(
+        'Login unexpected error: $error',
+        name: 'SSK.Auth',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundImage = widget.role == AppRole.broker
         ? 'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png'
         : 'assets/IMG_1750.PNG';
 
@@ -131,6 +215,7 @@ class _AuthLoginScreen extends ConsumerWidget {
                                         ),
                                       ),
                                       TextField(
+                                        controller: _emailController,
                                         keyboardType: TextInputType.emailAddress,
                                         textInputAction: TextInputAction.next,
                                         decoration: _pillDecoration(
@@ -140,11 +225,24 @@ class _AuthLoginScreen extends ConsumerWidget {
                                       ),
                                       const SizedBox(height: 14),
                                       TextField(
-                                        obscureText: true,
+                                        controller: _passwordController,
+                                        obscureText: _obscurePassword,
                                         textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _submit(),
                                         decoration: _pillDecoration(
                                           label: 'Password',
                                           icon: Icons.lock_rounded,
+                                          suffixIcon: IconButton(
+                                            onPressed: () {
+                                              setState(() => _obscurePassword = !_obscurePassword);
+                                            },
+                                            icon: Icon(
+                                              _obscurePassword
+                                                  ? Icons.visibility_off_outlined
+                                                  : Icons.visibility_outlined,
+                                            ),
+                                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 16),
@@ -155,13 +253,24 @@ class _AuthLoginScreen extends ConsumerWidget {
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             shape: const StadiumBorder(),
                                           ),
-                                          onPressed: () {
-                                            ref.read(selectedRoleProvider.notifier).state = role;
-                                            context.go(
-                                              role == AppRole.broker ? '/broker/home' : '/client/home',
-                                            );
-                                          },
-                                          child: const Text('Login'),
+                                          onPressed: _isSubmitting ? null : _submit,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(milliseconds: 180),
+                                            child: _isSubmitting
+                                                ? const SizedBox(
+                                                    key: ValueKey('loading'),
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2.2,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                : const Text(
+                                                    'Login',
+                                                    key: ValueKey('label'),
+                                                  ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 10),
@@ -192,7 +301,7 @@ class _AuthLoginScreen extends ConsumerWidget {
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
-                                          child: OutlinedButton.icon(
+                                            child: OutlinedButton.icon(
                                               onPressed: () {
                                                 // TODO: wire Apple auth flow.
                                               },
@@ -231,7 +340,7 @@ class _AuthLoginScreen extends ConsumerWidget {
                                             ),
                                             TextButton(
                                               onPressed: () => context.go(
-                                                role == AppRole.broker ? '/broker/signup' : '/client/signup',
+                                                widget.role == AppRole.broker ? '/broker/signup' : '/client/signup',
                                               ),
                                               style: TextButton.styleFrom(
                                                 padding: EdgeInsets.zero,
@@ -267,13 +376,25 @@ class _AuthLoginScreen extends ConsumerWidget {
   }
 }
 
+String _routeForRole(String role) {
+  return switch (role) {
+    'client' => '/client/home',
+    'broker' => '/broker/home',
+    'driver' => '/broker/home',
+    'admin' => '/broker/home',
+    _ => '/client/home',
+  };
+}
+
 InputDecoration _pillDecoration({
   required String label,
   required IconData icon,
+  Widget? suffixIcon,
 }) {
   return InputDecoration(
     labelText: label,
     prefixIcon: Icon(icon),
+    suffixIcon: suffixIcon,
     filled: true,
     fillColor: const Color(0xFFF7FAFD),
     border: OutlineInputBorder(

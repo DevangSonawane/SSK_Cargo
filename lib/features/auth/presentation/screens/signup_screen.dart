@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-enum SignupRole { broker, client }
+import '../../../../core/network/api_client.dart';
+import '../controllers/auth_controller.dart';
 
-class SignupScreen extends StatefulWidget {
+enum SignupRole { broker, client, driver }
+
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({
     super.key,
     this.initialRole,
@@ -12,11 +16,17 @@ class SignupScreen extends StatefulWidget {
   final SignupRole? initialRole;
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   late SignupRole _role;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isSubmitting = false;
+  bool _obscurePassword = true;
 
   bool get _isRoleLocked => widget.initialRole != null;
   SignupRole get _lockedRole => widget.initialRole ?? _role;
@@ -27,39 +37,99 @@ class _SignupScreenState extends State<SignupScreen> {
     _role = widget.initialRole ?? SignupRole.broker;
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   static const _roleData = <SignupRole, _RoleMeta>{
     SignupRole.broker: _RoleMeta(
       title: 'Broker',
-      subtitle: 'Register your broker profile and verify your identity.',
+      subtitle: 'Register your transport business and start managing fleets.',
       accent: Color(0xFF1F88C9),
       icon: Icons.handshake_rounded,
-      fields: [
-        _FieldMeta('Name', Icons.person_rounded, TextInputType.name),
-        _FieldMeta('Phone', Icons.phone_rounded, TextInputType.phone),
-        _FieldMeta('Email', Icons.email_rounded, TextInputType.emailAddress),
-        _FieldMeta('Aadhaar card', Icons.badge_rounded, TextInputType.number),
-        _FieldMeta('PAN card', Icons.credit_card_rounded, TextInputType.text),
-        _FieldMeta('Driver license', Icons.drive_file_rename_outline_rounded, TextInputType.text),
-      ],
+      roleValue: 'broker',
     ),
     SignupRole.client: _RoleMeta(
       title: 'Client',
       subtitle: 'Book vehicles and track shipments with ease.',
       accent: Color(0xFF2FA56E),
       icon: Icons.person_rounded,
-      fields: [
-        _FieldMeta('Full name', Icons.person_rounded, TextInputType.name),
-        _FieldMeta('Email address', Icons.email_rounded, TextInputType.emailAddress),
-        _FieldMeta('Phone number', Icons.phone_rounded, TextInputType.phone),
-        _FieldMeta('Company / organization', Icons.apartment_rounded, TextInputType.text),
-        _FieldMeta('Password', Icons.lock_rounded, TextInputType.visiblePassword, obscure: true),
-      ],
+      roleValue: 'client',
+    ),
+    SignupRole.driver: _RoleMeta(
+      title: 'Driver',
+      subtitle: 'Create a driver account for broker-managed work.',
+      accent: Color(0xFF7A5AF8),
+      icon: Icons.local_shipping_rounded,
+      roleValue: 'driver',
     ),
   };
 
   void _setRole(SignupRole role) {
     if (_role == role) return;
     setState(() => _role = role);
+  }
+
+  Future<void> _submit() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+    final activeMeta = _roleData[_lockedRole]!;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name, email, and password are required.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(authSessionProvider.notifier).register(
+            name: name,
+            email: email,
+            phone: phone.isEmpty ? null : phone,
+            password: password,
+            role: activeMeta.roleValue,
+          );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created. You can log in now.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+
+      context.go(_loginRouteForRole(activeMeta.roleValue));
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -98,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       Row(
                         children: [
                           IconButton(
-                            onPressed: () => context.go('/login'),
+                            onPressed: () => context.go('/access'),
                             icon: const Icon(Icons.arrow_back_rounded),
                             tooltip: 'Back to login',
                           ),
@@ -159,17 +229,55 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                               const SizedBox(height: 14),
                             ],
-                            ...activeMeta.fields.map(
-                              (field) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: TextField(
-                                  keyboardType: field.keyboardType,
-                                  obscureText: field.obscure,
-                                  decoration: _fieldDecoration(
-                                    label: field.label,
-                                    icon: field.icon,
-                                    accent: activeMeta.accent,
+                            TextField(
+                              controller: _nameController,
+                              keyboardType: TextInputType.name,
+                              decoration: _fieldDecoration(
+                                label: 'Full name',
+                                icon: Icons.person_rounded,
+                                accent: activeMeta.accent,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _fieldDecoration(
+                                label: 'Email',
+                                icon: Icons.email_rounded,
+                                accent: activeMeta.accent,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: _fieldDecoration(
+                                label: 'Phone',
+                                icon: Icons.phone_rounded,
+                                accent: activeMeta.accent,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _submit(),
+                              decoration: _fieldDecoration(
+                                label: 'Password',
+                                icon: Icons.lock_rounded,
+                                accent: activeMeta.accent,
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    setState(() => _obscurePassword = !_obscurePassword);
+                                  },
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
                                   ),
+                                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                                 ),
                               ),
                             ),
@@ -188,7 +296,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'Next: verify Aadhaar after registration',
+                                      'After signup, use the same email and password to log in.',
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                             color: const Color(0xFF1A365D),
                                             fontWeight: FontWeight.w600,
@@ -203,7 +311,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               width: double.infinity,
                               height: 56,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: _isSubmitting ? null : _submit,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: activeMeta.accent,
                                   elevation: 0,
@@ -211,21 +319,33 @@ class _SignupScreenState extends State<SignupScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Create Account',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 180),
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          key: ValueKey('loading'),
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Create Account',
+                                          key: ValueKey('label'),
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 12),
                             TextButton(
-                              onPressed: () => context.go(
-                                _role == SignupRole.broker ? '/broker/login' : '/login',
-                              ),
+                              onPressed: () => context.go(_loginRouteForRole(activeMeta.roleValue)),
                               style: TextButton.styleFrom(
                                 foregroundColor: const Color(0xFF17324D),
                                 textStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -253,54 +373,22 @@ class _RoleMeta {
     required this.subtitle,
     required this.accent,
     required this.icon,
-    required this.fields,
+    required this.roleValue,
   });
 
   final String title;
   final String subtitle;
   final Color accent;
   final IconData icon;
-  final List<_FieldMeta> fields;
+  final String roleValue;
 }
 
-class _FieldMeta {
-  const _FieldMeta(
-    this.label,
-    this.icon,
-    this.keyboardType, {
-    this.obscure = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final TextInputType keyboardType;
-  final bool obscure;
-}
-
-InputDecoration _fieldDecoration({
-  required String label,
-  required IconData icon,
-  required Color accent,
-}) {
-  return InputDecoration(
-    labelText: label,
-    prefixIcon: Icon(icon),
-    filled: true,
-    fillColor: const Color(0xFFF7FAFD),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
-      borderSide: BorderSide.none,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
-      borderSide: const BorderSide(color: Color(0xFFE5ECF3)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
-      borderSide: BorderSide(color: accent, width: 1.4),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-  );
+String _loginRouteForRole(String roleValue) {
+  return switch (roleValue) {
+    'broker' => '/broker/login',
+    'driver' => '/broker/login',
+    _ => '/login',
+  };
 }
 
 class _RoleCard extends StatelessWidget {
@@ -316,33 +404,34 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? meta.accent.withValues(alpha: 0.10) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? meta.accent.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(meta.icon, size: 20, color: selected ? meta.accent : const Color(0xFF94A3B8)),
-            const SizedBox(height: 6),
-            Text(
-              meta.title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontSize: 12,
-                    color: const Color(0xFF17324D),
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: selected ? meta.accent.withValues(alpha: 0.10) : const Color(0xFFF7FAFD),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? meta.accent.withValues(alpha: 0.45) : const Color(0xFFE5ECF3),
             ),
-          ],
+          ),
+          child: Column(
+            children: [
+              Icon(meta.icon, color: meta.accent),
+              const SizedBox(height: 8),
+              Text(
+                meta.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF17324D),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -369,4 +458,35 @@ class _DecorBlob extends StatelessWidget {
       ),
     );
   }
+}
+
+InputDecoration _fieldDecoration({
+  required String label,
+  required IconData icon,
+  required Color accent,
+  Widget? suffixIcon,
+}) {
+  return InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon),
+    suffixIcon: suffixIcon,
+    filled: true,
+    fillColor: const Color(0xFFF7FAFD),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFE5ECF3)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide(
+        color: accent,
+        width: 1.4,
+      ),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+  );
 }
