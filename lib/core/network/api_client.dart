@@ -55,6 +55,25 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> googleLogin({
+    required String idToken,
+    required String role,
+  }) async {
+    developer.log(
+      'POST /api/auth/google role=$role idTokenLength=${idToken.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/google',
+        data: {
+          'id_token': idToken,
+          'role': role,
+        },
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,

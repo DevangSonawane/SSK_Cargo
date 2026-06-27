@@ -31,6 +31,22 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     }
   }
 
+  Future<AuthSession> loginWithGoogle({
+    required String idToken,
+    required String role,
+  }) async {
+    state = const AsyncLoading<AuthSession?>();
+    try {
+      final response = await _apiClient.googleLogin(idToken: idToken, role: role);
+      final session = AuthSession.fromLoginResponse(response);
+      state = AsyncData<AuthSession?>(session);
+      return session;
+    } catch (error, stackTrace) {
+      state = AsyncError<AuthSession?>(error, stackTrace);
+      rethrow;
+    }
+  }
+
   Future<void> register({
     required String name,
     required String email,

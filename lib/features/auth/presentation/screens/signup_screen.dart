@@ -168,7 +168,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       Row(
                         children: [
                           IconButton(
-                            onPressed: () => context.go('/access'),
+                            onPressed: () => context.go(_loginRouteForRole(activeMeta.roleValue)),
                             icon: const Icon(Icons.arrow_back_rounded),
                             tooltip: 'Back to login',
                           ),

@@ -74,6 +74,8 @@ class AuthSession {
   const AuthSession({
     required this.user,
     required this.tokens,
+    this.isNewUser = false,
+    this.needsPhone = false,
   });
 
   factory AuthSession.fromLoginResponse(Map<String, dynamic> json) {
@@ -81,6 +83,8 @@ class AuthSession {
     return AuthSession(
       user: SskUser.fromJson(_asMap(data['user'])),
       tokens: AuthTokens.fromJson(_asMap(data['tokens'])),
+      isNewUser: data['is_new_user'] == true,
+      needsPhone: data['needs_phone'] == true,
     );
   }
 
@@ -97,6 +101,8 @@ class AuthSession {
 
   final SskUser user;
   final AuthTokens tokens;
+  final bool isNewUser;
+  final bool needsPhone;
 }
 
 DateTime? _parseDateTime(Object? value) {

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:developer' as developer;
@@ -36,10 +38,29 @@ class _AuthLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
+  static const String _googleWebClientId =
+      '567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com';
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleSignInInitialization;
   bool _isSubmitting = false;
+  bool _isGoogleSubmitting = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    developer.log(
+      'Initializing Google Sign-In for package=com.example.ssk',
+      name: 'SSK.Auth',
+    );
+    _googleSignInInitialization = _googleSignIn.initialize(
+      clientId: kIsWeb ? _googleWebClientId : null,
+      serverClientId: _googleWebClientId,
+    );
+  }
 
   @override
   void dispose() {
@@ -108,6 +129,114 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  Future<void> _submitWithGoogle() async {
+    if (widget.role == AppRole.admin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google sign-in is not available for admin accounts.')),
+      );
+      return;
+    }
+
+    setState(() => _isGoogleSubmitting = true);
+    try {
+      await _googleSignInInitialization;
+      developer.log(
+        'Starting Google sign-in for ${widget.role.name}',
+        name: 'SSK.Auth',
+      );
+
+      final account = await _googleSignIn.authenticate();
+
+      final auth = account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw StateError('Google did not return an ID token.');
+      }
+
+      final session = await ref.read(authSessionProvider.notifier).loginWithGoogle(
+            idToken: idToken,
+            role: switch (widget.role) {
+              AppRole.broker => 'broker',
+              AppRole.driver => 'driver',
+              _ => 'client',
+            },
+          );
+
+      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(session.user.role);
+
+      if (!mounted) {
+        return;
+      }
+
+      if (session.isNewUser) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google account connected.'),
+            backgroundColor: Color(0xFF2FA56E),
+          ),
+        );
+      }
+      if (session.needsPhone) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please add a phone number in your profile.'),
+          ),
+        );
+      }
+
+      developer.log(
+        'Google login success role=${session.user.role} route=${_routeForRole(session.user.role)}',
+        name: 'SSK.Auth',
+      );
+      context.go(_routeForRole(session.user.role));
+    } on ApiException catch (error) {
+      developer.log(
+        'Google login failed status=${error.statusCode} message=${error.message}',
+        name: 'SSK.Auth',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } on GoogleSignInException catch (error) {
+      developer.log(
+        'Google login exception code=${error.code} description=${error.description}',
+        name: 'SSK.Auth',
+      );
+      if (!mounted) return;
+
+      final message = error.code == GoogleSignInExceptionCode.canceled
+          ? 'Google sign-in is not configured correctly for Android. Check the OAuth client, package name, and SHA-1/SHA-256 in Google Cloud Console.'
+          : error.description ?? 'Google sign-in failed.';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      developer.log(
+        'Google login unexpected error: $error',
+        name: 'SSK.Auth',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleSubmitting = false);
       }
     }
   }
@@ -278,17 +407,11 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                         children: [
                                           Expanded(
                                             child: OutlinedButton.icon(
-                                              onPressed: () {
-                                                // TODO: wire Google auth flow.
-                                              },
+                                              onPressed: _isGoogleSubmitting ? null : _submitWithGoogle,
                                               icon: SvgPicture.asset(
                                                 'assets/google_logo.svg',
                                                 width: 18,
                                                 height: 18,
-                                              ),
-                                              label: const Text(
-                                                'Google',
-                                                style: TextStyle(fontWeight: FontWeight.w700),
                                               ),
                                               style: OutlinedButton.styleFrom(
                                                 foregroundColor: const Color(0xFF1B2A3A),
@@ -296,6 +419,24 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                                 backgroundColor: Colors.white.withValues(alpha: 0.82),
                                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                                 shape: const StadiumBorder(),
+                                              ),
+                                              label: AnimatedSwitcher(
+                                                duration: const Duration(milliseconds: 180),
+                                                child: _isGoogleSubmitting
+                                                    ? const SizedBox(
+                                                        key: ValueKey('google-loading'),
+                                                        width: 18,
+                                                        height: 18,
+                                                        child: CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Color(0xFF1B2A3A),
+                                                        ),
+                                                  )
+                                                    : const Text(
+                                                        'Google',
+                                                        key: ValueKey('google-label'),
+                                                        style: TextStyle(fontWeight: FontWeight.w700),
+                                                      ),
                                               ),
                                             ),
                                           ),
