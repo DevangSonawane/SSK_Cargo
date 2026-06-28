@@ -8,7 +8,7 @@ final dioProvider = Provider<Dio>((ref) {
       baseUrl: 'https://gadidosti-backend.onrender.com',
       contentType: Headers.jsonContentType,
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 15),
       headers: const {
         'Accept': 'application/json',
