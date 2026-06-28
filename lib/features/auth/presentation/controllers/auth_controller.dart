@@ -68,7 +68,6 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     if (currentSession != null) {
       try {
         await _apiClient.logout(
-          accessToken: currentSession.tokens.accessToken,
           refreshToken: currentSession.tokens.refreshToken,
           allDevices: allDevices,
         );
@@ -94,5 +93,45 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     );
     state = AsyncData<AuthSession?>(refreshed);
     return refreshed;
+  }
+
+  Future<AuthSession> updateProfile({
+    required String name,
+    required String email,
+    String? profileImage,
+  }) async {
+    final currentSession = session;
+    if (currentSession == null) {
+      throw StateError('No active session');
+    }
+
+    final response = await _apiClient.updateProfile(
+      accessToken: currentSession.tokens.accessToken,
+      name: name,
+      email: email,
+      profileImage: profileImage,
+    );
+    final updated = AuthSession.fromProfileResponse(
+      profile: response,
+      tokens: currentSession.tokens,
+    );
+    state = AsyncData<AuthSession?>(updated);
+    return updated;
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final currentSession = session;
+    if (currentSession == null) {
+      throw StateError('No active session');
+    }
+
+    await _apiClient.changePassword(
+      accessToken: currentSession.tokens.accessToken,
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/access_entry_screen.dart';
+import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
@@ -76,6 +77,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/access',
         pageBuilder: (context, state) => const NoTransitionPage(child: AccessEntryScreen()),
+      ),
+      GoRoute(
+        path: '/change-password',
+        pageBuilder: (context, state) => const NoTransitionPage(child: ChangePasswordScreen()),
       ),
       GoRoute(
         path: '/client/tracking/details',

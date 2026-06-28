@@ -96,22 +96,20 @@ class SskApiClient {
   }
 
   Future<Map<String, dynamic>> logout({
-    required String accessToken,
-    String? refreshToken,
+    required String refreshToken,
     bool allDevices = false,
   }) async {
+    developer.log(
+      'POST /api/auth/logout allDevices=$allDevices refreshTokenLength=${refreshToken.length}',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/auth/logout',
         data: {
-          if (refreshToken != null && refreshToken.isNotEmpty) 'refresh_token': refreshToken,
+          'refresh_token': refreshToken,
           'all_devices': allDevices,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
       ),
     );
   }
@@ -122,6 +120,58 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/user/profile',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required String accessToken,
+    required String name,
+    required String email,
+    String? profileImage,
+  }) async {
+    developer.log(
+      'PUT /api/user/profile name=$name email=$email profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/user/profile',
+        data: {
+          'name': name,
+          'email': email,
+          if (profileImage != null && profileImage.isNotEmpty) 'profile_image': profileImage,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String accessToken,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    developer.log(
+      'PUT /api/user/change-password currentPasswordLength=${currentPassword.length} newPasswordLength=${newPassword.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/user/change-password',
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
         options: Options(
           headers: {
             'Authorization': 'Bearer $accessToken',

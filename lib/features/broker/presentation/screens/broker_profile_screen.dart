@@ -2,11 +2,105 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerProfileScreen extends ConsumerWidget {
   const BrokerProfileScreen({super.key});
+
+  Future<void> _openAccountDetails(BuildContext context, WidgetRef ref) async {
+    try {
+      final session = await ref.read(authSessionProvider.notifier).refreshProfile();
+      final user = session.user;
+
+      if (!context.mounted) {
+        return;
+      }
+
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) {
+          return SafeArea(
+            child: Container(
+              margin: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Account details',
+                          style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF101828),
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _BrokerAccountDetailRow(label: 'Name', value: user.displayName),
+                  _BrokerAccountDetailRow(label: 'Email', value: user.email ?? '-'),
+                  _BrokerAccountDetailRow(label: 'Phone', value: user.phone.isEmpty ? '-' : user.phone),
+                  _BrokerAccountDetailRow(label: 'Role', value: user.role),
+                  _BrokerAccountDetailRow(label: 'Status', value: user.status),
+                  _BrokerAccountDetailRow(
+                    label: 'Phone verified',
+                    value: user.isPhoneVerified ? 'Yes' : 'No',
+                  ),
+                  _BrokerAccountDetailRow(
+                    label: 'Email verified',
+                    value: user.isEmailVerified ? 'Yes' : 'No',
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Last login: ${user.lastLoginAt?.toLocal().toString() ?? '-'}',
+                    style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF667085),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } on ApiException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,11 +176,11 @@ class BrokerProfileScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: BrokerProfileActionCard(
-                      title: 'Company Details',
+                      title: 'Manage account',
                       icon: Icons.handshake_rounded,
                       backgroundColor: const Color(0xFFF5F7FB),
                       iconColor: const Color(0xFF1F88C9),
-                      onTap: () {},
+                      onTap: () => _openAccountDetails(context, ref),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -129,6 +223,12 @@ class BrokerProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               BrokerMenuTile(
+                title: 'Change password',
+                icon: Icons.password_rounded,
+                onTap: () => context.push('/change-password'),
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
                 title: 'Logout',
                 icon: Icons.logout_rounded,
                 onTap: () async {
@@ -143,6 +243,48 @@ class BrokerProfileScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BrokerAccountDetailRow extends StatelessWidget {
+  const _BrokerAccountDetailRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }
