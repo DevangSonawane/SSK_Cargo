@@ -172,6 +172,29 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         return;
       }
 
+      final actualRole = appRoleFromApiRole(session.user.role);
+      final requestedRole = widget.role;
+      final isRoleMismatch = actualRole != requestedRole;
+
+      if (isRoleMismatch) {
+        final actualRoleLabel = session.user.role;
+        final requestedRoleLabel = requestedRole.name;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This account is associated with $actualRoleLabel. Kindly use a different account for $requestedRoleLabel.',
+            ),
+            backgroundColor: const Color(0xFFE23A4B),
+          ),
+        );
+        developer.log(
+          'Google login role mismatch requested=${requestedRole.name} actual=${session.user.role} redirect=${_routeForRole(session.user.role)}',
+          name: 'SSK.Auth',
+        );
+        context.go(_routeForRole(session.user.role));
+        return;
+      }
+
       if (session.isNewUser) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
