@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/profile_avatar.dart';
 import '../controllers/auth_controller.dart';
 
 class ManageAccountScreen extends ConsumerStatefulWidget {
@@ -18,10 +22,17 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _profileImageController = TextEditingController();
+  final _picker = ImagePicker();
+
   bool _loading = true;
   bool _saving = false;
   String? _errorMessage;
+
+  String _originalName = '';
+  String _originalEmail = '';
+  String? _originalProfileImage;
+  Uint8List? _pickedAvatarBytes;
+  String? _pickedAvatarDataUrl;
 
   @override
   void initState() {
@@ -33,8 +44,14 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _profileImageController.dispose();
     super.dispose();
+  }
+
+  bool get _hasChanges {
+    final nameChanged = _nameController.text.trim() != _originalName.trim();
+    final emailChanged = _emailController.text.trim() != _originalEmail.trim();
+    final imageChanged = _pickedAvatarBytes != null;
+    return nameChanged || emailChanged || imageChanged;
   }
 
   String _changePasswordRouteForRole(String? role) {
@@ -45,13 +62,27 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     };
   }
 
+  String _mimeTypeForName(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  String _buildDataUrl(Uint8List bytes, String name) {
+    final mimeType = _mimeTypeForName(name);
+    return 'data:$mimeType;base64,${base64Encode(bytes)}';
+  }
+
   Future<void> _loadProfile() async {
     try {
       final session = await ref.read(authSessionProvider.notifier).refreshProfile();
       final user = session.user;
-      _nameController.text = user.displayName;
-      _emailController.text = user.email ?? '';
-      _profileImageController.text = user.profileImage ?? '';
+      _originalName = user.displayName;
+      _originalEmail = user.email ?? '';
+      _originalProfileImage = user.profileImage;
+      _nameController.text = _originalName;
+      _emailController.text = _originalEmail;
     } catch (error) {
       _errorMessage = error.toString();
     } finally {
@@ -59,6 +90,26 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _pickAvatar() async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) {
+      return;
+    }
+
+    final bytes = await picked.readAsBytes();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _pickedAvatarBytes = bytes;
+      _pickedAvatarDataUrl = _buildDataUrl(bytes, picked.name);
+    });
   }
 
   Future<void> _save() async {
@@ -69,15 +120,23 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     setState(() => _saving = true);
     try {
       developer.log('Saving profile from manage account page', name: 'SSK.Auth');
-      await ref.read(authSessionProvider.notifier).updateProfile(
+      final saved = await ref.read(authSessionProvider.notifier).updateProfile(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
-            profileImage: _profileImageController.text.trim().isEmpty
-                ? null
-                : _profileImageController.text.trim(),
+            profileImage: _pickedAvatarDataUrl ?? _originalProfileImage,
           );
 
       if (!mounted) return;
+
+      setState(() {
+        _originalName = saved.user.displayName;
+        _originalEmail = saved.user.email ?? '';
+        _originalProfileImage = saved.user.profileImage;
+        _nameController.text = _originalName;
+        _emailController.text = _originalEmail;
+        _pickedAvatarBytes = null;
+        _pickedAvatarDataUrl = null;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -112,6 +171,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
+    final profileImage = _pickedAvatarBytes != null ? null : (_originalProfileImage ?? user?.profileImage);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -149,8 +209,34 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
+                      Center(
+                        child: Column(
+                          children: [
+                            SskProfileAvatar(
+                              imageUrl: profileImage,
+                              imageBytes: _pickedAvatarBytes,
+                              size: 96,
+                              onTap: _pickAvatar,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Tap to choose from gallery',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: const Color(0xFF667085),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Form(
                         key: _formKey,
+                        onChanged: () {
+                          if (mounted) {
+                            setState(() {});
+                          }
+                        },
                         child: Column(
                           children: [
                             TextFormField(
@@ -178,15 +264,6 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _profileImageController,
-                              keyboardType: TextInputType.url,
-                              decoration: const InputDecoration(
-                                labelText: 'Profile image URL',
-                                helperText: 'Optional',
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -196,21 +273,23 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                         _DetailRow(label: 'Role', value: user.role),
                         _DetailRow(label: 'Status', value: user.status),
                       ],
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: _saving ? null : _save,
-                          child: _saving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Save changes'),
+                      if (_hasChanges) ...[
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _saving ? null : _save,
+                            child: _saving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Save changes'),
+                          ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: () => context.push(_changePasswordRouteForRole(user?.role)),

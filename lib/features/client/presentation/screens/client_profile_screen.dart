@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class ClientProfileScreen extends ConsumerWidget {
@@ -46,24 +47,9 @@ class ClientProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 const Spacer(),
-                Container(
-                  width: 62,
-                  height: 62,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F4F8),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFE5EAF0), width: 1.2),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: user?.profileImage == null
-                      ? Image.asset('assets/user.png', fit: BoxFit.cover)
-                      : Image.network(
-                          user!.profileImage!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset('assets/user.png', fit: BoxFit.cover);
-                          },
-                        ),
+                SskProfileAvatar(
+                  imageUrl: user?.profileImage,
+                  size: 62,
                 ),
               ],
             ),
