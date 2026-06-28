@@ -133,10 +133,11 @@ class SskApiClient {
     required String accessToken,
     required String name,
     required String email,
+    String? phone,
     String? profileImage,
   }) async {
     developer.log(
-      'PUT /api/user/profile name=$name email=$email profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
+      'PUT /api/user/profile name=$name email=$email phoneSet=${phone != null && phone.isNotEmpty} profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
       name: 'SSK.API',
     );
     return _request(
@@ -145,6 +146,7 @@ class SskApiClient {
         data: {
           'name': name,
           'email': email,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
           if (profileImage != null && profileImage.isNotEmpty) 'profile_image': profileImage,
         },
         options: Options(

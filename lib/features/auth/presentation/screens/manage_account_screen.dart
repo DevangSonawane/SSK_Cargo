@@ -22,6 +22,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _picker = ImagePicker();
 
   bool _loading = true;
@@ -30,6 +31,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
   String _originalName = '';
   String _originalEmail = '';
+  String _originalPhone = '';
   String? _originalProfileImage;
   Uint8List? _pickedAvatarBytes;
   String? _pickedAvatarDataUrl;
@@ -44,14 +46,16 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   bool get _hasChanges {
     final nameChanged = _nameController.text.trim() != _originalName.trim();
     final emailChanged = _emailController.text.trim() != _originalEmail.trim();
+    final phoneChanged = _phoneController.text.trim() != _originalPhone.trim();
     final imageChanged = _pickedAvatarBytes != null;
-    return nameChanged || emailChanged || imageChanged;
+    return nameChanged || emailChanged || phoneChanged || imageChanged;
   }
 
   String _changePasswordRouteForRole(String? role) {
@@ -80,9 +84,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       final user = session.user;
       _originalName = user.displayName;
       _originalEmail = user.email ?? '';
+      _originalPhone = user.phone;
       _originalProfileImage = user.profileImage;
       _nameController.text = _originalName;
       _emailController.text = _originalEmail;
+      _phoneController.text = _originalPhone;
     } catch (error) {
       _errorMessage = error.toString();
     } finally {
@@ -123,6 +129,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       final saved = await ref.read(authSessionProvider.notifier).updateProfile(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
             profileImage: _pickedAvatarDataUrl ?? _originalProfileImage,
           );
 
@@ -131,9 +138,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       setState(() {
         _originalName = saved.user.displayName;
         _originalEmail = saved.user.email ?? '';
+        _originalPhone = saved.user.phone;
         _originalProfileImage = saved.user.profileImage;
         _nameController.text = _originalName;
         _emailController.text = _originalEmail;
+        _phoneController.text = _originalPhone;
         _pickedAvatarBytes = null;
         _pickedAvatarDataUrl = null;
       });
@@ -264,12 +273,20 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone',
+                                helperText: 'Optional',
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 16),
                       if (user != null) ...[
-                        _DetailRow(label: 'Phone', value: user.phone.isEmpty ? '-' : user.phone),
                         _DetailRow(label: 'Role', value: user.role),
                         _DetailRow(label: 'Status', value: user.status),
                       ],

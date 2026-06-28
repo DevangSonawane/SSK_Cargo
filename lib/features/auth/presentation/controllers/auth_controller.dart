@@ -98,6 +98,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   Future<AuthSession> updateProfile({
     required String name,
     required String email,
+    String? phone,
     String? profileImage,
   }) async {
     final currentSession = session;
@@ -109,6 +110,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       accessToken: currentSession.tokens.accessToken,
       name: name,
       email: email,
+      phone: phone,
       profileImage: profileImage,
     );
     final updated = AuthSession.fromProfileResponse(
