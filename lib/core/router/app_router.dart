@@ -19,6 +19,7 @@ import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/client/presentation/screens/client_delivery_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
+import '../../features/client/presentation/screens/client_settings_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
 import '../../features/client/presentation/screens/tracking_details_screen.dart';
@@ -88,6 +89,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const NoTransitionPage(child: ManageAccountScreen()),
       ),
       GoRoute(
+        path: '/client/settings',
+        pageBuilder: (context, state) => const NoTransitionPage(child: ClientSettingsScreen()),
+      ),
+      GoRoute(
         path: '/client/tracking/details',
         pageBuilder: (context, state) {
           final shipment = state.extra as TrackingDemoShipment?;
@@ -97,10 +102,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           );
         },
-      ),
-      GoRoute(
-        path: '/broker/profile',
-        pageBuilder: (context, state) => const NoTransitionPage(child: BrokerProfileScreen()),
       ),
       GoRoute(
         path: '/broker/vehicles/add',
@@ -179,6 +180,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/broker/home',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BrokerHomeScreen()),
+              ),
+              GoRoute(
+                path: '/broker/profile',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerProfileScreen()),
               ),
             ],
           ),

@@ -15,6 +15,9 @@ class BrokerShell extends ConsumerWidget {
     final pendingCount = ref.watch(brokerPendingRequestsProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
+    final location = GoRouterState.of(context).uri.path;
+    final showHeader = location != '/broker/profile';
+    final showBottomNav = location != '/broker/profile';
     final currentTab = navigationShell.currentIndex;
     final headerTitle = switch (currentTab) {
       0 => displayName == null ? 'Good morning, Aman' : 'Good morning, ${displayName.split(' ').first}',
@@ -35,27 +38,31 @@ class BrokerShell extends ConsumerWidget {
       backgroundColor: const Color(0xFFF5F7FB),
       body: Column(
         children: [
-          BrokerHeader(
-            highlighted: true,
-            title: headerTitle,
-            subtitle: headerSubtitle,
-            pendingRequestsCount: pendingCount,
-            onAvatarTap: () => context.push('/broker/profile'),
-          ),
-          const SizedBox(height: 8),
+          if (showHeader) ...[
+            BrokerHeader(
+              highlighted: true,
+              title: headerTitle,
+              subtitle: headerSubtitle,
+              pendingRequestsCount: pendingCount,
+              onAvatarTap: () => context.push('/broker/profile'),
+            ),
+            const SizedBox(height: 8),
+          ],
           Expanded(child: navigationShell),
         ],
       ),
-      bottomNavigationBar: BrokerBottomBar(
-        currentIndex: navigationShell.currentIndex,
-        pendingRequestsCount: pendingCount,
-        onTap: (index) {
-          if (index == navigationShell.currentIndex) {
-            return;
-          }
-          navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
-        },
-      ),
+      bottomNavigationBar: showBottomNav
+          ? BrokerBottomBar(
+              currentIndex: navigationShell.currentIndex,
+              pendingRequestsCount: pendingCount,
+              onTap: (index) {
+                if (index == navigationShell.currentIndex) {
+                  return;
+                }
+                navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+              },
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

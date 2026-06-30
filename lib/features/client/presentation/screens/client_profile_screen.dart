@@ -88,7 +88,7 @@ class ClientProfileScreen extends ConsumerWidget {
             _ProfileMenuTile(
               title: 'Settings',
               icon: Icons.settings_rounded,
-              onTap: () {},
+              onTap: () => context.push('/client/settings'),
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(

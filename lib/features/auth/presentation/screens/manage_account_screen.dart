@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -56,14 +55,6 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     final phoneChanged = _phoneController.text.trim() != _originalPhone.trim();
     final imageChanged = _pickedAvatarBytes != null;
     return nameChanged || emailChanged || phoneChanged || imageChanged;
-  }
-
-  String _changePasswordRouteForRole(String? role) {
-    return switch (role) {
-      'broker' => '/change-password',
-      'driver' => '/change-password',
-      _ => '/change-password',
-    };
   }
 
   String _mimeTypeForName(String name) {
@@ -307,11 +298,6 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 12),
-                      OutlinedButton(
-                        onPressed: () => context.push(_changePasswordRouteForRole(user?.role)),
-                        child: const Text('Change password'),
-                      ),
                     ],
                   ),
                 ),
