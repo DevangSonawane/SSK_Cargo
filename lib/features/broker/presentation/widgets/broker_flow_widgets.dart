@@ -1751,6 +1751,7 @@ class BrokerMenuTile extends StatelessWidget {
     required this.onTap,
     this.titleColor = const Color(0xFF101828),
     this.iconColor = const Color(0xFF1C2430),
+    this.completed = false,
   });
 
   final String title;
@@ -1758,6 +1759,7 @@ class BrokerMenuTile extends StatelessWidget {
   final VoidCallback onTap;
   final Color titleColor;
   final Color iconColor;
+  final bool completed;
 
   @override
   Widget build(BuildContext context) {
@@ -1780,7 +1782,7 @@ class BrokerMenuTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: iconColor, size: 22),
+            Icon(icon, color: completed ? const Color(0xFF2FA56E) : iconColor, size: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
@@ -1788,10 +1790,14 @@ class BrokerMenuTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: titleColor,
+                      color: completed ? const Color(0xFF1F7A52) : titleColor,
                     ),
               ),
             ),
+            if (completed) ...[
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 18),
+              const SizedBox(width: 8),
+            ],
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
           ],
         ),

@@ -2,15 +2,69 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
-class BrokerProfileScreen extends ConsumerWidget {
+class BrokerProfileScreen extends ConsumerStatefulWidget {
   const BrokerProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BrokerProfileScreen> createState() => _BrokerProfileScreenState();
+}
+
+class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
+  bool _kycApproved = false;
+  bool _loadingKyc = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadKycStatus();
+    });
+  }
+
+  bool _isApprovedStatus(String status) {
+    final normalized = status.toLowerCase();
+    return normalized.contains('verified') ||
+        normalized.contains('approved') ||
+        normalized.contains('complete');
+  }
+
+  Future<void> _loadKycStatus() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = false;
+        _loadingKyc = false;
+      });
+      return;
+    }
+
+    try {
+      final response =
+          await ref.read(apiClientProvider).getBrokerKycStatus(accessToken: session.tokens.accessToken);
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      final status = data['kyc_status']?.toString() ?? '';
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = _isApprovedStatus(status);
+        _loadingKyc = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = false;
+        _loadingKyc = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
     final title = user?.displayName ?? 'Broker operations';
@@ -121,6 +175,7 @@ class BrokerProfileScreen extends ConsumerWidget {
                 title: 'KYC registration',
                 icon: Icons.verified_user_rounded,
                 onTap: () => context.push('/broker/kyc-registration'),
+                completed: !_loadingKyc && _kycApproved,
               ),
               const SizedBox(height: 10),
               BrokerMenuTile(
