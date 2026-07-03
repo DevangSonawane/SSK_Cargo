@@ -533,38 +533,23 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       _KycStep.submitted => 3,
     };
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              for (var i = 0; i < _stepLabels.length; i++) ...[
-                Expanded(
-                  child: _StepperItem(
-                    label: _stepLabels[i],
-                    index: i,
-                    activeIndex: activeIndex,
-                  ),
+    return Column(
+      children: [
+        Row(
+          children: [
+            for (var i = 0; i < _stepLabels.length; i++) ...[
+              Expanded(
+                child: _StepperItem(
+                  label: _stepLabels[i],
+                  index: i,
+                  activeIndex: activeIndex,
                 ),
-                if (i != _stepLabels.length - 1) const SizedBox(width: 8),
-              ],
+              ),
+              if (i != _stepLabels.length - 1) const SizedBox(width: 8),
             ],
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -580,17 +565,18 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SectionHeader(
-            title: 'Broker KYC',
-            subtitle: 'Complete your KYC to verify your brokerage account.',
+          Text(
+            'Complete your KYC to verify your brokerage account.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  height: 1.4,
+                ),
           ),
           const SizedBox(height: 16),
           _PremiumTextField(
             controller: _panController,
             label: 'PAN Number',
             hintText: 'ABCDE1234F',
-            helperText: 'Enter the business PAN exactly as shown on the card.',
-            icon: Icons.credit_card_rounded,
             textCapitalization: TextCapitalization.characters,
             valid: panValid,
             validator: (value) {
@@ -605,8 +591,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             controller: _aadhaarController,
             label: 'Aadhaar Number',
             hintText: 'XXXX XXXX XXXX',
-            helperText: 'Use 12 digits. We auto-format spaces as you type.',
-            icon: Icons.badge_rounded,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -627,8 +611,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             controller: _gstController,
             label: 'GST Number',
             hintText: '27ABCDE1234F1Z5',
-            helperText: 'Business GST registration number.',
-            icon: Icons.receipt_long_rounded,
             textCapitalization: TextCapitalization.characters,
             valid: gstValid,
             validator: (value) {
@@ -643,8 +625,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             controller: _bankAccountController,
             label: 'Bank Account Number',
             hintText: '1234567890123',
-            helperText: 'Use the account number linked to this business.',
-            icon: Icons.account_balance_rounded,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -663,8 +643,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             controller: _bankAccountConfirmController,
             label: 'Confirm Account Number',
             hintText: 'Optional',
-            helperText: 'Optional, but helpful for avoiding mistakes.',
-            icon: Icons.verified_user_outlined,
+            requiredField: false,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -689,8 +668,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             controller: _businessRegController,
             label: 'Business Registration Number',
             hintText: 'U12345MH2020PTC123456',
-            helperText: 'Registration or incorporation number for the business.',
-            icon: Icons.storefront_rounded,
             textCapitalization: TextCapitalization.characters,
             valid: businessValid,
             validator: (value) {
@@ -1045,14 +1022,18 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       final isApproved = _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
       return SafeArea(
         top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
-          ),
-          child: Row(
-            children: [
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(22),
+                topRight: Radius.circular(22),
+              ),
+            ),
+            child: Row(
+              children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: _goBack,
@@ -1073,7 +1054,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                     backgroundColor: isApproved ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   ),
                   child: Text(
                     isApproved ? 'View my documents' : 'View KYC Status',
@@ -1123,12 +1104,12 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
         ),
         child: SizedBox(
           height: 54,
-          child: FilledButton(
+        child: FilledButton(
             onPressed: _saving ? null : action,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF1F88C9),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             ),
             child: _saving
                 ? const SizedBox(
@@ -1169,6 +1150,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
         elevation: 0,
         centerTitle: true,
         leadingWidth: 56,
+        titleSpacing: 0,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: InkWell(
@@ -1185,9 +1167,14 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'KYC registration',
           textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF101828),
+              ),
         ),
       ),
       body: SafeArea(
@@ -1321,26 +1308,32 @@ class _StepperItem extends StatelessWidget {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            circle,
-            if (index != 3) Expanded(
-              child: Container(
-                height: 2,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: index < activeIndex ? brand : muted,
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              circle,
+              if (index != 3) Expanded(
+                child: Container(
+                  height: 2,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  color: index < activeIndex ? brand : muted,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontSize: 9,
+            height: 1.0,
+            fontWeight: FontWeight.w600,
             color: isCompleted || isActive ? const Color(0xFF101828) : textMuted,
           ),
         ),
@@ -1467,11 +1460,10 @@ class _PremiumTextField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.hintText,
-    required this.helperText,
-    required this.icon,
     required this.valid,
     required this.validator,
     required this.onChanged,
+    this.requiredField = true,
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
@@ -1480,50 +1472,105 @@ class _PremiumTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String hintText;
-  final String helperText;
-  final IconData icon;
   final bool valid;
   final FormFieldValidator<String> validator;
   final ValueChanged<String> onChanged;
+  final bool requiredField;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
+    final hasValue = controller.text.trim().isNotEmpty;
+    final statusIcon = !hasValue
+        ? Icons.radio_button_unchecked_rounded
+        : valid
+            ? Icons.check_rounded
+            : Icons.close_rounded;
+    final statusColor = !hasValue
+        ? const Color(0xFF98A2B3)
+        : valid
+            ? const Color(0xFF2FA56E)
+            : const Color(0xFFE23A4B);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFE8EDF2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
-          inputFormatters: inputFormatters,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: hintText,
-            prefixIcon: Icon(icon),
-            suffixIcon: valid
-                ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E))
-                : null,
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          helperText,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
-                height: 1.3,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          label,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: const Color(0xFF101828),
+                              ),
+                        ),
+                        if (requiredField) ...[
+                          const SizedBox(width: 4),
+                          const Text(
+                            '*',
+                            style: TextStyle(
+                              color: Color(0xFFE23A4B),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    TextFormField(
+                      controller: controller,
+                      validator: validator,
+                      keyboardType: keyboardType,
+                      textCapitalization: textCapitalization,
+                      inputFormatters: inputFormatters,
+                      onChanged: onChanged,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.only(top: 0, bottom: 0),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        hintText: hintText,
+                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF98A2B3),
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
+              Icon(statusIcon, color: statusColor, size: 14),
+            ],
+          ),
         ),
       ],
     );
