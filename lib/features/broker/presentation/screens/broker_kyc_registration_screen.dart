@@ -22,7 +22,6 @@ class BrokerKycRegistrationScreen extends ConsumerStatefulWidget {
 }
 
 class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrationScreen> {
-  final _detailsFormKey = GlobalKey<FormState>();
   final _confirmCheckboxController = ValueNotifier<bool>(false);
   final _picker = ImagePicker();
 
@@ -177,10 +176,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     return input.map((key, value) => MapEntry(key.toString(), value?.toString() ?? ''));
   }
 
-  bool _hasUploadedAllDocuments() {
-    return _attachments.values.every((attachment) => attachment.isUploaded);
-  }
-
   Future<void> _loadKycStatus({bool silent = false}) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -241,18 +236,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   }
 
   Future<void> _submitKyc() async {
-    if (!(_detailsFormKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    if (!_hasUploadedAllDocuments()) {
-      setState(() {
-        _step = _KycStep.documents;
-        _errorMessage = 'Please upload all required documents before submitting.';
-      });
-      return;
-    }
-
     if (!(_confirmCheckboxController.value)) {
       setState(() {
         _step = _KycStep.review;
@@ -586,133 +569,105 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     final bankValid = _isBankValid(_bankAccountController.text);
     final businessValid = _isBusinessRegValid(_businessRegController.text);
 
-    return Form(
-      key: _detailsFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Complete your KYC to verify your brokerage account.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  height: 1.4,
-                ),
-          ),
-          const SizedBox(height: 16),
-          _PremiumTextField(
-            controller: _panController,
-            label: 'PAN Number',
-            hintText: 'ABCDE1234F',
-            textCapitalization: TextCapitalization.characters,
-            valid: panValid,
-            validator: (value) {
-              if ((value ?? '').trim().isEmpty) return 'PAN number is required';
-              if (!panValid) return 'Enter a valid PAN number';
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          _PremiumTextField(
-            controller: _aadhaarController,
-            label: 'Aadhaar Number',
-            hintText: 'XXXX XXXX XXXX',
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(12),
-              _AadhaarSpacingFormatter(),
-            ],
-            valid: aadhaarValid,
-            validator: (value) {
-              final raw = (value ?? '').replaceAll(' ', '').trim();
-              if (raw.isEmpty) return 'Aadhaar number is required';
-              if (!aadhaarValid) return 'Enter a valid Aadhaar number';
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          _PremiumTextField(
-            controller: _gstController,
-            label: 'GST Number',
-            hintText: '27ABCDE1234F1Z5',
-            textCapitalization: TextCapitalization.characters,
-            valid: gstValid,
-            validator: (value) {
-              if ((value ?? '').trim().isEmpty) return 'GST number is required';
-              if (!gstValid) return 'Enter a valid GST number';
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          _PremiumTextField(
-            controller: _bankAccountController,
-            label: 'Bank Account Number',
-            hintText: '1234567890123',
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(18),
-            ],
-            valid: bankValid,
-            validator: (value) {
-              if ((value ?? '').trim().isEmpty) return 'Bank account number is required';
-              if (!bankValid) return 'Enter a valid bank account number';
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          _PremiumTextField(
-            controller: _bankAccountConfirmController,
-            label: 'Confirm Account Number',
-            hintText: 'Optional',
-            requiredField: false,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(18),
-            ],
-            valid: _bankAccountConfirmController.text.trim().isNotEmpty &&
-                _bankAccountConfirmController.text.trim() == _bankAccountController.text.trim(),
-            validator: (value) {
-              final confirm = value?.trim() ?? '';
-              if (confirm.isEmpty) {
-                return null;
-              }
-              if (confirm != _bankAccountController.text.trim()) {
-                return 'Account numbers do not match';
-              }
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          _PremiumTextField(
-            controller: _businessRegController,
-            label: 'Business Registration Number',
-            hintText: 'U12345MH2020PTC123456',
-            textCapitalization: TextCapitalization.characters,
-            valid: businessValid,
-            validator: (value) {
-              if ((value ?? '').trim().isEmpty) return 'Business registration number is required';
-              if (!businessValid) return 'Enter a valid business registration number';
-              return null;
-            },
-            onChanged: (_) => setState(() {}),
-          ),
-          if (_rejectionReason != null) ...[
-            const SizedBox(height: 14),
-            _WarningCard(message: _rejectionReason!),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Complete your KYC to verify your brokerage account.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF667085),
+                height: 1.4,
+              ),
+        ),
+        const SizedBox(height: 16),
+        _PremiumTextField(
+          controller: _panController,
+          label: 'PAN Number',
+          hintText: 'ABCDE1234F',
+          textCapitalization: TextCapitalization.characters,
+          valid: panValid,
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+          requiredField: false,
+        ),
+        const SizedBox(height: 12),
+        _PremiumTextField(
+          controller: _aadhaarController,
+          label: 'Aadhaar Number',
+          hintText: 'XXXX XXXX XXXX',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(12),
+            _AadhaarSpacingFormatter(),
           ],
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 14),
-            _WarningCard(message: _errorMessage!),
+          valid: aadhaarValid,
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+          requiredField: false,
+        ),
+        const SizedBox(height: 12),
+        _PremiumTextField(
+          controller: _gstController,
+          label: 'GST Number',
+          hintText: '27ABCDE1234F1Z5',
+          textCapitalization: TextCapitalization.characters,
+          valid: gstValid,
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+          requiredField: false,
+        ),
+        const SizedBox(height: 12),
+        _PremiumTextField(
+          controller: _bankAccountController,
+          label: 'Bank Account Number',
+          hintText: '1234567890123',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(18),
           ],
+          valid: bankValid,
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+          requiredField: false,
+        ),
+        const SizedBox(height: 12),
+        _PremiumTextField(
+          controller: _bankAccountConfirmController,
+          label: 'Confirm Account Number',
+          hintText: 'Optional',
+          requiredField: false,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(18),
+          ],
+          valid: _bankAccountConfirmController.text.trim().isNotEmpty &&
+              _bankAccountConfirmController.text.trim() == _bankAccountController.text.trim(),
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        _PremiumTextField(
+          controller: _businessRegController,
+          label: 'Business Registration Number',
+          hintText: 'U12345MH2020PTC123456',
+          textCapitalization: TextCapitalization.characters,
+          valid: businessValid,
+          validator: (_) => null,
+          onChanged: (_) => setState(() {}),
+          requiredField: false,
+        ),
+        if (_rejectionReason != null) ...[
+          const SizedBox(height: 14),
+          _WarningCard(message: _rejectionReason!),
         ],
-      ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 14),
+          _WarningCard(message: _errorMessage!),
+        ],
+      ],
     );
   }
 
@@ -764,27 +719,33 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             children: [
               _ReviewFieldRow(
                 label: 'PAN Number',
-                value: _panController.text.trim(),
+                value: _panController.text.trim().isEmpty ? 'Not provided' : _panController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
                 label: 'Aadhaar Number',
-                value: _aadhaarController.text.trim(),
+                value: _aadhaarController.text.trim().isEmpty
+                    ? 'Not provided'
+                    : _aadhaarController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
                 label: 'GST Number',
-                value: _gstController.text.trim(),
+                value: _gstController.text.trim().isEmpty ? 'Not provided' : _gstController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
                 label: 'Bank Account Number',
-                value: _bankAccountController.text.trim(),
+                value: _bankAccountController.text.trim().isEmpty
+                    ? 'Not provided'
+                    : _bankAccountController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
                 label: 'Business Registration Number',
-                value: _businessRegController.text.trim(),
+                value: _businessRegController.text.trim().isEmpty
+                    ? 'Not provided'
+                    : _businessRegController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
             ],
@@ -1098,9 +1059,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
     final action = _step == _KycStep.details
         ? () {
-            if (!(_detailsFormKey.currentState?.validate() ?? false)) {
-              return;
-            }
             setState(() {
               _errorMessage = null;
               _step = _KycStep.documents;
@@ -1108,12 +1066,6 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
           }
         : _step == _KycStep.documents
             ? () {
-                if (!_hasUploadedAllDocuments()) {
-                  setState(() {
-                    _errorMessage = 'Please upload all required documents before continuing.';
-                  });
-                  return;
-                }
                 setState(() {
                   _errorMessage = null;
                   _step = _KycStep.review;
