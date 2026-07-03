@@ -34,6 +34,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   String? _rejectionReason;
   DateTime? _submittedAt;
   DateTime? _reviewedAt;
+  bool _hasSubmission = false;
   Map<String, String> _submittedDocuments = const {};
 
   @override
@@ -59,9 +60,12 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   }
 
   _KycFlowState get _currentFlowState {
+    if (!_hasSubmission) {
+      return _KycFlowState.form;
+    }
     final status = _statusLabel?.toLowerCase().trim();
     if (status == null || status.isEmpty) {
-      return _submittedDocuments.isEmpty ? _KycFlowState.form : _KycFlowState.pending;
+      return _KycFlowState.pending;
     }
     if (_isApprovedStatus(status)) {
       return _KycFlowState.approved;
@@ -72,7 +76,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     if (_isPendingStatus(status)) {
       return _KycFlowState.pending;
     }
-    return _submittedDocuments.isEmpty ? _KycFlowState.form : _KycFlowState.pending;
+    return _KycFlowState.pending;
   }
 
   bool _isApprovedStatus(String status) {
@@ -146,15 +150,17 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final submission = data['submission'] as Map<String, dynamic>?;
       final documents = _documentsFromMap(submission?['documents'] as Map<String, dynamic>?);
+      final hasSubmission = submission != null && submission.isNotEmpty;
 
       if (mounted) {
         setState(() {
+          _hasSubmission = hasSubmission;
           _statusLabel = data['kyc_status']?.toString();
           _rejectionReason = submission?['rejection_reason']?.toString();
           _submittedAt = DateTime.tryParse(submission?['submitted_at']?.toString() ?? '');
           _reviewedAt = DateTime.tryParse(submission?['reviewed_at']?.toString() ?? '');
           _submittedDocuments = documents;
-          if (_currentFlowState != _KycFlowState.form && documents.isNotEmpty) {
+          if (_hasSubmission && documents.isNotEmpty) {
             _prefillControllers(documents);
           }
           _errorMessage = null;
@@ -210,6 +216,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       _submittedAt = DateTime.now();
       _statusLabel = 'submitted';
       _rejectionReason = null;
+      _hasSubmission = true;
       await _loadKycStatus(silent: true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
