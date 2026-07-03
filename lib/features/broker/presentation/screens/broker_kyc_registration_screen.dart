@@ -533,23 +533,42 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       _KycStep.submitted => 3,
     };
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            for (var i = 0; i < _stepLabels.length; i++) ...[
-              Expanded(
-                child: _StepperItem(
-                  label: _stepLabels[i],
-                  index: i,
-                  activeIndex: activeIndex,
+    return SizedBox(
+      height: 54,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 14,
+            right: 14,
+            top: 14,
+            child: Row(
+              children: [
+                for (var i = 0; i < _stepLabels.length - 1; i++) ...[
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      color: activeIndex > i ? const Color(0xFF1F88C9) : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              for (var i = 0; i < _stepLabels.length; i++) ...[
+                Expanded(
+                  child: _StepperItem(
+                    label: _stepLabels[i],
+                    index: i,
+                    activeIndex: activeIndex,
+                  ),
                 ),
-              ),
-              if (i != _stepLabels.length - 1) const SizedBox(width: 8),
+              ],
             ],
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1251,9 +1270,8 @@ class _StepperItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompleted = index < activeIndex;
     final isActive = index == activeIndex;
-    final brand = const Color(0xFF1F88C9);
-    final muted = const Color(0xFFE5E7EB);
     final textMuted = const Color(0xFF667085);
+    final muted = const Color(0xFFE5E7EB);
 
     Widget circle;
     if (isCompleted) {
@@ -1311,30 +1329,19 @@ class _StepperItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        Center(child: circle),
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          child: Row(
-            children: [
-              circle,
-              if (index != 3) Expanded(
-                child: Container(
-                  height: 2,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: index < activeIndex ? brand : muted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 9,
-            height: 1.0,
-            fontWeight: FontWeight.w600,
-            color: isCompleted || isActive ? const Color(0xFF101828) : textMuted,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 9,
+              height: 1.0,
+              fontWeight: FontWeight.w600,
+              color: isCompleted || isActive ? const Color(0xFF101828) : textMuted,
+            ),
           ),
         ),
       ],
