@@ -1361,16 +1361,16 @@ class _CardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE8EDF2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1380,11 +1380,12 @@ class _CardSection extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
                   color: const Color(0xFF101828),
                 ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           child,
         ],
       ),
@@ -1400,11 +1401,18 @@ class _WarningCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7E8),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF2D9A8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1596,18 +1604,19 @@ class _KycUploadCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFEAF1FF),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   uploaded ? Icons.check_circle_rounded : Icons.description_rounded,
                   color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1618,57 +1627,39 @@ class _KycUploadCard extends StatelessWidget {
                           child: Text(
                             document.title,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
                                   color: titleColor,
                                 ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (uploaded)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9F3E5),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              'Uploaded',
-                              style: TextStyle(
-                                color: Color(0xFF1F7A52),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF2F4F7),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              document.requiredLabel,
-                              style: const TextStyle(
-                                color: Color(0xFF667085),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
+                        const SizedBox(width: 8),
+                        _TinyTag(
+                          label: uploaded ? 'Uploaded' : document.requiredLabel,
+                          uploaded: uploaded,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       'Supported formats: ${document.formats}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: const Color(0xFF667085),
+                            fontSize: 10,
                           ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       document.maxSize,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: const Color(0xFF667085),
+                            fontSize: 10,
                           ),
                     ),
                   ],
@@ -1676,85 +1667,103 @@ class _KycUploadCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onUpload,
-                  icon: const Icon(Icons.cloud_upload_rounded),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    side: const BorderSide(color: Color(0xFFD0D5DD)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  label: const Text('Upload', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
+              _MiniIconButton(
+                icon: Icons.cloud_upload_rounded,
+                onPressed: onUpload,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onCamera,
-                  icon: const Icon(Icons.photo_camera_rounded),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    side: const BorderSide(color: Color(0xFFD0D5DD)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  label: const Text('Camera', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
+              const SizedBox(width: 8),
+              _MiniIconButton(
+                icon: Icons.photo_camera_rounded,
+                onPressed: onCamera,
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onGallery,
-                  icon: const Icon(Icons.photo_library_rounded),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    side: const BorderSide(color: Color(0xFFD0D5DD)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  label: const Text('Gallery', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
+              const SizedBox(width: 8),
+              _MiniIconButton(
+                icon: Icons.photo_library_rounded,
+                onPressed: onGallery,
               ),
               if (uploaded) ...[
                 const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: onView,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2FA56E),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text('View', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
+                _MiniIconButton(
+                  icon: Icons.visibility_rounded,
+                  onPressed: onView,
+                  filled: true,
+                ),
+                const SizedBox(width: 8),
+                _MiniIconButton(
+                  icon: Icons.swap_horiz_rounded,
+                  onPressed: onReplace,
                 ),
               ],
             ],
           ),
-          if (uploaded) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: onReplace,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44),
-                  side: const BorderSide(color: Color(0xFFB7E4C7)),
-                  foregroundColor: const Color(0xFF1F7A52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text('Replace', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
         ],
+      ),
+    );
+  }
+}
+
+class _MiniIconButton extends StatelessWidget {
+  const _MiniIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = filled ? const Color(0xFF2FA56E) : Colors.white;
+    final iconColor = filled ? Colors.white : const Color(0xFF667085);
+    final borderColor = filled ? const Color(0xFF2FA56E) : const Color(0xFFD0D5DD);
+
+    return SizedBox(
+      width: 34,
+      height: 34,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          backgroundColor: background,
+          foregroundColor: iconColor,
+          side: BorderSide(color: borderColor),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Icon(icon, size: 16, color: iconColor),
+      ),
+    );
+  }
+}
+
+class _TinyTag extends StatelessWidget {
+  const _TinyTag({
+    required this.label,
+    required this.uploaded,
+  });
+
+  final String label;
+  final bool uploaded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFF2F4F7),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: uploaded ? const Color(0xFF1F7A52) : const Color(0xFF667085),
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1775,11 +1784,18 @@ class _ReviewFieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -1792,14 +1808,16 @@ class _ReviewFieldRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF667085),
                         fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF101828),
                         fontWeight: FontWeight.w700,
+                        fontSize: 14,
                       ),
                 ),
               ],
@@ -1834,19 +1852,26 @@ class _ReviewDocumentRow extends StatelessWidget {
     final uploaded = attachment.isUploaded;
     final hasPreview = attachment.path != null && File(attachment.path!).existsSync();
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             child: Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFEAF1FF),
               child: hasPreview
                   ? Image.file(
@@ -1868,6 +1893,7 @@ class _ReviewDocumentRow extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
+                        fontSize: 14,
                         color: const Color(0xFF101828),
                       ),
                 ),
