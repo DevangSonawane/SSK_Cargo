@@ -1866,12 +1866,13 @@ class _ReviewDocumentRow extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFEAF1FF),
               child: hasPreview
                   ? Image.file(
@@ -1881,41 +1882,48 @@ class _ReviewDocumentRow extends StatelessWidget {
                   : Icon(
                       uploaded ? Icons.check_rounded : Icons.insert_drive_file_rounded,
                       color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
+                      size: 18,
                     ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                        fontSize: 12,
                         color: const Color(0xFF101828),
                       ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   uploaded ? 'Uploaded' : 'Waiting for upload',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: uploaded ? const Color(0xFF1F7A52) : const Color(0xFF667085),
+                        fontSize: 10,
                       ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          TextButton(
+          const SizedBox(width: 8),
+          _MiniIconButton(
+            icon: Icons.visibility_rounded,
             onPressed: onView,
-            child: const Text('View'),
+            filled: true,
           ),
-          const SizedBox(width: 4),
-          TextButton(
+          const SizedBox(width: 8),
+          _MiniIconButton(
+            icon: Icons.swap_horiz_rounded,
             onPressed: onReplace,
-            child: const Text('Replace'),
           ),
         ],
       ),
