@@ -11,6 +11,7 @@ import '../../features/broker/presentation/screens/add_vehicle_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
 import '../../features/broker/presentation/screens/broker_profile_screen.dart';
+import '../../features/broker/presentation/screens/broker_kyc_registration_screen.dart';
 import '../../features/broker/presentation/screens/broker_shell.dart';
 import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
 import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
@@ -87,6 +88,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/manage-account',
         pageBuilder: (context, state) => const NoTransitionPage(child: ManageAccountScreen()),
+      ),
+      GoRoute(
+        path: '/broker/kyc-registration',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: BrokerKycRegistrationScreen(),
+        ),
       ),
       GoRoute(
         path: '/client/settings',

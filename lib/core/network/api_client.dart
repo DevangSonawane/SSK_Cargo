@@ -183,6 +183,44 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> submitBrokerKyc({
+    required String accessToken,
+    required Map<String, dynamic> documents,
+  }) async {
+    developer.log(
+      'POST /api/kyc/broker documents=${documents.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/broker',
+        data: {
+          'documents': documents,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerKycStatus({
+    required String accessToken,
+  }) async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/kyc/status',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> _request(
     Future<Response<Map<String, dynamic>>> Function() call,
   ) async {

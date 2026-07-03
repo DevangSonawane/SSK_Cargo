@@ -118,9 +118,9 @@ class BrokerProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               BrokerMenuTile(
-                title: 'Settings',
-                icon: Icons.settings_rounded,
-                onTap: () {},
+                title: 'KYC registration',
+                icon: Icons.verified_user_rounded,
+                onTap: () => context.push('/broker/kyc-registration'),
               ),
               const SizedBox(height: 10),
               BrokerMenuTile(
