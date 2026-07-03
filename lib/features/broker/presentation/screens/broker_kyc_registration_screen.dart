@@ -533,42 +533,49 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       _KycStep.submitted => 3,
     };
 
-    return SizedBox(
-      height: 54,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 14,
-            right: 14,
-            top: 14,
-            child: Row(
-              children: [
-                for (var i = 0; i < _stepLabels.length - 1; i++) ...[
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: activeIndex > i ? const Color(0xFF1F88C9) : const Color(0xFFE5E7EB),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stepWidth = constraints.maxWidth / _stepLabels.length;
+        final lineInset = stepWidth / 2;
+
+        return SizedBox(
+          height: 54,
+          child: Stack(
             children: [
-              for (var i = 0; i < _stepLabels.length; i++) ...[
-                Expanded(
-                  child: _StepperItem(
-                    label: _stepLabels[i],
-                    index: i,
-                    activeIndex: activeIndex,
-                  ),
+              Positioned(
+                left: lineInset,
+                right: lineInset,
+                top: 14,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _stepLabels.length - 1; i++) ...[
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          color: activeIndex > i ? const Color(0xFF1F88C9) : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
+              ),
+              Row(
+                children: [
+                  for (var i = 0; i < _stepLabels.length; i++) ...[
+                    Expanded(
+                      child: _StepperItem(
+                        label: _stepLabels[i],
+                        index: i,
+                        activeIndex: activeIndex,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1041,18 +1048,19 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       final isApproved = _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
       return SafeArea(
         top: false,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(22),
-                topRight: Radius.circular(22),
-              ),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(22),
+              topRight: Radius.circular(22),
             ),
-            child: Row(
-              children: [
+          ),
+          child: Row(
+            children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: _goBack,
@@ -1116,14 +1124,19 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     return SafeArea(
       top: false,
       child: Container(
+        clipBehavior: Clip.antiAlias,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(22),
+            topRight: Radius.circular(22),
+          ),
         ),
         child: SizedBox(
           height: 54,
-        child: FilledButton(
+          child: FilledButton(
             onPressed: _saving ? null : action,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF1F88C9),
