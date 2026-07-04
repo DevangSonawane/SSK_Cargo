@@ -81,8 +81,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                 onSlideChanged: (value) {
                   setState(() => _acceptSlide = value);
                   if (value >= 0.98) {
-                    context.push('/driver/order-accepted');
-                    setState(() => _acceptSlide = 0);
+                    Future.delayed(const Duration(milliseconds: 450), () {
+                      if (!context.mounted) return;
+                      context.push('/driver/delivery-details');
+                      setState(() => _acceptSlide = 0);
+                    });
                   }
                 },
               ),
@@ -276,48 +279,47 @@ class _DeliveryOrderCard extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: 96,
+            height: 92,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 IgnorePointer(
                   child: AnimatedOpacity(
-                    opacity: (1 - (acceptSlide * 1.5)).clamp(0.0, 1.0),
-                    duration: const Duration(milliseconds: 120),
-                    child: Text(
-                      'Slide to accept delivery',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                        fontWeight: FontWeight.w800,
+                    opacity: (1 - (acceptSlide * 2.8)).clamp(0.0, 1.0),
+                    duration: const Duration(milliseconds: 70),
+                    child: AnimatedSlide(
+                      offset: Offset(-acceptSlide * 0.28, 0),
+                      duration: const Duration(milliseconds: 70),
+                      child: Text(
+                        'Slide to accept delivery',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: const Color(0xFF1A1A1A),
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                Transform.scale(
-                  scaleX: 1.22,
-                  scaleY: 1.12,
-                  alignment: Alignment.center,
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 52,
-                      trackShape: const RoundedRectSliderTrackShape(),
-                      thumbShape: const _AcceptOrderThumbShape(),
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 0,
-                      ),
-                      activeTrackColor: const Color(0xFFE5E7EB),
-                      inactiveTrackColor: const Color(0xFFE5E7EB),
-                      thumbColor: Colors.white,
-                      overlayColor: Colors.transparent,
-                      trackGap: 0,
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 52,
+                    trackShape: const RoundedRectSliderTrackShape(),
+                    thumbShape: const _AcceptOrderThumbShape(),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 0,
                     ),
-                    child: Slider(
-                      value: acceptSlide,
-                      onChanged: onSlideChanged,
-                      min: 0,
-                      max: 1,
-                      divisions: 100,
-                    ),
+                    activeTrackColor: const Color(0xFFE5E7EB),
+                    inactiveTrackColor: const Color(0xFFE5E7EB),
+                    thumbColor: Colors.white,
+                    overlayColor: Colors.transparent,
+                    trackGap: 6,
+                  ),
+                  child: Slider(
+                    value: acceptSlide,
+                    onChanged: onSlideChanged,
+                    min: 0,
+                    max: 1,
+                    divisions: 100,
                   ),
                 ),
               ],
@@ -392,10 +394,14 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
     final canvas = context.canvas;
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.14)
+      ..isAntiAlias = true
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    final fillPaint = Paint()..color = Colors.white;
+    final fillPaint = Paint()
+      ..color = Colors.white
+      ..isAntiAlias = true;
     final borderPaint = Paint()
       ..color = const Color(0xFFE5E7EB)
+      ..isAntiAlias = true
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -404,12 +410,14 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
     canvas.drawCircle(center, 22, borderPaint);
 
     final textPainter = TextPainter(
-      text: const TextSpan(
-        text: '›',
+      text: TextSpan(
+        text: String.fromCharCode(Icons.chevron_right_rounded.codePoint),
         style: TextStyle(
-          color: Color(0xFF2FA56E),
-          fontSize: 26,
+          color: const Color(0xFF2FA56E),
+          fontSize: 28,
           fontWeight: FontWeight.w800,
+          fontFamily: Icons.chevron_right_rounded.fontFamily,
+          package: Icons.chevron_right_rounded.fontPackage,
           height: 1,
         ),
       ),
