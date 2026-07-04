@@ -283,23 +283,6 @@ class _DeliveryOrderCard extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                IgnorePointer(
-                  child: AnimatedOpacity(
-                    opacity: (1 - (acceptSlide * 2.8)).clamp(0.0, 1.0),
-                    duration: const Duration(milliseconds: 70),
-                    child: AnimatedSlide(
-                      offset: Offset(-acceptSlide * 0.28, 0),
-                      duration: const Duration(milliseconds: 70),
-                      child: Text(
-                        'Slide to accept delivery',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF1A1A1A),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 52,
@@ -320,6 +303,20 @@ class _DeliveryOrderCard extends StatelessWidget {
                     min: 0,
                     max: 1,
                     divisions: 100,
+                  ),
+                ),
+                IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: (1 - (acceptSlide * 1.7)).clamp(0.18, 1.0),
+                    duration: const Duration(milliseconds: 90),
+                    child: Text(
+                      'Slide to accept delivery',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ],
