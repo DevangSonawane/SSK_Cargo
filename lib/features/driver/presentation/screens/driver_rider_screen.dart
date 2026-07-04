@@ -11,7 +11,7 @@ class DriverRiderScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
           Text(
-            'Rider',
+            'Active',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: const Color(0xFF101828),
               fontWeight: FontWeight.w800,
@@ -20,9 +20,8 @@ class DriverRiderScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _InfoCard(
             icon: Icons.person_pin_circle_rounded,
-            title: 'Active rider details',
-            subtitle:
-                'Use this tab for current rider or trip assignment details.',
+            title: 'Active trip details',
+            subtitle: 'Use this tab for current trip assignment details.',
             accent: const Color(0xFF1F88C9),
           ),
           const SizedBox(height: 12),

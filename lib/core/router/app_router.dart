@@ -20,6 +20,7 @@ import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
+import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
 import '../../features/driver/presentation/screens/driver_rider_screen.dart';
 import '../../features/driver/presentation/screens/driver_shell.dart';
 import '../../features/client/presentation/screens/client_delivery_screen.dart';
@@ -60,6 +61,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/profile',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: DriverProfileScreen()),
+      ),
+      GoRoute(
+        path: '/driver/order-accepted',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverOrderAcceptedScreen()),
       ),
       GoRoute(
         path: '/signup',
@@ -174,7 +180,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/driver/rider',
+                path: '/driver/active',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: DriverRiderScreen()),
               ),

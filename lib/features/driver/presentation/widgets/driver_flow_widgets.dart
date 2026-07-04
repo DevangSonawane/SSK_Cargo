@@ -39,7 +39,7 @@ class DriverBottomBar extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _DriverBottomBarItem(
-                label: 'Rider',
+                label: 'Active',
                 icon: Icons.person_pin_circle_rounded,
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
