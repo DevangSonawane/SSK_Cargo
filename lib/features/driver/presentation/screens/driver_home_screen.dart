@@ -274,65 +274,54 @@ class _DeliveryOrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            'Slide to accept order',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                height: 60,
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 32,
-                    trackShape: const RoundedRectSliderTrackShape(),
-                    thumbShape: const _AcceptOrderThumbShape(),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 0,
+          SizedBox(
+            width: double.infinity,
+            height: 96,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: (1 - (acceptSlide * 1.5)).clamp(0.0, 1.0),
+                    duration: const Duration(milliseconds: 120),
+                    child: Text(
+                      'Slide to accept delivery',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF6B7280),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    activeTrackColor: const Color(0xFFE5E7EB),
-                    inactiveTrackColor: const Color(0xFFE5E7EB),
-                    thumbColor: Colors.white,
-                    overlayColor: Colors.transparent,
-                    trackGap: 0,
-                  ),
-                  child: Slider(
-                    value: acceptSlide,
-                    onChanged: onSlideChanged,
-                    min: 0,
-                    max: 1,
-                    divisions: 100,
                   ),
                 ),
-              ),
-              IgnorePointer(
-                child: Text(
-                  'Slide to Accept Order',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF6B7280),
-                    fontWeight: FontWeight.w800,
+                Transform.scale(
+                  scaleY: 1.12,
+                  alignment: Alignment.center,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 46,
+                      trackShape: const RoundedRectSliderTrackShape(),
+                      thumbShape: const _AcceptOrderThumbShape(),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 0,
+                      ),
+                      activeTrackColor: const Color(0xFFE5E7EB),
+                      inactiveTrackColor: const Color(0xFFE5E7EB),
+                      thumbColor: Colors.white,
+                      overlayColor: Colors.transparent,
+                      trackGap: 0,
+                    ),
+                    child: Slider(
+                      value: acceptSlide,
+                      onChanged: onSlideChanged,
+                      min: 0,
+                      max: 1,
+                      divisions: 100,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (acceptSlide > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                'Keep sliding to confirm',
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF98A2B3)),
-              ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -382,7 +371,7 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
   const _AcceptOrderThumbShape();
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(52, 52);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(54, 54);
 
   @override
   void paint(
@@ -409,16 +398,16 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    canvas.drawCircle(center + const Offset(0, 1.5), 22, shadowPaint);
-    canvas.drawCircle(center, 22, fillPaint);
-    canvas.drawCircle(center, 22, borderPaint);
+    canvas.drawCircle(center + const Offset(0, 1.5), 21, shadowPaint);
+    canvas.drawCircle(center, 21, fillPaint);
+    canvas.drawCircle(center, 21, borderPaint);
 
     final textPainter = TextPainter(
       text: const TextSpan(
         text: '›',
         style: TextStyle(
-          color: Color(0xFF22A699),
-          fontSize: 28,
+          color: Color(0xFF2FA56E),
+          fontSize: 26,
           fontWeight: FontWeight.w800,
           height: 1,
         ),
