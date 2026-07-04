@@ -294,11 +294,12 @@ class _DeliveryOrderCard extends StatelessWidget {
                   ),
                 ),
                 Transform.scale(
+                  scaleX: 1.22,
                   scaleY: 1.12,
                   alignment: Alignment.center,
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      trackHeight: 46,
+                      trackHeight: 52,
                       trackShape: const RoundedRectSliderTrackShape(),
                       thumbShape: const _AcceptOrderThumbShape(),
                       overlayShape: const RoundSliderOverlayShape(
@@ -371,7 +372,7 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
   const _AcceptOrderThumbShape();
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(54, 54);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(56, 56);
 
   @override
   void paint(
@@ -398,9 +399,9 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    canvas.drawCircle(center + const Offset(0, 1.5), 21, shadowPaint);
-    canvas.drawCircle(center, 21, fillPaint);
-    canvas.drawCircle(center, 21, borderPaint);
+    canvas.drawCircle(center + const Offset(0, 1.5), 22, shadowPaint);
+    canvas.drawCircle(center, 22, fillPaint);
+    canvas.drawCircle(center, 22, borderPaint);
 
     final textPainter = TextPainter(
       text: const TextSpan(
