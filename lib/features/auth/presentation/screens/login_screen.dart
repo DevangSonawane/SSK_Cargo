@@ -380,8 +380,17 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                         child: Row(
                           children: [
                             IconButton(
-                              onPressed: () => context.go('/access'),
-                              icon: const Icon(Icons.arrow_back_rounded),
+                              onPressed: () => context.go(
+                                widget.role == AppRole.driver
+                                    ? '/broker/login'
+                                    : '/access',
+                              ),
+                              icon: Icon(
+                                Icons.arrow_back_rounded,
+                                color: widget.role == AppRole.driver
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
                               tooltip: 'Back',
                             ),
                           ],
