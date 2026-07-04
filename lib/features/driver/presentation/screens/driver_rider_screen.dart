@@ -10,22 +10,6 @@ class DriverRiderScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
-          Text(
-            'Active',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Track your ongoing delivery and recent completed jobs.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
           _SectionHeader(
             title: 'Ongoing delivery',
             subtitle: 'Current trip in progress',
@@ -114,10 +98,6 @@ class _SectionHeader extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        const Icon(
-          Icons.chevron_right_rounded,
-          color: Color(0xFF98A2B3),
         ),
       ],
     );
