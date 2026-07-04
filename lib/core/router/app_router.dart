@@ -18,6 +18,10 @@ import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/driver_detail_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
+import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
+import '../../features/driver/presentation/screens/driver_profile_screen.dart';
+import '../../features/driver/presentation/screens/driver_rider_screen.dart';
+import '../../features/driver/presentation/screens/driver_shell.dart';
 import '../../features/client/presentation/screens/client_delivery_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
@@ -53,9 +57,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             const NoTransitionPage(child: DriverLoginScreen()),
       ),
       GoRoute(
-        path: '/driver/home',
+        path: '/driver/profile',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverHomeScreen()),
+            const NoTransitionPage(child: DriverProfileScreen()),
       ),
       GoRoute(
         path: '/signup',
@@ -152,6 +156,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   );
           return NoTransitionPage(child: DriverDetailScreen(driver: driver));
         },
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return DriverShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/driver/home',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DriverHomeScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/driver/rider',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DriverRiderScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/driver/earnings',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DriverEarningsScreen()),
+              ),
+            ],
+          ),
+        ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

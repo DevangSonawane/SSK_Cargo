@@ -8,6 +8,7 @@ import 'dart:developer' as developer;
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../data/auth_models.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -117,6 +118,9 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         'Login failed status=${error.statusCode} message=${error.message}',
         name: 'SSK.Auth',
       );
+      if (await _maybeBypassDriverVerification(error, email)) {
+        return;
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -138,6 +142,61 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  Future<bool> _maybeBypassDriverVerification(
+    ApiException error,
+    String email,
+  ) async {
+    final shouldBypass =
+        kDebugMode &&
+        widget.role == AppRole.driver &&
+        error.statusCode == 403 &&
+        error.message.toLowerCase().contains('phone not verified');
+
+    if (!shouldBypass) {
+      return false;
+    }
+
+    final normalizedEmail = email.isEmpty ? 'driver@ssklogistics.in' : email;
+    final session = AuthSession(
+      user: SskUser(
+        id: 'debug-driver-${DateTime.now().millisecondsSinceEpoch}',
+        name: 'Driver Test',
+        email: normalizedEmail,
+        phone: '0000000000',
+        role: 'driver',
+        status: 'active',
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        profileImage: null,
+        lastLoginAt: DateTime.now(),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      tokens: const AuthTokens(
+        accessToken: 'debug-access-token',
+        refreshToken: 'debug-refresh-token',
+        tokenType: 'Bearer',
+        expiresIn: 'debug',
+      ),
+    );
+
+    ref.read(authSessionProvider.notifier).debugSetSession(session);
+    ref.read(selectedRoleProvider.notifier).state = AppRole.driver;
+
+    if (!mounted) {
+      return true;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Debug bypass enabled for driver login.'),
+        backgroundColor: Color(0xFF2FA56E),
+      ),
+    );
+    context.go('/driver/home');
+    return true;
   }
 
   Future<void> _submitWithGoogle() async {
@@ -558,45 +617,46 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 18),
-                                      Center(
-                                        child: Wrap(
-                                          crossAxisAlignment:
-                                              WrapCrossAlignment.center,
-                                          spacing: 6,
-                                          children: [
-                                            const Text(
-                                              "Don't have an account?",
-                                              style: TextStyle(
-                                                color: Color(0xFF1B2A3A),
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => context.go(
-                                                widget.role == AppRole.broker
-                                                    ? '/broker/signup'
-                                                    : '/client/signup',
-                                              ),
-                                              style: TextButton.styleFrom(
-                                                padding: EdgeInsets.zero,
-                                                minimumSize: Size.zero,
-                                                tapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
-                                                foregroundColor: const Color(
-                                                  0xFF2FA56E,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Create one',
+                                      if (widget.role != AppRole.driver)
+                                        Center(
+                                          child: Wrap(
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            spacing: 6,
+                                            children: [
+                                              const Text(
+                                                "Don't have an account?",
                                                 style: TextStyle(
-                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF1B2A3A),
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                              TextButton(
+                                                onPressed: () => context.go(
+                                                  widget.role == AppRole.broker
+                                                      ? '/broker/signup'
+                                                      : '/client/signup',
+                                                ),
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  foregroundColor: const Color(
+                                                    0xFF2FA56E,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Create one',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
                                       if (widget.role == AppRole.broker) ...[
                                         const SizedBox(height: 8),
                                         Center(

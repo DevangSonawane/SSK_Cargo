@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -5,8 +6,8 @@ import '../../data/auth_models.dart';
 
 final authSessionProvider =
     StateNotifierProvider<AuthController, AsyncValue<AuthSession?>>((ref) {
-  return AuthController(ref.read(apiClientProvider));
-});
+      return AuthController(ref.read(apiClientProvider));
+    });
 
 class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   AuthController(this._apiClient) : super(const AsyncData<AuthSession?>(null));
@@ -14,6 +15,13 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   final SskApiClient _apiClient;
 
   AuthSession? get session => state.valueOrNull;
+
+  void debugSetSession(AuthSession session) {
+    if (!kDebugMode) {
+      return;
+    }
+    state = AsyncData<AuthSession?>(session);
+  }
 
   Future<AuthSession> login({
     required String email,
@@ -37,7 +45,10 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   }) async {
     state = const AsyncLoading<AuthSession?>();
     try {
-      final response = await _apiClient.googleLogin(idToken: idToken, role: role);
+      final response = await _apiClient.googleLogin(
+        idToken: idToken,
+        role: role,
+      );
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
       return session;
