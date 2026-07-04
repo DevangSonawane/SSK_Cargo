@@ -18,6 +18,7 @@ class DriverBottomBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
         decoration: const BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: Color(0x16000000),
@@ -31,7 +32,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'New travel',
-                icon: Icons.local_shipping_rounded,
+                assetPath: 'assets/trucks/new_travel.png',
                 selected: currentIndex == 0,
                 onTap: () => onTap(0),
               ),
@@ -40,7 +41,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'Active',
-                icon: Icons.person_pin_circle_rounded,
+                assetPath: 'assets/active.png',
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
@@ -49,7 +50,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'Earnings',
-                icon: Icons.payments_rounded,
+                assetPath: 'assets/earning.png',
                 selected: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
@@ -64,13 +65,13 @@ class DriverBottomBar extends StatelessWidget {
 class _DriverBottomBarItem extends StatelessWidget {
   const _DriverBottomBarItem({
     required this.label,
-    required this.icon,
     required this.selected,
     required this.onTap,
+    this.assetPath,
   });
 
   final String label;
-  final IconData icon;
+  final String? assetPath;
   final bool selected;
   final VoidCallback onTap;
 
@@ -87,7 +88,22 @@ class _DriverBottomBarItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: iconColor, size: 20),
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Center(
+                child: assetPath != null
+                    ? Image.asset(
+                        assetPath!,
+                        width: 20,
+                        height: 20,
+                        fit: BoxFit.contain,
+                        color: iconColor,
+                        colorBlendMode: BlendMode.srcIn,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               label,

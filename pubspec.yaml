@@ -84,6 +84,9 @@ flutter:
     - assets/login_screen_image.png
     - assets/driverloginscreen.png
     - assets/trucks/speed.png
+    - assets/trucks/new_travel.png
+    - assets/active.png
+    - assets/earning.png
     - assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png
     - assets/IMG_1750.PNG
     - assets/google_logo.svg

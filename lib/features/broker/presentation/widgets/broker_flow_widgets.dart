@@ -558,6 +558,7 @@ class BrokerBottomBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
         decoration: const BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: Color(0x16000000),
