@@ -46,8 +46,9 @@ class DriverDeliveryDetailsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 12),
                     Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Delivery ID',
@@ -67,7 +68,38 @@ class DriverDeliveryDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    const SizedBox(width: 40),
+                    InkWell(
+                      onTap: () {},
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F6FB),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.call_rounded,
+                              size: 18,
+                              color: Color(0xFF1F88C9),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Call',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF1F88C9),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

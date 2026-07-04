@@ -14,109 +14,112 @@ class DriverProfileScreen extends ConsumerWidget {
     final user = session?.user;
     final displayName = user?.displayName ?? 'Driver';
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName.split(' ').first,
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF101828),
-                          ),
-                    ),
-                    Text(
-                      displayName.contains(' ')
-                          ? displayName.split(' ').skip(1).join(' ')
-                          : 'Profile',
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF101828),
-                          ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                SskProfileAvatar(imageUrl: user?.profileImage, size: 62),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user?.email ?? 'No account connected yet',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: _ProfileActionCard(
-                    title: 'Help',
-                    icon: Icons.support_agent_rounded,
-                    backgroundColor: const Color(0xFFF5F7FB),
-                    iconColor: const Color(0xFF2D6EF2),
-                    onTap: () {},
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName.split(' ').first,
+                        textAlign: TextAlign.left,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF101828),
+                            ),
+                      ),
+                      Text(
+                        displayName.contains(' ')
+                            ? displayName.split(' ').skip(1).join(' ')
+                            : 'Profile',
+                        textAlign: TextAlign.left,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF101828),
+                            ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ProfileActionCard(
-                    title: 'Safety',
-                    icon: Icons.shield_rounded,
-                    backgroundColor: const Color(0xFFF5F7FB),
-                    iconColor: const Color(0xFF2FA56E),
-                    onTap: () {},
+                  const Spacer(),
+                  SskProfileAvatar(imageUrl: user?.profileImage, size: 62),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                user?.email ?? 'No account connected yet',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ProfileActionCard(
+                      title: 'Help',
+                      icon: Icons.support_agent_rounded,
+                      backgroundColor: const Color(0xFFF5F7FB),
+                      iconColor: const Color(0xFF2D6EF2),
+                      onTap: () {},
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            _ProfileMenuTile(
-              title: 'Settings',
-              icon: Icons.settings_rounded,
-              onTap: () => context.push('/manage-account'),
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Change password',
-              icon: Icons.password_rounded,
-              onTap: () => context.push('/change-password'),
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Manage account',
-              icon: Icons.manage_accounts_rounded,
-              onTap: () => context.push('/manage-account'),
-            ),
-            const SizedBox(height: 10),
-            _ProfileMenuTile(
-              title: 'Logout',
-              icon: Icons.logout_rounded,
-              onTap: () async {
-                await ref.read(authSessionProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go('/driver/login');
-                }
-              },
-              titleColor: const Color(0xFFE23A4B),
-              iconColor: const Color(0xFFE23A4B),
-            ),
-          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ProfileActionCard(
+                      title: 'Safety',
+                      icon: Icons.shield_rounded,
+                      backgroundColor: const Color(0xFFF5F7FB),
+                      iconColor: const Color(0xFF2FA56E),
+                      onTap: () {},
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              _ProfileMenuTile(
+                title: 'Settings',
+                icon: Icons.settings_rounded,
+                onTap: () => context.push('/manage-account'),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
+                title: 'Change password',
+                icon: Icons.password_rounded,
+                onTap: () => context.push('/change-password'),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
+                title: 'Manage account',
+                icon: Icons.manage_accounts_rounded,
+                onTap: () => context.push('/manage-account'),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
+                title: 'Logout',
+                icon: Icons.logout_rounded,
+                onTap: () async {
+                  await ref.read(authSessionProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/driver/login');
+                  }
+                },
+                titleColor: const Color(0xFFE23A4B),
+                iconColor: const Color(0xFFE23A4B),
+              ),
+            ],
+          ),
         ),
       ),
     );

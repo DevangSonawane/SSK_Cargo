@@ -19,6 +19,7 @@ import '../../features/broker/presentation/screens/driver_detail_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
+import '../../features/driver/presentation/screens/driver_all_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_details_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
@@ -72,6 +73,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/delivery-details',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: DriverDeliveryDetailsScreen()),
+      ),
+      GoRoute(
+        path: '/driver/all-earnings',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverAllEarningsScreen()),
       ),
       GoRoute(
         path: '/signup',
