@@ -8,10 +8,7 @@ import '../controllers/auth_controller.dart';
 enum SignupRole { broker, client, driver }
 
 class SignupScreen extends ConsumerStatefulWidget {
-  const SignupScreen({
-    super.key,
-    this.initialRole,
-  });
+  const SignupScreen({super.key, this.initialRole});
 
   final SignupRole? initialRole;
 
@@ -84,14 +81,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name, email, and password are required.')),
+        const SnackBar(
+          content: Text('Name, email, and password are required.'),
+        ),
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(authSessionProvider.notifier).register(
+      await ref
+          .read(authSessionProvider.notifier)
+          .register(
             name: name,
             email: email,
             phone: phone.isEmpty ? null : phone,
@@ -168,16 +169,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       Row(
                         children: [
                           IconButton(
-                            onPressed: () => context.go(_loginRouteForRole(activeMeta.roleValue)),
+                            onPressed: () => context.go(
+                              _loginRouteForRole(activeMeta.roleValue),
+                            ),
                             icon: const Icon(Icons.arrow_back_rounded),
                             tooltip: 'Back to login',
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Create account',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: const Color(0xFF17324D),
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: const Color(0xFF17324D)),
                           ),
                         ],
                       ),
@@ -186,9 +188,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         _isRoleLocked
                             ? 'Fill in the details for ${activeMeta.title.toLowerCase()}.'
                             : 'Choose a role and we’ll tailor the signup flow to it.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.black54,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 22),
                       Container(
@@ -196,7 +198,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.22),
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
@@ -215,7 +219,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                       (role) => Expanded(
                                         child: Padding(
                                           padding: EdgeInsets.only(
-                                            right: role == SignupRole.values.last ? 0 : 8,
+                                            right:
+                                                role == SignupRole.values.last
+                                                ? 0
+                                                : 8,
                                           ),
                                           child: _RoleCard(
                                             meta: _roleData[role]!,
@@ -270,34 +277,51 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 accent: activeMeta.accent,
                                 suffixIcon: IconButton(
                                   onPressed: () {
-                                    setState(() => _obscurePassword = !_obscurePassword);
+                                    setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    );
                                   },
                                   icon: Icon(
                                     _obscurePassword
                                         ? Icons.visibility_off_outlined
                                         : Icons.visibility_outlined,
                                   ),
-                                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                                  tooltip: _obscurePassword
+                                      ? 'Show password'
+                                      : 'Hide password',
                                 ),
                               ),
                             ),
                             const SizedBox(height: 2),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFD6E3FF)),
+                                border: Border.all(
+                                  color: const Color(0xFFD6E3FF),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.verified_user_rounded, size: 18, color: Color(0xFF1F88C9)),
+                                  const Icon(
+                                    Icons.verified_user_rounded,
+                                    size: 18,
+                                    color: Color(0xFF1F88C9),
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       'After signup, use the same email and password to log in.',
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
                                             color: const Color(0xFF1A365D),
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -345,12 +369,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextButton(
-                              onPressed: () => context.go(_loginRouteForRole(activeMeta.roleValue)),
+                              onPressed: () => context.go(
+                                _loginRouteForRole(activeMeta.roleValue),
+                              ),
                               style: TextButton.styleFrom(
                                 foregroundColor: const Color(0xFF17324D),
-                                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                              child: const Text('Already have an account? Login'),
+                              child: const Text(
+                                'Already have an account? Login',
+                              ),
                             ),
                           ],
                         ),
@@ -386,7 +416,7 @@ class _RoleMeta {
 String _loginRouteForRole(String roleValue) {
   return switch (roleValue) {
     'broker' => '/broker/login',
-    'driver' => '/broker/login',
+    'driver' => '/driver/login',
     _ => '/login',
   };
 }
@@ -413,10 +443,14 @@ class _RoleCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: selected ? meta.accent.withValues(alpha: 0.10) : const Color(0xFFF7FAFD),
+            color: selected
+                ? meta.accent.withValues(alpha: 0.10)
+                : const Color(0xFFF7FAFD),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selected ? meta.accent.withValues(alpha: 0.45) : const Color(0xFFE5ECF3),
+              color: selected
+                  ? meta.accent.withValues(alpha: 0.45)
+                  : const Color(0xFFE5ECF3),
             ),
           ),
           child: Column(
@@ -439,10 +473,7 @@ class _RoleCard extends StatelessWidget {
 }
 
 class _DecorBlob extends StatelessWidget {
-  const _DecorBlob({
-    required this.color,
-    required this.size,
-  });
+  const _DecorBlob({required this.color, required this.size});
 
   final Color color;
   final double size;
@@ -452,10 +483,7 @@ class _DecorBlob extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -482,10 +510,7 @@ InputDecoration _fieldDecoration({
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(18),
-      borderSide: BorderSide(
-        color: accent,
-        width: 1.4,
-      ),
+      borderSide: BorderSide(color: accent, width: 1.4),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
   );

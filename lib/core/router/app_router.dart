@@ -17,6 +17,7 @@ import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
 import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/driver_detail_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
+import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/client/presentation/screens/client_delivery_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
@@ -33,15 +34,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => const NoTransitionPage(child: SplashScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SplashScreen()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LoginScreen()),
       ),
       GoRoute(
         path: '/broker/login',
-        pageBuilder: (context, state) => const NoTransitionPage(child: BrokerLoginScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerLoginScreen()),
+      ),
+      GoRoute(
+        path: '/driver/login',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverLoginScreen()),
+      ),
+      GoRoute(
+        path: '/driver/home',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverHomeScreen()),
       ),
       GoRoute(
         path: '/signup',
@@ -79,25 +93,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/access',
-        pageBuilder: (context, state) => const NoTransitionPage(child: AccessEntryScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AccessEntryScreen()),
       ),
       GoRoute(
         path: '/change-password',
-        pageBuilder: (context, state) => const NoTransitionPage(child: ChangePasswordScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ChangePasswordScreen()),
       ),
       GoRoute(
         path: '/manage-account',
-        pageBuilder: (context, state) => const NoTransitionPage(child: ManageAccountScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ManageAccountScreen()),
       ),
       GoRoute(
         path: '/broker/kyc-registration',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: BrokerKycRegistrationScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerKycRegistrationScreen()),
       ),
       GoRoute(
         path: '/client/settings',
-        pageBuilder: (context, state) => const NoTransitionPage(child: ClientSettingsScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientSettingsScreen()),
       ),
       GoRoute(
         path: '/client/tracking/details',
@@ -112,25 +129,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/broker/vehicles/add',
-        pageBuilder: (context, state) => const NoTransitionPage(child: AddVehicleScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AddVehicleScreen()),
       ),
       GoRoute(
         path: '/broker/drivers/add',
-        pageBuilder: (context, state) => const NoTransitionPage(child: AddDriverScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AddDriverScreen()),
       ),
       GoRoute(
         path: '/broker/drivers/:id',
         pageBuilder: (context, state) {
           final extraDriver = state.extra as BrokerDriver?;
           final driverId = state.pathParameters['id'];
-          final driver = extraDriver ??
-              ref.read(brokerDriversProvider).firstWhere(
+          final driver =
+              extraDriver ??
+              ref
+                  .read(brokerDriversProvider)
+                  .firstWhere(
                     (driver) => driver.id == driverId,
                     orElse: () => mockBrokerDrivers.first,
                   );
-          return NoTransitionPage(
-            child: DriverDetailScreen(driver: driver),
-          );
+          return NoTransitionPage(child: DriverDetailScreen(driver: driver));
         },
       ),
       StatefulShellRoute.indexedStack(

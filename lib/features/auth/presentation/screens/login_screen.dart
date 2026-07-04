@@ -28,6 +28,15 @@ class BrokerLoginScreen extends ConsumerWidget {
   }
 }
 
+class DriverLoginScreen extends ConsumerWidget {
+  const DriverLoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _AuthLoginScreen(role: AppRole.driver);
+  }
+}
+
 class _AuthLoginScreen extends ConsumerStatefulWidget {
   const _AuthLoginScreen({required this.role});
 
@@ -86,12 +95,13 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         'Submitting login for $email as ${widget.role.name}',
         name: 'SSK.Auth',
       );
-      final session = await ref.read(authSessionProvider.notifier).login(
-            email: email,
-            password: password,
-          );
+      final session = await ref
+          .read(authSessionProvider.notifier)
+          .login(email: email, password: password);
 
-      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(session.user.role);
+      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(
+        session.user.role,
+      );
 
       if (!mounted) {
         return;
@@ -115,10 +125,7 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         ),
       );
     } catch (error) {
-      developer.log(
-        'Login unexpected error: $error',
-        name: 'SSK.Auth',
-      );
+      developer.log('Login unexpected error: $error', name: 'SSK.Auth');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -136,7 +143,9 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
   Future<void> _submitWithGoogle() async {
     if (widget.role == AppRole.admin) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google sign-in is not available for admin accounts.')),
+        const SnackBar(
+          content: Text('Google sign-in is not available for admin accounts.'),
+        ),
       );
       return;
     }
@@ -157,7 +166,9 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         throw StateError('Google did not return an ID token.');
       }
 
-      final session = await ref.read(authSessionProvider.notifier).loginWithGoogle(
+      final session = await ref
+          .read(authSessionProvider.notifier)
+          .loginWithGoogle(
             idToken: idToken,
             role: switch (widget.role) {
               AppRole.broker => 'broker',
@@ -166,7 +177,9 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
             },
           );
 
-      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(session.user.role);
+      ref.read(selectedRoleProvider.notifier).state = appRoleFromApiRole(
+        session.user.role,
+      );
 
       if (!mounted) {
         return;
@@ -246,10 +259,7 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
         ),
       );
     } catch (error) {
-      developer.log(
-        'Google login unexpected error: $error',
-        name: 'SSK.Auth',
-      );
+      developer.log('Google login unexpected error: $error', name: 'SSK.Auth');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -266,9 +276,11 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundImage = widget.role == AppRole.broker
-        ? 'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png'
-        : 'assets/IMG_1750.PNG';
+    final backgroundImage = switch (widget.role) {
+      AppRole.broker => 'assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png',
+      AppRole.driver => 'assets/driverloginscreen.png',
+      _ => 'assets/IMG_1750.PNG',
+    };
 
     return Scaffold(
       body: Stack(
@@ -331,16 +343,25 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(34),
                                 child: Container(
-                                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    20,
+                                    16,
+                                    20,
+                                    8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.62),
                                     borderRadius: BorderRadius.circular(34),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.66),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.66,
+                                      ),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.18),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.18,
+                                        ),
                                         blurRadius: 24,
                                         offset: const Offset(0, 10),
                                       ),
@@ -348,7 +369,8 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       SizedBox(
                                         height: 48,
@@ -368,7 +390,8 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                       ),
                                       TextField(
                                         controller: _emailController,
-                                        keyboardType: TextInputType.emailAddress,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                         textInputAction: TextInputAction.next,
                                         decoration: _pillDecoration(
                                           label: 'Email',
@@ -386,14 +409,20 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                           icon: Icons.lock_rounded,
                                           suffixIcon: IconButton(
                                             onPressed: () {
-                                              setState(() => _obscurePassword = !_obscurePassword);
+                                              setState(
+                                                () => _obscurePassword =
+                                                    !_obscurePassword,
+                                              );
                                             },
                                             icon: Icon(
                                               _obscurePassword
-                                                  ? Icons.visibility_off_outlined
+                                                  ? Icons
+                                                        .visibility_off_outlined
                                                   : Icons.visibility_outlined,
                                             ),
-                                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                                            tooltip: _obscurePassword
+                                                ? 'Show password'
+                                                : 'Hide password',
                                           ),
                                         ),
                                       ),
@@ -402,21 +431,28 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                         width: double.infinity,
                                         child: FilledButton(
                                           style: FilledButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 16,
+                                            ),
                                             shape: const StadiumBorder(),
                                           ),
-                                          onPressed: _isSubmitting ? null : _submit,
+                                          onPressed: _isSubmitting
+                                              ? null
+                                              : _submit,
                                           child: AnimatedSwitcher(
-                                            duration: const Duration(milliseconds: 180),
+                                            duration: const Duration(
+                                              milliseconds: 180,
+                                            ),
                                             child: _isSubmitting
                                                 ? const SizedBox(
                                                     key: ValueKey('loading'),
                                                     width: 20,
                                                     height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2.2,
-                                                      color: Colors.white,
-                                                    ),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2.2,
+                                                          color: Colors.white,
+                                                        ),
                                                   )
                                                 : const Text(
                                                     'Login',
@@ -430,35 +466,57 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                         children: [
                                           Expanded(
                                             child: OutlinedButton.icon(
-                                              onPressed: _isGoogleSubmitting ? null : _submitWithGoogle,
+                                              onPressed: _isGoogleSubmitting
+                                                  ? null
+                                                  : _submitWithGoogle,
                                               icon: SvgPicture.asset(
                                                 'assets/google_logo.svg',
                                                 width: 18,
                                                 height: 18,
                                               ),
                                               style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFF1B2A3A),
-                                                side: const BorderSide(color: Color(0xFFD7DDE5)),
-                                                backgroundColor: Colors.white.withValues(alpha: 0.82),
-                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                foregroundColor: const Color(
+                                                  0xFF1B2A3A,
+                                                ),
+                                                side: const BorderSide(
+                                                  color: Color(0xFFD7DDE5),
+                                                ),
+                                                backgroundColor: Colors.white
+                                                    .withValues(alpha: 0.82),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 16,
+                                                    ),
                                                 shape: const StadiumBorder(),
                                               ),
                                               label: AnimatedSwitcher(
-                                                duration: const Duration(milliseconds: 180),
+                                                duration: const Duration(
+                                                  milliseconds: 180,
+                                                ),
                                                 child: _isGoogleSubmitting
                                                     ? const SizedBox(
-                                                        key: ValueKey('google-loading'),
+                                                        key: ValueKey(
+                                                          'google-loading',
+                                                        ),
                                                         width: 18,
                                                         height: 18,
-                                                        child: CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          color: Color(0xFF1B2A3A),
-                                                        ),
-                                                  )
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              color: Color(
+                                                                0xFF1B2A3A,
+                                                              ),
+                                                            ),
+                                                      )
                                                     : const Text(
                                                         'Google',
-                                                        key: ValueKey('google-label'),
-                                                        style: TextStyle(fontWeight: FontWeight.w700),
+                                                        key: ValueKey(
+                                                          'google-label',
+                                                        ),
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
                                                       ),
                                               ),
                                             ),
@@ -476,13 +534,23 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                               ),
                                               label: const Text(
                                                 'Apple',
-                                                style: TextStyle(fontWeight: FontWeight.w700),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                               ),
                                               style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFF1B2A3A),
-                                                side: const BorderSide(color: Color(0xFFD7DDE5)),
-                                                backgroundColor: Colors.white.withValues(alpha: 0.82),
-                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                foregroundColor: const Color(
+                                                  0xFF1B2A3A,
+                                                ),
+                                                side: const BorderSide(
+                                                  color: Color(0xFFD7DDE5),
+                                                ),
+                                                backgroundColor: Colors.white
+                                                    .withValues(alpha: 0.82),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 16,
+                                                    ),
                                                 shape: const StadiumBorder(),
                                               ),
                                             ),
@@ -492,7 +560,8 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                       const SizedBox(height: 18),
                                       Center(
                                         child: Wrap(
-                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
                                           spacing: 6,
                                           children: [
                                             const Text(
@@ -504,22 +573,69 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                             ),
                                             TextButton(
                                               onPressed: () => context.go(
-                                                widget.role == AppRole.broker ? '/broker/signup' : '/client/signup',
+                                                widget.role == AppRole.broker
+                                                    ? '/broker/signup'
+                                                    : '/client/signup',
                                               ),
                                               style: TextButton.styleFrom(
                                                 padding: EdgeInsets.zero,
                                                 minimumSize: Size.zero,
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                foregroundColor: const Color(0xFF2FA56E),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                foregroundColor: const Color(
+                                                  0xFF2FA56E,
+                                                ),
                                               ),
                                               child: const Text(
                                                 'Create one',
-                                                style: TextStyle(fontWeight: FontWeight.w700),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
+                                      if (widget.role == AppRole.broker) ...[
+                                        const SizedBox(height: 8),
+                                        Center(
+                                          child: Wrap(
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            spacing: 6,
+                                            children: [
+                                              const Text(
+                                                'Rider?',
+                                                style: TextStyle(
+                                                  color: Color(0xFF1B2A3A),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    context.go('/driver/login'),
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  foregroundColor: const Color(
+                                                    0xFF2FA56E,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Login here',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -544,7 +660,7 @@ String _routeForRole(String role) {
   return switch (role) {
     'client' => '/client/home',
     'broker' => '/broker/home',
-    'driver' => '/broker/home',
+    'driver' => '/driver/home',
     'admin' => '/broker/home',
     _ => '/client/home',
   };
@@ -571,10 +687,7 @@ InputDecoration _pillDecoration({
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(999),
-      borderSide: BorderSide(
-        color: const Color(0xFF2FA56E),
-        width: 1.4,
-      ),
+      borderSide: BorderSide(color: const Color(0xFF2FA56E), width: 1.4),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
   );

@@ -11,7 +11,8 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
@@ -34,7 +35,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   String _loginRouteForRole(String? role) {
     return switch (role) {
       'broker' => '/broker/login',
-      'driver' => '/broker/login',
+      'driver' => '/driver/login',
       _ => '/login',
     };
   }
@@ -45,7 +46,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     final confirmPassword = _confirmPasswordController.text;
     final role = ref.read(authSessionProvider).valueOrNull?.user.role;
 
-    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+    if (currentPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All password fields are required.')),
       );
@@ -62,7 +65,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     setState(() => _isSubmitting = true);
     try {
       developer.log('Submitting password change', name: 'SSK.Auth');
-      await ref.read(authSessionProvider.notifier).changePassword(
+      await ref
+          .read(authSessionProvider.notifier)
+          .changePassword(
             currentPassword: currentPassword,
             newPassword: newPassword,
           );
@@ -71,7 +76,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password changed successfully. You will be logged out now.'),
+          content: Text(
+            'Password changed successfully. You will be logged out now.',
+          ),
           backgroundColor: Color(0xFF2FA56E),
           duration: Duration(seconds: 2),
         ),
@@ -146,7 +153,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               children: [
                 Text(
                   'Enter your current password and choose a new one.',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextField(
@@ -155,9 +164,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   decoration: InputDecoration(
                     labelText: 'Current password',
                     suffixIcon: IconButton(
-                      onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                      onPressed: () =>
+                          setState(() => _obscureCurrent = !_obscureCurrent),
                       icon: Icon(
-                        _obscureCurrent ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscureCurrent
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                       ),
                     ),
                   ),
@@ -169,9 +181,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   decoration: InputDecoration(
                     labelText: 'New password',
                     suffixIcon: IconButton(
-                      onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                      onPressed: () =>
+                          setState(() => _obscureNew = !_obscureNew),
                       icon: Icon(
-                        _obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscureNew
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                       ),
                     ),
                   ),
@@ -183,9 +198,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   decoration: InputDecoration(
                     labelText: 'Confirm new password',
                     suffixIcon: IconButton(
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
                       icon: Icon(
-                        _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscureConfirm
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                       ),
                     ),
                   ),
