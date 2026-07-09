@@ -1398,14 +1398,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             accessToken: session.tokens.accessToken,
             booking: _bookingPayload(),
           );
-      final reference = _extractBookingReference(response);
+      final bookingNumber = _extractBookingNumber(response);
+      final resolvedBookingNumber = bookingNumber.isNotEmpty
+          ? bookingNumber
+          : await _fetchLatestBookingNumber(session.tokens.accessToken);
+
       if (!mounted) {
         return;
       }
       setState(() {
         _submitting = false;
         _bookingCreated = true;
-        _bookingReference = reference;
+        _bookingReference = resolvedBookingNumber;
       });
     } catch (error) {
       if (!mounted) {
@@ -1435,14 +1439,42 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'weight_unit': _draft.weightUnit,
       'quantity': _draft.quantity,
       'material': _draft.material,
-      if (_draft.additionalNotes.isNotEmpty) 'notes': _draft.additionalNotes,
       'transport_type': _draft.transportType,
       'scheduled_date': scheduled.toUtc().toIso8601String(),
       'distance': _draft.distance,
       'amount': _draft.amount,
-      if (_draft.brokerId.isNotEmpty) 'broker_id': _draft.brokerId,
-      if (_draft.truckId.isNotEmpty) 'truck_id': _draft.truckId,
+      'payment_status': 'pending',
     };
+  }
+
+  Future<String> _fetchLatestBookingNumber(String accessToken) async {
+    final response = await ref.read(apiClientProvider).getBookings(
+          accessToken: accessToken,
+          page: 1,
+          limit: 20,
+        );
+    final bookingsPage = ClientBookingPage.fromJson(response);
+    if (bookingsPage.bookings.isEmpty) {
+      return '';
+    }
+
+    final candidates = bookingsPage.bookings.where(_matchesDraftBooking).toList();
+    final booking = candidates.isNotEmpty ? candidates.first : bookingsPage.bookings.first;
+    return booking.bookingNumber.isNotEmpty
+        ? booking.bookingNumber
+        : (booking.bookingRef.isNotEmpty ? booking.bookingRef : booking.id);
+  }
+
+  bool _matchesDraftBooking(ClientBooking booking) {
+    final draftPickup = _draft.from.trim().toLowerCase();
+    final draftDrop = _draft.to.trim().toLowerCase();
+    final draftMaterial = _draft.material.trim().toLowerCase();
+    final draftAmount = _draft.amount.toStringAsFixed(2);
+    final bookingAmount = booking.amountText.replaceAll(RegExp(r'[^0-9.]'), '');
+    return booking.pickupLocation.trim().toLowerCase() == draftPickup &&
+        booking.dropoffLocation.trim().toLowerCase() == draftDrop &&
+        (draftMaterial.isEmpty || booking.packageName.trim().toLowerCase().contains(draftMaterial) || booking.raw['material']?.toString().trim().toLowerCase() == draftMaterial) &&
+        (bookingAmount.isEmpty || bookingAmount == draftAmount || bookingAmount == _draft.amount.toStringAsFixed(0));
   }
 
   @override
@@ -1451,32 +1483,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
-      child: SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: (_submitting || _bookingCreated)
-                ? null
-                : _next,
-            child: _submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(
-                    _bookingCreated
-                        ? 'Booked'
-                        : switch (_step) {
+      bottomNavigationBar: _bookingCreated
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _submitting ? null : _next,
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(
+                          switch (_step) {
                             _BookingFlowStep.location => 'Next',
                             _BookingFlowStep.itemDetails => 'Next',
                             _BookingFlowStep.payment => 'Continue',
                           },
-                  ),
-          ),
-        ),
-      ),
+                        ),
+                ),
+              ),
+            ),
       body: SafeArea(
         child: Column(
           children: [
@@ -1675,7 +1705,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Widget _buildSuccessStep(BuildContext context) {
     return _BookingSuccessCard(
       bookingReference: _bookingReference,
-      paymentLabel: _draft.selectedPaymentLabel,
       onTrack: () => context.go('/client/tracking'),
       onHome: () => context.go('/client/home'),
     );
@@ -2159,13 +2188,11 @@ class _PaymentListTile extends StatelessWidget {
 class _BookingSuccessCard extends StatelessWidget {
   const _BookingSuccessCard({
     required this.bookingReference,
-    required this.paymentLabel,
     required this.onTrack,
     required this.onHome,
   });
 
   final String? bookingReference;
-  final String paymentLabel;
   final VoidCallback onTrack;
   final VoidCallback onHome;
 
@@ -2173,41 +2200,65 @@ class _BookingSuccessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F7FB),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE8EDF2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 48),
-          const SizedBox(height: 12),
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF8EF),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Color(0xFF2FA56E),
+              size: 58,
+            ),
+          ),
+          const SizedBox(height: 18),
           Text(
             'Booking confirmed',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF101828),
                 ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
-            bookingReference == null || bookingReference!.isEmpty
-                ? 'Your booking was created successfully.'
-                : 'Booking reference: $bookingReference',
+            'Your booking has been successfully placed.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF667085),
                 ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 14),
           Text(
-            'Payment mode: $paymentLabel',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+            bookingReference == null || bookingReference!.isEmpty
+                ? 'Booking Number: Pending'
+                : 'Booking Number: $bookingReference',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w700,
                 ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
           Row(
             children: [
               Expanded(
@@ -2244,15 +2295,35 @@ double _parsePrice(String value) {
   return double.tryParse(digits) ?? 0;
 }
 
-String _extractBookingReference(Map<String, dynamic> json) {
+String _extractBookingNumber(Map<String, dynamic> json) {
   final data = json['data'];
   if (data is Map<String, dynamic>) {
-    for (final key in ['booking_ref', 'booking_reference', 'reference', 'id', 'tracking_number']) {
+    for (final key in [
+      'booking_number',
+      'bookingNumber',
+      'booking_no',
+      'bookingNo',
+      'booking_ref',
+      'booking_reference',
+      'reference',
+      'id',
+      'tracking_number',
+    ]) {
       final value = data[key]?.toString().trim();
       if (value != null && value.isNotEmpty) return value;
     }
   }
-  for (final key in ['booking_ref', 'booking_reference', 'reference', 'id', 'tracking_number']) {
+  for (final key in [
+    'booking_number',
+    'bookingNumber',
+    'booking_no',
+    'bookingNo',
+    'booking_ref',
+    'booking_reference',
+    'reference',
+    'id',
+    'tracking_number',
+  ]) {
     final value = json[key]?.toString().trim();
     if (value != null && value.isNotEmpty) return value;
   }

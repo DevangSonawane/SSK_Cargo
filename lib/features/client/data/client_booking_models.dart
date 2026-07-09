@@ -38,8 +38,10 @@ class ClientBooking {
   const ClientBooking({
     required this.id,
     required this.bookingRef,
+    required this.bookingNumber,
     required this.status,
     required this.clientName,
+    required this.material,
     required this.packageName,
     required this.pickupLocation,
     required this.dropoffLocation,
@@ -65,6 +67,12 @@ class ClientBooking {
         'tracking_id',
         'tracking_number',
       ]),
+      bookingNumber: _readString(json, const [
+        'booking_number',
+        'bookingNumber',
+        'booking_no',
+        'bookingNo',
+      ]),
       status: status.isEmpty ? 'pending' : status,
       clientName: _readNestedName(json, const [
         'client_name',
@@ -73,6 +81,12 @@ class ClientBooking {
         'client',
         'user',
         'name',
+      ]),
+      material: _readString(json, const [
+        'material',
+        'cargo_material',
+        'goods',
+        'item',
       ]),
       packageName: _readString(json, const [
         'package_name',
@@ -122,8 +136,10 @@ class ClientBooking {
 
   final String id;
   final String bookingRef;
+  final String bookingNumber;
   final String status;
   final String clientName;
+  final String material;
   final String packageName;
   final String pickupLocation;
   final String dropoffLocation;
@@ -133,10 +149,14 @@ class ClientBooking {
   final DateTime? requestedAt;
   final Map<String, dynamic> raw;
 
-  String get displayTitle => packageName.isEmpty ? 'Booking' : packageName;
+  String get displayTitle => material.isNotEmpty
+      ? material
+      : (packageName.isNotEmpty ? packageName : 'Booking');
 
   String get displaySubtitle {
-    final ref = bookingRef.isEmpty ? id : bookingRef;
+    final ref = bookingNumber.isNotEmpty
+        ? bookingNumber
+        : (bookingRef.isEmpty ? id : bookingRef);
     return ref.isEmpty ? 'No booking reference' : 'Booking #$ref';
   }
 

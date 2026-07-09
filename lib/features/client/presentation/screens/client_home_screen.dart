@@ -316,7 +316,6 @@ class _RecentBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(booking.status);
-    final initials = _initials(booking.clientName);
 
     final card = Container(
       width: double.infinity,
@@ -343,17 +342,13 @@ class _RecentBookingCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
+                  color: const Color(0xFFFFF3D9),
                   shape: BoxShape.circle,
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
+                padding: const EdgeInsets.all(7),
+                child: Image.asset(
+                  'assets/package.png',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 10),
@@ -560,18 +555,6 @@ class _RecentBookingCard extends StatelessWidget {
       child: card,
     );
   }
-}
-
-String _initials(String value) {
-  final parts = value.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
-  if (parts.isEmpty) {
-    return 'C';
-  }
-  if (parts.length == 1) {
-    final part = parts.first;
-    return part.length >= 2 ? part.substring(0, 2).toUpperCase() : part.toUpperCase();
-  }
-  return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
 }
 
 Color _statusColor(String status) {

@@ -306,7 +306,6 @@ class ClientBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(booking.status);
-    final initials = _initials(booking.clientName);
 
     final card = Container(
       width: double.infinity,
@@ -333,17 +332,13 @@ class ClientBookingCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
+                  color: const Color(0xFFFFF3D9),
                   shape: BoxShape.circle,
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
+                padding: const EdgeInsets.all(7),
+                child: Image.asset(
+                  'assets/package.png',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 10),
@@ -352,7 +347,7 @@ class ClientBookingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.clientName,
+                      booking.displayTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -531,21 +526,10 @@ class ClientBookingCard extends StatelessWidget {
                   ],
                 ],
               ),
-            ),
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.access_time_rounded, size: 15, color: Colors.black.withValues(alpha: 0.45)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _relativeTime(booking.requestedAt),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ),
               if (booking.id.isNotEmpty)
                 Text(
                   booking.id,
@@ -599,37 +583,6 @@ class _StatusBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-String _relativeTime(DateTime? value) {
-  if (value == null) {
-    return 'Requested recently';
-  }
-
-  final now = DateTime.now();
-  final diff = now.difference(value);
-  if (diff.inMinutes < 1) {
-    return 'Requested just now';
-  }
-  if (diff.inMinutes < 60) {
-    return 'Requested ${diff.inMinutes} min ago';
-  }
-  if (diff.inHours < 24) {
-    return 'Requested ${diff.inHours}h ${diff.inMinutes.remainder(60)}m ago';
-  }
-  return 'Requested ${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
-}
-
-String _initials(String value) {
-  final parts = value.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
-  if (parts.isEmpty) {
-    return 'C';
-  }
-  if (parts.length == 1) {
-    final part = parts.first;
-    return part.length >= 2 ? part.substring(0, 2).toUpperCase() : part.toUpperCase();
-  }
-  return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
 }
 
 Color _statusColor(String status) {
