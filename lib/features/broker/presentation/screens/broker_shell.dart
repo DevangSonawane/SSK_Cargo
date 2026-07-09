@@ -12,7 +12,8 @@ class BrokerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pendingCount = ref.watch(brokerPendingRequestsProvider);
+    final requestsAsync = ref.watch(brokerJobRequestsProvider((page: 1, limit: 100)));
+    final pendingCount = requestsAsync.valueOrNull?.where(isPendingBookingRequest).length ?? 0;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final location = GoRouterState.of(context).uri.path;

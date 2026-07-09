@@ -356,6 +356,31 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getJobRequests({
+    required String accessToken,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    developer.log(
+      'GET /api/jobs/requests page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/jobs/requests',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getTrucks({
     required String accessToken,
     String? status,

@@ -14,21 +14,11 @@ class BrokerHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
-  late List<BookingRequest> _requests;
-
-  @override
-  void initState() {
-    super.initState();
-    _requests = [...mockBrokerRequests];
-  }
+  static const _requestsQuery = (page: 1, limit: 100);
 
   Future<void> _refresh() async {
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    setState(() {
-      _requests = [...mockBrokerRequests];
-    });
-    ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
+    ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+    await ref.read(brokerJobRequestsProvider(_requestsQuery).future);
   }
 
   Future<void> _acceptRequest(BookingRequest request) async {
@@ -68,10 +58,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
     if (!mounted) return;
 
-    setState(() {
-      _requests.removeWhere((item) => item.id == request.id);
-    });
-    ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
+    ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
 
     final assignment = await _pickAssignment(request);
     if (assignment == null || !mounted) {
@@ -112,11 +99,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       assignedTruckName: '${assignment.truck!.label} • ${assignment.truck!.plateNumber}',
     );
 
-    final history = ref.read(brokerHistoryProvider.notifier);
-    history.state = [
-      shipment,
-      ...history.state,
-    ];
+    ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
 
     if (!mounted) return;
 
@@ -315,16 +298,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           );
 
       if (!mounted) return;
-
-      setState(() {
-        _requests.removeWhere((item) => item.id == request.id);
-      });
-      ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
-      final history = ref.read(brokerHistoryProvider.notifier);
-      history.state = [
-        bookingRequestToShipment(request, status: 'Cancelled'),
-        ...history.state,
-      ];
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -353,7 +327,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isEmpty = _requests.isEmpty;
+    final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
+    final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
+    final pendingRequests = requests.where(isPendingBookingRequest).toList();
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -373,7 +349,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
               ),
               const Spacer(),
               StatusPill(
-                label: '${_requests.length} pending',
+                label: '${pendingRequests.length} pending',
                 backgroundColor: const Color(0xFFEFF6FF),
                 textColor: const Color(0xFF1F88C9),
                 icon: Icons.inbox_rounded,
@@ -381,66 +357,91 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          if (isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
+          requestsAsync.when(
+            data: (_) {
+              if (pendingRequests.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.inbox_rounded,
+                          color: Color(0xFF1F88C9),
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'No new requests',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF101828),
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Fresh bookings will appear here as soon as clients send them.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF667085),
+                            ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  for (var index = 0; index < pendingRequests.length; index++) ...[
+                    BrokerRequestCard(
+                      request: pendingRequests[index],
+                      onAccept: () => _acceptRequest(pendingRequests[index]),
+                      onReject: () => _rejectRequest(pendingRequests[index]),
+                    ),
+                    if (index != pendingRequests.length - 1) const SizedBox(height: 12),
+                  ],
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.only(top: 36),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stackTrace) => Container(
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: const Color(0xFFE8EDF2)),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      shape: BoxShape.circle,
+              child: Text(
+                error.toString().replaceFirst('Exception: ', ''),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFFB42318),
                     ),
-                    child: const Icon(
-                      Icons.inbox_rounded,
-                      color: Color(0xFF1F88C9),
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'No new requests',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF101828),
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Fresh bookings will appear here as soon as clients send them.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
-                  ),
-                ],
               ),
-            )
-          else
-            ..._requests.asMap().entries.expand(
-                  (entry) => [
-                    BrokerRequestCard(
-                      request: entry.value,
-                      onAccept: () => _acceptRequest(entry.value),
-                      onReject: () => _rejectRequest(entry.value),
-                    ),
-                    if (entry.key != _requests.length - 1) const SizedBox(height: 12),
-                  ],
-                ),
+            ),
+          ),
           const SizedBox(height: 16),
           Center(
             child: TextButton.icon(
               onPressed: _refresh,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reload demo data'),
+              label: const Text('Reload requests'),
             ),
           ),
         ],

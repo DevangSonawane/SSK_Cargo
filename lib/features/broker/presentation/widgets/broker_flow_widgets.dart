@@ -7,6 +7,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 
 typedef BrokerTrucksQuery = ({String? status, int page, int limit});
 typedef BrokerDriversQuery = ({String? status, int page, int limit});
+typedef BrokerJobRequestsQuery = ({int page, int limit});
 
 final brokerPendingRequestsProvider = StateProvider<int>((ref) {
   return mockBrokerRequests.length;
@@ -14,6 +15,25 @@ final brokerPendingRequestsProvider = StateProvider<int>((ref) {
 
 final brokerHistoryProvider = StateProvider<List<TrackingDemoShipment>>((ref) {
   return [...mockBrokerHistoryShipments];
+});
+
+final brokerJobRequestsProvider =
+    FutureProvider.autoDispose.family<List<BookingRequest>, BrokerJobRequestsQuery>((
+  ref,
+  query,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref.watch(apiClientProvider).getJobRequests(
+        accessToken: session.tokens.accessToken,
+        page: query.page,
+        limit: query.limit,
+      );
+
+  return _BrokerJobRequestPage.fromJson(response).requests;
 });
 
 final brokerTrucksProvider =
@@ -71,6 +91,7 @@ enum BrokerDriverStatus { onTrip, idle, offline }
 class BookingRequest {
   const BookingRequest({
     required this.id,
+    required this.status,
     required this.clientName,
     required this.clientInitials,
     required this.productName,
@@ -82,9 +103,11 @@ class BookingRequest {
     required this.distance,
     required this.etaText,
     required this.requestedAt,
+    this.expiresInMinutes = 0,
   });
 
   final String id;
+  final String status;
   final String clientName;
   final String clientInitials;
   final String productName;
@@ -96,6 +119,94 @@ class BookingRequest {
   final String distance;
   final String etaText;
   final String requestedAt;
+  final int expiresInMinutes;
+}
+
+class _BrokerJobRequestPage {
+  const _BrokerJobRequestPage({
+    required this.requests,
+  });
+
+  factory _BrokerJobRequestPage.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    final items = _extractItems(data, json);
+    return _BrokerJobRequestPage(
+      requests: items
+          .whereType<Map<String, dynamic>>()
+          .map(_bookingRequestFromJson)
+          .where((request) => request.id.isNotEmpty)
+          .toList(),
+    );
+  }
+
+  final List<BookingRequest> requests;
+}
+
+BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
+  final customer = _asMap(json['customer']);
+  final client = _asMap(json['client']);
+  final load = _asMap(json['load']);
+  final route = _asMap(json['route']);
+  final cargo = _asMap(json['cargo']);
+  final status = _readString(json, const ['status', 'job_status', 'request_status', 'booking_status']).toLowerCase();
+  final createdAt = _readString(json, const ['created_at', 'createdAt', 'requested_at', 'requestedAt']);
+  final expiresIn = int.tryParse(_readString(json, const ['expires_in', 'expiresIn'])) ?? 0;
+  final productName = _firstNonEmpty([
+    _readString(json, const ['product_name', 'cargo_name', 'title', 'shipment_name', 'package_name']),
+    _readString(cargo, const ['name', 'title', 'description']),
+    'Booking request',
+  ]);
+  final fromLocation = _firstNonEmpty([
+    _readString(json, const ['from', 'pickup_location', 'origin', 'source']),
+    _readString(route, const ['from', 'pickup', 'origin', 'source']),
+    'Pickup location not provided',
+  ]);
+  final toLocation = _firstNonEmpty([
+    _readString(json, const ['to', 'dropoff_location', 'destination', 'target']),
+    _readString(route, const ['to', 'dropoff', 'destination', 'target']),
+    'Drop-off location not provided',
+  ]);
+  final weight = _firstNonEmpty([
+    _readString(json, const ['weight', 'cargo_weight', 'load_weight']),
+    _readString(load, const ['weight', 'cargo_weight', 'load_weight']),
+    'N/A',
+  ]);
+  final vehicleType = _firstNonEmpty([
+    _readString(json, const ['vehicle_type', 'truck_type', 'required_vehicle_type']),
+    _readString(load, const ['vehicle_type', 'truck_type', 'required_vehicle_type']),
+    'Truck',
+  ]);
+  final value = _firstNonEmpty([
+    _readString(json, const ['value', 'price', 'amount', 'quoted_price', 'fare']),
+    _readString(load, const ['value', 'price', 'amount', 'quoted_price', 'fare']),
+    '₹0',
+  ]);
+  final clientName = _firstNonEmpty([
+    _readString(json, const ['client_name', 'customer_name', 'name']),
+    _readString(client, const ['name', 'full_name', 'display_name']),
+    _readString(customer, const ['name', 'full_name', 'display_name']),
+    'Customer',
+  ]);
+
+  return BookingRequest(
+    id: _readString(json, const ['id', 'request_id', 'job_request_id', 'uuid']),
+    status: status.isEmpty ? 'pending' : status,
+    clientName: clientName,
+    clientInitials: _initials(clientName),
+    productName: productName,
+    from: fromLocation,
+    to: toLocation,
+    weight: weight,
+    vehicleType: vehicleType,
+    value: value,
+    distance: _readString(json, const ['distance', 'trip_distance', 'route_distance']),
+    etaText: _firstNonEmpty([
+      _readString(json, const ['eta_text', 'eta', 'eta_minutes']),
+      _formatRelativeTime(createdAt),
+    ]),
+    requestedAt: _formatRelativeTime(createdAt),
+    expiresInMinutes: expiresIn,
+  );
 }
 
 class BrokerVehicle {
@@ -283,6 +394,35 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
   return '';
 }
 
+String _firstNonEmpty(List<String> values) {
+  for (final value in values) {
+    final text = value.trim();
+    if (text.isNotEmpty) {
+      return text;
+    }
+  }
+  return '';
+}
+
+String _formatRelativeTime(String isoDate) {
+  final parsed = DateTime.tryParse(isoDate);
+  if (parsed == null) {
+    return '';
+  }
+
+  final diff = DateTime.now().difference(parsed);
+  if (diff.inMinutes < 1) {
+    return 'Just now';
+  }
+  if (diff.inMinutes < 60) {
+    return '${diff.inMinutes} min ago';
+  }
+  if (diff.inHours < 24) {
+    return '${diff.inHours}h ago';
+  }
+  return '${diff.inDays}d ago';
+}
+
 String _readNestedName(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
@@ -392,6 +532,7 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
 const mockBrokerRequests = <BookingRequest>[
   BookingRequest(
     id: 'req-1001',
+    status: 'pending',
     clientName: 'Neha Kapoor',
     clientInitials: 'NK',
     productName: 'Office Chair Set',
@@ -406,6 +547,7 @@ const mockBrokerRequests = <BookingRequest>[
   ),
   BookingRequest(
     id: 'req-1002',
+    status: 'accepted',
     clientName: 'Aarav Mehta',
     clientInitials: 'AM',
     productName: '4-Seater Sofa',
@@ -420,6 +562,7 @@ const mockBrokerRequests = <BookingRequest>[
   ),
   BookingRequest(
     id: 'req-1003',
+    status: 'cancelled',
     clientName: 'Rohit Sharma',
     clientInitials: 'RS',
     productName: 'Printer Cartridge Box',
@@ -647,6 +790,45 @@ TrackingDemoShipment bookingRequestToShipment(
       ),
     ],
   );
+}
+
+TrackingDemoShipment brokerRequestToShipment(BookingRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  final shipmentStatus = switch (status) {
+    'completed' => 'Completed',
+    'assigned' => 'Assigned',
+    'confirmed' => 'Accepted',
+    'accepted' => 'Accepted',
+    _ when status == 'cancelled' || status == 'declined' || status == 'rejected' || status == 'expired' => 'Cancelled',
+    _ => request.status.isEmpty ? 'Pending' : request.status,
+  };
+
+  return bookingRequestToShipment(
+    request,
+    status: shipmentStatus,
+  );
+}
+
+bool isPendingBookingRequest(BookingRequest request) {
+  return _normalizeRequestStatus(request.status) == 'pending';
+}
+
+bool isCompletedBookingRequest(BookingRequest request) {
+  return _normalizeRequestStatus(request.status) == 'completed';
+}
+
+bool isCancelledBookingRequest(BookingRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  return status == 'cancelled' || status == 'declined' || status == 'rejected' || status == 'expired';
+}
+
+bool isAcceptedBookingRequest(BookingRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  return status == 'accepted' || status == 'confirmed' || status == 'assigned';
+}
+
+String _normalizeRequestStatus(String status) {
+  return status.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
 }
 
 class BrokerHeader extends StatelessWidget {

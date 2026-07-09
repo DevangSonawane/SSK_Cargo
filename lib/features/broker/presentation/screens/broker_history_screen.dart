@@ -19,19 +19,21 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final shipments = ref.watch(brokerHistoryProvider);
-    final filteredShipments = shipments.where((shipment) {
+    final requestsAsync = ref.watch(brokerJobRequestsProvider((page: 1, limit: 100)));
+    final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
+    final filteredRequests = requests.where((request) {
       switch (_filter) {
         case _HistoryFilter.all:
-          return true;
+          return !isPendingBookingRequest(request);
         case _HistoryFilter.completed:
-          return shipment.status.toLowerCase().contains('completed');
+          return isCompletedBookingRequest(request);
         case _HistoryFilter.cancelled:
-          return shipment.status.toLowerCase().contains('cancel');
+          return isCancelledBookingRequest(request);
         case _HistoryFilter.accepted:
-          return shipment.status.toLowerCase().contains('accept');
+          return isAcceptedBookingRequest(request);
       }
     }).toList();
+    final shipments = filteredRequests.map(brokerRequestToShipment).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -78,35 +80,60 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
               ),
             ),
           ],
-          ),
+        ),
         const SizedBox(height: 14),
-        if (filteredShipments.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
+        requestsAsync.when(
+          data: (_) {
+            if (shipments.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Center(
+                  child: Text(
+                    'No bookings found for this filter.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF667085),
+                        ),
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                for (var index = 0; index < shipments.length; index++) ...[
+                  PackageTrackingCard(
+                    shipment: shipments[index],
+                    onTap: () => context.push('/client/tracking/details', extra: shipments[index]),
+                  ),
+                  if (index != shipments.length - 1) const SizedBox(height: 12),
+                ],
+              ],
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.only(top: 36),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stackTrace) => Container(
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: const Color(0xFFE8EDF2)),
             ),
-            child: Center(
-              child: Text(
-                'No bookings found for this filter.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-              ),
-            ),
-          )
-        else
-          ...filteredShipments.asMap().entries.expand(
-                (entry) => [
-                  PackageTrackingCard(
-                    shipment: entry.value,
-                    onTap: () => context.push('/client/tracking/details', extra: entry.value),
+            child: Text(
+              error.toString().replaceFirst('Exception: ', ''),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFFB42318),
                   ),
-                  if (entry.key != filteredShipments.length - 1) const SizedBox(height: 12),
-                ],
-              ),
+            ),
+          ),
+        ),
       ],
     );
   }
