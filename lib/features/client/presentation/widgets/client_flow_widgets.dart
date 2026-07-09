@@ -1198,7 +1198,7 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
       _BookingLocationScreenState();
 }
 
-enum _BookingFlowStep { location, itemDetails, payment, confirm }
+enum _BookingFlowStep { location, itemDetails, payment }
 
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _toController;
@@ -1264,7 +1264,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             to: _toController.text.trim(),
             vehicle: _vehicle,
             truckCategory: _truckCategoryForVehicle(_vehicle.label),
-            truckId: _draft.truckId.isEmpty ? _vehicle.label : _draft.truckId,
           );
           _step = _BookingFlowStep.itemDetails;
         });
@@ -1296,10 +1295,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           _draft = _draft.copyWith(
             selectedPaymentLabel: _selectedPaymentMethod.label,
           );
-          _step = _BookingFlowStep.confirm;
         });
-        return;
-      case _BookingFlowStep.confirm:
         await _submitBooking();
         return;
     }
@@ -1382,10 +1378,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       backgroundColor: Colors.white,
       bottomNavigationBar: Padding(
         padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
-        child: SizedBox(
+      child: SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: (_submitting || (_step == _BookingFlowStep.confirm && _bookingCreated))
+            onPressed: (_submitting || _bookingCreated)
                 ? null
                 : _next,
             child: _submitting
@@ -1395,12 +1391,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
-                    switch (_step) {
-                      _BookingFlowStep.location => 'Next',
-                      _BookingFlowStep.itemDetails => 'Next',
-                      _BookingFlowStep.payment => 'Continue',
-                      _BookingFlowStep.confirm => _bookingCreated ? 'Booked' : 'Confirm booking',
-                    },
+                    _bookingCreated
+                        ? 'Booked'
+                        : switch (_step) {
+                            _BookingFlowStep.location => 'Next',
+                            _BookingFlowStep.itemDetails => 'Next',
+                            _BookingFlowStep.payment => 'Continue',
+                          },
                   ),
           ),
         ),
@@ -1424,13 +1421,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             }
                             setState(() {
                               _step = switch (_step) {
-                                _BookingFlowStep.location => _BookingFlowStep.location,
-                                _BookingFlowStep.itemDetails => _BookingFlowStep.location,
-                                _BookingFlowStep.payment => _BookingFlowStep.itemDetails,
-                                _BookingFlowStep.confirm => _BookingFlowStep.payment,
-                              };
-                            });
-                          },
+                              _BookingFlowStep.location => _BookingFlowStep.location,
+                              _BookingFlowStep.itemDetails => _BookingFlowStep.location,
+                              _BookingFlowStep.payment => _BookingFlowStep.itemDetails,
+                            };
+                          });
+                        },
                           borderRadius: BorderRadius.circular(999),
                           child: const SizedBox(
                             width: 28,
@@ -1444,7 +1440,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             _BookingFlowStep.location => 'Location',
                             _BookingFlowStep.itemDetails => 'Item details',
                             _BookingFlowStep.payment => 'Payment',
-                            _BookingFlowStep.confirm => 'Confirm',
                           },
                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                 color: const Color(0xFF667085),
@@ -1469,10 +1464,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
       _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
-      _BookingFlowStep.payment => _buildPaymentStep(context),
-      _BookingFlowStep.confirm => _bookingCreated
+      _BookingFlowStep.payment => _bookingCreated
           ? _buildSuccessStep(context)
-          : _buildConfirmStep(context),
+          : _buildPaymentStep(context),
     };
   }
 
@@ -1600,39 +1594,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       onSelect: (method) {
         setState(() => _selectedPaymentMethod = method);
       },
-    );
-  }
-
-  Widget _buildConfirmStep(BuildContext context) {
-    final effectiveDraft = _draft.copyWith(
-      to: _toController.text.trim(),
-      material: _materialController.text.trim(),
-      weight: double.tryParse(_weightController.text.trim()) ?? _draft.weight,
-      quantity: int.tryParse(_quantityController.text.trim()) ?? _draft.quantity,
-      amount: double.tryParse(_amountController.text.trim()) ?? _draft.amount,
-      selectedPaymentLabel: _selectedPaymentMethod.label,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Review and confirm',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
-              ),
-        ),
-        const SizedBox(height: 12),
-        _ConfirmSummaryCard(draft: effectiveDraft),
-        const SizedBox(height: 12),
-        Text(
-          'Tap confirm booking to create the booking on the backend.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-              ),
-        ),
-      ],
     );
   }
 
@@ -2115,42 +2076,6 @@ class _PaymentListTile extends StatelessWidget {
               const Icon(Icons.circle_outlined, color: Color(0xFFD0D5DD), size: 20),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ConfirmSummaryCard extends StatelessWidget {
-  const _ConfirmSummaryCard({required this.draft});
-
-  final BookingData draft;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(draft.vehicle?.label ?? 'Truck', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          Text('From: ${draft.from}'),
-          Text('To: ${draft.to}'),
-          Text('Material: ${draft.material}'),
-          if (draft.additionalNotes.isNotEmpty) Text('Notes: ${draft.additionalNotes}'),
-          Text('Weight: ${draft.weightText}'),
-          Text('Quantity: ${draft.quantity}'),
-          Text('Distance: ${draft.distanceText}'),
-          Text('Amount: ${draft.amountText}'),
-          Text('Transport: ${draft.transportType}'),
-          Text('Payment: ${draft.selectedPaymentLabel}'),
-        ],
       ),
     );
   }
