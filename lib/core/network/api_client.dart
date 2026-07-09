@@ -177,6 +177,76 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createTruck({
+    required String accessToken,
+    required Map<String, dynamic> truck,
+  }) async {
+    developer.log(
+      'POST /api/vehicles/trucks keys=${truck.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/vehicles/trucks',
+        data: truck,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateTruck({
+    required String accessToken,
+    required String id,
+    required Map<String, dynamic> truck,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/trucks/$id keys=${truck.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/trucks/$id',
+        data: truck,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getTrucks({
+    required String accessToken,
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    developer.log(
+      'GET /api/vehicles/trucks status=$status page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/trucks',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          'page': page,
+          'limit': limit,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> cancelBooking({
     required String accessToken,
     required String id,

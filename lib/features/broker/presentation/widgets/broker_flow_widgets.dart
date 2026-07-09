@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+
+typedef BrokerTrucksQuery = ({String? status, int page, int limit});
 
 final brokerPendingRequestsProvider = StateProvider<int>((ref) {
   return mockBrokerRequests.length;
@@ -9,6 +13,26 @@ final brokerPendingRequestsProvider = StateProvider<int>((ref) {
 
 final brokerHistoryProvider = StateProvider<List<TrackingDemoShipment>>((ref) {
   return [...mockBrokerHistoryShipments];
+});
+
+final brokerTrucksProvider =
+    FutureProvider.autoDispose.family<List<BrokerVehicle>, BrokerTrucksQuery>((
+  ref,
+  query,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref.watch(apiClientProvider).getTrucks(
+        accessToken: session.tokens.accessToken,
+        status: query.status,
+        page: query.page,
+        limit: query.limit,
+      );
+
+  return _BrokerTruckPage.fromJson(response).vehicles;
 });
 
 final brokerVehiclesProvider = StateProvider<List<BrokerVehicle>>((ref) {
@@ -62,6 +86,12 @@ class BrokerVehicle {
     required this.status,
     required this.assignedDriverName,
     required this.assetPath,
+    this.driverId = '',
+    this.truckType = '',
+    this.category = '',
+    this.make = '',
+    this.year = '',
+    this.insuranceExpiry = '',
   });
 
   final String id;
@@ -71,6 +101,168 @@ class BrokerVehicle {
   final BrokerVehicleStatus status;
   final String assignedDriverName;
   final String assetPath;
+  final String driverId;
+  final String truckType;
+  final String category;
+  final String make;
+  final String year;
+  final String insuranceExpiry;
+}
+
+class _BrokerTruckPage {
+  const _BrokerTruckPage({
+    required this.vehicles,
+  });
+
+  factory _BrokerTruckPage.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    final items = _extractItems(data, json);
+    return _BrokerTruckPage(
+      vehicles: items
+          .whereType<Map<String, dynamic>>()
+          .map(_brokerVehicleFromJson)
+          .toList(),
+    );
+  }
+
+  final List<BrokerVehicle> vehicles;
+}
+
+BrokerVehicle _brokerVehicleFromJson(Map<String, dynamic> json) {
+  final type = _readString(json, const ['type', 'truck_type', 'vehicle_type']);
+  final category = _readString(json, const ['category', 'truck_category']);
+  final label = type.isNotEmpty ? type : _labelFromCategory(category);
+  final assetPath = _assetPathForLabel(label);
+  final registration = _readString(json, const ['registration', 'plate_number', 'plate', 'registration_number']);
+  final capacity = _readString(json, const ['capacity', 'load_capacity']);
+  final assignedDriver = _readNestedName(json, const ['driver', 'assigned_driver']);
+  final driverId = _readString(json, const ['driver_id', 'driverId']);
+  final make = _readString(json, const ['make']);
+  final year = _readString(json, const ['year']);
+  final insuranceExpiry = _readString(json, const ['insurance_expiry', 'insuranceExpiry']);
+  final status = _vehicleStatusFromApi(_readString(json, const ['status']));
+
+  return BrokerVehicle(
+    id: _readString(json, const ['id', 'truck_id', 'uuid']),
+    label: label.isEmpty ? 'Truck' : label,
+    plateNumber: registration,
+    capacity: capacity,
+    status: status,
+    assignedDriverName: assignedDriver.isEmpty ? 'Unassigned' : assignedDriver,
+    assetPath: assetPath,
+    driverId: driverId,
+    truckType: type,
+    category: category,
+    make: make,
+    year: year,
+    insuranceExpiry: insuranceExpiry,
+  );
+}
+
+String _labelFromCategory(String category) {
+  switch (category.toLowerCase()) {
+    case 'small':
+      return 'Small truck';
+    case 'medium':
+      return 'Medium truck';
+    case 'large':
+    case 'big':
+      return 'Big truck';
+    case 'part':
+      return 'Part truck';
+    default:
+      return 'Truck';
+  }
+}
+
+String _assetPathForLabel(String label) {
+  final text = label.toLowerCase();
+  if (text.contains('small')) return 'assets/trucks/small truck.png';
+  if (text.contains('medium')) return 'assets/trucks/medium truck.png';
+  if (text.contains('big') || text.contains('large')) return 'assets/trucks/big truck.png';
+  return 'assets/trucks/truck pooling.png';
+}
+
+BrokerVehicleStatus _vehicleStatusFromApi(String status) {
+  switch (status.toLowerCase()) {
+    case 'on_trip':
+    case 'in_transit':
+    case 'assigned':
+      return BrokerVehicleStatus.onTrip;
+    case 'maintenance':
+      return BrokerVehicleStatus.maintenance;
+    case 'available':
+    default:
+      return BrokerVehicleStatus.idle;
+  }
+}
+
+List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root) {
+  for (final candidate in [
+    data['trucks'],
+    data['items'],
+    data['results'],
+    data['rows'],
+    data['data'],
+    root['trucks'],
+    root['items'],
+    root['results'],
+    root['rows'],
+  ]) {
+    if (candidate is List) {
+      return candidate;
+    }
+  }
+
+  if (data.isNotEmpty && data.values.every((value) => value is Map<String, dynamic> || value is List)) {
+    return const <dynamic>[];
+  }
+
+  final nested = root['data'];
+  if (nested is List) {
+    return nested;
+  }
+
+  return const <dynamic>[];
+}
+
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  return <String, dynamic>{};
+}
+
+String _readString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+    final text = value.toString().trim();
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
+}
+
+String _readNestedName(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is Map<String, dynamic>) {
+      final nested = _readString(value, const ['name', 'full_name', 'display_name', 'title']);
+      if (nested.isNotEmpty) {
+        return nested;
+      }
+    }
+
+    final text = value?.toString().trim();
+    if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
 }
 
 class BrokerDriver {
