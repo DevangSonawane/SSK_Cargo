@@ -9,7 +9,9 @@ class BrokerTrackingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final drivers = ref.watch(brokerDriversProvider);
+    final driversAsync = ref.watch(
+      brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -39,26 +41,83 @@ class BrokerTrackingScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 14),
-        ...drivers.asMap().entries.expand(
-              (entry) => [
+        driversAsync.when(
+          data: (drivers) {
+            if (drivers.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No drivers yet',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF101828),
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Create a driver from the + button to start tracking.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF667085),
+                          ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                for (var index = 0; index < drivers.length; index++) ...[
                 DriverListTile(
-                  driver: entry.value,
+                  driver: drivers[index],
                   onTap: () {
                     context.push(
-                      '/broker/drivers/${entry.value.id}',
-                      extra: entry.value,
+                      '/broker/drivers/${drivers[index].id}',
+                      extra: drivers[index],
                     );
                   },
-                  onRemove: () {
-                    final notifier = ref.read(brokerDriversProvider.notifier);
-                    notifier.state = notifier.state
-                        .where((item) => item.id != entry.value.id)
-                        .toList();
+                  onEdit: () {
+                    context.push(
+                      '/broker/drivers/add',
+                      extra: drivers[index],
+                    );
                   },
+                  onRemove: () {},
                 ),
-                if (entry.key != drivers.length - 1) const SizedBox(height: 10),
+                  if (index != drivers.length - 1) const SizedBox(height: 10),
+                ],
               ],
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.only(top: 36),
+            child: Center(
+              child: CircularProgressIndicator(),
             ),
+          ),
+          error: (error, stackTrace) => Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Text(
+              error.toString().replaceFirst('Exception: ', ''),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFFB42318),
+                  ),
+            ),
+          ),
+        ),
       ],
     );
   }

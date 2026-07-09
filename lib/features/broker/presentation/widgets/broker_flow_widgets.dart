@@ -6,6 +6,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 
 typedef BrokerTrucksQuery = ({String? status, int page, int limit});
+typedef BrokerDriversQuery = ({String? status, int page, int limit});
 
 final brokerPendingRequestsProvider = StateProvider<int>((ref) {
   return mockBrokerRequests.length;
@@ -33,6 +34,26 @@ final brokerTrucksProvider =
       );
 
   return _BrokerTruckPage.fromJson(response).vehicles;
+});
+
+final brokerDriversApiProvider =
+    FutureProvider.autoDispose.family<List<BrokerDriver>, BrokerDriversQuery>((
+  ref,
+  query,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref.watch(apiClientProvider).getDrivers(
+        accessToken: session.tokens.accessToken,
+        status: query.status,
+        page: query.page,
+        limit: query.limit,
+      );
+
+  return _BrokerDriverPage.fromJson(response).drivers;
 });
 
 final brokerVehiclesProvider = StateProvider<List<BrokerVehicle>>((ref) {
@@ -197,6 +218,21 @@ BrokerVehicleStatus _vehicleStatusFromApi(String status) {
   }
 }
 
+BrokerDriverStatus _driverStatusFromApi(String status) {
+  switch (status.toLowerCase()) {
+    case 'on_trip':
+    case 'in_transit':
+    case 'assigned':
+      return BrokerDriverStatus.onTrip;
+    case 'available':
+    case 'idle':
+      return BrokerDriverStatus.idle;
+    case 'offline':
+    default:
+      return BrokerDriverStatus.offline;
+  }
+}
+
 List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root) {
   for (final candidate in [
     data['trucks'],
@@ -271,6 +307,9 @@ class BrokerDriver {
     required this.name,
     required this.phone,
     required this.licenseNo,
+    required this.licenseExpiry,
+    required this.aadhaar,
+    required this.avatar,
     required this.vehicleType,
     required this.status,
     required this.currentLocation,
@@ -283,12 +322,71 @@ class BrokerDriver {
   final String name;
   final String phone;
   final String licenseNo;
+  final String licenseExpiry;
+  final String aadhaar;
+  final String avatar;
   final String vehicleType;
   final BrokerDriverStatus status;
   final String currentLocation;
   final String assignedVehicle;
   final String onTripSince;
   final String currentBookingRef;
+}
+
+class _BrokerDriverPage {
+  const _BrokerDriverPage({
+    required this.drivers,
+  });
+
+  factory _BrokerDriverPage.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    final items = _extractItems(data, json);
+    return _BrokerDriverPage(
+      drivers: items
+          .whereType<Map<String, dynamic>>()
+          .map(_brokerDriverFromJson)
+          .where((driver) => driver.id.isNotEmpty)
+          .toList(),
+    );
+  }
+
+  final List<BrokerDriver> drivers;
+}
+
+BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
+  final user = _asMap(json['user']);
+  final truck = _asMap(json['truck']);
+  final name = _readString(json, const ['name', 'full_name', 'display_name']);
+  final userName = _readString(user, const ['name', 'full_name', 'display_name']);
+  final phone = _readString(json, const ['phone', 'mobile', 'contact_number']);
+  final userPhone = _readString(user, const ['phone', 'mobile', 'contact_number']);
+  final licenseNo = _readString(json, const ['license_no', 'license_number', 'driver_license_no']);
+  final licenseExpiry = _readString(json, const ['license_expiry', 'licenseExpiry']);
+  final aadhaar = _readString(json, const ['aadhaar', 'aadhar']);
+  final avatar = _readString(json, const ['avatar', 'profile_image']);
+  final vehicleType = _readString(json, const ['vehicle_type', 'truck_type', 'assigned_vehicle_type']);
+  final assignedVehicle = _readString(json, const ['assigned_vehicle', 'truck_number', 'truck_registration']);
+  final truckPlate = _readString(truck, const ['registration', 'plate_number', 'plate', 'registration_number']);
+  final currentLocation = _readString(json, const ['current_location', 'location', 'last_location']);
+  final onTripSince = _readString(json, const ['on_trip_since', 'trip_since']);
+  final currentBookingRef = _readString(json, const ['current_booking_ref', 'booking_ref']);
+  final status = _driverStatusFromApi(_readString(json, const ['status']));
+
+  return BrokerDriver(
+    id: _readString(json, const ['id', 'driver_id', 'user_id', 'uuid']),
+    name: name.isNotEmpty ? name : userName,
+    phone: phone.isNotEmpty ? phone : userPhone,
+    licenseNo: licenseNo,
+    licenseExpiry: licenseExpiry,
+    aadhaar: aadhaar,
+    avatar: avatar,
+    vehicleType: vehicleType,
+    status: status,
+    currentLocation: currentLocation,
+    assignedVehicle: assignedVehicle.isNotEmpty ? assignedVehicle : truckPlate,
+    onTripSince: onTripSince,
+    currentBookingRef: currentBookingRef,
+  );
 }
 
 const mockBrokerRequests = <BookingRequest>[
@@ -372,6 +470,9 @@ const mockBrokerDrivers = <BrokerDriver>[
     name: 'Vikram Patil',
     phone: '+91 98220 11234',
     licenseNo: 'DL-1823-PL',
+    licenseExpiry: '',
+    aadhaar: '',
+    avatar: '',
     vehicleType: 'Medium truck',
     status: BrokerDriverStatus.idle,
     currentLocation: 'Near Pune Gateway Hub',
@@ -384,6 +485,9 @@ const mockBrokerDrivers = <BrokerDriver>[
     name: 'Rahul Jadhav',
     phone: '+91 98710 32455',
     licenseNo: 'DL-9172-RJ',
+    licenseExpiry: '',
+    aadhaar: '',
+    avatar: '',
     vehicleType: 'Big truck',
     status: BrokerDriverStatus.onTrip,
     currentLocation: 'Ahmedabad Bypass',
@@ -396,6 +500,9 @@ const mockBrokerDrivers = <BrokerDriver>[
     name: 'Sahil Verma',
     phone: '+91 99203 88091',
     licenseNo: 'DL-4471-SK',
+    licenseExpiry: '',
+    aadhaar: '',
+    avatar: '',
     vehicleType: 'Truck pooling',
     status: BrokerDriverStatus.offline,
     currentLocation: 'Offline for login',
@@ -504,6 +611,8 @@ const mockBrokerHistoryShipments = <TrackingDemoShipment>[
 TrackingDemoShipment bookingRequestToShipment(
   BookingRequest request, {
   String status = 'Accepted',
+  String? assignedDriverName,
+  String? assignedTruckName,
 }) {
   return TrackingDemoShipment(
     packageName: request.productName,
@@ -513,6 +622,8 @@ TrackingDemoShipment bookingRequestToShipment(
     status: status,
     customerName: request.clientName,
     weight: request.weight,
+    assignedDriverName: assignedDriverName,
+    assignedTruckName: assignedTruckName,
     timeline: [
       const TrackingTimelineStep(
         title: 'Request received',
@@ -1464,11 +1575,13 @@ class DriverListTile extends StatelessWidget {
     super.key,
     required this.driver,
     required this.onTap,
+    required this.onEdit,
     required this.onRemove,
   });
 
   final BrokerDriver driver;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onRemove;
 
   @override
@@ -1512,7 +1625,7 @@ class DriverListTile extends StatelessWidget {
                         icon: Icons.edit_rounded,
                         backgroundColor: const Color(0xFFE9EFF8),
                         iconColor: const Color(0xFF1A365D),
-                        onPressed: onTap,
+                        onPressed: onEdit,
                         tooltip: 'Edit driver',
                       ),
                       const SizedBox(width: 8),

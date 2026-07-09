@@ -707,6 +707,20 @@ class _CompactSummaryCard extends StatelessWidget {
                   rightLabel: 'Weight',
                   rightValue: shipment.weight,
                 ),
+                if ((shipment.assignedDriverName ?? '').isNotEmpty ||
+                    (shipment.assignedTruckName ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _InfoGrid(
+                    leftLabel: 'Driver',
+                    leftValue: (shipment.assignedDriverName ?? '').isEmpty
+                        ? 'Not assigned'
+                        : shipment.assignedDriverName!,
+                    rightLabel: 'Truck',
+                    rightValue: (shipment.assignedTruckName ?? '').isEmpty
+                        ? 'Not assigned'
+                        : shipment.assignedTruckName!,
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Row(
                   children: [

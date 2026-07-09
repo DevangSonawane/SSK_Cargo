@@ -198,6 +198,76 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createDriverProfile({
+    required String accessToken,
+    required Map<String, dynamic> driver,
+  }) async {
+    developer.log(
+      'POST /api/vehicles/drivers keys=${driver.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/vehicles/drivers',
+        data: driver,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateDriverProfile({
+    required String accessToken,
+    required String id,
+    required Map<String, dynamic> driver,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/drivers/$id keys=${driver.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/$id',
+        data: driver,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDrivers({
+    required String accessToken,
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    developer.log(
+      'GET /api/vehicles/drivers status=$status page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/drivers',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          'page': page,
+          'limit': limit,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateTruck({
     required String accessToken,
     required String id,

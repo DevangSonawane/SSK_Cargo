@@ -144,6 +144,31 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     }
   }
 
+  Future<void> _pickInsuranceExpiry() async {
+    final now = DateTime.now();
+    final parsed = DateTime.tryParse(_insuranceExpiryController.text.trim());
+    final initialDate = parsed ?? now;
+    final firstDate = DateTime(now.year, 1, 1);
+    final lastDate = DateTime(now.year + 20, 12, 31);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isBefore(firstDate)
+          ? firstDate
+          : (initialDate.isAfter(lastDate) ? lastDate : initialDate),
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Select insurance expiry date',
+    );
+
+    if (picked == null || !mounted) return;
+
+    setState(() {
+      _insuranceExpiryController.text =
+          picked.toIso8601String().split('T').first;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final drivers = ref.watch(brokerDriversProvider);
@@ -257,6 +282,43 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<BrokerDriver>(
                     initialValue: _selectedDriver,
+                    isExpanded: true,
+                    isDense: true,
+                    itemHeight: 56,
+                    dropdownColor: Colors.white,
+                    menuMaxHeight: 320,
+                    borderRadius: BorderRadius.circular(20),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF667085),
+                    ),
+                    selectedItemBuilder: (context) {
+                      return drivers
+                        .map(
+                          (driver) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              children: [
+                                  _DriverAvatar(initials: _driverInitials(driver.name), compact: true),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      driver.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        color: Color(0xFF101828),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList();
+                    },
                     decoration: _fieldDecoration(
                       labelText: 'Assign driver',
                       prefixIcon: Icons.person_rounded,
@@ -265,7 +327,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                         .map(
                           (driver) => DropdownMenuItem<BrokerDriver>(
                             value: driver,
-                            child: Text(driver.name),
+                            child: _DriverDropdownMenuItem(driver: driver),
                           ),
                         )
                         .toList(),
@@ -313,11 +375,14 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _insuranceExpiryController,
+                    readOnly: true,
                     textInputAction: TextInputAction.done,
+                    onTap: _pickInsuranceExpiry,
                     decoration: _fieldDecoration(
                       labelText: 'Insurance expiry',
-                      hintText: 'YYYY-MM-DD',
+                      hintText: 'Pick a date',
                       prefixIcon: Icons.event_available_rounded,
+                      suffixIcon: Icons.calendar_month_rounded,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -396,6 +461,7 @@ InputDecoration _fieldDecoration({
   required String labelText,
   required IconData prefixIcon,
   String? hintText,
+  IconData? suffixIcon,
 }) {
   return InputDecoration(
     labelText: labelText,
@@ -403,6 +469,8 @@ InputDecoration _fieldDecoration({
     filled: true,
     fillColor: Colors.white,
     prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
+    suffixIcon:
+        suffixIcon == null ? null : Icon(suffixIcon, color: const Color(0xFF667085)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
@@ -425,4 +493,75 @@ String _truckCategoryForVehicle(String label) {
   if (text.contains('medium')) return 'medium';
   if (text.contains('big')) return 'large';
   return 'part';
+}
+
+String _driverInitials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) {
+    final first = parts.first;
+    return first.substring(0, first.length.clamp(1, 2)).toUpperCase();
+  }
+  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+}
+
+class _DriverDropdownMenuItem extends StatelessWidget {
+  const _DriverDropdownMenuItem({required this.driver});
+
+  final BrokerDriver driver;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _DriverAvatar(initials: _driverInitials(driver.name), compact: false),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            driver.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Color(0xFF101828),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DriverAvatar extends StatelessWidget {
+  const _DriverAvatar({required this.initials, required this.compact});
+
+  final String initials;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: compact ? 34 : 38,
+      height: compact ? 34 : 38,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1F88C9), Color(0xFF63B3ED)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
 }

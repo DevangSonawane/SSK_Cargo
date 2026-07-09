@@ -208,6 +208,8 @@ class TrackingDemoShipment {
     required this.timeline,
     this.bookingId,
     this.bookingStatus,
+    this.assignedDriverName,
+    this.assignedTruckName,
   });
 
   final String packageName;
@@ -220,6 +222,8 @@ class TrackingDemoShipment {
   final List<TrackingTimelineStep> timeline;
   final String? bookingId;
   final String? bookingStatus;
+  final String? assignedDriverName;
+  final String? assignedTruckName;
 }
 
 class TrackingTimelineStep {

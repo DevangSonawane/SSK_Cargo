@@ -150,6 +150,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/broker/tracking/details',
+        pageBuilder: (context, state) {
+          final shipment = state.extra as TrackingDemoShipment?;
+          return NoTransitionPage(
+            child: TrackingDetailsScreen(
+              shipment: shipment ?? trackingDemoShipments.first,
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '/broker/vehicles/add',
         pageBuilder: (context, state) {
           final existingTruck = state.extra as BrokerVehicle?;
@@ -160,8 +171,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/broker/drivers/add',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AddDriverScreen()),
+        pageBuilder: (context, state) {
+          final existingDriver = state.extra as BrokerDriver?;
+          return NoTransitionPage(
+            child: AddDriverScreen(existingDriver: existingDriver),
+          );
+        },
       ),
       GoRoute(
         path: '/broker/drivers/:id',
