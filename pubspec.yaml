@@ -90,6 +90,8 @@ flutter:
     - assets/Gemini_Generated_Image_3yu2bb3yu2bb3yu2.png
     - assets/IMG_1750.PNG
     - assets/google_logo.svg
+    - assets/upi-icon.svg
+    - assets/svgs/
     - assets/images/
     - assets/selectionscreen/
     - "assets/client/test.png"

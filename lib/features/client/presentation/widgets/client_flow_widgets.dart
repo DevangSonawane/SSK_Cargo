@@ -1,6 +1,11 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -9,11 +14,131 @@ class BookingData {
     required this.from,
     required this.to,
     required this.tripType,
+    this.vehicle,
+    this.pickupLat,
+    this.pickupLng,
+    this.dropLat,
+    this.dropLng,
+    this.material = '',
+    this.additionalNotes = '',
+    this.weight = 0,
+    this.quantity = 1,
+    this.weightUnit = 'tons',
+    this.truckCategory = '',
+    this.scheduledDate,
+    this.distance = 0,
+    this.amount = 0,
+    this.brokerId = '',
+    this.truckId = '',
+    this.paymentMode = PaymentMode.payLater,
+    this.selectedPaymentLabel = '',
   });
 
   final String from;
   final String to;
   final TripType tripType;
+  final VehicleOption? vehicle;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? dropLat;
+  final double? dropLng;
+  final String material;
+  final String additionalNotes;
+  final double weight;
+  final int quantity;
+  final String weightUnit;
+  final String truckCategory;
+  final DateTime? scheduledDate;
+  final double distance;
+  final double amount;
+  final String brokerId;
+  final String truckId;
+  final PaymentMode paymentMode;
+  final String selectedPaymentLabel;
+
+  String get transportType => tripType == TripType.interCity ? 'inter' : 'intra';
+  String get truckType => vehicle?.label ?? '';
+  String get weightText => weight > 0 ? '$weight $weightUnit' : '';
+  String get distanceText => distance > 0 ? '${distance.toStringAsFixed(distance % 1 == 0 ? 0 : 1)} km' : '';
+  String get amountText => amount > 0 ? '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}' : '';
+
+  BookingData copyWith({
+    String? from,
+    String? to,
+    TripType? tripType,
+    VehicleOption? vehicle,
+    double? pickupLat,
+    double? pickupLng,
+    double? dropLat,
+    double? dropLng,
+    String? material,
+    String? additionalNotes,
+    double? weight,
+    int? quantity,
+    String? weightUnit,
+    String? truckCategory,
+    DateTime? scheduledDate,
+    double? distance,
+    double? amount,
+    String? brokerId,
+    String? truckId,
+    PaymentMode? paymentMode,
+    String? selectedPaymentLabel,
+  }) {
+    return BookingData(
+      from: from ?? this.from,
+      to: to ?? this.to,
+      tripType: tripType ?? this.tripType,
+      vehicle: vehicle ?? this.vehicle,
+      pickupLat: pickupLat ?? this.pickupLat,
+      pickupLng: pickupLng ?? this.pickupLng,
+      dropLat: dropLat ?? this.dropLat,
+      dropLng: dropLng ?? this.dropLng,
+      material: material ?? this.material,
+      additionalNotes: additionalNotes ?? this.additionalNotes,
+      weight: weight ?? this.weight,
+      quantity: quantity ?? this.quantity,
+      weightUnit: weightUnit ?? this.weightUnit,
+      truckCategory: truckCategory ?? this.truckCategory,
+      scheduledDate: scheduledDate ?? this.scheduledDate,
+      distance: distance ?? this.distance,
+      amount: amount ?? this.amount,
+      brokerId: brokerId ?? this.brokerId,
+      truckId: truckId ?? this.truckId,
+      paymentMode: paymentMode ?? this.paymentMode,
+      selectedPaymentLabel: selectedPaymentLabel ?? this.selectedPaymentLabel,
+    );
+  }
+}
+
+enum PaymentMode { payNow, payLater }
+
+enum PaymentMethod {
+  googlePay,
+  phonePe,
+  paytm,
+  otherUpi,
+  card,
+  cashOnDelivery,
+  netBanking,
+  emi,
+  payLater,
+}
+
+extension PaymentMethodLabel on PaymentMethod {
+  String get label {
+    return switch (this) {
+      PaymentMethod.googlePay => 'Google Pay',
+      PaymentMethod.phonePe => 'PhonePe',
+      PaymentMethod.paytm => 'PayTM',
+      PaymentMethod.otherUpi => 'Other UPI',
+      PaymentMethod.card => 'Card',
+      PaymentMethod.cashOnDelivery => 'Cash On Delivery',
+      PaymentMethod.netBanking => 'Net Banking',
+      PaymentMethod.emi => 'EMI',
+      PaymentMethod.payLater => 'Pay later',
+    };
+  }
 }
 
 class TruckSize {
@@ -380,7 +505,10 @@ Future<void> showTripTypeSheet(
 
     final bookingData = await Navigator.of(context).push<BookingData>(
       MaterialPageRoute(
-        builder: (context) => BookingLocationScreen(tripType: tripType),
+        builder: (context) => BookingLocationScreen(
+          tripType: tripType,
+          initialVehicleIndex: initialVehicleIndex ?? 0,
+        ),
       ),
     );
     if (bookingData == null || !context.mounted) return;
@@ -1059,39 +1187,224 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
   const BookingLocationScreen({
     super.key,
     required this.tripType,
+    this.initialVehicleIndex = 0,
   });
 
   final TripType tripType;
+  final int initialVehicleIndex;
 
   @override
   ConsumerState<BookingLocationScreen> createState() =>
       _BookingLocationScreenState();
 }
 
+enum _BookingFlowStep { location, itemDetails, payment, confirm }
+
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
-  final _toController = TextEditingController();
+  late final TextEditingController _toController;
+  late final TextEditingController _materialController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _amountController;
+  late final VehicleOption _vehicle;
+
+  _BookingFlowStep _step = _BookingFlowStep.location;
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
+  bool _submitting = false;
+  bool _bookingCreated = false;
+  String? _bookingReference;
+  late BookingData _draft;
 
   @override
   void initState() {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
+    _vehicle = vehicleOptions[widget.initialVehicleIndex.clamp(0, vehicleOptions.length - 1)];
+    _draft = BookingData(
+      from: widget.tripType == TripType.interCity ? 'Ghanshyam Enclave' : 'Current location',
+      to: '',
+      tripType: widget.tripType,
+      vehicle: _vehicle,
+      truckCategory: _truckCategoryForVehicle(_vehicle.label),
+      scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+      amount: _parsePrice(_vehicle.price),
+    );
+    _toController = TextEditingController();
+    _materialController = TextEditingController();
+    _notesController = TextEditingController();
+    _weightController = TextEditingController();
+    _quantityController = TextEditingController(text: '1');
+    _amountController = TextEditingController(text: _parsePrice(_vehicle.price).toStringAsFixed(0));
   }
 
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
     _toController.dispose();
+    _materialController.dispose();
+    _notesController.dispose();
+    _weightController.dispose();
+    _quantityController.dispose();
+    _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _next() async {
+    switch (_step) {
+      case _BookingFlowStep.location:
+        if (_toController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enter the drop location.')),
+          );
+          return;
+        }
+        setState(() {
+          _draft = _draft.copyWith(
+            to: _toController.text.trim(),
+            vehicle: _vehicle,
+            truckCategory: _truckCategoryForVehicle(_vehicle.label),
+            truckId: _draft.truckId.isEmpty ? _vehicle.label : _draft.truckId,
+          );
+          _step = _BookingFlowStep.itemDetails;
+        });
+        return;
+      case _BookingFlowStep.itemDetails:
+        final material = _materialController.text.trim();
+        final weight = double.tryParse(_weightController.text.trim());
+        final quantity = int.tryParse(_quantityController.text.trim());
+        final amount = double.tryParse(_amountController.text.trim());
+        if (material.isEmpty || weight == null || quantity == null || amount == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please fill weight, items, material type, and amount.')),
+          );
+          return;
+        }
+        setState(() {
+          _draft = _draft.copyWith(
+            material: material,
+            additionalNotes: _notesController.text.trim(),
+            weight: weight,
+            quantity: quantity,
+            amount: amount,
+          );
+          _step = _BookingFlowStep.payment;
+        });
+        return;
+      case _BookingFlowStep.payment:
+        setState(() {
+          _draft = _draft.copyWith(
+            selectedPaymentLabel: _selectedPaymentMethod.label,
+          );
+          _step = _BookingFlowStep.confirm;
+        });
+        return;
+      case _BookingFlowStep.confirm:
+        await _submitBooking();
+        return;
+    }
+  }
+
+  Future<void> _submitBooking() async {
+    if (_submitting || _bookingCreated) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to create a booking.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+    });
+
+    try {
+      final response = await ref.read(apiClientProvider).createBooking(
+            accessToken: session.tokens.accessToken,
+            booking: _bookingPayload(),
+          );
+      final reference = _extractBookingReference(response);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+        _bookingCreated = true;
+        _bookingReference = reference;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('ApiException: ', ''))),
+      );
+    }
+  }
+
+  Map<String, dynamic> _bookingPayload() {
+    final scheduled = _draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3));
+    return <String, dynamic>{
+      'pickup_location': _draft.from,
+      'pickup_lat': _draft.pickupLat ?? 0,
+      'pickup_lng': _draft.pickupLng ?? 0,
+      'drop_location': _draft.to,
+      'drop_lat': _draft.dropLat ?? 0,
+      'drop_lng': _draft.dropLng ?? 0,
+      'truck_type': _draft.truckType,
+      'truck_category': _draft.truckCategory.isEmpty ? _truckCategoryForVehicle(_vehicle.label) : _draft.truckCategory,
+      'weight': _draft.weight,
+      'weight_unit': _draft.weightUnit,
+      'quantity': _draft.quantity,
+      'material': _draft.material,
+      if (_draft.additionalNotes.isNotEmpty) 'notes': _draft.additionalNotes,
+      'transport_type': _draft.transportType,
+      'scheduled_date': scheduled.toUtc().toIso8601String(),
+      'distance': _draft.distance,
+      'amount': _draft.amount,
+      if (_draft.brokerId.isNotEmpty) 'broker_id': _draft.brokerId,
+      if (_draft.truckId.isNotEmpty) 'truck_id': _draft.truckId,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final isInterCity = widget.tripType == TripType.interCity;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    final bookBottomPadding = bottomInset > 0 ? bottomInset + 36.0 : 44.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: (_submitting || (_step == _BookingFlowStep.confirm && _bookingCreated))
+                ? null
+                : _next,
+            child: _submitting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(
+                    switch (_step) {
+                      _BookingFlowStep.location => 'Next',
+                      _BookingFlowStep.itemDetails => 'Next',
+                      _BookingFlowStep.payment => 'Continue',
+                      _BookingFlowStep.confirm => _bookingCreated ? 'Booked' : 'Confirm booking',
+                    },
+                  ),
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -1104,100 +1417,45 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     Row(
                       children: [
                         InkWell(
-                          onTap: () => Navigator.of(context).pop(),
+                          onTap: () {
+                            if (_step == _BookingFlowStep.location) {
+                              Navigator.of(context).pop();
+                              return;
+                            }
+                            setState(() {
+                              _step = switch (_step) {
+                                _BookingFlowStep.location => _BookingFlowStep.location,
+                                _BookingFlowStep.itemDetails => _BookingFlowStep.location,
+                                _BookingFlowStep.payment => _BookingFlowStep.itemDetails,
+                                _BookingFlowStep.confirm => _BookingFlowStep.payment,
+                              };
+                            });
+                          },
                           borderRadius: BorderRadius.circular(999),
-                          child: Container(
+                          child: const SizedBox(
                             width: 28,
                             height: 28,
-                            alignment: Alignment.centerLeft,
-                            child: const Icon(Icons.arrow_back_rounded, size: 18),
+                            child: Icon(Icons.arrow_back_rounded, size: 18),
                           ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          switch (_step) {
+                            _BookingFlowStep.location => 'Location',
+                            _BookingFlowStep.itemDetails => 'Item details',
+                            _BookingFlowStep.payment => 'Payment',
+                            _BookingFlowStep.confirm => 'Confirm',
+                          },
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _BookingSummaryCard(
-                      pickupTitle: isInterCity ? 'Aarav Mehta · 9823419076' : 'Current location',
-                      pickupSubtitle: isInterCity
-                          ? 'Ghanshyam Enclave, 1303/1304, N...'
-                          : 'Current location will appear here',
-                      dropController: _toController,
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ActionShortcutTile(
-                            assetPath: 'assets/gps.png',
-                            title: 'Select on map',
-                            onTap: () {},
-                            compact: true,
-                            iconSize: 18,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 30,
-                          child: VerticalDivider(
-                            width: 10,
-                            thickness: 1,
-                            color: Color(0xFFEAEFF4),
-                          ),
-                        ),
-                        Expanded(
-                          child: _ActionShortcutTile(
-                            assetPath: 'assets/heart.png',
-                            title: 'Saved addresses',
-                            onTap: () {},
-                            compact: true,
-                            iconSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Recent addresses',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF101828),
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    ..._recentAddresses.asMap().entries.expand(
-                          (entry) => [
-                            _RecentAddressTile(
-                              title: entry.value.$1,
-                              subtitle: entry.value.$2,
-                              onTap: () {
-                                _toController.text = entry.value.$2;
-                              },
-                            ),
-                            if (entry.key != _recentAddresses.length - 1)
-                              const SizedBox(height: 8),
-                          ],
-                        ),
+                    _buildCurrentStep(context),
                   ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(18, 10, 18, bookBottomPadding),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(
-                      BookingData(
-                        from: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
-                        to: _toController.text.trim().isEmpty
-                            ? 'Dummy location'
-                            : _toController.text.trim(),
-                        tripType: widget.tripType,
-                      ),
-                    );
-                  },
-                  child: const Text('Book'),
                 ),
               ),
             ),
@@ -1206,6 +1464,799 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       ),
     );
   }
+
+  Widget _buildCurrentStep(BuildContext context) {
+    return switch (_step) {
+      _BookingFlowStep.location => _buildLocationStep(context),
+      _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
+      _BookingFlowStep.payment => _buildPaymentStep(context),
+      _BookingFlowStep.confirm => _bookingCreated
+          ? _buildSuccessStep(context)
+          : _buildConfirmStep(context),
+    };
+  }
+
+  Widget _buildLocationStep(BuildContext context) {
+    final isInterCity = widget.tripType == TripType.interCity;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BookingSummaryCard(
+          pickupTitle: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
+          pickupSubtitle: isInterCity ? 'Pickup location from your trip header' : 'Pickup from current location',
+          dropController: _toController,
+        ),
+        const SizedBox(height: 12),
+        _VehiclePreviewHeader(vehicle: _vehicle),
+        const SizedBox(height: 14),
+        Text(
+          'Recent addresses',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
+        ),
+        const SizedBox(height: 10),
+        ..._recentAddresses.asMap().entries.expand(
+              (entry) => [
+                _RecentAddressTile(
+                  title: entry.value.$1,
+                  subtitle: entry.value.$2,
+                  onTap: () => _toController.text = entry.value.$2,
+                ),
+                if (entry.key != _recentAddresses.length - 1) const SizedBox(height: 8),
+              ],
+            ),
+      ],
+    );
+  }
+
+  Widget _buildItemDetailsStep(BuildContext context) {
+    final weight = double.tryParse(_weightController.text.trim()) ?? 0;
+    final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _VehiclePreviewHeader(vehicle: _vehicle),
+        const SizedBox(height: 14),
+        _StepperCard(
+          title: 'Weight (tons)',
+          valueText: weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1),
+          onMinus: () {
+            final next = (weight - 0.5).clamp(0, 9999).toDouble();
+            setState(() {
+              _weightController.text = next.toStringAsFixed(next % 1 == 0 ? 0 : 1);
+            });
+          },
+          onPlus: () {
+            final next = (weight + 0.5).clamp(0, 9999).toDouble();
+            setState(() {
+              _weightController.text = next.toStringAsFixed(next % 1 == 0 ? 0 : 1);
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        _StepperCard(
+          title: 'Number of items',
+          valueText: quantity.toString(),
+          onMinus: () {
+            final next = (quantity - 1).clamp(1, 9999).toInt();
+            setState(() {
+              _quantityController.text = next.toString();
+            });
+          },
+          onPlus: () {
+            final next = (quantity + 1).clamp(1, 9999).toInt();
+            setState(() {
+              _quantityController.text = next.toString();
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        _InputCard(
+          title: 'Amount (₹)',
+          child: TextField(
+            controller: _amountController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              hintText: '4800',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _InputCard(
+          title: 'Material type',
+          child: TextField(
+            controller: _materialController,
+            decoration: const InputDecoration(
+              hintText: 'Office chair set',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _InputCard(
+          title: 'Additional notes',
+          child: TextField(
+            controller: _notesController,
+            maxLines: 3,
+            textInputAction: TextInputAction.newline,
+            decoration: const InputDecoration(
+              hintText: 'Any special handling instructions or delivery notes',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentStep(BuildContext context) {
+    return _PaymentMethodsCard(
+      selectedMethod: _selectedPaymentMethod,
+      onSelect: (method) {
+        setState(() => _selectedPaymentMethod = method);
+      },
+    );
+  }
+
+  Widget _buildConfirmStep(BuildContext context) {
+    final effectiveDraft = _draft.copyWith(
+      to: _toController.text.trim(),
+      material: _materialController.text.trim(),
+      weight: double.tryParse(_weightController.text.trim()) ?? _draft.weight,
+      quantity: int.tryParse(_quantityController.text.trim()) ?? _draft.quantity,
+      amount: double.tryParse(_amountController.text.trim()) ?? _draft.amount,
+      selectedPaymentLabel: _selectedPaymentMethod.label,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Review and confirm',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+        ),
+        const SizedBox(height: 12),
+        _ConfirmSummaryCard(draft: effectiveDraft),
+        const SizedBox(height: 12),
+        Text(
+          'Tap confirm booking to create the booking on the backend.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF667085),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuccessStep(BuildContext context) {
+    return _BookingSuccessCard(
+      bookingReference: _bookingReference,
+      paymentLabel: _draft.selectedPaymentLabel,
+      onTrack: () => context.go('/client/tracking'),
+      onHome: () => context.go('/client/home'),
+    );
+  }
+}
+
+class _VehiclePreviewHeader extends StatelessWidget {
+  const _VehiclePreviewHeader({required this.vehicle});
+
+  final VehicleOption vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 58,
+            height: 58,
+            child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  vehicle.label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${vehicle.capacity} • ${vehicle.price}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF667085),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InputCard extends StatelessWidget {
+  const _InputCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperCard extends StatelessWidget {
+  const _StepperCard({
+    required this.title,
+    required this.valueText,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final String title;
+  final String valueText;
+  final VoidCallback onMinus;
+  final VoidCallback onPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _StepperButton(icon: Icons.remove_rounded, onTap: onMinus),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  valueText,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              _StepperButton(icon: Icons.add_rounded, onTap: onPlus),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF5F7FB),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(icon, color: const Color(0xFF1C2430), size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodsCard extends StatelessWidget {
+  const _PaymentMethodsCard({
+    required this.selectedMethod,
+    required this.onSelect,
+  });
+
+  final PaymentMethod selectedMethod;
+  final ValueChanged<PaymentMethod> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Text(
+              'UPI, Cards & Other Methods',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          _PaymentTopRow(
+            selectedMethod: selectedMethod,
+            onSelect: onSelect,
+          ),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          _PaymentListTile(
+            icon: Icons.credit_card_rounded,
+            title: 'Pay using card',
+            subtitle: 'All card supported',
+            selected: selectedMethod == PaymentMethod.card,
+            onTap: () => onSelect(PaymentMethod.card),
+          ),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          _PaymentListTile(
+            icon: Icons.account_balance_rounded,
+            title: 'Net banking',
+            subtitle: 'All Indian banks',
+            selected: selectedMethod == PaymentMethod.netBanking,
+            onTap: () => onSelect(PaymentMethod.netBanking),
+          ),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          _PaymentListTile(
+            icon: Icons.calendar_month_rounded,
+            title: 'EMI',
+            subtitle: 'Card, EarlySalary and more',
+            selected: selectedMethod == PaymentMethod.emi,
+            trailingChip: 'NO COST EMI AVAILABLE',
+            onTap: () => onSelect(PaymentMethod.emi),
+          ),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          _PaymentListTile(
+            icon: Icons.schedule_send_rounded,
+            title: 'Pay later',
+            subtitle: 'Confirm now and pay after delivery',
+            selected: selectedMethod == PaymentMethod.payLater,
+            onTap: () => onSelect(PaymentMethod.payLater),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentTopRow extends StatelessWidget {
+  const _PaymentTopRow({
+    required this.selectedMethod,
+    required this.onSelect,
+  });
+
+  final PaymentMethod selectedMethod;
+  final ValueChanged<PaymentMethod> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _PaymentListTile(
+            icon: Icons.double_arrow_rounded,
+            title: 'UPI',
+            subtitle: 'Pay with one-set UPI, apps or choose other',
+            selected: _isUpiSelected(selectedMethod),
+            compact: true,
+            leadingWidget: SvgPicture.asset(
+              'assets/upi-icon.svg',
+              width: 32,
+              height: 32,
+            ),
+            onTap: () => onSelect(PaymentMethod.googlePay),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _UpiAppTile(
+                  label: 'Google Pay',
+                  selected: selectedMethod == PaymentMethod.googlePay,
+                  accentColor: const Color(0xFF1A73E8),
+                  logoAssetPath: 'assets/svgs/icons8-google-pay.svg',
+                  onTap: () => onSelect(PaymentMethod.googlePay),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _UpiAppTile(
+                  label: 'PhonePe',
+                  selected: selectedMethod == PaymentMethod.phonePe,
+                  accentColor: const Color(0xFF5F3DC4),
+                  logoAssetPath: 'assets/svgs/icons8-phone-pe.svg',
+                  onTap: () => onSelect(PaymentMethod.phonePe),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _UpiAppTile(
+                  label: 'PayTM',
+                  selected: selectedMethod == PaymentMethod.paytm,
+                  accentColor: const Color(0xFF0F4C81),
+                  logoAssetPath: 'assets/svgs/icons8-paytm.svg',
+                  onTap: () => onSelect(PaymentMethod.paytm),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isUpiSelected(PaymentMethod method) {
+    return method == PaymentMethod.googlePay ||
+        method == PaymentMethod.phonePe ||
+        method == PaymentMethod.paytm ||
+        method == PaymentMethod.otherUpi;
+  }
+}
+
+class _UpiAppTile extends StatelessWidget {
+  const _UpiAppTile({
+    required this.label,
+    required this.selected,
+    required this.accentColor,
+    this.logoAssetPath,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color accentColor;
+  final String? logoAssetPath;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        children: [
+          Container(
+            height: 56,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: selected ? accentColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected ? accentColor : const Color(0xFFE8EDF2),
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: logoAssetPath != null
+                ? Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: SvgPicture.asset(
+                      logoAssetPath!,
+                      fit: BoxFit.contain,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentListTile extends StatelessWidget {
+  const _PaymentListTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+    this.trailingChip,
+    this.leadingWidget,
+    this.compact = false,
+  });
+
+  final IconData? icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  final String? trailingChip;
+  final Widget? leadingWidget;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = const Color(0xFF1F88C9);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 16, vertical: compact ? 6 : 14),
+        child: Row(
+          children: [
+            if (leadingWidget != null)
+              SizedBox(
+                width: compact ? 28 : 34,
+                height: compact ? 28 : 34,
+                child: Center(child: leadingWidget!),
+              )
+            else
+              Icon(icon, color: selected ? accent : const Color(0xFF667085), size: compact ? 22 : 26),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF101828),
+                              ),
+                          ),
+                        ),
+                      if (trailingChip != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF8F2),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            trailingChip!,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: const Color(0xFF2FA56E),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF98A2B3),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (selected)
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 20)
+            else
+              const Icon(Icons.circle_outlined, color: Color(0xFFD0D5DD), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfirmSummaryCard extends StatelessWidget {
+  const _ConfirmSummaryCard({required this.draft});
+
+  final BookingData draft;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(draft.vehicle?.label ?? 'Truck', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Text('From: ${draft.from}'),
+          Text('To: ${draft.to}'),
+          Text('Material: ${draft.material}'),
+          if (draft.additionalNotes.isNotEmpty) Text('Notes: ${draft.additionalNotes}'),
+          Text('Weight: ${draft.weightText}'),
+          Text('Quantity: ${draft.quantity}'),
+          Text('Distance: ${draft.distanceText}'),
+          Text('Amount: ${draft.amountText}'),
+          Text('Transport: ${draft.transportType}'),
+          Text('Payment: ${draft.selectedPaymentLabel}'),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingSuccessCard extends StatelessWidget {
+  const _BookingSuccessCard({
+    required this.bookingReference,
+    required this.paymentLabel,
+    required this.onTrack,
+    required this.onHome,
+  });
+
+  final String? bookingReference;
+  final String paymentLabel;
+  final VoidCallback onTrack;
+  final VoidCallback onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FB),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Booking confirmed',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF101828),
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            bookingReference == null || bookingReference!.isEmpty
+                ? 'Your booking was created successfully.'
+                : 'Booking reference: $bookingReference',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Payment mode: $paymentLabel',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: onTrack,
+                  child: const Text('Track booking'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onHome,
+                  child: const Text('Go to home'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _truckCategoryForVehicle(String label) {
+  final text = label.toLowerCase();
+  if (text.contains('small')) return 'small';
+  if (text.contains('medium')) return 'medium';
+  if (text.contains('big')) return 'large';
+  return 'pooling';
+}
+
+double _parsePrice(String value) {
+  final digits = value.replaceAll(RegExp(r'[^0-9.]'), '');
+  return double.tryParse(digits) ?? 0;
+}
+
+String _extractBookingReference(Map<String, dynamic> json) {
+  final data = json['data'];
+  if (data is Map<String, dynamic>) {
+    for (final key in ['booking_ref', 'booking_reference', 'reference', 'id', 'tracking_number']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+  }
+  for (final key in ['booking_ref', 'booking_reference', 'reference', 'id', 'tracking_number']) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) return value;
+  }
+  return '';
 }
 
 class _BookingSummaryCard extends StatelessWidget {
@@ -1416,64 +2467,6 @@ const List<(String, String)> _recentAddresses = [
     ('Drop Hub', 'MIHAN Cargo Terminal, Nagpur'),
     ('Residence', 'Hingna T Point, Nagpur'),
   ];
-
-class _ActionShortcutTile extends StatelessWidget {
-  const _ActionShortcutTile({
-    required this.assetPath,
-    required this.title,
-    required this.onTap,
-    this.compact = false,
-    this.iconSize,
-  });
-
-  final String assetPath;
-  final String title;
-  final VoidCallback onTap;
-  final bool compact;
-  final double? iconSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 8 : 12,
-          vertical: compact ? 8 : 14,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                assetPath,
-                width: iconSize ?? (compact ? 16 : 22),
-                height: iconSize ?? (compact ? 16 : 22),
-              ),
-              SizedBox(width: compact ? 6 : 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: compact ? 11 : null,
-                      color: const Color(0xFF1C2430),
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _RecentAddressTile extends StatelessWidget {
   const _RecentAddressTile({

@@ -24,7 +24,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     super.dispose();
   }
 
-  Future<void> _openBookingLocation() async {
+  Future<void> _openBookingLocation({required int vehicleIndex}) async {
     HapticFeedback.lightImpact();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
     try {
@@ -32,6 +32,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
         MaterialPageRoute(
           builder: (context) => BookingLocationScreen(
             tripType: _selectedTripType,
+            initialVehicleIndex: vehicleIndex,
           ),
         ),
       );
@@ -90,7 +91,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 return _VehiclePreviewTile(
                   vehicle: vehicle,
                   onTap: () {
-                    _openBookingLocation();
+                    _openBookingLocation(vehicleIndex: index);
                   },
                 );
               },
