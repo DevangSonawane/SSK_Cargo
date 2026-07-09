@@ -290,6 +290,72 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> declineJobRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'PATCH /api/jobs/requests/$id/decline',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/jobs/requests/$id/decline',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> acceptJobRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'PATCH /api/jobs/requests/$id/accept',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/jobs/requests/$id/accept',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> assignDriverToJob({
+    required String accessToken,
+    required String id,
+    required String driverId,
+    required String truckId,
+  }) async {
+    developer.log(
+      'POST /api/jobs/$id/assign-driver driverId=$driverId truckId=$truckId',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/jobs/$id/assign-driver',
+        data: {
+          'driverId': driverId,
+          'truckId': truckId,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getTrucks({
     required String accessToken,
     String? status,

@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
@@ -30,23 +32,86 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 
   Future<void> _acceptRequest(BookingRequest request) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to accept requests.')),
+      );
+      return;
+    }
+
+    try {
+      await ref.read(apiClientProvider).acceptJobRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _requests.removeWhere((item) => item.id == request.id);
+    });
+    ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
+
     final assignment = await _pickAssignment(request);
     if (assignment == null || !mounted) {
       return;
     }
 
+    try {
+      await ref.read(apiClientProvider).assignDriverToJob(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+            driverId: assignment.driver!.id,
+            truckId: assignment.truck!.id,
+          );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
+
     final shipment = bookingRequestToShipment(
       request,
-      status: 'Accepted',
-      assignedDriverName: assignment.driver.name,
-      assignedTruckName: '${assignment.truck.label} • ${assignment.truck.plateNumber}',
+      status: 'Assigned',
+      assignedDriverName: assignment.driver!.name,
+      assignedTruckName: '${assignment.truck!.label} • ${assignment.truck!.plateNumber}',
     );
 
-    setState(() {
-      _requests.removeWhere((item) => item.id == request.id);
-    });
-
-    ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
     final history = ref.read(brokerHistoryProvider.notifier);
     history.state = [
       shipment,
@@ -58,23 +123,35 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     await context.push('/broker/tracking/details', extra: shipment);
   }
 
-  Future<_AssignmentSelection?> _pickAssignment(BookingRequest request) {
-    final defaultDriver = mockBrokerDrivers.firstWhere(
-      (driver) => driver.vehicleType.toLowerCase() == request.vehicleType.toLowerCase(),
-      orElse: () => mockBrokerDrivers.first,
-    );
-    final defaultTruck = mockBrokerVehicles.firstWhere(
-      (truck) => truck.label.toLowerCase() == request.vehicleType.toLowerCase(),
-      orElse: () => mockBrokerVehicles.first,
-    );
+  Future<_AssignmentSelection?> _pickAssignment(BookingRequest request) async {
+    final result = await _loadAssignmentOptions();
+    final drivers = result.drivers;
+    final trucks = result.trucks;
+
+    if (!mounted) {
+      return null;
+    }
+
+    if (drivers.isEmpty || trucks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No available drivers or trucks found for assignment.'),
+          backgroundColor: Color(0xFFE23A4B),
+        ),
+      );
+      return null;
+    }
+
+    final defaultDriver = _defaultDriverForRequest(request, drivers);
+    final defaultTruck = _defaultTruckForRequest(request, trucks);
 
     return showDialog<_AssignmentSelection>(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       barrierColor: Colors.black54,
       builder: (dialogContext) {
-        var selectedDriver = defaultDriver;
-        var selectedTruck = defaultTruck;
+        BrokerDriver? selectedDriver = defaultDriver;
+        BrokerVehicle? selectedTruck = defaultTruck;
 
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -100,11 +177,6 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                                   ),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                            visualDensity: VisualDensity.compact,
-                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -115,54 +187,24 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                             ),
                       ),
                       const SizedBox(height: 18),
-                      DropdownButtonFormField<BrokerDriver>(
-                        initialValue: selectedDriver,
-                        isExpanded: true,
-                        decoration: _popupFieldDecoration(
-                          labelText: 'Driver',
-                          prefixIcon: Icons.person_rounded,
-                        ),
-                        items: mockBrokerDrivers
-                            .map(
-                              (driver) => DropdownMenuItem<BrokerDriver>(
-                                value: driver,
-                                child: Text(
-                                  driver.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setModalState(() => selectedDriver = value);
-                        },
+                      _SelectionSection<BrokerDriver>(
+                        label: 'Driver',
+                        icon: Icons.person_rounded,
+                        emptyLabel: 'None',
+                        value: selectedDriver,
+                        items: drivers,
+                        itemLabel: (driver) => driver.name,
+                        onSelected: (driver) => setModalState(() => selectedDriver = driver),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<BrokerVehicle>(
-                        initialValue: selectedTruck,
-                        isExpanded: true,
-                        decoration: _popupFieldDecoration(
-                          labelText: 'Truck',
-                          prefixIcon: Icons.local_shipping_rounded,
-                        ),
-                        items: mockBrokerVehicles
-                            .map(
-                              (truck) => DropdownMenuItem<BrokerVehicle>(
-                                value: truck,
-                                child: Text(
-                                  '${truck.label} • ${truck.plateNumber}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setModalState(() => selectedTruck = value);
-                        },
+                      _SelectionSection<BrokerVehicle>(
+                        label: 'Truck',
+                        icon: Icons.local_shipping_rounded,
+                        emptyLabel: 'None',
+                        value: selectedTruck,
+                        items: trucks,
+                        itemLabel: (truck) => '${truck.label} • ${truck.plateNumber}',
+                        onSelected: (truck) => setModalState(() => selectedTruck = truck),
                       ),
                       const SizedBox(height: 18),
                       SizedBox(
@@ -170,6 +212,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         height: 52,
                         child: FilledButton(
                           onPressed: () {
+                            if (selectedDriver == null || selectedTruck == null) {
+                              return;
+                            }
                             Navigator.of(dialogContext).pop(
                               _AssignmentSelection(
                                 driver: selectedDriver,
@@ -189,6 +234,15 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('Skip for now'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -197,6 +251,27 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           },
         );
       },
+    );
+  }
+
+  Future<({List<BrokerDriver> drivers, List<BrokerVehicle> trucks})> _loadAssignmentOptions() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return (drivers: const <BrokerDriver>[], trucks: const <BrokerVehicle>[]);
+    }
+
+    final results = await Future.wait([
+      ref.read(
+        brokerDriversApiProvider((status: 'available', page: 1, limit: 100)).future,
+      ),
+      ref.read(
+        brokerTrucksProvider((status: 'available', page: 1, limit: 100)).future,
+      ),
+    ]);
+
+    return (
+      drivers: results[0] as List<BrokerDriver>,
+      trucks: results[1] as List<BrokerVehicle>,
     );
   }
 
@@ -224,15 +299,56 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
     if (shouldRemove != true || !mounted) return;
 
-    setState(() {
-      _requests.removeWhere((item) => item.id == request.id);
-    });
-    ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
-    final history = ref.read(brokerHistoryProvider.notifier);
-    history.state = [
-      bookingRequestToShipment(request, status: 'Cancelled'),
-      ...history.state,
-    ];
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to reject requests.')),
+      );
+      return;
+    }
+
+    try {
+      await ref.read(apiClientProvider).declineJobRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+
+      if (!mounted) return;
+
+      setState(() {
+        _requests.removeWhere((item) => item.id == request.id);
+      });
+      ref.read(brokerPendingRequestsProvider.notifier).state = _requests.length;
+      final history = ref.read(brokerHistoryProvider.notifier);
+      history.state = [
+        bookingRequestToShipment(request, status: 'Cancelled'),
+        ...history.state,
+      ];
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Request declined.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    }
   }
 
   @override
@@ -339,31 +455,177 @@ class _AssignmentSelection {
     required this.truck,
   });
 
-  final BrokerDriver driver;
-  final BrokerVehicle truck;
+  final BrokerDriver? driver;
+  final BrokerVehicle? truck;
 }
 
-InputDecoration _popupFieldDecoration({
-  required String labelText,
-  required IconData prefixIcon,
-}) {
-  return InputDecoration(
-    labelText: labelText,
-    filled: true,
-    fillColor: const Color(0xFFF8FAFC),
-    prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    border: OutlineInputBorder(
+BrokerDriver? _defaultDriverForRequest(BookingRequest request, List<BrokerDriver> drivers) {
+  if (drivers.isEmpty) return null;
+  for (final driver in drivers) {
+    if (driver.vehicleType.toLowerCase() == request.vehicleType.toLowerCase()) {
+      return driver;
+    }
+  }
+  return drivers.first;
+}
+
+BrokerVehicle? _defaultTruckForRequest(BookingRequest request, List<BrokerVehicle> trucks) {
+  if (trucks.isEmpty) return null;
+  for (final truck in trucks) {
+    if (truck.label.toLowerCase() == request.vehicleType.toLowerCase()) {
+      return truck;
+    }
+  }
+  return trucks.first;
+}
+
+class _SelectionSection<T> extends StatelessWidget {
+  const _SelectionSection({
+    required this.label,
+    required this.icon,
+    required this.emptyLabel,
+    required this.value,
+    required this.items,
+    required this.itemLabel,
+    required this.onSelected,
+  });
+
+  final String label;
+  final IconData icon;
+  final String emptyLabel;
+  final T? value;
+  final List<T> items;
+  final String Function(T item) itemLabel;
+  final ValueChanged<T?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasItems = items.isNotEmpty;
+    final displayValue = value == null ? emptyLabel : itemLabel(value as T);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE3E8EF)),
+          ),
+          child: Column(
+            children: [
+              _SelectableOptionCard(
+                label: emptyLabel,
+                icon: icon,
+                selected: value == null,
+                onTap: () => onSelected(null),
+              ),
+              if (hasItems) ...[
+                const SizedBox(height: 10),
+                ...items.asMap().entries.map(
+                      (entry) => Padding(
+                        padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 10),
+                        child: _SelectableOptionCard(
+                          label: itemLabel(entry.value),
+                          icon: icon,
+                          selected: value == entry.value,
+                          onTap: () => onSelected(entry.value),
+                        ),
+                      ),
+                    ),
+              ] else ...[
+                const SizedBox(height: 10),
+                Text(
+                  'No $label available right now.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF667085),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Selected: $displayValue',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF667085),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectableOptionCard extends StatelessWidget {
+  const _SelectableOptionCard({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFF1F88C9), width: 1.4),
-    ),
-  );
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFEFF6FF) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFF1F88C9) : const Color(0xFFE3E8EF),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFF1F88C9) : const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                icon,
+                color: selected ? Colors.white : const Color(0xFF667085),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF101828),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
