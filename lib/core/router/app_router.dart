@@ -7,7 +7,7 @@ import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
-import '../../features/broker/presentation/screens/add_vehicle_screen.dart';
+import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
 import '../../features/broker/presentation/screens/broker_profile_screen.dart';
@@ -151,8 +151,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/broker/vehicles/add',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AddVehicleScreen()),
+        pageBuilder: (context, state) {
+          final existingTruck = state.extra as BrokerVehicle?;
+          return NoTransitionPage(
+            child: AddTruckScreen(existingTruck: existingTruck),
+          );
+        },
       ),
       GoRoute(
         path: '/broker/drivers/add',

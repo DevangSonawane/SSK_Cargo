@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../widgets/broker_flow_widgets.dart';
-import 'add_vehicle_screen.dart';
 
 class BrokerVehiclesScreen extends ConsumerWidget {
   const BrokerVehiclesScreen({super.key});
@@ -46,9 +46,7 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                 const Spacer(),
                 FilledButton.icon(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const AddVehicleScreen()),
-                    );
+                    context.push('/broker/vehicles/add');
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Add truck'),
@@ -95,9 +93,7 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                   const Spacer(),
                   FilledButton.icon(
                     onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const AddVehicleScreen()),
-                      );
+                      context.push('/broker/vehicles/add');
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Add truck'),
@@ -166,12 +162,9 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                                   selected: false,
                                   onTap: () {
                                     Navigator.of(context).pop();
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => AddVehicleScreen(
-                                          existingTruck: entry.value,
-                                        ),
-                                      ),
+                                    context.push(
+                                      '/broker/vehicles/add',
+                                      extra: entry.value,
                                     );
                                   },
                                 ),
