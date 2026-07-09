@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/client_flow_widgets.dart';
 
-class TrackingDetailsScreen extends StatefulWidget {
+class TrackingDetailsScreen extends ConsumerStatefulWidget {
   const TrackingDetailsScreen({
     super.key,
     required this.shipment,
@@ -11,11 +14,108 @@ class TrackingDetailsScreen extends StatefulWidget {
   final TrackingDemoShipment shipment;
 
   @override
-  State<TrackingDetailsScreen> createState() => _TrackingDetailsScreenState();
+  ConsumerState<TrackingDetailsScreen> createState() => _TrackingDetailsScreenState();
 }
 
-class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
+class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   bool _isLiveTracking = false;
+  bool _isCancelling = false;
+  bool _isBookingCancelled = false;
+
+  bool get _canCancelBooking {
+    final status = widget.shipment.bookingStatus?.toLowerCase();
+    return widget.shipment.bookingId != null &&
+        !_isBookingCancelled &&
+        (status == null || const {'pending', 'confirmed', 'assigned'}.contains(status));
+  }
+
+  Future<void> _cancelBooking() async {
+    final bookingId = widget.shipment.bookingId;
+    if (bookingId == null || _isCancelling || !_canCancelBooking) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to cancel this booking.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCancelling = true;
+    });
+
+    try {
+      await ref.read(apiClientProvider).cancelBooking(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking cancelled successfully.')),
+      );
+      setState(() {
+        _isBookingCancelled = true;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCancelling = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmCancelBooking() async {
+    if (!_canCancelBooking || _isCancelling) {
+      return;
+    }
+
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Cancel booking?'),
+          content: const Text(
+            'This booking will be cancelled and the status will be updated. Do you want to continue?',
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE23A4B),
+              ),
+              child: const Text('Yes, cancel'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldCancel == true && mounted) {
+      await _cancelBooking();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +160,7 @@ class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
                                 ),
                               ),
                               SingleChildScrollView(
-                                padding: const EdgeInsets.fromLTRB(18, 18, 18, 86),
+                                padding: const EdgeInsets.fromLTRB(18, 18, 18, 160),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -84,22 +184,78 @@ class _TrackingDetailsScreenState extends State<TrackingDetailsScreen> {
                               Positioned(
                                 left: 18,
                                 right: 18,
-                                bottom: 14,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: FilledButton(
-                                    onPressed: () => setState(() => _isLiveTracking = true),
-                                    style: FilledButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(999),
+                                bottom: 0,
+                                child: Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    0,
+                                    0,
+                                    0,
+                                    MediaQuery.of(context).padding.bottom + 14,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          height: 48,
+                                          child: FilledButton(
+                                            onPressed: () => setState(() => _isLiveTracking = true),
+                                            style: FilledButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(999),
+                                              ),
+                                              backgroundColor: const Color(0xFF2FA56E),
+                                            ),
+                                            child: const Text(
+                                              'Live Tracking',
+                                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                      backgroundColor: const Color(0xFF2FA56E),
-                                    ),
-                                    child: const Text(
-                                      'Live Tracking',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                    ),
+                                      if (widget.shipment.bookingId != null) ...[
+                                        const SizedBox(height: 10),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            height: 48,
+                                            child: OutlinedButton(
+                                              onPressed: _canCancelBooking && !_isCancelling
+                                                  ? _confirmCancelBooking
+                                                  : null,
+                                              style: OutlinedButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(999),
+                                                ),
+                                                side: BorderSide(
+                                                  color: _canCancelBooking
+                                                      ? const Color(0xFFE23A4B)
+                                                      : const Color(0xFFCFD4DC),
+                                                ),
+                                                foregroundColor: const Color(0xFFE23A4B),
+                                                backgroundColor: Colors.white,
+                                              ),
+                                              child: Text(
+                                                _isCancelling
+                                                    ? 'Cancelling...'
+                                                    : _isBookingCancelled
+                                                        ? 'Booking cancelled'
+                                                        : (_canCancelBooking
+                                                            ? 'Cancel booking'
+                                                            : 'Booking cannot be cancelled'),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                               ),

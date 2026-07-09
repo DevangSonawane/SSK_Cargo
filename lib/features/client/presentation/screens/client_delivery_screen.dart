@@ -1,56 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
+import 'tracking_details_screen.dart';
 import '../widgets/client_flow_widgets.dart';
-
-enum _BookingStatusFilter {
-  all,
-  pending,
-  confirmed,
-  assigned,
-  enRoutePickup,
-  pickedUp,
-  inTransit,
-  delivered,
-  completed,
-  cancelled,
-}
-
-extension on _BookingStatusFilter {
-  String? get apiValue {
-    return switch (this) {
-      _BookingStatusFilter.all => null,
-      _BookingStatusFilter.pending => 'pending',
-      _BookingStatusFilter.confirmed => 'confirmed',
-      _BookingStatusFilter.assigned => 'assigned',
-      _BookingStatusFilter.enRoutePickup => 'en_route_pickup',
-      _BookingStatusFilter.pickedUp => 'picked_up',
-      _BookingStatusFilter.inTransit => 'in_transit',
-      _BookingStatusFilter.delivered => 'delivered',
-      _BookingStatusFilter.completed => 'completed',
-      _BookingStatusFilter.cancelled => 'cancelled',
-    };
-  }
-
-  String get label {
-    return switch (this) {
-      _BookingStatusFilter.all => 'All',
-      _BookingStatusFilter.pending => 'Pending',
-      _BookingStatusFilter.confirmed => 'Confirmed',
-      _BookingStatusFilter.assigned => 'Assigned',
-      _BookingStatusFilter.enRoutePickup => 'En route pickup',
-      _BookingStatusFilter.pickedUp => 'Picked up',
-      _BookingStatusFilter.inTransit => 'In transit',
-      _BookingStatusFilter.delivered => 'Delivered',
-      _BookingStatusFilter.completed => 'Completed',
-      _BookingStatusFilter.cancelled => 'Cancelled',
-    };
-  }
-}
 
 class ClientDeliveryScreen extends ConsumerStatefulWidget {
   const ClientDeliveryScreen({super.key});
@@ -61,7 +16,6 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   static const int _pageSize = 20;
-  _BookingStatusFilter _selectedFilter = _BookingStatusFilter.all;
 
   Future<void> _refreshBookings() async {
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -69,11 +23,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
       return;
     }
 
-    final query = (
-      status: _selectedFilter.apiValue,
-      page: 1,
-      limit: _pageSize,
-    );
+    final query = (status: null, page: 1, limit: _pageSize);
     final refreshed = ref.refresh(clientBookingsProvider(query).future);
     await refreshed;
   }
@@ -81,11 +31,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
-    final query = (
-      status: _selectedFilter.apiValue,
-      page: 1,
-      limit: _pageSize,
-    );
+    final query = (status: null, page: 1, limit: _pageSize);
     final bookingsAsync = session == null
         ? null
         : ref.watch(clientBookingsProvider(query));
@@ -96,71 +42,10 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
         onRefresh: _refreshBookings,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
           children: [
-            Text(
-              'Activity',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your client bookings from the backend will appear here.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF667085),
-                  ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => showBookingFlow(
-                context,
-                onOpen: () => ref.read(bottomNavVisibleProvider.notifier).state = false,
-                onClose: () {
-                  if (context.mounted) {
-                    ref.read(bottomNavVisibleProvider.notifier).state = true;
-                  }
-                },
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Book a shipment'),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Filter by status',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF101828),
-                  ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 42,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _BookingStatusFilter.values.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = _BookingStatusFilter.values[index];
-                  final selected = filter == _selectedFilter;
-                  return _StatusFilterChip(
-                    label: filter.label,
-                    selected: selected,
-                    onTap: () {
-                      if (filter == _selectedFilter) {
-                        return;
-                      }
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 18),
+            const _TrackingHeroCard(),
+            const SizedBox(height: 14),
             if (session == null)
               const _EmptyState(
                 icon: Icons.lock_outline_rounded,
@@ -188,9 +73,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                     return _EmptyState(
                       icon: Icons.inbox_rounded,
                       title: 'No bookings found',
-                      subtitle: _selectedFilter == _BookingStatusFilter.all
-                          ? 'Once a booking is created, it will show up here.'
-                          : 'No bookings match the selected status right now.',
+                      subtitle: 'Once a booking is created, it will show up here.',
                       actionLabel: 'Refresh',
                       onAction: _refreshBookings,
                     );
@@ -209,7 +92,18 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                       const SizedBox(height: 12),
                       ...bookings.asMap().entries.expand(
                             (entry) => [
-                              ClientBookingCard(booking: entry.value),
+                              ClientBookingCard(
+                                booking: entry.value,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => TrackingDetailsScreen(
+                                        shipment: trackingShipmentFromBooking(entry.value),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                               if (entry.key != bookings.length - 1) const SizedBox(height: 12),
                             ],
                           ),
@@ -235,53 +129,92 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   }
 }
 
-class _StatusFilterChip extends StatelessWidget {
-  const _StatusFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+class _TrackingHeroCard extends StatelessWidget {
+  const _TrackingHeroCard();
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = selected ? const Color(0xFF2FA56E) : const Color(0xFF667085);
-    final backgroundColor = selected ? const Color(0xFFEFF8F2) : Colors.white;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: selected ? const Color(0xFF2FA56E).withValues(alpha: 0.22) : const Color(0xFFE8EDF2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: selected ? 0.04 : 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2FA56E),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: foregroundColor,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Track your package',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
+                  fontSize: 22,
                 ),
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            'Please enter tracking number',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  fontSize: 13,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                const Icon(Icons.search_rounded, color: Colors.black45, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Tracking number',
+                      hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.black54,
+                            fontSize: 15,
+                          ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontSize: 15,
+                        ),
+                  ),
+                ),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8B84D),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -364,16 +297,18 @@ class ClientBookingCard extends StatelessWidget {
   const ClientBookingCard({
     super.key,
     required this.booking,
+    this.onTap,
   });
 
   final ClientBooking booking;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(booking.status);
     final initials = _initials(booking.clientName);
 
-    return Container(
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -623,6 +558,16 @@ class ClientBookingCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: card,
     );
   }
 }

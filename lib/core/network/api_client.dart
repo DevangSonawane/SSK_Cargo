@@ -177,6 +177,26 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> cancelBooking({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'PATCH /api/bookings/$id/cancel',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/bookings/$id/cancel',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     required String accessToken,
     required String name,

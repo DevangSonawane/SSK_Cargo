@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/client_booking_models.dart';
+import '../controllers/client_bookings_controller.dart';
+import 'tracking_details_screen.dart';
 import '../widgets/client_flow_widgets.dart';
 
 class ClientHomeScreen extends ConsumerStatefulWidget {
@@ -17,6 +20,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   double _refreshTurns = 0;
   TripType _selectedTripType = TripType.interCity;
   final TextEditingController _whereToController = TextEditingController();
+  static const int _recentBookingsLimit = 3;
 
   @override
   void dispose() {
@@ -43,8 +47,25 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     }
   }
 
+  Future<void> _refreshRecentBookings() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    final query = (status: null, page: 1, limit: _recentBookingsLimit);
+    final refreshed = ref.refresh(clientBookingsProvider(query).future);
+    await refreshed;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(authSessionProvider).valueOrNull;
+    final recentBookingsQuery = (status: null, page: 1, limit: _recentBookingsLimit);
+    final recentBookingsAsync = session == null
+        ? null
+        : ref.watch(clientBookingsProvider(recentBookingsQuery));
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -108,10 +129,11 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 ),
                 const Spacer(),
                 IconButton(
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
                       _refreshTurns += 1;
                     });
+                    await _refreshRecentBookings();
                   },
                   icon: AnimatedRotation(
                     turns: _refreshTurns,
@@ -125,25 +147,449 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            ...trackingDemoShipments.asMap().entries.expand(
-                  (entry) => [
-                    PackageTrackingCard(
-                      shipment: entry.value,
-                      onTap: () {
-                        context.push(
-                          '/client/tracking/details',
-                          extra: entry.value,
-                        );
-                      },
-                    ),
-                    if (entry.key != trackingDemoShipments.length - 1)
-                      const SizedBox(height: 12),
-                  ],
+            if (session == null)
+              const _HomeEmptyState(
+                icon: Icons.lock_outline_rounded,
+                title: 'Sign in to view bookings',
+                subtitle: 'Recent bookings will appear here once you are signed in.',
+              )
+            else if (recentBookingsAsync == null)
+              const SizedBox.shrink()
+            else
+              recentBookingsAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.only(top: 18),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
+                error: (error, _) => _HomeEmptyState(
+                  icon: Icons.error_outline_rounded,
+                  title: 'Could not load bookings',
+                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                  actionLabel: 'Try again',
+                  onAction: _refreshRecentBookings,
+                ),
+                data: (page) {
+                  final bookings = page.bookings;
+                  if (bookings.isEmpty) {
+                    return const _HomeEmptyState(
+                      icon: Icons.inbox_rounded,
+                      title: 'No bookings yet',
+                      subtitle: 'Once you create a booking, it will appear here.',
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...bookings.asMap().entries.expand(
+                            (entry) => [
+                              _RecentBookingCard(
+                                booking: entry.value,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => TrackingDetailsScreen(
+                                        shipment: trackingShipmentFromBooking(entry.value),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (entry.key != bookings.length - 1)
+                                const SizedBox(height: 12),
+                            ],
+                          ),
+                    ],
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _HomeEmptyState extends StatelessWidget {
+  const _HomeEmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE3E8EF)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F7FB),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF667085), size: 30),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF101828),
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingStatusPill extends StatelessWidget {
+  const _BookingStatusPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+            ),
+      ),
+    );
+  }
+}
+
+class _RecentBookingCard extends StatelessWidget {
+  const _RecentBookingCard({
+    required this.booking,
+    this.onTap,
+  });
+
+  final ClientBooking booking;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _statusColor(booking.status);
+    final initials = _initials(booking.clientName);
+
+    final card = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEFEFF),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF0F3F7)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  initials,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      booking.displayTitle,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF121826),
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      booking.displaySubtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black45,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _BookingStatusPill(label: booking.displayStatusLabel, color: statusColor),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 14,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2FA56E),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 2,
+                      height: 28,
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F4E8),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F4E8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2FA56E),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'From:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black38,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      booking.pickupLocation.isEmpty
+                          ? 'Pickup location not provided'
+                          : booking.pickupLocation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFF1C2430),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Shipping to:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black38,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      booking.dropoffLocation.isEmpty
+                          ? 'Drop-off location not provided'
+                          : booking.dropoffLocation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFF1C2430),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (booking.packageName.isNotEmpty ||
+              booking.weight.isNotEmpty ||
+              booking.vehicleType.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FB),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.inventory_2_rounded, color: Color(0xFF667085), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      [
+                        if (booking.packageName.isNotEmpty) booking.packageName,
+                        if (booking.weight.isNotEmpty) booking.weight,
+                        if (booking.vehicleType.isNotEmpty) booking.vehicleType,
+                      ].join(' • '),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF1C2430),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                    ),
+                  ),
+                  if (booking.amountText.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        booking.amountText,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF1F88C9),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return card;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: card,
+    );
+  }
+}
+
+String _initials(String value) {
+  final parts = value.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) {
+    return 'C';
+  }
+  if (parts.length == 1) {
+    final part = parts.first;
+    return part.length >= 2 ? part.substring(0, 2).toUpperCase() : part.toUpperCase();
+  }
+  return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+}
+
+Color _statusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'completed':
+    case 'delivered':
+      return const Color(0xFF2FA56E);
+    case 'cancelled':
+      return const Color(0xFFE23A4B);
+    case 'confirmed':
+    case 'assigned':
+    case 'in_transit':
+    case 'en_route_pickup':
+    case 'picked_up':
+      return const Color(0xFF1F88C9);
+    case 'pending':
+    default:
+      return const Color(0xFFF59E0B);
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/client_booking_models.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -205,6 +206,8 @@ class TrackingDemoShipment {
     required this.customerName,
     required this.weight,
     required this.timeline,
+    this.bookingId,
+    this.bookingStatus,
   });
 
   final String packageName;
@@ -215,6 +218,8 @@ class TrackingDemoShipment {
   final String customerName;
   final String weight;
   final List<TrackingTimelineStep> timeline;
+  final String? bookingId;
+  final String? bookingStatus;
 }
 
 class TrackingTimelineStep {
@@ -227,6 +232,76 @@ class TrackingTimelineStep {
   final String title;
   final String subtitle;
   final bool completed;
+}
+
+TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
+  final status = booking.status.toLowerCase();
+  return TrackingDemoShipment(
+    packageName: booking.displayTitle,
+    trackingId: booking.bookingRef.isEmpty ? booking.id : booking.bookingRef,
+    fromLocation: booking.pickupLocation.isEmpty ? 'Pickup location not provided' : booking.pickupLocation,
+    toLocation: booking.dropoffLocation.isEmpty ? 'Drop-off location not provided' : booking.dropoffLocation,
+    status: booking.displayStatusLabel,
+    customerName: booking.clientName,
+    weight: booking.weight.isEmpty ? booking.vehicleType : booking.weight,
+    bookingId: booking.id,
+    bookingStatus: status,
+    timeline: _timelineForStatus(status, booking),
+  );
+}
+
+List<TrackingTimelineStep> _timelineForStatus(String status, ClientBooking booking) {
+  final origin = booking.pickupLocation.isEmpty ? 'Pickup location not provided' : booking.pickupLocation;
+  final destination = booking.dropoffLocation.isEmpty ? 'Drop-off location not provided' : booking.dropoffLocation;
+
+  switch (status) {
+    case 'completed':
+    case 'delivered':
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Assigned', subtitle: 'Vehicle assigned', completed: true),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: true),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Completed successfully', completed: true),
+      ];
+    case 'assigned':
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Assigned', subtitle: 'Driver assigned', completed: true),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+      ];
+    case 'en_route_pickup':
+    case 'picked_up':
+    case 'in_transit':
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Assigned', subtitle: 'Driver assigned', completed: true),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: true),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+      ];
+    case 'confirmed':
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Confirmed', subtitle: 'Waiting for assignment', completed: true),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+      ];
+    case 'cancelled':
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Cancelled', subtitle: 'Booking was cancelled', completed: true),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Cancelled', completed: false),
+      ];
+    case 'pending':
+    default:
+      return [
+        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
+        TrackingTimelineStep(title: 'Pending', subtitle: 'Waiting for confirmation', completed: false),
+        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
+        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+      ];
+  }
 }
 
 const trackingDemoShipments = <TrackingDemoShipment>[
