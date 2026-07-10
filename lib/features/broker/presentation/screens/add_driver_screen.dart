@@ -1,17 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class AddDriverScreen extends ConsumerStatefulWidget {
-  const AddDriverScreen({
-    super.key,
-    this.existingDriver,
-  });
+  const AddDriverScreen({super.key, this.existingDriver});
 
   final BrokerDriver? existingDriver;
 
@@ -29,12 +30,15 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
   final _aadhaarController = TextEditingController();
   final _licenseExpiryController = TextEditingController();
   final _truckIdController = TextEditingController();
-  final _avatarController = TextEditingController();
+  final _picker = ImagePicker();
 
   String? _selectedTruckId;
   String? _selectedStatus;
   bool _isSubmitting = false;
   bool _obscurePassword = true;
+  Uint8List? _pickedAvatarBytes;
+  String? _pickedAvatarDataUrl;
+  String? _originalAvatarUrl;
 
   bool get _isEditing => widget.existingDriver != null;
 
@@ -48,7 +52,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     _aadhaarController.dispose();
     _licenseExpiryController.dispose();
     _truckIdController.dispose();
-    _avatarController.dispose();
     super.dispose();
   }
 
@@ -65,11 +68,47 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     _licenseController.text = driver.licenseNo;
     _aadhaarController.text = driver.aadhaar;
     _licenseExpiryController.text = driver.licenseExpiry;
-    _avatarController.text = driver.avatar;
+    _originalAvatarUrl = driver.avatar;
     _selectedStatus = _driverStatusToApiValue(driver.status);
     if (driver.assignedVehicle.isNotEmpty) {
       _truckIdController.text = driver.assignedVehicle;
     }
+  }
+
+  bool get _hasPickedAvatar => _pickedAvatarBytes != null;
+
+  String? get _avatarPreviewUrl => _hasPickedAvatar ? null : _originalAvatarUrl;
+
+  String _mimeTypeForName(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  String _buildDataUrl(Uint8List bytes, String name) {
+    final mimeType = _mimeTypeForName(name);
+    return 'data:$mimeType;base64,${base64Encode(bytes)}';
+  }
+
+  Future<void> _pickAvatar() async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) {
+      return;
+    }
+
+    final bytes = await picked.readAsBytes();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _pickedAvatarBytes = bytes;
+      _pickedAvatarDataUrl = _buildDataUrl(bytes, picked.name);
+    });
   }
 
   Future<void> _pickLicenseExpiry() async {
@@ -106,7 +145,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to create a driver.')),
+        const SnackBar(
+          content: Text('Please sign in again to create a driver.'),
+        ),
       );
       return;
     }
@@ -123,7 +164,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final aadhaar = _aadhaarController.text.replaceAll(' ', '').trim();
     final licenseExpiry = _licenseExpiryController.text.trim();
     final manualTruckId = _truckIdController.text.trim();
-    final avatar = _avatarController.text.trim();
+    final avatar = _pickedAvatarDataUrl ?? _originalAvatarUrl ?? '';
     final selectedTruck = _selectedTruckId == null
         ? null
         : _truckById(trucks, _selectedTruckId!);
@@ -134,7 +175,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
     if (truckId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a truck or enter a truck ID.')),
+        const SnackBar(
+          content: Text('Please select a truck or enter a truck ID.'),
+        ),
       );
       return;
     }
@@ -149,23 +192,28 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         await apiClient.updateDriverProfile(
           accessToken: session.tokens.accessToken,
           id: widget.existingDriver!.id,
-          driver: {
-            'license_no': licenseNo,
-            'license_expiry': licenseExpiry,
-            'aadhaar': aadhaar,
-            'truck_id': truckId,
-            if (avatar.isNotEmpty) 'avatar': avatar,
-            if (_selectedStatus != null && _selectedStatus!.isNotEmpty) 'status': _selectedStatus,
-          }..removeWhere((key, value) => value == null || value.toString().trim().isEmpty),
+          driver:
+              {
+                'license_no': licenseNo,
+                'license_expiry': licenseExpiry,
+                'aadhaar': aadhaar,
+                'truck_id': truckId,
+                if (avatar.isNotEmpty) 'avatar': avatar,
+                if (_selectedStatus != null && _selectedStatus!.isNotEmpty)
+                  'status': _selectedStatus,
+              }..removeWhere(
+                (key, value) =>
+                    value == null || value.toString().trim().isEmpty,
+              ),
         );
       } else {
         final registrationResponse = await apiClient.register(
-              name: name,
-              email: email,
-              password: password,
-              phone: phone.isEmpty ? null : phone,
-              role: 'driver',
-            );
+          name: name,
+          email: email,
+          password: password,
+          phone: phone.isEmpty ? null : phone,
+          role: 'driver',
+        );
 
         final userId = _extractUserId(registrationResponse);
         if (userId.isEmpty) {
@@ -174,16 +222,20 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         createdUserId = userId;
 
         await apiClient.createDriverProfile(
-              accessToken: session.tokens.accessToken,
-              driver: {
+          accessToken: session.tokens.accessToken,
+          driver:
+              {
                 'user_id': userId,
                 'license_no': licenseNo,
                 'license_expiry': licenseExpiry,
                 'aadhaar': aadhaar,
                 'truck_id': truckId,
                 if (avatar.isNotEmpty) 'avatar': avatar,
-              }..removeWhere((key, value) => value == null || value.toString().trim().isEmpty),
-            );
+              }..removeWhere(
+                (key, value) =>
+                    value == null || value.toString().trim().isEmpty,
+              ),
+        );
       }
 
       if (!mounted) return;
@@ -197,12 +249,17 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         licenseExpiry: licenseExpiry,
         aadhaar: aadhaar,
         avatar: avatar,
-        vehicleType: selectedTruckLabel.isNotEmpty ? selectedTruckLabel : 'Assigned truck',
+        vehicleType: selectedTruckLabel.isNotEmpty
+            ? selectedTruckLabel
+            : 'Assigned truck',
         status: _selectedStatus == null
             ? (widget.existingDriver?.status ?? BrokerDriverStatus.offline)
             : _driverStatusFromApi(_selectedStatus!),
-        currentLocation: widget.existingDriver?.currentLocation ?? 'Awaiting activation',
-        assignedVehicle: selectedTruckPlate.isNotEmpty ? selectedTruckPlate : truckId,
+        currentLocation:
+            widget.existingDriver?.currentLocation ?? 'Awaiting activation',
+        assignedVehicle: selectedTruckPlate.isNotEmpty
+            ? selectedTruckPlate
+            : truckId,
         onTripSince: widget.existingDriver?.onTripSince ?? '',
         currentBookingRef: widget.existingDriver?.currentBookingRef ?? '',
       );
@@ -211,7 +268,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         updatedDriver,
         ...notifier.state.where((driver) => driver.id != updatedDriver.id),
       ];
-      ref.invalidate(brokerDriversApiProvider((status: null, page: 1, limit: 10)));
+      ref.invalidate(
+        brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -252,7 +311,11 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     );
     final trucks = trucksAsync.valueOrNull ?? const <BrokerVehicle>[];
     final driver = widget.existingDriver;
-    final selectedTruckId = _selectedTruckId ?? (driver == null ? null : _truckIdForDriver(trucks, driver.assignedVehicle));
+    final selectedTruckId =
+        _selectedTruckId ??
+        (driver == null
+            ? null
+            : _truckIdForDriver(trucks, driver.assignedVehicle));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -269,6 +332,27 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
+          Center(
+            child: Column(
+              children: [
+                SskProfileAvatar(
+                  imageUrl: _avatarPreviewUrl,
+                  imageBytes: _pickedAvatarBytes,
+                  size: 108,
+                  onTap: _pickAvatar,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Tap to choose driver photo',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -297,8 +381,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         ? 'Update the driver profile details and save the changes.'
                         : 'Create a driver login, then attach the driver profile to a truck.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
+                      color: const Color(0xFF667085),
+                    ),
                   ),
                 ),
               ],
@@ -365,7 +449,10 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       labelText: 'Password',
                       filled: true,
                       fillColor: Colors.white,
-                      prefixIcon: const Icon(Icons.lock_rounded, color: Color(0xFF667085)),
+                      prefixIcon: const Icon(
+                        Icons.lock_rounded,
+                        color: Color(0xFF667085),
+                      ),
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
@@ -375,9 +462,14 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                         ),
-                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        tooltip: _obscurePassword
+                            ? 'Show password'
+                            : 'Hide password',
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
@@ -388,7 +480,10 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF1F88C9), width: 1.4),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1F88C9),
+                          width: 1.4,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -449,17 +544,18 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                   controller: _licenseExpiryController,
                   readOnly: true,
                   onTap: _pickLicenseExpiry,
-                  decoration: _fieldDecoration(
-                    labelText: 'License expiry',
-                    prefixIcon: Icons.event_rounded,
-                    hintText: 'YYYY-MM-DD',
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      onPressed: _pickLicenseExpiry,
-                      icon: const Icon(Icons.calendar_month_rounded),
-                      tooltip: 'Pick date',
-                    ),
-                  ),
+                  decoration:
+                      _fieldDecoration(
+                        labelText: 'License expiry',
+                        prefixIcon: Icons.event_rounded,
+                        hintText: 'YYYY-MM-DD',
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          onPressed: _pickLicenseExpiry,
+                          icon: const Icon(Icons.calendar_month_rounded),
+                          tooltip: 'Pick date',
+                        ),
+                      ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Select license expiry';
@@ -482,11 +578,14 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         .map(
                           (truck) => DropdownMenuItem<String>(
                             value: truck.id,
-                            child: Text('${truck.label} • ${truck.plateNumber}'),
+                            child: Text(
+                              '${truck.label} • ${truck.plateNumber}',
+                            ),
                           ),
                         )
                         .toList(),
-                    onChanged: (value) => setState(() => _selectedTruckId = value),
+                    onChanged: (value) =>
+                        setState(() => _selectedTruckId = value),
                     validator: (value) {
                       if ((value ?? '').isEmpty) {
                         return 'Select a truck';
@@ -513,7 +612,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                 const SizedBox(height: 12),
                 if (_isEditing)
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedStatus ?? _driverStatusToApiValue(driver!.status),
+                    initialValue:
+                        _selectedStatus ??
+                        _driverStatusToApiValue(driver!.status),
                     decoration: _fieldDecoration(
                       labelText: 'Status',
                       prefixIcon: Icons.toggle_on_rounded,
@@ -532,24 +633,18 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         child: Text('Offline'),
                       ),
                     ],
-                    onChanged: (value) => setState(() => _selectedStatus = value),
+                    onChanged: (value) =>
+                        setState(() => _selectedStatus = value),
                   ),
                 if (_isEditing) const SizedBox(height: 12),
-                TextFormField(
-                  controller: _avatarController,
-                  textInputAction: TextInputAction.done,
-                  decoration: _fieldDecoration(
-                    labelText: 'Avatar URL',
-                    prefixIcon: Icons.image_rounded,
-                    hintText: 'Optional',
-                  ),
-                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : () => _submitDriver(trucks),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => _submitDriver(trucks),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1F88C9),
                       shape: RoundedRectangleBorder(
@@ -562,7 +657,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.4,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Text(
@@ -579,8 +676,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                   Text(
                     'Truck list could not be loaded. You can still enter a truck ID manually.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
+                      color: const Color(0xFF667085),
+                    ),
                   ),
                 ],
               ],
@@ -593,9 +690,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 }
 
 class _ReadonlyDriverHeader extends StatelessWidget {
-  const _ReadonlyDriverHeader({
-    required this.driver,
-  });
+  const _ReadonlyDriverHeader({required this.driver});
 
   final BrokerDriver driver;
 
@@ -615,16 +710,16 @@ class _ReadonlyDriverHeader extends StatelessWidget {
           Text(
             driver.name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             driver.phone,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
         ],
       ),
