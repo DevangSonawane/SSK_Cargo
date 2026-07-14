@@ -469,6 +469,18 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getAdminPricing({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/admin/pricing', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/admin/pricing',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getKycStatusForUser({
     required String accessToken,
     required String userId,

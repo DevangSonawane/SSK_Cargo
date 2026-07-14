@@ -7,6 +7,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
+import '../controllers/client_bookings_controller.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -57,11 +58,15 @@ class BookingData {
   final PaymentMode paymentMode;
   final String selectedPaymentLabel;
 
-  String get transportType => tripType == TripType.interCity ? 'inter' : 'intra';
+  String get transportType =>
+      tripType == TripType.interCity ? 'inter' : 'intra';
   String get truckType => vehicle?.label ?? '';
   String get weightText => weight > 0 ? '$weight $weightUnit' : '';
-  String get distanceText => distance > 0 ? '${distance.toStringAsFixed(distance % 1 == 0 ? 0 : 1)} km' : '';
-  String get amountText => amount > 0 ? '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}' : '';
+  String get distanceText => distance > 0
+      ? '${distance.toStringAsFixed(distance % 1 == 0 ? 0 : 1)} km'
+      : '';
+  String get amountText =>
+      amount > 0 ? '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}' : '';
 
   BookingData copyWith({
     String? from,
@@ -196,6 +201,84 @@ const vehicleOptions = <VehicleOption>[
   ),
 ];
 
+List<VehicleOption> resolveVehicleOptions({
+  required TripType tripType,
+  ClientPricingConfig? pricing,
+}) {
+  if (pricing == null) {
+    return vehicleOptions
+        .map(
+          (vehicle) => VehicleOption(
+            label: vehicle.label,
+            capacity: vehicle.capacity,
+            price: 'Loading...',
+            accentColor: vehicle.accentColor,
+            assetPath: vehicle.assetPath,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  return vehicleOptions
+      .map(
+        (vehicle) => VehicleOption(
+          label: vehicle.label,
+          capacity: vehicle.capacity,
+          price: _vehiclePriceLabel(
+            label: vehicle.label,
+            tripType: tripType,
+            pricing: pricing,
+          ),
+          accentColor: vehicle.accentColor,
+          assetPath: vehicle.assetPath,
+        ),
+      )
+      .toList(growable: false);
+}
+
+String _vehiclePriceLabel({
+  required String label,
+  required TripType tripType,
+  required ClientPricingConfig pricing,
+}) {
+  if (tripType == TripType.intraCity) {
+    final tier = _intraCityTierForVehicle(pricing, label);
+    final baseFare = tier?.baseFare ?? 0;
+    if (baseFare > 0) {
+      return '₹${baseFare.toStringAsFixed(baseFare % 1 == 0 ? 0 : 2)}';
+    }
+    return '';
+  }
+
+  final interCityRate = pricing.interCity.baseRatePerKm;
+  if (interCityRate > 0) {
+    final rateLabel =
+        '₹${interCityRate.toStringAsFixed(interCityRate % 1 == 0 ? 0 : 2)}/km';
+    if (label.toLowerCase().contains('pool')) {
+      final fee = pricing.partTruck.platformFee;
+      if (fee > 0) {
+        return '$rateLabel + ${(fee * 100).toStringAsFixed(0)}% fee';
+      }
+    }
+    return rateLabel;
+  }
+
+  return '';
+}
+
+ClientTruckPricingTier? _intraCityTierForVehicle(
+  ClientPricingConfig pricing,
+  String label,
+) {
+  final text = label.toLowerCase();
+  if (text.contains('small')) return pricing.intraCity.small;
+  if (text.contains('medium')) return pricing.intraCity.medium;
+  if (text.contains('big') || text.contains('large')) {
+    return pricing.intraCity.large;
+  }
+  return pricing.intraCity.small;
+}
+
 class TrackingDemoShipment {
   const TrackingDemoShipment({
     required this.packageName,
@@ -243,8 +326,12 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
   return TrackingDemoShipment(
     packageName: booking.displayTitle,
     trackingId: booking.bookingRef.isEmpty ? booking.id : booking.bookingRef,
-    fromLocation: booking.pickupLocation.isEmpty ? 'Pickup location not provided' : booking.pickupLocation,
-    toLocation: booking.dropoffLocation.isEmpty ? 'Drop-off location not provided' : booking.dropoffLocation,
+    fromLocation: booking.pickupLocation.isEmpty
+        ? 'Pickup location not provided'
+        : booking.pickupLocation,
+    toLocation: booking.dropoffLocation.isEmpty
+        ? 'Drop-off location not provided'
+        : booking.dropoffLocation,
     status: booking.displayStatusLabel,
     customerName: booking.clientName,
     weight: booking.weight.isEmpty ? booking.vehicleType : booking.weight,
@@ -254,56 +341,159 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
   );
 }
 
-List<TrackingTimelineStep> _timelineForStatus(String status, ClientBooking booking) {
-  final origin = booking.pickupLocation.isEmpty ? 'Pickup location not provided' : booking.pickupLocation;
-  final destination = booking.dropoffLocation.isEmpty ? 'Drop-off location not provided' : booking.dropoffLocation;
+List<TrackingTimelineStep> _timelineForStatus(
+  String status,
+  ClientBooking booking,
+) {
+  final origin = booking.pickupLocation.isEmpty
+      ? 'Pickup location not provided'
+      : booking.pickupLocation;
+  final destination = booking.dropoffLocation.isEmpty
+      ? 'Drop-off location not provided'
+      : booking.dropoffLocation;
 
   switch (status) {
     case 'completed':
     case 'delivered':
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Assigned', subtitle: 'Vehicle assigned', completed: true),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: true),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Completed successfully', completed: true),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Assigned',
+          subtitle: 'Vehicle assigned',
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Completed successfully',
+          completed: true,
+        ),
       ];
     case 'assigned':
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Assigned', subtitle: 'Driver assigned', completed: true),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Assigned',
+          subtitle: 'Driver assigned',
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: false,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Pending',
+          completed: false,
+        ),
       ];
     case 'en_route_pickup':
     case 'picked_up':
     case 'in_transit':
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Assigned', subtitle: 'Driver assigned', completed: true),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: true),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Assigned',
+          subtitle: 'Driver assigned',
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Pending',
+          completed: false,
+        ),
       ];
     case 'confirmed':
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Confirmed', subtitle: 'Waiting for assignment', completed: true),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Confirmed',
+          subtitle: 'Waiting for assignment',
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: false,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Pending',
+          completed: false,
+        ),
       ];
     case 'cancelled':
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Cancelled', subtitle: 'Booking was cancelled', completed: true),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Cancelled', completed: false),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Cancelled',
+          subtitle: 'Booking was cancelled',
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: false,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Cancelled',
+          completed: false,
+        ),
       ];
     case 'pending':
     default:
       return [
-        TrackingTimelineStep(title: 'Booking created', subtitle: origin, completed: true),
-        TrackingTimelineStep(title: 'Pending', subtitle: 'Waiting for confirmation', completed: false),
-        TrackingTimelineStep(title: 'In transit', subtitle: destination, completed: false),
-        TrackingTimelineStep(title: 'Delivered', subtitle: 'Pending', completed: false),
+        TrackingTimelineStep(
+          title: 'Booking created',
+          subtitle: origin,
+          completed: true,
+        ),
+        TrackingTimelineStep(
+          title: 'Pending',
+          subtitle: 'Waiting for confirmation',
+          completed: false,
+        ),
+        TrackingTimelineStep(
+          title: 'In transit',
+          subtitle: destination,
+          completed: false,
+        ),
+        TrackingTimelineStep(
+          title: 'Delivered',
+          subtitle: 'Pending',
+          completed: false,
+        ),
       ];
   }
 }
@@ -501,11 +691,7 @@ class LocationArc extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.location_on_rounded,
-              color: scheme.primary,
-              size: 17,
-            ),
+            Icon(Icons.location_on_rounded, color: scheme.primary, size: 17),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -515,9 +701,9 @@ class LocationArc extends StatelessWidget {
                   Text(
                     'Pick up from',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -525,9 +711,9 @@ class LocationArc extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: const Color(0xFF17324D),
-                          fontWeight: FontWeight.w400,
-                        ),
+                      color: const Color(0xFF17324D),
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),
@@ -572,7 +758,8 @@ Future<void> showTripTypeSheet(
 }) async {
   onOpen?.call();
   try {
-    final tripType = initialTripType ??
+    final tripType =
+        initialTripType ??
         await showModalBottomSheet<TripType>(
           context: context,
           isScrollControlled: true,
@@ -601,7 +788,6 @@ Future<void> showTripTypeSheet(
       ),
     );
     if (vehicle == null || !context.mounted) return;
-
   } finally {
     onClose?.call();
   }
@@ -668,9 +854,9 @@ class TrackingMockCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.black54,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                 ),
                 const SizedBox(height: 12),
                 ClipRRect(
@@ -692,11 +878,7 @@ class TrackingMockCard extends StatelessWidget {
 }
 
 class PackageTrackingCard extends StatelessWidget {
-  const PackageTrackingCard({
-    super.key,
-    required this.shipment,
-    this.onTap,
-  });
+  const PackageTrackingCard({super.key, required this.shipment, this.onTap});
 
   final TrackingDemoShipment shipment;
   final VoidCallback? onTap;
@@ -733,10 +915,7 @@ class PackageTrackingCard extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(7),
-                  child: Image.asset(
-                    'assets/package.png',
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.asset('assets/package.png', fit: BoxFit.contain),
                 ),
               ),
               const SizedBox(width: 10),
@@ -747,19 +926,19 @@ class PackageTrackingCard extends StatelessWidget {
                     Text(
                       shipment.packageName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF121826),
-                          ),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121826),
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '#Tracking ID: ${shipment.trackingId}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black45,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black45,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -768,7 +947,10 @@ class PackageTrackingCard extends StatelessWidget {
               IconButton(
                 onPressed: () {},
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+                constraints: const BoxConstraints.tightFor(
+                  width: 28,
+                  height: 28,
+                ),
                 icon: const Icon(Icons.more_horiz_rounded, size: 22),
                 color: Colors.black45,
               ),
@@ -839,10 +1021,10 @@ class PackageTrackingCard extends StatelessWidget {
                     Text(
                       'From:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -850,19 +1032,19 @@ class PackageTrackingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Shipping to:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -870,10 +1052,10 @@ class PackageTrackingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -883,22 +1065,22 @@ class PackageTrackingCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFECEFF3)),
           const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Container(
                 margin: const EdgeInsets.only(top: 5),
                 width: 7,
                 height: 7,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2FA56E),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2FA56E).withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2FA56E),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2FA56E).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
               ),
@@ -906,20 +1088,20 @@ class PackageTrackingCard extends StatelessWidget {
               Text(
                 'Status:',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF1C2430),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                  color: const Color(0xFF1C2430),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   shipment.status,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
+                    color: const Color(0xFF1C2430),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -968,8 +1150,11 @@ class TruckIllustration extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.local_shipping_rounded,
-                  color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.local_shipping_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           ),
           Positioned(
@@ -982,20 +1167,15 @@ class TruckIllustration extends StatelessWidget {
                 color: const Color(0xFF1F88C9),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.inventory_2_outlined,
-                  color: Colors.white, size: 13),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                color: Colors.white,
+                size: 13,
+              ),
             ),
           ),
-          const Positioned(
-            bottom: 10,
-            left: 10,
-            child: Wheel(),
-          ),
-          const Positioned(
-            bottom: 10,
-            right: 10,
-            child: Wheel(),
-          ),
+          const Positioned(bottom: 10, left: 10, child: Wheel()),
+          const Positioned(bottom: 10, right: 10, child: Wheel()),
         ],
       ),
     );
@@ -1065,9 +1245,9 @@ class OptionTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black54,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                   ),
                 ],
               ),
@@ -1081,11 +1261,7 @@ class OptionTile extends StatelessWidget {
 }
 
 class SheetContainer extends StatelessWidget {
-  const SheetContainer({
-    super.key,
-    required this.title,
-    required this.child,
-  });
+  const SheetContainer({super.key, required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -1167,9 +1343,9 @@ class TripTypeSheet extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Choose trip type',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 16,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontSize: 16),
             ),
             const SizedBox(height: 12),
             _TripTypeRow(
@@ -1225,12 +1401,7 @@ class _TripTypeRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Image.asset(
-              imagePath,
-              width: 54,
-              height: 54,
-              fit: BoxFit.contain,
-            ),
+            Image.asset(imagePath, width: 54, height: 54, fit: BoxFit.contain),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -1239,18 +1410,18 @@ class _TripTypeRow extends StatelessWidget {
                   Text(
                     helperText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -1294,27 +1465,39 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _bookingCreated = false;
   String? _bookingReference;
   late BookingData _draft;
+  late int _vehicleIndex;
 
   @override
   void initState() {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
-    _vehicle = vehicleOptions[widget.initialVehicleIndex.clamp(0, vehicleOptions.length - 1)];
+    _vehicleIndex = widget.initialVehicleIndex;
+    final initialPricing = ref.read(clientPricingProvider).valueOrNull;
+    final vehicles = resolveVehicleOptions(
+      tripType: widget.tripType,
+      pricing: initialPricing,
+    );
+    _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
+    _vehicle = vehicles[_vehicleIndex];
     _draft = BookingData(
-      from: widget.tripType == TripType.interCity ? 'Ghanshyam Enclave' : 'Current location',
+      from: widget.tripType == TripType.interCity
+          ? 'Ghanshyam Enclave'
+          : 'Current location',
       to: '',
       tripType: widget.tripType,
       vehicle: _vehicle,
       truckCategory: _truckCategoryForVehicle(_vehicle.label),
       scheduledDate: DateTime.now().add(const Duration(hours: 3)),
-      amount: _parsePrice(_vehicle.price),
+      amount: _priceValue(_vehicle.price),
     );
     _toController = TextEditingController();
     _materialController = TextEditingController();
     _notesController = TextEditingController();
     _weightController = TextEditingController();
     _quantityController = TextEditingController(text: '1');
-    _amountController = TextEditingController(text: _parsePrice(_vehicle.price).toStringAsFixed(0));
+    _amountController = TextEditingController(
+      text: _priceInputText(_vehicle.price),
+    );
   }
 
   @override
@@ -1352,9 +1535,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         final weight = double.tryParse(_weightController.text.trim());
         final quantity = int.tryParse(_quantityController.text.trim());
         final amount = double.tryParse(_amountController.text.trim());
-        if (material.isEmpty || weight == null || quantity == null || amount == null) {
+        if (material.isEmpty ||
+            weight == null ||
+            quantity == null ||
+            amount == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please fill weight, items, material type, and amount.')),
+            const SnackBar(
+              content: Text(
+                'Please fill weight, items, material type, and amount.',
+              ),
+            ),
           );
           return;
         }
@@ -1388,7 +1578,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to create a booking.')),
+        const SnackBar(
+          content: Text('Please sign in again to create a booking.'),
+        ),
       );
       return;
     }
@@ -1398,7 +1590,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
 
     try {
-      final response = await ref.read(apiClientProvider).createBooking(
+      final response = await ref
+          .read(apiClientProvider)
+          .createBooking(
             accessToken: session.tokens.accessToken,
             booking: _bookingPayload(),
           );
@@ -1423,13 +1617,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _submitting = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('ApiException: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
       );
     }
   }
 
   Map<String, dynamic> _bookingPayload() {
-    final scheduled = _draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3));
+    final scheduled =
+        _draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3));
     return <String, dynamic>{
       'pickup_location': _draft.from,
       'pickup_lat': _draft.pickupLat ?? 0,
@@ -1438,7 +1635,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'drop_lat': _draft.dropLat ?? 0,
       'drop_lng': _draft.dropLng ?? 0,
       'truck_type': _draft.truckType,
-      'truck_category': _draft.truckCategory.isEmpty ? _truckCategoryForVehicle(_vehicle.label) : _draft.truckCategory,
+      'truck_category': _draft.truckCategory.isEmpty
+          ? _truckCategoryForVehicle(_vehicle.label)
+          : _draft.truckCategory,
       'weight': _draft.weight,
       'weight_unit': _draft.weightUnit,
       'quantity': _draft.quantity,
@@ -1452,18 +1651,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<String> _fetchLatestBookingNumber(String accessToken) async {
-    final response = await ref.read(apiClientProvider).getBookings(
-          accessToken: accessToken,
-          page: 1,
-          limit: 20,
-        );
+    final response = await ref
+        .read(apiClientProvider)
+        .getBookings(accessToken: accessToken, page: 1, limit: 20);
     final bookingsPage = ClientBookingPage.fromJson(response);
     if (bookingsPage.bookings.isEmpty) {
       return '';
     }
 
-    final candidates = bookingsPage.bookings.where(_matchesDraftBooking).toList();
-    final booking = candidates.isNotEmpty ? candidates.first : bookingsPage.bookings.first;
+    final candidates = bookingsPage.bookings
+        .where(_matchesDraftBooking)
+        .toList();
+    final booking = candidates.isNotEmpty
+        ? candidates.first
+        : bookingsPage.bookings.first;
     return booking.bookingNumber.isNotEmpty
         ? booking.bookingNumber
         : (booking.bookingRef.isNotEmpty ? booking.bookingRef : booking.id);
@@ -1477,12 +1678,40 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final bookingAmount = booking.amountText.replaceAll(RegExp(r'[^0-9.]'), '');
     return booking.pickupLocation.trim().toLowerCase() == draftPickup &&
         booking.dropoffLocation.trim().toLowerCase() == draftDrop &&
-        (draftMaterial.isEmpty || booking.packageName.trim().toLowerCase().contains(draftMaterial) || booking.raw['material']?.toString().trim().toLowerCase() == draftMaterial) &&
-        (bookingAmount.isEmpty || bookingAmount == draftAmount || bookingAmount == _draft.amount.toStringAsFixed(0));
+        (draftMaterial.isEmpty ||
+            booking.packageName.trim().toLowerCase().contains(draftMaterial) ||
+            booking.raw['material']?.toString().trim().toLowerCase() ==
+                draftMaterial) &&
+        (bookingAmount.isEmpty ||
+            bookingAmount == draftAmount ||
+            bookingAmount == _draft.amount.toStringAsFixed(0));
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(clientPricingProvider, (previous, next) {
+      final pricing = next.valueOrNull;
+      if (pricing == null || !mounted) {
+        return;
+      }
+      final vehicles = resolveVehicleOptions(
+        tripType: widget.tripType,
+        pricing: pricing,
+      );
+      if (vehicles.isEmpty) return;
+      final safeIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
+      final updatedVehicle = vehicles[safeIndex];
+      setState(() {
+        _vehicle = updatedVehicle;
+        _draft = _draft.copyWith(
+          vehicle: updatedVehicle,
+          truckCategory: _truckCategoryForVehicle(updatedVehicle.label),
+          amount: _priceValue(updatedVehicle.price),
+        );
+        _amountController.text = _priceInputText(updatedVehicle.price);
+      });
+    });
+
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Scaffold(
@@ -1499,15 +1728,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : Text(
-                          switch (_step) {
-                            _BookingFlowStep.location => 'Next',
-                            _BookingFlowStep.itemDetails => 'Next',
-                            _BookingFlowStep.payment => 'Continue',
-                          },
-                        ),
+                      : Text(switch (_step) {
+                          _BookingFlowStep.location => 'Next',
+                          _BookingFlowStep.itemDetails => 'Next',
+                          _BookingFlowStep.payment => 'Continue',
+                        }),
                 ),
               ),
             ),
@@ -1530,12 +1760,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             }
                             setState(() {
                               _step = switch (_step) {
-                              _BookingFlowStep.location => _BookingFlowStep.location,
-                              _BookingFlowStep.itemDetails => _BookingFlowStep.location,
-                              _BookingFlowStep.payment => _BookingFlowStep.itemDetails,
-                            };
-                          });
-                        },
+                                _BookingFlowStep.location =>
+                                  _BookingFlowStep.location,
+                                _BookingFlowStep.itemDetails =>
+                                  _BookingFlowStep.location,
+                                _BookingFlowStep.payment =>
+                                  _BookingFlowStep.itemDetails,
+                              };
+                            });
+                          },
                           borderRadius: BorderRadius.circular(999),
                           child: const SizedBox(
                             width: 28,
@@ -1550,7 +1783,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             _BookingFlowStep.itemDetails => 'Item details',
                             _BookingFlowStep.payment => 'Payment',
                           },
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
                                 color: const Color(0xFF667085),
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1573,9 +1807,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
       _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
-      _BookingFlowStep.payment => _bookingCreated
-          ? _buildSuccessStep(context)
-          : _buildPaymentStep(context),
+      _BookingFlowStep.payment =>
+        _bookingCreated
+            ? _buildSuccessStep(context)
+            : _buildPaymentStep(context),
     };
   }
 
@@ -1586,7 +1821,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       children: [
         _BookingSummaryCard(
           pickupTitle: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
-          pickupSubtitle: isInterCity ? 'Pickup location from your trip header' : 'Pickup from current location',
+          pickupSubtitle: isInterCity
+              ? 'Pickup location from your trip header'
+              : 'Pickup from current location',
           dropController: _toController,
         ),
         const SizedBox(height: 12),
@@ -1595,22 +1832,23 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         Text(
           'Recent addresses',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
-              ),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF101828),
+          ),
         ),
         const SizedBox(height: 10),
         ..._recentAddresses.asMap().entries.expand(
-              (entry) => [
-                _RecentAddressTile(
-                  title: entry.value.$1,
-                  subtitle: entry.value.$2,
-                  onTap: () => _toController.text = entry.value.$2,
-                ),
-                if (entry.key != _recentAddresses.length - 1) const SizedBox(height: 8),
-              ],
+          (entry) => [
+            _RecentAddressTile(
+              title: entry.value.$1,
+              subtitle: entry.value.$2,
+              onTap: () => _toController.text = entry.value.$2,
             ),
+            if (entry.key != _recentAddresses.length - 1)
+              const SizedBox(height: 8),
+          ],
+        ),
       ],
     );
   }
@@ -1630,13 +1868,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           onMinus: () {
             final next = (weight - 0.5).clamp(0, 9999).toDouble();
             setState(() {
-              _weightController.text = next.toStringAsFixed(next % 1 == 0 ? 0 : 1);
+              _weightController.text = next.toStringAsFixed(
+                next % 1 == 0 ? 0 : 1,
+              );
             });
           },
           onPlus: () {
             final next = (weight + 0.5).clamp(0, 9999).toDouble();
             setState(() {
-              _weightController.text = next.toStringAsFixed(next % 1 == 0 ? 0 : 1);
+              _weightController.text = next.toStringAsFixed(
+                next % 1 == 0 ? 0 : 1,
+              );
             });
           },
         ),
@@ -1745,16 +1987,16 @@ class _VehiclePreviewHeader extends StatelessWidget {
                 Text(
                   vehicle.label,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${vehicle.capacity} • ${vehicle.price}',
+                  '${vehicle.capacity} • ${_displayPriceLabel(vehicle.price)}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
-                      ),
+                    color: const Color(0xFF667085),
+                  ),
                 ),
               ],
             ),
@@ -1786,9 +2028,9 @@ class _InputCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           child,
@@ -1826,9 +2068,9 @@ class _StepperCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -1840,9 +2082,9 @@ class _StepperCard extends StatelessWidget {
                   valueText,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1912,16 +2154,13 @@ class _PaymentMethodsCard extends StatelessWidget {
             child: Text(
               'UPI, Cards & Other Methods',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
             ),
           ),
           const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentTopRow(
-            selectedMethod: selectedMethod,
-            onSelect: onSelect,
-          ),
+          _PaymentTopRow(selectedMethod: selectedMethod, onSelect: onSelect),
           const Divider(height: 1, color: Color(0xFFE8EDF2)),
           _PaymentListTile(
             icon: Icons.credit_card_rounded,
@@ -1962,10 +2201,7 @@ class _PaymentMethodsCard extends StatelessWidget {
 }
 
 class _PaymentTopRow extends StatelessWidget {
-  const _PaymentTopRow({
-    required this.selectedMethod,
-    required this.onSelect,
-  });
+  const _PaymentTopRow({required this.selectedMethod, required this.onSelect});
 
   final PaymentMethod selectedMethod;
   final ValueChanged<PaymentMethod> onSelect;
@@ -2063,7 +2299,9 @@ class _UpiAppTile extends StatelessWidget {
             height: 56,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: selected ? accentColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+              color: selected
+                  ? accentColor.withValues(alpha: 0.08)
+                  : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: selected ? accentColor : const Color(0xFFE8EDF2),
@@ -2086,9 +2324,9 @@ class _UpiAppTile extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -2123,7 +2361,10 @@ class _PaymentListTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 16, vertical: compact ? 6 : 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 0 : 16,
+          vertical: compact ? 6 : 14,
+        ),
         child: Row(
           children: [
             if (leadingWidget != null)
@@ -2133,7 +2374,11 @@ class _PaymentListTile extends StatelessWidget {
                 child: Center(child: leadingWidget!),
               )
             else
-              Icon(icon, color: selected ? accent : const Color(0xFF667085), size: compact ? 22 : 26),
+              Icon(
+                icon,
+                color: selected ? accent : const Color(0xFF667085),
+                size: compact ? 22 : 26,
+              ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -2144,22 +2389,27 @@ class _PaymentListTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF101828),
                               ),
-                          ),
                         ),
+                      ),
                       if (trailingChip != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFEFF8F2),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             trailingChip!,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
                                   color: const Color(0xFF2FA56E),
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -2171,17 +2421,25 @@ class _PaymentListTile extends StatelessWidget {
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
-                        ),
+                      color: const Color(0xFF98A2B3),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 10),
             if (selected)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 20)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF2FA56E),
+                size: 20,
+              )
             else
-              const Icon(Icons.circle_outlined, color: Color(0xFFD0D5DD), size: 20),
+              const Icon(
+                Icons.circle_outlined,
+                color: Color(0xFFD0D5DD),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -2238,17 +2496,17 @@ class _BookingSuccessCard extends StatelessWidget {
           Text(
             'Booking confirmed',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
             'Your booking has been successfully placed.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -2258,9 +2516,9 @@ class _BookingSuccessCard extends StatelessWidget {
                 : 'Booking Number: $bookingReference',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 22),
           Row(
@@ -2297,6 +2555,26 @@ String _truckCategoryForVehicle(String label) {
 double _parsePrice(String value) {
   final digits = value.replaceAll(RegExp(r'[^0-9.]'), '');
   return double.tryParse(digits) ?? 0;
+}
+
+double _priceValue(String value) {
+  if (_parsePrice(value) <= 0) {
+    return 0;
+  }
+  return _parsePrice(value);
+}
+
+String _priceInputText(String value) {
+  final parsed = _parsePrice(value);
+  if (parsed <= 0) {
+    return '';
+  }
+  return parsed.toStringAsFixed(parsed % 1 == 0 ? 0 : 2);
+}
+
+String _displayPriceLabel(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? 'Loading...' : trimmed;
 }
 
 String _extractBookingNumber(Map<String, dynamic> json) {
@@ -2426,7 +2704,8 @@ class _BookingSummaryCard extends StatelessWidget {
                     children: [
                       Text(
                         pickupTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1C2430),
@@ -2446,7 +2725,8 @@ class _BookingSummaryCard extends StatelessWidget {
                               pickupSubtitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     color: Colors.black54,
                                     fontSize: 11,
                                   ),
@@ -2455,7 +2735,8 @@ class _BookingSummaryCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             '58 km',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
                                   color: const Color(0xFF98A2B3),
@@ -2470,11 +2751,17 @@ class _BookingSummaryCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2D6EF2), width: 1.2),
+                    border: Border.all(
+                      color: const Color(0xFF2D6EF2),
+                      width: 1.2,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -2484,7 +2771,8 @@ class _BookingSummaryCard extends StatelessWidget {
                                 dropValue ?? 'Where is your Drop ?',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
                                       color: const Color(0xFF1C2430),
                                       fontSize: 13,
                                     ),
@@ -2495,12 +2783,16 @@ class _BookingSummaryCard extends StatelessWidget {
                                   hintText: 'Where is your Drop ?',
                                   border: InputBorder.none,
                                   isDense: true,
-                                  hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  hintStyle: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
                                         color: Colors.black38,
                                         fontSize: 13,
                                       ),
                                 ),
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
                                       color: const Color(0xFF1C2430),
                                       fontSize: 13,
                                     ),
@@ -2510,7 +2802,10 @@ class _BookingSummaryCard extends StatelessWidget {
                         IconButton(
                           onPressed: () {},
                           visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints.tightFor(width: 24, height: 24),
+                          constraints: const BoxConstraints.tightFor(
+                            width: 24,
+                            height: 24,
+                          ),
                           padding: EdgeInsets.zero,
                           icon: const Icon(
                             Icons.mic_none_rounded,
@@ -2531,17 +2826,17 @@ class _BookingSummaryCard extends StatelessWidget {
 }
 
 const List<(String, String)> _recentAddresses = [
-    ('Home', 'Ghanshyam Enclave, 1303/1304, Nagpur'),
-    ('Office', 'Orbit Plaza, IT Park Road, Nagpur'),
-    ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
-    ('Client Site', 'Laxmi Nagar, Near Metro Station'),
-    ('Pickup Point', 'Nandanvan Main Road, Nagpur'),
-    ('Factory', 'Butibori Industrial Area, Nagpur'),
-    ('Retail Store', 'Sitabuldi Market, Nagpur'),
-    ('Branch', 'Wardha Road Business Park'),
-    ('Drop Hub', 'MIHAN Cargo Terminal, Nagpur'),
-    ('Residence', 'Hingna T Point, Nagpur'),
-  ];
+  ('Home', 'Ghanshyam Enclave, 1303/1304, Nagpur'),
+  ('Office', 'Orbit Plaza, IT Park Road, Nagpur'),
+  ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
+  ('Client Site', 'Laxmi Nagar, Near Metro Station'),
+  ('Pickup Point', 'Nandanvan Main Road, Nagpur'),
+  ('Factory', 'Butibori Industrial Area, Nagpur'),
+  ('Retail Store', 'Sitabuldi Market, Nagpur'),
+  ('Branch', 'Wardha Road Business Park'),
+  ('Drop Hub', 'MIHAN Cargo Terminal, Nagpur'),
+  ('Residence', 'Hingna T Point, Nagpur'),
+];
 
 class _RecentAddressTile extends StatelessWidget {
   const _RecentAddressTile({
@@ -2575,11 +2870,11 @@ class _RecentAddressTile extends StatelessWidget {
                 Text(
                   '58 km',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF98A2B3),
-                        height: 1,
-                      ),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF98A2B3),
+                    height: 1,
+                  ),
                 ),
               ],
             ),
@@ -2591,9 +2886,9 @@ class _RecentAddressTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -2601,9 +2896,9 @@ class _RecentAddressTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                          fontSize: 11,
-                        ),
+                      color: Colors.black54,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -2615,7 +2910,7 @@ class _RecentAddressTile extends StatelessWidget {
   }
 }
 
-class SelectVehicleScreen extends StatefulWidget {
+class SelectVehicleScreen extends ConsumerStatefulWidget {
   const SelectVehicleScreen({
     super.key,
     required this.bookingData,
@@ -2626,21 +2921,30 @@ class SelectVehicleScreen extends StatefulWidget {
   final int initialIndex;
 
   @override
-  State<SelectVehicleScreen> createState() => _SelectVehicleScreenState();
+  ConsumerState<SelectVehicleScreen> createState() =>
+      _SelectVehicleScreenState();
 }
 
-class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
+class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
   late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex.clamp(0, vehicleOptions.length - 1).toInt();
+    _selectedIndex = widget.initialIndex;
   }
 
   @override
   Widget build(BuildContext context) {
-    final selected = vehicleOptions[_selectedIndex];
+    final pricing = ref.watch(clientPricingProvider).valueOrNull;
+    final options = resolveVehicleOptions(
+      tripType: widget.bookingData.tripType,
+      pricing: pricing,
+    );
+    final safeIndex = options.isEmpty
+        ? 0
+        : _selectedIndex.clamp(0, options.length - 1).toInt();
+    final selected = options[safeIndex];
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Scaffold(
@@ -2650,12 +2954,7 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                18,
-                12,
-                18,
-                132 + bottomInset,
-              ),
+              padding: EdgeInsets.fromLTRB(18, 12, 18, 132 + bottomInset),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2682,22 +2981,22 @@ class _SelectVehicleScreenState extends State<SelectVehicleScreen> {
                   Text(
                     'Select your vehicle',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF101828),
-                          letterSpacing: 0.1,
-                        ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF101828),
+                      letterSpacing: 0.1,
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  ...vehicleOptions.asMap().entries.map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _VehicleOptionTile(
-                            option: entry.value,
-                            selected: _selectedIndex == entry.key,
-                            onTap: () => setState(() => _selectedIndex = entry.key),
-                          ),
-                        ),
+                  ...options.asMap().entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _VehicleOptionTile(
+                        option: entry.value,
+                        selected: safeIndex == entry.key,
+                        onTap: () => setState(() => _selectedIndex = entry.key),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -2798,18 +3097,18 @@ class _VehicleOptionTile extends StatelessWidget {
                   Text(
                     option.label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF101828),
-                        ),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF101828),
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     option.capacity,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black54,
-                          fontSize: 12,
-                        ),
+                      color: Colors.black54,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -2819,21 +3118,21 @@ class _VehicleOptionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  option.price,
+                  _displayPriceLabel(option.price),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   selected ? 'Selected' : '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: selected ? option.accentColor : Colors.transparent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: selected ? option.accentColor : Colors.transparent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),

@@ -19,7 +19,8 @@ class ClientBookingPage {
       page: _asInt(data['page']) ?? _asInt(json['page']) ?? 1,
       limit: _asInt(data['limit']) ?? _asInt(json['limit']) ?? items.length,
       total: _asInt(data['total']) ?? _asInt(json['total']) ?? items.length,
-      totalPages: _asInt(data['total_pages']) ??
+      totalPages:
+          _asInt(data['total_pages']) ??
           _asInt(data['totalPages']) ??
           _asInt(json['total_pages']) ??
           _asInt(json['totalPages']) ??
@@ -32,6 +33,109 @@ class ClientBookingPage {
   final int limit;
   final int total;
   final int totalPages;
+}
+
+class ClientPricingConfig {
+  const ClientPricingConfig({
+    required this.interCity,
+    required this.intraCity,
+    required this.partTruck,
+  });
+
+  factory ClientPricingConfig.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    return ClientPricingConfig(
+      interCity: ClientInterCityPricing.fromJson(_asMap(data['interCity'])),
+      intraCity: ClientIntraCityPricing.fromJson(_asMap(data['intraCity'])),
+      partTruck: ClientPartTruckPricing.fromJson(_asMap(data['partTruck'])),
+    );
+  }
+
+  final ClientInterCityPricing interCity;
+  final ClientIntraCityPricing intraCity;
+  final ClientPartTruckPricing partTruck;
+}
+
+class ClientInterCityPricing {
+  const ClientInterCityPricing({
+    required this.platformFee,
+    required this.tollHandling,
+    required this.baseRatePerKm,
+    required this.fuelSurcharge,
+    required this.tollFixedAmount,
+  });
+
+  factory ClientInterCityPricing.fromJson(Map<String, dynamic> json) {
+    return ClientInterCityPricing(
+      platformFee: _asDouble(json['platformFee']),
+      tollHandling: _readString(json, const ['tollHandling']),
+      baseRatePerKm: _asDouble(json['baseRatePerKm']),
+      fuelSurcharge: _asDouble(json['fuelSurcharge']),
+      tollFixedAmount: _asDouble(json['tollFixedAmount']),
+    );
+  }
+
+  final double platformFee;
+  final String tollHandling;
+  final double baseRatePerKm;
+  final double fuelSurcharge;
+  final double tollFixedAmount;
+}
+
+class ClientIntraCityPricing {
+  const ClientIntraCityPricing({
+    required this.large,
+    required this.small,
+    required this.medium,
+  });
+
+  factory ClientIntraCityPricing.fromJson(Map<String, dynamic> json) {
+    return ClientIntraCityPricing(
+      large: ClientTruckPricingTier.fromJson(_asMap(json['large'])),
+      small: ClientTruckPricingTier.fromJson(_asMap(json['small'])),
+      medium: ClientTruckPricingTier.fromJson(_asMap(json['medium'])),
+    );
+  }
+
+  final ClientTruckPricingTier large;
+  final ClientTruckPricingTier small;
+  final ClientTruckPricingTier medium;
+}
+
+class ClientTruckPricingTier {
+  const ClientTruckPricingTier({
+    required this.baseFare,
+    required this.perKmRate,
+    required this.platformFee,
+    required this.waitingCharge,
+    required this.demandMultiplier,
+  });
+
+  factory ClientTruckPricingTier.fromJson(Map<String, dynamic> json) {
+    return ClientTruckPricingTier(
+      baseFare: _asDouble(json['baseFare']),
+      perKmRate: _asDouble(json['perKmRate']),
+      platformFee: _asDouble(json['platformFee']),
+      waitingCharge: _asDouble(json['waitingCharge']),
+      demandMultiplier: _asDouble(json['demandMultiplier']),
+    );
+  }
+
+  final double baseFare;
+  final double perKmRate;
+  final double platformFee;
+  final double waitingCharge;
+  final double demandMultiplier;
+}
+
+class ClientPartTruckPricing {
+  const ClientPartTruckPricing({required this.platformFee});
+
+  factory ClientPartTruckPricing.fromJson(Map<String, dynamic> json) {
+    return ClientPartTruckPricing(platformFee: _asDouble(json['platformFee']));
+  }
+
+  final double platformFee;
 }
 
 class ClientBooking {
@@ -53,10 +157,7 @@ class ClientBooking {
   });
 
   factory ClientBooking.fromJson(Map<String, dynamic> json) {
-    final status = _readString(json, const [
-      'status',
-      'booking_status',
-    ]);
+    final status = _readString(json, const ['status', 'booking_status']);
 
     return ClientBooking(
       id: _readString(json, const ['id', 'booking_id', 'uuid']),
@@ -163,7 +264,10 @@ class ClientBooking {
   String get displayStatusLabel => _titleCase(status);
 }
 
-List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root) {
+List<dynamic> _extractItems(
+  Map<String, dynamic> data,
+  Map<String, dynamic> root,
+) {
   for (final candidate in [
     data['bookings'],
     data['items'],
@@ -180,7 +284,10 @@ List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root
     }
   }
 
-  if (data.isNotEmpty && data.values.every((value) => value is Map<String, dynamic> || value is List)) {
+  if (data.isNotEmpty &&
+      data.values.every(
+        (value) => value is Map<String, dynamic> || value is List,
+      )) {
     return const <dynamic>[];
   }
 
@@ -197,6 +304,13 @@ Map<String, dynamic> _asMap(Object? value) {
     return value;
   }
   return <String, dynamic>{};
+}
+
+double _asDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {
@@ -217,7 +331,12 @@ String _readNestedName(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
     if (value is Map<String, dynamic>) {
-      final nested = _readString(value, const ['name', 'full_name', 'display_name', 'title']);
+      final nested = _readString(value, const [
+        'name',
+        'full_name',
+        'display_name',
+        'title',
+      ]);
       if (nested.isNotEmpty) {
         return nested;
       }

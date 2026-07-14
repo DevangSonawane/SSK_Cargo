@@ -61,10 +61,19 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
-    final recentBookingsQuery = (status: null, page: 1, limit: _recentBookingsLimit);
+    final recentBookingsQuery = (
+      status: null,
+      page: 1,
+      limit: _recentBookingsLimit,
+    );
     final recentBookingsAsync = session == null
         ? null
         : ref.watch(clientBookingsProvider(recentBookingsQuery));
+    final pricing = ref.watch(clientPricingProvider).valueOrNull;
+    final vehicles = resolveVehicleOptions(
+      tripType: _selectedTripType,
+      pricing: pricing,
+    );
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -91,14 +100,14 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
             Text(
               'Vehicles we provide',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
             ),
             const SizedBox(height: 12),
             GridView.builder(
-              itemCount: vehicleOptions.length,
+              itemCount: vehicles.length,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -108,7 +117,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 childAspectRatio: 1.45,
               ),
               itemBuilder: (context, index) {
-                final vehicle = vehicleOptions[index];
+                final vehicle = vehicles[index];
                 return _VehiclePreviewTile(
                   vehicle: vehicle,
                   onTap: () {
@@ -123,9 +132,9 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                 Text(
                   'View all',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -151,7 +160,8 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
               const _HomeEmptyState(
                 icon: Icons.lock_outline_rounded,
                 title: 'Sign in to view bookings',
-                subtitle: 'Recent bookings will appear here once you are signed in.',
+                subtitle:
+                    'Recent bookings will appear here once you are signed in.',
               )
             else if (recentBookingsAsync == null)
               const SizedBox.shrink()
@@ -174,30 +184,33 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
                     return const _HomeEmptyState(
                       icon: Icons.inbox_rounded,
                       title: 'No bookings yet',
-                      subtitle: 'Once you create a booking, it will appear here.',
+                      subtitle:
+                          'Once you create a booking, it will appear here.',
                     );
                   }
 
                   return Column(
                     children: [
                       ...bookings.asMap().entries.expand(
-                            (entry) => [
-                              _RecentBookingCard(
-                                booking: entry.value,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => TrackingDetailsScreen(
-                                        shipment: trackingShipmentFromBooking(entry.value),
-                                      ),
+                        (entry) => [
+                          _RecentBookingCard(
+                            booking: entry.value,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => TrackingDetailsScreen(
+                                    shipment: trackingShipmentFromBooking(
+                                      entry.value,
                                     ),
-                                  );
-                                },
-                              ),
-                              if (entry.key != bookings.length - 1)
-                                const SizedBox(height: 12),
-                            ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
+                          if (entry.key != bookings.length - 1)
+                            const SizedBox(height: 12),
+                        ],
+                      ),
                     ],
                   );
                 },
@@ -250,24 +263,21 @@ class _HomeEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 14),
-            FilledButton(
-              onPressed: onAction,
-              child: Text(actionLabel!),
-            ),
+            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
           ],
         ],
       ),
@@ -276,10 +286,7 @@ class _HomeEmptyState extends StatelessWidget {
 }
 
 class _BookingStatusPill extends StatelessWidget {
-  const _BookingStatusPill({
-    required this.label,
-    required this.color,
-  });
+  const _BookingStatusPill({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -295,20 +302,17 @@ class _BookingStatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 10,
-            ),
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: 10,
+        ),
       ),
     );
   }
 }
 
 class _RecentBookingCard extends StatelessWidget {
-  const _RecentBookingCard({
-    required this.booking,
-    this.onTap,
-  });
+  const _RecentBookingCard({required this.booking, this.onTap});
 
   final ClientBooking booking;
   final VoidCallback? onTap;
@@ -346,10 +350,7 @@ class _RecentBookingCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(7),
-                child: Image.asset(
-                  'assets/package.png',
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset('assets/package.png', fit: BoxFit.contain),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -359,25 +360,28 @@ class _RecentBookingCard extends StatelessWidget {
                     Text(
                       booking.displayTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF121826),
-                          ),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF121826),
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       booking.displaySubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black45,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black45,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              _BookingStatusPill(label: booking.displayStatusLabel, color: statusColor),
+              _BookingStatusPill(
+                label: booking.displayStatusLabel,
+                color: statusColor,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -444,10 +448,10 @@ class _RecentBookingCard extends StatelessWidget {
                     Text(
                       'From:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -457,19 +461,19 @@ class _RecentBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Shipping to:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -479,10 +483,10 @@ class _RecentBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -502,7 +506,11 @@ class _RecentBookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_rounded, color: Color(0xFF667085), size: 18),
+                  const Icon(
+                    Icons.inventory_2_rounded,
+                    color: Color(0xFF667085),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -514,16 +522,19 @@ class _RecentBookingCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   if (booking.amountText.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(12),
@@ -531,10 +542,10 @@ class _RecentBookingCard extends StatelessWidget {
                       child: Text(
                         booking.amountText,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF1F88C9),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
+                          color: const Color(0xFF1F88C9),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -577,10 +588,7 @@ Color _statusColor(String status) {
 }
 
 class _VehiclePreviewTile extends StatelessWidget {
-  const _VehiclePreviewTile({
-    required this.vehicle,
-    required this.onTap,
-  });
+  const _VehiclePreviewTile({required this.vehicle, required this.onTap});
 
   final VehicleOption vehicle;
   final VoidCallback onTap;
@@ -614,11 +622,11 @@ class _VehiclePreviewTile extends StatelessWidget {
             vehicle.label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF101828),
-                  height: 1.1,
-                ),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF101828),
+              height: 1.1,
+            ),
           ),
         ],
       ),
@@ -654,11 +662,7 @@ class _TripHeader extends StatelessWidget {
                     onTap: () => onTripTypeChanged(TripType.interCity),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: const Color(0xFFE3E8EF),
-                ),
+                Container(width: 1, height: 24, color: const Color(0xFFE3E8EF)),
                 Expanded(
                   child: _TripModeLabel(
                     label: 'Intra city',
@@ -714,10 +718,12 @@ class _TripModeLabel extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: selected ? const Color(0xFF101828) : const Color(0xFF9AA4B2),
-                      ),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: selected
+                        ? const Color(0xFF101828)
+                        : const Color(0xFF9AA4B2),
+                  ),
                 ),
               ],
             ),
@@ -740,9 +746,7 @@ class _TripModeLabel extends StatelessWidget {
 }
 
 class _WhereToPill extends StatelessWidget {
-  const _WhereToPill({
-    required this.controller,
-  });
+  const _WhereToPill({required this.controller});
 
   final TextEditingController controller;
 
@@ -784,10 +788,10 @@ class _WhereToPill extends StatelessWidget {
               controller: controller,
               textInputAction: TextInputAction.search,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF101828),
-                  ),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF101828),
+              ),
               decoration: const InputDecoration(
                 hintText: 'Where to?',
                 hintStyle: TextStyle(
@@ -806,7 +810,7 @@ class _WhereToPill extends StatelessWidget {
             color: Color(0xFF9AA4B2),
           ),
         ],
-        ),
+      ),
     );
   }
 }
@@ -855,27 +859,27 @@ class _RecentAddressCard extends StatelessWidget {
                 Text(
                   'Recent address',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF667085),
-                      ),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF667085),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Ghanshyam Enclave, 1303/1304, Nagpur',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Home',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: const Color(0xFF98A2B3),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
