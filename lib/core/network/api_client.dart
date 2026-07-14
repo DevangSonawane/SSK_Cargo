@@ -469,6 +469,19 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getKycStatusForUser({
+    required String accessToken,
+    required String userId,
+  }) async {
+    developer.log('GET /api/kyc/$userId', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/kyc/$userId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getBrokerKycDocuments({
     required String accessToken,
   }) async {

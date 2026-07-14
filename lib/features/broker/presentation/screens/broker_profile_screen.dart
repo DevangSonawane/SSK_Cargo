@@ -51,7 +51,10 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     try {
       final response = await ref
           .read(apiClientProvider)
-          .getBrokerKycStatus(accessToken: session.tokens.accessToken);
+          .getKycStatusForUser(
+            accessToken: session.tokens.accessToken,
+            userId: session.user.id,
+          );
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final status = data['kyc_status']?.toString() ?? '';
       if (!mounted) return;

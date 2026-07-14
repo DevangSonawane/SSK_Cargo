@@ -275,8 +275,9 @@ class _BrokerKycRegistrationScreenState
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.getBrokerKycStatus(
+      final response = await apiClient.getKycStatusForUser(
         accessToken: session.tokens.accessToken,
+        userId: session.user.id,
       );
 
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
