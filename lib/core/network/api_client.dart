@@ -10,9 +10,7 @@ final dioProvider = Provider<Dio>((ref) {
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 15),
-      headers: const {
-        'Accept': 'application/json',
-      },
+      headers: const {'Accept': 'application/json'},
     ),
   );
 });
@@ -47,10 +45,7 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/auth/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       ),
     );
   }
@@ -66,10 +61,7 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/auth/google',
-        data: {
-          'id_token': idToken,
-          'role': role,
-        },
+        data: {'id_token': idToken, 'role': role},
       ),
     );
   }
@@ -106,25 +98,16 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/auth/logout',
-        data: {
-          'refresh_token': refreshToken,
-          'all_devices': allDevices,
-        },
+        data: {'refresh_token': refreshToken, 'all_devices': allDevices},
       ),
     );
   }
 
-  Future<Map<String, dynamic>> getProfile({
-    required String accessToken,
-  }) async {
+  Future<Map<String, dynamic>> getProfile({required String accessToken}) async {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/user/profile',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -147,11 +130,7 @@ class SskApiClient {
           'page': page,
           'limit': limit,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -168,11 +147,7 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/bookings',
         data: booking,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -189,11 +164,7 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/vehicles/trucks',
         data: truck,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -210,11 +181,7 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/vehicles/drivers',
         data: driver,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -232,11 +199,7 @@ class SskApiClient {
       () => _dio.patch<Map<String, dynamic>>(
         '/api/vehicles/drivers/$id',
         data: driver,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -259,11 +222,7 @@ class SskApiClient {
           'page': page,
           'limit': limit,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -281,11 +240,7 @@ class SskApiClient {
       () => _dio.patch<Map<String, dynamic>>(
         '/api/vehicles/trucks/$id',
         data: truck,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -294,18 +249,11 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log(
-      'PATCH /api/jobs/requests/$id/decline',
-      name: 'SSK.API',
-    );
+    developer.log('PATCH /api/jobs/requests/$id/decline', name: 'SSK.API');
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/jobs/requests/$id/decline',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -314,18 +262,11 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log(
-      'PATCH /api/jobs/requests/$id/accept',
-      name: 'SSK.API',
-    );
+    developer.log('PATCH /api/jobs/requests/$id/accept', name: 'SSK.API');
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/jobs/requests/$id/accept',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -343,15 +284,8 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/jobs/$id/assign-driver',
-        data: {
-          'driverId': driverId,
-          'truckId': truckId,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        data: {'driverId': driverId, 'truckId': truckId},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -368,15 +302,8 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/jobs/requests',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        queryParameters: {'page': page, 'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -399,11 +326,7 @@ class SskApiClient {
           'page': page,
           'limit': limit,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -412,18 +335,11 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log(
-      'PATCH /api/bookings/$id/cancel',
-      name: 'SSK.API',
-    );
+    developer.log('PATCH /api/bookings/$id/cancel', name: 'SSK.API');
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/bookings/$id/cancel',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -446,13 +362,10 @@ class SskApiClient {
           'name': name,
           'email': email,
           if (phone != null && phone.isNotEmpty) 'phone': phone,
-          if (profileImage != null && profileImage.isNotEmpty) 'profile_image': profileImage,
+          if (profileImage != null && profileImage.isNotEmpty)
+            'profile_image': profileImage,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -473,11 +386,7 @@ class SskApiClient {
           'current_password': currentPassword,
           'new_password': newPassword,
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -493,14 +402,30 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/kyc/broker',
-        data: {
-          'documents': documents,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        data: {'documents': documents},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> uploadBrokerKycDocument({
+    required String accessToken,
+    required String documentKey,
+    required String filePath,
+  }) async {
+    final filename = filePath.split(RegExp(r'[\\/]+')).last;
+    developer.log(
+      'POST /api/kyc/documents/upload documentKey=$documentKey file=$filename',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/documents/upload',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromFileSync(filePath, filename: filename),
+          'document_key': documentKey,
+        }),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }
@@ -511,11 +436,18 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/kyc/status',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $accessToken',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerKycDocuments({
+    required String accessToken,
+  }) async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/kyc/documents',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
   }

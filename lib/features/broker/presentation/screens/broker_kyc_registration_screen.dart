@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,7 +22,8 @@ class BrokerKycRegistrationScreen extends ConsumerStatefulWidget {
       _BrokerKycRegistrationScreenState();
 }
 
-class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrationScreen> {
+class _BrokerKycRegistrationScreenState
+    extends ConsumerState<BrokerKycRegistrationScreen> {
   final _confirmCheckboxController = ValueNotifier<bool>(false);
   final _picker = ImagePicker();
 
@@ -45,7 +47,13 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   String? _submissionId;
   bool _hasSubmission = false;
   final Map<String, _KycAttachment> _attachments = {
-    for (final doc in _kycDocuments) doc.key: const _KycAttachment(),
+    for (final doc in _kycDocuments)
+      doc.key: doc.uploadable
+          ? const _KycAttachment()
+          : const _KycAttachment(
+              fileName: 'Included in details',
+              sourceLabel: 'Form details',
+            ),
   };
 
   @override
@@ -74,39 +82,20 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
 
   static const _kycDocuments = <_KycDocument>[
     _KycDocument(
-      key: 'pan_card',
+      key: 'pan_photo_url',
       title: 'PAN Card',
       requiredLabel: 'Required',
       formats: 'JPG, PNG, PDF',
       maxSize: 'Max 10 MB',
+      uploadable: true,
     ),
     _KycDocument(
-      key: 'aadhaar_card',
+      key: 'aadhaar_photo_url',
       title: 'Aadhaar Card',
       requiredLabel: 'Required',
       formats: 'JPG, PNG, PDF',
       maxSize: 'Max 10 MB',
-    ),
-    _KycDocument(
-      key: 'gst_certificate',
-      title: 'GST Certificate',
-      requiredLabel: 'Required',
-      formats: 'JPG, PNG, PDF',
-      maxSize: 'Max 10 MB',
-    ),
-    _KycDocument(
-      key: 'bank_proof',
-      title: 'Cancelled Cheque OR Passbook',
-      requiredLabel: 'Required',
-      formats: 'JPG, PNG, PDF',
-      maxSize: 'Max 10 MB',
-    ),
-    _KycDocument(
-      key: 'business_certificate',
-      title: 'Business Registration Certificate',
-      requiredLabel: 'Required',
-      formats: 'JPG, PNG, PDF',
-      maxSize: 'Max 10 MB',
+      uploadable: true,
     ),
   ];
 
@@ -118,7 +107,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   ];
 
   bool _isApprovedStatus(String status) {
-    return status.contains('verified') || status.contains('approved') || status.contains('complete');
+    return status.contains('verified') ||
+        status.contains('approved') ||
+        status.contains('complete');
   }
 
   bool _isRejectedStatus(String status) {
@@ -130,7 +121,8 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   }
 
   bool _isAadhaarValid(String value) {
-    return value.replaceAll(' ', '').trim().length == 12 && RegExp(r'^\d{12}$').hasMatch(value.replaceAll(' ', '').trim());
+    return value.replaceAll(' ', '').trim().length == 12 &&
+        RegExp(r'^\d{12}$').hasMatch(value.replaceAll(' ', '').trim());
   }
 
   bool _isGstValid(String value) {
@@ -152,28 +144,75 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
 
   void _prefillControllers(Map<String, String> documents) {
     _panController.text = documents['pan_number'] ?? _panController.text;
-    _aadhaarController.text = documents['aadhaar_number'] ?? _aadhaarController.text;
+    _aadhaarController.text =
+        documents['aadhaar_number'] ?? _aadhaarController.text;
     _gstController.text = documents['gst_number'] ?? _gstController.text;
-    _bankAccountController.text = documents['bank_account_number'] ?? _bankAccountController.text;
+    _bankAccountController.text =
+        documents['bank_account_number'] ?? _bankAccountController.text;
     _businessRegController.text =
-        documents['business_registration_number'] ?? _businessRegController.text;
+        documents['business_registration_number'] ??
+        _businessRegController.text;
   }
 
   Map<String, dynamic> _documentsPayload() {
-    return {
+    final payload = <String, dynamic>{
       'pan_number': _panController.text.trim(),
       'aadhaar_number': _aadhaarController.text.replaceAll(' ', '').trim(),
       'gst_number': _gstController.text.trim(),
       'bank_account_number': _bankAccountController.text.trim(),
       'business_registration_number': _businessRegController.text.trim(),
     };
+
+    final panAttachment = _attachments['pan_photo_url'];
+    final aadhaarAttachment = _attachments['aadhaar_photo_url'];
+    if (panAttachment?.url != null && panAttachment!.url!.isNotEmpty) {
+      payload['pan_photo_url'] = panAttachment.url;
+    }
+    if (aadhaarAttachment?.url != null && aadhaarAttachment!.url!.isNotEmpty) {
+      payload['aadhaar_photo_url'] = aadhaarAttachment.url;
+    }
+
+    return payload;
   }
 
   Map<String, String> _documentsFromMap(Map<String, dynamic>? input) {
     if (input == null) {
       return const {};
     }
-    return input.map((key, value) => MapEntry(key.toString(), value?.toString() ?? ''));
+    return input.map(
+      (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+    );
+  }
+
+  void _applyUploadedDocumentsFromSubmission(Map<String, String> documents) {
+    final panUrl = documents['pan_photo_url'];
+    if (panUrl != null && panUrl.isNotEmpty) {
+      _attachments['pan_photo_url'] = _KycAttachment(
+        fileName: 'PAN Card',
+        sourceLabel: 'Submitted URL',
+        url: panUrl,
+      );
+    }
+
+    final aadhaarUrl = documents['aadhaar_photo_url'];
+    if (aadhaarUrl != null && aadhaarUrl.isNotEmpty) {
+      _attachments['aadhaar_photo_url'] = _KycAttachment(
+        fileName: 'Aadhaar Card',
+        sourceLabel: 'Submitted URL',
+        url: aadhaarUrl,
+      );
+    }
+  }
+
+  void _resetAttachments() {
+    for (final doc in _kycDocuments) {
+      _attachments[doc.key] = doc.uploadable
+          ? const _KycAttachment()
+          : const _KycAttachment(
+              fileName: 'Included in details',
+              sourceLabel: 'Form details',
+            );
+    }
   }
 
   Future<void> _loadKycStatus({bool silent = false}) async {
@@ -189,11 +228,16 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     }
 
     try {
-      final response =
-          await ref.read(apiClientProvider).getBrokerKycStatus(accessToken: session.tokens.accessToken);
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.getBrokerKycStatus(
+        accessToken: session.tokens.accessToken,
+      );
+
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final submission = data['submission'] as Map<String, dynamic>?;
-      final documents = _documentsFromMap(submission?['documents'] as Map<String, dynamic>?);
+      final documents = _documentsFromMap(
+        submission?['documents'] as Map<String, dynamic>?,
+      );
       final hasSubmission = submission != null && submission.isNotEmpty;
       final status = data['kyc_status']?.toString();
 
@@ -203,12 +247,18 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
           _statusLabel = status;
           _submissionId = submission?['id']?.toString();
           _rejectionReason = submission?['rejection_reason']?.toString();
-          _submittedAt = DateTime.tryParse(submission?['submitted_at']?.toString() ?? '');
-          _reviewedAt = DateTime.tryParse(submission?['reviewed_at']?.toString() ?? '');
+          _submittedAt = DateTime.tryParse(
+            submission?['submitted_at']?.toString() ?? '',
+          );
+          _reviewedAt = DateTime.tryParse(
+            submission?['reviewed_at']?.toString() ?? '',
+          );
+          _resetAttachments();
 
           if (hasSubmission && documents.isNotEmpty) {
             _prefillControllers(documents);
           }
+          _applyUploadedDocumentsFromSubmission(documents);
 
           if (!_hasSubmission) {
             _step = _KycStep.details;
@@ -229,7 +279,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
       setState(() {
         _initialLoading = false;
         if (!silent) {
-          _errorMessage = error is ApiException ? error.message : error.toString();
+          _errorMessage = error is ApiException
+              ? error.message
+              : error.toString();
         }
       });
     }
@@ -261,7 +313,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     });
 
     try {
-      await ref.read(apiClientProvider).submitBrokerKyc(
+      await ref
+          .read(apiClientProvider)
+          .submitBrokerKyc(
             accessToken: session.tokens.accessToken,
             documents: _documentsPayload(),
           );
@@ -302,21 +356,65 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
     }
   }
 
-  Future<void> _pickDocument(String key, ImageSource source) async {
+  Future<void> _pickDocument(_KycDocument document, ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(
-        source: source,
-        imageQuality: 85,
-      );
+      final picked = await _picker.pickImage(source: source, imageQuality: 85);
       if (picked == null) {
         return;
       }
+
+      if (!document.uploadable) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${document.title} is provided in the details section.',
+            ),
+            backgroundColor: const Color(0xFF1F88C9),
+          ),
+        );
+        return;
+      }
+
+      final session = ref.read(authSessionProvider).valueOrNull;
+      if (session == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please sign in again to upload documents.'),
+            backgroundColor: Color(0xFFE23A4B),
+          ),
+        );
+        return;
+      }
+
+      final dio = ref.read(dioProvider);
+      final filename = picked.path.split(RegExp(r'[\\/]+')).last;
+      final response = await dio.post<Map<String, dynamic>>(
+        '/api/kyc/documents/upload',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromFileSync(picked.path, filename: filename),
+          'document_key': document.key,
+        }),
+        options: Options(
+          headers: {'Authorization': 'Bearer ${session.tokens.accessToken}'},
+        ),
+      );
+      final data =
+          (response.data?['data'] as Map<String, dynamic>?) ?? const {};
+      final uploadedDocument =
+          (data['document'] as Map<String, dynamic>?) ?? const {};
+      final uploadedName = uploadedDocument['filename']?.toString();
+      final uploadedUrl = uploadedDocument['url']?.toString();
       if (!mounted) return;
       setState(() {
-        _attachments[key] = _KycAttachment(
-          fileName: picked.name,
+        _attachments[document.key] = _KycAttachment(
+          fileName: uploadedName != null && uploadedName.isNotEmpty
+              ? uploadedName
+              : picked.name,
           sourceLabel: source == ImageSource.camera ? 'Camera' : 'Gallery',
           path: picked.path,
+          url: uploadedUrl,
         );
       });
     } catch (_) {
@@ -348,16 +446,16 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                     Text(
                       document.title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF101828),
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Choose how you want to upload this document.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF667085),
-                          ),
+                        color: const Color(0xFF667085),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     _SheetAction(
@@ -365,7 +463,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                       label: 'Camera',
                       onTap: () {
                         Navigator.of(context).pop();
-                        _pickDocument(document.key, ImageSource.camera);
+                        _pickDocument(document, ImageSource.camera);
                       },
                     ),
                     const SizedBox(height: 10),
@@ -374,7 +472,7 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                       label: 'Gallery',
                       onTap: () {
                         Navigator.of(context).pop();
-                        _pickDocument(document.key, ImageSource.gallery);
+                        _pickDocument(document, ImageSource.gallery);
                       },
                     ),
                     const SizedBox(height: 10),
@@ -414,12 +512,16 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.document_scanner_rounded, color: Color(0xFF1F88C9)),
+                        const Icon(
+                          Icons.document_scanner_rounded,
+                          color: Color(0xFF1F88C9),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'Document preview',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF101828),
                                 ),
@@ -444,7 +546,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                               color: const Color(0xFFE6F3FF),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(Icons.insert_drive_file_rounded, color: Color(0xFF1F88C9)),
+                            child: const Icon(
+                              Icons.insert_drive_file_rounded,
+                              color: Color(0xFF1F88C9),
+                            ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -453,7 +558,8 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                               children: [
                                 Text(
                                   attachment.fileName ?? 'Uploaded file',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF101828),
                                       ),
@@ -461,7 +567,8 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                                 const SizedBox(height: 4),
                                 Text(
                                   attachment.sourceLabel ?? 'Upload',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
                                         color: const Color(0xFF667085),
                                       ),
                                 ),
@@ -478,9 +585,14 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                         backgroundColor: const Color(0xFF1F88C9),
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w800)),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 ),
@@ -535,7 +647,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                       Expanded(
                         child: Container(
                           height: 2,
-                          color: activeIndex > i ? const Color(0xFF1F88C9) : const Color(0xFFE5E7EB),
+                          color: activeIndex > i
+                              ? const Color(0xFF1F88C9)
+                              : const Color(0xFFE5E7EB),
                         ),
                       ),
                     ],
@@ -575,9 +689,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
         Text(
           'Complete your KYC to verify your brokerage account.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-                height: 1.4,
-              ),
+            color: const Color(0xFF667085),
+            height: 1.4,
+          ),
         ),
         const SizedBox(height: 16),
         _PremiumTextField(
@@ -643,8 +757,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(18),
           ],
-          valid: _bankAccountConfirmController.text.trim().isNotEmpty &&
-              _bankAccountConfirmController.text.trim() == _bankAccountController.text.trim(),
+          valid:
+              _bankAccountConfirmController.text.trim().isNotEmpty &&
+              _bankAccountConfirmController.text.trim() ==
+                  _bankAccountController.text.trim(),
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
         ),
@@ -683,10 +799,12 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
         for (var i = 0; i < _kycDocuments.length; i++) ...[
           _KycUploadCard(
             document: _kycDocuments[i],
-            attachment: _attachments[_kycDocuments[i].key] ?? const _KycAttachment(),
+            attachment:
+                _attachments[_kycDocuments[i].key] ?? const _KycAttachment(),
             onUpload: () => _showUploadOptions(_kycDocuments[i]),
-            onCamera: () => _pickDocument(_kycDocuments[i].key, ImageSource.camera),
-            onGallery: () => _pickDocument(_kycDocuments[i].key, ImageSource.gallery),
+            onCamera: () => _pickDocument(_kycDocuments[i], ImageSource.camera),
+            onGallery: () =>
+                _pickDocument(_kycDocuments[i], ImageSource.gallery),
             onView: () => _showAttachmentPreview(_kycDocuments[i].key),
             onReplace: () => _showUploadOptions(_kycDocuments[i]),
           ),
@@ -702,7 +820,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
 
   Widget _buildReviewStep(BuildContext context) {
     final uploadedItems = _kycDocuments
-        .map((doc) => MapEntry(doc, _attachments[doc.key] ?? const _KycAttachment()))
+        .map(
+          (doc) =>
+              MapEntry(doc, _attachments[doc.key] ?? const _KycAttachment()),
+        )
         .toList(growable: false);
 
     return Column(
@@ -719,7 +840,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             children: [
               _ReviewFieldRow(
                 label: 'PAN Number',
-                value: _panController.text.trim().isEmpty ? 'Not provided' : _panController.text.trim(),
+                value: _panController.text.trim().isEmpty
+                    ? 'Not provided'
+                    : _panController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
@@ -731,7 +854,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
               ),
               _ReviewFieldRow(
                 label: 'GST Number',
-                value: _gstController.text.trim().isEmpty ? 'Not provided' : _gstController.text.trim(),
+                value: _gstController.text.trim().isEmpty
+                    ? 'Not provided'
+                    : _gstController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
@@ -758,9 +883,11 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             children: [
               for (var i = 0; i < uploadedItems.length; i++) ...[
                 _ReviewDocumentRow(
+                  document: uploadedItems[i].key,
                   title: uploadedItems[i].key.title,
                   attachment: uploadedItems[i].value,
-                  onView: () => _showAttachmentPreview(uploadedItems[i].key.key),
+                  onView: () =>
+                      _showAttachmentPreview(uploadedItems[i].key.key),
                   onReplace: () => _showUploadOptions(uploadedItems[i].key),
                 ),
                 if (i != uploadedItems.length - 1) const SizedBox(height: 10),
@@ -789,9 +916,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
               title: Text(
                 'I confirm that all the information provided is accurate.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             );
           },
@@ -801,22 +928,24 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
   }
 
   Widget _buildSubmittedStep(BuildContext context) {
-    final isApproved = _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
-    final title = isApproved ? 'KYC Verification Complete' : 'KYC Submitted Successfully';
+    final isApproved =
+        _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
+    final title = isApproved
+        ? 'KYC Verification Complete'
+        : 'KYC Submitted Successfully';
     final badgeLabel = isApproved ? 'Verified' : 'Submitted for Review';
     final description = isApproved
         ? 'Your KYC has been verified. Your broker account is now active.'
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
     final currentStatus = isApproved ? 'Verified' : 'Pending Review';
-    final statusColor = isApproved ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9);
+    final statusColor = isApproved
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFF1F88C9);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(
-          title: title,
-          subtitle: description,
-        ),
+        _SectionHeader(title: title, subtitle: description),
         const SizedBox(height: 18),
         Container(
           width: double.infinity,
@@ -843,7 +972,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isApproved ? Icons.verified_rounded : Icons.check_circle_rounded,
+                  isApproved
+                      ? Icons.verified_rounded
+                      : Icons.check_circle_rounded,
                   size: 52,
                   color: const Color(0xFF2FA56E),
                 ),
@@ -852,18 +983,18 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
               Text(
                 badgeLabel,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: const Color(0xFF2FA56E),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: const Color(0xFF2FA56E),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 description,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                      height: 1.45,
-                    ),
+                  color: const Color(0xFF667085),
+                  height: 1.45,
+                ),
               ),
             ],
           ),
@@ -873,11 +1004,17 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
           title: 'Status Card',
           child: Column(
             children: [
-              _StatusInfoRow(label: 'Current Status', value: currentStatus, valueColor: statusColor),
+              _StatusInfoRow(
+                label: 'Current Status',
+                value: currentStatus,
+                valueColor: statusColor,
+              ),
               const SizedBox(height: 10),
               _StatusInfoRow(
                 label: 'Submitted Date',
-                value: _submittedAt != null ? _formatDateTime(_submittedAt!) : 'Not available',
+                value: _submittedAt != null
+                    ? _formatDateTime(_submittedAt!)
+                    : 'Not available',
                 valueColor: const Color(0xFF101828),
               ),
               const SizedBox(height: 10),
@@ -906,9 +1043,14 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
               backgroundColor: const Color(0xFF2FA56E),
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            label: const Text('View my documents', style: TextStyle(fontWeight: FontWeight.w800)),
+            label: const Text(
+              'View my documents',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ],
@@ -933,11 +1075,15 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.folder_copy_rounded, color: Color(0xFF1F88C9)),
+                        const Icon(
+                          Icons.folder_copy_rounded,
+                          color: Color(0xFF1F88C9),
+                        ),
                         const SizedBox(width: 10),
                         Text(
                           'My documents',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF101828),
                               ),
@@ -955,7 +1101,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.insert_drive_file_rounded, color: Color(0xFF1F88C9)),
+                            const Icon(
+                              Icons.insert_drive_file_rounded,
+                              color: Color(0xFF1F88C9),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -963,15 +1112,21 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                                 children: [
                                   Text(
                                     _kycDocuments[i].title,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF101828),
                                         ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _attachments[_kycDocuments[i].key]?.fileName ?? 'Uploaded file',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    _attachments[_kycDocuments[i].key]
+                                            ?.fileName ??
+                                        'Uploaded file',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
                                           color: const Color(0xFF667085),
                                         ),
                                   ),
@@ -981,7 +1136,8 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                           ],
                         ),
                       ),
-                      if (i != _kycDocuments.length - 1) const SizedBox(height: 10),
+                      if (i != _kycDocuments.length - 1)
+                        const SizedBox(height: 10),
                     ],
                     const SizedBox(height: 14),
                     FilledButton(
@@ -990,9 +1146,14 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                         backgroundColor: const Color(0xFF1F88C9),
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w800)),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 ),
@@ -1006,7 +1167,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
 
   Widget _bottomBar(BuildContext context) {
     if (_step == _KycStep.submitted) {
-      final isApproved = _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
+      final isApproved =
+          _statusLabel != null &&
+          _isApprovedStatus(_statusLabel!.toLowerCase());
       return SafeArea(
         top: false,
         child: Container(
@@ -1029,20 +1192,31 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                     minimumSize: const Size.fromHeight(52),
                     foregroundColor: const Color(0xFF101828),
                     side: const BorderSide(color: Color(0xFFD0D5DD)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Go Back', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Go Back',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: isApproved ? _showAllDocuments : () => _loadKycStatus(),
+                  onPressed: isApproved
+                      ? _showAllDocuments
+                      : () => _loadKycStatus(),
                   style: FilledButton.styleFrom(
-                    backgroundColor: isApproved ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
+                    backgroundColor: isApproved
+                        ? const Color(0xFF2FA56E)
+                        : const Color(0xFF1F88C9),
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                   ),
                   child: Text(
                     isApproved ? 'View my documents' : 'View KYC Status',
@@ -1065,13 +1239,13 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             });
           }
         : _step == _KycStep.documents
-            ? () {
-                setState(() {
-                  _errorMessage = null;
-                  _step = _KycStep.review;
-                });
-              }
-            : _submitKyc;
+        ? () {
+            setState(() {
+              _errorMessage = null;
+              _step = _KycStep.review;
+            });
+          }
+        : _submitKyc;
 
     return SafeArea(
       top: false,
@@ -1093,7 +1267,9 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF1F88C9),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
             ),
             child: _saving
                 ? const SizedBox(
@@ -1104,7 +1280,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+                : Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
           ),
         ),
       ),
@@ -1147,7 +1326,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFE8EDF2)),
               ),
-              child: const Icon(Icons.chevron_left_rounded, color: Color(0xFF101828)),
+              child: const Icon(
+                Icons.chevron_left_rounded,
+                color: Color(0xFF101828),
+              ),
             ),
           ),
         ),
@@ -1155,10 +1337,10 @@ class _BrokerKycRegistrationScreenState extends ConsumerState<BrokerKycRegistrat
           'KYC registration',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF101828),
-              ),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF101828),
+          ),
         ),
       ),
       body: SafeArea(
@@ -1197,6 +1379,7 @@ class _KycDocument {
     required this.requiredLabel,
     required this.formats,
     required this.maxSize,
+    required this.uploadable,
   });
 
   final String key;
@@ -1204,18 +1387,16 @@ class _KycDocument {
   final String requiredLabel;
   final String formats;
   final String maxSize;
+  final bool uploadable;
 }
 
 class _KycAttachment {
-  const _KycAttachment({
-    this.fileName,
-    this.sourceLabel,
-    this.path,
-  });
+  const _KycAttachment({this.fileName, this.sourceLabel, this.path, this.url});
 
   final String? fileName;
   final String? sourceLabel;
   final String? path;
+  final String? url;
 
   bool get isUploaded => fileName != null;
 }
@@ -1305,7 +1486,9 @@ class _StepperItem extends StatelessWidget {
               fontSize: 9,
               height: 1.0,
               fontWeight: FontWeight.w600,
-              color: isCompleted || isActive ? const Color(0xFF101828) : textMuted,
+              color: isCompleted || isActive
+                  ? const Color(0xFF101828)
+                  : textMuted,
             ),
           ),
         ),
@@ -1315,10 +1498,7 @@ class _StepperItem extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionHeader({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -1331,18 +1511,18 @@ class _SectionHeader extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
-              ),
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF101828),
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-                height: 1.4,
-              ),
+            color: const Color(0xFF667085),
+            height: 1.4,
+          ),
         ),
       ],
     );
@@ -1350,10 +1530,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _CardSection extends StatelessWidget {
-  const _CardSection({
-    required this.title,
-    required this.child,
-  });
+  const _CardSection({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -1380,10 +1557,10 @@ class _CardSection extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 10),
           child,
@@ -1423,10 +1600,10 @@ class _WarningCard extends StatelessWidget {
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF8A4B0F),
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                  ),
+                color: const Color(0xFF8A4B0F),
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -1466,13 +1643,13 @@ class _PremiumTextField extends StatelessWidget {
     final statusIcon = !hasValue
         ? Icons.radio_button_unchecked_rounded
         : valid
-            ? Icons.check_rounded
-            : Icons.close_rounded;
+        ? Icons.check_rounded
+        : Icons.close_rounded;
     final statusColor = !hasValue
         ? const Color(0xFF98A2B3)
         : valid
-            ? const Color(0xFF2FA56E)
-            : const Color(0xFFE23A4B);
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFE23A4B);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1502,7 +1679,8 @@ class _PremiumTextField extends StatelessWidget {
                       children: [
                         Text(
                           label,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                                 color: const Color(0xFF101828),
@@ -1531,14 +1709,18 @@ class _PremiumTextField extends StatelessWidget {
                       onChanged: onChanged,
                       decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: const EdgeInsets.only(top: 0, bottom: 0),
+                        contentPadding: const EdgeInsets.only(
+                          top: 0,
+                          bottom: 0,
+                        ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         focusedErrorBorder: InputBorder.none,
                         hintText: hintText,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        hintStyle: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(
                               color: const Color(0xFF98A2B3),
                               fontWeight: FontWeight.w500,
                             ),
@@ -1578,10 +1760,17 @@ class _KycUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uploaded = attachment.isUploaded;
-    final borderColor = uploaded ? const Color(0xFFB7E4C7) : const Color(0xFFE8EDF2);
+    final uploaded = document.uploadable ? attachment.isUploaded : true;
+    final borderColor = uploaded
+        ? const Color(0xFFB7E4C7)
+        : const Color(0xFFE8EDF2);
     final backgroundColor = uploaded ? const Color(0xFFF0FBF4) : Colors.white;
-    final titleColor = uploaded ? const Color(0xFF1F7A52) : const Color(0xFF101828);
+    final titleColor = uploaded
+        ? const Color(0xFF1F7A52)
+        : const Color(0xFF101828);
+    final badgeLabel = document.uploadable
+        ? (uploaded ? 'Uploaded' : document.requiredLabel)
+        : 'In details';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1607,12 +1796,18 @@ class _KycUploadCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFEAF1FF),
+                  color: uploaded
+                      ? const Color(0xFFD9F3E5)
+                      : const Color(0xFFEAF1FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  uploaded ? Icons.check_circle_rounded : Icons.description_rounded,
-                  color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
+                  uploaded
+                      ? Icons.check_circle_rounded
+                      : Icons.description_rounded,
+                  color: uploaded
+                      ? const Color(0xFF2FA56E)
+                      : const Color(0xFF1F88C9),
                   size: 18,
                 ),
               ),
@@ -1626,7 +1821,8 @@ class _KycUploadCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             document.title,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
                                   color: titleColor,
@@ -1636,10 +1832,7 @@ class _KycUploadCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TinyTag(
-                          label: uploaded ? 'Uploaded' : document.requiredLabel,
-                          uploaded: uploaded,
-                        ),
+                        _TinyTag(label: badgeLabel, uploaded: uploaded),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1648,9 +1841,9 @@ class _KycUploadCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF667085),
-                            fontSize: 10,
-                          ),
+                        color: const Color(0xFF667085),
+                        fontSize: 10,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1658,9 +1851,9 @@ class _KycUploadCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF667085),
-                            fontSize: 10,
-                          ),
+                        color: const Color(0xFF667085),
+                        fontSize: 10,
+                      ),
                     ),
                   ],
                 ),
@@ -1672,17 +1865,23 @@ class _KycUploadCard extends StatelessWidget {
             children: [
               _MiniIconButton(
                 icon: Icons.cloud_upload_rounded,
-                onPressed: onUpload,
+                onPressed: document.uploadable
+                    ? onUpload
+                    : () => _showDetailInfo(context),
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
                 icon: Icons.photo_camera_rounded,
-                onPressed: onCamera,
+                onPressed: document.uploadable
+                    ? onCamera
+                    : () => _showDetailInfo(context),
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
                 icon: Icons.photo_library_rounded,
-                onPressed: onGallery,
+                onPressed: document.uploadable
+                    ? onGallery
+                    : () => _showDetailInfo(context),
               ),
               if (uploaded) ...[
                 const SizedBox(width: 10),
@@ -1694,12 +1893,23 @@ class _KycUploadCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 _MiniIconButton(
                   icon: Icons.swap_horiz_rounded,
-                  onPressed: onReplace,
+                  onPressed: document.uploadable
+                      ? onReplace
+                      : () => _showDetailInfo(context),
                 ),
               ],
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDetailInfo(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('This item is covered in the details section.'),
+        backgroundColor: Color(0xFF1F88C9),
       ),
     );
   }
@@ -1720,7 +1930,9 @@ class _MiniIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final background = filled ? const Color(0xFF2FA56E) : Colors.white;
     final iconColor = filled ? Colors.white : const Color(0xFF667085);
-    final borderColor = filled ? const Color(0xFF2FA56E) : const Color(0xFFD0D5DD);
+    final borderColor = filled
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFD0D5DD);
 
     return SizedBox(
       width: 34,
@@ -1732,7 +1944,9 @@ class _MiniIconButton extends StatelessWidget {
           backgroundColor: background,
           foregroundColor: iconColor,
           side: BorderSide(color: borderColor),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Icon(icon, size: 16, color: iconColor),
       ),
@@ -1741,10 +1955,7 @@ class _MiniIconButton extends StatelessWidget {
 }
 
 class _TinyTag extends StatelessWidget {
-  const _TinyTag({
-    required this.label,
-    required this.uploaded,
-  });
+  const _TinyTag({required this.label, required this.uploaded});
 
   final String label;
   final bool uploaded;
@@ -1806,19 +2017,19 @@ class _ReviewFieldRow extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF101828),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -1836,12 +2047,14 @@ class _ReviewFieldRow extends StatelessWidget {
 
 class _ReviewDocumentRow extends StatelessWidget {
   const _ReviewDocumentRow({
+    required this.document,
     required this.title,
     required this.attachment,
     required this.onView,
     required this.onReplace,
   });
 
+  final _KycDocument document;
   final String title;
   final _KycAttachment attachment;
   final VoidCallback onView;
@@ -1849,8 +2062,12 @@ class _ReviewDocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uploaded = attachment.isUploaded;
-    final hasPreview = attachment.path != null && File(attachment.path!).existsSync();
+    final uploaded = document.uploadable ? attachment.isUploaded : true;
+    final hasPreview =
+        attachment.path != null && File(attachment.path!).existsSync();
+    final subtitle = document.uploadable
+        ? (uploaded ? 'Uploaded' : 'Waiting for upload')
+        : 'Included in details';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1873,15 +2090,18 @@ class _ReviewDocumentRow extends StatelessWidget {
             child: Container(
               width: 38,
               height: 38,
-              color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFEAF1FF),
+              color: uploaded
+                  ? const Color(0xFFD9F3E5)
+                  : const Color(0xFFEAF1FF),
               child: hasPreview
-                  ? Image.file(
-                      File(attachment.path!),
-                      fit: BoxFit.cover,
-                    )
+                  ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
-                      uploaded ? Icons.check_rounded : Icons.insert_drive_file_rounded,
-                      color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF1F88C9),
+                      uploaded
+                          ? Icons.check_rounded
+                          : Icons.insert_drive_file_rounded,
+                      color: uploaded
+                          ? const Color(0xFF2FA56E)
+                          : const Color(0xFF1F88C9),
                       size: 18,
                     ),
             ),
@@ -1896,20 +2116,22 @@ class _ReviewDocumentRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  uploaded ? 'Uploaded' : 'Waiting for upload',
+                  subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: uploaded ? const Color(0xFF1F7A52) : const Color(0xFF667085),
-                        fontSize: 10,
-                      ),
+                    color: uploaded
+                        ? const Color(0xFF1F7A52)
+                        : const Color(0xFF667085),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -1921,10 +2143,7 @@ class _ReviewDocumentRow extends StatelessWidget {
             filled: true,
           ),
           const SizedBox(width: 8),
-          _MiniIconButton(
-            icon: Icons.swap_horiz_rounded,
-            onPressed: onReplace,
-          ),
+          _MiniIconButton(icon: Icons.swap_horiz_rounded, onPressed: onReplace),
         ],
       ),
     );
@@ -1950,9 +2169,9 @@ class _StatusInfoRow extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -1961,9 +2180,9 @@ class _StatusInfoRow extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: valueColor,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],
@@ -1998,14 +2217,17 @@ class _SheetAction extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: muted ? const Color(0xFF667085) : const Color(0xFF1F88C9)),
+            Icon(
+              icon,
+              color: muted ? const Color(0xFF667085) : const Color(0xFF1F88C9),
+            ),
             const SizedBox(width: 12),
             Text(
               label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF101828),
-                  ),
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
             ),
           ],
         ),
@@ -2018,7 +2240,10 @@ class _AadhaarSpacingFormatter extends TextInputFormatter {
   const _AadhaarSpacingFormatter();
 
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     final digits = newValue.text.replaceAll(' ', '');
     final buffer = StringBuffer();
     for (var i = 0; i < digits.length; i++) {
