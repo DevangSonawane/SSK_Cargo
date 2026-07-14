@@ -408,6 +408,23 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> submitDriverKyc({
+    required String accessToken,
+    required Map<String, dynamic> documents,
+  }) async {
+    developer.log(
+      'POST /api/kyc/driver documents=${documents.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/driver',
+        data: {'documents': documents},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> uploadBrokerKycDocument({
     required String accessToken,
     required String documentKey,
@@ -431,6 +448,17 @@ class SskApiClient {
   }
 
   Future<Map<String, dynamic>> getBrokerKycStatus({
+    required String accessToken,
+  }) async {
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/kyc/status',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getKycStatus({
     required String accessToken,
   }) async {
     return _request(
