@@ -69,10 +69,11 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     final recentBookingsAsync = session == null
         ? null
         : ref.watch(clientBookingsProvider(recentBookingsQuery));
-    final pricing = ref.watch(clientPricingProvider).valueOrNull;
+    final pricingState = ref.watch(clientPricingProvider);
     final vehicles = resolveVehicleOptions(
       tripType: _selectedTripType,
-      pricing: pricing,
+      pricing: pricingState.valueOrNull,
+      isLoading: pricingState.isLoading,
     );
 
     return SafeArea(

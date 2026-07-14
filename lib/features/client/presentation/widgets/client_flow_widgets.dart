@@ -204,8 +204,9 @@ const vehicleOptions = <VehicleOption>[
 List<VehicleOption> resolveVehicleOptions({
   required TripType tripType,
   ClientPricingConfig? pricing,
+  required bool isLoading,
 }) {
-  if (pricing == null) {
+  if (isLoading) {
     return vehicleOptions
         .map(
           (vehicle) => VehicleOption(
@@ -219,6 +220,10 @@ List<VehicleOption> resolveVehicleOptions({
         .toList(growable: false);
   }
 
+  if (pricing == null) {
+    return vehicleOptions;
+  }
+
   return vehicleOptions
       .map(
         (vehicle) => VehicleOption(
@@ -228,6 +233,7 @@ List<VehicleOption> resolveVehicleOptions({
             label: vehicle.label,
             tripType: tripType,
             pricing: pricing,
+            fallback: vehicle.price,
           ),
           accentColor: vehicle.accentColor,
           assetPath: vehicle.assetPath,
@@ -240,6 +246,7 @@ String _vehiclePriceLabel({
   required String label,
   required TripType tripType,
   required ClientPricingConfig pricing,
+  required String fallback,
 }) {
   if (tripType == TripType.intraCity) {
     final tier = _intraCityTierForVehicle(pricing, label);
@@ -247,7 +254,7 @@ String _vehiclePriceLabel({
     if (baseFare > 0) {
       return '₹${baseFare.toStringAsFixed(baseFare % 1 == 0 ? 0 : 2)}';
     }
-    return '';
+    return fallback;
   }
 
   final interCityRate = pricing.interCity.baseRatePerKm;
@@ -263,7 +270,7 @@ String _vehiclePriceLabel({
     return rateLabel;
   }
 
-  return '';
+  return fallback;
 }
 
 ClientTruckPricingTier? _intraCityTierForVehicle(
@@ -1472,10 +1479,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
     _vehicleIndex = widget.initialVehicleIndex;
-    final initialPricing = ref.read(clientPricingProvider).valueOrNull;
+    final initialPricingState = ref.read(clientPricingProvider);
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
-      pricing: initialPricing,
+      pricing: initialPricingState.valueOrNull,
+      isLoading: initialPricingState.isLoading,
     );
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
@@ -1697,6 +1705,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       final vehicles = resolveVehicleOptions(
         tripType: widget.tripType,
         pricing: pricing,
+        isLoading: false,
       );
       if (vehicles.isEmpty) return;
       final safeIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
@@ -2936,10 +2945,11 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pricing = ref.watch(clientPricingProvider).valueOrNull;
+    final pricingState = ref.watch(clientPricingProvider);
     final options = resolveVehicleOptions(
       tripType: widget.bookingData.tripType,
-      pricing: pricing,
+      pricing: pricingState.valueOrNull,
+      isLoading: pricingState.isLoading,
     );
     final safeIndex = options.isEmpty
         ? 0
