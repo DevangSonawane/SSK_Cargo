@@ -2,16 +2,104 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-class DriverProfileScreen extends ConsumerWidget {
+class DriverProfileScreen extends ConsumerStatefulWidget {
   const DriverProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DriverProfileScreen> createState() =>
+      _DriverProfileScreenState();
+}
+
+class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
+  bool _kycApproved = false;
+  bool _loadingKyc = true;
+  String? _activeUserId;
+  bool _sessionSyncQueued = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeUserId = ref.read(authSessionProvider).valueOrNull?.user.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadKycStatus();
+    });
+  }
+
+  bool _isApprovedStatus(String status) {
+    final normalized = status.toLowerCase();
+    return normalized.contains('verified') ||
+        normalized.contains('approved') ||
+        normalized.contains('complete');
+  }
+
+  Future<void> _loadKycStatus() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = false;
+        _loadingKyc = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getKycStatus(accessToken: session.tokens.accessToken);
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      final status = data['kyc_status']?.toString() ?? '';
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = _isApprovedStatus(status);
+        _loadingKyc = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _kycApproved = false;
+        _loadingKyc = false;
+      });
+    }
+  }
+
+  void _syncKycStateForSession(String? userId) {
+    _sessionSyncQueued = false;
+    _activeUserId = userId;
+    setState(() {
+      _kycApproved = false;
+      _loadingKyc = true;
+    });
+
+    if (userId == null) {
+      setState(() {
+        _loadingKyc = false;
+      });
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadKycStatus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
+    final currentUserId = user?.id;
+    if (currentUserId != _activeUserId && !_sessionSyncQueued) {
+      _sessionSyncQueued = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _syncKycStateForSession(currentUserId);
+      });
+    }
     final displayName = user?.displayName ?? 'Driver';
 
     return Scaffold(
@@ -59,9 +147,9 @@ class DriverProfileScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 user?.email ?? 'No account connected yet',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
               ),
               const SizedBox(height: 22),
               Row(
@@ -104,6 +192,13 @@ class DriverProfileScreen extends ConsumerWidget {
                 title: 'Manage account',
                 icon: Icons.manage_accounts_rounded,
                 onTap: () => context.push('/manage-account'),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
+                title: 'KYC registration',
+                icon: Icons.verified_user_rounded,
+                onTap: () => context.push('/driver/kyc-registration'),
+                completed: !_loadingKyc && _kycApproved,
               ),
               const SizedBox(height: 10),
               _ProfileMenuTile(
@@ -180,6 +275,7 @@ class _ProfileMenuTile extends StatelessWidget {
     required this.onTap,
     this.titleColor = const Color(0xFF101828),
     this.iconColor = const Color(0xFF1C2430),
+    this.completed = false,
   });
 
   final String title;
@@ -187,6 +283,7 @@ class _ProfileMenuTile extends StatelessWidget {
   final VoidCallback onTap;
   final Color titleColor;
   final Color iconColor;
+  final bool completed;
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +306,11 @@ class _ProfileMenuTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: iconColor, size: 22),
+            Icon(
+              icon,
+              color: completed ? const Color(0xFF2FA56E) : iconColor,
+              size: 22,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
@@ -217,10 +318,15 @@ class _ProfileMenuTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: titleColor,
+                  color: completed ? const Color(0xFF1F7A52) : titleColor,
                 ),
               ),
             ),
+            if (completed) ...[
+              const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFF2FA56E), size: 18),
+              const SizedBox(width: 8),
+            ],
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
           ],
         ),

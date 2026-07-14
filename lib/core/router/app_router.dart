@@ -21,6 +21,7 @@ import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_all_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_details_screen.dart';
+import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
 import '../../features/driver/presentation/screens/driver_rider_screen.dart';
@@ -63,6 +64,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/profile',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: DriverProfileScreen()),
+      ),
+      GoRoute(
+        path: '/driver/kyc-registration',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverKycRegistrationScreen()),
       ),
       GoRoute(
         path: '/driver/order-accepted',

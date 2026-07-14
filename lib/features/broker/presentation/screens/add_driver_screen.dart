@@ -172,6 +172,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final selectedTruckPlate = selectedTruck?.plateNumber ?? '';
     final truckId = selectedTruck != null ? selectedTruck.id : manualTruckId;
     String? createdUserId;
+    BrokerDriver? recoveredDriver;
 
     if (truckId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -207,42 +208,79 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               ),
         );
       } else {
-        final registrationResponse = await apiClient.register(
-          name: name,
-          email: email,
-          password: password,
-          phone: phone.isEmpty ? null : phone,
-          role: 'driver',
-        );
+        try {
+          final registrationResponse = await apiClient.register(
+            name: name,
+            email: email,
+            password: password,
+            phone: phone.isEmpty ? null : phone,
+            role: 'driver',
+          );
 
-        final userId = _extractUserId(registrationResponse);
-        if (userId.isEmpty) {
-          throw StateError('Could not determine the created driver user id.');
+          final userId = _extractUserId(registrationResponse);
+          if (userId.isEmpty) {
+            throw StateError('Could not determine the created driver user id.');
+          }
+          createdUserId = userId;
+        } on ApiException catch (error) {
+          if (error.statusCode != 409) {
+            rethrow;
+          }
+
+          recoveredDriver = await _findRecoveredDriver(
+            ref: ref,
+            name: name,
+            phone: phone,
+            licenseNo: licenseNo,
+            aadhaar: aadhaar,
+          );
+          if (recoveredDriver == null) {
+            rethrow;
+          }
+
+          createdUserId = recoveredDriver.id;
         }
-        createdUserId = userId;
 
-        await apiClient.createDriverProfile(
-          accessToken: session.tokens.accessToken,
-          driver:
-              {
-                'user_id': userId,
-                'license_no': licenseNo,
-                'license_expiry': licenseExpiry,
-                'aadhaar': aadhaar,
-                'truck_id': truckId,
-                if (avatar.isNotEmpty) 'avatar': avatar,
-              }..removeWhere(
-                (key, value) =>
-                    value == null || value.toString().trim().isEmpty,
-              ),
-        );
+        if (recoveredDriver == null) {
+          try {
+            await apiClient.createDriverProfile(
+              accessToken: session.tokens.accessToken,
+              driver:
+                  {
+                    'user_id': createdUserId,
+                    'license_no': licenseNo,
+                    'license_expiry': licenseExpiry,
+                    'aadhaar': aadhaar,
+                    'truck_id': truckId,
+                    if (avatar.isNotEmpty) 'avatar': avatar,
+                  }..removeWhere(
+                    (key, value) =>
+                        value == null || value.toString().trim().isEmpty,
+                  ),
+            );
+          } on ApiException {
+            recoveredDriver = await _findRecoveredDriver(
+              ref: ref,
+              name: name,
+              phone: phone,
+              licenseNo: licenseNo,
+              aadhaar: aadhaar,
+            );
+            if (recoveredDriver == null) {
+              rethrow;
+            }
+            createdUserId = recoveredDriver.id;
+          }
+        }
       }
 
       if (!mounted) return;
 
+      final effectiveDriverId =
+          createdUserId ?? recoveredDriver?.id ?? widget.existingDriver!.id;
       final notifier = ref.read(brokerDriversProvider.notifier);
       final updatedDriver = BrokerDriver(
-        id: createdUserId ?? widget.existingDriver!.id,
+        id: effectiveDriverId,
         name: name,
         phone: phone.isEmpty ? '+91 90000 00000' : phone,
         licenseNo: licenseNo,
@@ -835,4 +873,67 @@ String _extractUserId(Map<String, dynamic> response) {
   }
 
   return '';
+}
+
+Future<BrokerDriver?> _findRecoveredDriver({
+  required WidgetRef ref,
+  required String name,
+  required String phone,
+  required String licenseNo,
+  required String aadhaar,
+}) async {
+  try {
+    final drivers = await ref.read(
+      brokerDriversApiProvider((status: null, page: 1, limit: 100)).future,
+    );
+    for (final driver in drivers) {
+      if (_matchesRecoveredDriver(
+        driver,
+        name: name,
+        phone: phone,
+        licenseNo: licenseNo,
+        aadhaar: aadhaar,
+      )) {
+        return driver;
+      }
+    }
+  } catch (_) {
+    // If we cannot refresh the driver list, surface the original backend error.
+  }
+
+  return null;
+}
+
+bool _matchesRecoveredDriver(
+  BrokerDriver driver, {
+  required String name,
+  required String phone,
+  required String licenseNo,
+  required String aadhaar,
+}) {
+  final normalizedName = _normalizeLookupValue(name);
+  final normalizedPhone = _normalizeLookupValue(phone);
+  final normalizedLicense = _normalizeLookupValue(licenseNo);
+  final normalizedAadhaar = _normalizeLookupValue(aadhaar);
+
+  final driverName = _normalizeLookupValue(driver.name);
+  final driverPhone = _normalizeLookupValue(driver.phone);
+  final driverLicense = _normalizeLookupValue(driver.licenseNo);
+  final driverAadhaar = _normalizeLookupValue(driver.aadhaar);
+
+  final strongMatch =
+      normalizedLicense.isNotEmpty && normalizedLicense == driverLicense;
+  final aadhaarMatch =
+      normalizedAadhaar.isNotEmpty && normalizedAadhaar == driverAadhaar;
+  final phoneMatch =
+      normalizedPhone.isNotEmpty && normalizedPhone == driverPhone;
+  final nameMatch = normalizedName.isNotEmpty && normalizedName == driverName;
+
+  return strongMatch ||
+      (phoneMatch && (nameMatch || normalizedLicense.isEmpty)) ||
+      (aadhaarMatch && (nameMatch || normalizedPhone.isEmpty));
+}
+
+String _normalizeLookupValue(String value) {
+  return value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase().trim();
 }

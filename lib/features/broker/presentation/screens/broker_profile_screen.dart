@@ -11,16 +11,20 @@ class BrokerProfileScreen extends ConsumerStatefulWidget {
   const BrokerProfileScreen({super.key});
 
   @override
-  ConsumerState<BrokerProfileScreen> createState() => _BrokerProfileScreenState();
+  ConsumerState<BrokerProfileScreen> createState() =>
+      _BrokerProfileScreenState();
 }
 
 class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
   bool _kycApproved = false;
   bool _loadingKyc = true;
+  String? _activeUserId;
+  bool _sessionSyncQueued = false;
 
   @override
   void initState() {
     super.initState();
+    _activeUserId = ref.read(authSessionProvider).valueOrNull?.user.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadKycStatus();
     });
@@ -45,8 +49,9 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     }
 
     try {
-      final response =
-          await ref.read(apiClientProvider).getBrokerKycStatus(accessToken: session.tokens.accessToken);
+      final response = await ref
+          .read(apiClientProvider)
+          .getBrokerKycStatus(accessToken: session.tokens.accessToken);
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final status = data['kyc_status']?.toString() ?? '';
       if (!mounted) return;
@@ -63,10 +68,39 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     }
   }
 
+  void _syncKycStateForSession(String? userId) {
+    _sessionSyncQueued = false;
+    _activeUserId = userId;
+    setState(() {
+      _kycApproved = false;
+      _loadingKyc = true;
+    });
+
+    if (userId == null) {
+      setState(() {
+        _loadingKyc = false;
+      });
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadKycStatus();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
+    final currentUserId = user?.id;
+    if (currentUserId != _activeUserId && !_sessionSyncQueued) {
+      _sessionSyncQueued = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _syncKycStateForSession(currentUserId);
+      });
+    }
     final title = user?.displayName ?? 'Broker operations';
 
     return Scaffold(
@@ -95,7 +129,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF101828),
@@ -103,7 +138,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                         ),
                         Text(
                           user?.role == 'broker' ? 'Broker account' : 'Profile',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF101828),
@@ -113,18 +149,15 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  SskProfileAvatar(
-                    imageUrl: user?.profileImage,
-                    size: 62,
-                  ),
+                  SskProfileAvatar(imageUrl: user?.profileImage, size: 62),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 user?.email ?? 'No account connected yet',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
+                  color: const Color(0xFF667085),
+                ),
               ),
               const SizedBox(height: 22),
               Row(

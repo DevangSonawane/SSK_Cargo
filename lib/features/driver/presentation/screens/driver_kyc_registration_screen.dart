@@ -1,37 +1,35 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
 
-class BrokerKycRegistrationScreen extends ConsumerStatefulWidget {
-  const BrokerKycRegistrationScreen({super.key});
+class DriverKycRegistrationScreen extends ConsumerStatefulWidget {
+  const DriverKycRegistrationScreen({super.key});
 
   @override
-  ConsumerState<BrokerKycRegistrationScreen> createState() =>
-      _BrokerKycRegistrationScreenState();
+  ConsumerState<DriverKycRegistrationScreen> createState() =>
+      _DriverKycRegistrationScreenState();
 }
 
-class _BrokerKycRegistrationScreenState
-    extends ConsumerState<BrokerKycRegistrationScreen> {
+class _DriverKycRegistrationScreenState
+    extends ConsumerState<DriverKycRegistrationScreen> {
   final _confirmCheckboxController = ValueNotifier<bool>(false);
   final _picker = ImagePicker();
 
-  final _panController = TextEditingController();
+  final _licenseController = TextEditingController();
   final _aadhaarController = TextEditingController();
-  final _gstController = TextEditingController();
-  final _bankAccountController = TextEditingController();
-  final _bankAccountConfirmController = TextEditingController();
-  final _businessRegController = TextEditingController();
+  final _vehicleRegController = TextEditingController();
+  final _vehicleInsuranceController = TextEditingController();
 
   Timer? _refreshTimer;
 
@@ -45,22 +43,13 @@ class _BrokerKycRegistrationScreenState
   DateTime? _reviewedAt;
   String? _submissionId;
   bool _hasSubmission = false;
-  String? _activeUserId;
-  bool _sessionSyncQueued = false;
   final Map<String, _KycAttachment> _attachments = {
-    for (final doc in _kycDocuments)
-      doc.key: doc.uploadable
-          ? const _KycAttachment()
-          : const _KycAttachment(
-              fileName: 'Included in details',
-              sourceLabel: 'Form details',
-            ),
+    for (final doc in _kycDocuments) doc.key: const _KycAttachment(),
   };
 
   @override
   void initState() {
     super.initState();
-    _activeUserId = ref.read(authSessionProvider).valueOrNull?.user.id;
     _loadKycStatus();
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (_step == _KycStep.submitted) {
@@ -73,23 +62,20 @@ class _BrokerKycRegistrationScreenState
   void dispose() {
     _refreshTimer?.cancel();
     _confirmCheckboxController.dispose();
-    _panController.dispose();
+    _licenseController.dispose();
     _aadhaarController.dispose();
-    _gstController.dispose();
-    _bankAccountController.dispose();
-    _bankAccountConfirmController.dispose();
-    _businessRegController.dispose();
+    _vehicleRegController.dispose();
+    _vehicleInsuranceController.dispose();
     super.dispose();
   }
 
   static const _kycDocuments = <_KycDocument>[
     _KycDocument(
-      key: 'pan_photo_url',
-      title: 'PAN Card',
+      key: 'license_photo_url',
+      title: 'Driving License',
       requiredLabel: 'Required',
       formats: 'JPG, PNG, PDF',
       maxSize: 'Max 10 MB',
-      uploadable: true,
     ),
     _KycDocument(
       key: 'aadhaar_photo_url',
@@ -97,7 +83,6 @@ class _BrokerKycRegistrationScreenState
       requiredLabel: 'Required',
       formats: 'JPG, PNG, PDF',
       maxSize: 'Max 10 MB',
-      uploadable: true,
     ),
   ];
 
@@ -118,25 +103,21 @@ class _BrokerKycRegistrationScreenState
     return status.contains('reject') || status.contains('declin');
   }
 
-  bool _isPanValid(String value) {
-    return RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(value.trim());
+  bool _isLicenseValid(String value) {
+    return value.trim().length >= 8;
   }
 
   bool _isAadhaarValid(String value) {
-    return value.replaceAll(' ', '').trim().length == 12 &&
-        RegExp(r'^\d{12}$').hasMatch(value.replaceAll(' ', '').trim());
+    final normalized = value.replaceAll(' ', '').trim();
+    return normalized.length == 12 && RegExp(r'^\d{12}$').hasMatch(normalized);
   }
 
-  bool _isGstValid(String value) {
-    return value.trim().length >= 10;
+  bool _isVehicleRegValid(String value) {
+    return value.trim().length >= 6;
   }
 
-  bool _isBankValid(String value) {
-    return RegExp(r'^\d{9,18}$').hasMatch(value.trim());
-  }
-
-  bool _isBusinessRegValid(String value) {
-    return value.trim().length >= 10;
+  bool _isInsuranceValid(String value) {
+    return value.trim().length >= 6;
   }
 
   String _formatDateTime(DateTime value) {
@@ -145,30 +126,29 @@ class _BrokerKycRegistrationScreenState
   }
 
   void _prefillControllers(Map<String, String> documents) {
-    _panController.text = documents['pan_number'] ?? _panController.text;
+    _licenseController.text =
+        documents['license_number'] ?? _licenseController.text;
     _aadhaarController.text =
         documents['aadhaar_number'] ?? _aadhaarController.text;
-    _gstController.text = documents['gst_number'] ?? _gstController.text;
-    _bankAccountController.text =
-        documents['bank_account_number'] ?? _bankAccountController.text;
-    _businessRegController.text =
-        documents['business_registration_number'] ??
-        _businessRegController.text;
+    _vehicleRegController.text =
+        documents['vehicle_registration_number'] ?? _vehicleRegController.text;
+    _vehicleInsuranceController.text =
+        documents['vehicle_insurance_number'] ??
+        _vehicleInsuranceController.text;
   }
 
   Map<String, dynamic> _documentsPayload() {
     final payload = <String, dynamic>{
-      'pan_number': _panController.text.trim(),
+      'license_number': _licenseController.text.trim(),
       'aadhaar_number': _aadhaarController.text.replaceAll(' ', '').trim(),
-      'gst_number': _gstController.text.trim(),
-      'bank_account_number': _bankAccountController.text.trim(),
-      'business_registration_number': _businessRegController.text.trim(),
+      'vehicle_registration_number': _vehicleRegController.text.trim(),
+      'vehicle_insurance_number': _vehicleInsuranceController.text.trim(),
     };
 
-    final panAttachment = _attachments['pan_photo_url'];
+    final licenseAttachment = _attachments['license_photo_url'];
     final aadhaarAttachment = _attachments['aadhaar_photo_url'];
-    if (panAttachment?.url != null && panAttachment!.url!.isNotEmpty) {
-      payload['pan_photo_url'] = panAttachment.url;
+    if (licenseAttachment?.url != null && licenseAttachment!.url!.isNotEmpty) {
+      payload['license_photo_url'] = licenseAttachment.url;
     }
     if (aadhaarAttachment?.url != null && aadhaarAttachment!.url!.isNotEmpty) {
       payload['aadhaar_photo_url'] = aadhaarAttachment.url;
@@ -187,12 +167,12 @@ class _BrokerKycRegistrationScreenState
   }
 
   void _applyUploadedDocumentsFromSubmission(Map<String, String> documents) {
-    final panUrl = documents['pan_photo_url'];
-    if (panUrl != null && panUrl.isNotEmpty) {
-      _attachments['pan_photo_url'] = _KycAttachment(
-        fileName: 'PAN Card',
+    final licenseUrl = documents['license_photo_url'];
+    if (licenseUrl != null && licenseUrl.isNotEmpty) {
+      _attachments['license_photo_url'] = _KycAttachment(
+        fileName: 'Driving License',
         sourceLabel: 'Submitted URL',
-        url: panUrl,
+        url: licenseUrl,
       );
     }
 
@@ -208,57 +188,24 @@ class _BrokerKycRegistrationScreenState
 
   void _resetAttachments() {
     for (final doc in _kycDocuments) {
-      _attachments[doc.key] = doc.uploadable
-          ? const _KycAttachment()
-          : const _KycAttachment(
-              fileName: 'Included in details',
-              sourceLabel: 'Form details',
-            );
+      _attachments[doc.key] = const _KycAttachment();
     }
   }
 
-  void _resetForSessionChange() {
-    _confirmCheckboxController.value = false;
-    _step = _KycStep.details;
-    _initialLoading = true;
-    _saving = false;
-    _errorMessage = null;
-    _statusLabel = null;
-    _rejectionReason = null;
-    _submittedAt = null;
-    _reviewedAt = null;
-    _submissionId = null;
-    _hasSubmission = false;
-    _resetAttachments();
-    _panController.clear();
-    _aadhaarController.clear();
-    _gstController.clear();
-    _bankAccountController.clear();
-    _bankAccountConfirmController.clear();
-    _businessRegController.clear();
-  }
-
-  void _syncSession(String? userId) {
-    _sessionSyncQueued = false;
-    _activeUserId = userId;
-    if (!mounted) return;
-
-    setState(() {
-      _resetForSessionChange();
-    });
-
-    if (userId == null) {
-      if (!mounted) return;
-      setState(() {
-        _initialLoading = false;
-      });
+  void _goBack() {
+    if (_step == _KycStep.documents) {
+      setState(() => _step = _KycStep.details);
       return;
     }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _loadKycStatus();
-    });
+    if (_step == _KycStep.review) {
+      setState(() => _step = _KycStep.documents);
+      return;
+    }
+    if (_step == _KycStep.submitted) {
+      context.pop();
+      return;
+    }
+    context.pop();
   }
 
   Future<void> _loadKycStatus({bool silent = false}) async {
@@ -274,11 +221,9 @@ class _BrokerKycRegistrationScreenState
     }
 
     try {
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.getBrokerKycStatus(
-        accessToken: session.tokens.accessToken,
-      );
-
+      final response = await ref
+          .read(apiClientProvider)
+          .getKycStatus(accessToken: session.tokens.accessToken);
       final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       final submission = data['submission'] as Map<String, dynamic>?;
       final documents = _documentsFromMap(
@@ -319,9 +264,7 @@ class _BrokerKycRegistrationScreenState
         });
       }
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _initialLoading = false;
         if (!silent) {
@@ -361,7 +304,7 @@ class _BrokerKycRegistrationScreenState
     try {
       await ref
           .read(apiClientProvider)
-          .submitBrokerKyc(
+          .submitDriverKyc(
             accessToken: session.tokens.accessToken,
             documents: _documentsPayload(),
           );
@@ -405,22 +348,7 @@ class _BrokerKycRegistrationScreenState
   Future<void> _pickDocument(_KycDocument document, ImageSource source) async {
     try {
       final picked = await _picker.pickImage(source: source, imageQuality: 85);
-      if (picked == null) {
-        return;
-      }
-
-      if (!document.uploadable) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${document.title} is provided in the details section.',
-            ),
-            backgroundColor: const Color(0xFF1F88C9),
-          ),
-        );
-        return;
-      }
+      if (picked == null) return;
 
       final session = ref.read(authSessionProvider).valueOrNull;
       if (session == null) {
@@ -660,22 +588,6 @@ class _BrokerKycRegistrationScreenState
     );
   }
 
-  void _goBack() {
-    if (_step == _KycStep.documents) {
-      setState(() => _step = _KycStep.details);
-      return;
-    }
-    if (_step == _KycStep.review) {
-      setState(() => _step = _KycStep.documents);
-      return;
-    }
-    if (_step == _KycStep.submitted) {
-      context.pop();
-      return;
-    }
-    context.pop();
-  }
-
   Widget _buildStepper() {
     final activeIndex = switch (_step) {
       _KycStep.details => 0,
@@ -733,17 +645,16 @@ class _BrokerKycRegistrationScreenState
   }
 
   Widget _buildDetailsStep(BuildContext context) {
-    final panValid = _isPanValid(_panController.text);
+    final licenseValid = _isLicenseValid(_licenseController.text);
     final aadhaarValid = _isAadhaarValid(_aadhaarController.text);
-    final gstValid = _isGstValid(_gstController.text);
-    final bankValid = _isBankValid(_bankAccountController.text);
-    final businessValid = _isBusinessRegValid(_businessRegController.text);
+    final vehicleRegValid = _isVehicleRegValid(_vehicleRegController.text);
+    final insuranceValid = _isInsuranceValid(_vehicleInsuranceController.text);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Complete your KYC to verify your brokerage account.',
+          'Complete your KYC to verify your driver account.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
             height: 1.4,
@@ -751,14 +662,13 @@ class _BrokerKycRegistrationScreenState
         ),
         const SizedBox(height: 16),
         _PremiumTextField(
-          controller: _panController,
-          label: 'PAN Number',
-          hintText: 'ABCDE1234F',
+          controller: _licenseController,
+          label: 'License Number',
+          hintText: 'MH-2020123456789',
           textCapitalization: TextCapitalization.characters,
-          valid: panValid,
+          valid: licenseValid,
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
-          requiredField: false,
         ),
         const SizedBox(height: 12),
         _PremiumTextField(
@@ -774,62 +684,26 @@ class _BrokerKycRegistrationScreenState
           valid: aadhaarValid,
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
-          requiredField: false,
         ),
         const SizedBox(height: 12),
         _PremiumTextField(
-          controller: _gstController,
-          label: 'GST Number',
-          hintText: '27ABCDE1234F1Z5',
+          controller: _vehicleRegController,
+          label: 'Vehicle Registration Number',
+          hintText: 'MH-12-CD-5678',
           textCapitalization: TextCapitalization.characters,
-          valid: gstValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-          requiredField: false,
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _bankAccountController,
-          label: 'Bank Account Number',
-          hintText: '1234567890123',
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(18),
-          ],
-          valid: bankValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-          requiredField: false,
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _bankAccountConfirmController,
-          label: 'Confirm Account Number',
-          hintText: 'Optional',
-          requiredField: false,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(18),
-          ],
-          valid:
-              _bankAccountConfirmController.text.trim().isNotEmpty &&
-              _bankAccountConfirmController.text.trim() ==
-                  _bankAccountController.text.trim(),
+          valid: vehicleRegValid,
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
         _PremiumTextField(
-          controller: _businessRegController,
-          label: 'Business Registration Number',
-          hintText: 'U12345MH2020PTC123456',
+          controller: _vehicleInsuranceController,
+          label: 'Vehicle Insurance Number',
+          hintText: 'INS-2024-567890',
           textCapitalization: TextCapitalization.characters,
-          valid: businessValid,
+          valid: insuranceValid,
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
-          requiredField: false,
         ),
         if (_rejectionReason != null) ...[
           const SizedBox(height: 14),
@@ -891,14 +765,14 @@ class _BrokerKycRegistrationScreenState
         ),
         const SizedBox(height: 16),
         _CardSection(
-          title: 'Business Information',
+          title: 'Driver Information',
           child: Column(
             children: [
               _ReviewFieldRow(
-                label: 'PAN Number',
-                value: _panController.text.trim().isEmpty
+                label: 'License Number',
+                value: _licenseController.text.trim().isEmpty
                     ? 'Not provided'
-                    : _panController.text.trim(),
+                    : _licenseController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
@@ -909,24 +783,17 @@ class _BrokerKycRegistrationScreenState
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'GST Number',
-                value: _gstController.text.trim().isEmpty
+                label: 'Vehicle Registration Number',
+                value: _vehicleRegController.text.trim().isEmpty
                     ? 'Not provided'
-                    : _gstController.text.trim(),
+                    : _vehicleRegController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Bank Account Number',
-                value: _bankAccountController.text.trim().isEmpty
+                label: 'Vehicle Insurance Number',
+                value: _vehicleInsuranceController.text.trim().isEmpty
                     ? 'Not provided'
-                    : _bankAccountController.text.trim(),
-                onEdit: () => setState(() => _step = _KycStep.details),
-              ),
-              _ReviewFieldRow(
-                label: 'Business Registration Number',
-                value: _businessRegController.text.trim().isEmpty
-                    ? 'Not provided'
-                    : _businessRegController.text.trim(),
+                    : _vehicleInsuranceController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
             ],
@@ -991,7 +858,7 @@ class _BrokerKycRegistrationScreenState
         : 'KYC Submitted Successfully';
     final badgeLabel = isApproved ? 'Verified' : 'Submitted for Review';
     final description = isApproved
-        ? 'Your KYC has been verified. Your broker account is now active.'
+        ? 'Your KYC has been verified. Your driver account is now active.'
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
     final currentStatus = isApproved ? 'Verified' : 'Pending Review';
     final statusColor = isApproved
@@ -1023,16 +890,14 @@ class _BrokerKycRegistrationScreenState
               Container(
                 width: 84,
                 height: 84,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EE),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEAF7EE),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  isApproved
-                      ? Icons.verified_rounded
-                      : Icons.check_circle_rounded,
+                child: const Icon(
+                  Icons.verified_rounded,
                   size: 52,
-                  color: const Color(0xFF2FA56E),
+                  color: Color(0xFF2FA56E),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1090,26 +955,104 @@ class _BrokerKycRegistrationScreenState
             ],
           ),
         ),
-        if (isApproved) ...[
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: _showAllDocuments,
-            icon: const Icon(Icons.folder_copy_rounded),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF2FA56E),
-              foregroundColor: Colors.white,
+      ],
+    );
+  }
+
+  Widget _bottomBar(BuildContext context) {
+    if (_step == _KycStep.submitted) {
+      final isApproved =
+          _statusLabel != null &&
+          _isApprovedStatus(_statusLabel!.toLowerCase());
+      return SafeArea(
+        top: false,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(22),
+              topRight: Radius.circular(22),
+            ),
+          ),
+          child: OutlinedButton(
+            onPressed: _goBack,
+            style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
+              foregroundColor: const Color(0xFF101828),
+              side: const BorderSide(color: Color(0xFFD0D5DD)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            label: const Text(
-              'View my documents',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            child: const Text(
+              'Go Back',
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
-        ],
-      ],
+        ),
+      );
+    }
+
+    final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
+    final action = _step == _KycStep.details
+        ? () {
+            setState(() {
+              _errorMessage = null;
+              _step = _KycStep.documents;
+            });
+          }
+        : _step == _KycStep.documents
+        ? () {
+            setState(() {
+              _errorMessage = null;
+              _step = _KycStep.review;
+            });
+          }
+        : _submitKyc;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(22),
+            topRight: Radius.circular(22),
+          ),
+        ),
+        child: SizedBox(
+          height: 54,
+          child: FilledButton(
+            onPressed: _saving ? null : action,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1F88C9),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            child: _saving
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1226,100 +1169,6 @@ class _BrokerKycRegistrationScreenState
     );
   }
 
-  Widget _bottomBar(BuildContext context) {
-    if (_step == _KycStep.submitted) {
-      return SafeArea(
-        top: false,
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(22),
-              topRight: Radius.circular(22),
-            ),
-          ),
-          child: OutlinedButton(
-            onPressed: _goBack,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              foregroundColor: const Color(0xFF101828),
-              side: const BorderSide(color: Color(0xFFD0D5DD)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'Go Back',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
-    final action = _step == _KycStep.details
-        ? () {
-            setState(() {
-              _errorMessage = null;
-              _step = _KycStep.documents;
-            });
-          }
-        : _step == _KycStep.documents
-        ? () {
-            setState(() {
-              _errorMessage = null;
-              _step = _KycStep.review;
-            });
-          }
-        : _submitKyc;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(22),
-            topRight: Radius.circular(22),
-          ),
-        ),
-        child: SizedBox(
-          height: 54,
-          child: FilledButton(
-            onPressed: _saving ? null : action,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1F88C9),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-            ),
-            child: _saving
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _stepBody(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 220),
@@ -1334,16 +1183,6 @@ class _BrokerKycRegistrationScreenState
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = ref.watch(
-      authSessionProvider.select((value) => value.valueOrNull?.user.id),
-    );
-    if (currentUserId != _activeUserId && !_sessionSyncQueued) {
-      _sessionSyncQueued = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _syncSession(currentUserId);
-      });
-    }
     final body = _stepBody(context);
 
     return Scaffold(
@@ -1357,7 +1196,7 @@ class _BrokerKycRegistrationScreenState
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: InkWell(
-            onTap: _goBack,
+            onTap: () => context.pop(),
             borderRadius: BorderRadius.circular(18),
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -1419,7 +1258,6 @@ class _KycDocument {
     required this.requiredLabel,
     required this.formats,
     required this.maxSize,
-    required this.uploadable,
   });
 
   final String key;
@@ -1427,7 +1265,6 @@ class _KycDocument {
   final String requiredLabel;
   final String formats;
   final String maxSize;
-  final bool uploadable;
 }
 
 class _KycAttachment {
@@ -1623,13 +1460,6 @@ class _WarningCard extends StatelessWidget {
         color: const Color(0xFFFFF7E8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF2D9A8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1660,7 +1490,6 @@ class _PremiumTextField extends StatelessWidget {
     required this.valid,
     required this.validator,
     required this.onChanged,
-    this.requiredField = true,
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
@@ -1672,7 +1501,6 @@ class _PremiumTextField extends StatelessWidget {
   final bool valid;
   final FormFieldValidator<String> validator;
   final ValueChanged<String> onChanged;
-  final bool requiredField;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
@@ -1691,90 +1519,69 @@ class _PremiumTextField extends StatelessWidget {
         ? const Color(0xFF2FA56E)
         : const Color(0xFFE23A4B);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          label,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: const Color(0xFF101828),
-                              ),
-                        ),
-                        if (requiredField) ...[
-                          const SizedBox(width: 4),
-                          const Text(
-                            '*',
-                            style: TextStyle(
-                              color: Color(0xFFE23A4B),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    TextFormField(
-                      controller: controller,
-                      validator: validator,
-                      keyboardType: keyboardType,
-                      textCapitalization: textCapitalization,
-                      inputFormatters: inputFormatters,
-                      onChanged: onChanged,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.only(
-                          top: 0,
-                          bottom: 0,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        hintText: hintText,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(
-                              color: const Color(0xFF98A2B3),
-                              fontWeight: FontWeight.w500,
-                            ),
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: const Color(0xFF101828),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Icon(statusIcon, color: statusColor, size: 14),
-            ],
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: controller,
+                  validator: validator,
+                  keyboardType: keyboardType,
+                  textCapitalization: textCapitalization,
+                  inputFormatters: inputFormatters,
+                  onChanged: onChanged,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.only(top: 0, bottom: 0),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    hintText: hintText,
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Icon(statusIcon, color: statusColor, size: 14),
+        ],
+      ),
     );
   }
 }
@@ -1800,7 +1607,7 @@ class _KycUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uploaded = document.uploadable ? attachment.isUploaded : true;
+    final uploaded = attachment.isUploaded;
     final borderColor = uploaded
         ? const Color(0xFFB7E4C7)
         : const Color(0xFFE8EDF2);
@@ -1808,9 +1615,6 @@ class _KycUploadCard extends StatelessWidget {
     final titleColor = uploaded
         ? const Color(0xFF1F7A52)
         : const Color(0xFF101828);
-    final badgeLabel = document.uploadable
-        ? (uploaded ? 'Uploaded' : document.requiredLabel)
-        : 'In details';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1872,7 +1676,10 @@ class _KycUploadCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TinyTag(label: badgeLabel, uploaded: uploaded),
+                        _TinyTag(
+                          label: uploaded ? 'Uploaded' : document.requiredLabel,
+                          uploaded: uploaded,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1905,23 +1712,17 @@ class _KycUploadCard extends StatelessWidget {
             children: [
               _MiniIconButton(
                 icon: Icons.cloud_upload_rounded,
-                onPressed: document.uploadable
-                    ? onUpload
-                    : () => _showDetailInfo(context),
+                onPressed: onUpload,
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
                 icon: Icons.photo_camera_rounded,
-                onPressed: document.uploadable
-                    ? onCamera
-                    : () => _showDetailInfo(context),
+                onPressed: onCamera,
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
                 icon: Icons.photo_library_rounded,
-                onPressed: document.uploadable
-                    ? onGallery
-                    : () => _showDetailInfo(context),
+                onPressed: onGallery,
               ),
               if (uploaded) ...[
                 const SizedBox(width: 10),
@@ -1933,23 +1734,12 @@ class _KycUploadCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 _MiniIconButton(
                   icon: Icons.swap_horiz_rounded,
-                  onPressed: document.uploadable
-                      ? onReplace
-                      : () => _showDetailInfo(context),
+                  onPressed: onReplace,
                 ),
               ],
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _showDetailInfo(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('This item is covered in the details section.'),
-        backgroundColor: Color(0xFF1F88C9),
       ),
     );
   }
@@ -2102,12 +1892,10 @@ class _ReviewDocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uploaded = document.uploadable ? attachment.isUploaded : true;
+    final uploaded = attachment.isUploaded;
     final hasPreview =
         attachment.path != null && File(attachment.path!).existsSync();
-    final subtitle = document.uploadable
-        ? (uploaded ? 'Uploaded' : 'Waiting for upload')
-        : 'Included in details';
+    final subtitle = uploaded ? 'Uploaded' : 'Waiting for upload';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
