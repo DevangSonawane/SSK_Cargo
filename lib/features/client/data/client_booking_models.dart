@@ -109,6 +109,7 @@ class ClientTruckPricingTier {
     required this.platformFee,
     required this.waitingCharge,
     required this.demandMultiplier,
+    required this.tollFixedAmount,
   });
 
   factory ClientTruckPricingTier.fromJson(Map<String, dynamic> json) {
@@ -118,6 +119,7 @@ class ClientTruckPricingTier {
       platformFee: _asDouble(json['platformFee']),
       waitingCharge: _asDouble(json['waitingCharge']),
       demandMultiplier: _asDouble(json['demandMultiplier']),
+      tollFixedAmount: _asDouble(json['tollFixedAmount']),
     );
   }
 
@@ -126,15 +128,23 @@ class ClientTruckPricingTier {
   final double platformFee;
   final double waitingCharge;
   final double demandMultiplier;
+  final double tollFixedAmount;
 }
 
 class ClientPartTruckPricing {
-  const ClientPartTruckPricing({required this.platformFee});
+  const ClientPartTruckPricing({
+    required this.baseFare,
+    required this.platformFee,
+  });
 
   factory ClientPartTruckPricing.fromJson(Map<String, dynamic> json) {
-    return ClientPartTruckPricing(platformFee: _asDouble(json['platformFee']));
+    return ClientPartTruckPricing(
+      baseFare: _asDouble(json['baseFare']),
+      platformFee: _asDouble(json['platformFee']),
+    );
   }
 
+  final double baseFare;
   final double platformFee;
 }
 

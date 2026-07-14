@@ -173,21 +173,21 @@ class VehicleOption {
 const vehicleOptions = <VehicleOption>[
   VehicleOption(
     label: 'Small truck',
-    capacity: 'Up to 500 kg',
+    capacity: '500 kg',
     price: '₹899',
     accentColor: Color(0xFF2FA56E),
     assetPath: 'assets/trucks/small truck.png',
   ),
   VehicleOption(
     label: 'Medium truck',
-    capacity: 'Up to 1.5 ton',
+    capacity: '1.5 ton',
     price: '₹1,499',
     accentColor: Color(0xFF1F88C9),
     assetPath: 'assets/trucks/medium truck.png',
   ),
   VehicleOption(
     label: 'Big truck',
-    capacity: 'Up to 3 ton',
+    capacity: '3 ton',
     price: '₹2,299',
     accentColor: Color(0xFF7A5AF8),
     assetPath: 'assets/trucks/big truck.png',
@@ -252,25 +252,25 @@ String _vehiclePriceLabel({
     final tier = _intraCityTierForVehicle(pricing, label);
     final baseFare = tier?.baseFare ?? 0;
     if (baseFare > 0) {
-      return '₹${baseFare.toStringAsFixed(baseFare % 1 == 0 ? 0 : 2)}';
+      final toll = tier?.tollFixedAmount ?? 0;
+      if (toll > 0) {
+        return '${_formatRupees(baseFare)} + toll ${_formatRupees(toll)}';
+      }
+      return _formatRupees(baseFare);
     }
     return fallback;
   }
 
   final interCityRate = pricing.interCity.baseRatePerKm;
   if (interCityRate > 0) {
-    final rateLabel =
-        '₹${interCityRate.toStringAsFixed(interCityRate % 1 == 0 ? 0 : 2)}/km';
-    if (label.toLowerCase().contains('pool')) {
-      final fee = pricing.partTruck.platformFee;
-      if (fee > 0) {
-        return '$rateLabel + ${(fee * 100).toStringAsFixed(0)}% fee';
-      }
-    }
-    return rateLabel;
+    return '${_formatRupees(interCityRate)}/km';
   }
 
   return fallback;
+}
+
+String _formatRupees(double amount) {
+  return '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
 }
 
 ClientTruckPricingTier? _intraCityTierForVehicle(
@@ -1464,7 +1464,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _weightController;
   late final TextEditingController _quantityController;
   late final TextEditingController _amountController;
-  late final VehicleOption _vehicle;
+  late VehicleOption _vehicle;
 
   _BookingFlowStep _step = _BookingFlowStep.location;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
@@ -2002,7 +2002,7 @@ class _VehiclePreviewHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${vehicle.capacity} • ${_displayPriceLabel(vehicle.price)}',
+                  '${vehicle.capacity} . ${_displayPriceLabel(vehicle.price)}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF667085),
                   ),
