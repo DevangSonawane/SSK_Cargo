@@ -42,6 +42,22 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
   bool get _isEditing => widget.existingDriver != null;
 
+  String _normalizeDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
+  }
+
+  String _formatAadhaarForDisplay(String value) {
+    final digits = _normalizeDigits(value);
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if (i == 3 || i == 7) {
+        buffer.write(' ');
+      }
+    }
+    return buffer.toString().trimRight();
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -66,7 +82,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     _nameController.text = driver.name;
     _phoneController.text = driver.phone;
     _licenseController.text = driver.licenseNo;
-    _aadhaarController.text = driver.aadhaar;
+    _aadhaarController.text = _formatAadhaarForDisplay(driver.aadhaar);
     _licenseExpiryController.text = driver.licenseExpiry;
     _originalAvatarUrl = driver.avatar;
     _selectedStatus = _driverStatusToApiValue(driver.status);
@@ -161,7 +177,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final password = _passwordController.text;
     final phone = _phoneController.text.trim();
     final licenseNo = _licenseController.text.trim();
-    final aadhaar = _aadhaarController.text.replaceAll(' ', '').trim();
+    final aadhaar = _normalizeDigits(_aadhaarController.text);
     final licenseExpiry = _licenseExpiryController.text.trim();
     final manualTruckId = _truckIdController.text.trim();
     final avatar = _pickedAvatarDataUrl ?? _originalAvatarUrl ?? '';
@@ -222,6 +238,17 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
             throw StateError('Could not determine the created driver user id.');
           }
           createdUserId = userId;
+          recoveredDriver = await _findRecoveredDriver(
+            ref: ref,
+            name: name,
+            email: email,
+            phone: phone,
+            licenseNo: licenseNo,
+            aadhaar: aadhaar,
+          );
+          if (recoveredDriver != null) {
+            createdUserId = recoveredDriver.id;
+          }
         } on ApiException catch (error) {
           if (error.statusCode != 409) {
             rethrow;
@@ -230,6 +257,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
           recoveredDriver = await _findRecoveredDriver(
             ref: ref,
             name: name,
+            email: email,
             phone: phone,
             licenseNo: licenseNo,
             aadhaar: aadhaar,
@@ -239,38 +267,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
           }
 
           createdUserId = recoveredDriver.id;
-        }
-
-        if (recoveredDriver == null) {
-          try {
-            await apiClient.createDriverProfile(
-              accessToken: session.tokens.accessToken,
-              driver:
-                  {
-                    'user_id': createdUserId,
-                    'license_no': licenseNo,
-                    'license_expiry': licenseExpiry,
-                    'aadhaar': aadhaar,
-                    'truck_id': truckId,
-                    if (avatar.isNotEmpty) 'avatar': avatar,
-                  }..removeWhere(
-                    (key, value) =>
-                        value == null || value.toString().trim().isEmpty,
-                  ),
-            );
-          } on ApiException {
-            recoveredDriver = await _findRecoveredDriver(
-              ref: ref,
-              name: name,
-              phone: phone,
-              licenseNo: licenseNo,
-              aadhaar: aadhaar,
-            );
-            if (recoveredDriver == null) {
-              rethrow;
-            }
-            createdUserId = recoveredDriver.id;
-          }
         }
       }
 
@@ -282,6 +278,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       final updatedDriver = BrokerDriver(
         id: effectiveDriverId,
         name: name,
+        email: email,
         phone: phone.isEmpty ? '+91 90000 00000' : phone,
         licenseNo: licenseNo,
         licenseExpiry: licenseExpiry,
@@ -561,6 +558,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(12),
+                    _AadhaarSpacingFormatter(),
                   ],
                   decoration: _fieldDecoration(
                     labelText: 'Aadhaar number',
@@ -796,6 +794,30 @@ String _isoDate(DateTime date) {
   return date.toIso8601String().split('T').first;
 }
 
+class _AadhaarSpacingFormatter extends TextInputFormatter {
+  const _AadhaarSpacingFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(' ', '');
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if (i == 3 || i == 7) {
+        buffer.write(' ');
+      }
+    }
+    final text = buffer.toString().trimRight();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+
 String _driverStatusToApiValue(BrokerDriverStatus status) {
   switch (status) {
     case BrokerDriverStatus.onTrip:
@@ -878,6 +900,7 @@ String _extractUserId(Map<String, dynamic> response) {
 Future<BrokerDriver?> _findRecoveredDriver({
   required WidgetRef ref,
   required String name,
+  required String email,
   required String phone,
   required String licenseNo,
   required String aadhaar,
@@ -890,6 +913,7 @@ Future<BrokerDriver?> _findRecoveredDriver({
       if (_matchesRecoveredDriver(
         driver,
         name: name,
+        email: email,
         phone: phone,
         licenseNo: licenseNo,
         aadhaar: aadhaar,
@@ -907,22 +931,27 @@ Future<BrokerDriver?> _findRecoveredDriver({
 bool _matchesRecoveredDriver(
   BrokerDriver driver, {
   required String name,
+  required String email,
   required String phone,
   required String licenseNo,
   required String aadhaar,
 }) {
   final normalizedName = _normalizeLookupValue(name);
+  final normalizedEmail = _normalizeLookupValue(email);
   final normalizedPhone = _normalizeLookupValue(phone);
   final normalizedLicense = _normalizeLookupValue(licenseNo);
   final normalizedAadhaar = _normalizeLookupValue(aadhaar);
 
   final driverName = _normalizeLookupValue(driver.name);
+  final driverEmail = _normalizeLookupValue(driver.email);
   final driverPhone = _normalizeLookupValue(driver.phone);
   final driverLicense = _normalizeLookupValue(driver.licenseNo);
   final driverAadhaar = _normalizeLookupValue(driver.aadhaar);
 
   final strongMatch =
       normalizedLicense.isNotEmpty && normalizedLicense == driverLicense;
+  final emailMatch =
+      normalizedEmail.isNotEmpty && normalizedEmail == driverEmail;
   final aadhaarMatch =
       normalizedAadhaar.isNotEmpty && normalizedAadhaar == driverAadhaar;
   final phoneMatch =
@@ -930,6 +959,7 @@ bool _matchesRecoveredDriver(
   final nameMatch = normalizedName.isNotEmpty && normalizedName == driverName;
 
   return strongMatch ||
+      emailMatch ||
       (phoneMatch && (nameMatch || normalizedLicense.isEmpty)) ||
       (aadhaarMatch && (nameMatch || normalizedPhone.isEmpty));
 }

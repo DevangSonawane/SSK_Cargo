@@ -17,64 +17,61 @@ final brokerHistoryProvider = StateProvider<List<TrackingDemoShipment>>((ref) {
   return [...mockBrokerHistoryShipments];
 });
 
-final brokerJobRequestsProvider =
-    FutureProvider.autoDispose.family<List<BookingRequest>, BrokerJobRequestsQuery>((
-  ref,
-  query,
-) async {
-  final session = ref.watch(authSessionProvider).valueOrNull;
-  if (session == null) {
-    throw StateError('No active session');
-  }
+final brokerJobRequestsProvider = FutureProvider.autoDispose
+    .family<List<BookingRequest>, BrokerJobRequestsQuery>((ref, query) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
 
-  final response = await ref.watch(apiClientProvider).getJobRequests(
-        accessToken: session.tokens.accessToken,
-        page: query.page,
-        limit: query.limit,
-      );
+      final response = await ref
+          .watch(apiClientProvider)
+          .getJobRequests(
+            accessToken: session.tokens.accessToken,
+            page: query.page,
+            limit: query.limit,
+          );
 
-  return _BrokerJobRequestPage.fromJson(response).requests;
-});
+      return _BrokerJobRequestPage.fromJson(response).requests;
+    });
 
-final brokerTrucksProvider =
-    FutureProvider.autoDispose.family<List<BrokerVehicle>, BrokerTrucksQuery>((
-  ref,
-  query,
-) async {
-  final session = ref.watch(authSessionProvider).valueOrNull;
-  if (session == null) {
-    throw StateError('No active session');
-  }
+final brokerTrucksProvider = FutureProvider.autoDispose
+    .family<List<BrokerVehicle>, BrokerTrucksQuery>((ref, query) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
 
-  final response = await ref.watch(apiClientProvider).getTrucks(
-        accessToken: session.tokens.accessToken,
-        status: query.status,
-        page: query.page,
-        limit: query.limit,
-      );
+      final response = await ref
+          .watch(apiClientProvider)
+          .getTrucks(
+            accessToken: session.tokens.accessToken,
+            status: query.status,
+            page: query.page,
+            limit: query.limit,
+          );
 
-  return _BrokerTruckPage.fromJson(response).vehicles;
-});
+      return _BrokerTruckPage.fromJson(response).vehicles;
+    });
 
-final brokerDriversApiProvider =
-    FutureProvider.autoDispose.family<List<BrokerDriver>, BrokerDriversQuery>((
-  ref,
-  query,
-) async {
-  final session = ref.watch(authSessionProvider).valueOrNull;
-  if (session == null) {
-    throw StateError('No active session');
-  }
+final brokerDriversApiProvider = FutureProvider.autoDispose
+    .family<List<BrokerDriver>, BrokerDriversQuery>((ref, query) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
 
-  final response = await ref.watch(apiClientProvider).getDrivers(
-        accessToken: session.tokens.accessToken,
-        status: query.status,
-        page: query.page,
-        limit: query.limit,
-      );
+      final response = await ref
+          .watch(apiClientProvider)
+          .getDrivers(
+            accessToken: session.tokens.accessToken,
+            status: query.status,
+            page: query.page,
+            limit: query.limit,
+          );
 
-  return _BrokerDriverPage.fromJson(response).drivers;
-});
+      return _BrokerDriverPage.fromJson(response).drivers;
+    });
 
 final brokerVehiclesProvider = StateProvider<List<BrokerVehicle>>((ref) {
   return [...mockBrokerVehicles];
@@ -123,9 +120,7 @@ class BookingRequest {
 }
 
 class _BrokerJobRequestPage {
-  const _BrokerJobRequestPage({
-    required this.requests,
-  });
+  const _BrokerJobRequestPage({required this.requests});
 
   factory _BrokerJobRequestPage.fromJson(Map<String, dynamic> json) {
     final data = _asMap(json['data']);
@@ -148,11 +143,28 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   final load = _asMap(json['load']);
   final route = _asMap(json['route']);
   final cargo = _asMap(json['cargo']);
-  final status = _readString(json, const ['status', 'job_status', 'request_status', 'booking_status']).toLowerCase();
-  final createdAt = _readString(json, const ['created_at', 'createdAt', 'requested_at', 'requestedAt']);
-  final expiresIn = int.tryParse(_readString(json, const ['expires_in', 'expiresIn'])) ?? 0;
+  final status = _readString(json, const [
+    'status',
+    'job_status',
+    'request_status',
+    'booking_status',
+  ]).toLowerCase();
+  final createdAt = _readString(json, const [
+    'created_at',
+    'createdAt',
+    'requested_at',
+    'requestedAt',
+  ]);
+  final expiresIn =
+      int.tryParse(_readString(json, const ['expires_in', 'expiresIn'])) ?? 0;
   final productName = _firstNonEmpty([
-    _readString(json, const ['product_name', 'cargo_name', 'title', 'shipment_name', 'package_name']),
+    _readString(json, const [
+      'product_name',
+      'cargo_name',
+      'title',
+      'shipment_name',
+      'package_name',
+    ]),
     _readString(cargo, const ['name', 'title', 'description']),
     'Booking request',
   ]);
@@ -162,7 +174,12 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     'Pickup location not provided',
   ]);
   final toLocation = _firstNonEmpty([
-    _readString(json, const ['to', 'dropoff_location', 'destination', 'target']),
+    _readString(json, const [
+      'to',
+      'dropoff_location',
+      'destination',
+      'target',
+    ]),
     _readString(route, const ['to', 'dropoff', 'destination', 'target']),
     'Drop-off location not provided',
   ]);
@@ -172,13 +189,33 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     'N/A',
   ]);
   final vehicleType = _firstNonEmpty([
-    _readString(json, const ['vehicle_type', 'truck_type', 'required_vehicle_type']),
-    _readString(load, const ['vehicle_type', 'truck_type', 'required_vehicle_type']),
+    _readString(json, const [
+      'vehicle_type',
+      'truck_type',
+      'required_vehicle_type',
+    ]),
+    _readString(load, const [
+      'vehicle_type',
+      'truck_type',
+      'required_vehicle_type',
+    ]),
     'Truck',
   ]);
   final value = _firstNonEmpty([
-    _readString(json, const ['value', 'price', 'amount', 'quoted_price', 'fare']),
-    _readString(load, const ['value', 'price', 'amount', 'quoted_price', 'fare']),
+    _readString(json, const [
+      'value',
+      'price',
+      'amount',
+      'quoted_price',
+      'fare',
+    ]),
+    _readString(load, const [
+      'value',
+      'price',
+      'amount',
+      'quoted_price',
+      'fare',
+    ]),
     '₹0',
   ]);
   final clientName = _firstNonEmpty([
@@ -199,7 +236,11 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     weight: weight,
     vehicleType: vehicleType,
     value: value,
-    distance: _readString(json, const ['distance', 'trip_distance', 'route_distance']),
+    distance: _readString(json, const [
+      'distance',
+      'trip_distance',
+      'route_distance',
+    ]),
     etaText: _firstNonEmpty([
       _readString(json, const ['eta_text', 'eta', 'eta_minutes']),
       _formatRelativeTime(createdAt),
@@ -242,9 +283,7 @@ class BrokerVehicle {
 }
 
 class _BrokerTruckPage {
-  const _BrokerTruckPage({
-    required this.vehicles,
-  });
+  const _BrokerTruckPage({required this.vehicles});
 
   factory _BrokerTruckPage.fromJson(Map<String, dynamic> json) {
     final data = _asMap(json['data']);
@@ -265,13 +304,24 @@ BrokerVehicle _brokerVehicleFromJson(Map<String, dynamic> json) {
   final category = _readString(json, const ['category', 'truck_category']);
   final label = type.isNotEmpty ? type : _labelFromCategory(category);
   final assetPath = _assetPathForLabel(label);
-  final registration = _readString(json, const ['registration', 'plate_number', 'plate', 'registration_number']);
+  final registration = _readString(json, const [
+    'registration',
+    'plate_number',
+    'plate',
+    'registration_number',
+  ]);
   final capacity = _readString(json, const ['capacity', 'load_capacity']);
-  final assignedDriver = _readNestedName(json, const ['driver', 'assigned_driver']);
+  final assignedDriver = _readNestedName(json, const [
+    'driver',
+    'assigned_driver',
+  ]);
   final driverId = _readString(json, const ['driver_id', 'driverId']);
   final make = _readString(json, const ['make']);
   final year = _readString(json, const ['year']);
-  final insuranceExpiry = _readString(json, const ['insurance_expiry', 'insuranceExpiry']);
+  final insuranceExpiry = _readString(json, const [
+    'insurance_expiry',
+    'insuranceExpiry',
+  ]);
   final status = _vehicleStatusFromApi(_readString(json, const ['status']));
 
   return BrokerVehicle(
@@ -311,7 +361,8 @@ String _assetPathForLabel(String label) {
   final text = label.toLowerCase();
   if (text.contains('small')) return 'assets/trucks/small truck.png';
   if (text.contains('medium')) return 'assets/trucks/medium truck.png';
-  if (text.contains('big') || text.contains('large')) return 'assets/trucks/big truck.png';
+  if (text.contains('big') || text.contains('large'))
+    return 'assets/trucks/big truck.png';
   return 'assets/trucks/truck pooling.png';
 }
 
@@ -344,7 +395,10 @@ BrokerDriverStatus _driverStatusFromApi(String status) {
   }
 }
 
-List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root) {
+List<dynamic> _extractItems(
+  Map<String, dynamic> data,
+  Map<String, dynamic> root,
+) {
   for (final candidate in [
     data['trucks'],
     data['items'],
@@ -361,7 +415,10 @@ List<dynamic> _extractItems(Map<String, dynamic> data, Map<String, dynamic> root
     }
   }
 
-  if (data.isNotEmpty && data.values.every((value) => value is Map<String, dynamic> || value is List)) {
+  if (data.isNotEmpty &&
+      data.values.every(
+        (value) => value is Map<String, dynamic> || value is List,
+      )) {
     return const <dynamic>[];
   }
 
@@ -427,7 +484,12 @@ String _readNestedName(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
     if (value is Map<String, dynamic>) {
-      final nested = _readString(value, const ['name', 'full_name', 'display_name', 'title']);
+      final nested = _readString(value, const [
+        'name',
+        'full_name',
+        'display_name',
+        'title',
+      ]);
       if (nested.isNotEmpty) {
         return nested;
       }
@@ -445,6 +507,7 @@ class BrokerDriver {
   const BrokerDriver({
     required this.id,
     required this.name,
+    required this.email,
     required this.phone,
     required this.licenseNo,
     required this.licenseExpiry,
@@ -460,6 +523,7 @@ class BrokerDriver {
 
   final String id;
   final String name;
+  final String email;
   final String phone;
   final String licenseNo;
   final String licenseExpiry;
@@ -474,9 +538,7 @@ class BrokerDriver {
 }
 
 class _BrokerDriverPage {
-  const _BrokerDriverPage({
-    required this.drivers,
-  });
+  const _BrokerDriverPage({required this.drivers});
 
   factory _BrokerDriverPage.fromJson(Map<String, dynamic> json) {
     final data = _asMap(json['data']);
@@ -497,24 +559,62 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
   final user = _asMap(json['user']);
   final truck = _asMap(json['truck']);
   final name = _readString(json, const ['name', 'full_name', 'display_name']);
-  final userName = _readString(user, const ['name', 'full_name', 'display_name']);
+  final userName = _readString(user, const [
+    'name',
+    'full_name',
+    'display_name',
+  ]);
+  final email = _readString(json, const ['email', 'email_address']);
+  final userEmail = _readString(user, const ['email', 'email_address']);
   final phone = _readString(json, const ['phone', 'mobile', 'contact_number']);
-  final userPhone = _readString(user, const ['phone', 'mobile', 'contact_number']);
-  final licenseNo = _readString(json, const ['license_no', 'license_number', 'driver_license_no']);
-  final licenseExpiry = _readString(json, const ['license_expiry', 'licenseExpiry']);
+  final userPhone = _readString(user, const [
+    'phone',
+    'mobile',
+    'contact_number',
+  ]);
+  final licenseNo = _readString(json, const [
+    'license_no',
+    'license_number',
+    'driver_license_no',
+  ]);
+  final licenseExpiry = _readString(json, const [
+    'license_expiry',
+    'licenseExpiry',
+  ]);
   final aadhaar = _readString(json, const ['aadhaar', 'aadhar']);
   final avatar = _readString(json, const ['avatar', 'profile_image']);
-  final vehicleType = _readString(json, const ['vehicle_type', 'truck_type', 'assigned_vehicle_type']);
-  final assignedVehicle = _readString(json, const ['assigned_vehicle', 'truck_number', 'truck_registration']);
-  final truckPlate = _readString(truck, const ['registration', 'plate_number', 'plate', 'registration_number']);
-  final currentLocation = _readString(json, const ['current_location', 'location', 'last_location']);
+  final vehicleType = _readString(json, const [
+    'vehicle_type',
+    'truck_type',
+    'assigned_vehicle_type',
+  ]);
+  final assignedVehicle = _readString(json, const [
+    'assigned_vehicle',
+    'truck_number',
+    'truck_registration',
+  ]);
+  final truckPlate = _readString(truck, const [
+    'registration',
+    'plate_number',
+    'plate',
+    'registration_number',
+  ]);
+  final currentLocation = _readString(json, const [
+    'current_location',
+    'location',
+    'last_location',
+  ]);
   final onTripSince = _readString(json, const ['on_trip_since', 'trip_since']);
-  final currentBookingRef = _readString(json, const ['current_booking_ref', 'booking_ref']);
+  final currentBookingRef = _readString(json, const [
+    'current_booking_ref',
+    'booking_ref',
+  ]);
   final status = _driverStatusFromApi(_readString(json, const ['status']));
 
   return BrokerDriver(
     id: _readString(json, const ['id', 'driver_id', 'user_id', 'uuid']),
     name: name.isNotEmpty ? name : userName,
+    email: email.isNotEmpty ? email : userEmail,
     phone: phone.isNotEmpty ? phone : userPhone,
     licenseNo: licenseNo,
     licenseExpiry: licenseExpiry,
@@ -611,6 +711,7 @@ const mockBrokerDrivers = <BrokerDriver>[
   BrokerDriver(
     id: 'drv-1',
     name: 'Vikram Patil',
+    email: '',
     phone: '+91 98220 11234',
     licenseNo: 'DL-1823-PL',
     licenseExpiry: '',
@@ -626,6 +727,7 @@ const mockBrokerDrivers = <BrokerDriver>[
   BrokerDriver(
     id: 'drv-2',
     name: 'Rahul Jadhav',
+    email: '',
     phone: '+91 98710 32455',
     licenseNo: 'DL-9172-RJ',
     licenseExpiry: '',
@@ -641,6 +743,7 @@ const mockBrokerDrivers = <BrokerDriver>[
   BrokerDriver(
     id: 'drv-3',
     name: 'Sahil Verma',
+    email: '',
     phone: '+91 99203 88091',
     licenseNo: 'DL-4471-SK',
     licenseExpiry: '',
@@ -799,14 +902,16 @@ TrackingDemoShipment brokerRequestToShipment(BookingRequest request) {
     'assigned' => 'Assigned',
     'confirmed' => 'Accepted',
     'accepted' => 'Accepted',
-    _ when status == 'cancelled' || status == 'declined' || status == 'rejected' || status == 'expired' => 'Cancelled',
+    _
+        when status == 'cancelled' ||
+            status == 'declined' ||
+            status == 'rejected' ||
+            status == 'expired' =>
+      'Cancelled',
     _ => request.status.isEmpty ? 'Pending' : request.status,
   };
 
-  return bookingRequestToShipment(
-    request,
-    status: shipmentStatus,
-  );
+  return bookingRequestToShipment(request, status: shipmentStatus);
 }
 
 bool isPendingBookingRequest(BookingRequest request) {
@@ -819,7 +924,10 @@ bool isCompletedBookingRequest(BookingRequest request) {
 
 bool isCancelledBookingRequest(BookingRequest request) {
   final status = _normalizeRequestStatus(request.status);
-  return status == 'cancelled' || status == 'declined' || status == 'rejected' || status == 'expired';
+  return status == 'cancelled' ||
+      status == 'declined' ||
+      status == 'rejected' ||
+      status == 'expired';
 }
 
 bool isAcceptedBookingRequest(BookingRequest request) {
@@ -849,7 +957,9 @@ class BrokerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = highlighted ? const Color(0xFF1F88C9) : Colors.white;
+    final backgroundColor = highlighted
+        ? const Color(0xFF1F88C9)
+        : Colors.white;
     final titleColor = highlighted ? Colors.white : const Color(0xFF101828);
     final iconAccent = highlighted ? Colors.white : const Color(0xFF1F88C9);
     return Container(
@@ -884,20 +994,20 @@ class BrokerHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: titleColor,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: titleColor,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: highlighted
-                              ? Colors.white.withValues(alpha: 0.84)
-                              : const Color(0xFF667085),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: highlighted
+                          ? Colors.white.withValues(alpha: 0.84)
+                          : const Color(0xFF667085),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ],
@@ -920,7 +1030,9 @@ class BrokerHeader extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: highlighted ? Colors.white.withValues(alpha: 0.16) : const Color(0xFFF1F4F8),
+                color: highlighted
+                    ? Colors.white.withValues(alpha: 0.16)
+                    : const Color(0xFFF1F4F8),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: highlighted
@@ -930,10 +1042,7 @@ class BrokerHeader extends StatelessWidget {
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              child: Image.asset(
-                'assets/user.png',
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset('assets/user.png', fit: BoxFit.cover),
             ),
           ),
         ],
@@ -1027,14 +1136,8 @@ class BrokerBottomBar extends StatelessWidget {
         icon: Icons.local_shipping_rounded,
         label: 'Vehicles',
       ),
-      const _BrokerNavItem(
-        icon: Icons.gps_fixed_rounded,
-        label: 'Tracking',
-      ),
-      const _BrokerNavItem(
-        icon: Icons.history_rounded,
-        label: 'History',
-      ),
+      const _BrokerNavItem(icon: Icons.gps_fixed_rounded, label: 'Tracking'),
+      const _BrokerNavItem(icon: Icons.history_rounded, label: 'History'),
     ];
 
     return SafeArea(
@@ -1126,7 +1229,9 @@ class _BrokerBottomBarItem extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFE23A4B).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFFE23A4B,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 6,
                               offset: const Offset(0, 3),
                             ),
@@ -1142,10 +1247,10 @@ class _BrokerBottomBarItem extends StatelessWidget {
               item.label,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: selected ? selectedColor : const Color(0xFF667085),
-                  ),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: selected ? selectedColor : const Color(0xFF667085),
+              ),
             ),
           ],
         ),
@@ -1239,27 +1344,30 @@ class BrokerRequestCard extends StatelessWidget {
                     Text(
                       'Load ID: #${request.id.toUpperCase()}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF667085),
-                            fontSize: 11,
-                            letterSpacing: 0.2,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: const Color(0xFF667085),
+                        fontSize: 11,
+                        letterSpacing: 0.2,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       request.productName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF1A365D),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        color: const Color(0xFF1A365D),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFD6E3FF),
                   borderRadius: BorderRadius.circular(12),
@@ -1267,10 +1375,10 @@ class BrokerRequestCard extends StatelessWidget {
                 child: Text(
                   request.value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF002045),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: const Color(0xFF002045),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -1278,10 +1386,7 @@ class BrokerRequestCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              const SizedBox(
-                width: 28,
-                child: _RouteLine(),
-              ),
+              const SizedBox(width: 28, child: _RouteLine()),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1316,7 +1421,11 @@ class BrokerRequestCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.inventory_2_rounded, size: 18, color: Color(0xFF667085)),
+                const Icon(
+                  Icons.inventory_2_rounded,
+                  size: 18,
+                  color: Color(0xFF667085),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1324,9 +1433,9 @@ class BrokerRequestCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF0B1C30),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: const Color(0xFF0B1C30),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -1467,28 +1576,28 @@ class _LoadPoint extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: const Color(0xFF667085),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 place,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF0B1C30),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: const Color(0xFF0B1C30),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (timeText.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Text(
                   timeText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontSize: 11,
-                      ),
+                    color: const Color(0xFF667085),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ],
@@ -1500,11 +1609,7 @@ class _LoadPoint extends StatelessWidget {
 }
 
 class VehicleCard extends StatelessWidget {
-  const VehicleCard({
-    super.key,
-    required this.vehicle,
-    required this.onTap,
-  });
+  const VehicleCard({super.key, required this.vehicle, required this.onTap});
 
   final BrokerVehicle vehicle;
   final VoidCallback onTap;
@@ -1564,7 +1669,8 @@ class VehicleCard extends StatelessWidget {
                               vehicle.plateNumber,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
                                     fontSize: 18,
                                     color: const Color(0xFF1A365D),
                                     fontWeight: FontWeight.w800,
@@ -1575,7 +1681,8 @@ class VehicleCard extends StatelessWidget {
                               '${vehicle.label} • ${vehicle.assignedDriverName}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     fontSize: 13,
                                     color: const Color(0xFF667085),
                                     fontWeight: FontWeight.w500,
@@ -1585,7 +1692,7 @@ class VehicleCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 _VehicleStatusBadge(
@@ -1596,10 +1703,7 @@ class VehicleCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            Container(
-              height: 1,
-              color: const Color(0xFFE8EDF2),
-            ),
+            Container(height: 1, color: const Color(0xFFE8EDF2)),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -1680,11 +1784,11 @@ class _VehicleStatBlock extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF667085),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              ),
+            color: const Color(0xFF667085),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
         ),
         const SizedBox(height: 3),
         Text(
@@ -1692,10 +1796,10 @@ class _VehicleStatBlock extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: valueColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
+            color: valueColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -1824,7 +1928,10 @@ class DriverListTile extends StatelessWidget {
                         style: FilledButton.styleFrom(
                           backgroundColor: visuals.ctaBackgroundColor,
                           foregroundColor: visuals.ctaForegroundColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
                           minimumSize: const Size(0, 38),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1861,13 +1968,16 @@ class DriverListTile extends StatelessWidget {
                           children: [
                             Text(
                               driver.name,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
                                     fontSize: 15,
                                     color: const Color(0xFF101828),
                                     fontWeight: FontWeight.w800,
                                   ),
                             ),
-                            _DriverCardMetaChip(label: 'ID: ${driver.id.toUpperCase()}'),
+                            _DriverCardMetaChip(
+                              label: 'ID: ${driver.id.toUpperCase()}',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -1884,7 +1994,8 @@ class DriverListTile extends StatelessWidget {
                                 meta.statusLine,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
                                       fontSize: 12,
                                       color: visuals.statusTextColor,
                                       fontWeight: FontWeight.w700,
@@ -1907,7 +2018,8 @@ class DriverListTile extends StatelessWidget {
                                 driver.currentLocation,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
                                       fontSize: 11,
                                       color: const Color(0xFF667085),
                                       fontWeight: FontWeight.w500,
@@ -1938,12 +2050,13 @@ class DriverListTile extends StatelessWidget {
                 children: [
                   leftColumn,
                   const SizedBox(height: 14),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: rightColumn,
+                  const Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Color(0xFFE8EDF2),
                   ),
+                  const SizedBox(height: 12),
+                  Align(alignment: Alignment.centerLeft, child: rightColumn),
                 ],
               );
             },
@@ -1984,10 +2097,10 @@ class _DriverAvatar extends StatelessWidget {
             child: Text(
               initials,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 13,
-                    color: textColor,
-                    fontWeight: FontWeight.w800,
-                  ),
+                fontSize: 13,
+                color: textColor,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           Positioned(
@@ -2062,10 +2175,10 @@ class _DriverCardMetaChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontSize: 10,
-              color: const Color(0xFF344054),
-              fontWeight: FontWeight.w700,
-            ),
+          fontSize: 10,
+          color: const Color(0xFF344054),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -2159,7 +2272,9 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
         statusLine: driver.currentBookingRef.isEmpty
             ? 'Active on trip'
             : 'Active on Booking ${driver.currentBookingRef}',
-        lastSeen: driver.onTripSince.isEmpty ? 'Just now' : '${driver.onTripSince} ago',
+        lastSeen: driver.onTripSince.isEmpty
+            ? 'Just now'
+            : '${driver.onTripSince} ago',
         ctaLabel: 'View Map',
         ctaIcon: Icons.map_outlined,
         statusIcon: Icons.check_circle,
@@ -2219,10 +2334,10 @@ class BrokerProfileActionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF101828),
-                  ),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
             ),
           ],
         ),
@@ -2270,20 +2385,28 @@ class BrokerMenuTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: completed ? const Color(0xFF2FA56E) : iconColor, size: 22),
+            Icon(
+              icon,
+              color: completed ? const Color(0xFF2FA56E) : iconColor,
+              size: 22,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: completed ? const Color(0xFF1F7A52) : titleColor,
-                    ),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: completed ? const Color(0xFF1F7A52) : titleColor,
+                ),
               ),
             ),
             if (completed) ...[
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF2FA56E), size: 18),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF2FA56E),
+                size: 18,
+              ),
               const SizedBox(width: 8),
             ],
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
@@ -2295,10 +2418,7 @@ class BrokerMenuTile extends StatelessWidget {
 }
 
 class SheetContainer extends StatelessWidget {
-  const SheetContainer({
-    super.key,
-    required this.child,
-  });
+  const SheetContainer({super.key, required this.child});
 
   final Widget child;
 
@@ -2340,10 +2460,14 @@ class OptionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? selectedColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+          color: selected
+              ? selectedColor.withValues(alpha: 0.08)
+              : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? selectedColor.withValues(alpha: 0.28) : const Color(0xFFE5E7EB),
+            color: selected
+                ? selectedColor.withValues(alpha: 0.28)
+                : const Color(0xFFE5E7EB),
           ),
         ),
         child: Row(
@@ -2352,10 +2476,15 @@ class OptionTile extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: selected ? selectedColor.withValues(alpha: 0.12) : Colors.white,
+                color: selected
+                    ? selectedColor.withValues(alpha: 0.12)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: selected ? selectedColor : const Color(0xFF94A3B8)),
+              child: Icon(
+                icon,
+                color: selected ? selectedColor : const Color(0xFF94A3B8),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -2365,17 +2494,17 @@ class OptionTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF101828),
-                        ),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF101828),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
+                      color: const Color(0xFF667085),
+                    ),
                   ),
                 ],
               ),
@@ -2409,10 +2538,14 @@ class VehicleSelectionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? vehicle.accentColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+          color: selected
+              ? vehicle.accentColor.withValues(alpha: 0.08)
+              : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? vehicle.accentColor.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
+            color: selected
+                ? vehicle.accentColor.withValues(alpha: 0.24)
+                : const Color(0xFFE5E7EB),
           ),
         ),
         child: Column(
@@ -2427,12 +2560,20 @@ class VehicleSelectionTile extends StatelessWidget {
                     color: accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.local_shipping_rounded, color: accent, size: 20),
+                  child: Icon(
+                    Icons.local_shipping_rounded,
+                    color: accent,
+                    size: 20,
+                  ),
                 ),
                 const Spacer(),
                 Icon(
-                  selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                  color: selected ? vehicle.accentColor : const Color(0xFFCBD5E1),
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
+                  color: selected
+                      ? vehicle.accentColor
+                      : const Color(0xFFCBD5E1),
                 ),
               ],
             ),
@@ -2440,17 +2581,17 @@ class VehicleSelectionTile extends StatelessWidget {
             Text(
               vehicle.label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               vehicle.capacity,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
             ),
           ],
         ),
@@ -2551,11 +2692,15 @@ String _initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return '${parts.first.substring(0, 1)}${parts[1].substring(0, 1)}'.toUpperCase();
+  return '${parts.first.substring(0, 1)}${parts[1].substring(0, 1)}'
+      .toUpperCase();
 }
 
 String maskPersonName(String name) {
-  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty);
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty);
   return parts.map(_maskWord).join(' ');
 }
 
