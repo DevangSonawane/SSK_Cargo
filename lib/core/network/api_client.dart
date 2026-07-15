@@ -343,6 +343,25 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> reportTripIssue({
+    required String accessToken,
+    required String tripId,
+    required String reason,
+    required String notes,
+  }) async {
+    developer.log(
+      'POST /api/trips/$tripId/report-issue reason=$reason notesLength=${notes.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/trips/$tripId/report-issue',
+        data: {'reason': reason, 'notes': notes},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     required String accessToken,
     required String name,

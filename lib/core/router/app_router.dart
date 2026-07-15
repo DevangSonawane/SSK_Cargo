@@ -76,9 +76,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             const NoTransitionPage(child: DriverOrderAcceptedScreen()),
       ),
       GoRoute(
-        path: '/driver/delivery-details',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverDeliveryDetailsScreen()),
+        path: '/driver/delivery-details/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          return NoTransitionPage(
+            child: DriverDeliveryDetailsScreen(tripId: tripId),
+          );
+        },
       ),
       GoRoute(
         path: '/driver/all-earnings',

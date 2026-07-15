@@ -83,7 +83,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   if (value >= 0.98) {
                     Future.delayed(const Duration(milliseconds: 450), () {
                       if (!context.mounted) return;
-                      context.push('/driver/delivery-details');
+                      context.push(
+                        '/driver/delivery-details/${_deliveries.first.tripId}',
+                      );
                       setState(() => _acceptSlide = 0);
                     });
                   }
@@ -143,6 +145,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 const _deliveries = <_DriverDelivery>[
   _DriverDelivery(
     deliveryId: 'DEL-2048',
+    tripId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
     amount: '₹103.5',
     dropLocation: 'Sector 137',
     stateAndPincode: 'Noida, Uttar Pradesh 201305',
@@ -156,6 +159,7 @@ const _deliveries = <_DriverDelivery>[
 class _DriverDelivery {
   const _DriverDelivery({
     required this.deliveryId,
+    required this.tripId,
     required this.amount,
     required this.dropLocation,
     required this.stateAndPincode,
@@ -166,6 +170,7 @@ class _DriverDelivery {
   });
 
   final String deliveryId;
+  final String tripId;
   final String amount;
   final String dropLocation;
   final String stateAndPincode;
