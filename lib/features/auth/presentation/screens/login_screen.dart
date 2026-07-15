@@ -626,6 +626,46 @@ class _AuthLoginScreenState extends ConsumerState<_AuthLoginScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 18),
+                                      if (widget.role == AppRole.driver)
+                                        Center(
+                                          child: Wrap(
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            spacing: 6,
+                                            children: [
+                                              const Text(
+                                                'New here?',
+                                                style: TextStyle(
+                                                  color: Color(0xFF1B2A3A),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => context.go(
+                                                  '/driver/signup',
+                                                ),
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  minimumSize: Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  foregroundColor: const Color(
+                                                    0xFF2FA56E,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Register',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      if (widget.role == AppRole.driver)
+                                        const SizedBox(height: 10),
                                       if (widget.role != AppRole.driver)
                                         Center(
                                           child: Wrap(

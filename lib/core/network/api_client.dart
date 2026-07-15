@@ -79,10 +79,9 @@ class SskApiClient {
         data: {
           'name': name,
           'email': email,
-          'phone': phone?.isEmpty == true ? null : phone,
           'password': password,
           'role': role,
-        }..removeWhere((key, value) => value == null),
+        },
       ),
     );
   }
