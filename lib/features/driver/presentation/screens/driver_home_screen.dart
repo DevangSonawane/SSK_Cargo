@@ -84,7 +84,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     Future.delayed(const Duration(milliseconds: 450), () {
                       if (!context.mounted) return;
                       context.push(
-                        '/driver/delivery-details/${_deliveries.first.tripId}',
+                        '/driver/order-accepted',
+                        extra: _deliveries.first.tripId,
                       );
                       setState(() => _acceptSlide = 0);
                     });

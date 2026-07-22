@@ -21,6 +21,9 @@ import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_all_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_details_screen.dart';
+import '../../features/driver/presentation/screens/driver_payment_screen.dart';
+import '../../features/driver/presentation/screens/driver_delivery_photo_upload_screen.dart';
+import '../../features/driver/presentation/screens/driver_thank_you_screen.dart';
 import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
@@ -72,8 +75,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/driver/order-accepted',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverOrderAcceptedScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: DriverOrderAcceptedScreen(tripId: state.extra as String?),
+        ),
       ),
       GoRoute(
         path: '/driver/delivery-details/:tripId',
@@ -82,6 +86,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return NoTransitionPage(
             child: DriverDeliveryDetailsScreen(tripId: tripId),
           );
+        },
+      ),
+      GoRoute(
+        path: '/driver/delivery-proof/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          final paymentMode = state.uri.queryParameters['payment'];
+          final requiresPayment = paymentMode != 'paid';
+          return NoTransitionPage(
+            child: DriverDeliveryPhotoUploadScreen(
+              tripId: tripId,
+              requiresPayment: requiresPayment,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/driver/payment/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          return NoTransitionPage(child: DriverPaymentScreen(tripId: tripId));
+        },
+      ),
+      GoRoute(
+        path: '/driver/thank-you/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          return NoTransitionPage(child: DriverThankYouScreen(tripId: tripId));
         },
       ),
       GoRoute(

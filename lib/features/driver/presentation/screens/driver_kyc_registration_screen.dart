@@ -961,9 +961,6 @@ class _DriverKycRegistrationScreenState
 
   Widget _bottomBar(BuildContext context) {
     if (_step == _KycStep.submitted) {
-      final isApproved =
-          _statusLabel != null &&
-          _isApprovedStatus(_statusLabel!.toLowerCase());
       return SafeArea(
         top: false,
         child: Container(
@@ -1053,119 +1050,6 @@ class _DriverKycRegistrationScreenState
           ),
         ),
       ),
-    );
-  }
-
-  void _showAllDocuments() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.folder_copy_rounded,
-                          color: Color(0xFF1F88C9),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'My documents',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    for (var i = 0; i < _kycDocuments.length; i++) ...[
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FB),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.insert_drive_file_rounded,
-                              color: Color(0xFF1F88C9),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _kycDocuments[i].title,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF101828),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _attachments[_kycDocuments[i].key]
-                                            ?.fileName ??
-                                        'Uploaded file',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: const Color(0xFF667085),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (i != _kycDocuments.length - 1)
-                        const SizedBox(height: 10),
-                    ],
-                    const SizedBox(height: 14),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'Close',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

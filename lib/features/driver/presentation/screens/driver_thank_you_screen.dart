@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class DriverOrderAcceptedScreen extends StatelessWidget {
-  const DriverOrderAcceptedScreen({super.key, this.tripId});
+class DriverThankYouScreen extends StatelessWidget {
+  const DriverThankYouScreen({super.key, required this.tripId});
 
-  final String? tripId;
+  final String tripId;
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTripId = (tripId != null && tripId!.isNotEmpty)
-        ? tripId!
-        : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F7FB),
         elevation: 0,
-        title: const Text('Order accepted'),
+        title: const Text('Complete'),
       ),
       body: SafeArea(
         child: Center(
@@ -43,21 +39,21 @@ class DriverOrderAcceptedScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 84,
+                    height: 84,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFFEAF7EF),
+                      borderRadius: BorderRadius.circular(28),
                     ),
                     child: const Icon(
                       Icons.check_circle_rounded,
+                      size: 48,
                       color: Color(0xFF2FA56E),
-                      size: 42,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Text(
-                    'Delivery accepted',
+                    'Thank you',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF101828),
@@ -65,7 +61,7 @@ class DriverOrderAcceptedScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your next stop is ready. Start navigation when you are set.',
+                    'Trip $tripId has been completed successfully.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF667085),
@@ -82,24 +78,14 @@ class DriverOrderAcceptedScreen extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFE8EDF2)),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Trip ID',
+                          'Payment and delivery marked complete.',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: const Color(0xFF98A2B3),
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          effectiveTripId,
-                          style: Theme.of(context).textTheme.titleMedium
+                          style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: const Color(0xFF101828),
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ),
                         ),
                       ],
@@ -109,20 +95,16 @@ class DriverOrderAcceptedScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     height: 52,
-                    child: OutlinedButton(
-                      onPressed: () => context.push(
-                        '/driver/delivery-details/$effectiveTripId',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF101828),
-                        side: const BorderSide(color: Color(0xFFD0D5DD)),
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/driver/active'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F88C9),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: const Text(
-                        'Go to trip',
+                        'Back to trips',
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,10 +7,36 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-class DriverDeliveryDetailsScreen extends StatelessWidget {
+class DriverDeliveryDetailsScreen extends StatefulWidget {
   const DriverDeliveryDetailsScreen({super.key, required this.tripId});
 
   final String tripId;
+
+  @override
+  State<DriverDeliveryDetailsScreen> createState() =>
+      _DriverDeliveryDetailsScreenState();
+}
+
+class _DriverDeliveryDetailsScreenState
+    extends State<DriverDeliveryDetailsScreen> {
+  double _arrivalSlide = 0;
+  bool _showArrivalSwipe = false;
+  Timer? _arrivalTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _arrivalTimer = Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _showArrivalSwipe = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _arrivalTimer?.cancel();
+    super.dispose();
+  }
 
   void _showEmergencyAssistance(BuildContext context) {
     showModalBottomSheet<void>(
@@ -127,7 +155,7 @@ class DriverDeliveryDetailsScreen extends StatelessWidget {
                     subtitle: 'Notify our support team immediately',
                     onTap: () {
                       Navigator.of(sheetContext).pop();
-                      _showIncidentReport(context, tripId);
+                      _showIncidentReport(context, widget.tripId);
                     },
                   ),
                 ],
@@ -298,117 +326,345 @@ class DriverDeliveryDetailsScreen extends StatelessWidget {
                         left: 16,
                         right: 16,
                         bottom: 16,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 8),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: _showArrivalSwipe
+                              ? Container(
+                                  key: const ValueKey('arrival-swipe'),
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      Row(
                                         children: [
-                                          Text(
-                                            'Current status',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: const Color(
-                                                    0xFF98A2B3,
-                                                  ),
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Current status',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: const Color(
+                                                        0xFF98A2B3,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Arrived',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      color: const Color(
+                                                        0xFF101828,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                    ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'On route',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleLarge
-                                                ?.copyWith(
-                                                  color: const Color(
-                                                    0xFF101828,
-                                                  ),
-                                                  fontWeight: FontWeight.w900,
-                                                ),
+                                          const Spacer(),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEAF7EF),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: const Text(
+                                              'Ready',
+                                              style: TextStyle(
+                                                color: Color(0xFF2FA56E),
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
-                                      const Spacer(),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEAF7EF),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Active',
-                                          style: TextStyle(
-                                            color: Color(0xFF2FA56E),
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                                      const SizedBox(height: 14),
+                                      const Divider(
+                                        height: 1,
+                                        thickness: 1,
+                                        color: Color(0xFFE8EDF2),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        'Swipe to continue',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              color: const Color(0xFF101828),
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'The on-route card is hidden now. Swipe to open photo upload.',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: const Color(0xFF667085),
+                                              height: 1.4,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 92,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            SliderTheme(
+                                              data: SliderTheme.of(context).copyWith(
+                                                trackHeight: 52,
+                                                trackShape:
+                                                    const RoundedRectSliderTrackShape(),
+                                                thumbShape:
+                                                    const _ArrivalThumbShape(),
+                                                overlayShape:
+                                                    const RoundSliderOverlayShape(
+                                                      overlayRadius: 0,
+                                                    ),
+                                                activeTrackColor: const Color(
+                                                  0xFFE5E7EB,
+                                                ),
+                                                inactiveTrackColor: const Color(
+                                                  0xFFE5E7EB,
+                                                ),
+                                                thumbColor: Colors.white,
+                                                overlayColor:
+                                                    Colors.transparent,
+                                                trackGap: 6,
+                                              ),
+                                              child: Slider(
+                                                value: _arrivalSlide,
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () => _arrivalSlide = value,
+                                                  );
+                                                  if (value >= 0.98) {
+                                                    Future.delayed(
+                                                      const Duration(
+                                                        milliseconds: 350,
+                                                      ),
+                                                      () {
+                                                        if (!context.mounted) {
+                                                          return;
+                                                        }
+                                                        context.push(
+                                                          '/driver/delivery-proof/${widget.tripId}?payment=pending',
+                                                        );
+                                                        setState(
+                                                          () =>
+                                                              _arrivalSlide = 0,
+                                                        );
+                                                      },
+                                                    );
+                                                  }
+                                                },
+                                                min: 0,
+                                                max: 1,
+                                                divisions: 100,
+                                              ),
+                                            ),
+                                            IgnorePointer(
+                                              child: AnimatedOpacity(
+                                                opacity:
+                                                    (1 - (_arrivalSlide * 1.7))
+                                                        .clamp(0.18, 1.0),
+                                                duration: const Duration(
+                                                  milliseconds: 90,
+                                                ),
+                                                child: Text(
+                                                  'Swipe to continue',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.copyWith(
+                                                        color: const Color(
+                                                          0xFF6B7280,
+                                                        ),
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 14),
-                                  const Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    color: Color(0xFFE8EDF2),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    'Customer details',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: const Color(0xFF101828),
-                                          fontWeight: FontWeight.w900,
+                                )
+                              : Container(
+                                  key: const ValueKey('on-route-card'),
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
                                         ),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 12),
-                                  _DetailRow(
-                                    label: 'Customer',
-                                    value: 'Rahul Sharma',
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Current status',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: const Color(
+                                                        0xFF98A2B3,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'On route',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      color: const Color(
+                                                        0xFF101828,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                          const Spacer(),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEAF7EF),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: const Text(
+                                              'Active',
+                                              style: TextStyle(
+                                                color: Color(0xFF2FA56E),
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 14),
+                                      const Divider(
+                                        height: 1,
+                                        thickness: 1,
+                                        color: Color(0xFFE8EDF2),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        'Customer details',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              color: const Color(0xFF101828),
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _DetailRow(
+                                        label: 'Customer',
+                                        value: 'Rahul Sharma',
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _DetailRow(
+                                        label: 'Phone',
+                                        value: '+91 98765 43210',
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _DetailRow(
+                                        label: 'Address',
+                                        value:
+                                            'Sector 137, Noida, Uttar Pradesh 201305',
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                          horizontal: 14,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF7FAFD),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFE8EDF2),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Swipe control will appear automatically after 2 seconds.',
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: const Color(0xFF667085),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 10),
-                                  _DetailRow(
-                                    label: 'Phone',
-                                    value: '+91 98765 43210',
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _DetailRow(
-                                    label: 'Address',
-                                    value:
-                                        'Sector 137, Noida, Uttar Pradesh 201305',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                ),
                         ),
                       ),
                     ],
@@ -456,6 +712,68 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ArrivalThumbShape extends SliderComponentShape {
+  const _ArrivalThumbShape();
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(56, 56);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.14)
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    final fillPaint = Paint()
+      ..color = Colors.white
+      ..isAntiAlias = true;
+    final borderPaint = Paint()
+      ..color = const Color(0xFFE5E7EB)
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    canvas.drawCircle(center + const Offset(0, 1.5), 22, shadowPaint);
+    canvas.drawCircle(center, 22, fillPaint);
+    canvas.drawCircle(center, 22, borderPaint);
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(Icons.chevron_right_rounded.codePoint),
+        style: TextStyle(
+          color: const Color(0xFF2FA56E),
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          fontFamily: Icons.chevron_right_rounded.fontFamily,
+          package: Icons.chevron_right_rounded.fontPackage,
+          height: 1,
+        ),
+      ),
+      textDirection: textDirection,
+      textAlign: TextAlign.center,
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      center - Offset(textPainter.width / 2, textPainter.height / 2 + 1),
     );
   }
 }
@@ -536,6 +854,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(widget.parentContext);
     setState(() => _isSubmitting = true);
     try {
       await ref
@@ -549,7 +868,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('$_selectedType report submitted to support.'),
           backgroundColor: const Color(0xFF2FA56E),
@@ -557,7 +876,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(error.message),
           backgroundColor: const Color(0xFFE23A4B),
@@ -565,7 +884,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(error.toString()),
           backgroundColor: const Color(0xFFE23A4B),

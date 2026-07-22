@@ -361,8 +361,9 @@ String _assetPathForLabel(String label) {
   final text = label.toLowerCase();
   if (text.contains('small')) return 'assets/trucks/small truck.png';
   if (text.contains('medium')) return 'assets/trucks/medium truck.png';
-  if (text.contains('big') || text.contains('large'))
+  if (text.contains('big') || text.contains('large')) {
     return 'assets/trucks/big truck.png';
+  }
   return 'assets/trucks/truck pooling.png';
 }
 
