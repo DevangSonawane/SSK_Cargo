@@ -105,7 +105,10 @@ class DriverThankYouScreen extends StatelessWidget {
                       ),
                       child: const Text(
                         'Back to trips',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
