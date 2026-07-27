@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
 
 class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
@@ -31,6 +34,10 @@ class _DriverDeliveryPhotoUploadScreenState
   final _picker = ImagePicker();
   final List<_CapturedPhoto> _photos = [];
   bool _uploading = false;
+  bool _loadingTrip = true;
+  bool _resumingFromRemoteState = false;
+  String? _tripPaymentStatus;
+  List<dynamic> _remotePodPhotos = const [];
 
   @override
   void initState() {
@@ -41,7 +48,56 @@ class _DriverDeliveryPhotoUploadScreenState
             .read(driverLocationTrackerProvider)
             .startTracking(tripId: widget.tripId),
       );
+      unawaited(_loadRemoteTripState());
     });
+  }
+
+  Future<void> _loadRemoteTripState() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getTrip(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+          );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic> ? data : response;
+      final paymentStatus = trip['paymentStatus']
+          ?.toString()
+          .trim()
+          .toLowerCase();
+      final podPhotos = trip['podPhotos'];
+
+      if (!mounted) return;
+      setState(() {
+        _tripPaymentStatus = paymentStatus;
+        _remotePodPhotos = podPhotos is List ? podPhotos : const [];
+        _loadingTrip = false;
+      });
+
+      if (_remotePodPhotos.isNotEmpty && !_resumingFromRemoteState) {
+        _resumingFromRemoteState = true;
+        if (!mounted) return;
+        if (paymentStatus == 'paid') {
+          context.go('/driver/thank-you/${widget.tripId}');
+        } else {
+          context.go('/driver/payment/${widget.tripId}');
+        }
+      }
+    } on ApiException {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -77,18 +133,80 @@ class _DriverDeliveryPhotoUploadScreenState
     if (_photos.isEmpty) return;
 
     setState(() => _uploading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${_photos.length} delivery photo(s) uploaded successfully.',
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to upload delivery photos.'),
         ),
-        backgroundColor: const Color(0xFF2FA56E),
-      ),
-    );
-    context.go('/driver/payment/${widget.tripId}');
+      );
+      return;
+    }
+
+    try {
+      final files = _photos
+          .map(
+            (photo) =>
+                MultipartFile.fromBytes(photo.bytes, filename: photo.fileName),
+          )
+          .toList(growable: false);
+
+      await ref
+          .read(apiClientProvider)
+          .uploadTripPod(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+            files: files,
+          );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_photos.length} delivery photo(s) uploaded successfully.',
+          ),
+          backgroundColor: const Color(0xFF2FA56E),
+        ),
+      );
+
+      await _loadRemoteTripState();
+      if (!mounted) return;
+
+      if (_tripPaymentStatus == 'paid') {
+        await ref
+            .read(apiClientProvider)
+            .completeTrip(
+              accessToken: session.tokens.accessToken,
+              tripId: widget.tripId,
+            );
+        if (!mounted) return;
+        context.go('/driver/thank-you/${widget.tripId}');
+      } else {
+        context.go('/driver/payment/${widget.tripId}');
+      }
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _uploading = false);
+      }
+    }
   }
 
   @override
@@ -106,6 +224,14 @@ class _DriverDeliveryPhotoUploadScreenState
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
+            if (_loadingTrip) ...[
+              const LinearProgressIndicator(
+                minHeight: 2,
+                backgroundColor: Color(0xFFE8EDF2),
+                color: Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 12),
+            ],
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(

@@ -1374,11 +1374,13 @@ class BrokerRequestCard extends StatelessWidget {
     required this.request,
     required this.onAccept,
     required this.onReject,
+    required this.onCounter,
   });
 
   final BookingRequest request;
   final VoidCallback onAccept;
   final VoidCallback onReject;
+  final VoidCallback onCounter;
 
   @override
   Widget build(BuildContext context) {
@@ -1523,6 +1525,24 @@ class BrokerRequestCard extends StatelessWidget {
                   ),
                   child: const Text(
                     'Reject',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onCounter,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    foregroundColor: const Color(0xFF1F88C9),
+                    side: const BorderSide(color: Color(0xFF1F88C9)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Counter',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),

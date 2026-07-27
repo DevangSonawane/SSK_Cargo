@@ -166,6 +166,18 @@ class _DriverDeliveryDetailsScreenState
                       _showIncidentReport(context, widget.tripId);
                     },
                   ),
+                  const SizedBox(height: 10),
+                  _EmergencyAssistanceTile(
+                    backgroundColor: const Color(0xFFEAF2FB),
+                    iconColor: const Color(0xFF1F88C9),
+                    icon: Icons.build_circle_outlined,
+                    title: 'View Mechanic Status',
+                    subtitle: 'See breakdown and repair progress',
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _showMechanicStatus(context, widget.tripId);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -181,6 +193,30 @@ class _DriverDeliveryDetailsScreenState
       barrierDismissible: true,
       builder: (dialogContext) {
         return _IncidentReportDialog(parentContext: context, tripId: tripId);
+      },
+    );
+  }
+
+  Future<void> _showMechanicStatus(BuildContext context, String tripId) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to view mechanic status.'),
+        ),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _MechanicStatusDialog(
+          tripId: tripId,
+          accessToken: session.tokens.accessToken,
+        );
       },
     );
   }
@@ -1062,6 +1098,266 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
   }
 }
 
+class _MechanicStatusDialog extends ConsumerStatefulWidget {
+  const _MechanicStatusDialog({
+    required this.tripId,
+    required this.accessToken,
+  });
+
+  final String tripId;
+  final String accessToken;
+
+  @override
+  ConsumerState<_MechanicStatusDialog> createState() =>
+      _MechanicStatusDialogState();
+}
+
+class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _incidents = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_loadIncidents());
+    });
+  }
+
+  Future<void> _loadIncidents() async {
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getTripIncidents(
+            accessToken: widget.accessToken,
+            tripId: widget.tripId,
+          );
+      final data = response['data'];
+      final items = data is Map<String, dynamic>
+          ? (data['incidents'] ??
+                data['items'] ??
+                data['results'] ??
+                data['rows'])
+          : response['incidents'] ?? response['items'] ?? response['results'];
+
+      final list = items is List ? items : const <dynamic>[];
+
+      if (!mounted) return;
+      setState(() {
+        _incidents = list.whereType<Map<String, dynamic>>().toList(
+          growable: false,
+        );
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.fromLTRB(18, 24, 18, 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF2FB),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.build_circle_outlined,
+                      color: Color(0xFF1F88C9),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Mechanic Status',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF101828),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: const Color(0xFF98A2B3),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Live incident updates for this trip.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                Text(
+                  _error!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFFB42318),
+                  ),
+                )
+              else if (_incidents.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Text('No incidents reported for this trip yet.'),
+                )
+              else
+                Column(
+                  children: [
+                    for (var index = 0; index < _incidents.length; index++) ...[
+                      _MechanicIncidentCard(incident: _incidents[index]),
+                      if (index != _incidents.length - 1)
+                        const SizedBox(height: 10),
+                    ],
+                  ],
+                ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: _loading ? null : _loadIncidents,
+                  child: const Text('Refresh'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MechanicIncidentCard extends StatelessWidget {
+  const _MechanicIncidentCard({required this.incident});
+
+  final Map<String, dynamic> incident;
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = _readIncidentString(incident, const ['reason', 'type']);
+    final notes = _readIncidentString(incident, const ['notes', 'description']);
+    final mechanic = _asMap(incident['mechanicRequest']);
+    final mechanicStatus = _readIncidentString(mechanic, const ['status']);
+    final mechanicName = _readIncidentString(mechanic, const [
+      'mechanicName',
+      'mechanic_name',
+    ]);
+    final mechanicPhone = _readIncidentString(mechanic, const [
+      'mechanicPhone',
+      'mechanic_phone',
+    ]);
+    final mechanicNotes = _readIncidentString(mechanic, const ['notes']);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            reason.isEmpty ? 'Incident' : reason,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          if (notes.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              notes,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ],
+          if (mechanic.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Mechanic: ${mechanicName.isEmpty ? 'Pending assignment' : mechanicName}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (mechanicPhone.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Phone: $mechanicPhone',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+              ),
+            ],
+            const SizedBox(height: 2),
+            Text(
+              'Status: ${mechanicStatus.isEmpty ? 'requested' : mechanicStatus}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+            if (mechanicNotes.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                mechanicNotes,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _IncidentTypeOption {
   const _IncidentTypeOption({
     required this.label,
@@ -1084,6 +1380,25 @@ String _incidentReasonFor(String label) {
     'Medical' => 'medical',
     _ => 'other',
   };
+}
+
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  return <String, dynamic>{};
+}
+
+String _readIncidentString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    final text = value.toString().trim();
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
 }
 
 class _IncidentTypeChip extends StatelessWidget {

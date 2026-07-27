@@ -174,7 +174,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
-    final password = _passwordController.text;
     final phone = _phoneController.text.trim();
     final licenseNo = _licenseController.text.trim();
     final aadhaar = _normalizeDigits(_aadhaarController.text);
@@ -188,7 +187,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final selectedTruckPlate = selectedTruck?.plateNumber ?? '';
     final truckId = selectedTruck != null ? selectedTruck.id : manualTruckId;
     String? createdUserId;
-    BrokerDriver? recoveredDriver;
 
     if (truckId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,56 +222,52 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               ),
         );
       } else {
-        try {
-          final registrationResponse = await apiClient.register(
-            name: name,
-            email: email,
-            password: password,
-            phone: phone.isEmpty ? null : phone,
-            role: 'driver',
-          );
+        final registrationResponse = await apiClient.createDriverRegistration(
+          accessToken: session.tokens.accessToken,
+          driver:
+              {
+                'name': name,
+                'phone': phone,
+                'email': email,
+                'license_no': licenseNo,
+                'license_expiry': licenseExpiry,
+              }..removeWhere(
+                (key, value) =>
+                    value == null || value.toString().trim().isEmpty,
+              ),
+        );
 
-          final userId = _extractUserId(registrationResponse);
-          if (userId.isEmpty) {
-            throw StateError('Could not determine the created driver user id.');
-          }
-          createdUserId = userId;
-          recoveredDriver = await _findRecoveredDriver(
-            ref: ref,
-            name: name,
-            email: email,
-            phone: phone,
-            licenseNo: licenseNo,
-            aadhaar: aadhaar,
-          );
-          if (recoveredDriver != null) {
-            createdUserId = recoveredDriver.id;
-          }
-        } on ApiException catch (error) {
-          if (error.statusCode != 409) {
-            rethrow;
-          }
+        final driverId = _extractUserId(registrationResponse);
+        if (driverId.isEmpty) {
+          throw StateError('Could not determine the created driver id.');
+        }
+        createdUserId = driverId;
 
-          recoveredDriver = await _findRecoveredDriver(
-            ref: ref,
-            name: name,
-            email: email,
-            phone: phone,
-            licenseNo: licenseNo,
-            aadhaar: aadhaar,
-          );
-          if (recoveredDriver == null) {
-            rethrow;
-          }
+        final driverUpdate =
+            <String, dynamic>{
+              'license_no': licenseNo,
+              'license_expiry': licenseExpiry,
+              'truck_id': truckId,
+              if (aadhaar.isNotEmpty) 'aadhaar': aadhaar,
+              if (avatar.isNotEmpty) 'avatar': avatar,
+              if (_selectedStatus != null && _selectedStatus!.isNotEmpty)
+                'status': _selectedStatus,
+            }..removeWhere(
+              (key, value) => value == null || value.toString().trim().isEmpty,
+            );
 
-          createdUserId = recoveredDriver.id;
+        if (driverUpdate.isNotEmpty) {
+          await apiClient.updateDriverProfile(
+            accessToken: session.tokens.accessToken,
+            id: driverId,
+            driver: driverUpdate,
+          );
         }
       }
 
       if (!mounted) return;
 
-      final effectiveDriverId =
-          createdUserId ?? recoveredDriver?.id ?? widget.existingDriver!.id;
+      final effectiveDriverId = createdUserId ?? widget.existingDriver!.id;
       final notifier = ref.read(brokerDriversProvider.notifier);
       final updatedDriver = BrokerDriver(
         id: effectiveDriverId,
@@ -897,75 +891,4 @@ String _extractUserId(Map<String, dynamic> response) {
   }
 
   return '';
-}
-
-Future<BrokerDriver?> _findRecoveredDriver({
-  required WidgetRef ref,
-  required String name,
-  required String email,
-  required String phone,
-  required String licenseNo,
-  required String aadhaar,
-}) async {
-  try {
-    final drivers = await ref.read(
-      brokerDriversApiProvider((status: null, page: 1, limit: 100)).future,
-    );
-    for (final driver in drivers) {
-      if (_matchesRecoveredDriver(
-        driver,
-        name: name,
-        email: email,
-        phone: phone,
-        licenseNo: licenseNo,
-        aadhaar: aadhaar,
-      )) {
-        return driver;
-      }
-    }
-  } catch (_) {
-    // If we cannot refresh the driver list, surface the original backend error.
-  }
-
-  return null;
-}
-
-bool _matchesRecoveredDriver(
-  BrokerDriver driver, {
-  required String name,
-  required String email,
-  required String phone,
-  required String licenseNo,
-  required String aadhaar,
-}) {
-  final normalizedName = _normalizeLookupValue(name);
-  final normalizedEmail = _normalizeLookupValue(email);
-  final normalizedPhone = _normalizeLookupValue(phone);
-  final normalizedLicense = _normalizeLookupValue(licenseNo);
-  final normalizedAadhaar = _normalizeLookupValue(aadhaar);
-
-  final driverName = _normalizeLookupValue(driver.name);
-  final driverEmail = _normalizeLookupValue(driver.email);
-  final driverPhone = _normalizeLookupValue(driver.phone);
-  final driverLicense = _normalizeLookupValue(driver.licenseNo);
-  final driverAadhaar = _normalizeLookupValue(driver.aadhaar);
-
-  final strongMatch =
-      normalizedLicense.isNotEmpty && normalizedLicense == driverLicense;
-  final emailMatch =
-      normalizedEmail.isNotEmpty && normalizedEmail == driverEmail;
-  final aadhaarMatch =
-      normalizedAadhaar.isNotEmpty && normalizedAadhaar == driverAadhaar;
-  final phoneMatch =
-      normalizedPhone.isNotEmpty && normalizedPhone == driverPhone;
-  final nameMatch = normalizedName.isNotEmpty && normalizedName == driverName;
-
-  return strongMatch ||
-      emailMatch ||
-      (phoneMatch && (nameMatch || normalizedLicense.isEmpty)) ||
-      (aadhaarMatch && (nameMatch || normalizedPhone.isEmpty));
-}
-
-String _normalizeLookupValue(String value) {
-  return value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase().trim();
 }

@@ -42,3 +42,35 @@ final clientPricingProvider = FutureProvider.autoDispose<ClientPricingConfig?>((
     return null;
   }
 });
+
+final clientBookingOffersProvider = FutureProvider.autoDispose
+    .family<List<ClientBookingOffer>, String>((ref, bookingId) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
+
+      final response = await ref
+          .watch(apiClientProvider)
+          .getBookingOffers(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+
+      final data = response['data'];
+      final items = data is Map<String, dynamic>
+          ? (data['offers'] ?? data['items'] ?? data['results'] ?? data['rows'])
+          : response['offers'] ?? response['items'] ?? response['results'];
+
+      final list = items is List
+          ? items
+          : data is List
+          ? data
+          : const <dynamic>[];
+
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(ClientBookingOffer.fromJson)
+          .where((offer) => offer.id.isNotEmpty)
+          .toList();
+    });

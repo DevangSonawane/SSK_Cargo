@@ -274,6 +274,83 @@ class ClientBooking {
   String get displayStatusLabel => _titleCase(status);
 }
 
+class ClientBookingOffer {
+  const ClientBookingOffer({
+    required this.id,
+    required this.status,
+    required this.amountText,
+    required this.brokerName,
+    required this.note,
+    required this.createdAt,
+    required this.raw,
+  });
+
+  factory ClientBookingOffer.fromJson(Map<String, dynamic> json) {
+    final broker = _asMap(json['broker']);
+    final brokerUser = _asMap(json['user']);
+    final amountValue =
+        json['amount'] ??
+        json['price'] ??
+        json['counter_amount'] ??
+        json['value'];
+
+    return ClientBookingOffer(
+      id: _readString(json, const [
+        'id',
+        'request_id',
+        'job_request_id',
+        'uuid',
+      ]),
+      status: _readString(json, const ['status', 'job_status']).isEmpty
+          ? 'pending'
+          : _readString(json, const ['status', 'job_status']),
+      amountText: _formatAmount(amountValue),
+      brokerName:
+          _readNestedName(json, const [
+            'broker_name',
+            'broker',
+            'created_by',
+            'user',
+            'driver',
+          ]).isNotEmpty
+          ? _readNestedName(json, const [
+              'broker_name',
+              'broker',
+              'created_by',
+              'user',
+              'driver',
+            ])
+          : _readNestedName(broker, const [
+              'name',
+              'full_name',
+              'display_name',
+            ]).isNotEmpty
+          ? _readNestedName(broker, const ['name', 'full_name', 'display_name'])
+          : _readNestedName(brokerUser, const [
+              'name',
+              'full_name',
+              'display_name',
+            ]),
+      note: _readString(json, const ['note', 'message', 'remarks']),
+      createdAt: _parseDateTime(
+        json['created_at'] ?? json['createdAt'] ?? json['updated_at'],
+      ),
+      raw: json,
+    );
+  }
+
+  final String id;
+  final String status;
+  final String amountText;
+  final String brokerName;
+  final String note;
+  final DateTime? createdAt;
+  final Map<String, dynamic> raw;
+
+  bool get isCountered => _normalizeStatus(status) == 'countered';
+  bool get isPending => _normalizeStatus(status) == 'pending';
+}
+
 List<dynamic> _extractItems(
   Map<String, dynamic> data,
   Map<String, dynamic> root,
@@ -408,4 +485,8 @@ String _titleCase(String value) {
       .where((word) => word.isNotEmpty)
       .map((word) => word[0].toUpperCase() + word.substring(1).toLowerCase())
       .join(' ');
+}
+
+String _normalizeStatus(String value) {
+  return value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
 }

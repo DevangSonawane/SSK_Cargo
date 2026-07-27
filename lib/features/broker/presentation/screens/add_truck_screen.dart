@@ -8,10 +8,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class AddTruckScreen extends ConsumerStatefulWidget {
-  const AddTruckScreen({
-    super.key,
-    this.existingTruck,
-  });
+  const AddTruckScreen({super.key, this.existingTruck});
 
   final BrokerVehicle? existingTruck;
 
@@ -71,9 +68,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
     final driver = _selectedDriver;
     if (driver == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please assign a driver.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please assign a driver.')));
       return;
     }
 
@@ -91,7 +88,6 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
     try {
       final truckPayload = {
-        'driver_id': driver.id,
         'type': selectedVehicle.label,
         'category': _truckCategoryForVehicle(selectedVehicle.label),
         'capacity': _capacityController.text.trim(),
@@ -101,18 +97,39 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       };
 
       if (widget.existingTruck == null) {
-        await ref.read(apiClientProvider).createTruck(
+        final response = await ref
+            .read(apiClientProvider)
+            .createTruck(
               accessToken: session.tokens.accessToken,
               truck: {
                 'registration': _registrationController.text.trim(),
                 ...truckPayload,
               },
             );
+        final truckId = _extractEntityId(response);
+        if (truckId.isNotEmpty) {
+          await ref
+              .read(apiClientProvider)
+              .updateDriverProfile(
+                accessToken: session.tokens.accessToken,
+                id: driver.id,
+                driver: {'truck_id': truckId},
+              );
+        }
       } else {
-        await ref.read(apiClientProvider).updateTruck(
+        await ref
+            .read(apiClientProvider)
+            .updateTruck(
               accessToken: session.tokens.accessToken,
               id: widget.existingTruck!.id,
               truck: truckPayload,
+            );
+        await ref
+            .read(apiClientProvider)
+            .updateDriverProfile(
+              accessToken: session.tokens.accessToken,
+              id: driver.id,
+              driver: {'truck_id': widget.existingTruck!.id},
             );
       }
 
@@ -133,7 +150,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('ApiException: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
       );
     } finally {
       if (mounted) {
@@ -164,8 +183,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     if (picked == null || !mounted) return;
 
     setState(() {
-      _insuranceExpiryController.text =
-          picked.toIso8601String().split('T').first;
+      _insuranceExpiryController.text = picked
+          .toIso8601String()
+          .split('T')
+          .first;
     });
   }
 
@@ -203,9 +224,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                 Text(
                   isEditing ? 'Edit truck' : 'Add truck',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
                 ),
               ],
             ),
@@ -220,20 +241,21 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                         ? 'Update the truck details and save the changes.'
                         : 'Choose the truck type and fill in the fleet details.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
+                      color: const Color(0xFF667085),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   GridView.builder(
                     itemCount: vehicleOptions.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 1.05,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 1.05,
+                        ),
                     itemBuilder: (context, index) {
                       final vehicle = vehicleOptions[index];
                       return VehicleSelectionTile(
@@ -241,7 +263,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                         selected: _selectedVehicleIndex == index,
                         onTap: () => setState(() {
                           _selectedVehicleIndex = index;
-                          if (!isEditing && _capacityController.text.trim().isEmpty) {
+                          if (!isEditing &&
+                              _capacityController.text.trim().isEmpty) {
                             _capacityController.text = vehicle.capacity;
                           }
                         }),
@@ -294,12 +317,15 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     ),
                     selectedItemBuilder: (context) {
                       return drivers
-                        .map(
-                          (driver) => Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                  _DriverAvatar(initials: _driverInitials(driver.name), compact: true),
+                          .map(
+                            (driver) => Align(
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                children: [
+                                  _DriverAvatar(
+                                    initials: _driverInitials(driver.name),
+                                    compact: true,
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -331,7 +357,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                           ),
                         )
                         .toList(),
-                    onChanged: (value) => setState(() => _selectedDriver = value),
+                    onChanged: (value) =>
+                        setState(() => _selectedDriver = value),
                     validator: (value) {
                       if (value == null) {
                         return 'Select a driver';
@@ -434,6 +461,36 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
   }
 }
 
+String _extractEntityId(Map<String, dynamic> response) {
+  final data = response['data'];
+  if (data is Map<String, dynamic>) {
+    for (final key in const ['id', 'truck_id', 'uuid']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+    final nestedTruck = data['truck'];
+    if (nestedTruck is Map<String, dynamic>) {
+      for (final key in const ['id', 'truck_id', 'uuid']) {
+        final value = nestedTruck[key]?.toString().trim();
+        if (value != null && value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+  }
+
+  for (final key in const ['id', 'truck_id', 'uuid']) {
+    final value = response[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) {
+      return value;
+    }
+  }
+
+  return '';
+}
+
 int _vehicleIndexForLabel(String label) {
   final lower = label.toLowerCase();
   for (var i = 0; i < vehicleOptions.length; i++) {
@@ -469,8 +526,9 @@ InputDecoration _fieldDecoration({
     filled: true,
     fillColor: Colors.white,
     prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
-    suffixIcon:
-        suffixIcon == null ? null : Icon(suffixIcon, color: const Color(0xFF667085)),
+    suffixIcon: suffixIcon == null
+        ? null
+        : Icon(suffixIcon, color: const Color(0xFF667085)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
@@ -496,13 +554,18 @@ String _truckCategoryForVehicle(String label) {
 }
 
 String _driverInitials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) {
     final first = parts.first;
     return first.substring(0, first.length.clamp(1, 2)).toUpperCase();
   }
-  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+      .toUpperCase();
 }
 
 class _DriverDropdownMenuItem extends StatelessWidget {

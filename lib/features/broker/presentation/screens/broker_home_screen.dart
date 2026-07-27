@@ -26,13 +26,17 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to accept requests.')),
+        const SnackBar(
+          content: Text('Please sign in again to accept requests.'),
+        ),
       );
       return;
     }
 
     try {
-      await ref.read(apiClientProvider).acceptJobRequest(
+      await ref
+          .read(apiClientProvider)
+          .acceptJobRequest(
             accessToken: session.tokens.accessToken,
             id: request.id,
           );
@@ -66,7 +70,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     }
 
     try {
-      await ref.read(apiClientProvider).assignDriverToJob(
+      await ref
+          .read(apiClientProvider)
+          .assignDriverToJob(
             accessToken: session.tokens.accessToken,
             id: request.id,
             driverId: assignment.driver!.id,
@@ -96,7 +102,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       request,
       status: 'Assigned',
       assignedDriverName: assignment.driver!.name,
-      assignedTruckName: '${assignment.truck!.label} • ${assignment.truck!.plateNumber}',
+      assignedTruckName:
+          '${assignment.truck!.label} • ${assignment.truck!.plateNumber}',
     );
 
     ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
@@ -139,8 +146,13 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Dialog(
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: SingleChildScrollView(
@@ -154,7 +166,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                           Expanded(
                             child: Text(
                               'Assign driver and truck',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: const Color(0xFF101828),
                                   ),
@@ -166,8 +179,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       Text(
                         'Choose who will handle ${request.productName} before opening live tracking.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF667085),
-                            ),
+                          color: const Color(0xFF667085),
+                        ),
                       ),
                       const SizedBox(height: 18),
                       _SelectionSection<BrokerDriver>(
@@ -177,7 +190,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         value: selectedDriver,
                         items: drivers,
                         itemLabel: (driver) => driver.name,
-                        onSelected: (driver) => setModalState(() => selectedDriver = driver),
+                        onSelected: (driver) =>
+                            setModalState(() => selectedDriver = driver),
                       ),
                       const SizedBox(height: 12),
                       _SelectionSection<BrokerVehicle>(
@@ -186,8 +200,10 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         emptyLabel: 'None',
                         value: selectedTruck,
                         items: trucks,
-                        itemLabel: (truck) => '${truck.label} • ${truck.plateNumber}',
-                        onSelected: (truck) => setModalState(() => selectedTruck = truck),
+                        itemLabel: (truck) =>
+                            '${truck.label} • ${truck.plateNumber}',
+                        onSelected: (truck) =>
+                            setModalState(() => selectedTruck = truck),
                       ),
                       const SizedBox(height: 18),
                       SizedBox(
@@ -195,7 +211,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         height: 52,
                         child: FilledButton(
                           onPressed: () {
-                            if (selectedDriver == null || selectedTruck == null) {
+                            if (selectedDriver == null ||
+                                selectedTruck == null) {
                               return;
                             }
                             Navigator.of(dialogContext).pop(
@@ -237,7 +254,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     );
   }
 
-  Future<({List<BrokerDriver> drivers, List<BrokerVehicle> trucks})> _loadAssignmentOptions() async {
+  Future<({List<BrokerDriver> drivers, List<BrokerVehicle> trucks})>
+  _loadAssignmentOptions() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       return (drivers: const <BrokerDriver>[], trucks: const <BrokerVehicle>[]);
@@ -245,7 +263,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
     final results = await Future.wait([
       ref.read(
-        brokerDriversApiProvider((status: 'available', page: 1, limit: 100)).future,
+        brokerDriversApiProvider((
+          status: 'available',
+          page: 1,
+          limit: 100,
+        )).future,
       ),
       ref.read(
         brokerTrucksProvider((status: 'available', page: 1, limit: 100)).future,
@@ -264,7 +286,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Reject request?'),
-          content: Text('Reject the booking request for ${request.productName}?'),
+          content: Text(
+            'Reject the booking request for ${request.productName}?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -272,7 +296,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFFE23A4B)),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFE23A4B),
+              ),
               child: const Text('Reject'),
             ),
           ],
@@ -286,13 +312,17 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to reject requests.')),
+        const SnackBar(
+          content: Text('Please sign in again to reject requests.'),
+        ),
       );
       return;
     }
 
     try {
-      await ref.read(apiClientProvider).declineJobRequest(
+      await ref
+          .read(apiClientProvider)
+          .declineJobRequest(
             accessToken: session.tokens.accessToken,
             id: request.id,
           );
@@ -325,6 +355,107 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     }
   }
 
+  Future<void> _counterRequest(BookingRequest request) async {
+    final amountController = TextEditingController(
+      text: request.value.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+    final noteController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Counter ${request.productName}?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Counter amount',
+                  prefixText: '₹',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Note (optional)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Send counter'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true || !mounted) return;
+
+    final amount = double.tryParse(
+      amountController.text.trim().replaceAll(',', ''),
+    );
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid counter amount.'),
+          backgroundColor: Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to counter requests.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await ref
+          .read(apiClientProvider)
+          .counterJobRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+            amount: amount,
+            note: noteController.text.trim(),
+          );
+      if (!mounted) return;
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Counter sent.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      amountController.dispose();
+      noteController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
@@ -343,9 +474,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
               Text(
                 'New booking requests',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const Spacer(),
               StatusPill(
@@ -386,7 +517,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       const SizedBox(height: 14),
                       Text(
                         'No new requests',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF101828),
                             ),
@@ -396,8 +528,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         'Fresh bookings will appear here as soon as clients send them.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF667085),
-                            ),
+                          color: const Color(0xFF667085),
+                        ),
                       ),
                     ],
                   ),
@@ -406,13 +538,19 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
               return Column(
                 children: [
-                  for (var index = 0; index < pendingRequests.length; index++) ...[
+                  for (
+                    var index = 0;
+                    index < pendingRequests.length;
+                    index++
+                  ) ...[
                     BrokerRequestCard(
                       request: pendingRequests[index],
                       onAccept: () => _acceptRequest(pendingRequests[index]),
                       onReject: () => _rejectRequest(pendingRequests[index]),
+                      onCounter: () => _counterRequest(pendingRequests[index]),
                     ),
-                    if (index != pendingRequests.length - 1) const SizedBox(height: 12),
+                    if (index != pendingRequests.length - 1)
+                      const SizedBox(height: 12),
                   ],
                 ],
               );
@@ -431,8 +569,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
               child: Text(
                 error.toString().replaceFirst('Exception: ', ''),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFFB42318),
-                    ),
+                  color: const Color(0xFFB42318),
+                ),
               ),
             ),
           ),
@@ -451,16 +589,16 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 }
 
 class _AssignmentSelection {
-  const _AssignmentSelection({
-    required this.driver,
-    required this.truck,
-  });
+  const _AssignmentSelection({required this.driver, required this.truck});
 
   final BrokerDriver? driver;
   final BrokerVehicle? truck;
 }
 
-BrokerDriver? _defaultDriverForRequest(BookingRequest request, List<BrokerDriver> drivers) {
+BrokerDriver? _defaultDriverForRequest(
+  BookingRequest request,
+  List<BrokerDriver> drivers,
+) {
   if (drivers.isEmpty) return null;
   for (final driver in drivers) {
     if (driver.vehicleType.toLowerCase() == request.vehicleType.toLowerCase()) {
@@ -470,7 +608,10 @@ BrokerDriver? _defaultDriverForRequest(BookingRequest request, List<BrokerDriver
   return drivers.first;
 }
 
-BrokerVehicle? _defaultTruckForRequest(BookingRequest request, List<BrokerVehicle> trucks) {
+BrokerVehicle? _defaultTruckForRequest(
+  BookingRequest request,
+  List<BrokerVehicle> trucks,
+) {
   if (trucks.isEmpty) return null;
   for (final truck in trucks) {
     if (truck.label.toLowerCase() == request.vehicleType.toLowerCase()) {
@@ -510,9 +651,9 @@ class _SelectionSection<T> extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
-              ),
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF101828),
+          ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -533,16 +674,16 @@ class _SelectionSection<T> extends StatelessWidget {
               if (hasItems) ...[
                 const SizedBox(height: 10),
                 ...items.asMap().entries.map(
-                      (entry) => Padding(
-                        padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 10),
-                        child: _SelectableOptionCard(
-                          label: itemLabel(entry.value),
-                          icon: icon,
-                          selected: value == entry.value,
-                          onTap: () => onSelected(entry.value),
-                        ),
-                      ),
+                  (entry) => Padding(
+                    padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 10),
+                    child: _SelectableOptionCard(
+                      label: itemLabel(entry.value),
+                      icon: icon,
+                      selected: value == entry.value,
+                      onTap: () => onSelected(entry.value),
                     ),
+                  ),
+                ),
               ] else ...[
                 const SizedBox(height: 10),
                 Text(
@@ -559,10 +700,7 @@ class _SelectionSection<T> extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Selected: $displayValue',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF667085),
-          ),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF667085)),
         ),
       ],
     );
@@ -603,7 +741,9 @@ class _SelectableOptionCard extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: selected ? const Color(0xFF1F88C9) : const Color(0xFFE2E8F0),
+                color: selected
+                    ? const Color(0xFF1F88C9)
+                    : const Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Icon(

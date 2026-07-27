@@ -271,8 +271,8 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                       ),
                                     ),
                                   ),
-                                  if (widget.shipment.bookingId != null) ...[
-                                    const SizedBox(height: 10),
+                                  const SizedBox(height: 10),
+                                  if (widget.shipment.bookingId != null)
                                     SizedBox(
                                       width: double.infinity,
                                       height: 48,
@@ -312,7 +312,6 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         ),
                                       ),
                                     ),
-                                  ],
                                 ],
                               ),
                             ),
