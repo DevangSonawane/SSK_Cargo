@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -119,8 +121,7 @@ class BookingData {
       scheduledDate: scheduledDate ?? this.scheduledDate,
       distance: distance ?? this.distance,
       durationMin: durationMin ?? this.durationMin,
-      durationInTrafficMin:
-          durationInTrafficMin ?? this.durationInTrafficMin,
+      durationInTrafficMin: durationInTrafficMin ?? this.durationInTrafficMin,
       amount: amount ?? this.amount,
       brokerId: brokerId ?? this.brokerId,
       truckId: truckId ?? this.truckId,
@@ -1530,7 +1531,99 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
       _BookingLocationScreenState();
 }
 
-enum _BookingFlowStep { location, itemDetails, payment }
+enum _BookingFlowStep { location, itemDetails, brokerSelection, payment }
+
+enum _NegotiationSheetStep { slider, loading, counterOffer }
+
+class _NegotiationSheetResult {
+  const _NegotiationSheetResult._(this.accepted, this.amount);
+
+  factory _NegotiationSheetResult.accepted(double amount) =>
+      _NegotiationSheetResult._(true, amount);
+
+  factory _NegotiationSheetResult.chooseAnotherBroker() =>
+      const _NegotiationSheetResult._(false, null);
+
+  final bool accepted;
+  final double? amount;
+}
+
+class _DemoBroker {
+  const _DemoBroker({
+    required this.id,
+    required this.name,
+    required this.company,
+    required this.rating,
+    required this.responseTime,
+    required this.specialty,
+    required this.basePrice,
+    required this.fleetLabel,
+    required this.color,
+  });
+
+  final String id;
+  final String name;
+  final String company;
+  final double rating;
+  final String responseTime;
+  final String specialty;
+  final double basePrice;
+  final String fleetLabel;
+  final Color color;
+}
+
+const _demoBrokers = <_DemoBroker>[
+  _DemoBroker(
+    id: 'broker-akash',
+    name: 'Akash Verma',
+    company: 'NorthStar Logistics',
+    rating: 4.9,
+    responseTime: '2 min',
+    specialty: 'Fast interstate loads',
+    basePrice: 4850,
+    fleetLabel: '12 trucks',
+    color: Color(0xFF2FA56E),
+  ),
+  _DemoBroker(
+    id: 'broker-sana',
+    name: 'Sana Shaikh',
+    company: 'GreenRoute Cargo',
+    rating: 4.8,
+    responseTime: '4 min',
+    specialty: 'Careful fragile handling',
+    basePrice: 4725,
+    fleetLabel: '18 trucks',
+    color: Color(0xFF1F88C9),
+  ),
+  _DemoBroker(
+    id: 'broker-rahul',
+    name: 'Rahul Mehta',
+    company: 'SwiftHaul Network',
+    rating: 4.7,
+    responseTime: '3 min',
+    specialty: 'Best for urgent dispatch',
+    basePrice: 4960,
+    fleetLabel: '9 trucks',
+    color: Color(0xFFF59E0B),
+  ),
+  _DemoBroker(
+    id: 'broker-neha',
+    name: 'Neha Kapoor',
+    company: 'Atlas Freight',
+    rating: 5.0,
+    responseTime: '1 min',
+    specialty: 'Premium city-to-city moves',
+    basePrice: 5090,
+    fleetLabel: '21 trucks',
+    color: Color(0xFF7A5AF8),
+  ),
+];
+
+const _brokerNegotiationMessages = <String>[
+  'Sending your negotiation offer',
+  'Waiting for the broker to review it',
+  'Give us a moment, the broker is responding',
+];
 
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _fromController;
@@ -1543,6 +1636,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late VehicleOption _vehicle;
 
   _BookingFlowStep _step = _BookingFlowStep.location;
+  _DemoBroker? _selectedBroker;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
   bool _submitting = false;
   bool _resolvingDistance = false;
@@ -1706,8 +1800,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             quantity: quantity,
             amount: amount,
           );
-          _step = _BookingFlowStep.payment;
+          _selectedBroker = null;
         });
+        setState(() {
+          _step = _BookingFlowStep.brokerSelection;
+        });
+        return;
+      case _BookingFlowStep.brokerSelection:
         return;
       case _BookingFlowStep.payment:
         setState(() {
@@ -1720,6 +1819,57 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  void _acceptSelectedBroker(_DemoBroker broker) {
+    if (_selectedBroker == null) {
+      return;
+    }
+
+    setState(() {
+      _draft = _draft.copyWith(brokerId: broker.id, amount: broker.basePrice);
+      _step = _BookingFlowStep.payment;
+    });
+  }
+
+  Future<void> _openNegotiationSheet() async {
+    final broker = _selectedBroker;
+    if (broker == null) {
+      return;
+    }
+
+    final lower = broker.basePrice * 0.84;
+    final upper = broker.basePrice * 1.08;
+    final initial = _draft.amount > 0
+        ? _draft.amount.clamp(lower, upper).toDouble()
+        : broker.basePrice.clamp(lower, upper).toDouble();
+
+    final outcome = await showModalBottomSheet<_NegotiationSheetResult>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _BrokerNegotiationSheet(
+        broker: broker,
+        minPrice: lower,
+        maxPrice: upper,
+        initialPrice: initial,
+      ),
+    );
+
+    if (!mounted || outcome == null) {
+      return;
+    }
+
+    if (outcome.accepted) {
+      setState(() {
+        _draft = _draft.copyWith(
+          brokerId: broker.id,
+          amount: outcome.amount ?? broker.basePrice,
+        );
+        _step = _BookingFlowStep.payment;
+      });
+    }
+  }
+
   Future<void> _resolveDistanceAndContinue() async {
     if (_resolvingDistance) {
       return;
@@ -1728,9 +1878,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to continue.'),
-        ),
+        const SnackBar(content: Text('Please sign in again to continue.')),
       );
       return;
     }
@@ -1751,11 +1899,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
 
     try {
-      await _resolveTypedCoordinates(
-        pickup: pickup,
-        drop: drop,
-      );
-      final response = await ref.read(apiClientProvider).getDistanceEstimate(
+      await _resolveTypedCoordinates(pickup: pickup, drop: drop);
+      final response = await ref
+          .read(apiClientProvider)
+          .getDistanceEstimate(
             accessToken: session.tokens.accessToken,
             pickup: pickup,
             drop: drop,
@@ -1842,7 +1989,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final service = ref.read(googlePlacesServiceProvider);
     final pickupNeedsResolution =
         _draft.pickupLat == null || _draft.pickupLng == null;
-    final dropNeedsResolution = _draft.dropLat == null || _draft.dropLng == null;
+    final dropNeedsResolution =
+        _draft.dropLat == null || _draft.dropLng == null;
 
     GooglePlaceSelection? pickupSelection;
     if (pickupNeedsResolution) {
@@ -1951,7 +2099,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     }
   }
@@ -1975,10 +2125,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (durationInTrafficMin != null) {
         payload['duration_in_traffic_min'] = durationInTrafficMin;
       }
-      final response = await ref.read(apiClientProvider).estimatePricing(
-        accessToken: accessToken,
-        payload: payload,
-      );
+      final response = await ref
+          .read(apiClientProvider)
+          .estimatePricing(accessToken: accessToken, payload: payload);
       return _readMoneyValue(response['data'], response);
     } catch (_) {
       return null;
@@ -2129,10 +2278,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
 
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final showBottomButton = switch (_step) {
+      _BookingFlowStep.location ||
+      _BookingFlowStep.itemDetails ||
+      _BookingFlowStep.payment => true,
+      _BookingFlowStep.brokerSelection => false,
+    };
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _bookingCreated
+      bottomNavigationBar: _bookingCreated || !showBottomButton
           ? const SizedBox.shrink()
           : Padding(
               padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
@@ -2150,10 +2305,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           ),
                         )
                       : Text(switch (_step) {
-                        _BookingFlowStep.location => 'Next',
-                        _BookingFlowStep.itemDetails => 'Next',
-                        _BookingFlowStep.payment => 'Continue',
-                      }),
+                          _BookingFlowStep.location => 'Next',
+                          _BookingFlowStep.itemDetails => 'Find brokers',
+                          _BookingFlowStep.payment => 'Continue',
+                          _BookingFlowStep.brokerSelection => 'Continue',
+                        }),
                 ),
               ),
             ),
@@ -2180,8 +2336,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   _BookingFlowStep.location,
                                 _BookingFlowStep.itemDetails =>
                                   _BookingFlowStep.location,
-                                _BookingFlowStep.payment =>
+                                _BookingFlowStep.brokerSelection =>
                                   _BookingFlowStep.itemDetails,
+                                _BookingFlowStep.payment =>
+                                  _BookingFlowStep.brokerSelection,
                               };
                             });
                           },
@@ -2197,6 +2355,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           switch (_step) {
                             _BookingFlowStep.location => 'Location',
                             _BookingFlowStep.itemDetails => 'Item details',
+                            _BookingFlowStep.brokerSelection => 'Choose broker',
                             _BookingFlowStep.payment => 'Payment',
                           },
                           style: Theme.of(context).textTheme.labelLarge
@@ -2223,11 +2382,60 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
       _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
+      _BookingFlowStep.brokerSelection => _buildBrokerSelectionStep(context),
       _BookingFlowStep.payment =>
         _bookingCreated
             ? _buildSuccessStep(context)
             : _buildPaymentStep(context),
     };
+  }
+
+  Widget _buildBrokerSelectionStep(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom + 140;
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomPadding),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Choose your broker',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Pick one of the demo brokers below, then either go with them or negotiate a better price.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _BrokerCardGrid(
+                brokers: _demoBrokers,
+                selectedBrokerId: _selectedBroker?.id,
+                onSelect: (broker) {
+                  setState(() {
+                    _selectedBroker = broker;
+                  });
+                },
+                onContinue: _acceptSelectedBroker,
+                onNegotiate: _openNegotiationSheet,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLocationStep(BuildContext context) {
@@ -2292,7 +2500,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 _toController.text = entry.value.$2;
               }),
             ),
-            if (entry.key != _recentLocations.length - 1) const SizedBox(height: 8),
+            if (entry.key != _recentLocations.length - 1)
+              const SizedBox(height: 8),
           ],
         ),
       ],
@@ -2416,6 +2625,814 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 }
 
+class _BrokerDiscoveryLoader extends StatefulWidget {
+  const _BrokerDiscoveryLoader({required this.messages});
+
+  final List<String> messages;
+
+  @override
+  State<_BrokerDiscoveryLoader> createState() => _BrokerDiscoveryLoaderState();
+}
+
+class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
+  Timer? _timer;
+  int _messageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted || widget.messages.isEmpty) {
+        return;
+      }
+      setState(() {
+        _messageIndex = (_messageIndex + 1) % widget.messages.length;
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _BrokerDiscoveryLoader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.messages != widget.messages) {
+      _messageIndex = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final message = widget.messages.isEmpty
+        ? 'Connecting brokers near you'
+        : widget.messages[_messageIndex % widget.messages.length];
+
+    return SizedBox(
+      width: double.infinity,
+      height: MediaQuery.sizeOf(context).height * 0.62,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 24),
+                const CircularProgressIndicator(
+                  color: Color(0xFF2FA56E),
+                  strokeWidth: 3,
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w800,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Dont worry, I will help you reach your package in its proper destination safely.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF8F2),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Searching live rates and nearby partners',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerCard extends StatelessWidget {
+  const _BrokerCard({
+    required this.broker,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _DemoBroker broker;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected ? broker.color : const Color(0xFFE8EDF2),
+              width: selected ? 1.6 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: selected
+                    ? broker.color.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.03),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: double.infinity,
+                  height: 84,
+                  color: broker.color.withValues(alpha: 0.08),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Image.asset(
+                          'assets/selectionscreen/broker.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      if (selected)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check_circle_rounded,
+                              color: Color(0xFF2FA56E),
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                broker.name,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                broker.company,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.star_rounded,
+                    color: Color(0xFFF5B62D),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    broker.rating.toStringAsFixed(1),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    broker.responseTime,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'From ₹${broker.basePrice.toStringAsFixed(0)}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: broker.color,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerCardGrid extends StatelessWidget {
+  const _BrokerCardGrid({
+    required this.brokers,
+    required this.selectedBrokerId,
+    required this.onSelect,
+    required this.onContinue,
+    required this.onNegotiate,
+  });
+
+  final List<_DemoBroker> brokers;
+  final String? selectedBrokerId;
+  final ValueChanged<_DemoBroker> onSelect;
+  final ValueChanged<_DemoBroker> onContinue;
+  final VoidCallback onNegotiate;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <List<_DemoBroker>>[
+      brokers.take(2).toList(growable: false),
+      brokers.skip(2).take(2).toList(growable: false),
+    ];
+
+    return Column(
+      children: rows.asMap().entries.map((rowEntry) {
+        final row = rowEntry.value;
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: rowEntry.key == rows.length - 1 ? 0 : 12,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < row.length; i++) ...[
+                Expanded(
+                  child: _BrokerSelectableTile(
+                    broker: row[i],
+                    selected: selectedBrokerId == row[i].id,
+                    onTap: () => onSelect(row[i]),
+                    onContinue: onContinue,
+                    onNegotiate: onNegotiate,
+                  ),
+                ),
+                if (i != row.length - 1) const SizedBox(width: 12),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _BrokerSelectableTile extends StatefulWidget {
+  const _BrokerSelectableTile({
+    required this.broker,
+    required this.selected,
+    required this.onTap,
+    required this.onContinue,
+    required this.onNegotiate,
+  });
+
+  final _DemoBroker broker;
+  final bool selected;
+  final VoidCallback onTap;
+  final ValueChanged<_DemoBroker> onContinue;
+  final VoidCallback onNegotiate;
+
+  @override
+  State<_BrokerSelectableTile> createState() => _BrokerSelectableTileState();
+}
+
+class _BrokerSelectableTileState extends State<_BrokerSelectableTile>
+    with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BrokerCard(
+          broker: widget.broker,
+          selected: widget.selected,
+          onTap: widget.onTap,
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: widget.selected
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FilledButton(
+                          onPressed: () => widget.onContinue(widget.broker),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2FA56E),
+                          ),
+                          child: const Text('Continue'),
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton(
+                          onPressed: widget.onNegotiate,
+                          child: const Text('Negotiate'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+class _BrokerNegotiationSheet extends StatefulWidget {
+  const _BrokerNegotiationSheet({
+    required this.broker,
+    required this.minPrice,
+    required this.maxPrice,
+    required this.initialPrice,
+  });
+
+  final _DemoBroker broker;
+  final double minPrice;
+  final double maxPrice;
+  final double initialPrice;
+
+  @override
+  State<_BrokerNegotiationSheet> createState() =>
+      _BrokerNegotiationSheetState();
+}
+
+class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
+  _NegotiationSheetStep _step = _NegotiationSheetStep.slider;
+  late double _value;
+  double? _counterOffer;
+  int _negotiationToken = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialPrice;
+  }
+
+  void _startNegotiation() {
+    final token = ++_negotiationToken;
+    setState(() {
+      _step = _NegotiationSheetStep.loading;
+    });
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted || token != _negotiationToken) {
+        return;
+      }
+      final counterOffer = double.parse((_value * 1.11).toStringAsFixed(0));
+      setState(() {
+        _counterOffer = counterOffer;
+        _step = _NegotiationSheetStep.counterOffer;
+      });
+    });
+  }
+
+  void _acceptCounterOffer() {
+    Navigator.of(
+      context,
+    ).pop(_NegotiationSheetResult.accepted(_counterOffer ?? _value));
+  }
+
+  void _chooseAnotherBroker() {
+    Navigator.of(context).pop(_NegotiationSheetResult.chooseAnotherBroker());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.56,
+      minChildSize: 0.42,
+      maxChildSize: 0.78,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD0D5DD),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: switch (_step) {
+                    _NegotiationSheetStep.slider => _NegotiationSliderStep(
+                      key: const ValueKey('slider'),
+                      broker: widget.broker,
+                      value: _value,
+                      minPrice: widget.minPrice,
+                      maxPrice: widget.maxPrice,
+                      onChanged: (value) {
+                        setState(() {
+                          _value = value;
+                        });
+                      },
+                      onNegotiate: _startNegotiation,
+                    ),
+                    _NegotiationSheetStep.loading => _NegotiationLoadingStep(
+                      key: const ValueKey('loading'),
+                      broker: widget.broker,
+                      messages: _brokerNegotiationMessages,
+                    ),
+                    _NegotiationSheetStep.counterOffer =>
+                      _NegotiationCounterOfferStep(
+                        key: const ValueKey('counter'),
+                        broker: widget.broker,
+                        counterOfferAmount: _counterOffer ?? _value,
+                        onAccept: _acceptCounterOffer,
+                        onCancel: _chooseAnotherBroker,
+                      ),
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NegotiationSliderStep extends StatelessWidget {
+  const _NegotiationSliderStep({
+    super.key,
+    required this.broker,
+    required this.value,
+    required this.minPrice,
+    required this.maxPrice,
+    required this.onChanged,
+    required this.onNegotiate,
+  });
+
+  final _DemoBroker broker;
+  final double value;
+  final double minPrice;
+  final double maxPrice;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onNegotiate;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue = value.roundToDouble();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Negotiate with ${broker.name}',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: const Color(0xFF101828),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Use the slider to set a single offer amount. This stays inside the popup.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: const Color(0xFF667085),
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Offer price',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    '₹${displayValue.toStringAsFixed(0)}',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Slider(
+                value: value.clamp(minPrice, maxPrice),
+                min: minPrice,
+                max: maxPrice,
+                divisions: 24,
+                activeColor: const Color(0xFF2FA56E),
+                inactiveColor: const Color(0xFFE4E7EC),
+                label: '₹${displayValue.toStringAsFixed(0)}',
+                onChanged: onChanged,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '₹${minPrice.toStringAsFixed(0)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                    ),
+                  ),
+                  Text(
+                    '₹${maxPrice.toStringAsFixed(0)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: onNegotiate,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2FA56E),
+            ),
+            child: const Text('Negotiate'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NegotiationLoadingStep extends StatelessWidget {
+  const _NegotiationLoadingStep({
+    super.key,
+    required this.broker,
+    required this.messages,
+  });
+
+  final _DemoBroker broker;
+  final List<String> messages;
+
+  @override
+  Widget build(BuildContext context) {
+    final message = messages.isEmpty
+        ? 'Waiting for broker response'
+        : messages.first;
+
+    return SizedBox(
+      height: 320,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              color: Color(0xFF2FA56E),
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Negotiating with ${broker.name}...',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NegotiationCounterOfferStep extends StatelessWidget {
+  const _NegotiationCounterOfferStep({
+    super.key,
+    required this.broker,
+    required this.counterOfferAmount,
+    required this.onAccept,
+    required this.onCancel,
+  });
+
+  final _DemoBroker broker;
+  final double counterOfferAmount;
+  final VoidCallback onAccept;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${broker.name} replied with a new price',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'You can accept it or choose another broker.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF667085),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: broker.color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.handshake_rounded, color: broker.color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          broker.company,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Counter offer: ₹${counterOfferAmount.toStringAsFixed(counterOfferAmount % 1 == 0 ? 0 : 2)}',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF101828),
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onAccept,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2FA56E),
+                    ),
+                    child: const Text('Accept'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE23A4B),
+                      side: const BorderSide(color: Color(0xFFE23A4B)),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _VehiclePreviewHeader extends StatelessWidget {
   const _VehiclePreviewHeader({required this.vehicle});
 
@@ -2467,11 +3484,7 @@ class _VehiclePreviewHeader extends StatelessWidget {
 }
 
 class _InputCard extends StatelessWidget {
-  const _InputCard({
-    required this.title,
-    required this.child,
-    this.errorText,
-  });
+  const _InputCard({required this.title, required this.child, this.errorText});
 
   final String title;
   final Widget child;
@@ -2485,7 +3498,9 @@ class _InputCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: errorText != null ? const Color(0xFFE23A4B) : const Color(0xFFE8EDF2),
+          color: errorText != null
+              ? const Color(0xFFE23A4B)
+              : const Color(0xFFE8EDF2),
         ),
       ),
       child: Column(
@@ -2540,7 +3555,9 @@ class _StepperCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: errorText != null ? const Color(0xFFE23A4B) : const Color(0xFFE8EDF2),
+          color: errorText != null
+              ? const Color(0xFFE23A4B)
+              : const Color(0xFFE8EDF2),
         ),
       ),
       child: Column(
@@ -3064,10 +4081,7 @@ String _priceInputText(String value) {
   return parsed.toStringAsFixed(parsed % 1 == 0 ? 0 : 2);
 }
 
-double _readDistanceValue(
-  Object? data,
-  Map<String, dynamic> fallback,
-) {
+double _readDistanceValue(Object? data, Map<String, dynamic> fallback) {
   final value = _readDoubleValue(data, fallback, const ['distance']);
   return value ?? 0;
 }
@@ -3095,27 +4109,20 @@ double? _readDoubleValue(
   return null;
 }
 
-double _readMoneyValue(
-  Object? data,
-  Map<String, dynamic> fallback,
-) {
-  return _readDoubleValue(
-        data,
-        fallback,
-        const [
-          'estimated_amount',
-          'estimatedAmount',
-          'amount',
-          'total',
-          'total_amount',
-          'totalAmount',
-          'fare',
-          'price',
-          'value',
-          'quoted_price',
-          'quotedPrice',
-        ],
-      ) ??
+double _readMoneyValue(Object? data, Map<String, dynamic> fallback) {
+  return _readDoubleValue(data, fallback, const [
+        'estimated_amount',
+        'estimatedAmount',
+        'amount',
+        'total',
+        'total_amount',
+        'totalAmount',
+        'fare',
+        'price',
+        'value',
+        'quoted_price',
+        'quotedPrice',
+      ]) ??
       0;
 }
 
@@ -3147,10 +4154,7 @@ String _displayPriceLabel(String value) {
   return trimmed.isEmpty ? 'Loading...' : trimmed;
 }
 
-double? _readBookingCoordinate(
-  Map<String, dynamic> raw,
-  List<String> keys,
-) {
+double? _readBookingCoordinate(Map<String, dynamic> raw, List<String> keys) {
   for (final key in keys) {
     final value = raw[key];
     if (value == null) continue;
@@ -3300,7 +4304,8 @@ class _BookingSummaryCard extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: pickupController != null &&
+                                child:
+                                    pickupController != null &&
                                         onPickupSelected != null
                                     ? GooglePlacesAutocompleteField(
                                         controller: pickupController!,
