@@ -5,7 +5,7 @@ import 'dart:developer' as developer;
 final dioProvider = Provider<Dio>((ref) {
   return Dio(
     BaseOptions(
-      baseUrl: 'https://gadidosti-backend.onrender.com',
+      baseUrl: 'https://apigadidosti.asynk.in',
       contentType: Headers.jsonContentType,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
@@ -146,6 +146,41 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/bookings',
         data: booking,
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDistanceEstimate({
+    required String accessToken,
+    required String pickup,
+    required String drop,
+  }) async {
+    developer.log(
+      'POST /api/config/distance pickup=$pickup drop=$drop',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/config/distance',
+        data: {'pickup': pickup, 'drop': drop},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> estimatePricing({
+    required String accessToken,
+    required Map<String, dynamic> payload,
+  }) async {
+    developer.log(
+      'POST /api/pricing/estimate keys=${payload.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/pricing/estimate',
+        data: payload,
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -357,6 +392,43 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/trips/$tripId/report-issue',
         data: {'reason': reason, 'notes': notes},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateDriverLocation({
+    required String accessToken,
+    required double lat,
+    required double lng,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/drivers/me/location lat=$lat lng=$lng',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/location',
+        data: {'lat': lat, 'lng': lng},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateTripLocation({
+    required String accessToken,
+    required String tripId,
+    required double lat,
+    required double lng,
+  }) async {
+    developer.log(
+      'PATCH /api/trips/$tripId/location lat=$lat lng=$lng',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/trips/$tripId/location',
+        data: {'lat': lat, 'lng': lng},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

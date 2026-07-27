@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerTrackingScreen extends ConsumerWidget {
@@ -69,29 +70,41 @@ class BrokerTrackingScreen extends ConsumerWidget {
                           ),
                     ),
                   ],
-                ),
-              );
+                  ),
+                );
             }
 
+            final liveDriver = _preferredLiveDriver(drivers);
+
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (var index = 0; index < drivers.length; index++) ...[
-                DriverListTile(
-                  driver: drivers[index],
-                  onTap: () {
-                    context.push(
-                      '/broker/drivers/${drivers[index].id}',
-                      extra: drivers[index],
-                    );
-                  },
-                  onEdit: () {
-                    context.push(
-                      '/broker/drivers/add',
-                      extra: drivers[index],
-                    );
-                  },
-                  onRemove: () {},
+                DriverLocationOverviewCard(
+                  driver: liveDriver,
+                  title: 'Live driver position',
+                  subtitle: liveDriver.currentLocation.isEmpty
+                      ? 'Awaiting driver location'
+                      : liveDriver.currentLocation,
                 ),
+                const SizedBox(height: 14),
+
+                for (var index = 0; index < drivers.length; index++) ...[
+                  DriverListTile(
+                    driver: drivers[index],
+                    onTap: () {
+                      context.push(
+                        '/broker/drivers/${drivers[index].id}',
+                        extra: drivers[index],
+                      );
+                    },
+                    onEdit: () {
+                      context.push(
+                        '/broker/drivers/add',
+                        extra: drivers[index],
+                      );
+                    },
+                    onRemove: () {},
+                  ),
                   if (index != drivers.length - 1) const SizedBox(height: 10),
                 ],
               ],
@@ -121,4 +134,20 @@ class BrokerTrackingScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+BrokerDriver _preferredLiveDriver(List<BrokerDriver> drivers) {
+  for (final driver in drivers) {
+    if (driver.status == BrokerDriverStatus.onTrip && driver.hasLiveCoordinates) {
+      return driver;
+    }
+  }
+
+  for (final driver in drivers) {
+    if (driver.hasLiveCoordinates) {
+      return driver;
+    }
+  }
+
+  return drivers.first;
 }

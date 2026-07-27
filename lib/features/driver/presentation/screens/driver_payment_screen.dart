@@ -1,10 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class DriverPaymentScreen extends StatelessWidget {
+import '../../../../core/providers/driver_location_tracker_provider.dart';
+
+class DriverPaymentScreen extends ConsumerStatefulWidget {
   const DriverPaymentScreen({super.key, required this.tripId});
 
   final String tripId;
+
+  @override
+  ConsumerState<DriverPaymentScreen> createState() =>
+      _DriverPaymentScreenState();
+}
+
+class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        ref
+            .read(driverLocationTrackerProvider)
+            .startTracking(tripId: widget.tripId),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,10 +206,10 @@ class DriverPaymentScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 52,
-              child: OutlinedButton(
-                onPressed: () => context.push('/driver/thank-you/$tripId'),
+              SizedBox(
+                height: 52,
+                child: OutlinedButton(
+                onPressed: () => context.push('/driver/thank-you/${widget.tripId}'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF101828),
                   side: const BorderSide(color: Color(0xFFD0D5DD)),

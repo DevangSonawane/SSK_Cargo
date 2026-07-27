@@ -1,10 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class DriverThankYouScreen extends StatelessWidget {
+import '../../../../core/providers/driver_location_tracker_provider.dart';
+
+class DriverThankYouScreen extends ConsumerStatefulWidget {
   const DriverThankYouScreen({super.key, required this.tripId});
 
   final String tripId;
+
+  @override
+  ConsumerState<DriverThankYouScreen> createState() =>
+      _DriverThankYouScreenState();
+}
+
+class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(driverLocationTrackerProvider).stopTracking());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +80,7 @@ class DriverThankYouScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Trip $tripId has been completed successfully.',
+                    'Trip ${widget.tripId} has been completed successfully.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF667085),
@@ -96,7 +115,7 @@ class DriverThankYouScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () => context.go('/driver/active'),
+                      onPressed: () => context.go('/driver/home'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1F88C9),
                         shape: RoundedRectangleBorder(

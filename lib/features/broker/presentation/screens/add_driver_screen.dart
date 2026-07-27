@@ -292,6 +292,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
             : _driverStatusFromApi(_selectedStatus!),
         currentLocation:
             widget.existingDriver?.currentLocation ?? 'Awaiting activation',
+        currentLatitude: widget.existingDriver?.currentLatitude,
+        currentLongitude: widget.existingDriver?.currentLongitude,
         assignedVehicle: selectedTruckPlate.isNotEmpty
             ? selectedTruckPlate
             : truckId,

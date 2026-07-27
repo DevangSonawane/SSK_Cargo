@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/client_flow_widgets.dart';
+import '../widgets/tracking_route_map_view.dart';
 
 class TrackingDetailsScreen extends ConsumerStatefulWidget {
   const TrackingDetailsScreen({
@@ -21,6 +23,26 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   bool _isLiveTracking = false;
   bool _isCancelling = false;
   bool _isBookingCancelled = false;
+
+  void _setBottomNavVisible(bool visible) {
+    ref.read(bottomNavVisibleProvider.notifier).state = visible;
+  }
+
+  void _openLiveTracking() {
+    _setBottomNavVisible(false);
+    setState(() => _isLiveTracking = true);
+  }
+
+  void _closeLiveTracking() {
+    _setBottomNavVisible(true);
+    setState(() => _isLiveTracking = false);
+  }
+
+  @override
+  void dispose() {
+    _setBottomNavVisible(true);
+    super.dispose();
+  }
 
   bool get _canCancelBooking {
     final status = widget.shipment.bookingStatus?.toLowerCase();
@@ -119,15 +141,22 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '[TrackingDetails] build live=$_isLiveTracking '
+      'bookingId=${widget.shipment.bookingId} '
+      'pickup=${widget.shipment.pickupLat},${widget.shipment.pickupLng} '
+      'drop=${widget.shipment.dropLat},${widget.shipment.dropLng} '
+      'live=${widget.shipment.liveLat},${widget.shipment.liveLng}',
+    );
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
         child: _isLiveTracking
             ? _LiveTrackingView(
-                key: const ValueKey('live'),
-                shipment: widget.shipment,
-                onBack: () => setState(() => _isLiveTracking = false),
-              )
+              key: const ValueKey('live'),
+              shipment: widget.shipment,
+              onBack: _closeLiveTracking,
+            )
             : SafeArea(
                 key: const ValueKey('details'),
                 child: Padding(
@@ -138,129 +167,114 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       _CompactSummaryCard(shipment: widget.shipment),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(28),
-                          child: Stack(
-                            children: [
-                              const Positioned.fill(child: TrackingMapBackdrop()),
-                              Positioned.fill(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(28),
                                 child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.white.withValues(alpha: 0.18),
-                                        Colors.white.withValues(alpha: 0.46),
-                                        Colors.white.withValues(alpha: 0.84),
+                                  width: double.infinity,
+                                  color: const Color(0xFFF5F7FB),
+                                  child: SingleChildScrollView(
+                                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Tracking timeline',
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF101828),
+                                              ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        ...widget.shipment.timeline.asMap().entries.map(
+                                              (entry) => Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: entry.key == widget.shipment.timeline.length - 1
+                                                      ? 0
+                                                      : 16,
+                                                ),
+                                                child: _TimelineStepItem(
+                                                  step: entry.value,
+                                                  showConnector:
+                                                      entry.key != widget.shipment.timeline.length - 1,
+                                                ),
+                                              ),
+                                            ),
                                       ],
-                                      stops: const [0.0, 0.42, 1.0],
                                     ),
                                   ),
                                 ),
                               ),
-                              SingleChildScrollView(
-                                padding: const EdgeInsets.fromLTRB(18, 18, 18, 160),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ...widget.shipment.timeline.asMap().entries.map(
-                                          (entry) => Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: entry.key == widget.shipment.timeline.length - 1
-                                                  ? 0
-                                                  : 16,
-                                            ),
-                                            child: _TimelineStepItem(
-                                              step: entry.value,
-                                              showConnector:
-                                                  entry.key != widget.shipment.timeline.length - 1,
-                                            ),
-                                          ),
-                                        ),
-                                  ],
-                                ),
+                            ),
+                            const SizedBox(height: 14),
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: MediaQuery.of(context).padding.bottom,
                               ),
-                              Positioned(
-                                left: 18,
-                                right: 18,
-                                bottom: 0,
-                                child: Padding(
-                                  padding: EdgeInsets.fromLTRB(
-                                    0,
-                                    0,
-                                    0,
-                                    MediaQuery.of(context).padding.bottom + 14,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: FilledButton(
+                                      onPressed: _openLiveTracking,
+                                      style: FilledButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        backgroundColor: const Color(0xFF2FA56E),
+                                      ),
+                                      child: const Text(
+                                        'Live Tracking',
+                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
                                   ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                                        child: SizedBox(
-                                          width: double.infinity,
-                                          height: 48,
-                                          child: FilledButton(
-                                            onPressed: () => setState(() => _isLiveTracking = true),
-                                            style: FilledButton.styleFrom(
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(999),
-                                              ),
-                                              backgroundColor: const Color(0xFF2FA56E),
-                                            ),
-                                            child: const Text(
-                                              'Live Tracking',
-                                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                            ),
+                                  if (widget.shipment.bookingId != null) ...[
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        onPressed: _canCancelBooking && !_isCancelling
+                                            ? _confirmCancelBooking
+                                            : null,
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          side: BorderSide(
+                                            color: _canCancelBooking
+                                                ? const Color(0xFFE23A4B)
+                                                : const Color(0xFFCFD4DC),
+                                          ),
+                                          foregroundColor: const Color(0xFFE23A4B),
+                                          backgroundColor: Colors.white,
+                                        ),
+                                        child: Text(
+                                          _isCancelling
+                                              ? 'Cancelling...'
+                                              : _isBookingCancelled
+                                                  ? 'Booking cancelled'
+                                                  : (_canCancelBooking
+                                                      ? 'Cancel booking'
+                                                      : 'Booking cannot be cancelled'),
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
-                                      if (widget.shipment.bookingId != null) ...[
-                                        const SizedBox(height: 10),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                                          child: SizedBox(
-                                            width: double.infinity,
-                                            height: 48,
-                                            child: OutlinedButton(
-                                              onPressed: _canCancelBooking && !_isCancelling
-                                                  ? _confirmCancelBooking
-                                                  : null,
-                                              style: OutlinedButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(999),
-                                                ),
-                                                side: BorderSide(
-                                                  color: _canCancelBooking
-                                                      ? const Color(0xFFE23A4B)
-                                                      : const Color(0xFFCFD4DC),
-                                                ),
-                                                foregroundColor: const Color(0xFFE23A4B),
-                                                backgroundColor: Colors.white,
-                                              ),
-                                              child: Text(
-                                                _isCancelling
-                                                    ? 'Cancelling...'
-                                                    : _isBookingCancelled
-                                                        ? 'Booking cancelled'
-                                                        : (_canCancelBooking
-                                                            ? 'Cancel booking'
-                                                            : 'Booking cannot be cancelled'),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -286,36 +300,22 @@ class _LiveTrackingView extends StatefulWidget {
   State<_LiveTrackingView> createState() => _LiveTrackingViewState();
 }
 
-class _LiveTrackingViewState extends State<_LiveTrackingView>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
+class _LiveTrackingViewState extends State<_LiveTrackingView> {
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '[LiveTracking] build bookingId=${widget.shipment.bookingId} '
+      'pickup=${widget.shipment.pickupLat},${widget.shipment.pickupLng} '
+      'drop=${widget.shipment.dropLat},${widget.shipment.dropLng} '
+      'live=${widget.shipment.liveLat},${widget.shipment.liveLng}',
+    );
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Stack(
       children: [
-        const Positioned.fill(child: TrackingMapBackdrop()),
         Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, _) {
-              return _LiveRouteOverlay(pulse: _pulseController.value);
-            },
+          child: TrackingRouteMapView(
+            shipment: widget.shipment,
+            liveMode: true,
           ),
         ),
         Positioned.fill(
@@ -325,11 +325,11 @@ class _LiveTrackingViewState extends State<_LiveTrackingView>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white.withValues(alpha: 0.12),
-                  Colors.white.withValues(alpha: 0.36),
-                  Colors.white.withValues(alpha: 0.66),
+                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0.05),
+                  Colors.white.withValues(alpha: 0.14),
                 ],
-                stops: const [0.0, 0.42, 1.0],
+                stops: const [0.0, 0.55, 1.0],
               ),
             ),
           ),
@@ -389,8 +389,11 @@ class _LiveTrackingViewState extends State<_LiveTrackingView>
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 0,
-                child: _LiveInfoCard(shipment: widget.shipment),
+                bottom: bottomInset + 24,
+                child: _LiveInfoCard(
+                  shipment: widget.shipment,
+                  bottomInset: bottomInset,
+                ),
               ),
             ],
           ),
@@ -401,17 +404,22 @@ class _LiveTrackingViewState extends State<_LiveTrackingView>
 }
 
 class _LiveInfoCard extends StatelessWidget {
-  const _LiveInfoCard({required this.shipment});
+  const _LiveInfoCard({
+    required this.shipment,
+    required this.bottomInset,
+  });
 
   final TrackingDemoShipment shipment;
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.34;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.97),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
@@ -421,152 +429,157 @@ class _LiveInfoCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 56,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE1E5EB),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Package information',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: const Color(0xFF101828),
-                ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF2F4FA),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Delivery Type:',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.black45,
-                                  fontSize: 11,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Express delivery',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Package weight:',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.black45,
-                                  fontSize: 11,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            shipment.weight,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0B0B14),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 56,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person_rounded, color: Color(0xFF2FA56E)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Rahul Patil',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Delivery man',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                      ),
-                    ],
+                    color: const Color(0xFFE1E5EB),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Row(
-                  children: [
-                    _ContactIconButton(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      onTap: () {},
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Package information',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: const Color(0xFF101828),
                     ),
-                    const SizedBox(width: 10),
-                    _ContactIconButton(
-                      icon: Icons.call_rounded,
-                      onTap: () {},
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F4FA),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Delivery Type:',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.black45,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Express delivery',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Package weight:',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.black45,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                shipment.weight,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B0B14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F4F4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person_rounded, color: Color(0xFF2FA56E)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rahul Patil',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Delivery man',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Row(
+                      children: [
+                        _ContactIconButton(
+                          icon: Icons.chat_bubble_outline_rounded,
+                          onTap: () {},
+                        ),
+                        const SizedBox(width: 10),
+                        _ContactIconButton(
+                          icon: Icons.call_rounded,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -969,113 +982,6 @@ class _ZoomButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LiveRouteOverlay extends StatelessWidget {
-  const _LiveRouteOverlay({required this.pulse});
-
-  final double pulse;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _LiveRoutePainter(pulse: pulse),
-    );
-  }
-}
-
-class _LiveRoutePainter extends CustomPainter {
-  const _LiveRoutePainter({required this.pulse});
-
-  final double pulse;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final pathPaint = Paint()
-      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.85)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final startGlow = Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.24);
-    final startCore = Paint()..color = const Color(0xFF2FA56E);
-    final endCore = Paint()..color = const Color(0xFF2FA56E);
-    final endGlow = Paint()
-      ..color = const Color(0xFF2FA56E).withValues(alpha: 0.35 + (pulse * 0.40));
-
-    final path = Path()
-      ..moveTo(size.width * 0.28, size.height * 0.66)
-      ..quadraticBezierTo(size.width * 0.34, size.height * 0.45, size.width * 0.50, size.height * 0.40)
-      ..quadraticBezierTo(size.width * 0.62, size.height * 0.36, size.width * 0.74, size.height * 0.28);
-
-    canvas.drawPath(path, pathPaint);
-
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isNotEmpty) {
-      final metric = metrics.first;
-      final animatedOffset = metric.length * pulse;
-
-      for (double offset = 0; offset < metric.length; offset += 18) {
-        final sample = metric.getTangentForOffset((offset + animatedOffset) % metric.length);
-        if (sample == null) continue;
-
-        final t = (offset / metric.length);
-        final alpha = (0.06 + (1 - t) * 0.18) * (0.65 + pulse * 0.35);
-        final radius = 2.2 + ((1 - t) * 1.6);
-
-        canvas.drawCircle(
-          sample.position,
-          radius,
-          Paint()..color = const Color(0xFF2FA56E).withValues(alpha: alpha),
-        );
-      }
-
-      final livePoint = metric.getTangentForOffset(animatedOffset);
-      if (livePoint != null) {
-        canvas.drawCircle(
-          livePoint.position,
-          11 + (pulse * 5),
-          Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.18 + (pulse * 0.18)),
-        );
-        canvas.drawCircle(
-          livePoint.position,
-          5.5,
-          Paint()..color = Colors.white,
-        );
-      }
-    }
-
-    final startCenter = Offset(size.width * 0.28, size.height * 0.66);
-    final startOuter = 28 + (pulse * 10);
-    final startInner = 12 + (pulse * 2.5);
-
-    canvas.drawCircle(
-      startCenter,
-      startOuter,
-      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.10 + (pulse * 0.12)),
-    );
-    canvas.drawCircle(startCenter, 34 + (pulse * 6), startGlow);
-    canvas.drawCircle(startCenter, startInner, startCore);
-    canvas.drawCircle(startCenter, 4.5, Paint()..color = Colors.white);
-
-    final endCenter = Offset(size.width * 0.74, size.height * 0.28);
-    final glowRadius = 28 + (pulse * 14);
-    final coreRadius = 12 + (pulse * 3.0);
-
-    canvas.drawCircle(
-      endCenter,
-      glowRadius + 10,
-      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.10 + (pulse * 0.14)),
-    );
-    canvas.drawCircle(endCenter, glowRadius, endGlow);
-    canvas.drawCircle(endCenter, 26 + (pulse * 4), startGlow);
-    canvas.drawCircle(endCenter, coreRadius, endCore);
-    canvas.drawCircle(endCenter, 4.5, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(covariant _LiveRoutePainter oldDelegate) => oldDelegate.pulse != pulse;
 }
 
 class TrackingMapBackdrop extends StatelessWidget {

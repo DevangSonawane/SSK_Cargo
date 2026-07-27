@@ -1,13 +1,17 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../../../core/providers/google_places_provider.dart';
+import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
+import 'google_places_autocomplete_field.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -29,6 +33,8 @@ class BookingData {
     this.truckCategory = '',
     this.scheduledDate,
     this.distance = 0,
+    this.durationMin,
+    this.durationInTrafficMin,
     this.amount = 0,
     this.brokerId = '',
     this.truckId = '',
@@ -52,6 +58,8 @@ class BookingData {
   final String truckCategory;
   final DateTime? scheduledDate;
   final double distance;
+  final int? durationMin;
+  final int? durationInTrafficMin;
   final double amount;
   final String brokerId;
   final String truckId;
@@ -85,6 +93,8 @@ class BookingData {
     String? truckCategory,
     DateTime? scheduledDate,
     double? distance,
+    int? durationMin,
+    int? durationInTrafficMin,
     double? amount,
     String? brokerId,
     String? truckId,
@@ -108,6 +118,9 @@ class BookingData {
       truckCategory: truckCategory ?? this.truckCategory,
       scheduledDate: scheduledDate ?? this.scheduledDate,
       distance: distance ?? this.distance,
+      durationMin: durationMin ?? this.durationMin,
+      durationInTrafficMin:
+          durationInTrafficMin ?? this.durationInTrafficMin,
       amount: amount ?? this.amount,
       brokerId: brokerId ?? this.brokerId,
       truckId: truckId ?? this.truckId,
@@ -296,6 +309,12 @@ class TrackingDemoShipment {
     required this.customerName,
     required this.weight,
     required this.timeline,
+    this.pickupLat,
+    this.pickupLng,
+    this.dropLat,
+    this.dropLng,
+    this.liveLat,
+    this.liveLng,
     this.bookingId,
     this.bookingStatus,
     this.assignedDriverName,
@@ -310,6 +329,12 @@ class TrackingDemoShipment {
   final String customerName;
   final String weight;
   final List<TrackingTimelineStep> timeline;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? dropLat;
+  final double? dropLng;
+  final double? liveLat;
+  final double? liveLng;
   final String? bookingId;
   final String? bookingStatus;
   final String? assignedDriverName;
@@ -330,6 +355,16 @@ class TrackingTimelineStep {
 
 TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
   final status = booking.status.toLowerCase();
+  final raw = booking.raw;
+  debugPrint(
+    '[TrackingShipment] bookingId=${booking.id} '
+    'pickup=${_readBookingCoordinate(raw, const ['pickup_lat', 'pickupLat'])},'
+    '${_readBookingCoordinate(raw, const ['pickup_lng', 'pickupLng'])} '
+    'drop=${_readBookingCoordinate(raw, const ['drop_lat', 'dropLat'])},'
+    '${_readBookingCoordinate(raw, const ['drop_lng', 'dropLng'])} '
+    'live=${_readBookingCoordinate(raw, const ['current_lat', 'currentLat', 'truck_lat', 'truckLat'])},'
+    '${_readBookingCoordinate(raw, const ['current_lng', 'currentLng', 'truck_lng', 'truckLng'])}',
+  );
   return TrackingDemoShipment(
     packageName: booking.displayTitle,
     trackingId: booking.bookingRef.isEmpty ? booking.id : booking.bookingRef,
@@ -342,6 +377,22 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     status: booking.displayStatusLabel,
     customerName: booking.clientName,
     weight: booking.weight.isEmpty ? booking.vehicleType : booking.weight,
+    pickupLat: _readBookingCoordinate(raw, const ['pickup_lat', 'pickupLat']),
+    pickupLng: _readBookingCoordinate(raw, const ['pickup_lng', 'pickupLng']),
+    dropLat: _readBookingCoordinate(raw, const ['drop_lat', 'dropLat']),
+    dropLng: _readBookingCoordinate(raw, const ['drop_lng', 'dropLng']),
+    liveLat: _readBookingCoordinate(raw, const [
+      'current_lat',
+      'currentLat',
+      'truck_lat',
+      'truckLat',
+    ]),
+    liveLng: _readBookingCoordinate(raw, const [
+      'current_lng',
+      'currentLng',
+      'truck_lng',
+      'truckLng',
+    ]),
     bookingId: booking.id,
     bookingStatus: status,
     timeline: _timelineForStatus(status, booking),
@@ -514,6 +565,12 @@ const trackingDemoShipments = <TrackingDemoShipment>[
     status: 'Your package is in transit',
     customerName: 'Aarav Mehta',
     weight: '2.40 KG',
+    pickupLat: 19.0760,
+    pickupLng: 72.8777,
+    dropLat: 18.5204,
+    dropLng: 73.8567,
+    liveLat: 18.7640,
+    liveLng: 73.4100,
     timeline: [
       TrackingTimelineStep(
         title: 'Tracking Number Created',
@@ -545,6 +602,12 @@ const trackingDemoShipments = <TrackingDemoShipment>[
     status: 'Arriving at next checkpoint',
     customerName: 'Karan Shah',
     weight: '1.15 KG',
+    pickupLat: 19.0330,
+    pickupLng: 73.0297,
+    dropLat: 12.9716,
+    dropLng: 77.5946,
+    liveLat: 16.0800,
+    liveLng: 75.3500,
     timeline: [
       TrackingTimelineStep(
         title: 'Tracking Number Created',
@@ -576,6 +639,12 @@ const trackingDemoShipments = <TrackingDemoShipment>[
     status: 'Awaiting dispatch',
     customerName: 'Neha Kapoor',
     weight: '8.60 KG',
+    pickupLat: 28.7041,
+    pickupLng: 77.1025,
+    dropLat: 26.9124,
+    dropLng: 75.7873,
+    liveLat: 27.5400,
+    liveLng: 76.4200,
     timeline: [
       TrackingTimelineStep(
         title: 'Tracking Number Created',
@@ -607,6 +676,12 @@ const trackingDemoShipments = <TrackingDemoShipment>[
     status: 'Out for pickup',
     customerName: 'Rohan Kulkarni',
     weight: '4.05 KG',
+    pickupLat: 18.5204,
+    pickupLng: 73.8567,
+    dropLat: 17.3850,
+    dropLng: 78.4867,
+    liveLat: 17.9400,
+    liveLng: 76.9900,
     timeline: [
       TrackingTimelineStep(
         title: 'Tracking Number Created',
@@ -1458,6 +1533,7 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
 enum _BookingFlowStep { location, itemDetails, payment }
 
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
+  late final TextEditingController _fromController;
   late final TextEditingController _toController;
   late final TextEditingController _materialController;
   late final TextEditingController _notesController;
@@ -1469,8 +1545,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   _BookingFlowStep _step = _BookingFlowStep.location;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
   bool _submitting = false;
+  bool _resolvingDistance = false;
   bool _bookingCreated = false;
   String? _bookingReference;
+  String? _weightError;
+  String? _quantityError;
+  String? _materialError;
+  String? _amountError;
+  bool _itemDetailsValidationAttempted = false;
   late BookingData _draft;
   late int _vehicleIndex;
 
@@ -1488,9 +1570,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
     _draft = BookingData(
-      from: widget.tripType == TripType.interCity
-          ? 'Ghanshyam Enclave'
-          : 'Current location',
+      from: '',
       to: '',
       tripType: widget.tripType,
       vehicle: _vehicle,
@@ -1498,6 +1578,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       scheduledDate: DateTime.now().add(const Duration(hours: 3)),
       amount: _priceValue(_vehicle.price),
     );
+    _fromController = TextEditingController(text: _draft.from);
     _toController = TextEditingController();
     _materialController = TextEditingController();
     _notesController = TextEditingController();
@@ -1506,11 +1587,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _amountController = TextEditingController(
       text: _priceInputText(_vehicle.price),
     );
+    _weightController.addListener(_syncItemDetailsErrors);
+    _quantityController.addListener(_syncItemDetailsErrors);
+    _materialController.addListener(_syncItemDetailsErrors);
+    _amountController.addListener(_syncItemDetailsErrors);
   }
 
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _fromController.dispose();
     _toController.dispose();
     _materialController.dispose();
     _notesController.dispose();
@@ -1518,6 +1604,79 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _quantityController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  void _syncItemDetailsErrors() {
+    if (!mounted || !_itemDetailsValidationAttempted) {
+      return;
+    }
+
+    final nextWeightError =
+        double.tryParse(_weightController.text.trim()) == null ||
+            (double.tryParse(_weightController.text.trim()) ?? 0) <= 0
+        ? 'Enter weight'
+        : null;
+    final nextQuantityError =
+        int.tryParse(_quantityController.text.trim()) == null ||
+            (int.tryParse(_quantityController.text.trim()) ?? 0) <= 0
+        ? 'Enter items'
+        : null;
+    final nextMaterialError = _materialController.text.trim().isEmpty
+        ? 'Enter material type'
+        : null;
+    final nextAmountError =
+        double.tryParse(_amountController.text.trim()) == null ||
+            (double.tryParse(_amountController.text.trim()) ?? 0) <= 0
+        ? 'Enter amount'
+        : null;
+
+    if (nextWeightError == _weightError &&
+        nextQuantityError == _quantityError &&
+        nextMaterialError == _materialError &&
+        nextAmountError == _amountError) {
+      return;
+    }
+
+    setState(() {
+      _weightError = nextWeightError;
+      _quantityError = nextQuantityError;
+      _materialError = nextMaterialError;
+      _amountError = nextAmountError;
+    });
+  }
+
+  bool _validateItemDetails() {
+    final nextWeightError =
+        double.tryParse(_weightController.text.trim()) == null ||
+            (double.tryParse(_weightController.text.trim()) ?? 0) <= 0
+        ? 'Enter weight'
+        : null;
+    final nextQuantityError =
+        int.tryParse(_quantityController.text.trim()) == null ||
+            (int.tryParse(_quantityController.text.trim()) ?? 0) <= 0
+        ? 'Enter items'
+        : null;
+    final nextMaterialError = _materialController.text.trim().isEmpty
+        ? 'Enter material type'
+        : null;
+    final nextAmountError =
+        double.tryParse(_amountController.text.trim()) == null ||
+            (double.tryParse(_amountController.text.trim()) ?? 0) <= 0
+        ? 'Enter amount'
+        : null;
+
+    setState(() {
+      _itemDetailsValidationAttempted = true;
+      _weightError = nextWeightError;
+      _quantityError = nextQuantityError;
+      _materialError = nextMaterialError;
+      _amountError = nextAmountError;
+    });
+
+    return nextWeightError == null &&
+        nextQuantityError == null &&
+        nextMaterialError == null &&
+        nextAmountError == null;
   }
 
   Future<void> _next() async {
@@ -1529,33 +1688,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
           return;
         }
-        setState(() {
-          _draft = _draft.copyWith(
-            to: _toController.text.trim(),
-            vehicle: _vehicle,
-            truckCategory: _truckCategoryForVehicle(_vehicle.label),
-          );
-          _step = _BookingFlowStep.itemDetails;
-        });
+        await _resolveDistanceAndContinue();
         return;
       case _BookingFlowStep.itemDetails:
-        final material = _materialController.text.trim();
-        final weight = double.tryParse(_weightController.text.trim());
-        final quantity = int.tryParse(_quantityController.text.trim());
-        final amount = double.tryParse(_amountController.text.trim());
-        if (material.isEmpty ||
-            weight == null ||
-            quantity == null ||
-            amount == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Please fill weight, items, material type, and amount.',
-              ),
-            ),
-          );
+        if (!_validateItemDetails()) {
           return;
         }
+        final material = _materialController.text.trim();
+        final weight = double.parse(_weightController.text.trim());
+        final quantity = int.parse(_quantityController.text.trim());
+        final amount = double.parse(_amountController.text.trim());
         setState(() {
           _draft = _draft.copyWith(
             material: material,
@@ -1575,6 +1717,271 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
         await _submitBooking();
         return;
+    }
+  }
+
+  Future<void> _resolveDistanceAndContinue() async {
+    if (_resolvingDistance) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to continue.'),
+        ),
+      );
+      return;
+    }
+
+    final pickup = _fromController.text.trim();
+    final drop = _toController.text.trim();
+    if (pickup.isEmpty || drop.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter both pickup and drop locations.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _resolvingDistance = true;
+    });
+
+    try {
+      await _resolveTypedCoordinates(
+        pickup: pickup,
+        drop: drop,
+      );
+      final response = await ref.read(apiClientProvider).getDistanceEstimate(
+            accessToken: session.tokens.accessToken,
+            pickup: pickup,
+            drop: drop,
+          );
+      final data = response['data'];
+      final distance = _readDistanceValue(data, response);
+      final durationMin = _readIntValue(data, response, const [
+        'durationMin',
+        'duration_min',
+      ]);
+      final durationInTrafficMin = _readIntValue(data, response, const [
+        'durationInTrafficMin',
+        'duration_in_traffic_min',
+      ]);
+      final estimatedAmount = await _estimateBookingAmount(
+        accessToken: session.tokens.accessToken,
+        distance: distance,
+        durationMin: durationMin,
+        durationInTrafficMin: durationInTrafficMin,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _draft = _draft.copyWith(
+          to: drop,
+          from: pickup,
+          vehicle: _vehicle,
+          truckCategory: _truckCategoryForVehicle(_vehicle.label),
+          distance: distance,
+          durationMin: durationMin,
+          durationInTrafficMin: durationInTrafficMin,
+          amount: estimatedAmount ?? _draft.amount,
+        );
+        _amountController.text = estimatedAmount == null
+            ? _amountController.text
+            : _priceInputText(estimatedAmount.toString());
+        _step = _BookingFlowStep.itemDetails;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingDistance = false;
+        });
+      }
+    }
+  }
+
+  void _applyDropSelection(GooglePlaceSelection selection) {
+    setState(() {
+      _draft = _draft.copyWith(
+        to: selection.formattedAddress,
+        dropLat: selection.latitude,
+        dropLng: selection.longitude,
+      );
+    });
+  }
+
+  void _applyPickupSelection(GooglePlaceSelection selection) {
+    setState(() {
+      _draft = _draft.copyWith(
+        from: selection.formattedAddress,
+        pickupLat: selection.latitude,
+        pickupLng: selection.longitude,
+      );
+    });
+  }
+
+  Future<void> _resolveTypedCoordinates({
+    required String pickup,
+    required String drop,
+  }) async {
+    final service = ref.read(googlePlacesServiceProvider);
+    final pickupNeedsResolution =
+        _draft.pickupLat == null || _draft.pickupLng == null;
+    final dropNeedsResolution = _draft.dropLat == null || _draft.dropLng == null;
+
+    GooglePlaceSelection? pickupSelection;
+    if (pickupNeedsResolution) {
+      pickupSelection = await service.geocodeAddress(address: pickup);
+    }
+
+    GooglePlaceSelection? dropSelection;
+    if (dropNeedsResolution) {
+      dropSelection = await service.geocodeAddress(address: drop);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (pickupSelection != null &&
+          pickupSelection.latitude != null &&
+          pickupSelection.longitude != null) {
+        _draft = _draft.copyWith(
+          from: pickupSelection.formattedAddress.isNotEmpty
+              ? pickupSelection.formattedAddress
+              : pickup,
+          pickupLat: pickupSelection.latitude,
+          pickupLng: pickupSelection.longitude,
+        );
+        if (pickupSelection.formattedAddress.isNotEmpty) {
+          _fromController.text = pickupSelection.formattedAddress;
+        }
+      }
+
+      if (dropSelection != null &&
+          dropSelection.latitude != null &&
+          dropSelection.longitude != null) {
+        _draft = _draft.copyWith(
+          to: dropSelection.formattedAddress.isNotEmpty
+              ? dropSelection.formattedAddress
+              : drop,
+          dropLat: dropSelection.latitude,
+          dropLng: dropSelection.longitude,
+        );
+        if (dropSelection.formattedAddress.isNotEmpty) {
+          _toController.text = dropSelection.formattedAddress;
+        }
+      }
+    });
+  }
+
+  Future<void> _useCurrentLocationForPickup() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Turn on location services to autofill pickup.'),
+          ),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission is needed to autofill pickup.'),
+          ),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      final service = ref.read(googlePlacesServiceProvider);
+      final address = await service.reverseGeocode(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      if (!mounted) return;
+
+      if (address.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not resolve your current address yet.'),
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _draft = _draft.copyWith(
+          from: address,
+          pickupLat: position.latitude,
+          pickupLng: position.longitude,
+        );
+        _fromController.text = address;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<double?> _estimateBookingAmount({
+    required String accessToken,
+    required double distance,
+    required int? durationMin,
+    required int? durationInTrafficMin,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'distance': distance,
+        'truck_category': _truckCategoryForVehicle(_vehicle.label),
+        'transport_type': _draft.transportType,
+        'truck_type': _vehicle.label,
+      };
+      if (durationMin != null) {
+        payload['duration_min'] = durationMin;
+      }
+      if (durationInTrafficMin != null) {
+        payload['duration_in_traffic_min'] = durationInTrafficMin;
+      }
+      final response = await ref.read(apiClientProvider).estimatePricing(
+        accessToken: accessToken,
+        payload: payload,
+      );
+      return _readMoneyValue(response['data'], response);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -1733,7 +2140,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submitting ? null : _next,
-                  child: _submitting
+                  child: (_submitting || _resolvingDistance)
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -1743,10 +2150,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           ),
                         )
                       : Text(switch (_step) {
-                          _BookingFlowStep.location => 'Next',
-                          _BookingFlowStep.itemDetails => 'Next',
-                          _BookingFlowStep.payment => 'Continue',
-                        }),
+                        _BookingFlowStep.location => 'Next',
+                        _BookingFlowStep.itemDetails => 'Next',
+                        _BookingFlowStep.payment => 'Continue',
+                      }),
                 ),
               ),
             ),
@@ -1828,34 +2235,64 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Text(
+              'Location',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _useCurrentLocationForPickup,
+              icon: const Icon(Icons.gps_fixed_rounded, size: 14),
+              label: const Text('Use current location'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                minimumSize: const Size(0, 28),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: const Color(0xFF1F88C9),
+                textStyle: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
         _BookingSummaryCard(
+          pickupController: _fromController,
+          onPickupSelected: _applyPickupSelection,
           pickupTitle: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
-          pickupSubtitle: isInterCity
-              ? 'Pickup location from your trip header'
-              : 'Pickup from current location',
           dropController: _toController,
+          onDropSelected: _applyDropSelection,
         ),
         const SizedBox(height: 12),
         _VehiclePreviewHeader(vehicle: _vehicle),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Text(
-          'Recent addresses',
+          'Recent locations',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF101828),
           ),
         ),
-        const SizedBox(height: 10),
-        ..._recentAddresses.asMap().entries.expand(
+        const SizedBox(height: 8),
+        ..._recentLocations.asMap().entries.expand(
           (entry) => [
-            _RecentAddressTile(
-              title: entry.value.$1,
-              subtitle: entry.value.$2,
-              onTap: () => _toController.text = entry.value.$2,
+            _RecentLocationTile(
+              label: entry.value.$1,
+              address: entry.value.$2,
+              onTap: () => setState(() {
+                _toController.text = entry.value.$2;
+              }),
             ),
-            if (entry.key != _recentAddresses.length - 1)
-              const SizedBox(height: 8),
+            if (entry.key != _recentLocations.length - 1) const SizedBox(height: 8),
           ],
         ),
       ],
@@ -1874,6 +2311,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _StepperCard(
           title: 'Weight (tons)',
           valueText: weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1),
+          errorText: _weightError,
           onMinus: () {
             final next = (weight - 0.5).clamp(0, 9999).toDouble();
             setState(() {
@@ -1895,6 +2333,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _StepperCard(
           title: 'Number of items',
           valueText: quantity.toString(),
+          errorText: _quantityError,
           onMinus: () {
             final next = (quantity - 1).clamp(1, 9999).toInt();
             setState(() {
@@ -1911,6 +2350,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         const SizedBox(height: 12),
         _InputCard(
           title: 'Amount (₹)',
+          errorText: _amountError,
           child: TextField(
             controller: _amountController,
             keyboardType: TextInputType.number,
@@ -1923,6 +2363,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         const SizedBox(height: 12),
         _InputCard(
           title: 'Material type',
+          errorText: _materialError,
           child: TextField(
             controller: _materialController,
             decoration: const InputDecoration(
@@ -1961,8 +2402,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return _BookingSuccessCard(
       bookingReference: _bookingReference,
       onTrack: () => context.go('/client/tracking'),
-      onHome: () => context.go('/client/home'),
+      onHome: _goToClientHome,
     );
+  }
+
+  void _goToClientHome() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.popUntil((route) => route.isFirst);
+      return;
+    }
+    context.go('/client/home');
   }
 }
 
@@ -2017,10 +2467,15 @@ class _VehiclePreviewHeader extends StatelessWidget {
 }
 
 class _InputCard extends StatelessWidget {
-  const _InputCard({required this.title, required this.child});
+  const _InputCard({
+    required this.title,
+    required this.child,
+    this.errorText,
+  });
 
   final String title;
   final Widget child;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -2029,7 +2484,9 @@ class _InputCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(
+          color: errorText != null ? const Color(0xFFE23A4B) : const Color(0xFFE8EDF2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2043,6 +2500,17 @@ class _InputCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           child,
+          if (errorText != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorText!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFFE23A4B),
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -2055,12 +2523,14 @@ class _StepperCard extends StatelessWidget {
     required this.valueText,
     required this.onMinus,
     required this.onPlus,
+    this.errorText,
   });
 
   final String title;
   final String valueText;
   final VoidCallback onMinus;
   final VoidCallback onPlus;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -2069,7 +2539,9 @@ class _StepperCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(
+          color: errorText != null ? const Color(0xFFE23A4B) : const Color(0xFFE8EDF2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2100,6 +2572,17 @@ class _StepperCard extends StatelessWidget {
               _StepperButton(icon: Icons.add_rounded, onTap: onPlus),
             ],
           ),
+          if (errorText != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorText!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFFE23A4B),
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -2581,9 +3064,100 @@ String _priceInputText(String value) {
   return parsed.toStringAsFixed(parsed % 1 == 0 ? 0 : 2);
 }
 
+double _readDistanceValue(
+  Object? data,
+  Map<String, dynamic> fallback,
+) {
+  final value = _readDoubleValue(data, fallback, const ['distance']);
+  return value ?? 0;
+}
+
+double? _readDoubleValue(
+  Object? data,
+  Map<String, dynamic> fallback,
+  List<String> keys,
+) {
+  final candidates = <Object?>[];
+  if (data is Map<String, dynamic>) {
+    for (final key in keys) {
+      candidates.add(data[key]);
+    }
+  }
+  for (final key in keys) {
+    candidates.add(fallback[key]);
+  }
+
+  for (final candidate in candidates) {
+    if (candidate == null) continue;
+    final parsed = double.tryParse(candidate.toString());
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+double _readMoneyValue(
+  Object? data,
+  Map<String, dynamic> fallback,
+) {
+  return _readDoubleValue(
+        data,
+        fallback,
+        const [
+          'estimated_amount',
+          'estimatedAmount',
+          'amount',
+          'total',
+          'total_amount',
+          'totalAmount',
+          'fare',
+          'price',
+          'value',
+          'quoted_price',
+          'quotedPrice',
+        ],
+      ) ??
+      0;
+}
+
+int? _readIntValue(
+  Object? data,
+  Map<String, dynamic> fallback,
+  List<String> keys,
+) {
+  final candidates = <Object?>[];
+  if (data is Map<String, dynamic>) {
+    for (final key in keys) {
+      candidates.add(data[key]);
+    }
+  }
+  for (final key in keys) {
+    candidates.add(fallback[key]);
+  }
+
+  for (final candidate in candidates) {
+    if (candidate == null) continue;
+    final parsed = int.tryParse(candidate.toString());
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
 String _displayPriceLabel(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? 'Loading...' : trimmed;
+}
+
+double? _readBookingCoordinate(
+  Map<String, dynamic> raw,
+  List<String> keys,
+) {
+  for (final key in keys) {
+    final value = raw[key];
+    if (value == null) continue;
+    final parsed = double.tryParse(value.toString());
+    if (parsed != null) return parsed;
+  }
+  return null;
 }
 
 String _extractBookingNumber(Map<String, dynamic> json) {
@@ -2624,14 +3198,22 @@ String _extractBookingNumber(Map<String, dynamic> json) {
 class _BookingSummaryCard extends StatelessWidget {
   const _BookingSummaryCard({
     required this.pickupTitle,
-    required this.pickupSubtitle,
+    this.pickupController,
+    this.onPickupSelected,
     this.dropController,
+    this.onDropSelected,
+    this.distanceText,
+    this.amountText,
     this.dropValue,
   });
 
   final String pickupTitle;
-  final String pickupSubtitle;
+  final TextEditingController? pickupController;
+  final ValueChanged<GooglePlaceSelection>? onPickupSelected;
   final TextEditingController? dropController;
+  final ValueChanged<GooglePlaceSelection>? onDropSelected;
+  final String? distanceText;
+  final String? amountText;
   final String? dropValue;
 
   @override
@@ -2686,6 +3268,7 @@ class _BookingSummaryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
+                const SizedBox(height: 6),
                 Container(
                   width: 8,
                   height: 8,
@@ -2711,47 +3294,37 @@ class _BookingSummaryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        pickupTitle,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1C2430),
-                            ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: Color(0xFF98A2B3),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: pickupController != null &&
+                                        onPickupSelected != null
+                                    ? GooglePlacesAutocompleteField(
+                                        controller: pickupController!,
+                                        label: '',
+                                        hintText: pickupTitle,
+                                        embedded: true,
+                                        showLabel: false,
+                                        onSelected: onPickupSelected!,
+                                      )
+                                    : Text(
+                                        pickupTitle,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF1C2430),
+                                            ),
+                                      ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              pickupSubtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: Colors.black54,
-                                    fontSize: 11,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '58 km',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF98A2B3),
-                                  height: 1,
-                                ),
-                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ],
@@ -2760,23 +3333,24 @@ class _BookingSummaryCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFFF5F7FB),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF2D6EF2),
-                      width: 1.2,
-                    ),
                   ),
                   child: Row(
                     children: [
                       Expanded(
-                        child: dropController == null
-                            ? Text(
+                        child: dropController != null && onDropSelected != null
+                            ? GooglePlacesAutocompleteField(
+                                controller: dropController!,
+                                label: '',
+                                hintText: 'Where is your Drop ?',
+                                embedded: true,
+                                showLabel: false,
+                                onSelected: onDropSelected!,
+                              )
+                            : Text(
                                 dropValue ?? 'Where is your Drop ?',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -2785,43 +3359,8 @@ class _BookingSummaryCard extends StatelessWidget {
                                       color: const Color(0xFF1C2430),
                                       fontSize: 13,
                                     ),
-                              )
-                            : TextField(
-                                controller: dropController,
-                                decoration: InputDecoration(
-                                  hintText: 'Where is your Drop ?',
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  hintStyle: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
-                                        color: Colors.black38,
-                                        fontSize: 13,
-                                      ),
-                                ),
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: const Color(0xFF1C2430),
-                                      fontSize: 13,
-                                    ),
                               ),
                       ),
-                      if (dropController != null)
-                        IconButton(
-                          onPressed: () {},
-                          visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 24,
-                            height: 24,
-                          ),
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(
-                            Icons.mic_none_rounded,
-                            color: Color(0xFF2D6EF2),
-                            size: 16,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -2834,79 +3373,76 @@ class _BookingSummaryCard extends StatelessWidget {
   }
 }
 
-const List<(String, String)> _recentAddresses = [
-  ('Home', 'Ghanshyam Enclave, 1303/1304, Nagpur'),
-  ('Office', 'Orbit Plaza, IT Park Road, Nagpur'),
+const List<(String, String)> _recentLocations = [
+  ('Home', 'Ghanshyam Enclave, Nagpur'),
+  ('Office', 'Orbit Plaza, IT Park Road'),
   ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
   ('Client Site', 'Laxmi Nagar, Near Metro Station'),
-  ('Pickup Point', 'Nandanvan Main Road, Nagpur'),
-  ('Factory', 'Butibori Industrial Area, Nagpur'),
-  ('Retail Store', 'Sitabuldi Market, Nagpur'),
+  ('Pickup Point', 'Nandanvan Main Road'),
+  ('Factory', 'Butibori Industrial Area'),
+  ('Retail Store', 'Sitabuldi Market'),
   ('Branch', 'Wardha Road Business Park'),
-  ('Drop Hub', 'MIHAN Cargo Terminal, Nagpur'),
-  ('Residence', 'Hingna T Point, Nagpur'),
 ];
 
-class _RecentAddressTile extends StatelessWidget {
-  const _RecentAddressTile({
-    required this.title,
-    required this.subtitle,
+class _RecentLocationTile extends StatelessWidget {
+  const _RecentLocationTile({
+    required this.label,
+    required this.address,
     required this.onTap,
   });
 
-  final String title;
-  final String subtitle;
+  final String label;
+  final String address;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.access_time_rounded,
-                  color: Color(0xFF98A2B3),
-                  size: 14,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  '58 km',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF98A2B3),
-                    height: 1,
-                  ),
-                ),
-              ],
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEAF2FB),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_on_rounded,
+                size: 16,
+                color: Color(0xFF1F88C9),
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
+                      color: const Color(0xFF101828),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    subtitle,
+                    address,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
-                      fontSize: 11,
+                      color: const Color(0xFF667085),
                     ),
                   ),
                 ],
@@ -2984,7 +3520,8 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
                   const SizedBox(height: 12),
                   _BookingSummaryCard(
                     pickupTitle: widget.bookingData.from,
-                    pickupSubtitle: widget.bookingData.to,
+                    distanceText: widget.bookingData.distanceText,
+                    amountText: widget.bookingData.amountText,
                     dropValue: widget.bookingData.to,
                   ),
                   const SizedBox(height: 12),

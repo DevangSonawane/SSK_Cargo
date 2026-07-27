@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-class DriverDeliveryPhotoUploadScreen extends StatefulWidget {
+import '../../../../core/providers/driver_location_tracker_provider.dart';
+
+class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
   const DriverDeliveryPhotoUploadScreen({
     super.key,
     required this.tripId,
@@ -16,17 +20,29 @@ class DriverDeliveryPhotoUploadScreen extends StatefulWidget {
   final bool requiresPayment;
 
   @override
-  State<DriverDeliveryPhotoUploadScreen> createState() =>
+  ConsumerState<DriverDeliveryPhotoUploadScreen> createState() =>
       _DriverDeliveryPhotoUploadScreenState();
 }
 
 class _DriverDeliveryPhotoUploadScreenState
-    extends State<DriverDeliveryPhotoUploadScreen> {
+    extends ConsumerState<DriverDeliveryPhotoUploadScreen> {
   static const int _maxPhotos = 6;
 
   final _picker = ImagePicker();
   final List<_CapturedPhoto> _photos = [];
   bool _uploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        ref
+            .read(driverLocationTrackerProvider)
+            .startTracking(tripId: widget.tripId),
+      );
+    });
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     if (_photos.length >= _maxPhotos) {

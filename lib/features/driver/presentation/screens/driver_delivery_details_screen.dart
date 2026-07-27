@@ -5,20 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/providers/driver_location_tracker_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-class DriverDeliveryDetailsScreen extends StatefulWidget {
+class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryDetailsScreen({super.key, required this.tripId});
 
   final String tripId;
 
   @override
-  State<DriverDeliveryDetailsScreen> createState() =>
+  ConsumerState<DriverDeliveryDetailsScreen> createState() =>
       _DriverDeliveryDetailsScreenState();
 }
 
 class _DriverDeliveryDetailsScreenState
-    extends State<DriverDeliveryDetailsScreen> {
+    extends ConsumerState<DriverDeliveryDetailsScreen> {
   double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
   Timer? _arrivalTimer;
@@ -26,6 +27,13 @@ class _DriverDeliveryDetailsScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        ref
+            .read(driverLocationTrackerProvider)
+            .startTracking(tripId: widget.tripId),
+      );
+    });
     _arrivalTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _showArrivalSwipe = true);

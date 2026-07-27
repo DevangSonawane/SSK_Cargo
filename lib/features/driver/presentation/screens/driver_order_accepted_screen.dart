@@ -1,15 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class DriverOrderAcceptedScreen extends StatelessWidget {
+import '../../../../core/providers/driver_location_tracker_provider.dart';
+
+class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
   const DriverOrderAcceptedScreen({super.key, this.tripId});
 
   final String? tripId;
 
   @override
+  ConsumerState<DriverOrderAcceptedScreen> createState() =>
+      _DriverOrderAcceptedScreenState();
+}
+
+class _DriverOrderAcceptedScreenState
+    extends ConsumerState<DriverOrderAcceptedScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final effectiveTripId =
+          (widget.tripId != null && widget.tripId!.isNotEmpty)
+              ? widget.tripId!
+              : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+      unawaited(
+        ref
+            .read(driverLocationTrackerProvider)
+            .startTracking(tripId: effectiveTripId),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final effectiveTripId = (tripId != null && tripId!.isNotEmpty)
-        ? tripId!
+    final effectiveTripId = (widget.tripId != null && widget.tripId!.isNotEmpty)
+        ? widget.tripId!
         : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 
     return Scaffold(

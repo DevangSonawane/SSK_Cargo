@@ -28,6 +28,12 @@
 	<string>567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library so you can choose a profile picture.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to share live driver updates with brokers and clients.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs background location access so driver tracking can continue while a trip is active.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs background location access so driver tracking can continue while a trip is active.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>CFBundleURLTypes</key>
@@ -62,5 +68,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

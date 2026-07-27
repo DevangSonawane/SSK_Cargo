@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class DriverDetailScreen extends StatefulWidget {
@@ -157,40 +158,15 @@ class _DriverLiveViewState extends State<_DriverLiveView> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned.fill(child: _BrokerTrackingMapBackdrop()),
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return _LiveRouteOverlay(progress: _controller.value);
-            },
-          ),
-        ),
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: 0.12),
-                  Colors.white.withValues(alpha: 0.36),
-                  Colors.white.withValues(alpha: 0.66),
-                ],
-                stops: const [0.0, 0.42, 1.0],
-              ),
-            ),
-          ),
-        ),
-        SafeArea(
-          child: Stack(
-            children: [
-              Positioned(
-                left: 14,
-                top: 4,
-                child: InkWell(
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                InkWell(
                   onTap: widget.onBack,
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
@@ -199,140 +175,45 @@ class _DriverLiveViewState extends State<_DriverLiveView> with SingleTickerProvi
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: const Icon(Icons.arrow_back_rounded, size: 20),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 10,
-                left: 0,
-                right: 0,
-                child: Center(
+                const SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'Live Tracking',
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF111111),
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF101828),
                         ),
                   ),
                 ),
-              ),
-              Positioned(
-                right: 14,
-                top: 110,
-                child: Column(
-                  children: [
-                    _ZoomButton(icon: Icons.remove, onTap: () {}),
-                    const SizedBox(height: 10),
-                    _ZoomButton(icon: Icons.add, onTap: () {}),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _DriverLiveInfoCard(driver: widget.driver),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DriverLiveInfoCard extends StatelessWidget {
-  const _DriverLiveInfoCard({required this.driver});
-
-  final BrokerDriver driver;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 22,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 56,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE1E5EB),
-                borderRadius: BorderRadius.circular(999),
+                const SizedBox(width: 42),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: DriverLocationOverviewCard(
+                driver: widget.driver,
+                title: 'Live driver position',
+                subtitle: widget.driver.currentLocation.isEmpty
+                    ? 'Awaiting live location'
+                    : widget.driver.currentLocation,
+                height: null,
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Driver information',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: const Color(0xFF101828),
-                ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoBlock(title: 'Name', value: driver.name),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _InfoBlock(title: 'Phone', value: driver.phone),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoBlock(title: 'Vehicle', value: driver.assignedVehicle),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _InfoBlock(title: 'Status', value: driverStatusLabel(driver.status)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _ContactIconButton(
-                  icon: Icons.call_rounded,
-                  color: const Color(0xFF2FA56E),
-                  onTap: () {},
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ContactIconButton(
-                  icon: Icons.message_rounded,
-                  color: const Color(0xFF1F88C9),
-                  onTap: () {},
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -454,34 +335,6 @@ class _InfoBlock extends StatelessWidget {
   }
 }
 
-class _ContactIconButton extends StatelessWidget {
-  const _ContactIconButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Icon(icon, color: color),
-      ),
-    );
-  }
-}
-
 class _BrokerTrackingMapBackdrop extends StatelessWidget {
   const _BrokerTrackingMapBackdrop();
 
@@ -545,94 +398,4 @@ class _BrokerMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _LiveRouteOverlay extends StatelessWidget {
-  const _LiveRouteOverlay({required this.progress});
-
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _LiveRoutePainter(progress: progress),
-    );
-  }
-}
-
-class _LiveRoutePainter extends CustomPainter {
-  _LiveRoutePainter({required this.progress});
-
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width * 0.16, size.height * 0.76)
-      ..quadraticBezierTo(size.width * 0.32, size.height * 0.58, size.width * 0.48, size.height * 0.62)
-      ..quadraticBezierTo(size.width * 0.66, size.height * 0.67, size.width * 0.83, size.height * 0.40);
-
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isEmpty) return;
-
-    final metric = metrics.first;
-    final partialPath = metric.extractPath(0, metric.length * progress.clamp(0.0, 1.0));
-
-    final glowPaint = Paint()
-      ..color = const Color(0xFF1F88C9).withValues(alpha: 0.16)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 14
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(partialPath, glowPaint);
-
-    final routePaint = Paint()
-      ..color = const Color(0xFF1F88C9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(partialPath, routePaint);
-
-    final movingPoint = metric.getTangentForOffset(metric.length * progress.clamp(0.0, 1.0));
-    if (movingPoint != null) {
-      final pulsePaint = Paint()..color = const Color(0xFF1F88C9).withValues(alpha: 0.16);
-      canvas.drawCircle(movingPoint.position, 18, pulsePaint);
-      canvas.drawCircle(
-        movingPoint.position,
-        9,
-        Paint()..color = const Color(0xFF1F88C9),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _LiveRoutePainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
-}
-
-class _ZoomButton extends StatelessWidget {
-  const _ZoomButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.92),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, size: 20),
-      ),
-    );
-  }
 }

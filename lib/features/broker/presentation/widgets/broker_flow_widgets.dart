@@ -452,6 +452,25 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
   return '';
 }
 
+double? _readCoordinate(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    final parsed = double.tryParse(value.toString().trim());
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
 String _firstNonEmpty(List<String> values) {
   for (final value in values) {
     final text = value.trim();
@@ -517,6 +536,8 @@ class BrokerDriver {
     required this.vehicleType,
     required this.status,
     required this.currentLocation,
+    this.currentLatitude,
+    this.currentLongitude,
     required this.assignedVehicle,
     required this.onTripSince,
     required this.currentBookingRef,
@@ -533,9 +554,14 @@ class BrokerDriver {
   final String vehicleType;
   final BrokerDriverStatus status;
   final String currentLocation;
+  final double? currentLatitude;
+  final double? currentLongitude;
   final String assignedVehicle;
   final String onTripSince;
   final String currentBookingRef;
+
+  bool get hasLiveCoordinates =>
+      currentLatitude != null && currentLongitude != null;
 }
 
 class _BrokerDriverPage {
@@ -605,6 +631,21 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
     'location',
     'last_location',
   ]);
+  final currentLatitude = _readCoordinate(json, const [
+    'current_lat',
+    'latitude',
+    'lat',
+    'location_lat',
+  ]);
+  final currentLongitude = _readCoordinate(json, const [
+    'current_lng',
+    'current_lon',
+    'longitude',
+    'lng',
+    'lon',
+    'location_lng',
+    'location_lon',
+  ]);
   final onTripSince = _readString(json, const ['on_trip_since', 'trip_since']);
   final currentBookingRef = _readString(json, const [
     'current_booking_ref',
@@ -624,6 +665,8 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
     vehicleType: vehicleType,
     status: status,
     currentLocation: currentLocation,
+    currentLatitude: currentLatitude,
+    currentLongitude: currentLongitude,
     assignedVehicle: assignedVehicle.isNotEmpty ? assignedVehicle : truckPlate,
     onTripSince: onTripSince,
     currentBookingRef: currentBookingRef,
@@ -721,6 +764,8 @@ const mockBrokerDrivers = <BrokerDriver>[
     vehicleType: 'Medium truck',
     status: BrokerDriverStatus.idle,
     currentLocation: 'Near Pune Gateway Hub',
+    currentLatitude: null,
+    currentLongitude: null,
     assignedVehicle: 'MH 12 AB 2456',
     onTripSince: '',
     currentBookingRef: '',
@@ -737,6 +782,8 @@ const mockBrokerDrivers = <BrokerDriver>[
     vehicleType: 'Big truck',
     status: BrokerDriverStatus.onTrip,
     currentLocation: 'Ahmedabad Bypass',
+    currentLatitude: null,
+    currentLongitude: null,
     assignedVehicle: 'MH 14 XY 8104',
     onTripSince: '2h 12m',
     currentBookingRef: 'BK-20489',
@@ -753,6 +800,8 @@ const mockBrokerDrivers = <BrokerDriver>[
     vehicleType: 'Truck pooling',
     status: BrokerDriverStatus.offline,
     currentLocation: 'Offline for login',
+    currentLatitude: null,
+    currentLongitude: null,
     assignedVehicle: 'Unassigned',
     onTripSince: '',
     currentBookingRef: '',
@@ -768,6 +817,12 @@ const mockBrokerHistoryShipments = <TrackingDemoShipment>[
     status: 'Completed',
     customerName: 'Aarav Mehta',
     weight: '32.5 KG',
+    pickupLat: 19.0760,
+    pickupLng: 72.8777,
+    dropLat: 12.9716,
+    dropLng: 77.5946,
+    liveLat: 16.8500,
+    liveLng: 75.2500,
     timeline: [
       TrackingTimelineStep(
         title: 'Booking accepted',
@@ -799,6 +854,12 @@ const mockBrokerHistoryShipments = <TrackingDemoShipment>[
     status: 'Accepted',
     customerName: 'Neha Kapoor',
     weight: '8.6 KG',
+    pickupLat: 28.7041,
+    pickupLng: 77.1025,
+    dropLat: 26.9124,
+    dropLng: 75.7873,
+    liveLat: 27.4000,
+    liveLng: 76.0200,
     timeline: [
       TrackingTimelineStep(
         title: 'Request received',
@@ -830,6 +891,10 @@ const mockBrokerHistoryShipments = <TrackingDemoShipment>[
     status: 'Cancelled',
     customerName: 'Rohit Sharma',
     weight: '48 KG',
+    pickupLat: 18.5204,
+    pickupLng: 73.8567,
+    dropLat: 17.3850,
+    dropLng: 78.4867,
     timeline: [
       TrackingTimelineStep(
         title: 'Request received',

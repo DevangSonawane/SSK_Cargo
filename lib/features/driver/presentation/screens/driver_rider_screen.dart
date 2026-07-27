@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+
 class DriverRiderScreen extends StatelessWidget {
   const DriverRiderScreen({super.key});
 
@@ -10,6 +13,14 @@ class DriverRiderScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
+          TrackingRouteOverviewCard(
+            shipment: trackingDemoShipments.first,
+            title: 'Current route',
+            subtitle:
+                '${trackingDemoShipments.first.fromLocation} → ${trackingDemoShipments.first.toLocation}',
+            liveMode: true,
+          ),
+          const SizedBox(height: 18),
           _SectionHeader(
             title: 'Ongoing delivery',
             subtitle: 'Current trip in progress',
