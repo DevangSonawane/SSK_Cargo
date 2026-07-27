@@ -1,9 +1,12 @@
+// ignore_for_file: use_null_aware_elements
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../broker/presentation/widgets/broker_flow_widgets.dart';
+import '../../../../core/services/google_places_service.dart';
 import 'client_flow_widgets.dart';
 
 class TrackingRouteMapView extends StatefulWidget {
@@ -22,49 +25,40 @@ class TrackingRouteMapView extends StatefulWidget {
 
 class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   GoogleMapController? _controller;
+  final GooglePlacesService _routesService = GooglePlacesService();
+  List<LatLng> _routePoints = const [];
+  int _routeRequestToken = 0;
 
-  LatLng? get _pickupPoint => _latLng(
-        widget.shipment.pickupLat,
-        widget.shipment.pickupLng,
-      );
+  LatLng? get _pickupPoint =>
+      _latLng(widget.shipment.pickupLat, widget.shipment.pickupLng);
 
-  LatLng? get _dropPoint => _latLng(
-        widget.shipment.dropLat,
-        widget.shipment.dropLng,
-      );
+  LatLng? get _dropPoint =>
+      _latLng(widget.shipment.dropLat, widget.shipment.dropLng);
 
   LatLng? get _livePoint {
-    final live = _latLng(widget.shipment.liveLat, widget.shipment.liveLng);
-    if (live != null) return live;
-    if (!widget.liveMode) return null;
-    final pickup = _pickupPoint;
-    final drop = _dropPoint;
-    if (pickup == null) return drop;
-    if (drop == null) return pickup;
-    return LatLng(
-      pickup.latitude + ((drop.latitude - pickup.latitude) * 0.56),
-      pickup.longitude + ((drop.longitude - pickup.longitude) * 0.56),
-    );
+    return _latLng(widget.shipment.liveLat, widget.shipment.liveLng);
   }
 
   List<LatLng> get _points {
-    final points = <LatLng>[];
     final pickup = _pickupPoint;
     final live = _livePoint;
     final drop = _dropPoint;
-    if (pickup != null) points.add(pickup);
-    if (live != null &&
-        (pickup == null ||
-            live.latitude != pickup.latitude ||
-            live.longitude != pickup.longitude) &&
-        (drop == null ||
-            live.latitude != drop.latitude ||
-            live.longitude != drop.longitude)) {
-      points.add(live);
-    }
-    if (drop != null) points.add(drop);
-    return points;
+    return [
+      if (pickup != null) pickup,
+      if (live != null &&
+          (pickup == null ||
+              live.latitude != pickup.latitude ||
+              live.longitude != pickup.longitude) &&
+          (drop == null ||
+              live.latitude != drop.latitude ||
+              live.longitude != drop.longitude))
+        live,
+      if (drop != null) drop,
+    ];
   }
+
+  List<LatLng> get _cameraPoints =>
+      _routePoints.isNotEmpty ? _routePoints : _points;
 
   Set<Marker> get _markers {
     final markers = <Marker>{};
@@ -104,9 +98,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
           markerId: const MarkerId('drop'),
           position: drop,
           infoWindow: InfoWindow(title: widget.shipment.toLocation),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueRed,
-          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
       );
     }
@@ -115,30 +107,28 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   }
 
   Set<Polyline> get _polylines {
-    final points = _points;
-    if (points.length < 2) {
+    if (_routePoints.length < 2) {
       return const {};
     }
     return {
       Polyline(
         polylineId: const PolylineId('route'),
-        points: points,
+        points: _routePoints,
         width: 6,
         color: const Color(0xFF2FA56E),
-        patterns: [PatternItem.dot, PatternItem.gap(10)],
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        jointType: JointType.round,
       ),
     };
   }
 
   LatLngBounds? get _bounds {
-    final points = _points;
+    final points = _cameraPoints;
     if (points.isEmpty) return null;
     if (points.length == 1) {
       final point = points.first;
-      return LatLngBounds(
-        southwest: point,
-        northeast: point,
-      );
+      return LatLngBounds(southwest: point, northeast: point);
     }
     double? minLat;
     double? maxLat;
@@ -157,7 +147,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   }
 
   LatLng _defaultCenter() {
-    final points = _points;
+    final points = _cameraPoints;
     if (points.isNotEmpty) {
       return points.first;
     }
@@ -172,9 +162,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
 
     try {
-      await controller.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 48),
-      );
+      await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 48));
     } catch (_) {
       // Bounds fitting can fail briefly on initial layout; the fallback camera
       // position still renders the route correctly.
@@ -186,19 +174,64 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.shipment != widget.shipment ||
         oldWidget.liveMode != widget.liveMode) {
+      _loadRoute();
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadRoute();
+  }
+
+  Future<void> _loadRoute() async {
+    final pickup = _pickupPoint;
+    final drop = _dropPoint;
+    final token = ++_routeRequestToken;
+    if (pickup == null || drop == null) {
+      if (mounted) {
+        setState(() {
+          _routePoints = const [];
+        });
+      }
+      return;
+    }
+
+    try {
+      final route = await _routesService.fetchDrivingRoute(
+        originLatitude: pickup.latitude,
+        originLongitude: pickup.longitude,
+        destinationLatitude: drop.latitude,
+        destinationLongitude: drop.longitude,
+      );
+      if (!mounted || token != _routeRequestToken) {
+        return;
+      }
+      setState(() {
+        _routePoints = route;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
+    } catch (error) {
+      if (!mounted || token != _routeRequestToken) {
+        return;
+      }
+      debugPrint('[TrackingMap] route fetch failed: $error');
+      setState(() {
+        _routePoints = const [];
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final points = _points;
+    final points = _cameraPoints;
     debugPrint(
       '[TrackingMap] build live=${widget.liveMode} '
       'pickup=${widget.shipment.pickupLat},${widget.shipment.pickupLng} '
       'drop=${widget.shipment.dropLat},${widget.shipment.dropLng} '
       'live=${widget.shipment.liveLat},${widget.shipment.liveLng} '
-      'points=${points.length}',
+      'points=${points.length} routePoints=${_routePoints.length}',
     );
     if (points.isEmpty) {
       debugPrint('[TrackingMap] empty state: no coordinates available');
@@ -214,10 +247,20 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
       markers: _markers,
       polylines: _polylines,
       myLocationButtonEnabled: false,
+      zoomGesturesEnabled: true,
+      scrollGesturesEnabled: true,
+      rotateGesturesEnabled: true,
+      tiltGesturesEnabled: true,
       zoomControlsEnabled: false,
       compassEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: true,
+      onCameraMoveStarted: () {
+        debugPrint('[TrackingMap] camera move started');
+      },
+      onCameraIdle: () {
+        debugPrint('[TrackingMap] camera idle');
+      },
       onMapCreated: (controller) {
         _controller = controller;
         debugPrint('[TrackingMap] map created, fitting camera');
@@ -245,10 +288,7 @@ class _EmptyMapState extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF3F6FB),
-            Color(0xFFE8EEF6),
-          ],
+          colors: [Color(0xFFF3F6FB), Color(0xFFE8EEF6)],
         ),
       ),
       child: Center(
@@ -270,25 +310,22 @@ class _EmptyMapState extends StatelessWidget {
                   color: Color(0xFFEAF8EF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.map_outlined,
-                  color: Color(0xFF2FA56E),
-                ),
+                child: const Icon(Icons.map_outlined, color: Color(0xFF2FA56E)),
               ),
               const SizedBox(height: 12),
               Text(
                 'Map loading',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
                 'Location coordinates will appear once the booking has pickup and drop details.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
               ),
             ],
           ),
@@ -331,10 +368,7 @@ class TrackingRouteOverviewCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: TrackingRouteMapView(
-              shipment: shipment,
-              liveMode: liveMode,
-            ),
+            child: TrackingRouteMapView(shipment: shipment, liveMode: liveMode),
           ),
           Positioned(
             left: 14,
@@ -348,9 +382,9 @@ class TrackingRouteOverviewCard extends StatelessWidget {
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF1F88C9),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: const Color(0xFF1F88C9),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -372,13 +406,16 @@ class TrackingRouteOverviewCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF101828),
-                          ),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF101828),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF98A2B3),
+                  ),
                 ],
               ),
             ),
@@ -482,6 +519,10 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
       mapType: MapType.normal,
       markers: _markers,
       myLocationButtonEnabled: false,
+      zoomGesturesEnabled: true,
+      scrollGesturesEnabled: true,
+      rotateGesturesEnabled: true,
+      tiltGesturesEnabled: true,
       zoomControlsEnabled: false,
       compassEnabled: false,
       mapToolbarEnabled: false,
@@ -536,9 +577,9 @@ class DriverLocationOverviewCard extends StatelessWidget {
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF1F88C9),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: const Color(0xFF1F88C9),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -561,9 +602,9 @@ class DriverLocationOverviewCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF101828),
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF101828),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -573,7 +614,8 @@ class DriverLocationOverviewCard extends StatelessWidget {
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF667085),
                               ),
@@ -583,9 +625,9 @@ class DriverLocationOverviewCard extends StatelessWidget {
                       Text(
                         driverStatusLabel(driver.status),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: driverStatusColor(driver.status),
-                            ),
+                          fontWeight: FontWeight.w800,
+                          color: driverStatusColor(driver.status),
+                        ),
                       ),
                     ],
                   ),
@@ -595,8 +637,8 @@ class DriverLocationOverviewCard extends StatelessWidget {
                         ? '${driver.currentLatitude!.toStringAsFixed(5)}, ${driver.currentLongitude!.toStringAsFixed(5)}'
                         : 'Live GPS pending from backend',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
-                        ),
+                      color: const Color(0xFF98A2B3),
+                    ),
                   ),
                 ],
               ),
@@ -644,10 +686,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
 }
 
 class _EmptyLiveLocationState extends StatelessWidget {
-  const _EmptyLiveLocationState({
-    required this.title,
-    required this.subtitle,
-  });
+  const _EmptyLiveLocationState({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -659,10 +698,7 @@ class _EmptyLiveLocationState extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF3F6FB),
-            Color(0xFFE8EEF6),
-          ],
+          colors: [Color(0xFFF3F6FB), Color(0xFFE8EEF6)],
         ),
       ),
       child: Center(
@@ -693,17 +729,17 @@ class _EmptyLiveLocationState extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
               ),
             ],
           ),

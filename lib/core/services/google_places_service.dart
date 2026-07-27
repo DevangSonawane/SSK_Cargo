@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../config/google_maps_config.dart';
 
@@ -34,16 +35,17 @@ class GooglePlaceSelection {
 
 class GooglePlacesService {
   GooglePlacesService({Dio? dio})
-    : _dio = dio ??
+    : _dio =
+          dio ??
           Dio(
-    BaseOptions(
-      baseUrl: 'https://places.googleapis.com/v1',
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
-      sendTimeout: const Duration(seconds: 15),
-      contentType: Headers.jsonContentType,
-    ),
-  ),
+            BaseOptions(
+              baseUrl: 'https://places.googleapis.com/v1',
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 20),
+              sendTimeout: const Duration(seconds: 15),
+              contentType: Headers.jsonContentType,
+            ),
+          ),
       _geocodeDio = Dio(
         BaseOptions(
           baseUrl: 'https://maps.googleapis.com/maps/api/geocode',
@@ -55,6 +57,14 @@ class GooglePlacesService {
 
   final Dio _dio;
   final Dio _geocodeDio;
+  final Dio _directionsDio = Dio(
+    BaseOptions(
+      baseUrl: 'https://maps.googleapis.com/maps/api/directions',
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      sendTimeout: const Duration(seconds: 15),
+    ),
+  );
 
   Future<List<GooglePlaceSuggestion>> autocomplete({
     required String input,
@@ -91,12 +101,20 @@ class GooglePlacesService {
           final prediction = _asMap(item['placePrediction']);
           final text = _asMap(prediction['text']);
           final structured = _asMap(prediction['structuredFormat']);
-          final mainText = _readString(_asMap(structured['mainText']), const ['text']);
-          final secondaryText = _readString(_asMap(structured['secondaryText']), const ['text']);
+          final mainText = _readString(_asMap(structured['mainText']), const [
+            'text',
+          ]);
+          final secondaryText = _readString(
+            _asMap(structured['secondaryText']),
+            const ['text'],
+          );
           final description = _readString(text, const ['text']);
           final resolvedDescription = description.isNotEmpty
               ? description
-              : [mainText, secondaryText].where((value) => value.isNotEmpty).join(', ');
+              : [
+                  mainText,
+                  secondaryText,
+                ].where((value) => value.isNotEmpty).join(', ');
 
           return GooglePlaceSuggestion(
             placeId: _readString(prediction, const ['placeId']).isEmpty
@@ -135,9 +153,7 @@ class GooglePlacesService {
     );
   }
 
-  Future<GooglePlaceSelection> geocodeAddress({
-    required String address,
-  }) async {
+  Future<GooglePlaceSelection> geocodeAddress({required String address}) async {
     if (googleMapsApiKey.isEmpty || address.trim().isEmpty) {
       return const GooglePlaceSelection(
         placeId: '',
@@ -149,10 +165,7 @@ class GooglePlacesService {
 
     final response = await _geocodeDio.get<Map<String, dynamic>>(
       '/json',
-      queryParameters: {
-        'address': address.trim(),
-        'key': googleMapsApiKey,
-      },
+      queryParameters: {'address': address.trim(), 'key': googleMapsApiKey},
     );
 
     final data = response.data ?? const <String, dynamic>{};
@@ -215,6 +228,46 @@ class GooglePlacesService {
 
     return _readString(first, const ['formatted_address']);
   }
+
+  Future<List<LatLng>> fetchDrivingRoute({
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
+  }) async {
+    if (googleMapsApiKey.isEmpty) {
+      return const [];
+    }
+
+    final response = await _directionsDio.get<Map<String, dynamic>>(
+      '/json',
+      queryParameters: {
+        'origin': '$originLatitude,$originLongitude',
+        'destination': '$destinationLatitude,$destinationLongitude',
+        'mode': 'driving',
+        'key': googleMapsApiKey,
+      },
+    );
+
+    final data = response.data ?? const <String, dynamic>{};
+    final routes = data['routes'];
+    if (routes is! List || routes.isEmpty) {
+      return const [];
+    }
+
+    final first = routes.first;
+    if (first is! Map<String, dynamic>) {
+      return const [];
+    }
+
+    final overviewPolyline = _asMap(first['overview_polyline']);
+    final encoded = _readString(overviewPolyline, const ['points']);
+    if (encoded.isEmpty) {
+      return const [];
+    }
+
+    return decodePolyline(encoded);
+  }
 }
 
 Map<String, dynamic> _asMap(Object? value) {
@@ -254,4 +307,38 @@ double? _readDouble(Map<String, dynamic> json, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return null;
+}
+
+List<LatLng> decodePolyline(String encoded) {
+  final poly = <LatLng>[];
+  var index = 0;
+  var lat = 0;
+  var lng = 0;
+
+  while (index < encoded.length) {
+    var result = 0;
+    var shift = 0;
+    int b;
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    final dlat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+
+    result = 0;
+    shift = 0;
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    final dlng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+
+    poly.add(LatLng(lat / 1E5, lng / 1E5));
+  }
+
+  return poly;
 }
