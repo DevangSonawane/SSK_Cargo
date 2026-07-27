@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -343,6 +343,9 @@ class _LiveTrackingView extends StatefulWidget {
 }
 
 class _LiveTrackingViewState extends State<_LiveTrackingView> {
+  static const MethodChannel _mapsLauncherChannel = MethodChannel(
+    'ssk/google_maps_launcher',
+  );
   GoogleMapController? _mapController;
 
   Uri? get _googleMapsDirectionsUri {
@@ -370,7 +373,21 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
     if (uri == null) {
       return;
     }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final opened = await _mapsLauncherChannel.invokeMethod<bool>(
+        'openDirections',
+        {
+          'origin': '${widget.shipment.pickupLat},${widget.shipment.pickupLng}',
+          'destination':
+              '${widget.shipment.dropLat},${widget.shipment.dropLng}',
+        },
+      );
+      if (opened != true) {
+        debugPrint('[LiveTracking] maps launch returned false');
+      }
+    } catch (error) {
+      debugPrint('[LiveTracking] maps launch failed: $error');
+    }
   }
 
   Future<void> _zoomIn() async {
