@@ -840,16 +840,6 @@ class _GpsNavItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            const SizedBox(height: 2),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: selected ? 28 : 0,
-              height: 2.5,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2D6EF2),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
           ],
         ),
       ),
