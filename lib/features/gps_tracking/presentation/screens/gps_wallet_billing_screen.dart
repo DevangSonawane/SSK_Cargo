@@ -39,8 +39,9 @@ class GpsWalletBillingScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: _TokenHeroCard(compact: compact),
                   ),
+                  const SizedBox(height: 10),
                   Transform.translate(
-                    offset: const Offset(0, -16),
+                    offset: const Offset(0, 0),
                     child: Container(
                       width: double.infinity,
                       decoration: const BoxDecoration(
@@ -299,6 +300,27 @@ class _TokenHeroCard extends StatelessWidget {
                     Colors.transparent,
                   ],
                 ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 2,
+            bottom: 2,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.24),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 18,
               ),
             ),
           ),
