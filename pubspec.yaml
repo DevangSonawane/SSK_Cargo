@@ -93,6 +93,9 @@ flutter:
     - assets/IMG_1750.PNG
     - assets/google_logo.svg
     - assets/upi-icon.svg
+    - assets/gps_tracking_screen_fotos/loginpage_gps.png
+    - assets/gps_tracking_screen_fotos/sidebar.png
+    - assets/gps_tracking_screen_fotos/sidebar_image.png
     - assets/svgs/
     - assets/images/
     - assets/selectionscreen/

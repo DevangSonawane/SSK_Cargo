@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/gps_sidebar_drawer.dart';
+
 class GpsVehiclesScreen extends StatelessWidget {
   const GpsVehiclesScreen({super.key});
 
@@ -11,6 +13,7 @@ class GpsVehiclesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FD),
+      drawer: const GpsSidebarDrawer(currentRoute: '/gps/vehicles'),
       body: Stack(
         children: [
           const _VehiclesBackdrop(),
@@ -93,7 +96,7 @@ class _VehiclesHeader extends StatelessWidget {
         _HeaderButton(
           icon: Icons.menu_rounded,
           size: width < 390 ? 48 : 52,
-          onTap: () {},
+          onTap: () => Scaffold.of(context).openDrawer(),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -743,7 +746,7 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.grid_view_rounded,
+                      icon: Icons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
@@ -767,14 +770,8 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.person_rounded,
-                      label: 'Gadidost',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profile screen coming next.'),
-                          ),
-                        );
-                      },
+                      label: 'Profile',
+                      onTap: () => context.go('/gps/profile'),
                     ),
                   ),
                 ],

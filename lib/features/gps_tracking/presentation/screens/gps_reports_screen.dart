@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/gps_sidebar_drawer.dart';
+
 class GpsReportsScreen extends StatelessWidget {
   const GpsReportsScreen({super.key});
 
@@ -11,6 +13,7 @@ class GpsReportsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FD),
+      drawer: const GpsSidebarDrawer(currentRoute: '/gps/reports'),
       body: Stack(
         children: [
           const _ReportsBackdrop(),
@@ -32,10 +35,11 @@ class GpsReportsScreen extends StatelessWidget {
                         _DropdownField(
                           icon: Icons.bar_chart_rounded,
                           label: 'Select a report type',
+                          showArrow: false,
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
-                          height: 96,
+                          height: 84,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -229,72 +233,16 @@ class _ReportsBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF0B1E43), Color(0xFF102B5E)],
-            ),
-          ),
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFDFEFF), Color(0xFFF4F7FC)],
         ),
-        Positioned(
-          top: 28,
-          right: 26,
-          child: Opacity(
-            opacity: 0.22,
-            child: Container(
-              width: 170,
-              height: 110,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2D6EF2),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: CustomPaint(painter: _ReportsBackdropPainter()),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
-}
-
-class _ReportsBackdropPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = const Color(0xFF7DB0FF);
-
-    final path = Path()
-      ..moveTo(10, size.height * 0.78)
-      ..quadraticBezierTo(
-        size.width * 0.18,
-        size.height * 0.52,
-        size.width * 0.3,
-        size.height * 0.64,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.44,
-        size.height * 0.76,
-        size.width * 0.56,
-        size.height * 0.45,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.7,
-        size.height * 0.12,
-        size.width * 0.86,
-        size.height * 0.5,
-      );
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _ReportsHeader extends StatelessWidget {
@@ -304,8 +252,8 @@ class _ReportsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleSize = width < 390 ? 24.0 : 28.0;
-    final subtitleSize = width < 390 ? 11.5 : 12.5;
+    final titleSize = width < 390 ? 22.0 : 24.0;
+    final subtitleSize = width < 390 ? 10.5 : 11.5;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,7 +261,7 @@ class _ReportsHeader extends StatelessWidget {
         _HeaderButton(
           icon: Icons.menu_rounded,
           size: width < 390 ? 48 : 52,
-          onTap: () {},
+          onTap: () => Scaffold.of(context).openDrawer(),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -327,7 +275,7 @@ class _ReportsHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontSize: titleSize,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: const Color(0xFF0F1F44),
                   letterSpacing: -0.7,
                 ),
               ),
@@ -339,18 +287,11 @@ class _ReportsHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: subtitleSize,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.88),
+                  color: const Color(0xFF63708A),
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 12),
-        _HeaderButton(
-          icon: Icons.notifications_none_rounded,
-          size: width < 390 ? 48 : 52,
-          onTap: () {},
-          showDot: true,
         ),
       ],
     );
@@ -362,13 +303,11 @@ class _HeaderButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.size,
-    this.showDot = false,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final double size;
-  final bool showDot;
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +315,7 @@ class _HeaderButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Material(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             onTap: onTap,
@@ -385,26 +324,24 @@ class _HeaderButton extends StatelessWidget {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF101828).withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              child: Icon(icon, size: size * 0.48, color: Colors.white),
+              child: Icon(
+                icon,
+                size: size * 0.48,
+                color: const Color(0xFF182B4E),
+              ),
             ),
           ),
         ),
-        if (showDot)
-          Positioned(
-            right: 8,
-            top: 8,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF4646),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -469,7 +406,7 @@ class _ReportCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF10213F),
                       ),
@@ -478,7 +415,7 @@ class _ReportCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
+                        fontSize: 11.5,
                         color: const Color(0xFF6B7690),
                       ),
                     ),
@@ -496,10 +433,15 @@ class _ReportCard extends StatelessWidget {
 }
 
 class _DropdownField extends StatelessWidget {
-  const _DropdownField({required this.icon, required this.label});
+  const _DropdownField({
+    required this.icon,
+    required this.label,
+    this.showArrow = true,
+  });
 
   final IconData icon;
   final String label;
+  final bool showArrow;
 
   @override
   Widget build(BuildContext context) {
@@ -526,16 +468,17 @@ class _DropdownField extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF182B4E),
               ),
             ),
           ),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF72809B),
-          ),
+          if (showArrow)
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF72809B),
+            ),
         ],
       ),
     );
@@ -578,34 +521,33 @@ class _MiniOptionCard extends StatelessWidget {
     final fg = selected ? const Color(0xFF2D6EF2) : const Color(0xFF182B4E);
 
     return Container(
-      width: compact ? 106 : 116,
-      padding: const EdgeInsets.all(10),
+      width: compact ? 90 : 102,
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: borderColor),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 30,
+            height: 30,
             decoration: const BoxDecoration(
               color: Color(0xFFF2F6FC),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 18, color: fg),
+            child: Icon(icon, size: 15, color: fg),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: compact ? 10.2 : 11,
-              height: 1.1,
+              fontSize: compact ? 9.2 : 9.8,
               fontWeight: FontWeight.w800,
               color: fg,
             ),
@@ -625,7 +567,7 @@ class _DateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(16),
@@ -637,17 +579,17 @@ class _DateField extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 12,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF72809B),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(
                 Icons.calendar_month_rounded,
-                size: 18,
+                size: 16,
                 color: Color(0xFF72809B),
               ),
               const SizedBox(width: 8),
@@ -657,7 +599,7 @@ class _DateField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 13,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF182B4E),
                   ),
@@ -666,6 +608,7 @@ class _DateField extends StatelessWidget {
               const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: Color(0xFF72809B),
+                size: 18,
               ),
             ],
           ),
@@ -686,7 +629,7 @@ class _DurationChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: selected ? const Color(0xFFEAF1FF) : Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -698,14 +641,14 @@ class _DurationChip extends StatelessWidget {
         children: [
           Icon(
             Icons.calendar_today_rounded,
-            size: 16,
+            size: 14,
             color: selected ? const Color(0xFF2D6EF2) : const Color(0xFF72809B),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 12.5,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: selected
                   ? const Color(0xFF2D6EF2)
@@ -748,7 +691,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.grid_view_rounded,
+                      icon: Icons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
@@ -772,14 +715,8 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.person_rounded,
-                      label: 'Gadidost',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profile screen coming next.'),
-                          ),
-                        );
-                      },
+                      label: 'Profile',
+                      onTap: () => context.go('/gps/profile'),
                     ),
                   ),
                 ],
