@@ -266,14 +266,14 @@ class _TokenHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF174BBE), Color(0xFF0E2D75), Color(0xFF0D285E)],
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFF8FB4FF), width: 1.2),
         boxShadow: [
           BoxShadow(
@@ -289,8 +289,8 @@ class _TokenHeroCard extends StatelessWidget {
             right: -36,
             bottom: -40,
             child: Container(
-              width: 180,
-              height: 180,
+              width: 160,
+              height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
@@ -309,19 +309,19 @@ class _TokenHeroCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: compact ? 68 : 72,
-                    height: compact ? 68 : 72,
+                    width: compact ? 62 : 66,
+                    height: compact ? 62 : 66,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2E68F5),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
                       Icons.account_balance_wallet_rounded,
                       color: Colors.white,
-                      size: 34,
+                      size: 30,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,14 +331,14 @@ class _TokenHeroCard extends StatelessWidget {
                             Text(
                               'Token Balance',
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontSize: compact ? 14 : 15,
+                                    fontSize: compact ? 12.8 : 13.5,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white.withValues(alpha: 0.92),
                                   ),
                             ),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF2BC56A).withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(999),
@@ -346,7 +346,7 @@ class _TokenHeroCard extends StatelessWidget {
                               child: const Text(
                                 'ACTIVE',
                                 style: TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF55E07E),
                                   letterSpacing: 0.2,
@@ -355,26 +355,26 @@ class _TokenHeroCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               '0',
                               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                    fontSize: compact ? 36 : 40,
+                                    fontSize: compact ? 32 : 34,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     height: 0.9,
                                   ),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 5),
+                              padding: const EdgeInsets.only(bottom: 4),
                               child: Text(
                                 'tokens',
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontSize: 14,
+                                      fontSize: 12.5,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white.withValues(alpha: 0.82),
                                     ),
@@ -382,11 +382,11 @@ class _TokenHeroCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                         Text(
                           '₹0.00 equivalent',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontSize: compact ? 11 : 11.5,
+                                fontSize: compact ? 10 : 10.5,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white.withValues(alpha: 0.72),
                               ),
