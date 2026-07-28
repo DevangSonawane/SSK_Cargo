@@ -34,7 +34,7 @@ class GpsReportsScreen extends StatelessWidget {
                       children: [
                         _DropdownField(
                           icon: Icons.bar_chart_rounded,
-                          label: 'Select a report type',
+                          label: '',
                           showArrow: false,
                         ),
                         const SizedBox(height: 16),
@@ -464,16 +464,17 @@ class _DropdownField extends StatelessWidget {
             child: Icon(icon, size: 18, color: const Color(0xFF2D6EF2)),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF182B4E),
+          if (label.isNotEmpty)
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF182B4E),
+                ),
               ),
             ),
-          ),
           if (showArrow)
             const Icon(
               Icons.keyboard_arrow_down_rounded,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/gps_sidebar_drawer.dart';
+
 class GpsWalletBillingScreen extends StatelessWidget {
   const GpsWalletBillingScreen({super.key});
 
@@ -11,6 +13,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FC),
+      drawer: const GpsSidebarDrawer(currentRoute: '/gps/wallet-billing'),
       body: Stack(
         children: [
           const _WalletBackdrop(),
@@ -25,13 +28,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: _WalletHeader(
                       compact: compact,
-                      onBack: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
-                          context.go('/gps/dashboard');
-                        }
-                      },
+                      onMenu: () => Scaffold.of(context).openDrawer(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -216,26 +213,26 @@ class _WalletBackdrop extends StatelessWidget {
 class _WalletHeader extends StatelessWidget {
   const _WalletHeader({
     required this.compact,
-    required this.onBack,
+    required this.onMenu,
   });
 
   final bool compact;
-  final VoidCallback onBack;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         GestureDetector(
-          onTap: onBack,
+          onTap: onMenu,
           child: Container(
             width: 38,
             height: 38,
             alignment: Alignment.center,
             child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
+              Icons.menu_rounded,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ),
         ),

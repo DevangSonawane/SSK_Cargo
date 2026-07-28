@@ -88,7 +88,7 @@ class _VehiclesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleSize = width < 390 ? 21.0 : 24.0;
-    final subtitleSize = width < 390 ? 10.5 : 11.5;
+    final subtitleSize = width < 390 ? 9.5 : 10.2;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
