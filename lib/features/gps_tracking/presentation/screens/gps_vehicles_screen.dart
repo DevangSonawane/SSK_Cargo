@@ -520,10 +520,10 @@ class _VehicleCard extends StatelessWidget {
     final statusColor = vehicle.color;
 
     return Container(
-      height: compact ? 126 : 134,
+      height: compact ? 112 : 120,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF101828).withValues(alpha: 0.04),
@@ -533,7 +533,7 @@ class _VehicleCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Stack(
           children: [
             Positioned.fill(
@@ -545,23 +545,23 @@ class _VehicleCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               child: Row(
                 children: [
                   Container(
-                    width: compact ? 64 : 72,
-                    height: compact ? 64 : 72,
+                    width: compact ? 56 : 60,
+                    height: compact ? 56 : 60,
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       vehicle.icon,
                       color: statusColor,
-                      size: compact ? 30 : 34,
+                      size: compact ? 26 : 28,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,30 +573,30 @@ class _VehicleCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                fontSize: compact ? 13.5 : 15,
+                                fontSize: compact ? 12.5 : 13.5,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF10213F),
                               ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           vehicle.model,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                fontSize: compact ? 10.8 : 11.8,
+                                fontSize: compact ? 9.8 : 10.5,
                                 color: const Color(0xFF33405C),
                               ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             const CircleAvatar(
-                              radius: 9,
+                              radius: 8,
                               backgroundImage: AssetImage('assets/user.png'),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 vehicle.driver,
@@ -604,7 +604,7 @@ class _VehicleCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      fontSize: compact ? 10.8 : 11.8,
+                                      fontSize: compact ? 9.8 : 10.5,
                                       color: const Color(0xFF33405C),
                                     ),
                               ),
@@ -620,7 +620,7 @@ class _VehicleCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _StatusPill(color: statusColor, label: vehicle.status),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -628,28 +628,28 @@ class _VehicleCard extends StatelessWidget {
                             vehicle.status == 'Offline'
                                 ? Icons.wifi_off_rounded
                                 : Icons.speed_rounded,
-                            size: 15,
+                            size: 14,
                             color: const Color(0xFF66758D),
                           ),
-                          const SizedBox(width: 5),
+                          const SizedBox(width: 4),
                           Text(
                             vehicle.speed,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  fontSize: compact ? 10.8 : 11.8,
+                                  fontSize: compact ? 9.8 : 10.5,
                                   color: const Color(0xFF66758D),
                                 ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         vehicle.location,
                         textAlign: TextAlign.right,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: compact ? 10.3 : 11.2,
+                          fontSize: compact ? 9.2 : 10,
                           color: const Color(0xFF66758D),
                         ),
                       ),
@@ -657,7 +657,7 @@ class _VehicleCard extends StatelessWidget {
                       Text(
                         vehicle.timeAgo,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: compact ? 9.8 : 10.8,
+                          fontSize: compact ? 9 : 9.6,
                           color: const Color(0xFF8A96AB),
                         ),
                       ),
@@ -688,7 +688,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
@@ -705,7 +705,7 @@ class _StatusPill extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 11.5,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: color,
             ),

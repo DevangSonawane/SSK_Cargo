@@ -430,12 +430,10 @@ class _DropdownField extends StatelessWidget {
   const _DropdownField({
     required this.icon,
     required this.label,
-    this.showArrow = true,
   });
 
   final IconData icon;
   final String label;
-  final bool showArrow;
 
   @override
   Widget build(BuildContext context) {
@@ -469,11 +467,10 @@ class _DropdownField extends StatelessWidget {
                 ),
               ),
             ),
-          if (showArrow)
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF72809B),
-            ),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Color(0xFF72809B),
+          ),
         ],
       ),
     );
