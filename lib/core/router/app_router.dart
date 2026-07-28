@@ -8,6 +8,8 @@ import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_reports_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
@@ -74,6 +76,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/gps/dashboard',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: GpsDashboardScreen()),
+      ),
+      GoRoute(
+        path: '/gps/vehicles',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsVehiclesScreen()),
+      ),
+      GoRoute(
+        path: '/gps/reports',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsReportsScreen()),
       ),
       GoRoute(
         path: '/driver/profile',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class GpsDashboardScreen extends StatelessWidget {
   const GpsDashboardScreen({super.key});
@@ -21,7 +22,7 @@ class GpsDashboardScreen extends StatelessWidget {
                 children: [
                   _DashboardHeader(width: width),
                   const SizedBox(height: 16),
-                  _HorizontalActionStrip(width: width, isCompact: isCompact),
+                  _KpiStrip(width: width, isCompact: isCompact),
                   const SizedBox(height: 16),
                   const _FleetStatusCard(),
                   const SizedBox(height: 16),
@@ -228,28 +229,28 @@ class _NotificationButton extends StatelessWidget {
   }
 }
 
-class _HorizontalActionStrip extends StatelessWidget {
-  const _HorizontalActionStrip({required this.width, required this.isCompact});
+class _KpiStrip extends StatelessWidget {
+  const _KpiStrip({required this.width, required this.isCompact});
 
   final double width;
   final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = width < 390 ? 132.0 : 150.0;
-    final cardHeight = width < 390 ? 130.0 : 142.0;
+    final cardWidth = width < 390 ? 124.0 : 140.0;
+    final cardHeight = width < 390 ? 152.0 : 164.0;
 
     return SizedBox(
       height: cardHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: _actionCards.length,
+        itemCount: _kpiCards.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           return SizedBox(
             width: cardWidth,
-            child: _ActionCard(data: _actionCards[index], compact: isCompact),
+            child: _KpiCard(data: _kpiCards[index], compact: isCompact),
           );
         },
       ),
@@ -257,63 +258,63 @@ class _HorizontalActionStrip extends StatelessWidget {
   }
 }
 
-class _ActionCardData {
-  const _ActionCardData({
+class _KpiCardData {
+  const _KpiCardData({
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.tint,
     required this.background,
+    required this.value,
   });
 
   final String title;
-  final String subtitle;
   final IconData icon;
   final Color tint;
   final Color background;
+  final String value;
 }
 
-const _actionCards = <_ActionCardData>[
-  _ActionCardData(
-    title: 'Live Tracking',
-    subtitle: 'Track vehicles in real-time',
-    icon: Icons.location_on_rounded,
+const _kpiCards = <_KpiCardData>[
+  _KpiCardData(
+    title: 'Total Vehicles',
+    value: '32',
+    icon: Icons.local_shipping_rounded,
+    tint: Color(0xFF2D6EF2),
+    background: Color(0xFFEAF1FF),
+  ),
+  _KpiCardData(
+    title: 'Running',
+    value: '18',
+    icon: Icons.play_arrow_rounded,
     tint: Color(0xFF13B36C),
     background: Color(0xFFEAF9F1),
   ),
-  _ActionCardData(
-    title: 'Reports',
-    subtitle: 'View detailed fleet reports',
-    icon: Icons.description_rounded,
+  _KpiCardData(
+    title: 'Stopped',
+    value: '6',
+    icon: Icons.stop_circle_rounded,
+    tint: Color(0xFFFF595D),
+    background: Color(0xFFFFEEEE),
+  ),
+  _KpiCardData(
+    title: 'Offline',
+    value: '4',
+    icon: Icons.wifi_rounded,
     tint: Color(0xFF4B84F6),
     background: Color(0xFFEAF1FF),
   ),
-  _ActionCardData(
-    title: 'Alerts',
-    subtitle: 'View recent notifications',
-    icon: Icons.notifications_rounded,
-    tint: Color(0xFFF3A21C),
-    background: Color(0xFFFFF4E0),
-  ),
-  _ActionCardData(
-    title: 'Driver List',
-    subtitle: 'Manage your drivers',
-    icon: Icons.groups_rounded,
-    tint: Color(0xFF9D4EDD),
-    background: Color(0xFFF4ECFF),
-  ),
 ];
 
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.data, required this.compact});
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({required this.data, required this.compact});
 
-  final _ActionCardData data;
+  final _KpiCardData data;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(22),
@@ -338,26 +339,33 @@ class _ActionCard extends StatelessWidget {
             ),
             child: Icon(data.icon, color: data.tint, size: compact ? 22 : 24),
           ),
-          const Spacer(),
+          const SizedBox(height: 18),
+          Text(
+            data.value,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: compact ? 26 : 28,
+              fontWeight: FontWeight.w900,
+              color: data.tint,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 2),
           Text(
             data.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontSize: compact ? 13 : 14,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF16213C),
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF33405C),
             ),
           ),
-          const SizedBox(height: 4),
+          const Spacer(),
           Text(
-            data.subtitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            'vs last week',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: compact ? 10.5 : 11.5,
+              fontSize: compact ? 10.0 : 11.0,
               color: const Color(0xFF5F6E86),
-              height: 1.2,
             ),
           ),
         ],
@@ -750,31 +758,41 @@ class _GpsBottomNavBar extends StatelessWidget {
                 ],
               ),
               child: Row(
-                children: const [
+                children: [
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.home_rounded,
                       label: 'Dashboard',
                       selected: true,
+                      onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.local_shipping_rounded,
                       label: 'Vehicles',
+                      onTap: () => context.go('/gps/vehicles'),
                     ),
                   ),
-                  Expanded(child: SizedBox(width: 58)),
+                  const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.insert_chart_rounded,
                       label: 'Reports',
+                      onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: Icons.person_rounded,
                       label: 'Profile',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profile screen coming next.'),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -811,45 +829,50 @@ class _GpsNavItem extends StatelessWidget {
   const _GpsNavItem({
     required this.icon,
     required this.label,
+    required this.onTap,
     this.selected = false,
   });
 
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final color = selected ? const Color(0xFF2D6EF2) : const Color(0xFF8692A8);
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 6, bottom: 4),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontSize: 10.5,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: color,
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 10.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: selected ? 28 : 0,
-            height: 2.5,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2D6EF2),
-              borderRadius: BorderRadius.circular(999),
+            const SizedBox(height: 2),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: selected ? 28 : 0,
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2D6EF2),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
