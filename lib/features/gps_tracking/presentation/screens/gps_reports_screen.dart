@@ -32,12 +32,6 @@ class GpsReportsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _DropdownField(
-                          icon: Icons.bar_chart_rounded,
-                          label: '',
-                          showArrow: false,
-                        ),
-                        const SizedBox(height: 16),
                         SizedBox(
                           height: 84,
                           child: ListView.separated(
