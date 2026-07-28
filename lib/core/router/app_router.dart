@@ -11,6 +11,7 @@ import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.da
 import '../../features/gps_tracking/presentation/screens/gps_geofences_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_reports_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_profile_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_wallet_billing_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
@@ -98,6 +99,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/gps/profile',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: GpsProfileScreen()),
+      ),
+      GoRoute(
+        path: '/gps/wallet-billing',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsWalletBillingScreen()),
       ),
       GoRoute(
         path: '/driver/profile',

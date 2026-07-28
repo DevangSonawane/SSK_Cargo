@@ -82,8 +82,8 @@ class GpsSidebarDrawer extends ConsumerWidget {
                       _SidebarNavTile(
                         icon: Icons.account_balance_wallet_rounded,
                         label: 'Wallet & Billing',
-                        selected: false,
-                        onTap: () => _showComingSoon(context, 'Wallet & Billing'),
+                        selected: currentRoute == '/gps/wallet-billing',
+                        onTap: () => _go(context, '/gps/wallet-billing'),
                       ),
                       const _SectionHeader(label: 'Account'),
                       _SidebarNavTile(
