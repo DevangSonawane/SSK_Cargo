@@ -17,7 +17,10 @@ class AccessEntryScreen extends StatelessWidget {
             top: false,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final bannerHeight = (constraints.maxHeight * 0.36).clamp(270.0, 330.0);
+                final bannerHeight = (constraints.maxHeight * 0.36).clamp(
+                  270.0,
+                  330.0,
+                );
 
                 return Center(
                   child: ConstrainedBox(
@@ -41,7 +44,10 @@ class AccessEntryScreen extends StatelessWidget {
                                     return Container(
                                       decoration: const BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: [Color(0xFFEAF2FA), Color(0xFFDDEAF7)],
+                                          colors: [
+                                            Color(0xFFEAF2FA),
+                                            Color(0xFFDDEAF7),
+                                          ],
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
                                         ),
@@ -59,7 +65,9 @@ class AccessEntryScreen extends StatelessWidget {
                                         end: Alignment.bottomCenter,
                                         colors: [
                                           Colors.transparent,
-                                          const Color(0xFFF7FAFC).withValues(alpha: 0.14),
+                                          const Color(
+                                            0xFFF7FAFC,
+                                          ).withValues(alpha: 0.14),
                                           const Color(0xFFF7FAFC),
                                         ],
                                       ),
@@ -96,7 +104,8 @@ class AccessEntryScreen extends StatelessWidget {
                               const SizedBox(height: 18),
                               _AccessChoiceCard(
                                 title: 'Client',
-                                description: 'Book truck, manage shipments & more',
+                                description:
+                                    'Book truck, manage shipments & more',
                                 imagePath: 'assets/selectionscreen/client.png',
                                 icon: Icons.person_rounded,
                                 accentColor: const Color(0xFF6AAE5B),
@@ -106,7 +115,8 @@ class AccessEntryScreen extends StatelessWidget {
                               const SizedBox(height: 12),
                               _AccessChoiceCard(
                                 title: 'Broker',
-                                description: 'Connect with transporters, grow your business',
+                                description:
+                                    'Connect with transporters, grow your business',
                                 imagePath: 'assets/selectionscreen/broker.png',
                                 icon: Icons.handshake_rounded,
                                 accentColor: const Color(0xFF6AAE5B),
@@ -119,13 +129,7 @@ class AccessEntryScreen extends StatelessWidget {
                                 description: 'Track your vehicle in real-time',
                                 imagePath: 'assets/selectionscreen/gps.png',
                                 arrowIcon: Icons.chevron_right_rounded,
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Coming soon'),
-                                    ),
-                                  );
-                                },
+                                onTap: () => context.go('/gps/login'),
                               ),
                             ],
                           ),
@@ -172,7 +176,9 @@ class _AccessChoiceCard extends StatelessWidget {
           Expanded(
             flex: 10,
             child: ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(18.8)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(18.8),
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -215,10 +221,10 @@ class _AccessChoiceCard extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111827),
-                        ),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF111827),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Container(
@@ -233,10 +239,10 @@ class _AccessChoiceCard extends StatelessWidget {
                   Text(
                     description,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 10,
-                          height: 1.15,
-                          color: const Color(0xFF4B5563),
-                        ),
+                      fontSize: 10,
+                      height: 1.15,
+                      color: const Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ),
@@ -246,11 +252,7 @@ class _AccessChoiceCard extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Icon(
-                arrowIcon,
-                color: accentColor,
-                size: 28,
-              ),
+              child: Icon(arrowIcon, color: accentColor, size: 28),
             ),
           ),
         ],
@@ -286,7 +288,9 @@ class _TrackingChoiceCard extends StatelessWidget {
           Expanded(
             flex: 10,
             child: ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(18.8)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(18.8),
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -329,18 +333,18 @@ class _TrackingChoiceCard extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111827),
-                        ),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF111827),
+                    ),
                   ),
                   Text(
                     description,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 10,
-                          height: 1.15,
-                          color: const Color(0xFF4B5563),
-                        ),
+                      fontSize: 10,
+                      height: 1.15,
+                      color: const Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ),
@@ -350,11 +354,7 @@ class _TrackingChoiceCard extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Icon(
-                arrowIcon,
-                color: accentColor,
-                size: 28,
-              ),
+              child: Icon(arrowIcon, color: accentColor, size: 28),
             ),
           ),
         ],
@@ -390,10 +390,7 @@ class _ChoiceCardFrame extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFFE3E8EF),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE3E8EF), width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.14),

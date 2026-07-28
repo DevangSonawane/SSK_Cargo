@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/access_entry_screen.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
+import '../../features/auth/presentation/screens/gps_tracking_login_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
@@ -62,6 +64,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/login',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: DriverLoginScreen()),
+      ),
+      GoRoute(
+        path: '/gps/login',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsTrackingLoginScreen()),
+      ),
+      GoRoute(
+        path: '/gps/dashboard',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsDashboardScreen()),
       ),
       GoRoute(
         path: '/driver/profile',

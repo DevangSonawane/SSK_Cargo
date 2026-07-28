@@ -16,11 +16,15 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
 
   AuthSession? get session => state.valueOrNull;
 
+  void bootstrapSession(AuthSession session) {
+    state = AsyncData<AuthSession?>(session);
+  }
+
   void debugSetSession(AuthSession session) {
     if (!kDebugMode) {
       return;
     }
-    state = AsyncData<AuthSession?>(session);
+    bootstrapSession(session);
   }
 
   Future<AuthSession> login({
