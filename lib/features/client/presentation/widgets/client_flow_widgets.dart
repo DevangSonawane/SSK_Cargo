@@ -3260,6 +3260,28 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 4),
+        _WeightStepRouteSummary(
+          pickupAddress: _draft.from,
+          dropAddress: _draft.to,
+          onEditTap: () async {
+            final selection = await _openLocationDetailsScreen(
+              _LocationFieldKind.pickup,
+            );
+            if (selection == null || !mounted) {
+              return;
+            }
+            setState(() {
+              _draft = _draft.copyWith(
+                from: selection.formattedAddress,
+                pickupLat: selection.latitude,
+                pickupLng: selection.longitude,
+                city: selection.city.isNotEmpty ? selection.city : _draft.city,
+              );
+              _fromController.text = selection.formattedAddress;
+            });
+          },
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -3283,8 +3305,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     _fromController.text = selection.formattedAddress;
                   });
                 },
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('+ Add loading'),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add loading'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1F88C9),
                   side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -3318,8 +3340,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     _toController.text = selection.formattedAddress;
                   });
                 },
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('+ Add unloading'),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add unloading'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1F88C9),
                   side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -4538,6 +4560,162 @@ class _LocationLaunchCard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeightStepRouteSummary extends StatelessWidget {
+  const _WeightStepRouteSummary({
+    required this.pickupAddress,
+    required this.dropAddress,
+    required this.onEditTap,
+  });
+
+  final String pickupAddress;
+  final String dropAddress;
+  final VoidCallback onEditTap;
+
+  String _headline(String address) {
+    final parts = address
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) {
+      return 'Add location';
+    }
+    return parts.first;
+  }
+
+  String _subtitle(String address) {
+    final parts = address
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+    if (parts.length <= 1) {
+      return address.isEmpty ? 'Tap + to add details' : address;
+    }
+    return parts.skip(1).join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6FD),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F1F7)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF38B47A),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.arrow_upward_rounded,
+                  color: Colors.white,
+                  size: 13,
+                ),
+              ),
+              Container(
+                width: 2,
+                height: 22,
+                margin: const EdgeInsets.symmetric(vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF05252),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: const Icon(
+                  Icons.arrow_downward_rounded,
+                  color: Colors.white,
+                  size: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _headline(pickupAddress),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111111),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _subtitle(pickupAddress),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF8E8E93),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _headline(dropAddress),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111111),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _subtitle(dropAddress),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF8E8E93),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onEditTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE9EBF2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit_rounded, size: 15),
             ),
           ),
         ],
