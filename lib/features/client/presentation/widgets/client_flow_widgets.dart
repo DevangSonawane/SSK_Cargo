@@ -364,7 +364,7 @@ class _LocationDetailsScreenState
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: const Color(0xFF101828),
                           fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                          fontSize: 16,
                         ),
                         decoration: InputDecoration(
                           hintText: _hintText,
@@ -374,7 +374,7 @@ class _LocationDetailsScreenState
                               ?.copyWith(
                                 color: const Color(0xFF98A2B3),
                                 fontWeight: FontWeight.w400,
-                                fontSize: 14,
+                                fontSize: 16,
                               ),
                           border: InputBorder.none,
                           isDense: true,
@@ -531,7 +531,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF101828),
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 16,
                       ),
                     ),
                     if (suggestion.secondaryText.isNotEmpty) ...[
@@ -543,7 +543,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF98A2B3),
                           fontWeight: FontWeight.w400,
-                          fontSize: 11,
+                          fontSize: 12,
                         ),
                       ),
                     ],
