@@ -1587,6 +1587,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
   bool _submitting = false;
   bool _resolvingDistance = false;
+  bool _resolvingCurrentLocation = false;
   bool _bookingCreated = false;
   String? _bookingReference;
   String? _weightError;
@@ -2247,6 +2248,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _useCurrentLocationForPickup() async {
+    if (_resolvingCurrentLocation) {
+      return;
+    }
+
+    setState(() {
+      _resolvingCurrentLocation = true;
+    });
+
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -2310,6 +2319,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingCurrentLocation = false;
+        });
+      }
     }
   }
 
@@ -2937,9 +2952,21 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             ),
             const Spacer(),
             TextButton.icon(
-              onPressed: _useCurrentLocationForPickup,
-              icon: const Icon(Icons.gps_fixed_rounded, size: 14),
-              label: const Text('Use current location'),
+              onPressed: _resolvingCurrentLocation
+                  ? null
+                  : _useCurrentLocationForPickup,
+              icon: _resolvingCurrentLocation
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.gps_fixed_rounded, size: 14),
+              label: Text(
+                _resolvingCurrentLocation
+                    ? 'Locating...'
+                    : 'Use current location',
+              ),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                 minimumSize: const Size(0, 28),
