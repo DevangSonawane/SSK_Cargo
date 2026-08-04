@@ -16,6 +16,7 @@ class ClientShell extends ConsumerWidget {
     final currentIndex = _visibleTabIndex(navigationShell.currentIndex);
 
     return Scaffold(
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: isBottomNavVisible
           ? ClientBottomBar(

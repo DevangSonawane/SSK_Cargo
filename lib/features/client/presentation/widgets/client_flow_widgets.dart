@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -17,7 +18,6 @@ import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
-import 'google_places_autocomplete_field.dart';
 
 enum TripType { interCity, intraCity }
 
@@ -40,18 +40,171 @@ class _LocationDetailsScreen extends ConsumerStatefulWidget {
 class _LocationDetailsScreenState
     extends ConsumerState<_LocationDetailsScreen> {
   late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+  final Random _random = Random();
+  Timer? _debounce;
+  String _sessionToken = '';
+  bool _loadingSuggestions = false;
+  bool _selectingSuggestion = false;
+  String? _errorMessage;
+  List<GooglePlaceSuggestion> _suggestions = const [];
   bool _resolvingCurrentLocation = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+    _focusNode = FocusNode();
+    _sessionToken = _newSessionToken();
+    _controller.addListener(_onTextChanged);
+    _focusNode.addListener(_onFocusChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (_selectingSuggestion) {
+      return;
+    }
+    if (_focusNode.hasFocus && _controller.text.trim().isNotEmpty) {
+      _scheduleSearch();
+      return;
+    }
+    if (!_focusNode.hasFocus) {
+      setState(() {
+        _suggestions = const [];
+      });
+    }
+  }
+
+  void _onTextChanged() {
+    if (_selectingSuggestion) {
+      return;
+    }
+    if (!_focusNode.hasFocus) {
+      return;
+    }
+    final text = _controller.text.trim();
+    if (text.isEmpty) {
+      setState(() {
+        _suggestions = const [];
+        _errorMessage = null;
+      });
+      _sessionToken = _newSessionToken();
+      return;
+    }
+    _scheduleSearch();
+    setState(() {});
+  }
+
+  void _scheduleSearch() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), _search);
+  }
+
+  Future<void> _search() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _loadingSuggestions = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final service = ref.read(googlePlacesServiceProvider);
+      final suggestions = await service.autocomplete(
+        input: text,
+        sessionToken: _sessionToken,
+      );
+      if (!mounted) return;
+      setState(() {
+        _suggestions = suggestions;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString();
+        _suggestions = const [];
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingSuggestions = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectSuggestion(GooglePlaceSuggestion suggestion) async {
+    setState(() {
+      _loadingSuggestions = true;
+      _errorMessage = null;
+      _selectingSuggestion = true;
+      _suggestions = const [];
+    });
+
+    try {
+      FocusManager.instance.primaryFocus?.unfocus();
+      final service = ref.read(googlePlacesServiceProvider);
+      final selection = await service.fetchPlaceSelection(
+        placeId: suggestion.placeId,
+      );
+      if (!mounted) return;
+      _controller
+        ..text = selection.formattedAddress.isNotEmpty
+            ? selection.formattedAddress
+            : suggestion.description
+        ..selection = TextSelection.collapsed(offset: _controller.text.length);
+      Navigator.of(context).pop(
+        GooglePlaceSelection(
+          placeId: selection.placeId,
+          formattedAddress: _controller.text,
+          latitude: selection.latitude,
+          longitude: selection.longitude,
+          city: selection.city,
+        ),
+      );
+      setState(() {
+        _sessionToken = _newSessionToken();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingSuggestions = false;
+          _selectingSuggestion = false;
+        });
+      }
+    }
+  }
+
+  String _newSessionToken() {
+    final timestamp = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final randomPart = _random.nextInt(1 << 32).toRadixString(36);
+    return '$timestamp$randomPart'.substring(
+      0,
+      min(36, timestamp.length + randomPart.length),
+    );
   }
 
   String get _hintText => widget.kind == _LocationFieldKind.pickup
@@ -203,23 +356,62 @@ class _LocationDetailsScreenState
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: GooglePlacesAutocompleteField(
+                      child: TextField(
                         controller: _controller,
-                        label: '',
-                        hintText: _hintText,
-                        embedded: true,
-                        showLabel: false,
-                        autofocus: true,
-                        onSelected: (selection) {
-                          Navigator.of(context).pop(selection);
-                        },
+                        focusNode: _focusNode,
+                        textInputAction: TextInputAction.search,
+                        cursorColor: const Color(0xFF2D8EDB),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _hintText,
+                          hintStyle: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF98A2B3),
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                              ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          suffixIcon: _loadingSuggestions
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : (_controller.text.isEmpty
+                                    ? null
+                                    : IconButton(
+                                        onPressed: () {
+                                          _controller.clear();
+                                          _focusNode.requestFocus();
+                                        },
+                                        icon: const Icon(
+                                          Icons.close_rounded,
+                                          size: 20,
+                                        ),
+                                      )),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               if (widget.kind == _LocationFieldKind.pickup) ...[
-                const SizedBox(height: 26),
+                const SizedBox(height: 18),
                 InkWell(
                   onTap: _resolvingCurrentLocation ? null : _useCurrentLocation,
                   borderRadius: BorderRadius.circular(16),
@@ -261,6 +453,112 @@ class _LocationDetailsScreenState
                 ),
                 const SizedBox(height: 18),
                 Container(height: 1, color: const Color(0xFFE6EAF0)),
+              ],
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Could not load suggestions',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFFB42318),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              if (_suggestions.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                ..._suggestions.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: entry.key == _suggestions.length - 1 ? 0 : 8,
+                    ),
+                    child: _LocationSuggestionTile(
+                      suggestion: entry.value,
+                      onTap: () => _selectSuggestion(entry.value),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationSuggestionTile extends StatelessWidget {
+  const _LocationSuggestionTile({
+    required this.suggestion,
+    required this.onTap,
+  });
+
+  final GooglePlaceSuggestion suggestion;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF2F4F7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: Color(0xFF98A2B3),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      suggestion.mainText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF101828),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (suggestion.secondaryText.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        suggestion.secondaryText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF98A2B3),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (suggestion.distanceMeters != null) ...[
+                const SizedBox(width: 10),
+                Text(
+                  '${(suggestion.distanceMeters! / 1000).toStringAsFixed(suggestion.distanceMeters! >= 1000 ? 1 : 0)} km',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF98A2B3),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ],
           ),
@@ -1145,6 +1443,70 @@ Future<void> showTripTypeSheet(
   }
 }
 
+Future<void> showQuickBookingFlow(
+  BuildContext context, {
+  required TripType tripType,
+  int? initialVehicleIndex,
+  VoidCallback? onOpen,
+  VoidCallback? onClose,
+}) async {
+  onOpen?.call();
+  try {
+    final pickup = await Navigator.of(context).push<GooglePlaceSelection>(
+      MaterialPageRoute(
+        builder: (context) => _LocationDetailsScreen(
+          kind: _LocationFieldKind.pickup,
+          initialValue: '',
+        ),
+      ),
+    );
+    if (pickup == null || !context.mounted) {
+      return;
+    }
+
+    final drop = await Navigator.of(context).push<GooglePlaceSelection>(
+      MaterialPageRoute(
+        builder: (context) => _LocationDetailsScreen(
+          kind: _LocationFieldKind.drop,
+          initialValue: '',
+        ),
+      ),
+    );
+    if (drop == null || !context.mounted) {
+      return;
+    }
+
+    final bookingData = BookingData(
+      from: pickup.formattedAddress,
+      to: drop.formattedAddress,
+      tripType: tripType,
+      city: pickup.city.isNotEmpty ? pickup.city : drop.city,
+      pickupLat: pickup.latitude,
+      pickupLng: pickup.longitude,
+      dropLat: drop.latitude,
+      dropLng: drop.longitude,
+      scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BookingLocationScreen(
+          tripType: tripType,
+          initialVehicleIndex: initialVehicleIndex ?? 0,
+          initialBookingData: bookingData,
+          skipLocationStep: true,
+        ),
+      ),
+    );
+  } finally {
+    onClose?.call();
+  }
+}
+
 Future<void> showBookingFlow(
   BuildContext context, {
   TripType? initialTripType,
@@ -1790,11 +2152,15 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
     super.key,
     required this.tripType,
     this.initialVehicleIndex = 0,
+    this.initialBookingData,
+    this.skipLocationStep = false,
     this.autoOpenLocationFlow = false,
   });
 
   final TripType tripType;
   final int initialVehicleIndex;
+  final BookingData? initialBookingData;
+  final bool skipLocationStep;
   final bool autoOpenLocationFlow;
 
   @override
@@ -1870,22 +2236,37 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
-    _draft = BookingData(
-      from: '',
-      to: '',
-      tripType: widget.tripType,
-      city: '',
-      vehicle: _vehicle,
-      truckCategory: _truckCategoryForVehicle(_vehicle.label),
-      scheduledDate: DateTime.now().add(const Duration(hours: 3)),
-      amount: _priceValue(_vehicle.price),
-    );
+    final initialDraft = widget.initialBookingData;
+    _draft = (initialDraft ??
+            BookingData(
+              from: '',
+              to: '',
+              tripType: widget.tripType,
+              city: '',
+              scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+              amount: _priceValue(_vehicle.price),
+            ))
+        .copyWith(
+          tripType: initialDraft?.tripType ?? widget.tripType,
+          vehicle: initialDraft?.vehicle ?? _vehicle,
+          truckCategory: initialDraft?.truckCategory.isNotEmpty == true
+              ? initialDraft!.truckCategory
+              : _truckCategoryForVehicle(_vehicle.label),
+          amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
+        );
     _fromController = TextEditingController(text: _draft.from);
-    _toController = TextEditingController();
-    _weightController = TextEditingController();
-    _amountController = TextEditingController(
-      text: _priceInputText(_vehicle.price),
+    _toController = TextEditingController(text: _draft.to);
+    _weightController = TextEditingController(
+      text: _draft.weight > 0 ? _draft.weight.toString() : '',
     );
+    _amountController = TextEditingController(
+      text: _draft.amount > 0
+          ? _priceInputText(_draft.amount.toString())
+          : _priceInputText(_vehicle.price),
+    );
+    if (widget.skipLocationStep) {
+      _step = _BookingFlowStep.itemDetails;
+    }
 
     if (widget.autoOpenLocationFlow) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2341,7 +2722,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     try {
       await _resolveTypedCoordinates(pickup: pickup, drop: drop);
       await _refreshBrokerRoute();
-      final city = _draft.transportType == 'intra'
+      final resolvedTripType = _resolveTripTypeFromLocations(pickup, drop);
+      final city = resolvedTripType == TripType.intraCity
           ? (_draft.city.isNotEmpty
                 ? _draft.city
                 : _deriveCityFromLocation(pickup, drop))
@@ -2351,7 +2733,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           return;
         }
         setState(() {
-          _draft = _draft.copyWith(city: city);
+          _draft = _draft.copyWith(city: city, tripType: resolvedTripType);
+        });
+      } else {
+        setState(() {
+          _draft = _draft.copyWith(tripType: resolvedTripType);
         });
       }
       await _validateLocationStep(pickup, drop);
@@ -2388,6 +2774,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           to: drop,
           from: pickup,
           city: city,
+          tripType: resolvedTripType,
           vehicle: _vehicle,
           truckCategory: _truckCategoryForVehicle(_vehicle.label),
           distance: distance,
@@ -2736,6 +3123,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return cityFromAddress(drop);
   }
 
+  TripType _resolveTripTypeFromLocations(String pickup, String drop) {
+    String cityFromAddress(String value) {
+      final segments = value
+          .split(',')
+          .map((segment) => segment.trim())
+          .where((segment) => segment.isNotEmpty)
+          .toList(growable: false);
+      if (segments.length >= 2) {
+        return segments[1].toLowerCase();
+      }
+      if (segments.isNotEmpty) {
+        return segments.first.toLowerCase();
+      }
+      return '';
+    }
+
+    final pickupCity = cityFromAddress(pickup);
+    final dropCity = cityFromAddress(drop);
+    if (pickupCity.isEmpty || dropCity.isEmpty) {
+      return _draft.tripType;
+    }
+    return pickupCity == dropCity ? TripType.intraCity : TripType.interCity;
+  }
+
   Future<String> _fetchLatestBookingNumber(String accessToken) async {
     final response = await ref
         .read(apiClientProvider)
@@ -2799,6 +3210,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
     });
 
+    final hideInitialAutoLocationFrame =
+        widget.autoOpenLocationFlow &&
+        !_autoLocationFlowStarted &&
+        _step == _BookingFlowStep.location;
+
+    if (hideInitialAutoLocationFrame) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: SizedBox.shrink(),
+      );
+    }
+
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final showBottomButton = switch (_step) {
       _BookingFlowStep.location || _BookingFlowStep.payment => true,
@@ -2840,14 +3263,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-                child: Column(
+      child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         InkWell(
                           onTap: () {
-                            if (_step == _BookingFlowStep.location) {
+                            if (_step == _BookingFlowStep.location ||
+                                (_step == _BookingFlowStep.itemDetails &&
+                                    widget.skipLocationStep)) {
                               Navigator.of(context).pop();
                               return;
                             }
@@ -2942,6 +3367,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF667085),
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF8F2),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFBFE7CC)),
+                  ),
+                  child: Text(
+                    _draft.tripType == TripType.interCity
+                        ? 'This is an inter-city booking'
+                        : 'This is an intra-city booking',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -5405,50 +5854,53 @@ class ClientBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x16000000),
-              blurRadius: 24,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: NavItem(
-                label: 'Home',
-                assetPath: 'assets/home.png',
-                selected: currentIndex == 0,
-                onTap: () => onTap(0),
+    return Container(
+      color: Colors.white,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x16000000),
+                blurRadius: 24,
+                offset: Offset(0, -6),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NavItem(
-                label: 'Activity',
-                assetPath: 'assets/tracking.png',
-                selected: currentIndex == 1,
-                onTap: () => onTap(1),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: NavItem(
+                  label: 'Home',
+                  icon: LucideIcons.house,
+                  selected: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NavItem(
-                label: 'Profile',
-                assetPath: 'assets/user.png',
-                selected: currentIndex == 2,
-                onTap: () => onTap(2),
+              const SizedBox(width: 12),
+              Expanded(
+                child: NavItem(
+                  label: 'Activity',
+                  icon: LucideIcons.map,
+                  selected: currentIndex == 1,
+                  onTap: () => onTap(1),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: NavItem(
+                  label: 'Profile',
+                  icon: LucideIcons.user,
+                  selected: currentIndex == 2,
+                  onTap: () => onTap(2),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -5462,14 +5914,10 @@ class NavItem extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.icon,
-    this.assetPath,
-    this.assetSize = 18,
   });
 
   final String label;
   final IconData? icon;
-  final String? assetPath;
-  final double assetSize;
   final bool selected;
   final VoidCallback onTap;
 
@@ -5490,16 +5938,7 @@ class NavItem extends StatelessWidget {
               width: 22,
               height: 22,
               child: Center(
-                child: assetPath != null
-                    ? Image.asset(
-                        assetPath!,
-                        width: assetSize,
-                        height: assetSize,
-                        fit: BoxFit.contain,
-                        color: color,
-                        colorBlendMode: BlendMode.srcIn,
-                      )
-                    : Icon(icon, size: 20, color: color),
+                child: Icon(icon, size: 20, color: color),
               ),
             ),
             const SizedBox(height: 3),

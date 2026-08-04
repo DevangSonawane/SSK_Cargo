@@ -19,14 +19,10 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
     HapticFeedback.lightImpact();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
     try {
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => BookingLocationScreen(
-            tripType: _selectedTripType,
-            initialVehicleIndex: vehicleIndex,
-            autoOpenLocationFlow: true,
-          ),
-        ),
+      await showQuickBookingFlow(
+        context,
+        tripType: _selectedTripType,
+        initialVehicleIndex: vehicleIndex,
       );
     } finally {
       if (mounted) {
@@ -43,7 +39,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
           child: Image.asset(
             'assets/client/home_page_photo.png',
             fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
+            alignment: const Alignment(0, -0.18),
           ),
         ),
         Positioned.fill(
@@ -254,7 +250,7 @@ class _BookingPromptCard extends StatelessWidget {
               child: FilledButton(
                 onPressed: onTap,
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: const Color(0xFF2FA56E),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
