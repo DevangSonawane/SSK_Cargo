@@ -5,6 +5,15 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 
 typedef ClientBookingsQuery = ({String? status, int page, int limit});
+typedef NearbyTrucksQuery = ({
+  double pickupLat,
+  double pickupLng,
+  String? truckCategory,
+  String? capacity,
+  double? radiusKm,
+  int page,
+  int limit,
+});
 
 final clientBookingsProvider = FutureProvider.autoDispose
     .family<ClientBookingPage, ClientBookingsQuery>((ref, query) async {
@@ -73,4 +82,27 @@ final clientBookingOffersProvider = FutureProvider.autoDispose
           .map(ClientBookingOffer.fromJson)
           .where((offer) => offer.id.isNotEmpty)
           .toList();
+    });
+
+final clientNearbyTrucksProvider = FutureProvider.autoDispose
+    .family<List<NearbyTruck>, NearbyTrucksQuery>((ref, query) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
+
+      final response = await ref
+          .watch(apiClientProvider)
+          .getNearbyTrucks(
+            accessToken: session.tokens.accessToken,
+            pickupLat: query.pickupLat,
+            pickupLng: query.pickupLng,
+            truckCategory: query.truckCategory,
+            capacity: query.capacity,
+            radiusKm: query.radiusKm,
+            page: query.page,
+            limit: query.limit,
+          );
+
+      return NearbyTruckPage.fromJson(response).trucks;
     });

@@ -160,19 +160,75 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getNearbyTrucks({
+    required String accessToken,
+    required double pickupLat,
+    required double pickupLng,
+    String? truckCategory,
+    String? capacity,
+    double? radiusKm,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    developer.log(
+      'GET /api/vehicles/trucks/nearby pickupLat=$pickupLat pickupLng=$pickupLng truckCategory=$truckCategory capacity=$capacity radiusKm=$radiusKm page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/trucks/nearby',
+        queryParameters: {
+          'pickup_lat': pickupLat,
+          'pickup_lng': pickupLng,
+          if (truckCategory?.isNotEmpty ?? false)
+            'truck_category': truckCategory,
+          if (capacity?.isNotEmpty ?? false) 'capacity': capacity,
+          if (radiusKm?.isFinite ?? false) 'radius_km': radiusKm,
+          'page': page,
+          'limit': limit,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> validateBookingLocation({
+    required String accessToken,
+    required Map<String, dynamic> location,
+  }) async {
+    developer.log(
+      'POST /api/bookings/validate-location keys=${location.keys.join(',')}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/validate-location',
+        data: location,
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> createBooking({
     required String accessToken,
     required Map<String, dynamic> booking,
+    String? idempotencyKey,
   }) async {
     developer.log(
-      'POST /api/bookings keys=${booking.keys.join(',')}',
+      'POST /api/bookings keys=${booking.keys.join(',')} idempotencyKeySet=${idempotencyKey?.isNotEmpty ?? false}',
       name: 'SSK.API',
     );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/bookings',
         data: booking,
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            if (idempotencyKey?.isNotEmpty ?? false)
+              'Idempotency-Key': idempotencyKey,
+          },
+        ),
       ),
     );
   }

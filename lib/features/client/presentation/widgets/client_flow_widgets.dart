@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -22,6 +26,7 @@ class BookingData {
     required this.from,
     required this.to,
     required this.tripType,
+    this.city = '',
     this.vehicle,
     this.pickupLat,
     this.pickupLng,
@@ -47,6 +52,7 @@ class BookingData {
   final String from;
   final String to;
   final TripType tripType;
+  final String city;
   final VehicleOption? vehicle;
   final double? pickupLat;
   final double? pickupLng;
@@ -82,6 +88,7 @@ class BookingData {
     String? from,
     String? to,
     TripType? tripType,
+    String? city,
     VehicleOption? vehicle,
     double? pickupLat,
     double? pickupLng,
@@ -107,6 +114,7 @@ class BookingData {
       from: from ?? this.from,
       to: to ?? this.to,
       tripType: tripType ?? this.tripType,
+      city: city ?? this.city,
       vehicle: vehicle ?? this.vehicle,
       pickupLat: pickupLat ?? this.pickupLat,
       pickupLng: pickupLng ?? this.pickupLng,
@@ -1535,6 +1543,8 @@ enum _BookingFlowStep { location, itemDetails, brokerSelection, payment }
 
 enum _NegotiationSheetStep { slider, loading, counterOffer }
 
+enum _TruckAction { continueBooking, negotiate }
+
 class _NegotiationSheetResult {
   const _NegotiationSheetResult._(this.accepted, this.amount);
 
@@ -1548,77 +1558,6 @@ class _NegotiationSheetResult {
   final double? amount;
 }
 
-class _DemoBroker {
-  const _DemoBroker({
-    required this.id,
-    required this.name,
-    required this.company,
-    required this.rating,
-    required this.responseTime,
-    required this.specialty,
-    required this.basePrice,
-    required this.fleetLabel,
-    required this.color,
-  });
-
-  final String id;
-  final String name;
-  final String company;
-  final double rating;
-  final String responseTime;
-  final String specialty;
-  final double basePrice;
-  final String fleetLabel;
-  final Color color;
-}
-
-const _demoBrokers = <_DemoBroker>[
-  _DemoBroker(
-    id: 'broker-akash',
-    name: 'Akash Verma',
-    company: 'NorthStar Logistics',
-    rating: 4.9,
-    responseTime: '2 min',
-    specialty: 'Fast interstate loads',
-    basePrice: 4850,
-    fleetLabel: '12 trucks',
-    color: Color(0xFF2FA56E),
-  ),
-  _DemoBroker(
-    id: 'broker-sana',
-    name: 'Sana Shaikh',
-    company: 'GreenRoute Cargo',
-    rating: 4.8,
-    responseTime: '4 min',
-    specialty: 'Careful fragile handling',
-    basePrice: 4725,
-    fleetLabel: '18 trucks',
-    color: Color(0xFF1F88C9),
-  ),
-  _DemoBroker(
-    id: 'broker-rahul',
-    name: 'Rahul Mehta',
-    company: 'SwiftHaul Network',
-    rating: 4.7,
-    responseTime: '3 min',
-    specialty: 'Best for urgent dispatch',
-    basePrice: 4960,
-    fleetLabel: '9 trucks',
-    color: Color(0xFFF59E0B),
-  ),
-  _DemoBroker(
-    id: 'broker-neha',
-    name: 'Neha Kapoor',
-    company: 'Atlas Freight',
-    rating: 5.0,
-    responseTime: '1 min',
-    specialty: 'Premium city-to-city moves',
-    basePrice: 5090,
-    fleetLabel: '21 trucks',
-    color: Color(0xFF7A5AF8),
-  ),
-];
-
 const _brokerNegotiationMessages = <String>[
   'Sending your negotiation offer',
   'Waiting for the broker to review it',
@@ -1626,6 +1565,8 @@ const _brokerNegotiationMessages = <String>[
 ];
 
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
+  static const LatLng _fallbackMapCenter = LatLng(19.0760, 72.8777);
+
   late final TextEditingController _fromController;
   late final TextEditingController _toController;
   late final TextEditingController _materialController;
@@ -1634,9 +1575,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _quantityController;
   late final TextEditingController _amountController;
   late VehicleOption _vehicle;
+  GoogleMapController? _brokerMapController;
+  BitmapDescriptor? _truckMarkerIcon;
+  BitmapDescriptor? _pickupMarkerIcon;
+  BitmapDescriptor? _dropMarkerIcon;
+  List<LatLng> _brokerRoutePoints = const [];
+  int _brokerRouteRequestToken = 0;
 
   _BookingFlowStep _step = _BookingFlowStep.location;
-  _DemoBroker? _selectedBroker;
+  NearbyTruck? _selectedTruck;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
   bool _submitting = false;
   bool _resolvingDistance = false;
@@ -1654,6 +1601,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void initState() {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
+    _loadTruckMarkerIcon();
     _vehicleIndex = widget.initialVehicleIndex;
     final initialPricingState = ref.read(clientPricingProvider);
     final vehicles = resolveVehicleOptions(
@@ -1667,6 +1615,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       from: '',
       to: '',
       tripType: widget.tripType,
+      city: '',
       vehicle: _vehicle,
       truckCategory: _truckCategoryForVehicle(_vehicle.label),
       scheduledDate: DateTime.now().add(const Duration(hours: 3)),
@@ -1690,6 +1639,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
     _materialController.dispose();
@@ -1698,6 +1648,140 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _quantityController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTruckMarkerIcon() async {
+    try {
+      final truck = await _buildTruckCircleMarkerIcon(
+        'assets/trucks/small truck.png',
+      );
+      final pickup = await _buildDotMarkerIcon(const Color(0xFF22C55E));
+      final drop = await _buildDotMarkerIcon(const Color(0xFFEF4444));
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = truck;
+        _pickupMarkerIcon = pickup;
+        _dropMarkerIcon = drop;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueAzure,
+        );
+        _pickupMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueGreen,
+        );
+        _dropMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueRed,
+        );
+      });
+    }
+  }
+
+  Future<void> _refreshBrokerRoute() async {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    final token = ++_brokerRouteRequestToken;
+    if (pickup == null || drop == null) {
+      if (mounted) {
+        setState(() {
+          _brokerRoutePoints = const [];
+        });
+      }
+      return;
+    }
+
+    try {
+      final service = ref.read(googlePlacesServiceProvider);
+      final route = await service.fetchDrivingRoute(
+        originLatitude: pickup.latitude,
+        originLongitude: pickup.longitude,
+        destinationLatitude: drop.latitude,
+        destinationLongitude: drop.longitude,
+      );
+      if (!mounted || token != _brokerRouteRequestToken) {
+        return;
+      }
+      setState(() {
+        _brokerRoutePoints = route;
+      });
+    } catch (_) {
+      if (!mounted || token != _brokerRouteRequestToken) {
+        return;
+      }
+      setState(() {
+        _brokerRoutePoints = const [];
+      });
+    }
+  }
+
+  Future<BitmapDescriptor> _buildTruckCircleMarkerIcon(String assetPath) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    const size = 40.0;
+    const center = Offset(size / 2, size / 2);
+    const radius = size / 2;
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.12)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawCircle(center.translate(0, 1), radius - 4, shadowPaint);
+
+    final borderPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(center, radius - 3, borderPaint);
+
+    final imageData = await rootBundle.load(assetPath);
+    final codec = await ui.instantiateImageCodec(
+      imageData.buffer.asUint8List(),
+      targetWidth: 18,
+      targetHeight: 18,
+    );
+    final frame = await codec.getNextFrame();
+
+    final clipRect = Rect.fromCircle(center: center, radius: radius - 8);
+    canvas.save();
+    canvas.clipPath(Path()..addOval(clipRect));
+    canvas.drawImageRect(
+      frame.image,
+      Rect.fromLTWH(
+        0,
+        0,
+        frame.image.width.toDouble(),
+        frame.image.height.toDouble(),
+      ),
+      clipRect,
+      Paint(),
+    );
+    canvas.restore();
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) {
+      throw StateError('Failed to build truck marker icon');
+    }
+    return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
+  }
+
+  Future<BitmapDescriptor> _buildDotMarkerIcon(Color color) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    const size = 20.0;
+    final center = const Offset(size / 2, size / 2);
+    final outer = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final inner = Paint()..color = color;
+    canvas.drawCircle(center, 9, outer);
+    canvas.drawCircle(center, 6, inner);
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) {
+      throw StateError('Failed to build marker icon');
+    }
+    return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
   }
 
   void _syncItemDetailsErrors() {
@@ -1800,7 +1884,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             quantity: quantity,
             amount: amount,
           );
-          _selectedBroker = null;
+          _selectedTruck = null;
         });
         setState(() {
           _step = _BookingFlowStep.brokerSelection;
@@ -1819,28 +1903,22 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
-  void _acceptSelectedBroker(_DemoBroker broker) {
-    if (_selectedBroker == null) {
-      return;
-    }
-
+  void _acceptSelectedBroker(NearbyTruck truck) {
     setState(() {
-      _draft = _draft.copyWith(brokerId: broker.id, amount: broker.basePrice);
+      _draft = _draft.copyWith(brokerId: truck.id);
       _step = _BookingFlowStep.payment;
     });
   }
 
-  Future<void> _openNegotiationSheet() async {
-    final broker = _selectedBroker;
-    if (broker == null) {
-      return;
-    }
-
-    final lower = broker.basePrice * 0.84;
-    final upper = broker.basePrice * 1.08;
+  Future<void> _openNegotiationSheet(NearbyTruck truck) async {
+    final basePrice = _draft.amount > 0
+        ? _draft.amount
+        : _priceValue(_vehicle.price);
+    final lower = basePrice * 0.84;
+    final upper = basePrice * 1.08;
     final initial = _draft.amount > 0
         ? _draft.amount.clamp(lower, upper).toDouble()
-        : broker.basePrice.clamp(lower, upper).toDouble();
+        : basePrice.clamp(lower, upper).toDouble();
 
     final outcome = await showModalBottomSheet<_NegotiationSheetResult>(
       context: context,
@@ -1848,7 +1926,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _BrokerNegotiationSheet(
-        broker: broker,
+        truck: truck,
         minPrice: lower,
         maxPrice: upper,
         initialPrice: initial,
@@ -1861,13 +1939,131 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     if (outcome.accepted) {
       setState(() {
-        _draft = _draft.copyWith(
-          brokerId: broker.id,
-          amount: outcome.amount ?? broker.basePrice,
-        );
+        _draft = _draft.copyWith(brokerId: truck.id, amount: outcome.amount);
         _step = _BookingFlowStep.payment;
       });
     }
+  }
+
+  Future<void> _handleTruckTap(NearbyTruck truck) async {
+    setState(() {
+      _selectedTruck = truck;
+    });
+
+    final action = await _showTruckActionDialog(truck);
+    if (!mounted || action == null) {
+      return;
+    }
+
+    if (action == _TruckAction.continueBooking) {
+      _acceptSelectedBroker(truck);
+      return;
+    }
+
+    await _openNegotiationSheet(truck);
+  }
+
+  Future<_TruckAction?> _showTruckActionDialog(NearbyTruck truck) {
+    return showDialog<_TruckAction>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  truck.displayTitle,
+                  style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                icon: const Icon(Icons.close_rounded),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 34,
+                  height: 34,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                truck.displaySubtitle,
+                style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.local_shipping_rounded,
+                    color: Color(0xFF2FA56E),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      truck.capacity.isNotEmpty
+                          ? truck.capacity
+                          : 'Available truck',
+                      style: Theme.of(dialogContext).textTheme.titleMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF101828),
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(
+                      dialogContext,
+                    ).pop(_TruckAction.continueBooking),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2FA56E),
+                    ),
+                    child: const Text('Continue'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        Navigator.of(dialogContext).pop(_TruckAction.negotiate),
+                    child: const Text('Negotiate'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _resolveDistanceAndContinue() async {
@@ -1900,6 +2096,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     try {
       await _resolveTypedCoordinates(pickup: pickup, drop: drop);
+      await _refreshBrokerRoute();
+      await _validateLocationStep(pickup, drop);
+      final city = _draft.transportType == 'intra'
+          ? (_draft.city.isNotEmpty
+                ? _draft.city
+                : _deriveCityFromLocation(pickup, drop))
+          : '';
+      if (city.isNotEmpty || _draft.city.isNotEmpty) {
+        _draft = _draft.copyWith(city: city);
+      }
       final response = await ref
           .read(apiClientProvider)
           .getDistanceEstimate(
@@ -1932,6 +2138,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _draft = _draft.copyWith(
           to: drop,
           from: pickup,
+          city: city,
           vehicle: _vehicle,
           truckCategory: _truckCategoryForVehicle(_vehicle.label),
           distance: distance,
@@ -2159,6 +2366,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           .createBooking(
             accessToken: session.tokens.accessToken,
             booking: _bookingPayload(),
+            idempotencyKey: _buildIdempotencyKey(),
           );
       final bookingNumber = _extractBookingNumber(response);
       final resolvedBookingNumber = bookingNumber.isNotEmpty
@@ -2202,6 +2410,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'truck_category': _draft.truckCategory.isEmpty
           ? _truckCategoryForVehicle(_vehicle.label)
           : _draft.truckCategory,
+      'city': _draft.transportType == 'intra'
+          ? _draft.city.isNotEmpty
+                ? _draft.city
+                : _deriveCityFromLocation(_draft.from, _draft.to)
+          : _draft.city,
       'weight': _draft.weight,
       'weight_unit': _draft.weightUnit,
       'quantity': _draft.quantity,
@@ -2212,6 +2425,67 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'amount': _draft.amount,
       'payment_status': 'pending',
     };
+  }
+
+  Future<void> _validateLocationStep(String pickup, String drop) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      throw StateError('No active session');
+    }
+
+    final locationPayload = <String, dynamic>{
+      'pickup_location': pickup,
+      'drop_location': drop,
+      'transport_type': _draft.transportType,
+      if (_draft.transportType == 'intra')
+        'city': _draft.city.isNotEmpty
+            ? _draft.city
+            : _deriveCityFromLocation(pickup, drop),
+    };
+
+    await ref
+        .read(apiClientProvider)
+        .validateBookingLocation(
+          accessToken: session.tokens.accessToken,
+          location: locationPayload,
+        );
+  }
+
+  String _buildIdempotencyKey() {
+    final payload = <String, dynamic>{
+      ..._bookingPayload(),
+      'attempted_at': DateTime.now().microsecondsSinceEpoch,
+    };
+    final normalized = payload.entries
+        .map((entry) => '${entry.key}=${entry.value}')
+        .join('|');
+    final timestamp = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final hash = normalized.hashCode.abs().toRadixString(36);
+    final random = Random().nextInt(1 << 32).toRadixString(36);
+    return '$timestamp-$hash-$random';
+  }
+
+  String _deriveCityFromLocation(String pickup, String drop) {
+    String cityFromAddress(String value) {
+      final segments = value
+          .split(',')
+          .map((segment) => segment.trim())
+          .where((segment) => segment.isNotEmpty)
+          .toList(growable: false);
+      if (segments.length >= 2) {
+        return segments[1];
+      }
+      if (segments.isNotEmpty) {
+        return segments.first;
+      }
+      return '';
+    }
+
+    final pickupCity = cityFromAddress(pickup);
+    if (pickupCity.isNotEmpty) {
+      return pickupCity;
+    }
+    return cityFromAddress(drop);
   }
 
   Future<String> _fetchLatestBookingNumber(String accessToken) async {
@@ -2355,7 +2629,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           switch (_step) {
                             _BookingFlowStep.location => 'Location',
                             _BookingFlowStep.itemDetails => 'Item details',
-                            _BookingFlowStep.brokerSelection => 'Choose broker',
+                            _BookingFlowStep.brokerSelection => 'Choose trucks',
                             _BookingFlowStep.payment => 'Payment',
                           },
                           style: Theme.of(context).textTheme.labelLarge
@@ -2391,51 +2665,259 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildBrokerSelectionStep(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewPadding.bottom + 140;
-
+    final height = MediaQuery.sizeOf(context).height * 0.72;
+    final pickup = _pickupLatLng;
+    final nearbyTrucksAsync = pickup == null
+        ? const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[])
+        : ref.watch(
+            clientNearbyTrucksProvider((
+              pickupLat: pickup.latitude,
+              pickupLng: pickup.longitude,
+              truckCategory: _draft.truckCategory.isNotEmpty
+                  ? _draft.truckCategory
+                  : _truckCategoryForVehicle(_vehicle.label),
+              capacity: _vehicle.capacity,
+              radiusKm: 25,
+              page: 1,
+              limit: 20,
+            )),
+          );
+    final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: EdgeInsets.only(bottom: bottomPadding),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewPadding.bottom + 12,
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Choose your broker',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Pick one of the demo brokers below, then either go with them or negotiate a better price.',
-                textAlign: TextAlign.center,
+                'Tap a truck on the map to continue or negotiate.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 16),
-              _BrokerCardGrid(
-                brokers: _demoBrokers,
-                selectedBrokerId: _selectedBroker?.id,
-                onSelect: (broker) {
-                  setState(() {
-                    _selectedBroker = broker;
-                  });
-                },
-                onContinue: _acceptSelectedBroker,
-                onNegotiate: _openNegotiationSheet,
+              const SizedBox(height: 14),
+              SizedBox(
+                height: height,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Stack(
+                    children: [
+                      _buildBrokerMap(context, nearbyTrucks),
+                      if (nearbyTrucksAsync.isLoading)
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: ColoredBox(color: Color(0x0AFFFFFF)),
+                          ),
+                        ),
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: _MapHintPill(
+                          icon: Icons.local_shipping_rounded,
+                          label: 'Live trucks',
+                        ),
+                      ),
+                      if (_selectedTruck != null)
+                        Positioned(
+                          right: 16,
+                          bottom: 16,
+                          child: _MapHintPill(
+                            icon: Icons.touch_app_rounded,
+                            label: _selectedTruck!.displayTitle,
+                            accent: const Color(0xFF2FA56E),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildBrokerMap(BuildContext context, List<NearbyTruck> trucks) {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    final cameraTarget = _brokerMapCenter();
+    final markers = _buildBrokerMarkers(trucks);
+    final polylines = _buildBrokerPolylines();
+
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: cameraTarget,
+        zoom: pickup != null && drop != null ? 9.6 : 11.6,
+      ),
+      mapType: MapType.normal,
+      markers: markers,
+      polylines: polylines,
+      myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
+      compassEnabled: false,
+      mapToolbarEnabled: false,
+      rotateGesturesEnabled: true,
+      scrollGesturesEnabled: true,
+      tiltGesturesEnabled: false,
+      trafficEnabled: false,
+      onMapCreated: (controller) {
+        _brokerMapController = controller;
+      },
+    );
+  }
+
+  Set<Marker> _buildBrokerMarkers(List<NearbyTruck> trucks) {
+    final icon =
+        _truckMarkerIcon ??
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    final markers = <Marker>{};
+
+    for (final truck in trucks) {
+      if (!truck.hasLocation) {
+        continue;
+      }
+      markers.add(
+        Marker(
+          markerId: MarkerId(truck.id),
+          position: LatLng(truck.currentLat, truck.currentLng),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: _selectedTruck?.id == truck.id ? 2 : 1,
+          infoWindow: InfoWindow(
+            title: truck.displayTitle,
+            snippet: truck.displaySubtitle,
+          ),
+          onTap: () => _handleTruckTap(truck),
+        ),
+      );
+    }
+
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    final pickupIcon =
+        _pickupMarkerIcon ??
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+    final dropIcon =
+        _dropMarkerIcon ??
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+
+    if (pickup != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('pickup-point'),
+          position: pickup,
+          icon: pickupIcon,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 3,
+          infoWindow: const InfoWindow(title: 'Pickup'),
+        ),
+      );
+    }
+
+    if (drop != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('drop-point'),
+          position: drop,
+          icon: dropIcon,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 3,
+          infoWindow: const InfoWindow(title: 'Drop'),
+        ),
+      );
+    }
+
+    return markers;
+  }
+
+  Set<Polyline> _buildBrokerPolylines() {
+    final path = _brokerRoutePath();
+    if (path.length < 2) {
+      return const {};
+    }
+
+    return {
+      Polyline(
+        polylineId: const PolylineId('booking-route'),
+        points: path,
+        color: const Color(0xFF6B8FAF),
+        width: 8,
+        geodesic: true,
+        jointType: JointType.round,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+      ),
+    };
+  }
+
+  LatLng? get _pickupLatLng {
+    final lat = _draft.pickupLat;
+    final lng = _draft.pickupLng;
+    if (lat == null || lng == null) {
+      return null;
+    }
+    return LatLng(lat, lng);
+  }
+
+  LatLng? get _dropLatLng {
+    final lat = _draft.dropLat;
+    final lng = _draft.dropLng;
+    if (lat == null || lng == null) {
+      return null;
+    }
+    return LatLng(lat, lng);
+  }
+
+  LatLng _brokerMapCenter() {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    if (pickup != null && drop != null) {
+      return LatLng(
+        (pickup.latitude + drop.latitude) / 2,
+        (pickup.longitude + drop.longitude) / 2,
+      );
+    }
+    return pickup ?? drop ?? _fallbackMapCenter;
+  }
+
+  List<LatLng> _brokerRoutePath() {
+    if (_brokerRoutePoints.length >= 2) {
+      return _brokerRoutePoints;
+    }
+
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    if (pickup == null || drop == null) {
+      return const [];
+    }
+
+    final midLat = (pickup.latitude + drop.latitude) / 2;
+    final midLng = (pickup.longitude + drop.longitude) / 2;
+    final latDelta = (drop.latitude - pickup.latitude).abs();
+    final lngDelta = (drop.longitude - pickup.longitude).abs();
+    final bend = max(latDelta, lngDelta) * 0.30 + 0.015;
+    final direction = pickup.longitude < drop.longitude ? 1 : -1;
+
+    return [
+      pickup,
+      LatLng(
+        pickup.latitude + (drop.latitude - pickup.latitude) * 0.22,
+        pickup.longitude + (drop.longitude - pickup.longitude) * 0.14,
+      ),
+      LatLng(midLat + bend, midLng + (bend * 0.35 * direction)),
+      LatLng(
+        pickup.latitude + (drop.latitude - pickup.latitude) * 0.74,
+        pickup.longitude + (drop.longitude - pickup.longitude) * 0.70,
+      ),
+      drop,
+    ];
   }
 
   Widget _buildLocationStep(BuildContext context) {
@@ -2747,283 +3229,15 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
   }
 }
 
-class _BrokerCard extends StatelessWidget {
-  const _BrokerCard({
-    required this.broker,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _DemoBroker broker;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: selected ? broker.color : const Color(0xFFE8EDF2),
-              width: selected ? 1.6 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: selected
-                    ? broker.color.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.03),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: double.infinity,
-                  height: 84,
-                  color: broker.color.withValues(alpha: 0.08),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.asset(
-                          'assets/selectionscreen/broker.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      if (selected)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check_circle_rounded,
-                              color: Color(0xFF2FA56E),
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                broker.name,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                broker.company,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.star_rounded,
-                    color: Color(0xFFF5B62D),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    broker.rating.toStringAsFixed(1),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    broker.responseTime,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'From ₹${broker.basePrice.toStringAsFixed(0)}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: broker.color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BrokerCardGrid extends StatelessWidget {
-  const _BrokerCardGrid({
-    required this.brokers,
-    required this.selectedBrokerId,
-    required this.onSelect,
-    required this.onContinue,
-    required this.onNegotiate,
-  });
-
-  final List<_DemoBroker> brokers;
-  final String? selectedBrokerId;
-  final ValueChanged<_DemoBroker> onSelect;
-  final ValueChanged<_DemoBroker> onContinue;
-  final VoidCallback onNegotiate;
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = <List<_DemoBroker>>[
-      brokers.take(2).toList(growable: false),
-      brokers.skip(2).take(2).toList(growable: false),
-    ];
-
-    return Column(
-      children: rows.asMap().entries.map((rowEntry) {
-        final row = rowEntry.value;
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: rowEntry.key == rows.length - 1 ? 0 : 12,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < row.length; i++) ...[
-                Expanded(
-                  child: _BrokerSelectableTile(
-                    broker: row[i],
-                    selected: selectedBrokerId == row[i].id,
-                    onTap: () => onSelect(row[i]),
-                    onContinue: onContinue,
-                    onNegotiate: onNegotiate,
-                  ),
-                ),
-                if (i != row.length - 1) const SizedBox(width: 12),
-              ],
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _BrokerSelectableTile extends StatefulWidget {
-  const _BrokerSelectableTile({
-    required this.broker,
-    required this.selected,
-    required this.onTap,
-    required this.onContinue,
-    required this.onNegotiate,
-  });
-
-  final _DemoBroker broker;
-  final bool selected;
-  final VoidCallback onTap;
-  final ValueChanged<_DemoBroker> onContinue;
-  final VoidCallback onNegotiate;
-
-  @override
-  State<_BrokerSelectableTile> createState() => _BrokerSelectableTileState();
-}
-
-class _BrokerSelectableTileState extends State<_BrokerSelectableTile>
-    with SingleTickerProviderStateMixin {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _BrokerCard(
-          broker: widget.broker,
-          selected: widget.selected,
-          onTap: widget.onTap,
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          child: widget.selected
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        FilledButton(
-                          onPressed: () => widget.onContinue(widget.broker),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2FA56E),
-                          ),
-                          child: const Text('Continue'),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton(
-                          onPressed: widget.onNegotiate,
-                          child: const Text('Negotiate'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }
-}
-
 class _BrokerNegotiationSheet extends StatefulWidget {
   const _BrokerNegotiationSheet({
-    required this.broker,
+    required this.truck,
     required this.minPrice,
     required this.maxPrice,
     required this.initialPrice,
   });
 
-  final _DemoBroker broker;
+  final NearbyTruck truck;
   final double minPrice;
   final double maxPrice;
   final double initialPrice;
@@ -3110,7 +3324,7 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
                   child: switch (_step) {
                     _NegotiationSheetStep.slider => _NegotiationSliderStep(
                       key: const ValueKey('slider'),
-                      broker: widget.broker,
+                      truck: widget.truck,
                       value: _value,
                       minPrice: widget.minPrice,
                       maxPrice: widget.maxPrice,
@@ -3123,13 +3337,13 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
                     ),
                     _NegotiationSheetStep.loading => _NegotiationLoadingStep(
                       key: const ValueKey('loading'),
-                      broker: widget.broker,
+                      truck: widget.truck,
                       messages: _brokerNegotiationMessages,
                     ),
                     _NegotiationSheetStep.counterOffer =>
                       _NegotiationCounterOfferStep(
                         key: const ValueKey('counter'),
-                        broker: widget.broker,
+                        truck: widget.truck,
                         counterOfferAmount: _counterOffer ?? _value,
                         onAccept: _acceptCounterOffer,
                         onCancel: _chooseAnotherBroker,
@@ -3148,7 +3362,7 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
 class _NegotiationSliderStep extends StatelessWidget {
   const _NegotiationSliderStep({
     super.key,
-    required this.broker,
+    required this.truck,
     required this.value,
     required this.minPrice,
     required this.maxPrice,
@@ -3156,7 +3370,7 @@ class _NegotiationSliderStep extends StatelessWidget {
     required this.onNegotiate,
   });
 
-  final _DemoBroker broker;
+  final NearbyTruck truck;
   final double value;
   final double minPrice;
   final double maxPrice;
@@ -3170,7 +3384,7 @@ class _NegotiationSliderStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Negotiate with ${broker.name}',
+          'Negotiate with ${truck.displayTitle}',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: const Color(0xFF101828),
             fontWeight: FontWeight.w800,
@@ -3263,11 +3477,11 @@ class _NegotiationSliderStep extends StatelessWidget {
 class _NegotiationLoadingStep extends StatelessWidget {
   const _NegotiationLoadingStep({
     super.key,
-    required this.broker,
+    required this.truck,
     required this.messages,
   });
 
-  final _DemoBroker broker;
+  final NearbyTruck truck;
   final List<String> messages;
 
   @override
@@ -3297,7 +3511,7 @@ class _NegotiationLoadingStep extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Negotiating with ${broker.name}...',
+              'Negotiating with ${truck.displayTitle}...',
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -3313,13 +3527,13 @@ class _NegotiationLoadingStep extends StatelessWidget {
 class _NegotiationCounterOfferStep extends StatelessWidget {
   const _NegotiationCounterOfferStep({
     super.key,
-    required this.broker,
+    required this.truck,
     required this.counterOfferAmount,
     required this.onAccept,
     required this.onCancel,
   });
 
-  final _DemoBroker broker;
+  final NearbyTruck truck;
   final double counterOfferAmount;
   final VoidCallback onAccept;
   final VoidCallback onCancel;
@@ -3340,7 +3554,7 @@ class _NegotiationCounterOfferStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${broker.name} replied with a new price',
+              '${truck.displayTitle} replied with a new price',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: const Color(0xFF101828),
                 fontWeight: FontWeight.w800,
@@ -3368,10 +3582,13 @@ class _NegotiationCounterOfferStep extends StatelessWidget {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: broker.color.withValues(alpha: 0.12),
+                      color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.handshake_rounded, color: broker.color),
+                    child: const Icon(
+                      Icons.local_shipping_rounded,
+                      color: Color(0xFF2FA56E),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -3379,7 +3596,7 @@ class _NegotiationCounterOfferStep extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          broker.company,
+                          truck.displaySubtitle,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: const Color(0xFF667085),
@@ -3428,6 +3645,51 @@ class _NegotiationCounterOfferStep extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MapHintPill extends StatelessWidget {
+  const _MapHintPill({
+    required this.icon,
+    required this.label,
+    this.accent = const Color(0xFF101828),
+  });
+
+  final IconData icon;
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

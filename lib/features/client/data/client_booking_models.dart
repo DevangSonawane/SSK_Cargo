@@ -351,6 +351,195 @@ class ClientBookingOffer {
   bool get isPending => _normalizeStatus(status) == 'pending';
 }
 
+class NearbyTruckPage {
+  const NearbyTruckPage({required this.trucks});
+
+  factory NearbyTruckPage.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    final items = _extractItems(data, json);
+    return NearbyTruckPage(
+      trucks: items
+          .whereType<Map<String, dynamic>>()
+          .map(NearbyTruck.fromJson)
+          .where((truck) => truck.id.isNotEmpty)
+          .toList(),
+    );
+  }
+
+  final List<NearbyTruck> trucks;
+}
+
+class NearbyTruck {
+  const NearbyTruck({
+    required this.id,
+    required this.truckNumber,
+    required this.truckName,
+    required this.capacity,
+    required this.category,
+    required this.status,
+    required this.currentLat,
+    required this.currentLng,
+    required this.lastLocationAt,
+    required this.distanceKm,
+    required this.raw,
+  });
+
+  factory NearbyTruck.fromJson(Map<String, dynamic> json) {
+    final truck = _asMap(json['truck']);
+    final vehicle = _asMap(json['vehicle']);
+    final location = _asMap(json['location']);
+    final latValue =
+        json['current_lat'] ??
+        json['currentLat'] ??
+        json['truck_lat'] ??
+        json['truckLat'] ??
+        location['current_lat'] ??
+        location['currentLat'] ??
+        location['lat'] ??
+        location['latitude'];
+    final lngValue =
+        json['current_lng'] ??
+        json['currentLng'] ??
+        json['truck_lng'] ??
+        json['truckLng'] ??
+        location['current_lng'] ??
+        location['currentLng'] ??
+        location['lng'] ??
+        location['longitude'];
+
+    return NearbyTruck(
+      id: _readString(json, const ['id', 'truck_id', 'uuid']),
+      truckNumber: _firstNonEmpty([
+        _readString(json, const [
+          'truck_number',
+          'registration_number',
+          'plate_number',
+          'vehicle_number',
+          'number_plate',
+          'reg_no',
+          'truck_no',
+        ]),
+        _readString(truck, const [
+          'truck_number',
+          'registration_number',
+          'plate_number',
+          'vehicle_number',
+          'number_plate',
+          'reg_no',
+          'truck_no',
+        ]),
+        _readString(vehicle, const [
+          'truck_number',
+          'registration_number',
+          'plate_number',
+          'vehicle_number',
+          'number_plate',
+          'reg_no',
+          'truck_no',
+        ]),
+      ]),
+      truckName: _firstNonEmpty([
+        _readString(json, const [
+          'truck_name',
+          'name',
+          'title',
+          'vehicle_name',
+        ]),
+        _readString(truck, const [
+          'truck_name',
+          'name',
+          'title',
+          'vehicle_name',
+        ]),
+        _readString(vehicle, const [
+          'truck_name',
+          'name',
+          'title',
+          'vehicle_name',
+        ]),
+      ]),
+      capacity: _firstNonEmpty([
+        _readString(json, const ['capacity', 'load_capacity']),
+        _readString(truck, const ['capacity', 'load_capacity']),
+        _readString(vehicle, const ['capacity', 'load_capacity']),
+      ]),
+      category: _firstNonEmpty([
+        _readString(json, const ['truck_category', 'category']),
+        _readString(truck, const ['truck_category', 'category']),
+        _readString(vehicle, const ['truck_category', 'category']),
+      ]),
+      status: _readString(json, const ['status', 'truck_status']).isEmpty
+          ? 'available'
+          : _readString(json, const ['status', 'truck_status']),
+      currentLat: _asDouble(latValue),
+      currentLng: _asDouble(lngValue),
+      lastLocationAt: _parseDateTime(
+        json['last_location_at'] ??
+            json['lastLocationAt'] ??
+            json['updated_at'] ??
+            json['updatedAt'] ??
+            location['last_location_at'] ??
+            location['lastLocationAt'],
+      ),
+      distanceKm: _asDouble(
+        json['distance_km'] ??
+            json['distanceKm'] ??
+            json['distance'] ??
+            location['distance_km'] ??
+            location['distanceKm'],
+      ),
+      raw: json,
+    );
+  }
+
+  final String id;
+  final String truckNumber;
+  final String truckName;
+  final String capacity;
+  final String category;
+  final String status;
+  final double currentLat;
+  final double currentLng;
+  final DateTime? lastLocationAt;
+  final double distanceKm;
+  final Map<String, dynamic> raw;
+
+  bool get hasLocation => currentLat != 0 && currentLng != 0;
+
+  String get displayTitle {
+    if (truckNumber.isNotEmpty) {
+      return truckNumber;
+    }
+    if (truckName.isNotEmpty) {
+      return truckName;
+    }
+    return 'Truck ${id.isNotEmpty ? id.substring(0, id.length > 6 ? 6 : id.length) : ''}'
+        .trim();
+  }
+
+  String get displaySubtitle {
+    final parts = <String>[
+      if (capacity.isNotEmpty) capacity,
+      if (category.isNotEmpty) _titleCase(category),
+      if (status.isNotEmpty) _titleCase(status),
+    ];
+    return parts.isEmpty ? 'Available truck' : parts.join(' · ');
+  }
+
+  String get selectionLabel =>
+      displayTitle.isNotEmpty ? displayTitle : 'Selected truck';
+}
+
+String _firstNonEmpty(List<String> values) {
+  for (final value in values) {
+    final text = value.trim();
+    if (text.isNotEmpty) {
+      return text;
+    }
+  }
+  return '';
+}
+
 List<dynamic> _extractItems(
   Map<String, dynamic> data,
   Map<String, dynamic> root,
