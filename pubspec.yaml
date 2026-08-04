@@ -100,6 +100,7 @@ flutter:
     - assets/images/
     - assets/selectionscreen/
     - "assets/client/test.png"
+    - "assets/client/home_page_photo.png"
     - "assets/package.png"
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -17,6 +17,7 @@ class GooglePlacesAutocompleteField extends ConsumerStatefulWidget {
     this.initialValue,
     this.embedded = false,
     this.showLabel = true,
+    this.autofocus = false,
   });
 
   final TextEditingController controller;
@@ -26,6 +27,7 @@ class GooglePlacesAutocompleteField extends ConsumerStatefulWidget {
   final String? initialValue;
   final bool embedded;
   final bool showLabel;
+  final bool autofocus;
 
   @override
   ConsumerState<GooglePlacesAutocompleteField> createState() =>
@@ -51,6 +53,13 @@ class _GooglePlacesAutocompleteFieldState
     _focusNode.addListener(_onFocusChanged);
     if (widget.initialValue != null && widget.controller.text.isEmpty) {
       widget.controller.text = widget.initialValue!;
+    }
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focusNode.requestFocus();
+        }
+      });
     }
   }
 
@@ -180,6 +189,7 @@ class _GooglePlacesAutocompleteFieldState
           formattedAddress: widget.controller.text,
           latitude: selection.latitude,
           longitude: selection.longitude,
+          city: selection.city,
         ),
       );
       setState(() {
@@ -203,7 +213,10 @@ class _GooglePlacesAutocompleteFieldState
   String _newSessionToken() {
     final timestamp = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
     final randomPart = _random.nextInt(1 << 32).toRadixString(36);
-    return '$timestamp$randomPart'.substring(0, min(36, timestamp.length + randomPart.length));
+    return '$timestamp$randomPart'.substring(
+      0,
+      min(36, timestamp.length + randomPart.length),
+    );
   }
 
   @override
@@ -211,60 +224,60 @@ class _GooglePlacesAutocompleteFieldState
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-          if (widget.showLabel) ...[
-            Text(
-              widget.label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          TextField(
-            controller: widget.controller,
-            focusNode: _focusNode,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: widget.hintText,
-              border: InputBorder.none,
-              isDense: true,
-              suffixIcon: _loading
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : const Icon(Icons.place_outlined, size: 18),
+        if (widget.showLabel) ...[
+          Text(
+            widget.label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w700,
             ),
           ),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Could not load suggestions',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFB42318),
-                fontWeight: FontWeight.w600,
+          const SizedBox(height: 8),
+        ],
+        TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            border: InputBorder.none,
+            isDense: true,
+            suffixIcon: _loading
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : const Icon(Icons.place_outlined, size: 18),
+          ),
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Could not load suggestions',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFFB42318),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (_suggestions.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          ..._suggestions.asMap().entries.map(
+            (entry) => Padding(
+              padding: EdgeInsets.only(
+                bottom: entry.key == _suggestions.length - 1 ? 0 : 8,
+              ),
+              child: _SuggestionTile(
+                suggestion: entry.value,
+                onTap: () => _selectSuggestion(entry.value),
               ),
             ),
-          ],
-          if (_suggestions.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ..._suggestions.asMap().entries.map(
-              (entry) => Padding(
-                padding: EdgeInsets.only(
-                  bottom: entry.key == _suggestions.length - 1 ? 0 : 8,
-                ),
-                child: _SuggestionTile(
-                  suggestion: entry.value,
-                  onTap: () => _selectSuggestion(entry.value),
-                ),
-              ),
-            ),
-          ],
+          ),
+        ],
       ],
     );
 
@@ -286,10 +299,7 @@ class _GooglePlacesAutocompleteFieldState
 }
 
 class _SuggestionTile extends StatelessWidget {
-  const _SuggestionTile({
-    required this.suggestion,
-    required this.onTap,
-  });
+  const _SuggestionTile({required this.suggestion, required this.onTap});
 
   final GooglePlaceSuggestion suggestion;
   final VoidCallback onTap;

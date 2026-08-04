@@ -25,12 +25,14 @@ class GooglePlaceSelection {
     required this.formattedAddress,
     required this.latitude,
     required this.longitude,
+    this.city = '',
   });
 
   final String placeId;
   final String formattedAddress;
   final double? latitude;
   final double? longitude;
+  final String city;
 }
 
 class GooglePlacesService {
@@ -138,18 +140,22 @@ class GooglePlacesService {
       options: Options(
         headers: {
           'X-Goog-Api-Key': googleMapsApiKey,
-          'X-Goog-FieldMask': 'id,formattedAddress,location',
+          'X-Goog-FieldMask': 'id,formattedAddress,location,addressComponents',
         },
       ),
     );
 
     final data = response.data ?? const <String, dynamic>{};
     final location = _asMap(data['location']);
+    final city = _extractCityFromAddressComponents(
+      _asList(data['addressComponents']),
+    );
     return GooglePlaceSelection(
       placeId: _readString(data, const ['id', 'placeId']),
       formattedAddress: _readString(data, const ['formattedAddress']),
       latitude: _readDouble(location, const ['latitude']),
       longitude: _readDouble(location, const ['longitude']),
+      city: city,
     );
   }
 
@@ -191,11 +197,15 @@ class GooglePlacesService {
 
     final geometry = _asMap(first['geometry']);
     final location = _asMap(geometry['location']);
+    final city = _extractCityFromAddressComponents(
+      _asList(first['address_components']),
+    );
     return GooglePlaceSelection(
       placeId: _readString(first, const ['place_id']),
       formattedAddress: _readString(first, const ['formatted_address']),
       latitude: _readDouble(location, const ['lat']),
       longitude: _readDouble(location, const ['lng']),
+      city: city,
     );
   }
 
@@ -277,6 +287,13 @@ Map<String, dynamic> _asMap(Object? value) {
   return <String, dynamic>{};
 }
 
+List<Map<String, dynamic>> _asList(Object? value) {
+  if (value is List) {
+    return value.whereType<Map<String, dynamic>>().toList(growable: false);
+  }
+  return const <Map<String, dynamic>>[];
+}
+
 String _readString(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
@@ -307,6 +324,44 @@ double? _readDouble(Map<String, dynamic> json, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return null;
+}
+
+String _extractCityFromAddressComponents(
+  List<Map<String, dynamic>> components,
+) {
+  const cityTypes = <String>{
+    'locality',
+    'postal_town',
+    'administrative_area_level_3',
+    'administrative_area_level_2',
+    'sublocality_level_1',
+  };
+
+  for (final component in components) {
+    final types = _asListOfString(component['types']);
+    if (types.any(cityTypes.contains)) {
+      final longText = _readString(component, const ['longText', 'long_name']);
+      if (longText.isNotEmpty) {
+        return longText;
+      }
+      final shortText = _readString(component, const [
+        'shortText',
+        'short_name',
+      ]);
+      if (shortText.isNotEmpty) {
+        return shortText;
+      }
+    }
+  }
+
+  return '';
+}
+
+List<String> _asListOfString(Object? value) {
+  if (value is List) {
+    return value.map((item) => item.toString()).toList(growable: false);
+  }
+  return const <String>[];
 }
 
 List<LatLng> decodePolyline(String encoded) {

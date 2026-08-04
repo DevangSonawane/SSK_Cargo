@@ -372,6 +372,8 @@ class NearbyTruckPage {
 class NearbyTruck {
   const NearbyTruck({
     required this.id,
+    required this.registration,
+    required this.type,
     required this.truckNumber,
     required this.truckName,
     required this.capacity,
@@ -409,6 +411,40 @@ class NearbyTruck {
 
     return NearbyTruck(
       id: _readString(json, const ['id', 'truck_id', 'uuid']),
+      registration: _firstNonEmpty([
+        _readString(json, const [
+          'registration',
+          'registration_number',
+          'registrationNumber',
+          'truck_number',
+          'truckNumber',
+          'plate_number',
+          'plateNumber',
+        ]),
+        _readString(truck, const [
+          'registration',
+          'registration_number',
+          'registrationNumber',
+          'truck_number',
+          'truckNumber',
+          'plate_number',
+          'plateNumber',
+        ]),
+        _readString(vehicle, const [
+          'registration',
+          'registration_number',
+          'registrationNumber',
+          'truck_number',
+          'truckNumber',
+          'plate_number',
+          'plateNumber',
+        ]),
+      ]),
+      type: _firstNonEmpty([
+        _readString(json, const ['type', 'truck_type']),
+        _readString(truck, const ['type', 'truck_type']),
+        _readString(vehicle, const ['type', 'truck_type']),
+      ]),
       truckNumber: _firstNonEmpty([
         _readString(json, const [
           'truck_number',
@@ -493,6 +529,8 @@ class NearbyTruck {
   }
 
   final String id;
+  final String registration;
+  final String type;
   final String truckNumber;
   final String truckName;
   final String capacity;
@@ -507,6 +545,9 @@ class NearbyTruck {
   bool get hasLocation => currentLat != 0 && currentLng != 0;
 
   String get displayTitle {
+    if (registration.isNotEmpty) {
+      return registration;
+    }
     if (truckNumber.isNotEmpty) {
       return truckNumber;
     }
@@ -519,6 +560,7 @@ class NearbyTruck {
 
   String get displaySubtitle {
     final parts = <String>[
+      if (type.isNotEmpty) _titleCase(type),
       if (capacity.isNotEmpty) capacity,
       if (category.isNotEmpty) _titleCase(category),
       if (status.isNotEmpty) _titleCase(status),

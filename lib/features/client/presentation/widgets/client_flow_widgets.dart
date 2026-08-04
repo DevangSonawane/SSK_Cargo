@@ -21,6 +21,267 @@ import 'google_places_autocomplete_field.dart';
 
 enum TripType { interCity, intraCity }
 
+enum _LocationFieldKind { pickup, drop }
+
+class _LocationDetailsScreen extends ConsumerStatefulWidget {
+  const _LocationDetailsScreen({
+    required this.kind,
+    required this.initialValue,
+  });
+
+  final _LocationFieldKind kind;
+  final String initialValue;
+
+  @override
+  ConsumerState<_LocationDetailsScreen> createState() =>
+      _LocationDetailsScreenState();
+}
+
+class _LocationDetailsScreenState
+    extends ConsumerState<_LocationDetailsScreen> {
+  late final TextEditingController _controller;
+  bool _resolvingCurrentLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String get _hintText => widget.kind == _LocationFieldKind.pickup
+      ? 'Enter your loading address'
+      : 'Enter your unloading address';
+
+  String get _useCurrentLocationLabel =>
+      widget.kind == _LocationFieldKind.pickup
+      ? 'Use your current location'
+      : 'Use current location';
+
+  IconData get _fieldIcon => widget.kind == _LocationFieldKind.pickup
+      ? Icons.arrow_upward_rounded
+      : Icons.arrow_downward_rounded;
+
+  Color get _fieldIconColor => widget.kind == _LocationFieldKind.pickup
+      ? const Color(0xFF38B47A)
+      : const Color(0xFFF05252);
+
+  Future<void> _useCurrentLocation() async {
+    if (widget.kind != _LocationFieldKind.pickup || _resolvingCurrentLocation) {
+      return;
+    }
+
+    setState(() {
+      _resolvingCurrentLocation = true;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Turn on location services to autofill pickup.'),
+          ),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission is needed to autofill pickup.'),
+          ),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      final service = ref.read(googlePlacesServiceProvider);
+      final address = await service.reverseGeocode(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      if (!mounted) return;
+
+      if (address.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not resolve your current address yet.'),
+          ),
+        );
+        return;
+      }
+
+      Navigator.of(context).pop(
+        GooglePlaceSelection(
+          placeId: '',
+          formattedAddress: address,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          city: '',
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingCurrentLocation = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: () => Navigator.of(context).pop(),
+                borderRadius: BorderRadius.circular(999),
+                child: const SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Icon(Icons.arrow_back_rounded, size: 24),
+                ),
+              ),
+              const SizedBox(height: 34),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(color: const Color(0xFFE7EEF6)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: _fieldIconColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(_fieldIcon, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GooglePlacesAutocompleteField(
+                        controller: _controller,
+                        label: '',
+                        hintText: _hintText,
+                        embedded: true,
+                        showLabel: false,
+                        autofocus: true,
+                        onSelected: (selection) {
+                          Navigator.of(context).pop(selection);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.kind == _LocationFieldKind.pickup) ...[
+                const SizedBox(height: 26),
+                InkWell(
+                  onTap: _resolvingCurrentLocation ? null : _useCurrentLocation,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 2,
+                    ),
+                    child: Row(
+                      children: [
+                        _resolvingCurrentLocation
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.my_location_rounded,
+                                color: Color(0xFF2D8EDB),
+                                size: 24,
+                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _useCurrentLocationLabel,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF2D8EDB),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(height: 1, color: const Color(0xFFE6EAF0)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+extension TripTypeDisplayLabel on TripType {
+  String get displayLabel => switch (this) {
+    TripType.interCity => 'Full truck',
+    TripType.intraCity => 'Part truck',
+  };
+
+  String get helperText => switch (this) {
+    TripType.interCity => 'Dedicated truck for one shipment',
+    TripType.intraCity => 'Share capacity and optimize cost',
+  };
+}
+
 class BookingData {
   const BookingData({
     required this.from,
@@ -1440,16 +1701,16 @@ class TripTypeSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _TripTypeRow(
-              imagePath: 'assets/trucks/intra-city.png',
-              label: 'Inter city',
-              helperText: 'Move between cities',
+              imagePath: 'assets/trucks/inter-city.png',
+              label: TripType.interCity.displayLabel,
+              helperText: TripType.interCity.helperText,
               onTap: () => Navigator.of(context).pop(TripType.interCity),
             ),
             const SizedBox(height: 10),
             _TripTypeRow(
-              imagePath: 'assets/trucks/inter-city.png',
-              label: 'Intra city',
-              helperText: 'Deliver within the city',
+              imagePath: 'assets/trucks/intra-city.png',
+              label: TripType.intraCity.displayLabel,
+              helperText: TripType.intraCity.helperText,
               onTap: () => Navigator.of(context).pop(TripType.intraCity),
             ),
           ],
@@ -1529,10 +1790,12 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
     super.key,
     required this.tripType,
     this.initialVehicleIndex = 0,
+    this.autoOpenLocationFlow = false,
   });
 
   final TripType tripType;
   final int initialVehicleIndex;
+  final bool autoOpenLocationFlow;
 
   @override
   ConsumerState<BookingLocationScreen> createState() =>
@@ -1569,10 +1832,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   late final TextEditingController _fromController;
   late final TextEditingController _toController;
-  late final TextEditingController _materialController;
-  late final TextEditingController _notesController;
   late final TextEditingController _weightController;
-  late final TextEditingController _quantityController;
   late final TextEditingController _amountController;
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
@@ -1590,13 +1850,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _resolvingCurrentLocation = false;
   bool _bookingCreated = false;
   String? _bookingReference;
+  bool _weightUnknown = false;
   String? _weightError;
-  String? _quantityError;
-  String? _materialError;
-  String? _amountError;
-  bool _itemDetailsValidationAttempted = false;
   late BookingData _draft;
   late int _vehicleIndex;
+  bool _autoLocationFlowStarted = false;
 
   @override
   void initState() {
@@ -1624,17 +1882,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
     _fromController = TextEditingController(text: _draft.from);
     _toController = TextEditingController();
-    _materialController = TextEditingController();
-    _notesController = TextEditingController();
     _weightController = TextEditingController();
-    _quantityController = TextEditingController(text: '1');
     _amountController = TextEditingController(
       text: _priceInputText(_vehicle.price),
     );
-    _weightController.addListener(_syncItemDetailsErrors);
-    _quantityController.addListener(_syncItemDetailsErrors);
-    _materialController.addListener(_syncItemDetailsErrors);
-    _amountController.addListener(_syncItemDetailsErrors);
+
+    if (widget.autoOpenLocationFlow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _runAutoLocationFlow();
+        }
+      });
+    }
   }
 
   @override
@@ -1643,10 +1902,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
-    _materialController.dispose();
-    _notesController.dispose();
     _weightController.dispose();
-    _quantityController.dispose();
     _amountController.dispose();
     super.dispose();
   }
@@ -1714,6 +1970,59 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _brokerRoutePoints = const [];
       });
+    }
+  }
+
+  Future<GooglePlaceSelection?> _openLocationDetailsScreen(
+    _LocationFieldKind kind,
+  ) async {
+    final initialValue = kind == _LocationFieldKind.pickup
+        ? _fromController.text
+        : _toController.text;
+
+    return Navigator.of(context).push<GooglePlaceSelection>(
+      MaterialPageRoute(
+        builder: (context) =>
+            _LocationDetailsScreen(kind: kind, initialValue: initialValue),
+      ),
+    );
+  }
+
+  Future<void> _runAutoLocationFlow() async {
+    if (_autoLocationFlowStarted || !mounted) {
+      return;
+    }
+    _autoLocationFlowStarted = true;
+
+    final pickup = await _openLocationDetailsScreen(_LocationFieldKind.pickup);
+    if (pickup == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _draft = _draft.copyWith(
+        from: pickup.formattedAddress,
+        pickupLat: pickup.latitude,
+        pickupLng: pickup.longitude,
+        city: pickup.city.isNotEmpty ? pickup.city : _draft.city,
+      );
+      _fromController.text = pickup.formattedAddress;
+    });
+
+    final drop = await _openLocationDetailsScreen(_LocationFieldKind.drop);
+    if (drop == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _draft = _draft.copyWith(
+        to: drop.formattedAddress,
+        dropLat: drop.latitude,
+        dropLng: drop.longitude,
+      );
+      _toController.text = drop.formattedAddress;
+    });
+
+    if (mounted) {
+      await _resolveDistanceAndContinue();
     }
   }
 
@@ -1785,77 +2094,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
   }
 
-  void _syncItemDetailsErrors() {
-    if (!mounted || !_itemDetailsValidationAttempted) {
-      return;
-    }
+  Future<void> _advanceFromWeightStep({required bool unknown}) async {
+    final rawWeight = _weightController.text.trim();
+    final parsedWeight = double.tryParse(rawWeight);
 
-    final nextWeightError =
-        double.tryParse(_weightController.text.trim()) == null ||
-            (double.tryParse(_weightController.text.trim()) ?? 0) <= 0
-        ? 'Enter weight'
-        : null;
-    final nextQuantityError =
-        int.tryParse(_quantityController.text.trim()) == null ||
-            (int.tryParse(_quantityController.text.trim()) ?? 0) <= 0
-        ? 'Enter items'
-        : null;
-    final nextMaterialError = _materialController.text.trim().isEmpty
-        ? 'Enter material type'
-        : null;
-    final nextAmountError =
-        double.tryParse(_amountController.text.trim()) == null ||
-            (double.tryParse(_amountController.text.trim()) ?? 0) <= 0
-        ? 'Enter amount'
-        : null;
-
-    if (nextWeightError == _weightError &&
-        nextQuantityError == _quantityError &&
-        nextMaterialError == _materialError &&
-        nextAmountError == _amountError) {
+    if (!unknown && (parsedWeight == null || parsedWeight <= 0)) {
+      setState(() {
+        _weightUnknown = false;
+        _weightError = 'Enter weight';
+      });
       return;
     }
 
     setState(() {
-      _weightError = nextWeightError;
-      _quantityError = nextQuantityError;
-      _materialError = nextMaterialError;
-      _amountError = nextAmountError;
+      _weightUnknown = unknown;
+      _weightError = null;
+      _draft = _draft.copyWith(
+        weight: unknown ? 0 : parsedWeight ?? 0,
+        quantity: 1,
+        material: '',
+        additionalNotes: '',
+      );
+      _selectedTruck = null;
+      _step = _BookingFlowStep.brokerSelection;
     });
-  }
-
-  bool _validateItemDetails() {
-    final nextWeightError =
-        double.tryParse(_weightController.text.trim()) == null ||
-            (double.tryParse(_weightController.text.trim()) ?? 0) <= 0
-        ? 'Enter weight'
-        : null;
-    final nextQuantityError =
-        int.tryParse(_quantityController.text.trim()) == null ||
-            (int.tryParse(_quantityController.text.trim()) ?? 0) <= 0
-        ? 'Enter items'
-        : null;
-    final nextMaterialError = _materialController.text.trim().isEmpty
-        ? 'Enter material type'
-        : null;
-    final nextAmountError =
-        double.tryParse(_amountController.text.trim()) == null ||
-            (double.tryParse(_amountController.text.trim()) ?? 0) <= 0
-        ? 'Enter amount'
-        : null;
-
-    setState(() {
-      _itemDetailsValidationAttempted = true;
-      _weightError = nextWeightError;
-      _quantityError = nextQuantityError;
-      _materialError = nextMaterialError;
-      _amountError = nextAmountError;
-    });
-
-    return nextWeightError == null &&
-        nextQuantityError == null &&
-        nextMaterialError == null &&
-        nextAmountError == null;
   }
 
   Future<void> _next() async {
@@ -1870,26 +2132,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         await _resolveDistanceAndContinue();
         return;
       case _BookingFlowStep.itemDetails:
-        if (!_validateItemDetails()) {
-          return;
-        }
-        final material = _materialController.text.trim();
-        final weight = double.parse(_weightController.text.trim());
-        final quantity = int.parse(_quantityController.text.trim());
-        final amount = double.parse(_amountController.text.trim());
-        setState(() {
-          _draft = _draft.copyWith(
-            material: material,
-            additionalNotes: _notesController.text.trim(),
-            weight: weight,
-            quantity: quantity,
-            amount: amount,
-          );
-          _selectedTruck = null;
-        });
-        setState(() {
-          _step = _BookingFlowStep.brokerSelection;
-        });
+        await _advanceFromWeightStep(unknown: _weightUnknown);
         return;
       case _BookingFlowStep.brokerSelection:
         return;
@@ -2098,15 +2341,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     try {
       await _resolveTypedCoordinates(pickup: pickup, drop: drop);
       await _refreshBrokerRoute();
-      await _validateLocationStep(pickup, drop);
       final city = _draft.transportType == 'intra'
           ? (_draft.city.isNotEmpty
                 ? _draft.city
                 : _deriveCityFromLocation(pickup, drop))
           : '';
       if (city.isNotEmpty || _draft.city.isNotEmpty) {
-        _draft = _draft.copyWith(city: city);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _draft = _draft.copyWith(city: city);
+        });
       }
+      await _validateLocationStep(pickup, drop);
       final response = await ref
           .read(apiClientProvider)
           .getDistanceEstimate(
@@ -2170,26 +2418,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
-  void _applyDropSelection(GooglePlaceSelection selection) {
-    setState(() {
-      _draft = _draft.copyWith(
-        to: selection.formattedAddress,
-        dropLat: selection.latitude,
-        dropLng: selection.longitude,
-      );
-    });
-  }
-
-  void _applyPickupSelection(GooglePlaceSelection selection) {
-    setState(() {
-      _draft = _draft.copyWith(
-        from: selection.formattedAddress,
-        pickupLat: selection.latitude,
-        pickupLng: selection.longitude,
-      );
-    });
-  }
-
   Future<void> _resolveTypedCoordinates({
     required String pickup,
     required String drop,
@@ -2224,6 +2452,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               : pickup,
           pickupLat: pickupSelection.latitude,
           pickupLng: pickupSelection.longitude,
+          city: pickupSelection.city.isNotEmpty
+              ? pickupSelection.city
+              : _draft.city,
         );
         if (pickupSelection.formattedAddress.isNotEmpty) {
           _fromController.text = pickupSelection.formattedAddress;
@@ -2305,10 +2536,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
 
       setState(() {
+        final city = _deriveCityFromLocation(address, '');
         _draft = _draft.copyWith(
           from: address,
           pickupLat: position.latitude,
           pickupLng: position.longitude,
+          city: city.isNotEmpty ? city : _draft.city,
         );
         _fromController.text = address;
       });
@@ -2568,9 +2801,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final showBottomButton = switch (_step) {
-      _BookingFlowStep.location ||
-      _BookingFlowStep.itemDetails ||
-      _BookingFlowStep.payment => true,
+      _BookingFlowStep.location || _BookingFlowStep.payment => true,
+      _BookingFlowStep.itemDetails => false,
       _BookingFlowStep.brokerSelection => false,
     };
 
@@ -2595,9 +2827,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         )
                       : Text(switch (_step) {
                           _BookingFlowStep.location => 'Next',
-                          _BookingFlowStep.itemDetails => 'Find brokers',
                           _BookingFlowStep.payment => 'Continue',
                           _BookingFlowStep.brokerSelection => 'Continue',
+                          _BookingFlowStep.itemDetails => 'Next',
                         }),
                 ),
               ),
@@ -2643,7 +2875,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         Text(
                           switch (_step) {
                             _BookingFlowStep.location => 'Location',
-                            _BookingFlowStep.itemDetails => 'Item details',
+                            _BookingFlowStep.itemDetails => 'Weight',
                             _BookingFlowStep.brokerSelection => 'Choose trucks',
                             _BookingFlowStep.payment => 'Payment',
                           },
@@ -2688,10 +2920,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             clientNearbyTrucksProvider((
               pickupLat: pickup.latitude,
               pickupLng: pickup.longitude,
-              truckCategory: _draft.truckCategory.isNotEmpty
-                  ? _draft.truckCategory
-                  : _truckCategoryForVehicle(_vehicle.label),
-              capacity: _vehicle.capacity,
               radiusKm: 25,
               page: 1,
               limit: 20,
@@ -2936,7 +3164,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildLocationStep(BuildContext context) {
-    final isInterCity = widget.tripType == TripType.interCity;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2981,37 +3208,46 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        _BookingSummaryCard(
-          pickupController: _fromController,
-          onPickupSelected: _applyPickupSelection,
-          pickupTitle: isInterCity ? 'Ghanshyam Enclave' : 'Current location',
-          dropController: _toController,
-          onDropSelected: _applyDropSelection,
-        ),
-        const SizedBox(height: 12),
-        _VehiclePreviewHeader(vehicle: _vehicle),
-        const SizedBox(height: 12),
-        Text(
-          'Recent locations',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF101828),
-          ),
-        ),
-        const SizedBox(height: 8),
-        ..._recentLocations.asMap().entries.expand(
-          (entry) => [
-            _RecentLocationTile(
-              label: entry.value.$1,
-              address: entry.value.$2,
-              onTap: () => setState(() {
-                _toController.text = entry.value.$2;
-              }),
-            ),
-            if (entry.key != _recentLocations.length - 1)
-              const SizedBox(height: 8),
-          ],
+        _LocationLaunchCard(
+          pickupValue: _fromController.text.isEmpty
+              ? 'Enter loading location'
+              : _fromController.text,
+          dropValue: _toController.text.isEmpty
+              ? 'Enter unloading location'
+              : _toController.text,
+          onPickupTap: () async {
+            final selection = await _openLocationDetailsScreen(
+              _LocationFieldKind.pickup,
+            );
+            if (selection == null || !mounted) {
+              return;
+            }
+            setState(() {
+              _draft = _draft.copyWith(
+                from: selection.formattedAddress,
+                pickupLat: selection.latitude,
+                pickupLng: selection.longitude,
+                city: selection.city.isNotEmpty ? selection.city : _draft.city,
+              );
+              _fromController.text = selection.formattedAddress;
+            });
+          },
+          onDropTap: () async {
+            final selection = await _openLocationDetailsScreen(
+              _LocationFieldKind.drop,
+            );
+            if (selection == null || !mounted) {
+              return;
+            }
+            setState(() {
+              _draft = _draft.copyWith(
+                to: selection.formattedAddress,
+                dropLat: selection.latitude,
+                dropLng: selection.longitude,
+              );
+              _toController.text = selection.formattedAddress;
+            });
+          },
         ),
       ],
     );
@@ -3019,87 +3255,214 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildItemDetailsStep(BuildContext context) {
     final weight = double.tryParse(_weightController.text.trim()) ?? 0;
-    final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _VehiclePreviewHeader(vehicle: _vehicle),
-        const SizedBox(height: 14),
-        _StepperCard(
-          title: 'Weight (tons)',
-          valueText: weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1),
-          errorText: _weightError,
-          onMinus: () {
-            final next = (weight - 0.5).clamp(0, 9999).toDouble();
-            setState(() {
-              _weightController.text = next.toStringAsFixed(
-                next % 1 == 0 ? 0 : 1,
-              );
-            });
-          },
-          onPlus: () {
-            final next = (weight + 0.5).clamp(0, 9999).toDouble();
-            setState(() {
-              _weightController.text = next.toStringAsFixed(
-                next % 1 == 0 ? 0 : 1,
-              );
-            });
-          },
-        ),
-        const SizedBox(height: 12),
-        _StepperCard(
-          title: 'Number of items',
-          valueText: quantity.toString(),
-          errorText: _quantityError,
-          onMinus: () {
-            final next = (quantity - 1).clamp(1, 9999).toInt();
-            setState(() {
-              _quantityController.text = next.toString();
-            });
-          },
-          onPlus: () {
-            final next = (quantity + 1).clamp(1, 9999).toInt();
-            setState(() {
-              _quantityController.text = next.toString();
-            });
-          },
-        ),
-        const SizedBox(height: 12),
-        _InputCard(
-          title: 'Amount (₹)',
-          errorText: _amountError,
-          child: TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              hintText: '4800',
-              border: InputBorder.none,
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final selection = await _openLocationDetailsScreen(
+                    _LocationFieldKind.pickup,
+                  );
+                  if (selection == null || !mounted) {
+                    return;
+                  }
+                  setState(() {
+                    _draft = _draft.copyWith(
+                      from: selection.formattedAddress,
+                      pickupLat: selection.latitude,
+                      pickupLng: selection.longitude,
+                      city: selection.city.isNotEmpty
+                          ? selection.city
+                          : _draft.city,
+                    );
+                    _fromController.text = selection.formattedAddress;
+                  });
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('+ Add loading'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1F88C9),
+                  side: const BorderSide(color: Color(0xFFD7E7F4)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
             ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final selection = await _openLocationDetailsScreen(
+                    _LocationFieldKind.drop,
+                  );
+                  if (selection == null || !mounted) {
+                    return;
+                  }
+                  setState(() {
+                    _draft = _draft.copyWith(
+                      to: selection.formattedAddress,
+                      dropLat: selection.latitude,
+                      dropLng: selection.longitude,
+                    );
+                    _toController.text = selection.formattedAddress;
+                  });
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('+ Add unloading'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1F88C9),
+                  side: const BorderSide(color: Color(0xFFD7E7F4)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Select the weight of your goods',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF111111),
+            height: 1.1,
           ),
         ),
         const SizedBox(height: 12),
-        _InputCard(
-          title: 'Material type',
-          errorText: _materialError,
-          child: TextField(
-            controller: _materialController,
-            decoration: const InputDecoration(
-              hintText: 'Office chair set',
-              border: InputBorder.none,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _weightError != null
+                  ? const Color(0xFFE23A4B)
+                  : const Color(0xFFD7DCE3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _weightController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onSubmitted: (_) =>
+                      _advanceFromWeightStep(unknown: _weightUnknown),
+                  onChanged: (_) {
+                    if (_weightUnknown || _weightError != null) {
+                      setState(() {
+                        _weightUnknown = false;
+                        _weightError = null;
+                      });
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Enter tonnage',
+                    isDense: true,
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'ton',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF111111),
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_weightError != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _weightError!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFFE23A4B),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [1.0, 4.5, 7.0, 12.0, 15.0, 18.0, 25.0]
+              .map(
+                (value) => _WeightChip(
+                  label: '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)} ton',
+                  selected: !_weightUnknown && (weight - value).abs() < 0.001,
+                  onTap: () {
+                    setState(() {
+                      _weightUnknown = false;
+                      _weightError = null;
+                      _weightController.text = value.toStringAsFixed(
+                        value % 1 == 0 ? 0 : 1,
+                      );
+                    });
+                    _advanceFromWeightStep(unknown: false);
+                  },
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () {
+              _weightController.clear();
+              _advanceFromWeightStep(unknown: true);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE9ECF2),
+              foregroundColor: const Color(0xFF111111),
+              minimumSize: const Size.fromHeight(56),
+            ),
+            child: const Text(
+              "I don't know my material weight",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        _InputCard(
-          title: 'Additional notes',
-          child: TextField(
-            controller: _notesController,
-            maxLines: 3,
-            textInputAction: TextInputAction.newline,
-            decoration: const InputDecoration(
-              hintText: 'Any special handling instructions or delivery notes',
-              border: InputBorder.none,
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _submitting
+                ? null
+                : () => _advanceFromWeightStep(unknown: _weightUnknown),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2FA56E),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(56),
+            ),
+            child: const Text(
+              'Submit',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -3722,203 +4085,6 @@ class _MapHintPill extends StatelessWidget {
   }
 }
 
-class _VehiclePreviewHeader extends StatelessWidget {
-  const _VehiclePreviewHeader({required this.vehicle});
-
-  final VehicleOption vehicle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 58,
-            height: 58,
-            child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  vehicle.label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${vehicle.capacity} . ${_displayPriceLabel(vehicle.price)}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InputCard extends StatelessWidget {
-  const _InputCard({required this.title, required this.child, this.errorText});
-
-  final String title;
-  final Widget child;
-  final String? errorText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: errorText != null
-              ? const Color(0xFFE23A4B)
-              : const Color(0xFFE8EDF2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          child,
-          if (errorText != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              errorText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE23A4B),
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StepperCard extends StatelessWidget {
-  const _StepperCard({
-    required this.title,
-    required this.valueText,
-    required this.onMinus,
-    required this.onPlus,
-    this.errorText,
-  });
-
-  final String title;
-  final String valueText;
-  final VoidCallback onMinus;
-  final VoidCallback onPlus;
-  final String? errorText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: errorText != null
-              ? const Color(0xFFE23A4B)
-              : const Color(0xFFE8EDF2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _StepperButton(icon: Icons.remove_rounded, onTap: onMinus),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  valueText,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _StepperButton(icon: Icons.add_rounded, onTap: onPlus),
-            ],
-          ),
-          if (errorText != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              errorText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFFE23A4B),
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF5F7FB),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          width: 38,
-          height: 38,
-          child: Icon(icon, color: const Color(0xFF1C2430), size: 20),
-        ),
-      ),
-    );
-  }
-}
-
 class _PaymentMethodsCard extends StatelessWidget {
   const _PaymentMethodsCard({
     required this.selectedMethod,
@@ -4245,6 +4411,172 @@ class _PaymentListTile extends StatelessWidget {
   }
 }
 
+class _LocationLaunchCard extends StatelessWidget {
+  const _LocationLaunchCard({
+    required this.pickupValue,
+    required this.dropValue,
+    required this.onPickupTap,
+    required this.onDropTap,
+  });
+
+  final String pickupValue;
+  final String dropValue;
+  final VoidCallback onPickupTap;
+  final VoidCallback onDropTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEAEFF4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onPickupTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF38B47A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_upward_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      Container(
+                        width: 2,
+                        height: 28,
+                        margin: const EdgeInsets.symmetric(vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD7DDE4),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          pickupValue,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF9B9B9B),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w400,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(height: 1, color: const Color(0xFFE9EDF2)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          InkWell(
+            onTap: onDropTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF05252),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_downward_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      dropValue,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF9B9B9B),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeightChip extends StatelessWidget {
+  const _WeightChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : const Color(0xFF111111),
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+      ),
+      selectedColor: const Color(0xFF111111),
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFE0E4EA)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    );
+  }
+}
+
 class _BookingSuccessCard extends StatelessWidget {
   const _BookingSuccessCard({
     required this.bookingReference,
@@ -4491,20 +4823,12 @@ String _extractBookingNumber(Map<String, dynamic> json) {
 class _BookingSummaryCard extends StatelessWidget {
   const _BookingSummaryCard({
     required this.pickupTitle,
-    this.pickupController,
-    this.onPickupSelected,
-    this.dropController,
-    this.onDropSelected,
     this.distanceText,
     this.amountText,
     this.dropValue,
   });
 
   final String pickupTitle;
-  final TextEditingController? pickupController;
-  final ValueChanged<GooglePlaceSelection>? onPickupSelected;
-  final TextEditingController? dropController;
-  final ValueChanged<GooglePlaceSelection>? onDropSelected;
   final String? distanceText;
   final String? amountText;
   final String? dropValue;
@@ -4587,40 +4911,38 @@ class _BookingSummaryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child:
-                                    pickupController != null &&
-                                        onPickupSelected != null
-                                    ? GooglePlacesAutocompleteField(
-                                        controller: pickupController!,
-                                        label: '',
-                                        hintText: pickupTitle,
-                                        embedded: true,
-                                        showLabel: false,
-                                        onSelected: onPickupSelected!,
-                                      )
-                                    : Text(
-                                        pickupTitle,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF1C2430),
-                                            ),
-                                      ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                        ],
+                      Text(
+                        pickupTitle,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1C2430),
+                            ),
                       ),
+                      if (distanceText != null && distanceText!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          distanceText!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontSize: 11,
+                              ),
+                        ),
+                      ],
+                      if (amountText != null && amountText!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          amountText!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF1F88C9),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -4635,25 +4957,16 @@ class _BookingSummaryCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: dropController != null && onDropSelected != null
-                            ? GooglePlacesAutocompleteField(
-                                controller: dropController!,
-                                label: '',
-                                hintText: 'Where is your Drop ?',
-                                embedded: true,
-                                showLabel: false,
-                                onSelected: onDropSelected!,
-                              )
-                            : Text(
-                                dropValue ?? 'Where is your Drop ?',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: const Color(0xFF1C2430),
-                                      fontSize: 13,
-                                    ),
+                        child: Text(
+                          dropValue ?? 'Where is your Drop ?',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: const Color(0xFF1C2430),
+                                fontSize: 13,
                               ),
+                        ),
                       ),
                     ],
                   ),
@@ -4662,88 +4975,6 @@ class _BookingSummaryCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-const List<(String, String)> _recentLocations = [
-  ('Home', 'Ghanshyam Enclave, Nagpur'),
-  ('Office', 'Orbit Plaza, IT Park Road'),
-  ('Warehouse', 'MIDC Cargo Yard, Phase 2'),
-  ('Client Site', 'Laxmi Nagar, Near Metro Station'),
-  ('Pickup Point', 'Nandanvan Main Road'),
-  ('Factory', 'Butibori Industrial Area'),
-  ('Retail Store', 'Sitabuldi Market'),
-  ('Branch', 'Wardha Road Business Park'),
-];
-
-class _RecentLocationTile extends StatelessWidget {
-  const _RecentLocationTile({
-    required this.label,
-    required this.address,
-    required this.onTap,
-  });
-
-  final String label;
-  final String address;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEAF2FB),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_on_rounded,
-                size: 16,
-                color: Color(0xFF1F88C9),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
