@@ -361,16 +361,15 @@ class _LocationDetailsScreenState
                         focusNode: _focusNode,
                         textInputAction: TextInputAction.search,
                         cursorColor: const Color(0xFF2D8EDB),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF101828),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: const Color(0xFF101828),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
                         decoration: InputDecoration(
                           hintText: _hintText,
-                          hintStyle: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          hintStyle: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: const Color(0xFF98A2B3),
                                 fontWeight: FontWeight.w400,
@@ -2207,6 +2206,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   BitmapDescriptor? _dropMarkerIcon;
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
+  String? _brokerRouteKey;
 
   _BookingFlowStep _step = _BookingFlowStep.location;
   NearbyTruck? _selectedTruck;
@@ -2237,23 +2237,24 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
     final initialDraft = widget.initialBookingData;
-    _draft = (initialDraft ??
-            BookingData(
-              from: '',
-              to: '',
-              tripType: widget.tripType,
-              city: '',
-              scheduledDate: DateTime.now().add(const Duration(hours: 3)),
-              amount: _priceValue(_vehicle.price),
-            ))
-        .copyWith(
-          tripType: initialDraft?.tripType ?? widget.tripType,
-          vehicle: initialDraft?.vehicle ?? _vehicle,
-          truckCategory: initialDraft?.truckCategory.isNotEmpty == true
-              ? initialDraft!.truckCategory
-              : _truckCategoryForVehicle(_vehicle.label),
-          amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
-        );
+    _draft =
+        (initialDraft ??
+                BookingData(
+                  from: '',
+                  to: '',
+                  tripType: widget.tripType,
+                  city: '',
+                  scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+                  amount: _priceValue(_vehicle.price),
+                ))
+            .copyWith(
+              tripType: initialDraft?.tripType ?? widget.tripType,
+              vehicle: initialDraft?.vehicle ?? _vehicle,
+              truckCategory: initialDraft?.truckCategory.isNotEmpty == true
+                  ? initialDraft!.truckCategory
+                  : _truckCategoryForVehicle(_vehicle.label),
+              amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
+            );
     _fromController = TextEditingController(text: _draft.from);
     _toController = TextEditingController(text: _draft.to);
     _weightController = TextEditingController(
@@ -2344,6 +2345,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _brokerRoutePoints = route;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
     } catch (_) {
       if (!mounted || token != _brokerRouteRequestToken) {
         return;
@@ -2351,7 +2353,29 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _brokerRoutePoints = const [];
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
     }
+  }
+
+  void _scheduleBrokerRouteRefresh() {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    if (pickup == null || drop == null) {
+      return;
+    }
+
+    final routeKey =
+        '${pickup.latitude},${pickup.longitude}|${drop.latitude},${drop.longitude}';
+    if (_brokerRouteKey == routeKey) {
+      return;
+    }
+
+    _brokerRouteKey = routeKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _refreshBrokerRoute();
+      }
+    });
   }
 
   Future<GooglePlaceSelection?> _openLocationDetailsScreen(
@@ -2410,27 +2434,27 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<BitmapDescriptor> _buildTruckCircleMarkerIcon(String assetPath) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    const size = 40.0;
+    const size = 72.0;
     const center = Offset(size / 2, size / 2);
     const radius = size / 2;
 
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawCircle(center.translate(0, 1), radius - 4, shadowPaint);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center.translate(0, 2), radius - 6, shadowPaint);
 
     final borderPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius - 3, borderPaint);
+    canvas.drawCircle(center, radius - 4, borderPaint);
 
     final imageData = await rootBundle.load(assetPath);
     final codec = await ui.instantiateImageCodec(
       imageData.buffer.asUint8List(),
-      targetWidth: 18,
-      targetHeight: 18,
+      targetWidth: 30,
+      targetHeight: 30,
     );
     final frame = await codec.getNextFrame();
 
-    final clipRect = Rect.fromCircle(center: center, radius: radius - 8);
+    final clipRect = Rect.fromCircle(center: center, radius: radius - 13);
     canvas.save();
     canvas.clipPath(Path()..addOval(clipRect));
     canvas.drawImageRect(
@@ -2458,14 +2482,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<BitmapDescriptor> _buildDotMarkerIcon(Color color) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    const size = 20.0;
+    const size = 56.0;
     final center = const Offset(size / 2, size / 2);
-    final outer = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center.translate(0, 2), 13, shadowPaint);
+
+    final outer = Paint()..color = Colors.white;
     final inner = Paint()..color = color;
-    canvas.drawCircle(center, 9, outer);
-    canvas.drawCircle(center, 6, inner);
+    canvas.drawCircle(center, 13, outer);
+    canvas.drawCircle(center, 8.5, inner);
     final picture = recorder.endRecording();
     final image = await picture.toImage(size.toInt(), size.toInt());
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -2740,7 +2767,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           _draft = _draft.copyWith(tripType: resolvedTripType);
         });
       }
-      await _validateLocationStep(pickup, drop);
       final response = await ref
           .read(apiClientProvider)
           .getDistanceEstimate(
@@ -3062,30 +3088,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     };
   }
 
-  Future<void> _validateLocationStep(String pickup, String drop) async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      throw StateError('No active session');
-    }
-
-    final locationPayload = <String, dynamic>{
-      'pickup_location': pickup,
-      'drop_location': drop,
-      'transport_type': _draft.transportType,
-      if (_draft.transportType == 'intra')
-        'city': _draft.city.isNotEmpty
-            ? _draft.city
-            : _deriveCityFromLocation(pickup, drop),
-    };
-
-    await ref
-        .read(apiClientProvider)
-        .validateBookingLocation(
-          accessToken: session.tokens.accessToken,
-          location: locationPayload,
-        );
-  }
-
   String _buildIdempotencyKey() {
     final payload = <String, dynamic>{
       ..._bookingPayload(),
@@ -3263,7 +3265,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-      child: Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -3437,11 +3439,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildBrokerMap(BuildContext context, List<NearbyTruck> trucks) {
-    final pickup = _pickupLatLng;
-    final drop = _dropLatLng;
     final cameraTarget = _brokerMapCenter();
     final markers = _buildBrokerMarkers(trucks);
     final polylines = _buildBrokerPolylines();
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+
+    _scheduleBrokerRouteRefresh();
 
     return GoogleMap(
       initialCameraPosition: CameraPosition(
@@ -3458,9 +3462,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       rotateGesturesEnabled: true,
       scrollGesturesEnabled: true,
       tiltGesturesEnabled: false,
-      trafficEnabled: false,
+      trafficEnabled: true,
       onMapCreated: (controller) {
         _brokerMapController = controller;
+        _scheduleBrokerRouteRefresh();
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
       },
     );
   }
@@ -3539,14 +3545,29 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       Polyline(
         polylineId: const PolylineId('booking-route'),
         points: path,
-        color: const Color(0xFF6B8FAF),
-        width: 8,
-        geodesic: true,
+        color: const Color(0xFF1A73E8),
+        width: 7,
+        geodesic: false,
         jointType: JointType.round,
         startCap: Cap.roundCap,
         endCap: Cap.roundCap,
       ),
     };
+  }
+
+  Future<void> _fitBrokerCamera() async {
+    final controller = _brokerMapController;
+    final bounds = _brokerRouteBounds();
+    if (controller == null || bounds == null) {
+      return;
+    }
+
+    try {
+      await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 56));
+    } catch (_) {
+      // The map can briefly reject bounds updates while the surface is still
+      // settling. The next rebuild or route refresh will retry automatically.
+    }
   }
 
   LatLng? get _pickupLatLng {
@@ -3583,33 +3604,34 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_brokerRoutePoints.length >= 2) {
       return _brokerRoutePoints;
     }
+    return const [];
+  }
 
-    final pickup = _pickupLatLng;
-    final drop = _dropLatLng;
-    if (pickup == null || drop == null) {
-      return const [];
+  LatLngBounds? _brokerRouteBounds() {
+    final points = _brokerRoutePath();
+    if (points.isEmpty) {
+      return null;
+    }
+    if (points.length == 1) {
+      final point = points.first;
+      return LatLngBounds(southwest: point, northeast: point);
     }
 
-    final midLat = (pickup.latitude + drop.latitude) / 2;
-    final midLng = (pickup.longitude + drop.longitude) / 2;
-    final latDelta = (drop.latitude - pickup.latitude).abs();
-    final lngDelta = (drop.longitude - pickup.longitude).abs();
-    final bend = max(latDelta, lngDelta) * 0.30 + 0.015;
-    final direction = pickup.longitude < drop.longitude ? 1 : -1;
+    double? minLat;
+    double? maxLat;
+    double? minLng;
+    double? maxLng;
+    for (final point in points) {
+      minLat = minLat == null ? point.latitude : min(minLat, point.latitude);
+      maxLat = maxLat == null ? point.latitude : max(maxLat, point.latitude);
+      minLng = minLng == null ? point.longitude : min(minLng, point.longitude);
+      maxLng = maxLng == null ? point.longitude : max(maxLng, point.longitude);
+    }
 
-    return [
-      pickup,
-      LatLng(
-        pickup.latitude + (drop.latitude - pickup.latitude) * 0.22,
-        pickup.longitude + (drop.longitude - pickup.longitude) * 0.14,
-      ),
-      LatLng(midLat + bend, midLng + (bend * 0.35 * direction)),
-      LatLng(
-        pickup.latitude + (drop.latitude - pickup.latitude) * 0.74,
-        pickup.longitude + (drop.longitude - pickup.longitude) * 0.70,
-      ),
-      drop,
-    ];
+    return LatLngBounds(
+      southwest: LatLng(minLat!, minLng!),
+      northeast: LatLng(maxLat!, maxLng!),
+    );
   }
 
   Widget _buildLocationStep(BuildContext context) {
@@ -5937,9 +5959,7 @@ class NavItem extends StatelessWidget {
             SizedBox(
               width: 22,
               height: 22,
-              child: Center(
-                child: Icon(icon, size: 20, color: color),
-              ),
+              child: Center(child: Icon(icon, size: 20, color: color)),
             ),
             const SizedBox(height: 3),
             Text(

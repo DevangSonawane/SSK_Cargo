@@ -192,23 +192,6 @@ class SskApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> validateBookingLocation({
-    required String accessToken,
-    required Map<String, dynamic> location,
-  }) async {
-    developer.log(
-      'POST /api/bookings/validate-location keys=${location.keys.join(',')}',
-      name: 'SSK.API',
-    );
-    return _request(
-      () => _dio.post<Map<String, dynamic>>(
-        '/api/bookings/validate-location',
-        data: location,
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      ),
-    );
-  }
-
   Future<Map<String, dynamic>> createBooking({
     required String accessToken,
     required Map<String, dynamic> booking,

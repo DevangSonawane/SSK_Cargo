@@ -255,6 +255,9 @@ class GooglePlacesService {
         'origin': '$originLatitude,$originLongitude',
         'destination': '$destinationLatitude,$destinationLongitude',
         'mode': 'driving',
+        'departure_time': 'now',
+        'traffic_model': 'best_guess',
+        'alternatives': 'false',
         'key': googleMapsApiKey,
       },
     );
@@ -273,10 +276,39 @@ class GooglePlacesService {
     final overviewPolyline = _asMap(first['overview_polyline']);
     final encoded = _readString(overviewPolyline, const ['points']);
     if (encoded.isEmpty) {
+      final routePoints = <LatLng>[];
+      final legs = _asList(first['legs']);
+      for (final leg in legs) {
+        final steps = _asList(leg['steps']);
+        for (final step in steps) {
+          final polyline = _asMap(step['polyline']);
+          final stepEncoded = _readString(polyline, const ['points']);
+          if (stepEncoded.isEmpty) {
+            continue;
+          }
+          _appendDecodedPolyline(routePoints, decodePolyline(stepEncoded));
+        }
+      }
+      if (routePoints.length >= 2) {
+        return routePoints;
+      }
       return const [];
     }
 
     return decodePolyline(encoded);
+  }
+}
+
+void _appendDecodedPolyline(List<LatLng> output, List<LatLng> points) {
+  for (final point in points) {
+    if (output.isNotEmpty) {
+      final last = output.last;
+      if (last.latitude == point.latitude &&
+          last.longitude == point.longitude) {
+        continue;
+      }
+    }
+    output.add(point);
   }
 }
 
