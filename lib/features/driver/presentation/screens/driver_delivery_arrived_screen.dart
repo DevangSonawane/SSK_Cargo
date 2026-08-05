@@ -26,11 +26,7 @@ class _DriverDeliveryArrivedScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(
-        ref
-            .read(driverLocationTrackerProvider)
-            .startTracking(tripId: widget.tripId),
-      );
+      ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
     });
     _revealTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;

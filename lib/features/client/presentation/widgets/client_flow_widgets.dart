@@ -313,7 +313,7 @@ class _LocationDetailsScreenState
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -326,89 +326,112 @@ class _LocationDetailsScreenState
                   child: Icon(Icons.arrow_back_rounded, size: 24),
                 ),
               ),
-              const SizedBox(height: 34),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(color: const Color(0xFFE7EEF6)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
+              const SizedBox(height: 22),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    margin: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: _fieldIconColor,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
+                    child: Icon(_fieldIcon, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: _fieldIconColor,
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFFE7EEF6)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      child: Icon(_fieldIcon, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        textInputAction: TextInputAction.search,
-                        cursorColor: const Color(0xFF2D8EDB),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: const Color(0xFF101828),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                        decoration: InputDecoration(
-                          hintText: _hintText,
-                          hintStyle: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: const Color(0xFF98A2B3),
-                                fontWeight: FontWeight.w400,
-                                fontSize: 16,
-                              ),
-                          filled: false,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          suffixIcon: _loadingSuggestions
-                              ? const Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              textInputAction: TextInputAction.search,
+                              cursorColor: const Color(0xFF2D8EDB),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 15,
                                   ),
-                                )
-                              : (_controller.text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        onPressed: () {
-                                          _controller.clear();
-                                          _focusNode.requestFocus();
-                                        },
-                                        icon: const Icon(
-                                          Icons.close_rounded,
-                                          size: 20,
-                                        ),
-                                      )),
-                        ),
+                              decoration: InputDecoration(
+                                hintText: _hintText,
+                                hintStyle: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF98A2B3),
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 15,
+                                    ),
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Center(
+                              child: _loadingSuggestions
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : (_controller.text.isEmpty
+                                        ? const SizedBox.shrink()
+                                        : InkWell(
+                                            onTap: () {
+                                              _controller.clear();
+                                              _focusNode.requestFocus();
+                                            },
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(2),
+                                              child: Icon(
+                                                Icons.close_rounded,
+                                                size: 18,
+                                                color: Color(0xFF667085),
+                                              ),
+                                            ),
+                                          )),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               if (widget.kind == _LocationFieldKind.pickup) ...[
                 const SizedBox(height: 18),
@@ -442,7 +465,7 @@ class _LocationDetailsScreenState
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   color: const Color(0xFF2D8EDB),
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
                           ),
@@ -467,14 +490,22 @@ class _LocationDetailsScreenState
               if (_suggestions.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 ..._suggestions.asMap().entries.map(
-                  (entry) => Padding(
-                    padding: EdgeInsets.only(
-                      bottom: entry.key == _suggestions.length - 1 ? 0 : 8,
-                    ),
-                    child: _LocationSuggestionTile(
-                      suggestion: entry.value,
-                      onTap: () => _selectSuggestion(entry.value),
-                    ),
+                  (entry) => Column(
+                    children: [
+                      _LocationSuggestionTile(
+                        suggestion: entry.value,
+                        onTap: () => _selectSuggestion(entry.value),
+                      ),
+                      if (entry.key != _suggestions.length - 1)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 2),
+                          child: Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: Color(0xFFE6EAF0),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -3228,9 +3259,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final showBottomButton = switch (_step) {
       _BookingFlowStep.location || _BookingFlowStep.payment => true,
-      _BookingFlowStep.itemDetails => false,
       _BookingFlowStep.brokerSelection => false,
+      _BookingFlowStep.itemDetails => false,
     };
+    final bodyPadding = EdgeInsets.fromLTRB(
+      18,
+      12,
+      18,
+      _step == _BookingFlowStep.itemDetails ? 154 : 18,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -3261,68 +3298,153 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               ),
             ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            if (_step == _BookingFlowStep.location ||
-                                (_step == _BookingFlowStep.itemDetails &&
-                                    widget.skipLocationStep)) {
-                              Navigator.of(context).pop();
-                              return;
-                            }
-                            setState(() {
-                              _step = switch (_step) {
-                                _BookingFlowStep.location =>
-                                  _BookingFlowStep.location,
-                                _BookingFlowStep.itemDetails =>
-                                  _BookingFlowStep.location,
-                                _BookingFlowStep.brokerSelection =>
-                                  _BookingFlowStep.itemDetails,
-                                _BookingFlowStep.payment =>
-                                  _BookingFlowStep.brokerSelection,
-                              };
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(999),
-                          child: const SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: Icon(Icons.arrow_back_rounded, size: 18),
+        child: _step == _BookingFlowStep.itemDetails
+            ? Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: bodyPadding,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      if (_step == _BookingFlowStep.location ||
+                                          (_step ==
+                                                  _BookingFlowStep
+                                                      .itemDetails &&
+                                              widget.skipLocationStep)) {
+                                        Navigator.of(context).pop();
+                                        return;
+                                      }
+                                      setState(() {
+                                        _step = switch (_step) {
+                                          _BookingFlowStep.location =>
+                                            _BookingFlowStep.location,
+                                          _BookingFlowStep.itemDetails =>
+                                            _BookingFlowStep.location,
+                                          _BookingFlowStep.brokerSelection =>
+                                            _BookingFlowStep.itemDetails,
+                                          _BookingFlowStep.payment =>
+                                            _BookingFlowStep.brokerSelection,
+                                        };
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: const SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: Icon(
+                                        Icons.arrow_back_rounded,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    switch (_step) {
+                                      _BookingFlowStep.location => 'Location',
+                                      _BookingFlowStep.itemDetails => 'Weight',
+                                      _BookingFlowStep.brokerSelection =>
+                                        'Choose trucks',
+                                      _BookingFlowStep.payment => 'Payment',
+                                    },
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: const Color(0xFF667085),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildCurrentStep(context),
+                            ],
                           ),
                         ),
-                        const Spacer(),
-                        Text(
-                          switch (_step) {
-                            _BookingFlowStep.location => 'Location',
-                            _BookingFlowStep.itemDetails => 'Weight',
-                            _BookingFlowStep.brokerSelection => 'Choose trucks',
-                            _BookingFlowStep.payment => 'Payment',
-                          },
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: const Color(0xFF667085),
-                                fontWeight: FontWeight.w700,
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 44,
+                    child: _buildWeightBottomActions(context),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: bodyPadding,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  if (_step == _BookingFlowStep.location ||
+                                      (_step == _BookingFlowStep.itemDetails &&
+                                          widget.skipLocationStep)) {
+                                    Navigator.of(context).pop();
+                                    return;
+                                  }
+                                  setState(() {
+                                    _step = switch (_step) {
+                                      _BookingFlowStep.location =>
+                                        _BookingFlowStep.location,
+                                      _BookingFlowStep.itemDetails =>
+                                        _BookingFlowStep.location,
+                                      _BookingFlowStep.brokerSelection =>
+                                        _BookingFlowStep.itemDetails,
+                                      _BookingFlowStep.payment =>
+                                        _BookingFlowStep.brokerSelection,
+                                    };
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(999),
+                                child: const SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: Icon(
+                                    Icons.arrow_back_rounded,
+                                    size: 18,
+                                  ),
+                                ),
                               ),
-                        ),
-                      ],
+                              const Spacer(),
+                              Text(
+                                switch (_step) {
+                                  _BookingFlowStep.location => 'Location',
+                                  _BookingFlowStep.itemDetails => 'Weight',
+                                  _BookingFlowStep.brokerSelection =>
+                                    'Choose trucks',
+                                  _BookingFlowStep.payment => 'Payment',
+                                },
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildCurrentStep(context),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildCurrentStep(context),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -3834,7 +3956,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         Text(
           'Select the weight of your goods',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF111111),
             height: 1.1,
@@ -3861,8 +3983,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  onSubmitted: (_) =>
-                      _advanceFromWeightStep(unknown: _weightUnknown),
+                  onSubmitted: (_) {
+                    FocusScope.of(context).unfocus();
+                  },
                   onChanged: (_) {
                     if (_weightUnknown || _weightError != null) {
                       setState(() {
@@ -3883,7 +4006,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 'ton',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: const Color(0xFF111111),
-                  fontSize: 16,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -3916,51 +4040,65 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         value % 1 == 0 ? 0 : 1,
                       );
                     });
-                    _advanceFromWeightStep(unknown: false);
                   },
                 ),
               )
               .toList(growable: false),
         ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () {
-              _weightController.clear();
-              _advanceFromWeightStep(unknown: true);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE9ECF2),
-              foregroundColor: const Color(0xFF111111),
-              minimumSize: const Size.fromHeight(56),
-            ),
-            child: const Text(
-              "I don't know my material weight",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: _submitting
-                ? null
-                : () => _advanceFromWeightStep(unknown: _weightUnknown),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF2FA56E),
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(56),
-            ),
-            child: const Text(
-              'Submit',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildWeightBottomActions(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _submitting
+                  ? null
+                  : () {
+                      setState(() {
+                        _weightController.clear();
+                        _weightUnknown = true;
+                        _weightError = null;
+                      });
+                    },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE9ECF2),
+                foregroundColor: const Color(0xFF111111),
+                minimumSize: const Size.fromHeight(54),
+              ),
+              child: const Text(
+                "I don't know my material weight",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _submitting
+                  ? null
+                  : () => _advanceFromWeightStep(unknown: _weightUnknown),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2FA56E),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(54),
+              ),
+              child: const Text(
+                'Submit',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

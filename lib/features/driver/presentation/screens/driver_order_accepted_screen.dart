@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,13 +22,9 @@ class _DriverOrderAcceptedScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final effectiveTripId =
           (widget.tripId != null && widget.tripId!.isNotEmpty)
-              ? widget.tripId!
-              : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
-      unawaited(
-        ref
-            .read(driverLocationTrackerProvider)
-            .startTracking(tripId: effectiveTripId),
-      );
+          ? widget.tripId!
+          : '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+      ref.read(driverLocationTrackerProvider).setActiveTripId(effectiveTripId);
     });
   }
 

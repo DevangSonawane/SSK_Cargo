@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:geolocator/geolocator.dart';
 
-import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -13,50 +12,11 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
-  bool _isOnline = true;
   double _acceptSlide = 0;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_isOnline) return;
-      _syncDriverTracking();
-    });
-  }
-
-  @override
-  void dispose() {
-    ref.read(driverLocationTrackerProvider).stopTracking();
-    super.dispose();
-  }
-
-  Future<void> _syncDriverTracking() async {
-    final tracker = ref.read(driverLocationTrackerProvider);
-    String? message;
-    if (_isOnline) {
-      message = await tracker.startTracking(tripId: _deliveries.first.tripId);
-    } else {
-      await tracker.stopTracking();
-    }
-
-    if (!mounted || message == null) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        action: SnackBarAction(
-          label: 'Settings',
-          onPressed: () => Geolocator.openLocationSettings(),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isOnline = ref.watch(driverOnlineProvider);
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -73,18 +33,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     'Offline',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: _isOnline
+                      color: isOnline
                           ? const Color(0xFF98A2B3)
                           : const Color(0xFFE23A4B),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Switch(
-                    value: _isOnline,
-                    onChanged: (value) async {
-                      setState(() => _isOnline = value);
-                      await _syncDriverTracking();
-                    },
+                    value: isOnline,
+                    onChanged: (value) =>
+                        ref.read(driverOnlineProvider.notifier).state = value,
                     activeThumbColor: const Color(0xFF2FA56E),
                     activeTrackColor: const Color(
                       0xFF2FA56E,
@@ -99,7 +57,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     'Online',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: _isOnline
+                      color: isOnline
                           ? const Color(0xFF2FA56E)
                           : const Color(0xFF98A2B3),
                     ),
@@ -118,7 +76,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            if (_isOnline) ...[
+            if (isOnline) ...[
               _DeliveryOrderCard(
                 delivery: _deliveries.first,
                 acceptSlide: _acceptSlide,

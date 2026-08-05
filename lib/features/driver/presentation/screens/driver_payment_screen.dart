@@ -31,11 +31,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(
-        ref
-            .read(driverLocationTrackerProvider)
-            .startTracking(tripId: widget.tripId),
-      );
+      ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
       unawaited(_loadTripState());
     });
   }

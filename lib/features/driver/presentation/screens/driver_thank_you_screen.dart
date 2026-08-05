@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,7 +19,7 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(ref.read(driverLocationTrackerProvider).stopTracking());
+      ref.read(driverLocationTrackerProvider).setActiveTripId(null);
     });
   }
 

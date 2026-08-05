@@ -1,18 +1,58 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/driver_flow_widgets.dart';
 
-class DriverShell extends ConsumerWidget {
+class DriverShell extends ConsumerStatefulWidget {
   const DriverShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DriverShell> createState() => _DriverShellState();
+}
+
+class _DriverShellState extends ConsumerState<DriverShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_syncTracking(ref.read(driverOnlineProvider)));
+    });
+  }
+
+  Future<void> _syncTracking(bool isOnline) async {
+    final tracker = ref.read(driverLocationTrackerProvider);
+    if (isOnline) {
+      await tracker.startTracking();
+    } else {
+      await tracker.stopTracking();
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(ref.read(driverLocationTrackerProvider).stopTracking());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<bool>(driverOnlineProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      unawaited(_syncTracking(next));
+    });
+
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final firstName = displayName?.split(' ').first ?? 'Driver';
@@ -95,14 +135,14 @@ class DriverShell extends ConsumerWidget {
               ],
             ),
           ),
-          Expanded(child: navigationShell),
+          Expanded(child: widget.navigationShell),
         ],
       ),
       bottomNavigationBar: DriverBottomBar(
-        currentIndex: navigationShell.currentIndex,
+        currentIndex: widget.navigationShell.currentIndex,
         onTap: (index) {
-          if (index == navigationShell.currentIndex) return;
-          navigationShell.goBranch(index, initialLocation: false);
+          if (index == widget.navigationShell.currentIndex) return;
+          widget.navigationShell.goBranch(index, initialLocation: false);
         },
       ),
     );
