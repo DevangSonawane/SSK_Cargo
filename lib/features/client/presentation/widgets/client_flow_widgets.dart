@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -2278,7 +2277,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void initState() {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
-    _loadTruckMarkerIcon();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadTruckMarkerIcon(context);
+      }
+    });
     _vehicleIndex = widget.initialVehicleIndex;
     final initialPricingState = ref.read(clientPricingProvider);
     final vehicles = resolveVehicleOptions(
@@ -2544,10 +2547,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return null;
   }
 
-  Future<void> _loadTruckMarkerIcon() async {
+  Future<void> _loadTruckMarkerIcon(BuildContext context) async {
     try {
-      final truck = await _buildTruckCircleMarkerIcon(
-        'assets/trucks/small truck.png',
+      final imageConfiguration = createLocalImageConfiguration(
+        context,
+        size: const Size(32, 20),
+      );
+      final truck = await BitmapDescriptor.asset(
+        imageConfiguration,
+        'assets/trucks/rucks for gadidostt.png',
       );
       final pickup = await _buildDotMarkerIcon(const Color(0xFF22C55E));
       final drop = await _buildDotMarkerIcon(const Color(0xFFEF4444));
@@ -2684,54 +2692,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (mounted) {
       await _resolveDistanceAndContinue();
     }
-  }
-
-  Future<BitmapDescriptor> _buildTruckCircleMarkerIcon(String assetPath) async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    const size = 44.0;
-    const center = Offset(size / 2, size / 2);
-    const radius = size / 2;
-
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawCircle(center.translate(0, 2), radius - 7, shadowPaint);
-
-    final borderPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius - 5, borderPaint);
-
-    final imageData = await rootBundle.load(assetPath);
-    final codec = await ui.instantiateImageCodec(
-      imageData.buffer.asUint8List(),
-      targetWidth: 16,
-      targetHeight: 16,
-    );
-    final frame = await codec.getNextFrame();
-
-    final clipRect = Rect.fromCircle(center: center, radius: radius - 11);
-    canvas.save();
-    canvas.clipPath(Path()..addOval(clipRect));
-    canvas.drawImageRect(
-      frame.image,
-      Rect.fromLTWH(
-        0,
-        0,
-        frame.image.width.toDouble(),
-        frame.image.height.toDouble(),
-      ),
-      clipRect,
-      Paint(),
-    );
-    canvas.restore();
-
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (byteData == null) {
-      throw StateError('Failed to build truck marker icon');
-    }
-    return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
   }
 
   Future<BitmapDescriptor> _buildDotMarkerIcon(Color color) async {
@@ -4309,13 +4269,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             child: FilledButton(
               onPressed: _submitting
                   ? null
-                  : () {
-                      setState(() {
-                        _weightController.clear();
-                        _weightUnknown = true;
-                        _weightError = null;
-                      });
-                    },
+                  : () => _advanceFromWeightStep(unknown: true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE9ECF2),
                 foregroundColor: const Color(0xFF111111),

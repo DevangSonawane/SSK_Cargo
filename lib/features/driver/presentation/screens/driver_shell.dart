@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/driver_location_tracker_provider.dart';
@@ -19,27 +20,53 @@ class DriverShell extends ConsumerStatefulWidget {
   ConsumerState<DriverShell> createState() => _DriverShellState();
 }
 
-class _DriverShellState extends ConsumerState<DriverShell> {
+class _DriverShellState extends ConsumerState<DriverShell>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_syncTracking(ref.read(driverOnlineProvider)));
     });
   }
 
-  Future<void> _syncTracking(bool isOnline) async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && ref.read(driverOnlineProvider)) {
+      unawaited(_syncTracking(true, restart: true));
+    }
+  }
+
+  Future<void> _syncTracking(bool isOnline, {bool restart = false}) async {
     final tracker = ref.read(driverLocationTrackerProvider);
+    String? message;
     if (isOnline) {
-      await tracker.startTracking();
+      message = restart
+          ? await tracker.restartTracking()
+          : await tracker.startTracking();
     } else {
       await tracker.stopTracking();
+    }
+
+    if (message != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () => Geolocator.openLocationSettings(),
+          ),
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(ref.read(driverLocationTrackerProvider).stopTracking());
     super.dispose();
   }

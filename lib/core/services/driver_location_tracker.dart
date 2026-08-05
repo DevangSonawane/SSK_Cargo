@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../network/api_client.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
@@ -15,11 +16,13 @@ class DriverLocationTracker {
   final Ref _ref;
 
   StreamSubscription<Position>? _subscription;
+  io.Socket? _socket;
   String? _activeTripId;
   Position? _lastPublishedPosition;
   DateTime? _lastPublishedAt;
 
   bool get isRunning => _subscription != null;
+  String? get activeTripId => _activeTripId;
 
   Future<String?> startTracking({String? tripId}) async {
     _activeTripId = tripId;
@@ -49,6 +52,7 @@ class DriverLocationTracker {
       return null;
     }
 
+    _ensureSocket(session.tokens.accessToken);
     final settings = _trackingSettings();
 
     try {
@@ -99,10 +103,65 @@ class DriverLocationTracker {
     _lastPublishedAt = null;
     await _subscription?.cancel();
     _subscription = null;
+    _disconnectSocket();
+  }
+
+  Future<String?> restartTracking() async {
+    final tripId = _activeTripId;
+    await stopTracking();
+    return startTracking(tripId: tripId);
   }
 
   void setActiveTripId(String? tripId) {
     _activeTripId = tripId;
+  }
+
+  void _ensureSocket(String accessToken) {
+    if (_socket != null) {
+      return;
+    }
+
+    final baseUrl = _ref.read(dioProvider).options.baseUrl;
+    final socket = io.io(
+      baseUrl,
+      io.OptionBuilder()
+          .setTransports(['websocket', 'polling'])
+          .setAuth({'token': accessToken})
+          .disableAutoConnect()
+          .build(),
+    );
+
+    socket.onConnect((_) {
+      developer.log('Driver websocket connected', name: 'SSK.Location');
+    });
+    socket.onConnectError((error) {
+      developer.log(
+        'Driver websocket connect error',
+        name: 'SSK.Location',
+        error: error,
+      );
+    });
+    socket.onError((error) {
+      developer.log(
+        'Driver websocket error',
+        name: 'SSK.Location',
+        error: error,
+      );
+    });
+
+    _socket = socket;
+    socket.connect();
+  }
+
+  void _disconnectSocket() {
+    final socket = _socket;
+    if (socket == null) {
+      return;
+    }
+
+    _socket = null;
+    socket.disconnect();
+    socket.dispose();
   }
 
   LocationSettings _trackingSettings() {
@@ -150,25 +209,8 @@ class DriverLocationTracker {
       return;
     }
 
-    final api = _ref.read(apiClientProvider);
-
     try {
-      await api.updateDriverLocation(
-        accessToken: session.tokens.accessToken,
-        lat: position.latitude,
-        lng: position.longitude,
-      );
-
-      final tripId = _activeTripId;
-      if (tripId != null && tripId.isNotEmpty) {
-        await api.updateTripLocation(
-          accessToken: session.tokens.accessToken,
-          tripId: tripId,
-          lat: position.latitude,
-          lng: position.longitude,
-        );
-      }
-
+      _emitLocation(position);
       _lastPublishedPosition = position;
       _lastPublishedAt = DateTime.now();
     } catch (error, stackTrace) {
@@ -179,6 +221,23 @@ class DriverLocationTracker {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  void _emitLocation(Position position) {
+    final socket = _socket;
+    if (socket == null) {
+      return;
+    }
+
+    final payload = <String, dynamic>{
+      'lat': position.latitude,
+      'lng': position.longitude,
+      'lastLocationAt': DateTime.now().toIso8601String(),
+      if ((_activeTripId?.isNotEmpty ?? false)) 'tripId': _activeTripId,
+    };
+
+    socket.emit('driver-location', payload);
+    socket.emit('truck-location', payload);
   }
 
   bool _shouldPublishPosition(Position position) {
