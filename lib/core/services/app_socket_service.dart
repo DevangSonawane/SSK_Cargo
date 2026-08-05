@@ -63,6 +63,9 @@ class AppSocketService {
       developer.log('Shared websocket connected', name: 'SSK.Socket');
       _resyncTruckTrackingRooms();
     });
+    socket.onDisconnect((_) {
+      developer.log('Shared websocket disconnected', name: 'SSK.Socket');
+    });
     socket.onConnectError((error) {
       developer.log(
         'Shared websocket connect error',
@@ -74,9 +77,22 @@ class AppSocketService {
       developer.log('Shared websocket error', name: 'SSK.Socket', error: error);
     });
     socket.on('truck-location', (payload) {
+      developer.log(
+        'Shared websocket truck-location payload: $payload',
+        name: 'SSK.Socket',
+      );
       final event = _parseTruckLocationPayload(payload);
       if (event != null && !_truckLocationController.isClosed) {
+        developer.log(
+          'Shared websocket truck-location parsed truckId=${event.truckId} lat=${event.lat} lng=${event.lng}',
+          name: 'SSK.Socket',
+        );
         _truckLocationController.add(event);
+      } else {
+        developer.log(
+          'Shared websocket truck-location payload ignored: unable to parse',
+          name: 'SSK.Socket',
+        );
       }
     });
 
@@ -91,6 +107,11 @@ class AppSocketService {
         .where((id) => id.isNotEmpty)
         .toSet();
 
+    developer.log(
+      'Shared websocket setTruckTrackingIds count=${nextIds.length} ids=${nextIds.join(",")}',
+      name: 'SSK.Socket',
+    );
+
     final removed = _truckTrackingIds.difference(nextIds).toList();
     final added = nextIds.difference(_truckTrackingIds).toList();
 
@@ -104,10 +125,18 @@ class AppSocketService {
     }
 
     for (final id in removed) {
+      developer.log(
+        'Shared websocket leave-truck-tracking truckId=$id',
+        name: 'SSK.Socket',
+      );
       socket.emit('leave-truck-tracking', {'truckId': id});
     }
 
     for (final id in added) {
+      developer.log(
+        'Shared websocket join-truck-tracking truckId=$id',
+        name: 'SSK.Socket',
+      );
       socket.emit('join-truck-tracking', {'truckId': id});
     }
   }
@@ -116,6 +145,10 @@ class AppSocketService {
     final socket = _socket;
     if (socket != null && socket.connected) {
       for (final id in _truckTrackingIds) {
+        developer.log(
+          'Shared websocket leave-truck-tracking truckId=$id',
+          name: 'SSK.Socket',
+        );
         socket.emit('leave-truck-tracking', {'truckId': id});
       }
     }
@@ -136,10 +169,22 @@ class AppSocketService {
   void _resyncTruckTrackingRooms() {
     final socket = _socket;
     if (socket == null || !socket.connected || _truckTrackingIds.isEmpty) {
+      developer.log(
+        'Shared websocket resync skipped connected=${socket?.connected ?? false} tracked=${_truckTrackingIds.length}',
+        name: 'SSK.Socket',
+      );
       return;
     }
 
+    developer.log(
+      'Shared websocket resync truck tracking ids=${_truckTrackingIds.join(",")}',
+      name: 'SSK.Socket',
+    );
     for (final id in _truckTrackingIds) {
+      developer.log(
+        'Shared websocket join-truck-tracking truckId=$id',
+        name: 'SSK.Socket',
+      );
       socket.emit('join-truck-tracking', {'truckId': id});
     }
   }
@@ -163,9 +208,28 @@ class AppSocketService {
     }
 
     final data = payload.cast<String, dynamic>();
-    final truckId = _readString(data, const ['truckId', 'truck_id', 'id']);
-    final lat = _readDouble(data, const ['lat', 'latitude']);
-    final lng = _readDouble(data, const ['lng', 'longitude']);
+    final truckId = _readString(data, const [
+      'truckId',
+      'truck_id',
+      'id',
+      'truck',
+    ]);
+    final lat = _readDouble(data, const [
+      'lat',
+      'latitude',
+      'current_lat',
+      'currentLat',
+      'location_lat',
+      'locationLat',
+    ]);
+    final lng = _readDouble(data, const [
+      'lng',
+      'longitude',
+      'current_lng',
+      'currentLng',
+      'location_lng',
+      'locationLng',
+    ]);
     if (truckId.isEmpty || lat == null || lng == null) {
       return null;
     }
@@ -177,6 +241,8 @@ class AppSocketService {
       lastLocationAt: _readDateTime(data, const [
         'lastLocationAt',
         'last_location_at',
+        'updatedAt',
+        'updated_at',
       ]),
     );
   }

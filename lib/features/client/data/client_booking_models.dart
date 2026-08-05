@@ -402,6 +402,11 @@ class NearbyTruck {
     final truck = _asMap(json['truck']);
     final vehicle = _asMap(json['vehicle']);
     final location = _asMap(json['location']);
+    final id = _firstNonEmpty([
+      _readString(json, const ['id', 'truck_id', 'uuid']),
+      _readString(truck, const ['id', 'truck_id', 'uuid']),
+      _readString(vehicle, const ['id', 'truck_id', 'uuid']),
+    ]);
     final latValue =
         json['current_lat'] ??
         json['currentLat'] ??
@@ -422,7 +427,7 @@ class NearbyTruck {
         location['longitude'];
 
     return NearbyTruck(
-      id: _readString(json, const ['id', 'truck_id', 'uuid']),
+      id: id,
       registration: _firstNonEmpty([
         _readString(json, const [
           'registration',

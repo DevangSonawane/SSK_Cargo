@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -2336,8 +2338,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         .truckLocationStream
         .listen((event) {
           if (!mounted || !_trackedTruckIds.contains(event.truckId)) {
+            developer.log(
+              'Client flow ignored truck-location truckId=${event.truckId} mounted=$mounted tracked=${_trackedTruckIds.contains(event.truckId)}',
+              name: 'SSK.ClientFlow',
+            );
             return;
           }
+          developer.log(
+            'Client flow received truck-location truckId=${event.truckId} lat=${event.lat} lng=${event.lng}',
+            name: 'SSK.ClientFlow',
+          );
           setState(() {
             _liveTruckLocations[event.truckId] = _LiveTruckLocation(
               truckId: event.truckId,
@@ -2395,6 +2405,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         .map((truck) => truck.id.trim())
         .where((id) => id.isNotEmpty)
         .toSet();
+    developer.log(
+      'Client flow syncing truck tracking count=${currentIds.length} ids=${currentIds.join(",")}',
+      name: 'SSK.ClientFlow',
+    );
     _trackedTruckIds
       ..clear()
       ..addAll(currentIds);
@@ -2419,14 +2433,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Future<void> _loadTruckMarkerIcon(BuildContext context) async {
     try {
-      final imageConfiguration = createLocalImageConfiguration(
-        context,
-        size: const Size(32, 20),
-      );
-      final truck = await BitmapDescriptor.asset(
-        imageConfiguration,
-        'assets/trucks/rucks for gadidostt.png',
-      );
+      final truckBytes = (await rootBundle.load(
+        'assets/trucks/rucks_for_gadidostt.png',
+      )).buffer.asUint8List();
+      final truck = BitmapDescriptor.bytes(truckBytes, width: 32, height: 20);
       final pickup = await _buildDotMarkerIcon(const Color(0xFF22C55E));
       final drop = await _buildDotMarkerIcon(const Color(0xFFEF4444));
       if (!mounted) return;
