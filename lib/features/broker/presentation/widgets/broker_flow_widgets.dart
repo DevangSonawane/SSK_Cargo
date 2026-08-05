@@ -351,7 +351,7 @@ String _labelFromCategory(String category) {
     case 'big':
       return 'Big truck';
     case 'part':
-      return 'Part truck';
+      return 'Part load';
     default:
       return 'Truck';
   }
@@ -1313,9 +1313,9 @@ class _BrokerBottomBarItem extends StatelessWidget {
               item.label,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: selected ? selectedColor : const Color(0xFF667085),
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: selected ? selectedColor : const Color(0xFF667085),
               ),
             ),
           ],
@@ -1664,7 +1664,7 @@ class _LoadPoint extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF667085),
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 2),

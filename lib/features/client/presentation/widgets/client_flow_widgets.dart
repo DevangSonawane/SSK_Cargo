@@ -375,8 +375,12 @@ class _LocationDetailsScreenState
                                 fontWeight: FontWeight.w400,
                                 fontSize: 16,
                               ),
+                          filled: false,
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                           isDense: true,
+                          contentPadding: EdgeInsets.zero,
                           suffixIcon: _loadingSuggestions
                               ? const Padding(
                                   padding: EdgeInsets.all(12),
@@ -400,9 +404,6 @@ class _LocationDetailsScreenState
                                           size: 20,
                                         ),
                                       )),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 6,
-                          ),
                         ),
                       ),
                     ),

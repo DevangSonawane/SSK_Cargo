@@ -356,7 +356,19 @@ class NearbyTruckPage {
 
   factory NearbyTruckPage.fromJson(Map<String, dynamic> json) {
     final data = _asMap(json['data']);
-    final items = _extractItems(data, json);
+    final items = <dynamic>[];
+    final trucks = data['trucks'];
+    if (trucks is List) {
+      items.addAll(trucks);
+    }
+
+    final rootTrucks = json['trucks'];
+    if (rootTrucks is List) {
+      items.addAll(rootTrucks);
+    }
+
+    items.addAll(_extractItems(data, json));
+
     return NearbyTruckPage(
       trucks: items
           .whereType<Map<String, dynamic>>()

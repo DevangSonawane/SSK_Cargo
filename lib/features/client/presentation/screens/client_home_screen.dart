@@ -232,16 +232,14 @@ class _BookingPromptCard extends StatelessWidget {
               icon: Icons.arrow_upward_rounded,
               iconColor: const Color(0xFF38B47A),
               hintText: 'Enter loading location (e.g. delhi)',
-              dividerColor: const Color(0xFFE4E7EC),
-              showConnector: true,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            const _BookingRouteDivider(),
+            const SizedBox(height: 12),
             _BookingRouteRow(
               icon: Icons.arrow_downward_rounded,
               iconColor: const Color(0xFFF05252),
               hintText: 'Search your unloading location',
-              dividerColor: Colors.transparent,
-              showConnector: false,
             ),
             const SizedBox(height: 14),
             SizedBox(
@@ -279,15 +277,11 @@ class _BookingRouteRow extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.hintText,
-    required this.dividerColor,
-    required this.showConnector,
   });
 
   final IconData icon;
   final Color iconColor;
   final String hintText;
-  final Color dividerColor;
-  final bool showConnector;
 
   @override
   Widget build(BuildContext context) {
@@ -305,17 +299,6 @@ class _BookingRouteRow extends StatelessWidget {
               ),
               child: Icon(icon, color: Colors.white, size: 15),
             ),
-            if (showConnector)
-              Container(
-                width: 2,
-                height: 30,
-                margin: const EdgeInsets.symmetric(vertical: 1),
-                decoration: BoxDecoration(
-                  color: dividerColor,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: CustomPaint(painter: _VerticalDotsPainter()),
-              ),
           ],
         ),
         const SizedBox(width: 12),
@@ -333,13 +316,37 @@ class _BookingRouteRow extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 7),
-              if (showConnector)
-                Container(height: 1, color: const Color(0xFFE8EAF0)),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BookingRouteDivider extends StatelessWidget {
+  const _BookingRouteDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 18,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 26,
+            child: Center(
+              child: SizedBox(
+                width: 2,
+                height: 18,
+                child: CustomPaint(painter: _VerticalDotsPainter()),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Container(height: 1, color: const Color(0xFFE8EAF0))),
+        ],
+      ),
     );
   }
 }
