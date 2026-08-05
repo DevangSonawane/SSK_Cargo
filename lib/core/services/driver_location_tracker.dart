@@ -5,7 +5,6 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../network/api_client.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
@@ -16,7 +15,6 @@ class DriverLocationTracker {
   final Ref _ref;
 
   StreamSubscription<Position>? _subscription;
-  io.Socket? _socket;
   String? _activeTripId;
   Position? _lastPublishedPosition;
   DateTime? _lastPublishedAt;
@@ -52,22 +50,8 @@ class DriverLocationTracker {
       return null;
     }
 
-    _ensureSocket(session.tokens.accessToken);
     final settings = _trackingSettings();
-
-    try {
-      final currentPosition = await Geolocator.getCurrentPosition(
-        locationSettings: settings,
-      );
-      await _sendPosition(currentPosition, force: true);
-    } catch (error, stackTrace) {
-      developer.log(
-        'Initial driver location lookup failed',
-        name: 'SSK.Location',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+    await _publishCurrentLocation(settings);
 
     try {
       _subscription = Geolocator.getPositionStream(locationSettings: settings)
@@ -97,13 +81,28 @@ class DriverLocationTracker {
     return null;
   }
 
+  Future<void> _publishCurrentLocation(LocationSettings settings) async {
+    try {
+      final currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: settings,
+      );
+      await _sendPosition(currentPosition, force: true);
+    } catch (error, stackTrace) {
+      developer.log(
+        'Initial driver location lookup failed',
+        name: 'SSK.Location',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   Future<void> stopTracking() async {
     _activeTripId = null;
     _lastPublishedPosition = null;
     _lastPublishedAt = null;
     await _subscription?.cancel();
     _subscription = null;
-    _disconnectSocket();
   }
 
   Future<String?> restartTracking() async {
@@ -114,54 +113,6 @@ class DriverLocationTracker {
 
   void setActiveTripId(String? tripId) {
     _activeTripId = tripId;
-  }
-
-  void _ensureSocket(String accessToken) {
-    if (_socket != null) {
-      return;
-    }
-
-    final baseUrl = _ref.read(dioProvider).options.baseUrl;
-    final socket = io.io(
-      baseUrl,
-      io.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
-          .setAuth({'token': accessToken})
-          .disableAutoConnect()
-          .build(),
-    );
-
-    socket.onConnect((_) {
-      developer.log('Driver websocket connected', name: 'SSK.Location');
-    });
-    socket.onConnectError((error) {
-      developer.log(
-        'Driver websocket connect error',
-        name: 'SSK.Location',
-        error: error,
-      );
-    });
-    socket.onError((error) {
-      developer.log(
-        'Driver websocket error',
-        name: 'SSK.Location',
-        error: error,
-      );
-    });
-
-    _socket = socket;
-    socket.connect();
-  }
-
-  void _disconnectSocket() {
-    final socket = _socket;
-    if (socket == null) {
-      return;
-    }
-
-    _socket = null;
-    socket.disconnect();
-    socket.dispose();
   }
 
   LocationSettings _trackingSettings() {
@@ -210,7 +161,13 @@ class DriverLocationTracker {
     }
 
     try {
-      _emitLocation(position);
+      await _ref
+          .read(apiClientProvider)
+          .updateDriverLocation(
+            accessToken: session.tokens.accessToken,
+            lat: position.latitude,
+            lng: position.longitude,
+          );
       _lastPublishedPosition = position;
       _lastPublishedAt = DateTime.now();
     } catch (error, stackTrace) {
@@ -221,23 +178,6 @@ class DriverLocationTracker {
         stackTrace: stackTrace,
       );
     }
-  }
-
-  void _emitLocation(Position position) {
-    final socket = _socket;
-    if (socket == null) {
-      return;
-    }
-
-    final payload = <String, dynamic>{
-      'lat': position.latitude,
-      'lng': position.longitude,
-      'lastLocationAt': DateTime.now().toIso8601String(),
-      if ((_activeTripId?.isNotEmpty ?? false)) 'tripId': _activeTripId,
-    };
-
-    socket.emit('driver-location', payload);
-    socket.emit('truck-location', payload);
   }
 
   bool _shouldPublishPosition(Position position) {

@@ -2,16 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../data/auth_models.dart';
 
 final authSessionProvider =
     StateNotifierProvider<AuthController, AsyncValue<AuthSession?>>((ref) {
-      return AuthController(ref.read(apiClientProvider));
+      return AuthController(ref, ref.read(apiClientProvider));
     });
 
 class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
-  AuthController(this._apiClient) : super(const AsyncData<AuthSession?>(null));
+  AuthController(this._ref, this._apiClient)
+    : super(const AsyncData<AuthSession?>(null));
 
+  final Ref _ref;
   final SskApiClient _apiClient;
 
   AuthSession? get session => state.valueOrNull;
@@ -90,6 +93,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         // Clear local state even if the server already expired the token.
       }
     }
+    _ref.read(appSocketServiceProvider).reset();
     state = const AsyncValue.data(null);
   }
 

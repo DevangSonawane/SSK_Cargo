@@ -9,11 +9,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/google_places_provider.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
@@ -2250,13 +2250,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
-  io.Socket? _truckTrackingSocket;
-  List<NearbyTruck> _trackedNearbyTrucks = const [];
+  StreamSubscription<TruckLocationEvent>? _truckLocationSubscription;
+  final Set<String> _trackedTruckIds = <String>{};
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
   String? _brokerRouteKey;
   String? _truckTrackingSyncKey;
-  final Set<String> _joinedTruckTrackingIds = <String>{};
   final Map<String, _LiveTruckLocation> _liveTruckLocations = {};
 
   _BookingFlowStep _step = _BookingFlowStep.location;
@@ -2331,12 +2330,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         }
       });
     }
+
+    _truckLocationSubscription = ref
+        .read(appSocketServiceProvider)
+        .truckLocationStream
+        .listen((event) {
+          if (!mounted || !_trackedTruckIds.contains(event.truckId)) {
+            return;
+          }
+          setState(() {
+            _liveTruckLocations[event.truckId] = _LiveTruckLocation(
+              truckId: event.truckId,
+              latitude: event.lat,
+              longitude: event.lng,
+              lastLocationAt: event.lastLocationAt,
+            );
+          });
+        });
   }
 
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
-    _disconnectTruckTrackingSocket();
+    _truckLocationSubscription?.cancel();
+    ref.read(appSocketServiceProvider).clearTruckTrackingIds();
     _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
@@ -2366,185 +2383,38 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
 
       if (shouldTrack) {
-        _trackedNearbyTrucks = trucks;
-        _ensureTruckTrackingSocket();
-        _syncTruckTrackingRooms(trucks);
+        unawaited(_syncTruckTrackingRooms(trucks));
       } else {
-        _disconnectTruckTrackingSocket();
+        _clearTruckTrackingRooms();
       }
     });
   }
 
-  void _ensureTruckTrackingSocket() {
-    if (_truckTrackingSocket != null) {
-      return;
-    }
+  Future<void> _syncTruckTrackingRooms(List<NearbyTruck> trucks) async {
+    final currentIds = trucks
+        .map((truck) => truck.id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    _trackedTruckIds
+      ..clear()
+      ..addAll(currentIds);
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       return;
     }
 
-    final baseUrl = ref.read(dioProvider).options.baseUrl;
-    final socket = io.io(
-      baseUrl,
-      io.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
-          .setAuth({'token': session.tokens.accessToken})
-          .disableAutoConnect()
-          .build(),
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
     );
-
-    socket.onConnect((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncTruckTrackingRooms(_trackedNearbyTrucks);
-    });
-    socket.onConnectError((error) {
-      debugPrint('[TruckTracking] socket connect error: $error');
-    });
-    socket.onError((error) {
-      debugPrint('[TruckTracking] socket error: $error');
-    });
-    socket.on('truck-location', (payload) {
-      final event = _parseTruckLocationPayload(payload);
-      if (event == null || !mounted) {
-        return;
-      }
-      setState(() {
-        _liveTruckLocations[event.truckId] = event;
-      });
-    });
-
-    _truckTrackingSocket = socket;
-    socket.connect();
+    socketService.setTruckTrackingIds(currentIds);
   }
 
-  void _syncTruckTrackingRooms(List<NearbyTruck> trucks) {
-    final socket = _truckTrackingSocket;
-    if (socket == null) {
-      return;
-    }
-
-    final currentIds = trucks
-        .map((truck) => truck.id.trim())
-        .where((id) => id.isNotEmpty)
-        .toSet();
-
-    for (final id in currentIds.difference(_joinedTruckTrackingIds)) {
-      socket.emit('join-truck-tracking', {'truckId': id});
-      _joinedTruckTrackingIds.add(id);
-    }
-
-    for (final id in _joinedTruckTrackingIds.difference(currentIds).toList()) {
-      socket.emit('leave-truck-tracking', {'truckId': id});
-      _joinedTruckTrackingIds.remove(id);
-      _liveTruckLocations.remove(id);
-    }
-  }
-
-  void _disconnectTruckTrackingSocket() {
-    final socket = _truckTrackingSocket;
-    if (socket == null) {
-      return;
-    }
-
-    for (final id in _joinedTruckTrackingIds) {
-      socket.emit('leave-truck-tracking', {'truckId': id});
-    }
-
-    _joinedTruckTrackingIds.clear();
-    _trackedNearbyTrucks = const [];
+  void _clearTruckTrackingRooms() {
+    ref.read(appSocketServiceProvider).clearTruckTrackingIds();
+    _trackedTruckIds.clear();
     _liveTruckLocations.clear();
-    _truckTrackingSocket = null;
-    socket.disconnect();
-    socket.dispose();
-  }
-
-  _LiveTruckLocation? _parseTruckLocationPayload(Object? payload) {
-    if (payload is! Map) {
-      return null;
-    }
-
-    final data = payload.cast<String, dynamic>();
-    final truckId = _readSocketString(data, const [
-      'truckId',
-      'truck_id',
-      'id',
-    ]);
-    final lat = _readSocketDouble(data, const [
-      'lat',
-      'latitude',
-      'current_lat',
-      'currentLat',
-    ]);
-    final lng = _readSocketDouble(data, const [
-      'lng',
-      'longitude',
-      'current_lng',
-      'currentLng',
-    ]);
-    if (truckId.isEmpty || lat == null || lng == null) {
-      return null;
-    }
-
-    return _LiveTruckLocation(
-      truckId: truckId,
-      latitude: lat,
-      longitude: lng,
-      lastLocationAt: _readSocketDateTime(data, const [
-        'lastLocationAt',
-        'last_location_at',
-        'updatedAt',
-        'updated_at',
-      ]),
-    );
-  }
-
-  String _readSocketString(Map<String, dynamic> json, List<String> keys) {
-    for (final key in keys) {
-      final value = json[key];
-      if (value == null) {
-        continue;
-      }
-      final text = value.toString().trim();
-      if (text.isNotEmpty && text.toLowerCase() != 'null') {
-        return text;
-      }
-    }
-    return '';
-  }
-
-  double? _readSocketDouble(Map<String, dynamic> json, List<String> keys) {
-    for (final key in keys) {
-      final value = json[key];
-      if (value is num) {
-        return value.toDouble();
-      }
-      final text = value?.toString().trim();
-      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
-        final parsed = double.tryParse(text);
-        if (parsed != null) {
-          return parsed;
-        }
-      }
-    }
-    return null;
-  }
-
-  DateTime? _readSocketDateTime(Map<String, dynamic> json, List<String> keys) {
-    for (final key in keys) {
-      final value = json[key];
-      final text = value?.toString().trim();
-      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
-        final parsed = DateTime.tryParse(text);
-        if (parsed != null) {
-          return parsed;
-        }
-      }
-    }
-    return null;
   }
 
   Future<void> _loadTruckMarkerIcon(BuildContext context) async {
