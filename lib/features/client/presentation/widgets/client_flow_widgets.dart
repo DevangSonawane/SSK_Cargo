@@ -10,6 +10,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -950,6 +951,18 @@ class TrackingTimelineStep {
   final String title;
   final String subtitle;
   final bool completed;
+}
+
+class _LiveTruckLocation {
+  const _LiveTruckLocation({
+    required this.latitude,
+    required this.longitude,
+    this.lastLocationAt,
+  });
+
+  final double latitude;
+  final double longitude;
+  final DateTime? lastLocationAt;
 }
 
 TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
@@ -2236,9 +2249,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
+  io.Socket? _truckTrackingSocket;
+  List<NearbyTruck> _trackedNearbyTrucks = const [];
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
   String? _brokerRouteKey;
+  String? _truckTrackingSyncKey;
+  final Set<String> _joinedTruckTrackingIds = <String>{};
+  final Map<String, _LiveTruckLocation> _liveTruckLocations = {};
 
   _BookingFlowStep _step = _BookingFlowStep.location;
   NearbyTruck? _selectedTruck;
@@ -2313,12 +2331,214 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _disconnectTruckTrackingSocket();
     _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
     _weightController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  void _scheduleTruckTrackingSync(List<NearbyTruck> trucks) {
+    final pickup = _pickupLatLng;
+    final shouldTrack =
+        _step == _BookingFlowStep.brokerSelection && pickup != null;
+    final nextKey = shouldTrack
+        ? '${pickup.latitude.toStringAsFixed(5)},'
+              '${pickup.longitude.toStringAsFixed(5)}|'
+              '${trucks.map((truck) => truck.id).join(',')}'
+        : 'off';
+
+    if (_truckTrackingSyncKey == nextKey) {
+      return;
+    }
+    _truckTrackingSyncKey = nextKey;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _truckTrackingSyncKey != nextKey) {
+        return;
+      }
+
+      if (shouldTrack) {
+        _trackedNearbyTrucks = trucks;
+        _ensureTruckTrackingSocket();
+        _syncTruckTrackingRooms(trucks);
+      } else {
+        _disconnectTruckTrackingSocket();
+      }
+    });
+  }
+
+  void _ensureTruckTrackingSocket() {
+    if (_truckTrackingSocket != null) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    final baseUrl = ref.read(dioProvider).options.baseUrl;
+    final socket = io.io(
+      baseUrl,
+      io.OptionBuilder()
+          .setTransports(['websocket', 'polling'])
+          .setAuth({'token': session.tokens.accessToken})
+          .disableAutoConnect()
+          .build(),
+    );
+
+    socket.onConnect((_) {
+      if (!mounted) {
+        return;
+      }
+      _syncTruckTrackingRooms(_trackedNearbyTrucks);
+    });
+    socket.onConnectError((error) {
+      debugPrint('[TruckTracking] socket connect error: $error');
+    });
+    socket.onError((error) {
+      debugPrint('[TruckTracking] socket error: $error');
+    });
+    socket.on('truck-location', (payload) {
+      final event = _parseTruckLocationPayload(payload);
+      if (event == null || !mounted) {
+        return;
+      }
+      setState(() {
+        _liveTruckLocations[event.truckId] = event;
+      });
+    });
+
+    _truckTrackingSocket = socket;
+    socket.connect();
+  }
+
+  void _syncTruckTrackingRooms(List<NearbyTruck> trucks) {
+    final socket = _truckTrackingSocket;
+    if (socket == null) {
+      return;
+    }
+
+    final currentIds = trucks
+        .map((truck) => truck.id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    for (final id in currentIds.difference(_joinedTruckTrackingIds)) {
+      socket.emit('join-truck-tracking', {'truckId': id});
+      _joinedTruckTrackingIds.add(id);
+    }
+
+    for (final id in _joinedTruckTrackingIds.difference(currentIds).toList()) {
+      socket.emit('leave-truck-tracking', {'truckId': id});
+      _joinedTruckTrackingIds.remove(id);
+      _liveTruckLocations.remove(id);
+    }
+  }
+
+  void _disconnectTruckTrackingSocket() {
+    final socket = _truckTrackingSocket;
+    if (socket == null) {
+      return;
+    }
+
+    for (final id in _joinedTruckTrackingIds) {
+      socket.emit('leave-truck-tracking', {'truckId': id});
+    }
+
+    _joinedTruckTrackingIds.clear();
+    _trackedNearbyTrucks = const [];
+    _liveTruckLocations.clear();
+    _truckTrackingSocket = null;
+    socket.disconnect();
+    socket.dispose();
+  }
+
+  _LiveTruckLocation? _parseTruckLocationPayload(Object? payload) {
+    if (payload is! Map) {
+      return null;
+    }
+
+    final data = payload.cast<String, dynamic>();
+    final truckId = _readSocketString(data, const [
+      'truckId',
+      'truck_id',
+      'id',
+    ]);
+    final lat = _readSocketDouble(data, const [
+      'lat',
+      'latitude',
+      'current_lat',
+      'currentLat',
+    ]);
+    final lng = _readSocketDouble(data, const [
+      'lng',
+      'longitude',
+      'current_lng',
+      'currentLng',
+    ]);
+    if (truckId.isEmpty || lat == null || lng == null) {
+      return null;
+    }
+
+    return _LiveTruckLocation(
+      latitude: lat,
+      longitude: lng,
+      lastLocationAt: _readSocketDateTime(data, const [
+        'lastLocationAt',
+        'last_location_at',
+        'updatedAt',
+        'updated_at',
+      ]),
+    );
+  }
+
+  String _readSocketString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) {
+        continue;
+      }
+      final text = value.toString().trim();
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  double? _readSocketDouble(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is num) {
+        return value.toDouble();
+      }
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        final parsed = double.tryParse(text);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  }
+
+  DateTime? _readSocketDateTime(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        final parsed = DateTime.tryParse(text);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return null;
   }
 
   Future<void> _loadTruckMarkerIcon() async {
@@ -2466,27 +2686,27 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Future<BitmapDescriptor> _buildTruckCircleMarkerIcon(String assetPath) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    const size = 72.0;
+    const size = 44.0;
     const center = Offset(size / 2, size / 2);
     const radius = size / 2;
 
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(center.translate(0, 2), radius - 6, shadowPaint);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawCircle(center.translate(0, 2), radius - 7, shadowPaint);
 
     final borderPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius - 4, borderPaint);
+    canvas.drawCircle(center, radius - 5, borderPaint);
 
     final imageData = await rootBundle.load(assetPath);
     final codec = await ui.instantiateImageCodec(
       imageData.buffer.asUint8List(),
-      targetWidth: 30,
-      targetHeight: 30,
+      targetWidth: 16,
+      targetHeight: 16,
     );
     final frame = await codec.getNextFrame();
 
-    final clipRect = Rect.fromCircle(center: center, radius: radius - 13);
+    final clipRect = Rect.fromCircle(center: center, radius: radius - 11);
     canvas.save();
     canvas.clipPath(Path()..addOval(clipRect));
     canvas.drawImageRect(
@@ -3244,6 +3464,22 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
     });
 
+    final pickup = _pickupLatLng;
+    final nearbyTrucksAsync =
+        _step == _BookingFlowStep.brokerSelection && pickup != null
+        ? ref.watch(
+            clientNearbyTrucksProvider((
+              pickupLat: pickup.latitude,
+              pickupLng: pickup.longitude,
+              radiusKm: 25,
+              page: 1,
+              limit: 20,
+            )),
+          )
+        : const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[]);
+    final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
+    _scheduleTruckTrackingSync(nearbyTrucks);
+
     final hideInitialAutoLocationFrame =
         widget.autoOpenLocationFlow &&
         !_autoLocationFlowStarted &&
@@ -3364,7 +3600,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              _buildCurrentStep(context),
+                              _buildCurrentStep(
+                                context,
+                                nearbyTrucks,
+                                nearbyTrucksAsync.isLoading,
+                              ),
                             ],
                           ),
                         ),
@@ -3438,7 +3678,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildCurrentStep(context),
+                          _buildCurrentStep(
+                            context,
+                            nearbyTrucks,
+                            nearbyTrucksAsync.isLoading,
+                          ),
                         ],
                       ),
                     ),
@@ -3449,11 +3693,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  Widget _buildCurrentStep(BuildContext context) {
+  Widget _buildCurrentStep(
+    BuildContext context,
+    List<NearbyTruck> nearbyTrucks,
+    bool nearbyTrucksLoading,
+  ) {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
       _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
-      _BookingFlowStep.brokerSelection => _buildBrokerSelectionStep(context),
+      _BookingFlowStep.brokerSelection => _buildBrokerSelectionStep(
+        context,
+        nearbyTrucks,
+        nearbyTrucksLoading,
+      ),
       _BookingFlowStep.payment =>
         _bookingCreated
             ? _buildSuccessStep(context)
@@ -3461,21 +3713,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     };
   }
 
-  Widget _buildBrokerSelectionStep(BuildContext context) {
+  Widget _buildBrokerSelectionStep(
+    BuildContext context,
+    List<NearbyTruck> nearbyTrucks,
+    bool nearbyTrucksLoading,
+  ) {
     final height = MediaQuery.sizeOf(context).height * 0.72;
-    final pickup = _pickupLatLng;
-    final nearbyTrucksAsync = pickup == null
-        ? const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[])
-        : ref.watch(
-            clientNearbyTrucksProvider((
-              pickupLat: pickup.latitude,
-              pickupLng: pickup.longitude,
-              radiusKm: 25,
-              page: 1,
-              limit: 20,
-            )),
-          );
-    final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
@@ -3526,7 +3769,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   child: Stack(
                     children: [
                       _buildBrokerMap(context, nearbyTrucks),
-                      if (nearbyTrucksAsync.isLoading)
+                      if (nearbyTrucksLoading)
                         const Positioned.fill(
                           child: IgnorePointer(
                             child: ColoredBox(color: Color(0x0AFFFFFF)),
@@ -3601,15 +3844,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final markers = <Marker>{};
 
     for (final truck in trucks) {
-      if (!truck.hasLocation) {
+      final live = _liveTruckLocations[truck.id];
+      final latitude = live?.latitude ?? truck.currentLat;
+      final longitude = live?.longitude ?? truck.currentLng;
+      if (latitude == 0 && longitude == 0) {
         continue;
       }
       markers.add(
         Marker(
           markerId: MarkerId(truck.id),
-          position: LatLng(truck.currentLat, truck.currentLng),
+          position: LatLng(latitude, longitude),
           icon: icon,
-          anchor: const Offset(0.5, 0.5),
+          anchor: const Offset(0.5, 0.95),
           zIndexInt: _selectedTruck?.id == truck.id ? 2 : 1,
           infoWindow: InfoWindow(
             title: truck.displayTitle,
