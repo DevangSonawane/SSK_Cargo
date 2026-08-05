@@ -955,11 +955,13 @@ class TrackingTimelineStep {
 
 class _LiveTruckLocation {
   const _LiveTruckLocation({
+    required this.truckId,
     required this.latitude,
     required this.longitude,
     this.lastLocationAt,
   });
 
+  final String truckId;
   final double latitude;
   final double longitude;
   final DateTime? lastLocationAt;
@@ -2485,6 +2487,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     return _LiveTruckLocation(
+      truckId: truckId,
       latitude: lat,
       longitude: lng,
       lastLocationAt: _readSocketDateTime(data, const [
