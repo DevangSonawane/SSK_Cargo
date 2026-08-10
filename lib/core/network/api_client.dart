@@ -245,6 +245,19 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> notifyBookingInvoice({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('POST /api/bookings/$id/invoice/notify', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$id/invoice/notify',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> payBooking({
     required String accessToken,
     required String id,

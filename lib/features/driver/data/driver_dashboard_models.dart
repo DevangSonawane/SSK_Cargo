@@ -40,7 +40,9 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
     final truck = _truckFromResponse(results[3]);
 
     return DriverDashboardData(
-      activeTrip: activeTrip,
+      activeTrip: activeTrip == null || !_isLiveTrip(activeTrip.status)
+          ? null
+          : activeTrip,
       upcomingTrip: upcomingTrip,
       history: analytics,
       assignedTruck: truck,
@@ -56,6 +58,9 @@ TrackingDemoShipment? _shipmentFromTripResponse(Map<String, dynamic> response) {
             : data)
       : response['trip'];
   if (trip is Map<String, dynamic>) {
+    if (_looksLikePlaceholderTrip(trip)) {
+      return null;
+    }
     return _shipmentFromTrip(trip);
   }
   return null;
@@ -226,4 +231,83 @@ double _doubleFrom(Map<String, dynamic> value, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return 0;
+}
+
+bool _isLiveTrip(String status) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) return false;
+
+  const liveStatuses = {
+    'accepted',
+    'live',
+    'ongoing',
+    'ontrip',
+    'on_trip',
+    'in_transit',
+    'in transit',
+    'picked_up',
+    'picked up',
+    'en_route',
+    'en route',
+    'started',
+  };
+
+  const inactiveStatuses = {
+    'requested',
+    'pending',
+    'completed',
+    'delivered',
+    'cancelled',
+    'canceled',
+    'rejected',
+    'declined',
+  };
+
+  if (inactiveStatuses.contains(normalized)) {
+    return false;
+  }
+
+  return liveStatuses.contains(normalized);
+}
+
+bool _looksLikePlaceholderTrip(Map<String, dynamic> trip) {
+  final status = _stringFrom(trip, const ['status', 'rawStatus'])
+      .trim()
+      .toLowerCase();
+  if (status.isEmpty) {
+    return false;
+  }
+
+  const placeholderStatuses = {
+    'assigned',
+    'pending',
+    'requested',
+  };
+  if (!placeholderStatuses.contains(status)) {
+    return false;
+  }
+
+  final pickup = _mapFrom(trip['pickup'] ?? trip['pickupLocation']);
+  final drop = _mapFrom(trip['drop'] ?? trip['dropoffLocation']);
+  final currentLocation = _mapFrom(
+    trip['currentLocation'] ?? trip['liveLocation'] ?? trip['truckLocation'],
+  );
+  final bookingNumber = _stringFrom(trip, const [
+    'bookingNumber',
+    'booking_number',
+  ]);
+  final id = _stringFrom(trip, const ['id', 'tripId', 'trip_id']);
+
+  final hasLocationData =
+      pickup.isNotEmpty ||
+      drop.isNotEmpty ||
+      currentLocation.isNotEmpty ||
+      _doubleFrom(pickup, const ['lat', 'latitude']) != 0 ||
+      _doubleFrom(pickup, const ['lng', 'longitude']) != 0 ||
+      _doubleFrom(drop, const ['lat', 'latitude']) != 0 ||
+      _doubleFrom(drop, const ['lng', 'longitude']) != 0 ||
+      _doubleFrom(currentLocation, const ['lat', 'latitude']) != 0 ||
+      _doubleFrom(currentLocation, const ['lng', 'longitude']) != 0;
+
+  return !hasLocationData && bookingNumber.isEmpty && id.isEmpty;
 }

@@ -34,6 +34,7 @@ import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_all_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_details_screen.dart';
+import '../../features/driver/presentation/screens/driver_delivery_history_details_screen.dart';
 import '../../features/driver/presentation/screens/driver_payment_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_photo_upload_screen.dart';
 import '../../features/driver/presentation/screens/driver_thank_you_screen.dart';
@@ -148,6 +149,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final tripId = state.pathParameters['tripId'] ?? '';
           return NoTransitionPage(
             child: DriverDeliveryDetailsScreen(tripId: tripId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/driver/deliveries/:bookingId',
+        pageBuilder: (context, state) {
+          final bookingId = state.pathParameters['bookingId'] ?? '';
+          final settlement = state.extra is BrokerSettlement
+              ? state.extra as BrokerSettlement
+              : null;
+          return NoTransitionPage(
+            child: DriverDeliveryHistoryDetailsScreen(
+              bookingId: bookingId,
+              initialSettlement: settlement,
+            ),
           );
         },
       ),

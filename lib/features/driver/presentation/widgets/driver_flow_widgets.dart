@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 class DriverBottomBar extends StatelessWidget {
   const DriverBottomBar({
@@ -32,7 +33,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'New travel',
-                assetPath: 'assets/trucks/new_travel.png',
+                icon: LucideIcons.truck,
                 selected: currentIndex == 0,
                 onTap: () => onTap(0),
               ),
@@ -41,7 +42,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'Active',
-                assetPath: 'assets/active.png',
+                icon: LucideIcons.book_open_text,
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
@@ -50,7 +51,7 @@ class DriverBottomBar extends StatelessWidget {
             Expanded(
               child: _DriverBottomBarItem(
                 label: 'Earnings',
-                assetPath: 'assets/earning.png',
+                icon: LucideIcons.wallet,
                 selected: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
@@ -67,11 +68,11 @@ class _DriverBottomBarItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.assetPath,
+    required this.icon,
   });
 
   final String label;
-  final String? assetPath;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -92,16 +93,7 @@ class _DriverBottomBarItem extends StatelessWidget {
               width: 20,
               height: 20,
               child: Center(
-                child: assetPath != null
-                    ? Image.asset(
-                        assetPath!,
-                        width: 20,
-                        height: 20,
-                        fit: BoxFit.contain,
-                        color: iconColor,
-                        colorBlendMode: BlendMode.srcIn,
-                      )
-                    : const SizedBox.shrink(),
+                child: Icon(icon, size: 20, color: iconColor),
               ),
             ),
             const SizedBox(height: 4),

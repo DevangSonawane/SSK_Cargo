@@ -6,11 +6,19 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
 
-class DriverHomeScreen extends ConsumerWidget {
+class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DriverHomeScreen> createState() => _DriverHomeScreenState();
+}
+
+class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
+  double _acceptSlide = 0;
+  bool _launchingRequest = false;
+
+  @override
+  Widget build(BuildContext context) {
     final isOnline = ref.watch(driverOnlineProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
     final requestsAsync = ref.watch(driverRequestsProvider);
@@ -70,7 +78,7 @@ class DriverHomeScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Incoming requests',
+                    'Deliveries',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: const Color(0xFF101828),
                       fontWeight: FontWeight.w800,
@@ -114,28 +122,71 @@ class DriverHomeScreen extends ConsumerWidget {
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (requests) {
-                  if (requests.isEmpty) {
+                  final newRequests = requests
+                      .where((request) => request.canNegotiate)
+                      .toList();
+
+                  if (newRequests.isEmpty) {
                     return const _EmptyStateCard(
                       icon: Icons.inbox_rounded,
-                      title: 'All caught up',
-                      subtitle: 'No incoming driver requests right now.',
+                      title: 'No new deliveries',
+                      subtitle:
+                          'New client requests will appear here when they arrive.',
                     );
                   }
 
                   return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (var i = 0; i < requests.length; i++) ...[
-                        _DriverRequestCard(
-                          request: requests[i],
-                          onOpenNegotiation: (request) {
-                            context.push(
-                              '/driver/request',
-                              extra: request.raw,
-                            );
-                          },
+                      _DeliveryOrderCard(
+                        request: newRequests.first,
+                        acceptSlide: _acceptSlide,
+                        onSlideChanged: (value) {
+                          if (_launchingRequest) return;
+                          setState(() => _acceptSlide = value);
+                          if (value >= 0.98) {
+                            _launchingRequest = true;
+                            Future.delayed(const Duration(milliseconds: 350), () {
+                              if (!context.mounted) return;
+                              context.push(
+                                '/driver/request',
+                                extra: newRequests.first.raw,
+                              );
+                              setState(() => _acceptSlide = 0);
+                              _launchingRequest = false;
+                            });
+                          }
+                        },
+                        onOpenNegotiation: () {
+                          context.push(
+                            '/driver/request',
+                            extra: newRequests.first.raw,
+                          );
+                        },
+                      ),
+                      if (newRequests.length > 1) ...[
+                        const SizedBox(height: 18),
+                        Text(
+                          'More requests',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: const Color(0xFF101828),
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
-                        if (i != requests.length - 1)
-                          const SizedBox(height: 14),
+                        const SizedBox(height: 12),
+                        for (var i = 1; i < newRequests.length; i++) ...[
+                          _DriverRequestCard(
+                            request: newRequests[i],
+                            onOpenNegotiation: (request) {
+                              context.push(
+                                '/driver/request',
+                                extra: request.raw,
+                              );
+                            },
+                          ),
+                          if (i != newRequests.length - 1)
+                            const SizedBox(height: 14),
+                        ],
                       ],
                     ],
                   );
@@ -195,6 +246,175 @@ class _EmptyStateCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF667085),
               height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeliveryOrderCard extends StatelessWidget {
+  const _DeliveryOrderCard({
+    required this.request,
+    required this.acceptSlide,
+    required this.onSlideChanged,
+    required this.onOpenNegotiation,
+  });
+
+  final DriverRequestItem request;
+  final double acceptSlide;
+  final ValueChanged<double> onSlideChanged;
+  final VoidCallback onOpenNegotiation;
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = request.amount > 0 ? request.amount : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Delivery ID',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF98A2B3),
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      request.displayRef,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: const Color(0xFF101828),
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '₹${amount.toStringAsFixed(0)}',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+          const SizedBox(height: 14),
+          Text(
+            request.drop.isNotEmpty ? request.drop : 'Drop location',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            request.pickup.isNotEmpty ? request.pickup : 'Pickup location',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniMetric(
+                  label: 'Request',
+                  value: request.status,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MiniMetric(
+                  label: 'Offers',
+                  value: '${request.offerCount}',
+                ),
+              ),
+            ],
+          ),
+          if (request.driverTimedOut) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDF4E8),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF4D3A5)),
+              ),
+              child: Text(
+                'This request timed out for the driver. Broker handoff is active.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF9A5B13),
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Text(
+            'Slide to accept delivery',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 48,
+              trackShape: const RoundedRectSliderTrackShape(),
+              thumbShape: const _RequestThumbShape(),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+              activeTrackColor: const Color(0xFFE5E7EB),
+              inactiveTrackColor: const Color(0xFFE5E7EB),
+              thumbColor: Colors.white,
+              overlayColor: Colors.transparent,
+            ),
+            child: Slider(
+              value: request.canNegotiate ? acceptSlide : 0,
+              min: 0,
+              max: 1,
+              divisions: 100,
+              onChanged: request.canNegotiate
+                  ? (value) {
+                      onSlideChanged(value);
+                      if (value >= 0.98) {
+                        Future.delayed(const Duration(milliseconds: 250), () {
+                          if (context.mounted) {
+                            onOpenNegotiation();
+                          }
+                        });
+                      }
+                    }
+                  : null,
             ),
           ),
         ],

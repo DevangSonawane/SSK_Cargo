@@ -1972,26 +1972,28 @@ class DriverListTile extends StatelessWidget {
                         onPressed: onRemove,
                         tooltip: 'Delete driver',
                       ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: onTap,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: visuals.ctaBackgroundColor,
-                          foregroundColor: visuals.ctaForegroundColor,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
+                      if (meta.ctaLabel.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: onTap,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: visuals.ctaBackgroundColor,
+                            foregroundColor: visuals.ctaForegroundColor,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 10,
+                            ),
+                            minimumSize: const Size(0, 38),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          minimumSize: const Size(0, 38),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          child: Text(
+                            meta.ctaLabel,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
-                        child: Text(
-                          meta.ctaLabel,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                 ],
@@ -2363,7 +2365,7 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
       return _DriverCardMeta(
         statusLine: 'Idle - Awaiting Assignment',
         lastSeen: '14 mins ago',
-        ctaLabel: 'Assign Load',
+        ctaLabel: '',
         ctaIcon: Icons.add_task_rounded,
         statusIcon: Icons.schedule,
       );
