@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../../../core/services/google_places_service.dart';
 import 'client_flow_widgets.dart';
@@ -28,6 +29,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   final GooglePlacesService _routesService = GooglePlacesService();
   List<LatLng> _routePoints = const [];
   int _routeRequestToken = 0;
+  BitmapDescriptor? _truckMarkerIcon;
 
   LatLng? get _pickupPoint =>
       _latLng(widget.shipment.pickupLat, widget.shipment.pickupLng);
@@ -85,9 +87,10 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
           markerId: const MarkerId('live'),
           position: live,
           infoWindow: const InfoWindow(title: 'Truck live position'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
-          ),
+          icon:
+              _truckMarkerIcon ??
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          anchor: const Offset(0.5, 0.5),
         ),
       );
     }
@@ -183,6 +186,24 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   void initState() {
     super.initState();
     _loadRoute();
+    _loadTruckMarkerIcon();
+  }
+
+  Future<void> _loadTruckMarkerIcon() async {
+    try {
+      final icon = await loadTruckMarkerIcon();
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = icon;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueAzure,
+        );
+      });
+    }
   }
 
   Future<void> _loadRoute() async {
@@ -451,8 +472,32 @@ class LiveLocationMapView extends StatefulWidget {
 
 class _LiveLocationMapViewState extends State<LiveLocationMapView> {
   GoogleMapController? _controller;
+  BitmapDescriptor? _truckMarkerIcon;
 
   LatLng? get _location => _latLng(widget.latitude, widget.longitude);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTruckMarkerIcon();
+  }
+
+  Future<void> _loadTruckMarkerIcon() async {
+    try {
+      final icon = await loadTruckMarkerIcon();
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = icon;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _truckMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueAzure,
+        );
+      });
+    }
+  }
 
   Set<Marker> get _markers {
     final location = _location;
@@ -465,7 +510,10 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
         markerId: const MarkerId('live'),
         position: location,
         infoWindow: InfoWindow(title: widget.label),
-        icon: BitmapDescriptor.defaultMarkerWithHue(widget.markerHue),
+        icon:
+            _truckMarkerIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(widget.markerHue),
+        anchor: const Offset(0.5, 0.5),
       ),
     };
   }

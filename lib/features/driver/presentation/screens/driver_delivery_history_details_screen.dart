@@ -243,65 +243,20 @@ class _DriverDeliveryHistoryDetailsScreenState
       return;
     }
 
-    final toController = TextEditingController(text: session.user.email);
-    final subjectController = TextEditingController(
-      text: 'Invoice for booking $_displayBookingRef',
-    );
-    final messageController = TextEditingController(
-      text: 'Please find attached the invoice for booking $_displayBookingRef.',
-    );
-
     try {
-      final shouldSend = await showDialog<bool>(
+      final draft = await showDialog<_EmailInvoiceDraft>(
         context: context,
         builder: (dialogContext) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text('Email invoice'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: toController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'To',
-                      hintText: 'recipient@example.com',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: subjectController,
-                    decoration: const InputDecoration(labelText: 'Subject'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: messageController,
-                    minLines: 3,
-                    maxLines: 5,
-                    decoration: const InputDecoration(labelText: 'Message'),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('Send'),
-              ),
-            ],
+          return _EmailInvoiceDialog(
+            initialTo: session.user.email ?? '',
+            defaultSubject: 'Invoice for booking $_displayBookingRef',
+            defaultMessage:
+                'Please find attached the invoice for booking $_displayBookingRef.',
           );
         },
       );
 
-      if (shouldSend != true) return;
+      if (draft == null) return;
 
       setState(() => _emailing = true);
       await ref
@@ -309,9 +264,9 @@ class _DriverDeliveryHistoryDetailsScreenState
           .emailBookingInvoice(
             accessToken: session.tokens.accessToken,
             id: bookingId,
-            to: toController.text.trim(),
-            subject: subjectController.text.trim(),
-            message: messageController.text.trim(),
+            to: draft.to,
+            subject: draft.subject,
+            message: draft.message,
           );
       if (!mounted) return;
       _showSnack('Invoice emailed successfully.');
@@ -322,9 +277,6 @@ class _DriverDeliveryHistoryDetailsScreenState
       if (!mounted) return;
       _showSnack(error.toString().replaceFirst('Exception: ', ''));
     } finally {
-      toController.dispose();
-      subjectController.dispose();
-      messageController.dispose();
       if (mounted) {
         setState(() => _emailing = false);
       }
@@ -671,6 +623,110 @@ class _DriverDeliveryHistoryDetailsScreenState
       'completed_at',
     ]);
     return value == null ? '—' : _formatDate(value);
+  }
+}
+
+class _EmailInvoiceDraft {
+  const _EmailInvoiceDraft({
+    required this.to,
+    required this.subject,
+    required this.message,
+  });
+
+  final String to;
+  final String subject;
+  final String message;
+}
+
+class _EmailInvoiceDialog extends StatefulWidget {
+  const _EmailInvoiceDialog({
+    required this.initialTo,
+    required this.defaultSubject,
+    required this.defaultMessage,
+  });
+
+  final String initialTo;
+  final String defaultSubject;
+  final String defaultMessage;
+
+  @override
+  State<_EmailInvoiceDialog> createState() => _EmailInvoiceDialogState();
+}
+
+class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
+  late final TextEditingController _toController;
+  late final TextEditingController _subjectController;
+  late final TextEditingController _messageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _toController = TextEditingController(text: widget.initialTo);
+    _subjectController = TextEditingController(text: widget.defaultSubject);
+    _messageController = TextEditingController(text: widget.defaultMessage);
+  }
+
+  @override
+  void dispose() {
+    _toController.dispose();
+    _subjectController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    Navigator.of(context).pop(
+      _EmailInvoiceDraft(
+        to: _toController.text.trim(),
+        subject: _subjectController.text.trim(),
+        message: _messageController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Email invoice'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _toController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'To',
+                hintText: 'recipient@example.com',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _subjectController,
+              decoration: const InputDecoration(labelText: 'Subject'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _messageController,
+              minLines: 3,
+              maxLines: 5,
+              decoration: const InputDecoration(labelText: 'Message'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Send'),
+        ),
+      ],
+    );
   }
 }
 

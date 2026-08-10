@@ -220,11 +220,11 @@ class _DriverDeliveryDetailsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
+        backgroundColor: const Color(0xFFF5F7FB),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
@@ -243,7 +243,7 @@ class _DriverDeliveryDetailsScreenState
                 child: Row(
                   children: [
                     InkWell(
-                      onTap: () => context.pop(),
+                      onTap: () => context.go('/driver/home'),
                       borderRadius: BorderRadius.circular(999),
                       child: Container(
                         width: 40,

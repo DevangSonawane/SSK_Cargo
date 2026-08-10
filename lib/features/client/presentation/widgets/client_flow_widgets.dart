@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,6 +16,7 @@ import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/services/google_places_service.dart';
+import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
@@ -2388,7 +2388,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     ref.read(bottomNavVisibleProvider.notifier).state = false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _loadTruckMarkerIcon(context);
+        _loadTruckMarkerIcon();
       }
     });
     _vehicleIndex = widget.initialVehicleIndex;
@@ -2539,12 +2539,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _liveTruckLocations.clear();
   }
 
-  Future<void> _loadTruckMarkerIcon(BuildContext context) async {
+  Future<void> _loadTruckMarkerIcon() async {
     try {
-      final truckBytes = (await rootBundle.load(
-        'assets/trucks/rucks_for_gadidostt.png',
-      )).buffer.asUint8List();
-      final truck = BitmapDescriptor.bytes(truckBytes, width: 32, height: 20);
+      final truck = await loadTruckMarkerIcon();
       final pickup = await _buildDotMarkerIcon(const Color(0xFF22C55E));
       final drop = await _buildDotMarkerIcon(const Color(0xFFEF4444));
       if (!mounted) return;
@@ -3828,7 +3825,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           markerId: MarkerId(truck.id),
           position: LatLng(latitude, longitude),
           icon: icon,
-          anchor: const Offset(0.5, 0.95),
+          anchor: const Offset(0.5, 0.5),
           zIndexInt: _selectedTruck?.id == truck.id ? 2 : 1,
           infoWindow: InfoWindow(
             title: truck.displayTitle,
