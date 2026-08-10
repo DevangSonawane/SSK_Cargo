@@ -910,17 +910,77 @@ class TrackingDemoShipment {
     required this.customerName,
     required this.weight,
     required this.timeline,
+    this.amount = 0,
+    this.paymentStatus = 'pending',
     this.pickupLat,
     this.pickupLng,
     this.dropLat,
     this.dropLng,
     this.liveLat,
     this.liveLng,
+    this.podUrl,
+    this.ratingStars,
     this.bookingId,
     this.bookingStatus,
     this.assignedDriverName,
     this.assignedTruckName,
   });
+
+  TrackingDemoShipment copyWith({
+    String? packageName,
+    String? trackingId,
+    String? fromLocation,
+    String? toLocation,
+    String? status,
+    String? customerName,
+    String? weight,
+    List<TrackingTimelineStep>? timeline,
+    double? pickupLat,
+    double? pickupLng,
+    double? dropLat,
+    double? dropLng,
+    double? liveLat,
+    double? liveLng,
+    String? bookingId,
+    String? bookingStatus,
+    String? assignedDriverName,
+    String? assignedTruckName,
+    double? amount,
+    String? paymentStatus,
+    String? podUrl,
+    int? ratingStars,
+    bool clearPickupLat = false,
+    bool clearPickupLng = false,
+    bool clearDropLat = false,
+    bool clearDropLng = false,
+    bool clearLiveLat = false,
+    bool clearLiveLng = false,
+  }) {
+    return TrackingDemoShipment(
+      packageName: packageName ?? this.packageName,
+      trackingId: trackingId ?? this.trackingId,
+      fromLocation: fromLocation ?? this.fromLocation,
+      toLocation: toLocation ?? this.toLocation,
+      status: status ?? this.status,
+      customerName: customerName ?? this.customerName,
+      weight: weight ?? this.weight,
+      timeline: timeline ?? this.timeline,
+      pickupLat: clearPickupLat ? null : (pickupLat ?? this.pickupLat),
+      pickupLng: clearPickupLng ? null : (pickupLng ?? this.pickupLng),
+      dropLat: clearDropLat ? null : (dropLat ?? this.dropLat),
+      dropLng: clearDropLng ? null : (dropLng ?? this.dropLng),
+      liveLat: clearLiveLat ? null : (liveLat ?? this.liveLat),
+      liveLng: clearLiveLng ? null : (liveLng ?? this.liveLng),
+      podUrl: podUrl ?? this.podUrl,
+      ratingStars: ratingStars ?? this.ratingStars,
+      bookingId: bookingId ?? this.bookingId,
+      bookingStatus: bookingStatus ?? this.bookingStatus,
+      assignedDriverName: assignedDriverName ?? this.assignedDriverName,
+      assignedTruckName: assignedTruckName ?? this.assignedTruckName,
+      amount: amount ?? this.amount,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+    );
+  }
 
   final String packageName;
   final String trackingId;
@@ -936,10 +996,50 @@ class TrackingDemoShipment {
   final double? dropLng;
   final double? liveLat;
   final double? liveLng;
+  final double amount;
+  final String paymentStatus;
+  final String? podUrl;
+  final int? ratingStars;
   final String? bookingId;
   final String? bookingStatus;
   final String? assignedDriverName;
   final String? assignedTruckName;
+}
+
+String _readString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
+}
+
+String formatPaymentStatus(String status) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return 'Pending';
+  }
+  switch (normalized) {
+    case 'paid':
+      return 'Paid';
+    case 'pending':
+      return 'Pending';
+    case 'failed':
+      return 'Failed';
+    case 'refunded':
+      return 'Refunded';
+    case 'partial':
+    case 'partially_paid':
+      return 'Partially paid';
+    default:
+      return normalized
+          .split(RegExp(r'[_\s-]+'))
+          .where((part) => part.isNotEmpty)
+          .map((part) => part[0].toUpperCase() + part.substring(1))
+          .join(' ');
+  }
 }
 
 class TrackingTimelineStep {
@@ -1008,6 +1108,14 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
       'truck_lng',
       'truckLng',
     ]),
+    amount: _readMoneyValue(raw, raw),
+    paymentStatus: formatPaymentStatus(
+      _readString(raw, const ['payment_status', 'paymentStatus']).isEmpty
+          ? 'pending'
+          : _readString(raw, const ['payment_status', 'paymentStatus']),
+    ),
+    podUrl: _readString(raw, const ['podUrl', 'pod_url']),
+    ratingStars: _readIntValue(raw, raw, const ['rating_stars', 'stars']),
     bookingId: booking.id,
     bookingStatus: status,
     timeline: _timelineForStatus(status, booking),
@@ -2862,6 +2970,28 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           _draft = _draft.copyWith(tripType: resolvedTripType);
         });
       }
+
+      final validation = await ref
+          .read(apiClientProvider)
+          .validateBookingLocation(
+            accessToken: session.tokens.accessToken,
+            pickupLocation: pickup,
+            dropLocation: drop,
+            transportType: resolvedTripType == TripType.intraCity
+                ? 'intra'
+                : 'inter',
+            city: resolvedTripType == TripType.intraCity
+                ? (city.isNotEmpty ? city : _draft.city)
+                : null,
+          );
+      if (validation['success'] == false) {
+        throw ApiException(
+          (validation['message'] ??
+                  'These pickup/drop locations are not valid for this trip')
+              .toString(),
+        );
+      }
+
       final response = await ref
           .read(apiClientProvider)
           .getDistanceEstimate(

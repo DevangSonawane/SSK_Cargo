@@ -39,18 +39,78 @@ class ClientSettingsScreen extends StatelessWidget {
                     Text(
                       'Account security',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF101828),
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Keep your sign-in details up to date and change your password here.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF667085),
-                          ),
+                        color: const Color(0xFF667085),
+                      ),
                     ),
                     const SizedBox(height: 18),
+                    InkWell(
+                      onTap: () => context.push('/client/notifications'),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F7FB),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0F4E8),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_active_outlined,
+                                color: Color(0xFF2FA56E),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Notifications',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF101828),
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Review booking updates and invoice alerts',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: const Color(0xFF667085),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF98A2B3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     InkWell(
                       onTap: () => context.push('/change-password'),
                       borderRadius: BorderRadius.circular(18),
@@ -82,7 +142,10 @@ class ClientSettingsScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Change password',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF101828),
@@ -91,14 +154,18 @@ class ClientSettingsScreen extends StatelessWidget {
                                   const SizedBox(height: 2),
                                   Text(
                                     'Update the password for this account',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
                                           color: const Color(0xFF667085),
                                         ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF98A2B3),
+                            ),
                           ],
                         ),
                       ),

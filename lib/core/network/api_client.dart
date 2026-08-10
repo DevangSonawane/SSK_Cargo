@@ -80,6 +80,7 @@ class SskApiClient {
           'name': name,
           'email': email,
           'password': password,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
           'role': role,
         },
       ),
@@ -105,7 +106,399 @@ class SskApiClient {
   Future<Map<String, dynamic>> getProfile({required String accessToken}) async {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
-        '/api/user/profile',
+        '/api/users/profile',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBookingById({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/bookings/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBookingTrack({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/bookings/$id/track', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/$id/track',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> validateBookingLocation({
+    required String accessToken,
+    required String pickupLocation,
+    required String dropLocation,
+    required String transportType,
+    String? city,
+  }) async {
+    developer.log(
+      'POST /api/bookings/validate-location transportType=$transportType city=$city',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/validate-location',
+        data: {
+          'pickup_location': pickupLocation,
+          'drop_location': dropLocation,
+          'transport_type': transportType,
+          if (city != null && city.isNotEmpty) 'city': city,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> quoteBooking({
+    required String accessToken,
+    required String truckCategory,
+    required String transportType,
+    required double distance,
+    int? durationMin,
+    int? durationInTrafficMin,
+  }) async {
+    developer.log(
+      'POST /api/bookings/quote truckCategory=$truckCategory transportType=$transportType distance=$distance',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/quote',
+        data: {
+          'truck_category': truckCategory,
+          'transport_type': transportType,
+          'distance': distance,
+          ...?(durationMin == null
+              ? null
+              : <String, dynamic>{'duration_min': durationMin}),
+          ...?(durationInTrafficMin == null
+              ? null
+              : <String, dynamic>{
+                  'duration_in_traffic_min': durationInTrafficMin,
+                }),
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> requestTruckForBooking({
+    required String accessToken,
+    required String bookingId,
+    required String truckId,
+  }) async {
+    developer.log(
+      'POST /api/bookings/$bookingId/request-truck truckId=$truckId',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/request-truck',
+        data: {'truck_id': truckId},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Response<List<int>>> getBookingInvoice({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/bookings/$id/invoice', name: 'SSK.API');
+    return _dio.get<List<int>>(
+      '/api/bookings/$id/invoice',
+      options: Options(
+        headers: {'Authorization': 'Bearer $accessToken'},
+        responseType: ResponseType.bytes,
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> emailBookingInvoice({
+    required String accessToken,
+    required String id,
+    required String to,
+    required String subject,
+    required String message,
+  }) async {
+    developer.log('POST /api/bookings/$id/invoice/email', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$id/invoice/email',
+        data: {
+          'to': to,
+          'subject': subject,
+          'message': message,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> payBooking({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/bookings/$id/pay', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/bookings/$id/pay',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> rateBooking({
+    required String accessToken,
+    required String id,
+    required int stars,
+    String? review,
+  }) async {
+    developer.log('POST /api/bookings/$id/rate stars=$stars', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$id/rate',
+        data: {
+          'stars': stars,
+          if (review != null && review.isNotEmpty) 'review': review,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> raiseBookingDispute({
+    required String accessToken,
+    required String bookingId,
+    required String issueType,
+    required String description,
+  }) async {
+    developer.log('POST /api/disputes bookingId=$bookingId issueType=$issueType', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/disputes',
+        data: {
+          'booking_id': bookingId,
+          'issue_type': issueType,
+          'description': description,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getConfigCities() async {
+    developer.log('GET /api/config/cities', name: 'SSK.API');
+    return _request(() => _dio.get<Map<String, dynamic>>('/api/config/cities'));
+  }
+
+  Future<Map<String, dynamic>> getVehicleTypes() async {
+    developer.log('GET /api/config/vehicle-types', name: 'SSK.API');
+    return _request(() => _dio.get<Map<String, dynamic>>('/api/config/vehicle-types'));
+  }
+
+  Future<Map<String, dynamic>> getMaterialTypes() async {
+    developer.log('GET /api/config/material-types', name: 'SSK.API');
+    return _request(() => _dio.get<Map<String, dynamic>>('/api/config/material-types'));
+  }
+
+  Future<Map<String, dynamic>> registerDeviceToken({
+    required String accessToken,
+    required String token,
+    required String platform,
+  }) async {
+    developer.log('POST /api/users/device-token platform=$platform', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/users/device-token',
+        data: {'token': token, 'platform': platform},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> unregisterDeviceToken({
+    required String accessToken,
+    required String token,
+  }) async {
+    developer.log('DELETE /api/users/device-token', name: 'SSK.API');
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/users/device-token',
+        data: {'token': token},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getUnreadChatCount({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/chat/unread-count', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/unread-count',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getChatThread({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log('GET /api/chat/bookings/$bookingId/thread', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/bookings/$bookingId/thread',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getChatMessages({
+    required String accessToken,
+    required String threadId,
+    int limit = 50,
+  }) async {
+    developer.log('GET /api/chat/threads/$threadId/messages limit=$limit', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/threads/$threadId/messages',
+        queryParameters: {'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> markChatThreadRead({
+    required String accessToken,
+    required String threadId,
+  }) async {
+    developer.log('PATCH /api/chat/threads/$threadId/read', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/chat/threads/$threadId/read',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getNotifications({
+    required String accessToken,
+    int limit = 10,
+  }) async {
+    developer.log('GET /api/users/notifications limit=$limit', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/users/notifications',
+        queryParameters: {'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> markNotificationRead({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/users/notifications/$id/read', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/users/notifications/$id/read',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> markAllNotificationsRead({
+    required String accessToken,
+  }) async {
+    developer.log('PATCH /api/users/notifications/read-all', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/users/notifications/read-all',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDriverRequestById({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/driver-requests/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/driver-requests/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDriverRequestByBooking({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log('GET /api/driver-requests/booking/$bookingId', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/driver-requests/booking/$bookingId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> acceptDriverRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/driver-requests/$id/client-accept', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/client-accept',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> rejectDriverRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/driver-requests/$id/client-reject', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/client-reject',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> counterDriverRequest({
+    required String accessToken,
+    required String id,
+    required num amount,
+  }) async {
+    developer.log('PATCH /api/driver-requests/$id/client-counter amount=$amount', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/client-counter',
+        data: {'amount': amount},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -239,12 +632,12 @@ class SskApiClient {
     required Map<String, dynamic> payload,
   }) async {
     developer.log(
-      'POST /api/pricing/estimate keys=${payload.keys.join(',')}',
+      'POST /api/bookings/quote keys=${payload.keys.join(',')}',
       name: 'SSK.API',
     );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
-        '/api/pricing/estimate',
+        '/api/bookings/quote',
         data: payload,
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -801,12 +1194,12 @@ class SskApiClient {
     String? profileImage,
   }) async {
     developer.log(
-      'PUT /api/user/profile name=$name email=$email phoneSet=${phone != null && phone.isNotEmpty} profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
+      'PATCH /api/users/profile name=$name email=$email phoneSet=${phone != null && phone.isNotEmpty} profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
       name: 'SSK.API',
     );
     return _request(
-      () => _dio.put<Map<String, dynamic>>(
-        '/api/user/profile',
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/users/profile',
         data: {
           'name': name,
           'email': email,
@@ -825,12 +1218,12 @@ class SskApiClient {
     required String newPassword,
   }) async {
     developer.log(
-      'PUT /api/user/change-password currentPasswordLength=${currentPassword.length} newPasswordLength=${newPassword.length}',
+      'PATCH /api/users/change-password currentPasswordLength=${currentPassword.length} newPasswordLength=${newPassword.length}',
       name: 'SSK.API',
     );
     return _request(
-      () => _dio.put<Map<String, dynamic>>(
-        '/api/user/change-password',
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/users/change-password',
         data: {
           'current_password': currentPassword,
           'new_password': newPassword,

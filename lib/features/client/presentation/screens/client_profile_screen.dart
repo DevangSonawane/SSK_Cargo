@@ -5,11 +5,32 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-class ClientProfileScreen extends ConsumerWidget {
+class ClientProfileScreen extends ConsumerStatefulWidget {
   const ClientProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientProfileScreen> createState() => _ClientProfileScreenState();
+}
+
+class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshProfile();
+    });
+  }
+
+  Future<void> _refreshProfile() async {
+    try {
+      await ref.read(authSessionProvider.notifier).refreshProfile();
+    } catch (_) {
+      // Best effort only; the screen can still render from the cached session.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
     final displayName = user?.displayName ?? 'Client';

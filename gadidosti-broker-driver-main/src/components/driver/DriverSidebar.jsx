@@ -1,0 +1,142 @@
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useDriverSidebarCounts } from "../../hooks/useDriverSidebarCounts";
+import {
+  LayoutDashboard, Inbox, Navigation, History, User, ShieldCheck, IndianRupee,
+  LogOut, X,
+} from "lucide-react";
+
+const NAV = [
+  { label: "MAIN", items: [{ label: "Dashboard", icon: LayoutDashboard, path: "/driver" }] },
+  {
+    label: "TRIPS", items: [
+      { label: "Requests", icon: Inbox, path: "/driver/requests" },
+      { label: "My Trip", icon: Navigation, path: "/driver/my-trip" },
+      { label: "Trip History", icon: History, path: "/driver/history" },
+      { label: "Earnings", icon: IndianRupee, path: "/driver/earnings" },
+    ],
+  },
+  {
+    label: "ACCOUNT", items: [
+      { label: "KYC", icon: ShieldCheck, path: "/driver/kyc" },
+      { label: "Profile", icon: User, path: "/driver/profile" },
+    ],
+  },
+];
+
+const KYC_DOT = {
+  pending: "bg-amber-400",
+  submitted: "bg-amber-400",
+  rejected: "bg-red-500",
+  verified: null,
+};
+
+export default function DriverSidebar({ isExpanded, onExpand, onCollapse, mobileOpen, onMobileClose }) {
+  const [hovered, setHovered] = useState(null);
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const kycDot = KYC_DOT[user?.kyc_status || "pending"];
+  const { requests, hasActiveTrip } = useDriverSidebarCounts(!!user?.tokens?.access_token);
+  const badges = {
+    "/driver/requests": requests,
+    "/driver/my-trip": hasActiveTrip ? 1 : 0,
+  };
+
+  return (
+    <aside
+      onMouseEnter={onExpand}
+      onMouseLeave={onCollapse}
+      className={`fixed left-0 top-0 h-screen z-50 flex flex-col overflow-hidden bg-white border-r border-neutral-100 transition-all duration-300
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        ${isExpanded ? "w-[260px]" : "w-[260px] lg:w-[76px]"}
+      `}
+    >
+      <div className="flex items-center gap-3 px-4 pt-5 pb-4 flex-shrink-0">
+        <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+          <img src="/gadidost-logo.png" alt="GadiDost" className="w-5 h-5 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+        </div>
+        <div className={`min-w-0 ${!isExpanded ? "lg:hidden" : ""}`}>
+          <div className="font-bold text-neutral-900 text-[15px] leading-tight truncate">GadiDost</div>
+          <div className="text-[11px] text-neutral-400 truncate">Driver Portal</div>
+        </div>
+        <button onClick={onMobileClose} className="lg:hidden ml-auto p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 flex-shrink-0">
+          <X size={16} />
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-2 scrollbar-none px-3">
+        {NAV.map((section) => (
+          <div key={section.label} className="mb-6">
+            <div className={`px-3 mb-2 ${!isExpanded ? "lg:hidden" : ""}`}>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{section.label}</span>
+            </div>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                const badge = badges[item.path];
+                return (
+                  <div
+                    key={item.path}
+                    className="relative"
+                    onMouseEnter={() => setHovered(item.label)}
+                    onMouseLeave={() => setHovered(null)}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary z-10" />
+                    )}
+                    <NavLink
+                      to={item.path}
+                      onClick={() => onMobileClose?.()}
+                      className={`flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-xl transition-all ${
+                        isActive ? "bg-primary-50 text-primary font-semibold" : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800"
+                      }`}
+                    >
+                      <Icon size={18} className={`flex-shrink-0 ${isActive ? "text-primary" : "text-neutral-400"}`} />
+                      <span className={`text-[13px] whitespace-nowrap flex-1 ${!isExpanded ? "lg:hidden" : ""}`}>
+                        {item.label}
+                      </span>
+                      {!!badge && (
+                        <span className={`text-[10px] font-bold bg-primary text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none ${!isExpanded ? "lg:hidden" : ""}`}>
+                          {badge > 9 ? "9+" : badge}
+                        </span>
+                      )}
+                      {item.path === "/driver/kyc" && kycDot && (
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${kycDot} ${!isExpanded ? "lg:hidden" : ""}`} />
+                      )}
+                    </NavLink>
+                    {!isExpanded && hovered === item.label && (
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 pointer-events-none hidden lg:block">
+                        <div className="bg-neutral-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap shadow-modal">
+                          {item.label}
+                          {!!badge && <span className="ml-2 bg-primary text-white text-[9px] px-1.5 py-0.5 rounded-full">{badge > 9 ? "9+" : badge}</span>}
+                          {item.path === "/driver/kyc" && kycDot && <span className={`ml-2 inline-block w-1.5 h-1.5 rounded-full ${kycDot}`} />}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="flex-shrink-0 px-3 pb-3 pt-2 border-t border-neutral-100">
+        <div className={`flex items-center gap-3 rounded-xl bg-neutral-50 px-3 py-2.5 mb-1 ${!isExpanded ? "lg:flex-col lg:items-center lg:gap-1.5" : ""}`}>
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-primary font-bold text-sm">{(user?.name || "R")[0]}</span>
+          </div>
+          <div className={`flex-1 min-w-0 ${!isExpanded ? "lg:hidden" : ""}`}>
+            <div className="text-neutral-800 text-[13px] font-medium truncate">{user?.name || "Ramesh Singh"}</div>
+            <div className="text-[11px] text-neutral-400 truncate">Driver</div>
+          </div>
+          <button onClick={logout} className="p-1.5 rounded-lg transition-colors text-neutral-400 hover:text-danger hover:bg-red-50 flex-shrink-0" title="Sign out">
+            <LogOut size={15} />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}

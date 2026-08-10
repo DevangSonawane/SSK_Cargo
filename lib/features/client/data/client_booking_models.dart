@@ -349,6 +349,7 @@ class ClientBookingOffer {
 
   bool get isCountered => _normalizeStatus(status) == 'countered';
   bool get isPending => _normalizeStatus(status) == 'pending';
+  String get displayStatusLabel => _titleCase(status);
 }
 
 class NearbyTruckPage {
@@ -589,6 +590,37 @@ class NearbyTruck {
       displayTitle.isNotEmpty ? displayTitle : 'Selected truck';
 }
 
+class ClientNotification {
+  const ClientNotification({
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.isRead,
+    required this.createdAt,
+    required this.raw,
+  });
+
+  factory ClientNotification.fromJson(Map<String, dynamic> json) {
+    return ClientNotification(
+      id: _readString(json, const ['id', 'notification_id', 'uuid']),
+      title: _readString(json, const ['title', 'subject', 'heading']),
+      message: _readString(json, const ['message', 'body', 'content']),
+      isRead: _readBool(json, const ['is_read', 'isRead', 'read']),
+      createdAt: _parseDateTime(
+        json['created_at'] ?? json['createdAt'] ?? json['updated_at'],
+      ),
+      raw: json,
+    );
+  }
+
+  final String id;
+  final String title;
+  final String message;
+  final bool isRead;
+  final DateTime? createdAt;
+  final Map<String, dynamic> raw;
+}
+
 String _firstNonEmpty(List<String> values) {
   for (final value in values) {
     final text = value.trim();
@@ -597,6 +629,19 @@ String _firstNonEmpty(List<String> values) {
     }
   }
   return '';
+}
+
+bool _readBool(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = value.toString().trim().toLowerCase();
+    if (normalized.isEmpty) continue;
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+  return false;
 }
 
 List<dynamic> _extractItems(
