@@ -2361,10 +2361,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
   StreamSubscription<TruckLocationEvent>? _truckLocationSubscription;
+  Timer? _nearbyTrucksRefreshTimer;
   final Set<String> _trackedTruckIds = <String>{};
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
   String? _brokerRouteKey;
+  String? _nearbyTrucksRefreshKey;
   String? _truckTrackingSyncKey;
   final Map<String, _LiveTruckLocation> _liveTruckLocations = {};
 
@@ -2470,6 +2472,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   @override
   void dispose() {
     ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _nearbyTrucksRefreshTimer?.cancel();
     _truckLocationSubscription?.cancel();
     ref.read(appSocketServiceProvider).clearTruckTrackingIds();
     _brokerMapController?.dispose();
@@ -2537,6 +2540,36 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     ref.read(appSocketServiceProvider).clearTruckTrackingIds();
     _trackedTruckIds.clear();
     _liveTruckLocations.clear();
+  }
+
+  void _syncNearbyTrucksRefreshTimer({
+    required bool shouldRefresh,
+    required NearbyTrucksQuery? query,
+  }) {
+    final nextKey = shouldRefresh && query != null
+        ? '${query.pickupLat.toStringAsFixed(5)},'
+              '${query.pickupLng.toStringAsFixed(5)}|'
+              '${query.radiusKm ?? 25}|${query.page}|${query.limit}'
+        : 'off';
+
+    if (_nearbyTrucksRefreshKey == nextKey) {
+      return;
+    }
+    _nearbyTrucksRefreshKey = nextKey;
+
+    _nearbyTrucksRefreshTimer?.cancel();
+    _nearbyTrucksRefreshTimer = null;
+
+    if (!shouldRefresh || query == null) {
+      return;
+    }
+
+    _nearbyTrucksRefreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _step != _BookingFlowStep.brokerSelection) {
+        return;
+      }
+      ref.invalidate(clientNearbyTrucksProvider(query));
+    });
   }
 
   Future<void> _loadTruckMarkerIcon() async {
@@ -3435,19 +3468,26 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
 
     final pickup = _pickupLatLng;
+    final nearbyTrucksQuery =
+        _step == _BookingFlowStep.brokerSelection && pickup != null
+        ? (
+            pickupLat: pickup.latitude,
+            pickupLng: pickup.longitude,
+            radiusKm: 25.0,
+            page: 1,
+            limit: 20,
+          )
+        : null;
     final nearbyTrucksAsync =
         _step == _BookingFlowStep.brokerSelection && pickup != null
-        ? ref.watch(
-            clientNearbyTrucksProvider((
-              pickupLat: pickup.latitude,
-              pickupLng: pickup.longitude,
-              radiusKm: 25,
-              page: 1,
-              limit: 20,
-            )),
-          )
+        ? ref.watch(clientNearbyTrucksProvider(nearbyTrucksQuery!))
         : const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[]);
     final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
+    _syncNearbyTrucksRefreshTimer(
+      shouldRefresh:
+          _step == _BookingFlowStep.brokerSelection && pickup != null,
+      query: nearbyTrucksQuery,
+    );
     _scheduleTruckTrackingSync(nearbyTrucks);
 
     final hideInitialAutoLocationFrame =
