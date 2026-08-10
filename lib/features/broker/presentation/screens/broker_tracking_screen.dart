@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
@@ -14,10 +17,23 @@ class BrokerTrackingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final driversAsync = ref.watch(
-      brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+      brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
-    final List<BrokerDriver> availableDrivers =
-        driversAsync.valueOrNull ?? const <BrokerDriver>[];
+    final trucksAsync = ref.watch(brokerVehiclesProvider);
+    final driverRequestsAsync = ref.watch(
+      brokerDriverRequestsProvider((page: 1, limit: 100)),
+    );
+    final roster = _brokerDriverRoster(
+      driversAsync.valueOrNull ?? const <BrokerDriver>[],
+      trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
+    );
+    final List<BrokerDriver> availableDrivers = roster;
+    final pendingDriverRequests =
+        driverRequestsAsync.valueOrNull?.where((request) {
+          final status = request.status.toLowerCase();
+          return status != 'accepted' && status != 'declined';
+        }).length ??
+        0;
 
     Future<void> openDriverSheet(BrokerDriver driver) async {
       await showModalBottomSheet<void>(
@@ -42,6 +58,7 @@ class BrokerTrackingScreen extends ConsumerWidget {
             ),
             const Spacer(),
             _HeaderActionButton(
+              badgeCount: pendingDriverRequests,
               icon: Icons.assignment_rounded,
               onTap: () => showModalBottomSheet<void>(
                 context: context,
@@ -90,7 +107,12 @@ class BrokerTrackingScreen extends ConsumerWidget {
         const SizedBox(height: 14),
         driversAsync.when(
           data: (drivers) {
-            if (drivers.isEmpty) {
+            final mergedDrivers = _brokerDriverRoster(
+              drivers,
+              trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
+            );
+
+            if (mergedDrivers.isEmpty) {
               return Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -120,7 +142,7 @@ class BrokerTrackingScreen extends ConsumerWidget {
               );
             }
 
-            final liveDriver = _preferredLiveDriver(drivers);
+            final liveDriver = _preferredLiveDriver(mergedDrivers);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -134,20 +156,24 @@ class BrokerTrackingScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 14),
 
-                for (var index = 0; index < drivers.length; index++) ...[
+                for (var index = 0; index < mergedDrivers.length; index++) ...[
                   DriverListTile(
-                    driver: drivers[index],
-                    onTap: () => openDriverSheet(drivers[index]),
+                    driver: mergedDrivers[index],
+                    onTap: () => openDriverSheet(mergedDrivers[index]),
                     onEdit: () {
                       context.push(
                         '/broker/drivers/add',
-                        extra: drivers[index],
+                        extra: mergedDrivers[index],
                       );
                     },
-                    onRemove: () =>
-                        _confirmDeleteDriver(context, ref, drivers[index]),
+                    onRemove: () => _confirmDeleteDriver(
+                      context,
+                      ref,
+                      mergedDrivers[index],
+                    ),
                   ),
-                  if (index != drivers.length - 1) const SizedBox(height: 10),
+                  if (index != mergedDrivers.length - 1)
+                    const SizedBox(height: 10),
                 ],
               ],
             );
@@ -174,6 +200,79 @@ class BrokerTrackingScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+List<BrokerDriver> _brokerDriverRoster(
+  List<BrokerDriver> drivers,
+  List<BrokerVehicle> trucks,
+) {
+  final roster = <BrokerDriver>[...drivers];
+  final ids = roster.map((driver) => driver.id).toSet();
+
+  for (final truck in trucks) {
+    final name = truck.assignedDriverName.trim();
+    if (name.isEmpty || name.toLowerCase() == 'unassigned') {
+      continue;
+    }
+
+    final driverId = truck.driverId.trim().isNotEmpty
+        ? truck.driverId.trim()
+        : 'truck-${truck.id}';
+    if (ids.contains(driverId)) {
+      continue;
+    }
+    ids.add(driverId);
+    roster.add(
+      BrokerDriver(
+        id: driverId,
+        name: name,
+        email: '',
+        phone: '',
+        licenseNo: '',
+        licenseExpiry: '',
+        aadhaar: '',
+        avatar: '',
+        vehicleType: truck.label,
+        status: truck.status == BrokerVehicleStatus.onTrip
+            ? BrokerDriverStatus.onTrip
+            : truck.status == BrokerVehicleStatus.maintenance
+            ? BrokerDriverStatus.offline
+            : BrokerDriverStatus.idle,
+        currentLocation: truck.status == BrokerVehicleStatus.onTrip
+            ? 'In transit with ${truck.plateNumber}'
+            : 'Assigned to ${truck.plateNumber}',
+        currentLatitude: null,
+        currentLongitude: null,
+        assignedVehicle: truck.plateNumber,
+        onTripSince: '',
+        currentBookingRef: '',
+        activeTripId: truck.id,
+        tripStatus: truck.status == BrokerVehicleStatus.onTrip
+            ? 'in_transit'
+            : truck.status == BrokerVehicleStatus.maintenance
+            ? 'maintenance'
+            : '',
+      ),
+    );
+  }
+
+  roster.sort((a, b) {
+    final aScore = a.status == BrokerDriverStatus.onTrip
+        ? 0
+        : a.status == BrokerDriverStatus.idle
+        ? 1
+        : 2;
+    final bScore = b.status == BrokerDriverStatus.onTrip
+        ? 0
+        : b.status == BrokerDriverStatus.idle
+        ? 1
+        : 2;
+    return aScore != bScore
+        ? aScore.compareTo(bScore)
+        : a.name.compareTo(b.name);
+  });
+
+  return roster;
 }
 
 Future<void> _confirmDeleteDriver(
@@ -220,11 +319,11 @@ Future<void> _confirmDeleteDriver(
         .deleteDriver(accessToken: session.tokens.accessToken, id: driver.id);
     if (!context.mounted) return;
     ref.invalidate(
-      brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+      brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Driver removed from fleet.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Driver removed from fleet.')));
   } catch (error) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -236,25 +335,57 @@ Future<void> _confirmDeleteDriver(
 }
 
 class _HeaderActionButton extends StatelessWidget {
-  const _HeaderActionButton({required this.icon, required this.onTap});
+  const _HeaderActionButton({
+    required this.icon,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Icon(icon, color: const Color(0xFF1F88C9), size: 20),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Icon(icon, color: const Color(0xFF1F88C9), size: 20),
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE23A4B),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                constraints: const BoxConstraints(minWidth: 16),
+                child: Text(
+                  badgeCount > 99 ? '99+' : '$badgeCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -269,9 +400,22 @@ class _DriverRequestsSheet extends ConsumerStatefulWidget {
 }
 
 class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
-  static const _query = (page: 1, limit: 50);
+  static const _query = (page: 1, limit: 100);
   bool _countering = false;
   bool _refreshing = false;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_connectSocket());
+  }
+
+  @override
+  void dispose() {
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
 
   Future<void> _refresh() async {
     setState(() => _refreshing = true);
@@ -281,6 +425,27 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }
+  }
+
+  Future<void> _connectSocket() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((_) {
+      if (!mounted) return;
+      ref.invalidate(brokerDriverRequestsProvider(_query));
+    });
   }
 
   Future<void> _runAction({
@@ -709,7 +874,7 @@ class _BrokerDriverTripSheetState
     setState(() => _refreshing = true);
     try {
       ref.invalidate(
-        brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+        brokerDriversApiProvider((status: null, page: 1, limit: 100)),
       );
       setState(() {
         _snapshotFuture = _loadSnapshot();

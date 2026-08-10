@@ -471,7 +471,11 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/driver-requests',
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          '_ts': DateTime.now().millisecondsSinceEpoch,
+        },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -826,6 +830,7 @@ class SskApiClient {
           if (status != null && status.isNotEmpty) 'status': status,
           'page': page,
           'limit': limit,
+          '_ts': DateTime.now().millisecondsSinceEpoch,
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
@@ -1032,6 +1037,7 @@ class SskApiClient {
           if (status != null && status.isNotEmpty) 'status': status,
           'page': page,
           'limit': limit,
+          '_ts': DateTime.now().millisecondsSinceEpoch,
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),

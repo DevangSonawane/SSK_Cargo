@@ -30,9 +30,14 @@ class AppSocketService {
   final Set<String> _truckTrackingIds = <String>{};
   final StreamController<TruckLocationEvent> _truckLocationController =
       StreamController<TruckLocationEvent>.broadcast();
+  final StreamController<Map<String, dynamic>> _driverRequestController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<TruckLocationEvent> get truckLocationStream =>
       _truckLocationController.stream;
+
+  Stream<Map<String, dynamic>> get driverRequestStream =>
+      _driverRequestController.stream;
 
   io.Socket? get socket => _socket;
 
@@ -93,6 +98,16 @@ class AppSocketService {
           'Shared websocket truck-location payload ignored: unable to parse',
           name: 'SSK.Socket',
         );
+      }
+    });
+    socket.on('driver-request-updated', (payload) {
+      developer.log(
+        'Shared websocket driver-request-updated payload: $payload',
+        name: 'SSK.Socket',
+      );
+      final event = _parseDriverRequestPayload(payload);
+      if (event != null && !_driverRequestController.isClosed) {
+        _driverRequestController.add(event);
       }
     });
 
@@ -164,6 +179,7 @@ class AppSocketService {
   void dispose() {
     reset();
     _truckLocationController.close();
+    _driverRequestController.close();
   }
 
   void _resyncTruckTrackingRooms() {
@@ -282,6 +298,14 @@ class AppSocketService {
       }
     }
     return null;
+  }
+
+  Map<String, dynamic>? _parseDriverRequestPayload(Object? payload) {
+    if (payload is! Map) {
+      return null;
+    }
+
+    return payload.cast<String, dynamic>();
   }
 }
 
