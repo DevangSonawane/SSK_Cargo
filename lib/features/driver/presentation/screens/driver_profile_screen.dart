@@ -152,46 +152,16 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                 ),
               ),
               const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ProfileActionCard(
-                      title: 'Help',
-                      icon: Icons.support_agent_rounded,
-                      backgroundColor: const Color(0xFFF5F7FB),
-                      iconColor: const Color(0xFF2D6EF2),
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ProfileActionCard(
-                      title: 'Safety',
-                      icon: Icons.shield_rounded,
-                      backgroundColor: const Color(0xFFF5F7FB),
-                      iconColor: const Color(0xFF2FA56E),
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
               _ProfileMenuTile(
                 title: 'Settings',
                 icon: Icons.settings_rounded,
-                onTap: () => context.push('/manage-account'),
+                onTap: () => context.push('/driver/settings'),
               ),
               const SizedBox(height: 10),
               _ProfileMenuTile(
                 title: 'Change password',
                 icon: Icons.password_rounded,
                 onTap: () => context.push('/change-password'),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'Manage account',
-                icon: Icons.manage_accounts_rounded,
-                onTap: () => context.push('/manage-account'),
               ),
               const SizedBox(height: 10),
               _ProfileMenuTile(
@@ -215,53 +185,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileActionCard extends StatelessWidget {
-  const _ProfileActionCard({
-    required this.title,
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-    required this.onTap,
-  });
-
-  final String title;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 86,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28, color: iconColor),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
-              ),
-            ),
-          ],
         ),
       ),
     );

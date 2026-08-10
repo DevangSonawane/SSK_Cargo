@@ -109,7 +109,7 @@ class _DriverOrderAcceptedScreenState
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F7FB),
         elevation: 0,
-        title: const Text('Negotiation'),
+        title: const Text('Driver request'),
       ),
       body: SafeArea(
         child: ListView(
@@ -152,7 +152,7 @@ class _DriverOrderAcceptedScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Negotiation ready',
+                              'Request ready',
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.w900,
@@ -161,7 +161,7 @@ class _DriverOrderAcceptedScreenState
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Adjust the counter amount or accept the request to unlock the trip screens.',
+                              'Review the request, send a counter, or accept it to unlock the trip screens.',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     color: const Color(0xFF667085),
@@ -188,7 +188,7 @@ class _DriverOrderAcceptedScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Negotiation slider',
+                    'Counter amount',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF101828),

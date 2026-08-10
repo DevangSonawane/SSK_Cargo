@@ -129,7 +129,7 @@ class DriverHomeScreen extends ConsumerWidget {
                           request: requests[i],
                           onOpenNegotiation: (request) {
                             context.push(
-                              '/driver/order-accepted',
+                              '/driver/request',
                               extra: request.raw,
                             );
                           },

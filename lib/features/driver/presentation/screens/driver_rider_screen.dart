@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
-import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../../data/driver_dashboard_models.dart';
 
 class DriverRiderScreen extends ConsumerWidget {
@@ -35,29 +34,17 @@ class DriverRiderScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: [
-              if (activeTrip != null)
-                TrackingRouteOverviewCard(
-                  shipment: activeTrip,
-                  title: 'Current route',
-                  subtitle:
-                      '${activeTrip.fromLocation} → ${activeTrip.toLocation}',
-                  liveMode: true,
-                )
-              else if (upcomingTrip != null)
-                TrackingRouteOverviewCard(
-                  shipment: upcomingTrip,
-                  title: 'Upcoming route',
-                  subtitle:
-                      '${upcomingTrip.fromLocation} → ${upcomingTrip.toLocation}',
-                  liveMode: false,
-                )
-              else
+              if (upcomingTrip != null) ...[
+                _UpcomingTripCard(shipment: upcomingTrip),
+                const SizedBox(height: 18),
+              ] else if (activeTrip == null) ...[
                 const _EmptyCard(
                   icon: Icons.route_rounded,
                   title: 'No active or upcoming trip',
                   subtitle: 'Trips will appear here once they are assigned.',
                 ),
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
+              ],
               _SectionHeader(
                 title: activeTrip != null
                     ? 'Ongoing delivery'
@@ -101,6 +88,114 @@ class DriverRiderScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _UpcomingTripCard extends StatelessWidget {
+  const _UpcomingTripCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEFFAF4),
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset(
+                    'assets/trucks/speed.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upcoming delivery',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF121826),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      shipment.trackingId,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.black45,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF7EF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  shipment.status,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF2FA56E),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${shipment.fromLocation} → ${shipment.toLocation}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your next trip is queued here without the live map card.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF667085),
+            ),
+          ),
+        ],
       ),
     );
   }
