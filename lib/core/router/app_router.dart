@@ -132,7 +132,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/driver/order-accepted',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: DriverOrderAcceptedScreen(tripId: state.extra as String?),
+          child: DriverOrderAcceptedScreen(initialRequest: state.extra),
         ),
       ),
       GoRoute(

@@ -578,6 +578,50 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> acceptDriverRequestAsDriver({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/driver-requests/$id/accept', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/accept',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> rejectDriverRequestAsDriver({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/driver-requests/$id/decline', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/decline',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> counterDriverRequestAsDriver({
+    required String accessToken,
+    required String id,
+    required num amount,
+  }) async {
+    developer.log(
+      'PATCH /api/driver-requests/$id/counter amount=$amount',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/driver-requests/$id/counter',
+        data: {'amount': amount},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getTrip({
     required String accessToken,
     required String tripId,

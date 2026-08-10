@@ -3,20 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/driver_request_models.dart';
 
-class DriverHomeScreen extends ConsumerStatefulWidget {
+class DriverHomeScreen extends ConsumerWidget {
   const DriverHomeScreen({super.key});
 
   @override
-  ConsumerState<DriverHomeScreen> createState() => _DriverHomeScreenState();
-}
-
-class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
-  double _acceptSlide = 0;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = ref.watch(driverOnlineProvider);
+    final session = ref.watch(authSessionProvider).valueOrNull;
+    final requestsAsync = ref.watch(driverRequestsProvider);
+
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -68,75 +66,80 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             const SizedBox(height: 18),
             const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
             const SizedBox(height: 18),
-            Text(
-              'Deliveries',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Incoming requests',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    ref.invalidate(driverRequestsProvider);
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: 'Refresh requests',
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            if (isOnline) ...[
-              _DeliveryOrderCard(
-                delivery: _deliveries.first,
-                acceptSlide: _acceptSlide,
-                onSlideChanged: (value) {
-                  setState(() => _acceptSlide = value);
-                  if (value >= 0.98) {
-                    Future.delayed(const Duration(milliseconds: 450), () {
-                      if (!context.mounted) return;
-                      context.push(
-                        '/driver/order-accepted',
-                        extra: _deliveries.first.tripId,
-                      );
-                      setState(() => _acceptSlide = 0);
-                    });
+            if (!isOnline)
+              const _EmptyStateCard(
+                icon: Icons.wifi_off_rounded,
+                title: 'Go online to receive requests',
+                subtitle:
+                    'Negotiation cards will appear here once you are available.',
+              )
+            else if (session == null)
+              const _EmptyStateCard(
+                icon: Icons.lock_outline_rounded,
+                title: 'Please sign in again',
+                subtitle:
+                    'We need an active session before we can load requests.',
+              )
+            else
+              requestsAsync.when(
+                loading: () => const _EmptyStateCard(
+                  icon: Icons.hourglass_top_rounded,
+                  title: 'Loading requests',
+                  subtitle: 'Fetching driver requests from the server.',
+                ),
+                error: (error, _) => _EmptyStateCard(
+                  icon: Icons.error_outline_rounded,
+                  title: 'Could not load requests',
+                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                ),
+                data: (requests) {
+                  if (requests.isEmpty) {
+                    return const _EmptyStateCard(
+                      icon: Icons.inbox_rounded,
+                      title: 'All caught up',
+                      subtitle: 'No incoming driver requests right now.',
+                    );
                   }
+
+                  return Column(
+                    children: [
+                      for (var i = 0; i < requests.length; i++) ...[
+                        _DriverRequestCard(
+                          request: requests[i],
+                          onOpenNegotiation: (request) {
+                            context.push(
+                              '/driver/order-accepted',
+                              extra: request.raw,
+                            );
+                          },
+                        ),
+                        if (i != requests.length - 1)
+                          const SizedBox(height: 14),
+                      ],
+                    ],
+                  );
                 },
-              ),
-            ] else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF7FAFD),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.inbox_rounded,
-                        color: Color(0xFF98A2B3),
-                        size: 34,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'No deliveries available',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Go online to receive deliveries.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
               ),
           ],
         ),
@@ -145,66 +148,94 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 }
 
-const _deliveries = <_DriverDelivery>[
-  _DriverDelivery(
-    deliveryId: 'DEL-2048',
-    tripId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-    amount: '₹103.5',
-    dropLocation: 'Sector 137',
-    stateAndPincode: 'Noida, Uttar Pradesh 201305',
-    tripDistance: 'Trip distance',
-    tripDistanceValue: '24 km',
-    itemsLabel: 'Items',
-    itemsValue: '8 kg',
-  ),
-];
-
-class _DriverDelivery {
-  const _DriverDelivery({
-    required this.deliveryId,
-    required this.tripId,
-    required this.amount,
-    required this.dropLocation,
-    required this.stateAndPincode,
-    required this.tripDistance,
-    required this.tripDistanceValue,
-    required this.itemsLabel,
-    required this.itemsValue,
+class _EmptyStateCard extends StatelessWidget {
+  const _EmptyStateCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
   });
 
-  final String deliveryId;
-  final String tripId;
-  final String amount;
-  final String dropLocation;
-  final String stateAndPincode;
-  final String tripDistance;
-  final String tripDistanceValue;
-  final String itemsLabel;
-  final String itemsValue;
-}
-
-class _DeliveryOrderCard extends StatelessWidget {
-  const _DeliveryOrderCard({
-    required this.delivery,
-    required this.acceptSlide,
-    required this.onSlideChanged,
-  });
-
-  final _DriverDelivery delivery;
-  final double acceptSlide;
-  final ValueChanged<double> onSlideChanged;
+  final IconData icon;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7FAFD),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF98A2B3), size: 34),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF667085),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverRequestCard extends StatefulWidget {
+  const _DriverRequestCard({
+    required this.request,
+    required this.onOpenNegotiation,
+  });
+
+  final DriverRequestItem request;
+  final ValueChanged<DriverRequestItem> onOpenNegotiation;
+
+  @override
+  State<_DriverRequestCard> createState() => _DriverRequestCardState();
+}
+
+class _DriverRequestCardState extends State<_DriverRequestCard> {
+  double _slideValue = 0;
+  bool _opening = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final request = widget.request;
+    final amount = request.amount > 0 ? request.amount : 0;
+    final canOpen = request.canNegotiate;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE8EDF2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -221,113 +252,161 @@ class _DeliveryOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Delivery ID',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      delivery.deliveryId,
+                      request.displayRef,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF101828),
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      request.clientName.isNotEmpty
+                          ? request.clientName
+                          : 'Client request',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Text(
-                delivery.amount,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w900,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF7EF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '₹${amount.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF2FA56E),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Text(
-            delivery.dropLocation,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            '${request.pickup.isNotEmpty ? request.pickup : 'Pickup'} → ${request.drop.isNotEmpty ? request.drop : 'Drop'}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: const Color(0xFF101828),
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
-            delivery.stateAndPincode,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w500,
-            ),
+            [
+              if (request.truckType.isNotEmpty) request.truckType,
+              if (request.weight.isNotEmpty) request.weight,
+              if (request.truckReg.isNotEmpty) request.truckReg,
+            ].join(' • '),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _DeliveryMetric(
-                  label: delivery.tripDistance,
-                  value: delivery.tripDistanceValue,
-                ),
+                child: _MiniMetric(label: 'Request', value: request.status),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: _DeliveryMetric(
-                  label: delivery.itemsLabel,
-                  value: delivery.itemsValue,
-                  alignRight: true,
+                child: _MiniMetric(
+                  label: 'Offers',
+                  value: '${request.offerCount}',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          if (request.driverTimedOut) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDF4E8),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF4D3A5)),
+              ),
+              child: Text(
+                'This request timed out for the driver. Broker handoff is active.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF9A5B13),
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Text(
+            canOpen ? 'Swipe to open negotiation' : 'Negotiation unavailable',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF98A2B3),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 48,
+              trackShape: const RoundedRectSliderTrackShape(),
+              thumbShape: const _RequestThumbShape(),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+              activeTrackColor: const Color(0xFFE5E7EB),
+              inactiveTrackColor: const Color(0xFFE5E7EB),
+              thumbColor: Colors.white,
+              overlayColor: Colors.transparent,
+            ),
+            child: Slider(
+              value: canOpen ? _slideValue : 0,
+              min: 0,
+              max: 1,
+              divisions: 100,
+              onChanged: canOpen
+                  ? (value) {
+                      setState(() {
+                        _slideValue = value;
+                      });
+                      if (!_opening && value >= 0.98) {
+                        _opening = true;
+                        Future.delayed(const Duration(milliseconds: 250), () {
+                          if (!mounted) return;
+                          widget.onOpenNegotiation(request);
+                          setState(() => _slideValue = 0);
+                          _opening = false;
+                        });
+                      }
+                    }
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 92,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 52,
-                    trackShape: const RoundedRectSliderTrackShape(),
-                    thumbShape: const _AcceptOrderThumbShape(),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 0,
-                    ),
-                    activeTrackColor: const Color(0xFFE5E7EB),
-                    inactiveTrackColor: const Color(0xFFE5E7EB),
-                    thumbColor: Colors.white,
-                    overlayColor: Colors.transparent,
-                    trackGap: 6,
-                  ),
-                  child: Slider(
-                    value: acceptSlide,
-                    onChanged: onSlideChanged,
-                    min: 0,
-                    max: 1,
-                    divisions: 100,
-                  ),
+            child: FilledButton(
+              onPressed: canOpen
+                  ? () => widget.onOpenNegotiation(request)
+                  : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2FA56E),
+                disabledBackgroundColor: const Color(0xFFE5E7EB),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                IgnorePointer(
-                  child: AnimatedOpacity(
-                    opacity: (1 - (acceptSlide * 1.7)).clamp(0.18, 1.0),
-                    duration: const Duration(milliseconds: 90),
-                    child: Text(
-                      'Slide to accept delivery',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
+              child: const Text(
+                'Open negotiation',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ),
         ],
@@ -336,50 +415,50 @@ class _DeliveryOrderCard extends StatelessWidget {
   }
 }
 
-class _DeliveryMetric extends StatelessWidget {
-  const _DeliveryMetric({
-    required this.label,
-    required this.value,
-    this.alignRight = false,
-  });
+class _MiniMetric extends StatelessWidget {
+  const _MiniMetric({required this.label, required this.value});
 
   final String label;
   final String value;
-  final bool alignRight;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: alignRight
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF98A2B3),
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF98A2B3),
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF101828),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
+          const SizedBox(height: 2),
+          Text(
+            value.isEmpty ? '-' : value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _AcceptOrderThumbShape extends SliderComponentShape {
-  const _AcceptOrderThumbShape();
+class _RequestThumbShape extends SliderComponentShape {
+  const _RequestThumbShape();
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(56, 56);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(44, 44);
 
   @override
   void paint(
@@ -397,42 +476,40 @@ class _AcceptOrderThumbShape extends SliderComponentShape {
     required Size sizeWithOverflow,
   }) {
     final canvas = context.canvas;
+    final paint = Paint()..color = Colors.white;
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.14)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    final fillPaint = Paint()
-      ..color = Colors.white
-      ..isAntiAlias = true;
-    final borderPaint = Paint()
-      ..color = const Color(0xFFE5E7EB)
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    final rect = Rect.fromCenter(center: center, width: 44, height: 44);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        rect.shift(const Offset(0, 2)),
+        const Radius.circular(14),
+      ),
+      shadowPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(14)),
+      paint,
+    );
 
-    canvas.drawCircle(center + const Offset(0, 1.5), 22, shadowPaint);
-    canvas.drawCircle(center, 22, fillPaint);
-    canvas.drawCircle(center, 22, borderPaint);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(Icons.chevron_right_rounded.codePoint),
+    final iconPainter = TextPainter(
+      text: const TextSpan(
+        text: '\u27A4',
         style: TextStyle(
-          color: const Color(0xFF2FA56E),
-          fontSize: 28,
-          fontWeight: FontWeight.w800,
-          fontFamily: Icons.chevron_right_rounded.fontFamily,
-          package: Icons.chevron_right_rounded.fontPackage,
-          height: 1,
+          color: Color(0xFF2FA56E),
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
         ),
       ),
       textDirection: textDirection,
-      textAlign: TextAlign.center,
     )..layout();
-
-    textPainter.paint(
+    iconPainter.paint(
       canvas,
-      center - Offset(textPainter.width / 2, textPainter.height / 2 + 1),
+      Offset(
+        center.dx - iconPainter.width / 2,
+        center.dy - iconPainter.height / 2 - 1,
+      ),
     );
   }
 }
