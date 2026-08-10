@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/client_push_notification_service.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../data/auth_models.dart';
 
@@ -21,6 +23,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
 
   void bootstrapSession(AuthSession session) {
     state = AsyncData<AuthSession?>(session);
+    unawaited(
+      _ref.read(clientPushNotificationServiceProvider).syncForSession(session),
+    );
   }
 
   void debugSetSession(AuthSession session) {
@@ -39,6 +44,11 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       final response = await _apiClient.login(email: email, password: password);
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
+      unawaited(
+        _ref
+            .read(clientPushNotificationServiceProvider)
+            .syncForSession(session),
+      );
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -58,6 +68,11 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       );
       final session = AuthSession.fromLoginResponse(response);
       state = AsyncData<AuthSession?>(session);
+      unawaited(
+        _ref
+            .read(clientPushNotificationServiceProvider)
+            .syncForSession(session),
+      );
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -84,6 +99,13 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   Future<void> logout({bool allDevices = false}) async {
     final currentSession = session;
     if (currentSession != null) {
+      try {
+        await _ref
+            .read(clientPushNotificationServiceProvider)
+            .clearForSession(currentSession);
+      } catch (_) {
+        // Clear local state even if push token cleanup fails.
+      }
       try {
         await _apiClient.logout(
           refreshToken: currentSession.tokens.refreshToken,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "420579105285",
+    "project_id": "gadidosti-68f19",
+    "storage_bucket": "gadidosti-68f19.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:420579105285:android:1d35eae383d64d0e4c9a6c",
+        "android_client_info": {
+          "package_name": "com.example.ssk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyYepaMwZLax5eJGeygMVhT76bJUsnpRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

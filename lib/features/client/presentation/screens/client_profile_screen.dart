@@ -9,7 +9,8 @@ class ClientProfileScreen extends ConsumerStatefulWidget {
   const ClientProfileScreen({super.key});
 
   @override
-  ConsumerState<ClientProfileScreen> createState() => _ClientProfileScreenState();
+  ConsumerState<ClientProfileScreen> createState() =>
+      _ClientProfileScreenState();
 }
 
 class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
@@ -50,16 +51,20 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                     Text(
                       displayName.split(' ').first,
                       textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF101828),
                           ),
                     ),
                     Text(
-                      displayName.contains(' ') ? displayName.split(' ').skip(1).join(' ') : 'Profile',
+                      displayName.contains(' ')
+                          ? displayName.split(' ').skip(1).join(' ')
+                          : 'Profile',
                       textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF101828),
@@ -68,18 +73,15 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                   ],
                 ),
                 const Spacer(),
-                SskProfileAvatar(
-                  imageUrl: user?.profileImage,
-                  size: 62,
-                ),
+                SskProfileAvatar(imageUrl: user?.profileImage, size: 62),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               user?.email ?? 'No account connected yet',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
             ),
             const SizedBox(height: 22),
             Row(
@@ -104,6 +106,49 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 22),
+            Text(
+              'Notifications',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE8EDF2)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _ProfileMenuTile(
+                    title: 'Open notifications',
+                    icon: Icons.notifications_active_rounded,
+                    onTap: () => context.push('/client/notifications'),
+                    titleColor: const Color(0xFF101828),
+                    iconColor: const Color(0xFF2FA56E),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Booking updates, invoice alerts, negotiation replies, and other account activity are shown here.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 22),
             _ProfileMenuTile(
@@ -178,10 +223,10 @@ class _ProfileActionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF101828),
-                  ),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF101828),
+              ),
             ),
           ],
         ),
@@ -232,10 +277,10 @@ class _ProfileMenuTile extends StatelessWidget {
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: titleColor,
-                    ),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: titleColor,
+                ),
               ),
             ),
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
