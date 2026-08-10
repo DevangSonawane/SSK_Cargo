@@ -177,9 +177,13 @@ class _DriverOrderAcceptedScreenState
                   _SummaryPill(label: 'Request', value: request.displayRef),
                   const SizedBox(height: 10),
                   _SummaryPill(
-                    label: 'Route',
-                    value:
-                        '${request.pickup.isNotEmpty ? request.pickup : '-'} to ${request.drop.isNotEmpty ? request.drop : '-'}',
+                    label: 'Pickup',
+                    value: request.pickup.isNotEmpty ? request.pickup : '-',
+                  ),
+                  const SizedBox(height: 10),
+                  _SummaryPill(
+                    label: 'Drop',
+                    value: request.drop.isNotEmpty ? request.drop : '-',
                   ),
                   const SizedBox(height: 10),
                   _SummaryPill(
@@ -201,60 +205,75 @@ class _DriverOrderAcceptedScreenState
                       color: const Color(0xFF667085),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 48,
-                      trackShape: const RoundedRectSliderTrackShape(),
-                      thumbShape: const _NegotiationThumbShape(),
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 0,
-                      ),
-                      activeTrackColor: const Color(0xFFE5E7EB),
-                      inactiveTrackColor: const Color(0xFFE5E7EB),
-                      thumbColor: Colors.white,
-                      overlayColor: Colors.transparent,
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(22),
                     ),
-                    child: Slider(
-                      value: selectedAmount,
-                      min: minOffer,
-                      max: maxOffer,
-                      divisions: 100,
-                      onChanged: _submitting
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _counterAmount = value;
-                              });
-                            },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Offer price',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            Text(
+                              '₹${selectedAmount.toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: const Color(0xFF2FA56E),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        Slider(
+                          value: selectedAmount.clamp(minOffer, maxOffer),
+                          min: minOffer,
+                          max: maxOffer,
+                          divisions: 24,
+                          activeColor: const Color(0xFF2FA56E),
+                          inactiveColor: const Color(0xFFE4E7EC),
+                          label: '₹${selectedAmount.toStringAsFixed(0)}',
+                          onChanged: _submitting
+                              ? null
+                              : (value) {
+                                  setState(() {
+                                    _counterAmount = value;
+                                  });
+                                },
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '₹${minOffer.toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF98A2B3),
+                                  ),
+                            ),
+                            Text(
+                              '₹${maxOffer.toStringAsFixed(0)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF98A2B3),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '₹${minOffer.toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        '₹${selectedAmount.toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF2FA56E),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      Text(
-                        '₹${maxOffer.toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -407,66 +426,6 @@ class _SummaryPill extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _NegotiationThumbShape extends SliderComponentShape {
-  const _NegotiationThumbShape();
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(44, 44);
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    final canvas = context.canvas;
-    final paint = Paint()..color = Colors.white;
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.14)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    final rect = Rect.fromCenter(center: center, width: 44, height: 44);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.shift(const Offset(0, 2)),
-        const Radius.circular(14),
-      ),
-      shadowPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(14)),
-      paint,
-    );
-
-    final iconPainter = TextPainter(
-      text: const TextSpan(
-        text: '\u27A4',
-        style: TextStyle(
-          color: Color(0xFF1F88C9),
-          fontSize: 20,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: textDirection,
-    )..layout();
-    iconPainter.paint(
-      canvas,
-      Offset(
-        center.dx - iconPainter.width / 2,
-        center.dy - iconPainter.height / 2 - 1,
       ),
     );
   }

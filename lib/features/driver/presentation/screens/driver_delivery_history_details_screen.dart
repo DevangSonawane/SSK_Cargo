@@ -73,18 +73,6 @@ class _DriverDeliveryHistoryDetailsScreenState
         : 'Completed';
   }
 
-  String get _routeText {
-    final shipment = _shipment;
-    if (shipment != null) {
-      return '${shipment.fromLocation} → ${shipment.toLocation}';
-    }
-    final settlement = widget.initialSettlement;
-    if (settlement != null && settlement.route.isNotEmpty) {
-      return settlement.route;
-    }
-    return 'Route unavailable';
-  }
-
   Future<void> _loadDetails() async {
     final bookingId = _bookingId;
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -434,7 +422,10 @@ class _DriverDeliveryHistoryDetailsScreenState
                         onBack: () => context.pop(),
                       ),
                       const SizedBox(height: 16),
-                      _RouteHeader(routeText: _routeText),
+                      _RouteSummaryCard(
+                        pickup: _shipment?.fromLocation ?? 'Pickup unavailable',
+                        drop: _shipment?.toLocation ?? 'Drop unavailable',
+                      ),
                       const SizedBox(height: 16),
                       _ActionRow(
                         onDownload: _downloading ? null : _downloadInvoice,
@@ -757,18 +748,121 @@ class _HeaderBar extends StatelessWidget {
   }
 }
 
-class _RouteHeader extends StatelessWidget {
-  const _RouteHeader({required this.routeText});
+class _RouteSummaryCard extends StatelessWidget {
+  const _RouteSummaryCard({
+    required this.pickup,
+    required this.drop,
+  });
 
-  final String routeText;
+  final String pickup;
+  final String drop;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      routeText,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-        color: const Color(0xFF101828),
-        fontWeight: FontWeight.w900,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pickup and drop',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2FA56E),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Container(
+                    width: 2,
+                    height: 34,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF59E0B),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pickup',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFF98A2B3),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      pickup,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF101828),
+                            fontWeight: FontWeight.w700,
+                            height: 1.35,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Drop',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFF98A2B3),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      drop,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF101828),
+                            fontWeight: FontWeight.w700,
+                            height: 1.35,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
