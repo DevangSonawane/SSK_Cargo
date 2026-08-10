@@ -44,8 +44,8 @@ class BrokerSettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _SectionCard(
-            title: 'Support',
-            subtitle: 'Need help or want to review notifications?',
+            title: 'Notifications',
+            subtitle: 'Open your notification inbox.',
             children: [
               _SettingsTile(
                 title: 'Notifications',

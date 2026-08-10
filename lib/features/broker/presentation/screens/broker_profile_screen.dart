@@ -188,6 +188,35 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
               ),
               const SizedBox(height: 22),
               _SectionTitle(
+                title: 'Finance',
+                subtitle: 'Invoices, settlements, and analytics.',
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
+                title: 'Invoices',
+                icon: Icons.receipt_long_rounded,
+                onTap: () => context.push('/broker/settings/invoices'),
+                titleColor: const Color(0xFF1F88C9),
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
+                title: 'Settlements',
+                icon: Icons.payments_rounded,
+                onTap: () => context.push('/broker/settings/settlements'),
+                titleColor: const Color(0xFF1F88C9),
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
+                title: 'Analytics',
+                icon: Icons.bar_chart_rounded,
+                onTap: () => context.push('/broker/settings/analytics'),
+                titleColor: const Color(0xFF1F88C9),
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 22),
+              _SectionTitle(
                 title: 'Inbox',
                 subtitle: 'Open notifications and active broker updates.',
               ),
@@ -198,17 +227,6 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 onTap: () => context.push('/broker/notifications'),
                 titleColor: const Color(0xFF1F88C9),
                 iconColor: const Color(0xFF1F88C9),
-              ),
-              const SizedBox(height: 22),
-              _SectionTitle(
-                title: 'Settings',
-                subtitle: 'Finance, analytics, and billing actions.',
-              ),
-              const SizedBox(height: 10),
-              BrokerMenuTile(
-                title: 'Settings',
-                icon: Icons.tune_rounded,
-                onTap: () => context.push('/broker/settings'),
               ),
               const SizedBox(height: 22),
               BrokerMenuTile(

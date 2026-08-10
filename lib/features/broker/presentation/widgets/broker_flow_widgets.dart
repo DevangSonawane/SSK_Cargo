@@ -1376,202 +1376,162 @@ class BrokerRequestCard extends StatelessWidget {
   const BrokerRequestCard({
     super.key,
     required this.request,
-    required this.onAccept,
-    required this.onReject,
-    required this.onCounter,
+    required this.onTap,
   });
 
   final BookingRequest request;
-  final VoidCallback onAccept;
-  final VoidCallback onReject;
-  final VoidCallback onCounter;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1A365D).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Load ID: #${request.id.toUpperCase()}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontSize: 11,
-                        letterSpacing: 0.2,
-                        fontWeight: FontWeight.w600,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A365D).withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Load ID: #${request.id.toUpperCase()}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF667085),
+                          fontSize: 11,
+                          letterSpacing: 0.2,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      request.productName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF1A365D),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 3),
+                      Text(
+                        request.productName,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: const Color(0xFF1A365D),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD6E3FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  request.value,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF002045),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const SizedBox(width: 28, child: _RouteLine()),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _LoadPoint(
-                      label: 'Pickup',
-                      icon: Icons.location_on_rounded,
-                      iconColor: const Color(0xFF1F88C9),
-                      place: request.from,
-                      timeText: request.requestedAt,
-                    ),
-                    const SizedBox(height: 14),
-                    _LoadPoint(
-                      label: 'Drop-off',
-                      icon: Icons.near_me_rounded,
-                      iconColor: const Color(0xFF1F88C9),
-                      place: request.to,
-                      timeText: '',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF4FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.inventory_2_rounded,
-                  size: 18,
-                  color: Color(0xFF667085),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD6E3FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Text(
-                    '${request.weight} • ${request.vehicleType}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF0B1C30),
-                      fontWeight: FontWeight.w500,
+                    request.value,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF002045),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onReject,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    foregroundColor: const Color(0xFFBA1A1A),
-                    side: const BorderSide(color: Color(0xFFBA1A1A)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    'Reject',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onCounter,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    foregroundColor: const Color(0xFF1F88C9),
-                    side: const BorderSide(color: Color(0xFF1F88C9)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    'Counter',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const SizedBox(width: 28, child: _RouteLine()),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _LoadPoint(
+                        label: 'Pickup',
+                        icon: Icons.location_on_rounded,
+                        iconColor: const Color(0xFF1F88C9),
+                        place: request.from,
+                        timeText: request.requestedAt,
+                      ),
+                      const SizedBox(height: 14),
+                      _LoadPoint(
+                        label: 'Drop-off',
+                        icon: Icons.near_me_rounded,
+                        iconColor: const Color(0xFF1F88C9),
+                        place: request.to,
+                        timeText: '',
+                      ),
+                    ],
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF4FF),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: onAccept,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: const Color(0xFF1F88C9),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.inventory_2_rounded,
+                    size: 18,
+                    color: Color(0xFF667085),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${request.weight} • ${request.vehicleType}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF0B1C30),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Accept',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onTap,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF1F88C9),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                child: const Text(
+                  'Open request',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1998,11 +1958,11 @@ class DriverListTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _DriverActionIconButton(
-                        icon: Icons.edit_rounded,
+                        icon: Icons.visibility_rounded,
                         backgroundColor: const Color(0xFFE9EFF8),
                         iconColor: const Color(0xFF1A365D),
                         onPressed: onEdit,
-                        tooltip: 'Edit driver',
+                        tooltip: 'View driver details',
                       ),
                       const SizedBox(width: 8),
                       _DriverActionIconButton(

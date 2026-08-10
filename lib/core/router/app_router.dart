@@ -18,6 +18,7 @@ import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
+import '../../features/broker/presentation/screens/broker_request_detail_screen.dart';
 import '../../features/broker/presentation/screens/broker_settings_screen.dart';
 import '../../features/broker/presentation/screens/broker_invoices_screen.dart';
 import '../../features/broker/presentation/screens/broker_settlements_screen.dart';
@@ -38,8 +39,6 @@ import '../../features/driver/presentation/screens/driver_delivery_photo_upload_
 import '../../features/driver/presentation/screens/driver_thank_you_screen.dart';
 import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
-import '../../features/driver/presentation/screens/driver_notifications_screen.dart';
-import '../../features/driver/presentation/screens/driver_settings_screen.dart';
 import '../../features/driver/presentation/screens/driver_order_accepted_screen.dart';
 import '../../features/driver/presentation/screens/driver_rider_screen.dart';
 import '../../features/driver/presentation/screens/driver_shell.dart';
@@ -130,31 +129,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/kyc-registration',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: DriverKycRegistrationScreen()),
-      ),
-      GoRoute(
-        path: '/driver/settings',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverSettingsScreen()),
-      ),
-      GoRoute(
-        path: '/driver/settings/invoices',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerInvoicesScreen()),
-      ),
-      GoRoute(
-        path: '/driver/settings/settlements',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerSettlementsScreen()),
-      ),
-      GoRoute(
-        path: '/driver/settings/analytics',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerAnalyticsScreen()),
-      ),
-      GoRoute(
-        path: '/driver/notifications',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverNotificationsScreen()),
       ),
       GoRoute(
         path: '/driver/request',
@@ -273,6 +247,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/broker/settings',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: BrokerSettingsScreen()),
+      ),
+      GoRoute(
+        path: '/broker/request',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: BrokerRequestDetailScreen(initialRequest: state.extra),
+        ),
       ),
       GoRoute(
         path: '/broker/settings/invoices',

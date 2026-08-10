@@ -35,15 +35,6 @@ class BrokerTrackingScreen extends ConsumerWidget {
         }).length ??
         0;
 
-    Future<void> openDriverSheet(BrokerDriver driver) async {
-      await showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => _BrokerDriverTripSheet(driver: driver),
-      );
-    }
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       children: [
@@ -86,7 +77,10 @@ class BrokerTrackingScreen extends ConsumerWidget {
                   );
                   return;
                 }
-                openDriverSheet(preferredDriver.first);
+                context.push(
+                  '/broker/drivers/${preferredDriver.first.id}',
+                  extra: preferredDriver.first,
+                );
               },
             ),
             const SizedBox(width: 10),
@@ -142,30 +136,20 @@ class BrokerTrackingScreen extends ConsumerWidget {
               );
             }
 
-            final liveDriver = _preferredLiveDriver(mergedDrivers);
-
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                DriverLocationOverviewCard(
-                  driver: liveDriver,
-                  title: 'Live driver position',
-                  subtitle: liveDriver.currentLocation.isEmpty
-                      ? 'Awaiting driver location'
-                      : liveDriver.currentLocation,
-                ),
-                const SizedBox(height: 14),
-
                 for (var index = 0; index < mergedDrivers.length; index++) ...[
                   DriverListTile(
                     driver: mergedDrivers[index],
-                    onTap: () => openDriverSheet(mergedDrivers[index]),
-                    onEdit: () {
-                      context.push(
-                        '/broker/drivers/add',
-                        extra: mergedDrivers[index],
-                      );
-                    },
+                    onTap: () => context.push(
+                      '/broker/drivers/${mergedDrivers[index].id}',
+                      extra: mergedDrivers[index],
+                    ),
+                    onEdit: () => _showDriverDetailsSheet(
+                      context,
+                      mergedDrivers[index],
+                    ),
                     onRemove: () => _confirmDeleteDriver(
                       context,
                       ref,
@@ -334,6 +318,287 @@ Future<void> _confirmDeleteDriver(
   }
 }
 
+Future<void> _showDriverDetailsSheet(
+  BuildContext context,
+  BrokerDriver driver,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      return _DriverDetailsSheet(
+        driver: driver,
+        onEdit: () {
+          Navigator.of(sheetContext).pop();
+          context.push('/broker/drivers/add', extra: driver);
+        },
+      );
+    },
+  );
+}
+
+class _DriverDetailsSheet extends StatelessWidget {
+  const _DriverDetailsSheet({
+    required this.driver,
+    required this.onEdit,
+  });
+
+  final BrokerDriver driver;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 12,
+        bottom: bottomInset + 12,
+      ),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Driver Details',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF101828),
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: driverAvatarColor(driver.status),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _driverInitials(driver.name),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: driverAvatarTextColor(driver.status),
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            driver.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF101828),
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            driver.phone.isEmpty ? 'No phone number' : driver.phone,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: const Color(0xFF667085),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: driverStatusBackground(driver.status),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        driverStatusLabel(driver.status),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: driverStatusColor(driver.status),
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final tileWidth = constraints.maxWidth >= 640
+                        ? (constraints.maxWidth - 12) / 2
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'License No.',
+                            value: driver.licenseNo.isEmpty
+                                ? 'Not available'
+                                : driver.licenseNo,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'Aadhaar',
+                            value: _maskAadhaar(driver.aadhaar),
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'License Expiry',
+                            value: driver.licenseExpiry.isEmpty
+                                ? 'Not available'
+                                : driver.licenseExpiry,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'Assigned Truck',
+                            value: driver.assignedVehicle.isEmpty
+                                ? 'Not assigned'
+                                : driver.assignedVehicle,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'Location',
+                            value: driver.currentLocation.isEmpty
+                                ? 'Awaiting live location'
+                                : driver.currentLocation,
+                          ),
+                        ),
+                        SizedBox(
+                          width: tileWidth,
+                          child: _DriverDetailTile(
+                            label: 'Status',
+                            value: driver.tripStatus.isNotEmpty
+                                ? driver.tripStatus
+                                : driverStatusLabel(driver.status),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: onEdit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F88C9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Edit',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverDetailTile extends StatelessWidget {
+  const _DriverDetailTile({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF1F2937),
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _driverInitials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) {
+    return parts.first.characters.first.toUpperCase();
+  }
+  return '${parts.first.characters.first}${parts[1].characters.first}'.toUpperCase();
+}
+
+String _maskAadhaar(String value) {
+  final digits = value.replaceAll(RegExp(r'\D'), '');
+  if (digits.isEmpty) return 'Not available';
+  if (digits.length < 4) return digits;
+  final last4 = digits.substring(digits.length - 4);
+  return 'XXXX-XXXX-$last4';
+}
+
 class _HeaderActionButton extends StatelessWidget {
   const _HeaderActionButton({
     required this.icon,
@@ -472,282 +737,278 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
   @override
   Widget build(BuildContext context) {
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
+    final screenHeight = MediaQuery.of(context).size.height;
     return Padding(
       padding: EdgeInsets.only(
         left: 12,
         right: 12,
         bottom: MediaQuery.of(context).viewInsets.bottom + 12,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 54,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  'Driver requests',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+      child: SizedBox(
+        height: screenHeight * 0.88,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 54,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE1E5EB),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: _refreshing ? null : _refresh,
-                  icon: _refreshing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.62,
-              child: requestsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(
-                  child: Text(error.toString().replaceFirst('Exception: ', '')),
-                ),
-                data: (requests) {
-                  if (requests.isEmpty) {
-                    return const Center(child: Text('No driver requests yet.'));
-                  }
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    'Driver requests',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF101828),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: _refreshing ? null : _refresh,
+                    icon: _refreshing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: requestsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(
+                    child: Text(
+                      error.toString().replaceFirst('Exception: ', ''),
+                    ),
+                  ),
+                  data: (requests) {
+                    if (requests.isEmpty) {
+                      return const Center(
+                        child: Text('No driver requests yet.'),
+                      );
+                    }
 
-                  return ListView.separated(
-                    itemCount: requests.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final request = requests[index];
-                      return Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FB),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    request.bookingNumber.isEmpty
-                                        ? request.bookingId
-                                        : request.bookingNumber,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
+                    return ListView.separated(
+                      itemCount: requests.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F7FB),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE8EDF2)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      request.bookingNumber.isEmpty
+                                          ? request.bookingId
+                                          : request.bookingNumber,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: const Color(0xFF101828),
+                                          ),
+                                    ),
+                                  ),
+                                  Text(
+                                    request.status,
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF101828),
+                                          color: const Color(0xFF1F88C9),
+                                          fontWeight: FontWeight.w700,
                                         ),
                                   ),
-                                ),
-                                Text(
-                                  request.status,
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: const Color(0xFF1F88C9),
-                                        fontWeight: FontWeight.w700,
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${request.clientName} • ${request.pickup} → ${request.drop}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: const Color(0xFF667085)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${request.amount.toStringAsFixed(0)} • ${request.truckType}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => _runAction(
+                                        request: request,
+                                        action: (api, token) =>
+                                            api.acceptDriverRequest(
+                                              accessToken: token,
+                                              id: request.id,
+                                            ),
                                       ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '${request.clientName} • ${request.pickup} → ${request.drop}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: const Color(0xFF667085)),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '₹${request.amount.toStringAsFixed(0)} • ${request.truckType}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () => _runAction(
-                                      request: request,
-                                      action: (api, token) =>
-                                          api.acceptDriverRequest(
-                                            accessToken: token,
-                                            id: request.id,
-                                          ),
+                                      child: const Text('Accept'),
                                     ),
-                                    child: const Text('Accept'),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () => _runAction(
-                                      request: request,
-                                      action: (api, token) =>
-                                          api.rejectDriverRequest(
-                                            accessToken: token,
-                                            id: request.id,
-                                          ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => _runAction(
+                                        request: request,
+                                        action: (api, token) =>
+                                            api.rejectDriverRequest(
+                                              accessToken: token,
+                                              id: request.id,
+                                            ),
+                                      ),
+                                      child: const Text('Decline'),
                                     ),
-                                    child: const Text('Decline'),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: FilledButton(
-                                    onPressed: _countering
-                                        ? null
-                                        : () async {
-                                            final controller =
-                                                TextEditingController(
-                                                  text: request.amount
-                                                      .toStringAsFixed(0),
-                                                );
-                                            final noteController =
-                                                TextEditingController();
-                                            final counter = await showDialog<double?>(
-                                              context: context,
-                                              builder: (dialogContext) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                    'Counter request',
-                                                  ),
-                                                  content: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      TextField(
-                                                        controller: controller,
-                                                        keyboardType:
-                                                            TextInputType
-                                                                .number,
-                                                        decoration:
-                                                            const InputDecoration(
-                                                              labelText:
-                                                                  'Amount',
-                                                            ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: FilledButton(
+                                      onPressed: _countering
+                                          ? null
+                                          : () async {
+                                              final controller =
+                                                  TextEditingController(
+                                                    text: request.amount
+                                                        .toStringAsFixed(0),
+                                                  );
+                                              final noteController =
+                                                  TextEditingController();
+                                              final counter = await showDialog<double?>(
+                                                context: context,
+                                                builder: (dialogContext) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                      'Counter request',
+                                                    ),
+                                                    content: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        TextField(
+                                                          controller:
+                                                              controller,
+                                                          keyboardType:
+                                                              TextInputType
+                                                                  .number,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                labelText:
+                                                                    'Amount',
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        TextField(
+                                                          controller:
+                                                              noteController,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                labelText:
+                                                                    'Note',
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                              dialogContext,
+                                                            ).pop(),
+                                                        child: const Text(
+                                                          'Cancel',
+                                                        ),
                                                       ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            noteController,
-                                                        decoration:
-                                                            const InputDecoration(
-                                                              labelText: 'Note',
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
+                                                      FilledButton(
+                                                        onPressed: () {
+                                                          final amount =
+                                                              double.tryParse(
+                                                                controller.text
+                                                                    .trim(),
+                                                              );
                                                           Navigator.of(
                                                             dialogContext,
-                                                          ).pop(),
-                                                      child: const Text(
-                                                        'Cancel',
+                                                          ).pop(amount);
+                                                        },
+                                                        child: const Text(
+                                                          'Send',
+                                                        ),
                                                       ),
-                                                    ),
-                                                    FilledButton(
-                                                      onPressed: () {
-                                                        final amount =
-                                                            double.tryParse(
-                                                              controller.text
-                                                                  .trim(),
-                                                            );
-                                                        Navigator.of(
-                                                          dialogContext,
-                                                        ).pop(amount);
-                                                      },
-                                                      child: const Text('Send'),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                            if (counter == null) return;
-                                            setState(() => _countering = true);
-                                            try {
-                                              await _runAction(
-                                                request: request,
-                                                action: (api, token) =>
-                                                    api.counterDriverRequest(
-                                                      accessToken: token,
-                                                      id: request.id,
-                                                      amount: counter,
-                                                    ),
+                                                    ],
+                                                  );
+                                                },
                                               );
-                                            } finally {
-                                              if (mounted) {
-                                                setState(
-                                                  () => _countering = false,
+                                              if (counter == null) return;
+                                              setState(
+                                                () => _countering = true,
+                                              );
+                                              try {
+                                                await _runAction(
+                                                  request: request,
+                                                  action: (api, token) =>
+                                                      api.counterDriverRequest(
+                                                        accessToken: token,
+                                                        id: request.id,
+                                                        amount: counter,
+                                                      ),
                                                 );
+                                              } finally {
+                                                if (mounted) {
+                                                  setState(
+                                                    () => _countering = false,
+                                                  );
+                                                }
                                               }
-                                            }
-                                          },
-                                    child: const Text('Counter'),
+                                            },
+                                      child: const Text('Counter'),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-BrokerDriver _preferredLiveDriver(List<BrokerDriver> drivers) {
-  for (final driver in drivers) {
-    if (driver.status == BrokerDriverStatus.onTrip &&
-        driver.hasLiveCoordinates) {
-      return driver;
-    }
-  }
-
-  for (final driver in drivers) {
-    if (driver.hasLiveCoordinates) {
-      return driver;
-    }
-  }
-
-  return drivers.first;
 }
 
 class _BrokerDriverTripSheet extends ConsumerStatefulWidget {

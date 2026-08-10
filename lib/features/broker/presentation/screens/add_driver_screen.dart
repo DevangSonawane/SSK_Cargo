@@ -567,6 +567,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                 if (trucks.isNotEmpty)
                   DropdownButtonFormField<String>(
                     initialValue: selectedTruckId,
+                    isExpanded: true,
                     decoration: _fieldDecoration(
                       labelText: 'Assign truck',
                       prefixIcon: Icons.local_shipping_rounded,
@@ -577,6 +578,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             value: truck.id,
                             child: Text(
                               '${truck.label} • ${truck.plateNumber}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         )
@@ -612,6 +615,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     initialValue:
                         _selectedStatus ??
                         _driverStatusToApiValue(driver!.status),
+                    isExpanded: true,
                     decoration: _fieldDecoration(
                       labelText: 'Status',
                       prefixIcon: Icons.toggle_on_rounded,
