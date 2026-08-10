@@ -183,10 +183,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final selectedTruck = _selectedTruckId == null
         ? null
         : _truckById(trucks, _selectedTruckId!);
-    final selectedTruckLabel = selectedTruck?.label ?? '';
-    final selectedTruckPlate = selectedTruck?.plateNumber ?? '';
     final truckId = selectedTruck != null ? selectedTruck.id : manualTruckId;
-    String? createdUserId;
 
     if (truckId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +238,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         if (driverId.isEmpty) {
           throw StateError('Could not determine the created driver id.');
         }
-        createdUserId = driverId;
 
         final driverUpdate =
             <String, dynamic>{
@@ -267,41 +263,10 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
       if (!mounted) return;
 
-      final effectiveDriverId = createdUserId ?? widget.existingDriver!.id;
-      final notifier = ref.read(brokerDriversProvider.notifier);
-      final updatedDriver = BrokerDriver(
-        id: effectiveDriverId,
-        name: name,
-        email: email,
-        phone: phone.isEmpty ? '+91 90000 00000' : phone,
-        licenseNo: licenseNo,
-        licenseExpiry: licenseExpiry,
-        aadhaar: aadhaar,
-        avatar: avatar,
-        vehicleType: selectedTruckLabel.isNotEmpty
-            ? selectedTruckLabel
-            : 'Assigned truck',
-        status: _selectedStatus == null
-            ? (widget.existingDriver?.status ?? BrokerDriverStatus.offline)
-            : _driverStatusFromApi(_selectedStatus!),
-        currentLocation:
-            widget.existingDriver?.currentLocation ?? 'Awaiting activation',
-        currentLatitude: widget.existingDriver?.currentLatitude,
-        currentLongitude: widget.existingDriver?.currentLongitude,
-        assignedVehicle: selectedTruckPlate.isNotEmpty
-            ? selectedTruckPlate
-            : truckId,
-        onTripSince: widget.existingDriver?.onTripSince ?? '',
-        currentBookingRef: widget.existingDriver?.currentBookingRef ?? '',
-      );
-
-      notifier.state = [
-        updatedDriver,
-        ...notifier.state.where((driver) => driver.id != updatedDriver.id),
-      ];
       ref.invalidate(
         brokerDriversApiProvider((status: null, page: 1, limit: 10)),
       );
+      ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -822,21 +787,6 @@ String _driverStatusToApiValue(BrokerDriverStatus status) {
       return 'available';
     case BrokerDriverStatus.offline:
       return 'offline';
-  }
-}
-
-BrokerDriverStatus _driverStatusFromApi(String status) {
-  switch (status.toLowerCase()) {
-    case 'on_trip':
-    case 'in_transit':
-    case 'assigned':
-      return BrokerDriverStatus.onTrip;
-    case 'available':
-    case 'idle':
-      return BrokerDriverStatus.idle;
-    case 'offline':
-    default:
-      return BrokerDriverStatus.offline;
   }
 }
 

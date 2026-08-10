@@ -16,7 +16,12 @@ import '../../features/gps_tracking/presentation/screens/gps_vehicles_screen.dar
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
+import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
+import '../../features/broker/presentation/screens/broker_settings_screen.dart';
+import '../../features/broker/presentation/screens/broker_invoices_screen.dart';
+import '../../features/broker/presentation/screens/broker_settlements_screen.dart';
+import '../../features/broker/presentation/screens/broker_analytics_screen.dart';
 import '../../features/broker/presentation/screens/broker_profile_screen.dart';
 import '../../features/broker/presentation/screens/broker_kyc_registration_screen.dart';
 import '../../features/broker/presentation/screens/broker_shell.dart';
@@ -46,6 +51,14 @@ import '../../features/client/presentation/screens/client_tracking_screen.dart';
 import '../../features/client/presentation/screens/tracking_details_screen.dart';
 import '../../features/client/presentation/widgets/client_flow_widgets.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
+
+BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
+  if (id == null || id.isEmpty) return null;
+  for (final driver in drivers) {
+    if (driver.id == id) return driver;
+  }
+  return null;
+}
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -219,6 +232,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             const NoTransitionPage(child: BrokerKycRegistrationScreen()),
       ),
       GoRoute(
+        path: '/broker/notifications',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerNotificationsScreen()),
+      ),
+      GoRoute(
+        path: '/broker/settings',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerSettingsScreen()),
+      ),
+      GoRoute(
+        path: '/broker/settings/invoices',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerInvoicesScreen()),
+      ),
+      GoRoute(
+        path: '/broker/settings/settlements',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerSettlementsScreen()),
+      ),
+      GoRoute(
+        path: '/broker/settings/analytics',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerAnalyticsScreen()),
+      ),
+      GoRoute(
         path: '/client/settings',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientSettingsScreen()),
@@ -273,14 +311,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final extraDriver = state.extra as BrokerDriver?;
           final driverId = state.pathParameters['id'];
+          final driversAsync = ref.read(
+            brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+          );
           final driver =
               extraDriver ??
-              ref
-                  .read(brokerDriversProvider)
-                  .firstWhere(
-                    (driver) => driver.id == driverId,
-                    orElse: () => mockBrokerDrivers.first,
-                  );
+              _findBrokerDriver(
+                driversAsync.valueOrNull ?? const <BrokerDriver>[],
+                driverId,
+              ) ??
+              (throw StateError('Driver not found'));
           return NoTransitionPage(child: DriverDetailScreen(driver: driver));
         },
       ),

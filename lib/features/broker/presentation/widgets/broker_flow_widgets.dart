@@ -8,14 +8,49 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 typedef BrokerTrucksQuery = ({String? status, int page, int limit});
 typedef BrokerDriversQuery = ({String? status, int page, int limit});
 typedef BrokerJobRequestsQuery = ({int page, int limit});
+typedef BrokerDriverRequestsQuery = ({int page, int limit});
 
-final brokerPendingRequestsProvider = StateProvider<int>((ref) {
-  return mockBrokerRequests.length;
+final brokerPendingRequestsProvider = FutureProvider.autoDispose<int>((
+  ref,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref
+      .watch(apiClientProvider)
+      .getJobRequests(
+        accessToken: session.tokens.accessToken,
+        page: 1,
+        limit: 100,
+      );
+
+  return _BrokerJobRequestPage.fromJson(
+    response,
+  ).requests.where(isPendingBookingRequest).length;
 });
 
-final brokerHistoryProvider = StateProvider<List<TrackingDemoShipment>>((ref) {
-  return [...mockBrokerHistoryShipments];
-});
+final brokerHistoryProvider =
+    FutureProvider.autoDispose<List<TrackingDemoShipment>>((ref) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
+
+      final response = await ref
+          .watch(apiClientProvider)
+          .getJobRequests(
+            accessToken: session.tokens.accessToken,
+            page: 1,
+            limit: 100,
+          );
+
+      return _BrokerJobRequestPage.fromJson(response).requests
+          .where((request) => !isPendingBookingRequest(request))
+          .map(brokerRequestToShipment)
+          .toList();
+    });
 
 final brokerJobRequestsProvider = FutureProvider.autoDispose
     .family<List<BookingRequest>, BrokerJobRequestsQuery>((ref, query) async {
@@ -33,6 +68,27 @@ final brokerJobRequestsProvider = FutureProvider.autoDispose
           );
 
       return _BrokerJobRequestPage.fromJson(response).requests;
+    });
+
+final brokerDriverRequestsProvider = FutureProvider.autoDispose
+    .family<List<BrokerDriverRequest>, BrokerDriverRequestsQuery>((
+      ref,
+      query,
+    ) async {
+      final session = ref.watch(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw StateError('No active session');
+      }
+
+      final response = await ref
+          .watch(apiClientProvider)
+          .getDriverRequests(
+            accessToken: session.tokens.accessToken,
+            page: query.page,
+            limit: query.limit,
+          );
+
+      return _BrokerDriverRequestPage.fromJson(response).requests;
     });
 
 final brokerTrucksProvider = FutureProvider.autoDispose
@@ -73,12 +129,34 @@ final brokerDriversApiProvider = FutureProvider.autoDispose
       return _BrokerDriverPage.fromJson(response).drivers;
     });
 
-final brokerVehiclesProvider = StateProvider<List<BrokerVehicle>>((ref) {
-  return [...mockBrokerVehicles];
+final brokerVehiclesProvider = FutureProvider.autoDispose<List<BrokerVehicle>>((
+  ref,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref
+      .watch(apiClientProvider)
+      .getTrucks(accessToken: session.tokens.accessToken, page: 1, limit: 50);
+
+  return _BrokerTruckPage.fromJson(response).vehicles;
 });
 
-final brokerDriversProvider = StateProvider<List<BrokerDriver>>((ref) {
-  return [...mockBrokerDrivers];
+final brokerDriversProvider = FutureProvider.autoDispose<List<BrokerDriver>>((
+  ref,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref
+      .watch(apiClientProvider)
+      .getDrivers(accessToken: session.tokens.accessToken, page: 1, limit: 50);
+
+  return _BrokerDriverPage.fromJson(response).drivers;
 });
 
 enum BrokerVehicleStatus { idle, onTrip, maintenance }
@@ -119,6 +197,56 @@ class BookingRequest {
   final int expiresInMinutes;
 }
 
+class BrokerDriverRequest {
+  const BrokerDriverRequest({
+    required this.id,
+    required this.bookingId,
+    required this.bookingNumber,
+    required this.clientName,
+    required this.clientPhone,
+    required this.driverName,
+    required this.driverPhone,
+    required this.brokerName,
+    required this.brokerPhone,
+    required this.truckReg,
+    required this.truckType,
+    required this.truckCategory,
+    required this.pickup,
+    required this.drop,
+    required this.weight,
+    required this.amount,
+    required this.status,
+    required this.driverTimedOut,
+    required this.offerCount,
+    required this.requestedAt,
+    required this.updatedAt,
+    required this.raw,
+  });
+
+  final String id;
+  final String bookingId;
+  final String bookingNumber;
+  final String clientName;
+  final String clientPhone;
+  final String driverName;
+  final String driverPhone;
+  final String brokerName;
+  final String brokerPhone;
+  final String truckReg;
+  final String truckType;
+  final String truckCategory;
+  final String pickup;
+  final String drop;
+  final String weight;
+  final double amount;
+  final String status;
+  final bool driverTimedOut;
+  final int offerCount;
+  final DateTime? requestedAt;
+  final DateTime? updatedAt;
+  final Map<String, dynamic> raw;
+}
+
 class _BrokerJobRequestPage {
   const _BrokerJobRequestPage({required this.requests});
 
@@ -135,6 +263,24 @@ class _BrokerJobRequestPage {
   }
 
   final List<BookingRequest> requests;
+}
+
+class _BrokerDriverRequestPage {
+  const _BrokerDriverRequestPage({required this.requests});
+
+  factory _BrokerDriverRequestPage.fromJson(Map<String, dynamic> json) {
+    final data = _asMap(json['data']);
+    final items = _extractItems(data, json);
+    return _BrokerDriverRequestPage(
+      requests: items
+          .whereType<Map<String, dynamic>>()
+          .map(_brokerDriverRequestFromJson)
+          .where((request) => request.id.isNotEmpty)
+          .toList(),
+    );
+  }
+
+  final List<BrokerDriverRequest> requests;
 }
 
 BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
@@ -247,6 +393,45 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     ]),
     requestedAt: _formatRelativeTime(createdAt),
     expiresInMinutes: expiresIn,
+  );
+}
+
+BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
+  final offerHistory = _asList(json['offerHistory'] ?? json['offer_history']);
+  final driverTimedOut =
+      json['driverTimedOut'] == true || json['driver_timed_out'] == true;
+  return BrokerDriverRequest(
+    id: _readString(json, const [
+      'id',
+      'request_id',
+      'driver_request_id',
+      'uuid',
+    ]),
+    bookingId: _readString(json, const ['bookingId', 'booking_id']),
+    bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
+    clientName: _readString(json, const ['clientName', 'client_name']),
+    clientPhone: _readString(json, const ['clientPhone', 'client_phone']),
+    driverName: _readString(json, const ['driverName', 'driver_name']),
+    driverPhone: _readString(json, const ['driverPhone', 'driver_phone']),
+    brokerName: _readString(json, const ['brokerName', 'broker_name']),
+    brokerPhone: _readString(json, const ['brokerPhone', 'broker_phone']),
+    truckReg: _readString(json, const ['truckReg', 'truck_reg']),
+    truckType: _readString(json, const ['truckType', 'truck_type']),
+    truckCategory: _readString(json, const ['truckCategory', 'truck_category']),
+    pickup: _readString(json, const ['pickup']),
+    drop: _readString(json, const ['drop']),
+    weight: _readString(json, const ['weight']),
+    amount: _readDouble(json, const ['amount', 'price', 'value']),
+    status: _readString(json, const ['status']).isEmpty
+        ? 'pending'
+        : _readString(json, const ['status']),
+    driverTimedOut: driverTimedOut,
+    offerCount: offerHistory.length,
+    requestedAt: _parseDateTimeObject(
+      json['createdAt'] ?? json['created_at'] ?? json['requested_at'],
+    ),
+    updatedAt: _parseDateTimeObject(json['updatedAt'] ?? json['updated_at']),
+    raw: json,
   );
 }
 
@@ -438,6 +623,13 @@ Map<String, dynamic> _asMap(Object? value) {
   return <String, dynamic>{};
 }
 
+List<dynamic> _asList(Object? value) {
+  if (value is List) {
+    return value;
+  }
+  return const <dynamic>[];
+}
+
 String _readString(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
@@ -469,6 +661,31 @@ double? _readCoordinate(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return null;
+}
+
+double _readDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    final parsed = double.tryParse(value.toString().trim());
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return 0;
+}
+
+DateTime? _parseDateTimeObject(Object? value) {
+  final text = value?.toString();
+  if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+    return null;
+  }
+  return DateTime.tryParse(text);
 }
 
 String _firstNonEmpty(List<String> values) {
@@ -541,6 +758,8 @@ class BrokerDriver {
     required this.assignedVehicle,
     required this.onTripSince,
     required this.currentBookingRef,
+    required this.activeTripId,
+    required this.tripStatus,
   });
 
   final String id;
@@ -559,9 +778,23 @@ class BrokerDriver {
   final String assignedVehicle;
   final String onTripSince;
   final String currentBookingRef;
+  final String activeTripId;
+  final String tripStatus;
 
   bool get hasLiveCoordinates =>
       currentLatitude != null && currentLongitude != null;
+
+  bool get hasActiveTrip => activeTripId.isNotEmpty;
+
+  bool get hasCompletedTrip {
+    final normalized = tripStatus.trim().toLowerCase();
+    return const {
+      'completed',
+      'delivered',
+      'closed',
+      'settled',
+    }.contains(normalized);
+  }
 }
 
 class _BrokerDriverPage {
@@ -651,6 +884,20 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
     'current_booking_ref',
     'booking_ref',
   ]);
+  final activeTripId = _readString(json, const [
+    'active_trip_id',
+    'current_trip_id',
+    'trip_id',
+    'activeTripId',
+    'tripId',
+  ]);
+  final tripStatus = _readString(json, const [
+    'trip_status',
+    'current_trip_status',
+    'delivery_status',
+    'shipment_status',
+    'booking_status',
+  ]);
   final status = _driverStatusFromApi(_readString(json, const ['status']));
 
   return BrokerDriver(
@@ -670,255 +917,10 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
     assignedVehicle: assignedVehicle.isNotEmpty ? assignedVehicle : truckPlate,
     onTripSince: onTripSince,
     currentBookingRef: currentBookingRef,
+    activeTripId: activeTripId,
+    tripStatus: tripStatus,
   );
 }
-
-const mockBrokerRequests = <BookingRequest>[
-  BookingRequest(
-    id: 'req-1001',
-    status: 'pending',
-    clientName: 'Neha Kapoor',
-    clientInitials: 'NK',
-    productName: 'Office Chair Set',
-    from: 'Delhi DC-3',
-    to: 'Jaipur Office',
-    weight: '8.6 KG',
-    vehicleType: 'Medium truck',
-    value: '₹2,950',
-    distance: '276 km',
-    etaText: '4h 20m',
-    requestedAt: '12 min ago',
-  ),
-  BookingRequest(
-    id: 'req-1002',
-    status: 'accepted',
-    clientName: 'Aarav Mehta',
-    clientInitials: 'AM',
-    productName: '4-Seater Sofa',
-    from: 'Mumbai Warehouse',
-    to: 'Pune Kothrud',
-    weight: '22 KG',
-    vehicleType: 'Big truck',
-    value: '₹4,800',
-    distance: '148 km',
-    etaText: '3h 10m',
-    requestedAt: '25 min ago',
-  ),
-  BookingRequest(
-    id: 'req-1003',
-    status: 'cancelled',
-    clientName: 'Rohit Sharma',
-    clientInitials: 'RS',
-    productName: 'Printer Cartridge Box',
-    from: 'Pune Cargo Yard',
-    to: 'Hyderabad Retail Store',
-    weight: '4.1 KG',
-    vehicleType: 'Truck pooling',
-    value: '₹1,150',
-    distance: '560 km',
-    etaText: '8h 50m',
-    requestedAt: '41 min ago',
-  ),
-];
-
-const mockBrokerVehicles = <BrokerVehicle>[
-  BrokerVehicle(
-    id: 'veh-1',
-    label: 'Medium truck',
-    plateNumber: 'MH 12 AB 2456',
-    capacity: '1.5 ton',
-    status: BrokerVehicleStatus.idle,
-    assignedDriverName: 'Vikram Patil',
-    assetPath: 'assets/trucks/medium truck.png',
-  ),
-  BrokerVehicle(
-    id: 'veh-2',
-    label: 'Big truck',
-    plateNumber: 'MH 14 XY 8104',
-    capacity: '3 ton',
-    status: BrokerVehicleStatus.onTrip,
-    assignedDriverName: 'Rahul Jadhav',
-    assetPath: 'assets/trucks/big truck.png',
-  ),
-  BrokerVehicle(
-    id: 'veh-3',
-    label: 'Small truck',
-    plateNumber: 'MH 10 CZ 1198',
-    capacity: '500 kg',
-    status: BrokerVehicleStatus.maintenance,
-    assignedDriverName: 'Unassigned',
-    assetPath: 'assets/trucks/small truck.png',
-  ),
-];
-
-const mockBrokerDrivers = <BrokerDriver>[
-  BrokerDriver(
-    id: 'drv-1',
-    name: 'Vikram Patil',
-    email: '',
-    phone: '+91 98220 11234',
-    licenseNo: 'DL-1823-PL',
-    licenseExpiry: '',
-    aadhaar: '',
-    avatar: '',
-    vehicleType: 'Medium truck',
-    status: BrokerDriverStatus.idle,
-    currentLocation: 'Near Pune Gateway Hub',
-    currentLatitude: null,
-    currentLongitude: null,
-    assignedVehicle: 'MH 12 AB 2456',
-    onTripSince: '',
-    currentBookingRef: '',
-  ),
-  BrokerDriver(
-    id: 'drv-2',
-    name: 'Rahul Jadhav',
-    email: '',
-    phone: '+91 98710 32455',
-    licenseNo: 'DL-9172-RJ',
-    licenseExpiry: '',
-    aadhaar: '',
-    avatar: '',
-    vehicleType: 'Big truck',
-    status: BrokerDriverStatus.onTrip,
-    currentLocation: 'Ahmedabad Bypass',
-    currentLatitude: null,
-    currentLongitude: null,
-    assignedVehicle: 'MH 14 XY 8104',
-    onTripSince: '2h 12m',
-    currentBookingRef: 'BK-20489',
-  ),
-  BrokerDriver(
-    id: 'drv-3',
-    name: 'Sahil Verma',
-    email: '',
-    phone: '+91 99203 88091',
-    licenseNo: 'DL-4471-SK',
-    licenseExpiry: '',
-    aadhaar: '',
-    avatar: '',
-    vehicleType: 'Truck pooling',
-    status: BrokerDriverStatus.offline,
-    currentLocation: 'Offline for login',
-    currentLatitude: null,
-    currentLongitude: null,
-    assignedVehicle: 'Unassigned',
-    onTripSince: '',
-    currentBookingRef: '',
-  ),
-];
-
-const mockBrokerHistoryShipments = <TrackingDemoShipment>[
-  TrackingDemoShipment(
-    packageName: 'Server Rack',
-    trackingId: 'TRK-BR-1009',
-    fromLocation: 'Mumbai Warehouse',
-    toLocation: 'Bengaluru Tech Park',
-    status: 'Completed',
-    customerName: 'Aarav Mehta',
-    weight: '32.5 KG',
-    pickupLat: 19.0760,
-    pickupLng: 72.8777,
-    dropLat: 12.9716,
-    dropLng: 77.5946,
-    liveLat: 16.8500,
-    liveLng: 75.2500,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Booking accepted',
-        subtitle: 'Broker assigned vehicle',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In transit',
-        subtitle: 'Vehicle left depot',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Received by client',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Closed',
-        subtitle: 'Payment settled',
-        completed: true,
-      ),
-    ],
-  ),
-  TrackingDemoShipment(
-    packageName: 'Office Chair Set',
-    trackingId: 'TRK-BR-1014',
-    fromLocation: 'Delhi DC-3',
-    toLocation: 'Jaipur Office',
-    status: 'Accepted',
-    customerName: 'Neha Kapoor',
-    weight: '8.6 KG',
-    pickupLat: 28.7041,
-    pickupLng: 77.1025,
-    dropLat: 26.9124,
-    dropLng: 75.7873,
-    liveLat: 27.4000,
-    liveLng: 76.0200,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Request received',
-        subtitle: 'Waiting for assignment',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Broker accepted',
-        subtitle: 'Vehicle to be assigned',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Pickup scheduled',
-        subtitle: 'Pending',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Pending',
-        completed: false,
-      ),
-    ],
-  ),
-  TrackingDemoShipment(
-    packageName: 'Industrial Printer',
-    trackingId: 'TRK-BR-1021',
-    fromLocation: 'Pune Cargo Yard',
-    toLocation: 'Hyderabad Retail Store',
-    status: 'Cancelled',
-    customerName: 'Rohit Sharma',
-    weight: '48 KG',
-    pickupLat: 18.5204,
-    pickupLng: 73.8567,
-    dropLat: 17.3850,
-    dropLng: 78.4867,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Request received',
-        subtitle: 'Awaiting action',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Cancelled',
-        subtitle: 'Rejected by client',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In transit',
-        subtitle: 'Not started',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Not started',
-        completed: false,
-      ),
-    ],
-  ),
-];
 
 TrackingDemoShipment bookingRequestToShipment(
   BookingRequest request, {
@@ -1013,6 +1015,7 @@ class BrokerHeader extends StatelessWidget {
     this.subtitle,
     required this.pendingRequestsCount,
     required this.onAvatarTap,
+    this.onNotificationsTap,
   });
 
   final bool highlighted;
@@ -1020,6 +1023,7 @@ class BrokerHeader extends StatelessWidget {
   final String? subtitle;
   final int pendingRequestsCount;
   final VoidCallback onAvatarTap;
+  final VoidCallback? onNotificationsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1086,7 +1090,7 @@ class BrokerHeader extends StatelessWidget {
             iconColor: iconAccent,
             size: 30,
             badgeOffset: const Offset(5, 2),
-            onTap: () {},
+            onTap: onNotificationsTap ?? () {},
           ),
           const SizedBox(width: 8),
           InkWell(
@@ -1959,7 +1963,7 @@ class DriverListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = _driverCardMeta(driver);
-    final visuals = _driverCardVisuals(driver.status);
+    final visuals = _driverCardVisuals(driver);
 
     return InkWell(
       onTap: onTap,
@@ -2294,8 +2298,22 @@ class _DriverCardVisuals {
   final double opacity;
 }
 
-_DriverCardVisuals _driverCardVisuals(BrokerDriverStatus status) {
-  switch (status) {
+_DriverCardVisuals _driverCardVisuals(BrokerDriver driver) {
+  if (driver.hasCompletedTrip) {
+    return const _DriverCardVisuals(
+      backgroundColor: Color(0xFFF0FBF4),
+      borderColor: Color(0xFFB7E4C7),
+      avatarBackgroundColor: Color(0xFFD9F6E3),
+      avatarTextColor: Color(0xFF136F3E),
+      statusDotColor: Color(0xFF22C55E),
+      statusTextColor: Color(0xFF136F3E),
+      ctaBackgroundColor: Color(0xFF15803D),
+      ctaForegroundColor: Colors.white,
+      opacity: 1,
+    );
+  }
+
+  switch (driver.status) {
     case BrokerDriverStatus.onTrip:
       return const _DriverCardVisuals(
         backgroundColor: Color(0xFFF8F9FF),
@@ -2352,10 +2370,26 @@ class _DriverCardMeta {
 }
 
 _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
+  if (driver.hasCompletedTrip) {
+    return _DriverCardMeta(
+      statusLine: driver.tripStatus.isNotEmpty
+          ? 'Trip ${_prettyTripStatus(driver.tripStatus)}'
+          : 'Trip completed',
+      lastSeen: driver.onTripSince.isEmpty
+          ? 'Recently completed'
+          : '${driver.onTripSince} ago',
+      ctaLabel: 'Settlements',
+      ctaIcon: Icons.payments_rounded,
+      statusIcon: Icons.verified_rounded,
+    );
+  }
+
   switch (driver.status) {
     case BrokerDriverStatus.onTrip:
       return _DriverCardMeta(
-        statusLine: driver.currentBookingRef.isEmpty
+        statusLine: driver.tripStatus.isNotEmpty
+            ? 'Trip ${_prettyTripStatus(driver.tripStatus)}'
+            : driver.currentBookingRef.isEmpty
             ? 'Active on trip'
             : 'Active on Booking ${driver.currentBookingRef}',
         lastSeen: driver.onTripSince.isEmpty
@@ -2382,6 +2416,16 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
         statusIcon: Icons.do_not_disturb_on_outlined,
       );
   }
+}
+
+String _prettyTripStatus(String value) {
+  final normalized = value.trim().replaceAll(RegExp(r'[_-]+'), ' ');
+  if (normalized.isEmpty) return 'active';
+  return normalized
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) => part[0].toUpperCase() + part.substring(1))
+      .join(' ');
 }
 
 class BrokerProfileActionCard extends StatelessWidget {

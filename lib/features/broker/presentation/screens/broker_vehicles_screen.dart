@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerVehiclesScreen extends ConsumerWidget {
@@ -39,9 +41,9 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                 Text(
                   'Your fleet',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF101828),
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const Spacer(),
                 FilledButton.icon(
@@ -52,7 +54,10 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                   label: const Text('Add truck'),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF1F88C9),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     shape: const StadiumBorder(),
                   ),
                 ),
@@ -78,17 +83,17 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                   Text(
                     'Your fleet',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
-                          fontWeight: FontWeight.w800,
-                        ),
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '(${vehicles.length})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: const Color(0xFF667085),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const Spacer(),
                   FilledButton.icon(
@@ -99,7 +104,10 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                     label: const Text('Add truck'),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF1F88C9),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       shape: const StadiumBorder(),
                     ),
                   ),
@@ -110,93 +118,170 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                 const _FleetEmptyState(
                   icon: Icons.local_shipping_outlined,
                   title: 'No trucks yet',
-                  subtitle: 'Add your first truck to start managing your fleet.',
+                  subtitle:
+                      'Add your first truck to start managing your fleet.',
                 )
               else
                 ...vehicles.asMap().entries.expand(
-                      (entry) => [
-                        VehicleCard(
-                          vehicle: entry.value,
-                          onTap: () async {
-                            await showModalBottomSheet<void>(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) {
-                                return SheetContainer(
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Center(
-                                          child: Container(
-                                            width: 54,
-                                            height: 5,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFE1E5EB),
-                                              borderRadius: BorderRadius.circular(999),
-                                            ),
+                  (entry) => [
+                    VehicleCard(
+                      vehicle: entry.value,
+                      onTap: () async {
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) {
+                            return SheetContainer(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  14,
+                                  20,
+                                  28,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Center(
+                                      child: Container(
+                                        width: 54,
+                                        height: 5,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE1E5EB),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
                                           ),
                                         ),
-                                        const SizedBox(height: 18),
-                                        Text(
-                                          entry.value.label,
-                                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                fontWeight: FontWeight.w800,
-                                                color: const Color(0xFF101828),
-                                              ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          entry.value.plateNumber,
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                color: const Color(0xFF667085),
-                                              ),
-                                        ),
-                                        const SizedBox(height: 18),
-                                OptionTile(
-                                  title: 'Edit vehicle',
-                                  subtitle: 'Update vehicle info and assignment',
-                                  icon: Icons.edit_rounded,
-                                  selected: false,
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    context.push(
-                                      '/broker/vehicles/add',
-                                      extra: entry.value,
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 10),
-                                OptionTile(
-                                  title: 'Remove vehicle',
-                                  subtitle: 'Archive this vehicle from the fleet',
-                                  icon: Icons.delete_rounded,
-                                  selected: false,
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Truck removal is not wired yet.'),
                                       ),
-                                    );
-                                  },
-                                ),
-                                      ],
                                     ),
-                                  ),
-                                );
-                              },
+                                    const SizedBox(height: 18),
+                                    Text(
+                                      entry.value.label,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: const Color(0xFF101828),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      entry.value.plateNumber,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFF667085),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 18),
+                                    OptionTile(
+                                      title: 'Edit vehicle',
+                                      subtitle:
+                                          'Update vehicle info and assignment',
+                                      icon: Icons.edit_rounded,
+                                      selected: false,
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                        context.push(
+                                          '/broker/vehicles/add',
+                                          extra: entry.value,
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 10),
+                                    OptionTile(
+                                      title: 'Remove vehicle',
+                                      subtitle:
+                                          'Archive this vehicle from the fleet',
+                                      icon: Icons.delete_rounded,
+                                      selected: false,
+                                      onTap: () async {
+                                        Navigator.of(context).pop();
+                                        await _confirmDeleteTruck(
+                                          context,
+                                          ref,
+                                          entry.value,
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             );
                           },
-                        ),
-                        if (entry.key != vehicles.length - 1) const SizedBox(height: 12),
-                      ],
+                        );
+                      },
                     ),
+                    if (entry.key != vehicles.length - 1)
+                      const SizedBox(height: 12),
+                  ],
+                ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+Future<void> _confirmDeleteTruck(
+  BuildContext context,
+  WidgetRef ref,
+  BrokerVehicle vehicle,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Remove truck?'),
+        content: Text(
+          'This will delete ${vehicle.plateNumber} from the fleet.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE23A4B),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  final session = ref.read(authSessionProvider).valueOrNull;
+  if (session == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please sign in again to delete a truck.')),
+    );
+    return;
+  }
+
+  try {
+    await ref
+        .read(apiClientProvider)
+        .deleteTruck(accessToken: session.tokens.accessToken, id: vehicle.id);
+    if (!context.mounted) return;
+    ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Truck removed from fleet.')),
+    );
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.toString().replaceFirst('ApiException: ', '')),
       ),
     );
   }
@@ -243,24 +328,21 @@ class _FleetEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 14),
-            FilledButton(
-              onPressed: onAction,
-              child: Text(actionLabel!),
-            ),
+            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
           ],
         ],
       ),

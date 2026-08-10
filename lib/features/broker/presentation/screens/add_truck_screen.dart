@@ -37,7 +37,6 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       _makeController.text = truck.make;
       _yearController.text = truck.year;
       _insuranceExpiryController.text = truck.insuranceExpiry;
-      _selectedDriver = _driverForName(truck.assignedDriverName);
       _selectedVehicleIndex = _vehicleIndexForLabel(truck.label);
     }
   }
@@ -192,8 +191,21 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final drivers = ref.watch(brokerDriversProvider);
+    final driversAsync = ref.watch(
+      brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+    );
+    final drivers = driversAsync.valueOrNull ?? const <BrokerDriver>[];
     final isEditing = widget.existingTruck != null;
+    if (_selectedDriver == null && widget.existingTruck != null && drivers.isNotEmpty) {
+      final resolved = _driverForName(drivers, widget.existingTruck!.assignedDriverName);
+      if (resolved != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _selectedDriver == null) {
+            setState(() => _selectedDriver = resolved);
+          }
+        });
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -505,8 +517,8 @@ int _vehicleIndexForLabel(String label) {
   return 3;
 }
 
-BrokerDriver? _driverForName(String name) {
-  for (final driver in mockBrokerDrivers) {
+BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
+  for (final driver in drivers) {
     if (driver.name == name) {
       return driver;
     }

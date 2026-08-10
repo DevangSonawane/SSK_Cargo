@@ -187,6 +187,30 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 ],
               ),
               const SizedBox(height: 22),
+              _SectionTitle(
+                title: 'Inbox',
+                subtitle: 'Open notifications and active broker updates.',
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
+                title: 'Notifications',
+                icon: Icons.notifications_active_rounded,
+                onTap: () => context.push('/broker/notifications'),
+                titleColor: const Color(0xFF1F88C9),
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 22),
+              _SectionTitle(
+                title: 'Settings',
+                subtitle: 'Finance, analytics, and billing actions.',
+              ),
+              const SizedBox(height: 10),
+              BrokerMenuTile(
+                title: 'Settings',
+                icon: Icons.tune_rounded,
+                onTap: () => context.push('/broker/settings'),
+              ),
+              const SizedBox(height: 22),
               BrokerMenuTile(
                 title: 'Manage Drivers',
                 icon: Icons.people_alt_rounded,
@@ -236,6 +260,36 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF101828),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+        ),
+      ],
     );
   }
 }

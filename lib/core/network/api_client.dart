@@ -239,11 +239,7 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/bookings/$id/invoice/email',
-        data: {
-          'to': to,
-          'subject': subject,
-          'message': message,
-        },
+        data: {'to': to, 'subject': subject, 'message': message},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -287,7 +283,10 @@ class SskApiClient {
     required String issueType,
     required String description,
   }) async {
-    developer.log('POST /api/disputes bookingId=$bookingId issueType=$issueType', name: 'SSK.API');
+    developer.log(
+      'POST /api/disputes bookingId=$bookingId issueType=$issueType',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/disputes',
@@ -308,12 +307,16 @@ class SskApiClient {
 
   Future<Map<String, dynamic>> getVehicleTypes() async {
     developer.log('GET /api/config/vehicle-types', name: 'SSK.API');
-    return _request(() => _dio.get<Map<String, dynamic>>('/api/config/vehicle-types'));
+    return _request(
+      () => _dio.get<Map<String, dynamic>>('/api/config/vehicle-types'),
+    );
   }
 
   Future<Map<String, dynamic>> getMaterialTypes() async {
     developer.log('GET /api/config/material-types', name: 'SSK.API');
-    return _request(() => _dio.get<Map<String, dynamic>>('/api/config/material-types'));
+    return _request(
+      () => _dio.get<Map<String, dynamic>>('/api/config/material-types'),
+    );
   }
 
   Future<Map<String, dynamic>> registerDeviceToken({
@@ -321,7 +324,10 @@ class SskApiClient {
     required String token,
     required String platform,
   }) async {
-    developer.log('POST /api/users/device-token platform=$platform', name: 'SSK.API');
+    developer.log(
+      'POST /api/users/device-token platform=$platform',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/users/device-token',
@@ -375,7 +381,10 @@ class SskApiClient {
     required String threadId,
     int limit = 50,
   }) async {
-    developer.log('GET /api/chat/threads/$threadId/messages limit=$limit', name: 'SSK.API');
+    developer.log(
+      'GET /api/chat/threads/$threadId/messages limit=$limit',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/chat/threads/$threadId/messages',
@@ -450,14 +459,66 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getDriverRequests({
+    required String accessToken,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    developer.log(
+      'GET /api/driver-requests page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/driver-requests',
+        queryParameters: {'page': page, 'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getDriverRequestByBooking({
     required String accessToken,
     required String bookingId,
   }) async {
-    developer.log('GET /api/driver-requests/booking/$bookingId', name: 'SSK.API');
+    developer.log(
+      'GET /api/driver-requests/booking/$bookingId',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/driver-requests/booking/$bookingId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerSettlements({
+    required String accessToken,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    developer.log(
+      'GET /api/payments/settlements page=$page limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/payments/settlements',
+        queryParameters: {'page': page, 'limit': limit},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerSettlementById({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/payments/settlements/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/payments/settlements/$id',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -467,7 +528,10 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log('PATCH /api/driver-requests/$id/client-accept', name: 'SSK.API');
+    developer.log(
+      'PATCH /api/driver-requests/$id/client-accept',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/driver-requests/$id/client-accept',
@@ -480,7 +544,10 @@ class SskApiClient {
     required String accessToken,
     required String id,
   }) async {
-    developer.log('PATCH /api/driver-requests/$id/client-reject', name: 'SSK.API');
+    developer.log(
+      'PATCH /api/driver-requests/$id/client-reject',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/driver-requests/$id/client-reject',
@@ -494,7 +561,10 @@ class SskApiClient {
     required String id,
     required num amount,
   }) async {
-    developer.log('PATCH /api/driver-requests/$id/client-counter amount=$amount', name: 'SSK.API');
+    developer.log(
+      'PATCH /api/driver-requests/$id/client-counter amount=$amount',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/driver-requests/$id/client-counter',
@@ -1342,6 +1412,18 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/kyc/documents',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerAnalytics({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/analytics/broker', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/analytics/broker',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

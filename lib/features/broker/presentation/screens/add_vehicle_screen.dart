@@ -8,10 +8,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
-  const AddVehicleScreen({
-    super.key,
-    this.existingTruck,
-  });
+  const AddVehicleScreen({super.key, this.existingTruck});
 
   final BrokerVehicle? existingTruck;
 
@@ -40,7 +37,6 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       _makeController.text = truck.make;
       _yearController.text = truck.year;
       _insuranceExpiryController.text = truck.insuranceExpiry;
-      _selectedDriver = _driverForName(truck.assignedDriverName);
       _selectedVehicleIndex = _vehicleIndexForLabel(truck.label);
     }
   }
@@ -72,12 +68,12 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       return;
     }
 
-      final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
-      final driver = _selectedDriver;
+    final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
+    final driver = _selectedDriver;
     if (driver == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please assign a driver.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please assign a driver.')));
       return;
     }
 
@@ -105,7 +101,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       };
 
       if (widget.existingTruck == null) {
-        await ref.read(apiClientProvider).createTruck(
+        await ref
+            .read(apiClientProvider)
+            .createTruck(
               accessToken: session.tokens.accessToken,
               truck: {
                 'registration': _registrationController.text.trim(),
@@ -113,7 +111,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
               },
             );
       } else {
-        await ref.read(apiClientProvider).updateTruck(
+        await ref
+            .read(apiClientProvider)
+            .updateTruck(
               accessToken: session.tokens.accessToken,
               id: widget.existingTruck!.id,
               truck: truckPayload,
@@ -128,7 +128,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.existingTruck == null ? 'Truck added successfully.' : 'Truck updated successfully.',
+            widget.existingTruck == null
+                ? 'Truck added successfully.'
+                : 'Truck updated successfully.',
           ),
         ),
       );
@@ -138,7 +140,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('ApiException: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
       );
     } finally {
       if (mounted) {
@@ -169,15 +173,35 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     if (picked == null || !mounted) return;
 
     setState(() {
-      _insuranceExpiryController.text =
-          picked.toIso8601String().split('T').first;
+      _insuranceExpiryController.text = picked
+          .toIso8601String()
+          .split('T')
+          .first;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final drivers = ref.watch(brokerDriversProvider);
+    final driversAsync = ref.watch(
+      brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+    );
+    final drivers = driversAsync.valueOrNull ?? const <BrokerDriver>[];
     final isEditing = widget.existingTruck != null;
+    if (_selectedDriver == null &&
+        widget.existingTruck != null &&
+        drivers.isNotEmpty) {
+      final resolved = _driverForName(
+        drivers,
+        widget.existingTruck!.assignedDriverName,
+      );
+      if (resolved != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _selectedDriver == null) {
+            setState(() => _selectedDriver = resolved);
+          }
+        });
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -207,8 +231,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                       ? 'Update the truck details and save the changes.'
                       : 'Choose the truck type and fill in the fleet details.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
-                      ),
+                    color: const Color(0xFF667085),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 GridView.builder(
@@ -228,7 +252,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                       selected: _selectedVehicleIndex == index,
                       onTap: () => setState(() {
                         _selectedVehicleIndex = index;
-                        if (!isEditing && _capacityController.text.trim().isEmpty) {
+                        if (!isEditing &&
+                            _capacityController.text.trim().isEmpty) {
                           _capacityController.text = vehicle.capacity;
                         }
                       }),
@@ -286,7 +311,10 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                             alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                _DriverAvatar(initials: _driverInitials(driver.name), compact: true),
+                                _DriverAvatar(
+                                  initials: _driverInitials(driver.name),
+                                  compact: true,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -389,13 +417,18 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                     onPressed: _submitting ? null : _submitTruck,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1F88C9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     child: _submitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Text(
                             'Save truck',
@@ -426,8 +459,8 @@ int _vehicleIndexForLabel(String label) {
   return 3;
 }
 
-BrokerDriver? _driverForName(String name) {
-  for (final driver in mockBrokerDrivers) {
+BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
+  for (final driver in drivers) {
     if (driver.name == name) {
       return driver;
     }
@@ -447,8 +480,9 @@ InputDecoration _fieldDecoration({
     filled: true,
     fillColor: Colors.white,
     prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
-    suffixIcon:
-        suffixIcon == null ? null : Icon(suffixIcon, color: const Color(0xFF667085)),
+    suffixIcon: suffixIcon == null
+        ? null
+        : Icon(suffixIcon, color: const Color(0xFF667085)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
@@ -474,13 +508,18 @@ String _truckCategoryForVehicle(String label) {
 }
 
 String _driverInitials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) {
     final first = parts.first;
     return first.substring(0, first.length.clamp(1, 2)).toUpperCase();
   }
-  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+      .toUpperCase();
 }
 
 class _DriverDropdownMenuItem extends StatelessWidget {

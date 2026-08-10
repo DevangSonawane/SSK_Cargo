@@ -12,8 +12,11 @@ class BrokerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final requestsAsync = ref.watch(brokerJobRequestsProvider((page: 1, limit: 100)));
-    final pendingCount = requestsAsync.valueOrNull?.where(isPendingBookingRequest).length ?? 0;
+    final requestsAsync = ref.watch(
+      brokerJobRequestsProvider((page: 1, limit: 100)),
+    );
+    final pendingCount =
+        requestsAsync.valueOrNull?.where(isPendingBookingRequest).length ?? 0;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final location = GoRouterState.of(context).uri.path;
@@ -21,7 +24,10 @@ class BrokerShell extends ConsumerWidget {
     final showBottomNav = location != '/broker/profile';
     final currentTab = navigationShell.currentIndex;
     final headerTitle = switch (currentTab) {
-      0 => displayName == null ? 'Good morning, Aman' : 'Good morning, ${displayName.split(' ').first}',
+      0 =>
+        displayName == null
+            ? 'Good morning, Aman'
+            : 'Good morning, ${displayName.split(' ').first}',
       1 => 'Vehicles',
       2 => 'Tracking',
       3 => 'History',
@@ -46,6 +52,7 @@ class BrokerShell extends ConsumerWidget {
               subtitle: headerSubtitle,
               pendingRequestsCount: pendingCount,
               onAvatarTap: () => context.push('/broker/profile'),
+              onNotificationsTap: () => context.push('/broker/notifications'),
             ),
             const SizedBox(height: 8),
           ],
@@ -60,7 +67,10 @@ class BrokerShell extends ConsumerWidget {
                 if (index == navigationShell.currentIndex) {
                   return;
                 }
-                navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+                navigationShell.goBranch(
+                  index,
+                  initialLocation: index == navigationShell.currentIndex,
+                );
               },
             )
           : const SizedBox.shrink(),
