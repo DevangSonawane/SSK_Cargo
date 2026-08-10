@@ -273,7 +273,7 @@ class _DriverDeliveryDetailsScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'DEL-2048',
+                          widget.tripId,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: const Color(0xFF101828),

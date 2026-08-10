@@ -1,139 +1,192 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class DriverEarningsScreen extends StatelessWidget {
+import '../../../broker/presentation/screens/broker_settlements_screen.dart';
+import '../../data/driver_dashboard_models.dart';
+
+class DriverEarningsScreen extends ConsumerWidget {
   const DriverEarningsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardAsync = ref.watch(driverDashboardProvider);
+
     return SafeArea(
       top: false,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Current balance',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '₹18,450',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Congratulations you have done 2 deliveries!',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
-                    fontSize: 11,
-                    height: 1.3,
-                  ),
-                ),
-              ],
+      child: dashboardAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              error.toString().replaceFirst('Exception: ', ''),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFE23A4B)),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 2),
-                ..._monthlyEarnings.asMap().entries.expand(
-                      (entry) => [
-                        _MonthlyEarningsSection(month: entry.value),
-                        if (entry.key != _monthlyEarnings.length - 1)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            child: Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: Color(0xFFECEFF3),
-                            ),
-                          ),
-                      ],
+        ),
+        data: (dashboard) {
+          final history = dashboard.history;
+          final total = history.fold<double>(
+            0,
+            (sum, item) => sum + item.netEarnings,
+          );
+          final deliveredCount = history.length;
+          final average = deliveredCount == 0 ? 0 : total / deliveredCount;
+          final grouped = _groupByMonth(history);
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          InkWell(
-            onTap: () => context.push('/driver/all-earnings'),
-            borderRadius: BorderRadius.circular(18),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Text(
-                  'View all earnings',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF1F88C9),
-                    fontWeight: FontWeight.w800,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Current balance',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '₹${total.toStringAsFixed(0)}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: const Color(0xFF101828),
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      deliveredCount == 0
+                          ? 'No completed deliveries yet.'
+                          : 'You have completed $deliveredCount deliveries.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontSize: 11,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 2),
+                    if (grouped.isEmpty)
+                      const _EmptyHistory()
+                    else
+                      ...grouped.entries.expand(
+                        (entry) => [
+                          _MonthlyEarningsSection(
+                            month: entry.key,
+                            deliveries: entry.value,
+                          ),
+                          if (entry.key != grouped.keys.last)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: Color(0xFFECEFF3),
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              InkWell(
+                onTap: () => context.push('/driver/all-earnings'),
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Text(
+                      'View all earnings',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: const Color(0xFF1F88C9),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 4),
+              Text(
+                'Average per delivery: ₹${average.toStringAsFixed(0)}',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF98A2B3)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _MonthlyEarningsSection extends StatelessWidget {
-  const _MonthlyEarningsSection({required this.month});
+  const _MonthlyEarningsSection({
+    required this.month,
+    required this.deliveries,
+  });
 
-  final _MonthlyEarningsMonth month;
+  final String month;
+  final List<_EarnedTripRow> deliveries;
 
   @override
   Widget build(BuildContext context) {
+    final total = deliveries.fold<double>(0, (sum, row) => sum + row.amount);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             Text(
-              month.label,
+              month,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: const Color(0xFF101828),
                 fontWeight: FontWeight.w900,
@@ -141,7 +194,7 @@ class _MonthlyEarningsSection extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              month.total,
+              '₹${total.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: const Color(0xFF101828),
                 fontWeight: FontWeight.w900,
@@ -150,16 +203,15 @@ class _MonthlyEarningsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        ...month.deliveries.asMap().entries.expand(
-              (entry) => [
-                _DeliveryEarningRow(
-                  deliveryId: entry.value.deliveryId,
-                  amount: entry.value.amount,
-                ),
-                if (entry.key != month.deliveries.length - 1)
-                  const SizedBox(height: 10),
-              ],
+        ...deliveries.asMap().entries.expand(
+          (entry) => [
+            _DeliveryEarningRow(
+              bookingNumber: entry.value.bookingNumber,
+              amount: entry.value.amount,
             ),
+            if (entry.key != deliveries.length - 1) const SizedBox(height: 10),
+          ],
+        ),
       ],
     );
   }
@@ -167,12 +219,12 @@ class _MonthlyEarningsSection extends StatelessWidget {
 
 class _DeliveryEarningRow extends StatelessWidget {
   const _DeliveryEarningRow({
-    required this.deliveryId,
+    required this.bookingNumber,
     required this.amount,
   });
 
-  final String deliveryId;
-  final String amount;
+  final String bookingNumber;
+  final double amount;
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +232,7 @@ class _DeliveryEarningRow extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            deliveryId,
+            bookingNumber,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF667085),
               fontWeight: FontWeight.w600,
@@ -188,7 +240,7 @@ class _DeliveryEarningRow extends StatelessWidget {
           ),
         ),
         Text(
-          amount,
+          '₹${amount.toStringAsFixed(0)}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF101828),
             fontWeight: FontWeight.w800,
@@ -199,54 +251,75 @@ class _DeliveryEarningRow extends StatelessWidget {
   }
 }
 
-class _MonthlyEarningsMonth {
-  const _MonthlyEarningsMonth({
-    required this.label,
-    required this.total,
-    required this.deliveries,
-  });
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory();
 
-  final String label;
-  final String total;
-  final List<_MonthlyEarningEntry> deliveries;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Text(
+        'No completed trips yet.',
+        textAlign: TextAlign.center,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+      ),
+    );
+  }
 }
 
-class _MonthlyEarningEntry {
-  const _MonthlyEarningEntry({
-    required this.deliveryId,
+class _EarnedTripRow {
+  const _EarnedTripRow({
+    required this.bookingNumber,
     required this.amount,
+    required this.settledAt,
   });
 
-  final String deliveryId;
-  final String amount;
+  final String bookingNumber;
+  final double amount;
+  final DateTime? settledAt;
 }
 
-const _monthlyEarnings = <_MonthlyEarningsMonth>[
-  _MonthlyEarningsMonth(
-    label: 'Jan, 2026',
-    total: '₹345',
-    deliveries: [
-      _MonthlyEarningEntry(deliveryId: 'DEL-2048', amount: '₹145'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-2032', amount: '₹95'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-2019', amount: '₹105'),
-    ],
-  ),
-  _MonthlyEarningsMonth(
-    label: 'Dec, 2025',
-    total: '₹520',
-    deliveries: [
-      _MonthlyEarningEntry(deliveryId: 'DEL-1987', amount: '₹210'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-1979', amount: '₹180'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-1965', amount: '₹130'),
-    ],
-  ),
-  _MonthlyEarningsMonth(
-    label: 'Nov, 2025',
-    total: '₹415',
-    deliveries: [
-      _MonthlyEarningEntry(deliveryId: 'DEL-1912', amount: '₹155'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-1908', amount: '₹120'),
-      _MonthlyEarningEntry(deliveryId: 'DEL-1896', amount: '₹140'),
-    ],
-  ),
-];
+Map<String, List<_EarnedTripRow>> _groupByMonth(
+  List<BrokerSettlement> history,
+) {
+  final buckets = <String, List<_EarnedTripRow>>{};
+  for (final item in history) {
+    final month = _monthLabel(item.settledAt);
+    buckets
+        .putIfAbsent(month, () => <_EarnedTripRow>[])
+        .add(
+          _EarnedTripRow(
+            bookingNumber: item.bookingNumber,
+            amount: item.netEarnings,
+            settledAt: item.settledAt == null
+                ? null
+                : DateTime.tryParse(item.settledAt!),
+          ),
+        );
+  }
+  return buckets;
+}
+
+String _monthLabel(String? value) {
+  final parsed = value == null ? null : DateTime.tryParse(value);
+  if (parsed == null) {
+    return 'Recent';
+  }
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[parsed.month - 1]}, ${parsed.year}';
+}

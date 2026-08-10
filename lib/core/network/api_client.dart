@@ -635,6 +635,42 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getActiveTrip({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/trips/active', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips/active',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getUpcomingTrip({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/trips/upcoming', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips/upcoming',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDriverTruck({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/vehicles/drivers/me/truck', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/truck',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getBookings({
     required String accessToken,
     String? status,
