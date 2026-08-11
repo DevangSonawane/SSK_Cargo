@@ -11,5 +11,5 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const ProviderScope(child: SSKApp()));
+  runApp(const ProviderScope(child: SSKApp()));     
 }

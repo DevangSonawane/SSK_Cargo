@@ -180,6 +180,10 @@ class BookingRequest {
     required this.distance,
     required this.etaText,
     required this.requestedAt,
+    this.driverId = '',
+    this.truckId = '',
+    this.assignedDriverName = '',
+    this.assignedTruckName = '',
     this.expiresInMinutes = 0,
   });
 
@@ -196,6 +200,10 @@ class BookingRequest {
   final String distance;
   final String etaText;
   final String requestedAt;
+  final String driverId;
+  final String truckId;
+  final String assignedDriverName;
+  final String assignedTruckName;
   final int expiresInMinutes;
 }
 
@@ -272,6 +280,14 @@ bool brokerLooksLikeTimedOutNegotiationPayload(Map<String, dynamic> payload) {
 BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
   Map<String, dynamic> payload,
 ) {
+  final data = _asMap(payload['data']);
+  final request = _asMap(data['request']);
+  final source = request.isNotEmpty ? request : data;
+  final route = _asMap(source['route']);
+  final truck = _asMap(source['truck']);
+  final driver = _asMap(source['driver']);
+  final broker = _asMap(source['broker']);
+  final load = _asMap(source['load']);
   final bookingId = _readString(payload, const ['bookingId', 'booking_id']);
   final requestId = _readString(payload, const [
     'request_id',
@@ -289,21 +305,83 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     id: requestId.isNotEmpty ? requestId : bookingId,
     bookingId: bookingId,
     bookingNumber: bookingNumber,
-    clientName: _readString(payload, const ['clientName', 'client_name']),
-    clientPhone: _readString(payload, const ['clientPhone', 'client_phone']),
-    driverName: _readString(payload, const ['driverName', 'driver_name']),
-    driverPhone: _readString(payload, const ['driverPhone', 'driver_phone']),
-    brokerName: _readString(payload, const ['brokerName', 'broker_name']),
-    brokerPhone: _readString(payload, const ['brokerPhone', 'broker_phone']),
-    truckReg: _readString(payload, const ['truckReg', 'truck_reg']),
-    truckType: _readString(payload, const ['truckType', 'truck_type']),
-    truckCategory: _readString(payload, const [
-      'truckCategory',
-      'truck_category',
+    clientName: _firstNonEmpty([
+      _readString(payload, const ['clientName', 'client_name']),
+      _readString(source, const ['clientName', 'client_name']),
     ]),
-    pickup: _readString(payload, const ['pickup']),
-    drop: _readString(payload, const ['drop']),
-    weight: _readString(payload, const ['weight']),
+    clientPhone: _firstNonEmpty([
+      _readString(payload, const ['clientPhone', 'client_phone']),
+      _readString(source, const ['clientPhone', 'client_phone']),
+    ]),
+    driverName: _firstNonEmpty([
+      _readString(payload, const ['driverName', 'driver_name']),
+      _readString(source, const ['driverName', 'driver_name']),
+      _readString(driver, const ['name', 'full_name', 'display_name']),
+    ]),
+    driverPhone: _firstNonEmpty([
+      _readString(payload, const ['driverPhone', 'driver_phone']),
+      _readString(source, const ['driverPhone', 'driver_phone']),
+      _readString(driver, const ['phone', 'mobile']),
+    ]),
+    brokerName: _firstNonEmpty([
+      _readString(payload, const ['brokerName', 'broker_name']),
+      _readString(source, const ['brokerName', 'broker_name']),
+      _readString(broker, const ['name', 'full_name', 'display_name']),
+    ]),
+    brokerPhone: _firstNonEmpty([
+      _readString(payload, const ['brokerPhone', 'broker_phone']),
+      _readString(source, const ['brokerPhone', 'broker_phone']),
+      _readString(broker, const ['phone', 'mobile']),
+    ]),
+    truckReg: _firstNonEmpty([
+      _readString(payload, const ['truckReg', 'truck_reg']),
+      _readString(source, const ['truckReg', 'truck_reg']),
+      _readString(truck, const [
+        'registrationNumber',
+        'registration_number',
+        'plateNumber',
+        'plate_number',
+        'plate',
+      ]),
+    ]),
+    truckType: _firstNonEmpty([
+      _readString(payload, const ['truckType', 'truck_type']),
+      _readString(source, const ['truckType', 'truck_type']),
+      _readString(truck, const [
+        'type',
+        'truckType',
+        'truck_type',
+        'vehicleType',
+      ]),
+    ]),
+    truckCategory: _firstNonEmpty([
+      _readString(payload, const ['truckCategory', 'truck_category']),
+      _readString(source, const ['truckCategory', 'truck_category']),
+      _readString(truck, const ['category', 'truckCategory', 'truck_category']),
+    ]),
+    pickup: _firstNonEmpty([
+      _readString(payload, const ['pickup']),
+      _readString(source, const [
+        'pickup',
+        'pickupLocation',
+        'pickup_location',
+      ]),
+      _readString(route, const ['from', 'pickup', 'origin', 'source']),
+    ]),
+    drop: _firstNonEmpty([
+      _readString(payload, const ['drop']),
+      _readString(source, const [
+        'drop',
+        'dropoffLocation',
+        'dropoff_location',
+      ]),
+      _readString(route, const ['to', 'dropoff', 'destination', 'target']),
+    ]),
+    weight: _firstNonEmpty([
+      _readString(payload, const ['weight']),
+      _readString(source, const ['weight']),
+      _readString(load, const ['weight', 'cargo_weight', 'load_weight']),
+    ]),
     amount: _readDouble(payload, const ['amount', 'price', 'value']),
     status: status,
     driverTimedOut: true,
@@ -360,11 +438,58 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   final load = _asMap(json['load']);
   final route = _asMap(json['route']);
   final cargo = _asMap(json['cargo']);
-  final status = _readString(json, const [
-    'status',
-    'job_status',
-    'request_status',
-    'booking_status',
+  final booking = _asMap(json['booking']);
+  final request = _asMap(json['request']);
+  final truck = _asMap(json['truck']);
+  final driver = _asMap(json['driver']);
+  final source = request.isNotEmpty
+      ? request
+      : booking.isNotEmpty
+      ? booking
+      : json;
+  final sourceRoute = _asMap(source['route']);
+  final sourceLoad = _asMap(source['load']);
+  final status = _firstNonEmpty([
+    _readString(json, const [
+      'status',
+      'job_status',
+      'jobStatus',
+      'request_status',
+      'requestStatus',
+      'booking_status',
+      'bookingStatus',
+      'state',
+    ]),
+    _readString(source, const [
+      'status',
+      'job_status',
+      'jobStatus',
+      'request_status',
+      'requestStatus',
+      'booking_status',
+      'bookingStatus',
+      'state',
+    ]),
+    _readString(request, const [
+      'status',
+      'job_status',
+      'jobStatus',
+      'request_status',
+      'requestStatus',
+      'booking_status',
+      'bookingStatus',
+      'state',
+    ]),
+    _readString(booking, const [
+      'status',
+      'job_status',
+      'jobStatus',
+      'request_status',
+      'requestStatus',
+      'booking_status',
+      'bookingStatus',
+      'state',
+    ]),
   ]).toLowerCase();
   final createdAt = _readString(json, const [
     'created_at',
@@ -382,27 +507,175 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'shipment_name',
       'package_name',
     ]),
+    _readString(source, const [
+      'product_name',
+      'cargo_name',
+      'title',
+      'shipment_name',
+      'package_name',
+    ]),
     _readString(cargo, const ['name', 'title', 'description']),
     'Booking request',
   ]);
   final fromLocation = _firstNonEmpty([
-    _readString(json, const ['from', 'pickup_location', 'origin', 'source']),
-    _readString(route, const ['from', 'pickup', 'origin', 'source']),
+    _readString(json, const [
+      'from',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+    ]),
+    _readString(source, const [
+      'from',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+    ]),
+    _readString(route, const [
+      'from',
+      'pickup',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickup_address',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+    ]),
+    _readString(sourceRoute, const [
+      'from',
+      'pickup',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickup_address',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+    ]),
     'Pickup location not provided',
   ]);
   final toLocation = _firstNonEmpty([
     _readString(json, const [
       'to',
       'dropoff_location',
+      'drop_off_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
       'destination',
+      'destination_address',
+      'destinationAddress',
       'target',
     ]),
-    _readString(route, const ['to', 'dropoff', 'destination', 'target']),
+    _readString(source, const [
+      'to',
+      'dropoff_location',
+      'drop_off_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+    ]),
+    _readString(route, const [
+      'to',
+      'dropoff',
+      'dropoff_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+    ]),
+    _readString(sourceRoute, const [
+      'to',
+      'dropoff',
+      'dropoff_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+    ]),
     'Drop-off location not provided',
   ]);
   final weight = _firstNonEmpty([
-    _readString(json, const ['weight', 'cargo_weight', 'load_weight']),
-    _readString(load, const ['weight', 'cargo_weight', 'load_weight']),
+    _readString(json, const [
+      'weight',
+      'cargo_weight',
+      'load_weight',
+      'cargoWeight',
+      'loadWeight',
+    ]),
+    _readString(load, const [
+      'weight',
+      'cargo_weight',
+      'load_weight',
+      'cargoWeight',
+      'loadWeight',
+    ]),
+    _readString(source, const [
+      'weight',
+      'cargo_weight',
+      'load_weight',
+      'cargoWeight',
+      'loadWeight',
+    ]),
+    _readString(sourceLoad, const [
+      'weight',
+      'cargo_weight',
+      'load_weight',
+      'cargoWeight',
+      'loadWeight',
+    ]),
     'N/A',
   ]);
   final vehicleType = _firstNonEmpty([
@@ -410,11 +683,33 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'vehicle_type',
       'truck_type',
       'required_vehicle_type',
+      'vehicleType',
+      'truckType',
+      'requiredVehicleType',
     ]),
     _readString(load, const [
       'vehicle_type',
       'truck_type',
       'required_vehicle_type',
+      'vehicleType',
+      'truckType',
+      'requiredVehicleType',
+    ]),
+    _readString(source, const [
+      'vehicle_type',
+      'truck_type',
+      'required_vehicle_type',
+      'vehicleType',
+      'truckType',
+      'requiredVehicleType',
+    ]),
+    _readString(sourceLoad, const [
+      'vehicle_type',
+      'truck_type',
+      'required_vehicle_type',
+      'vehicleType',
+      'truckType',
+      'requiredVehicleType',
     ]),
     'Truck',
   ]);
@@ -433,18 +728,109 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'quoted_price',
       'fare',
     ]),
+    _readString(source, const [
+      'value',
+      'price',
+      'amount',
+      'quoted_price',
+      'fare',
+    ]),
+    _readString(sourceLoad, const [
+      'value',
+      'price',
+      'amount',
+      'quoted_price',
+      'fare',
+    ]),
+    _readString(json, const ['amountText', 'priceText']),
+    _readString(source, const ['amountText', 'priceText']),
     '₹0',
   ]);
   final clientName = _firstNonEmpty([
     _readString(json, const ['client_name', 'customer_name', 'name']),
+    _readString(source, const ['client_name', 'customer_name', 'name']),
     _readString(client, const ['name', 'full_name', 'display_name']),
     _readString(customer, const ['name', 'full_name', 'display_name']),
     'Customer',
   ]);
+  final driverId = _firstNonEmpty([
+    _readString(json, const ['driver_id', 'driverId', 'assigned_driver_id']),
+    _readString(source, const ['driver_id', 'driverId', 'assigned_driver_id']),
+    _readString(request, const ['driver_id', 'driverId', 'assigned_driver_id']),
+    _readString(booking, const ['driver_id', 'driverId', 'assigned_driver_id']),
+  ]);
+  final truckId = _firstNonEmpty([
+    _readString(json, const ['truck_id', 'truckId', 'assigned_truck_id']),
+    _readString(source, const ['truck_id', 'truckId', 'assigned_truck_id']),
+    _readString(request, const ['truck_id', 'truckId', 'assigned_truck_id']),
+    _readString(booking, const ['truck_id', 'truckId', 'assigned_truck_id']),
+  ]);
+  final assignedDriverName = _firstNonEmpty([
+    _readString(json, const [
+      'assigned_driver_name',
+      'assignedDriverName',
+      'driver_name',
+      'driverName',
+    ]),
+    _readString(source, const [
+      'assigned_driver_name',
+      'assignedDriverName',
+      'driver_name',
+      'driverName',
+    ]),
+    _readString(request, const [
+      'assigned_driver_name',
+      'assignedDriverName',
+      'driver_name',
+      'driverName',
+    ]),
+    _readString(booking, const [
+      'assigned_driver_name',
+      'assignedDriverName',
+      'driver_name',
+      'driverName',
+    ]),
+    _readNestedName(driver, const ['name', 'full_name', 'display_name']),
+  ]);
+  final assignedTruckName = _firstNonEmpty([
+    _readString(json, const [
+      'assigned_truck_name',
+      'assignedTruckName',
+      'truck_name',
+      'truckName',
+      'truck_reg',
+      'truckReg',
+    ]),
+    _readString(source, const [
+      'assigned_truck_name',
+      'assignedTruckName',
+      'truck_name',
+      'truckName',
+      'truck_reg',
+      'truckReg',
+    ]),
+    _readString(request, const [
+      'assigned_truck_name',
+      'assignedTruckName',
+      'truck_name',
+      'truckName',
+      'truck_reg',
+      'truckReg',
+    ]),
+    _readString(booking, const [
+      'assigned_truck_name',
+      'assignedTruckName',
+      'truck_name',
+      'truckName',
+      'truck_reg',
+      'truckReg',
+    ]),
+    _readNestedName(truck, const ['name', 'full_name', 'display_name']),
+  ]);
 
   return BookingRequest(
     id: _readString(json, const ['id', 'request_id', 'job_request_id', 'uuid']),
-    status: status.isEmpty ? 'pending' : status,
+    status: status.isEmpty ? 'unknown' : status,
     clientName: clientName,
     clientInitials: _initials(clientName),
     productName: productName,
@@ -463,6 +849,10 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       _formatRelativeTime(createdAt),
     ]),
     requestedAt: _formatRelativeTime(createdAt),
+    driverId: driverId,
+    truckId: truckId,
+    assignedDriverName: assignedDriverName,
+    assignedTruckName: assignedTruckName,
     expiresInMinutes: expiresIn,
   );
 }
@@ -471,6 +861,11 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
   final offerHistory = _asList(json['offerHistory'] ?? json['offer_history']);
   final driverTimedOut =
       json['driverTimedOut'] == true || json['driver_timed_out'] == true;
+  final route = _asMap(json['route']);
+  final truck = _asMap(json['truck']);
+  final driver = _asMap(json['driver']);
+  final broker = _asMap(json['broker']);
+  final load = _asMap(json['load']);
   return BrokerDriverRequest(
     id: _readString(json, const [
       'id',
@@ -480,18 +875,63 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
     ]),
     bookingId: _readString(json, const ['bookingId', 'booking_id']),
     bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
-    clientName: _readString(json, const ['clientName', 'client_name']),
-    clientPhone: _readString(json, const ['clientPhone', 'client_phone']),
-    driverName: _readString(json, const ['driverName', 'driver_name']),
-    driverPhone: _readString(json, const ['driverPhone', 'driver_phone']),
-    brokerName: _readString(json, const ['brokerName', 'broker_name']),
-    brokerPhone: _readString(json, const ['brokerPhone', 'broker_phone']),
-    truckReg: _readString(json, const ['truckReg', 'truck_reg']),
-    truckType: _readString(json, const ['truckType', 'truck_type']),
-    truckCategory: _readString(json, const ['truckCategory', 'truck_category']),
-    pickup: _readString(json, const ['pickup']),
-    drop: _readString(json, const ['drop']),
-    weight: _readString(json, const ['weight']),
+    clientName: _firstNonEmpty([
+      _readString(json, const ['clientName', 'client_name']),
+    ]),
+    clientPhone: _firstNonEmpty([
+      _readString(json, const ['clientPhone', 'client_phone']),
+    ]),
+    driverName: _firstNonEmpty([
+      _readString(json, const ['driverName', 'driver_name']),
+      _readString(driver, const ['name', 'full_name', 'display_name']),
+    ]),
+    driverPhone: _firstNonEmpty([
+      _readString(json, const ['driverPhone', 'driver_phone']),
+      _readString(driver, const ['phone', 'mobile']),
+    ]),
+    brokerName: _firstNonEmpty([
+      _readString(json, const ['brokerName', 'broker_name']),
+      _readString(broker, const ['name', 'full_name', 'display_name']),
+    ]),
+    brokerPhone: _firstNonEmpty([
+      _readString(json, const ['brokerPhone', 'broker_phone']),
+      _readString(broker, const ['phone', 'mobile']),
+    ]),
+    truckReg: _firstNonEmpty([
+      _readString(json, const ['truckReg', 'truck_reg']),
+      _readString(truck, const [
+        'registrationNumber',
+        'registration_number',
+        'plateNumber',
+        'plate_number',
+        'plate',
+      ]),
+    ]),
+    truckType: _firstNonEmpty([
+      _readString(json, const ['truckType', 'truck_type']),
+      _readString(truck, const [
+        'type',
+        'truckType',
+        'truck_type',
+        'vehicleType',
+      ]),
+    ]),
+    truckCategory: _firstNonEmpty([
+      _readString(json, const ['truckCategory', 'truck_category']),
+      _readString(truck, const ['category', 'truckCategory', 'truck_category']),
+    ]),
+    pickup: _firstNonEmpty([
+      _readString(json, const ['pickup']),
+      _readString(route, const ['from', 'pickup', 'origin', 'source']),
+    ]),
+    drop: _firstNonEmpty([
+      _readString(json, const ['drop']),
+      _readString(route, const ['to', 'dropoff', 'destination', 'target']),
+    ]),
+    weight: _firstNonEmpty([
+      _readString(json, const ['weight']),
+      _readString(load, const ['weight', 'cargo_weight', 'load_weight']),
+    ]),
     amount: _readDouble(json, const ['amount', 'price', 'value']),
     status: _readString(json, const ['status']).isEmpty
         ? 'pending'
@@ -1128,7 +1568,21 @@ TrackingDemoShipment brokerDriverRequestToShipment(
 }
 
 bool isPendingBookingRequest(BookingRequest request) {
-  return _normalizeRequestStatus(request.status) == 'pending';
+  final status = _normalizeRequestStatus(request.status);
+  const pendingStatuses = {
+    'pending',
+    'requested',
+    'new',
+    'open',
+    'open_request',
+    'review',
+    'review_request',
+    'awaiting',
+    'awaiting_action',
+    'waiting',
+  };
+
+  return pendingStatuses.contains(status);
 }
 
 bool isCompletedBookingRequest(BookingRequest request) {
@@ -1146,6 +1600,12 @@ bool isCancelledBookingRequest(BookingRequest request) {
 bool isAcceptedBookingRequest(BookingRequest request) {
   final status = _normalizeRequestStatus(request.status);
   return status == 'accepted' || status == 'confirmed' || status == 'assigned';
+}
+
+bool isActiveBrokerDriverRequest(BrokerDriverRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  return request.driverTimedOut &&
+      (status == 'requested' || status == 'pending' || status == 'countered');
 }
 
 String _normalizeRequestStatus(String status) {
@@ -1529,6 +1989,17 @@ class BrokerRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final status = _normalizeRequestStatus(request.status);
+    final statusVisual = _bookingRequestStatusVisual(status);
+    final pickupText = _bookingRequestLocationText(
+      request.from,
+      'Pickup location unavailable',
+    );
+    final dropText = _bookingRequestLocationText(
+      request.to,
+      'Drop-off location unavailable',
+    );
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -1576,6 +2047,26 @@ class BrokerRequestCard extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                       ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusVisual.backgroundColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          statusVisual.label,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: statusVisual.textColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1613,7 +2104,7 @@ class BrokerRequestCard extends StatelessWidget {
                         label: 'Pickup',
                         icon: Icons.location_on_rounded,
                         iconColor: const Color(0xFF1F88C9),
-                        place: request.from,
+                        place: pickupText,
                         timeText: request.requestedAt,
                       ),
                       const SizedBox(height: 14),
@@ -1621,7 +2112,7 @@ class BrokerRequestCard extends StatelessWidget {
                         label: 'Drop-off',
                         icon: Icons.near_me_rounded,
                         iconColor: const Color(0xFF1F88C9),
-                        place: request.to,
+                        place: dropText,
                         timeText: '',
                       ),
                     ],
@@ -1659,23 +2150,57 @@ class BrokerRequestCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: onTap,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1F88C9),
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            if (isPendingBookingRequest(request))
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: onTap,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F88C9),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Review request',
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-                child: const Text(
-                  'Open request',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: statusVisual.backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: statusVisual.borderColor),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Icon(
+                      statusVisual.icon,
+                      size: 16,
+                      color: statusVisual.textColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        statusVisual.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: statusVisual.textColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -1802,6 +2327,86 @@ class _LoadPoint extends StatelessWidget {
       ],
     );
   }
+}
+
+class _BookingRequestStatusVisual {
+  const _BookingRequestStatusVisual({
+    required this.label,
+    required this.description,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.textColor,
+    required this.icon,
+  });
+
+  final String label;
+  final String description;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color textColor;
+  final IconData icon;
+}
+
+_BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
+  switch (status) {
+    case 'accepted':
+    case 'confirmed':
+    case 'assigned':
+      return const _BookingRequestStatusVisual(
+        label: 'Accepted',
+        description: 'Accepted - booking confirmed',
+        backgroundColor: Color(0xFFEAF8EF),
+        borderColor: Color(0xFFB7E4C7),
+        textColor: Color(0xFF136F3E),
+        icon: Icons.check_circle_rounded,
+      );
+    case 'countered':
+      return const _BookingRequestStatusVisual(
+        label: 'Countered',
+        description: 'Countered - waiting for the next response',
+        backgroundColor: Color(0xFFFEF3C7),
+        borderColor: Color(0xFFFCD34D),
+        textColor: Color(0xFFB45309),
+        icon: Icons.payments_rounded,
+      );
+    case 'declined':
+    case 'rejected':
+    case 'expired':
+      return const _BookingRequestStatusVisual(
+        label: 'Declined',
+        description: 'Declined - no longer available',
+        backgroundColor: Color(0xFFFDECEC),
+        borderColor: Color(0xFFF7B4B4),
+        textColor: Color(0xFFB42318),
+        icon: Icons.cancel_rounded,
+      );
+    default:
+      return const _BookingRequestStatusVisual(
+        label: 'Pending',
+        description: 'Review request',
+        backgroundColor: Color(0xFFEFF6FF),
+        borderColor: Color(0xFFC7DAFF),
+        textColor: Color(0xFF1F88C9),
+        icon: Icons.inbox_rounded,
+      );
+  }
+}
+
+String _bookingRequestLocationText(String value, String fallback) {
+  final text = value.trim();
+  if (text.isEmpty) {
+    return fallback;
+  }
+
+  final normalized = text.toLowerCase();
+  if (normalized.contains('not provided') ||
+      normalized == 'pickup' ||
+      normalized == 'drop' ||
+      normalized == 'drop-off') {
+    return fallback;
+  }
+
+  return text;
 }
 
 class VehicleCard extends StatelessWidget {

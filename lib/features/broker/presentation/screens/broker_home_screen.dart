@@ -24,6 +24,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
     final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
     final pendingRequests = requests.where(isPendingBookingRequest).toList();
+    final visibleRequests = requests;
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -53,7 +54,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           const SizedBox(height: 14),
           requestsAsync.when(
             data: (_) {
-              if (pendingRequests.isEmpty) {
+              if (visibleRequests.isEmpty) {
                 return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -103,17 +104,17 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 children: [
                   for (
                     var index = 0;
-                    index < pendingRequests.length;
+                    index < visibleRequests.length;
                     index++
                   ) ...[
                     BrokerRequestCard(
-                      request: pendingRequests[index],
+                      request: visibleRequests[index],
                       onTap: () => context.push(
                         '/broker/request',
-                        extra: pendingRequests[index],
+                        extra: visibleRequests[index],
                       ),
                     ),
-                    if (index != pendingRequests.length - 1)
+                    if (index != visibleRequests.length - 1)
                       const SizedBox(height: 12),
                   ],
                 ],

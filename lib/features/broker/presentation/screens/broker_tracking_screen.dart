@@ -189,7 +189,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     final List<BrokerDriver> availableDrivers = roster;
     final timedOutRequests =
         driverRequestsAsync.valueOrNull
-            ?.where((request) => request.driverTimedOut)
+            ?.where(isActiveBrokerDriverRequest)
             .toList() ??
         const <BrokerDriverRequest>[];
     final pendingDriverRequests =
@@ -203,6 +203,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
             ?.where(
               (notification) =>
                   brokerLooksLikeTimedOutNegotiationPayload(notification.raw),
+            )
+            .where(
+              (notification) => isActiveBrokerDriverRequest(
+                brokerDriverRequestFromNotificationPayload(notification.raw),
+              ),
             )
             .toList() ??
         const <ClientNotification>[];
