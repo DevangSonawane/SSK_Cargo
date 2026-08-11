@@ -281,6 +281,7 @@ class ClientBookingOffer {
     required this.amountText,
     required this.brokerName,
     required this.note,
+    required this.driverTimedOut,
     required this.createdAt,
     required this.raw,
   });
@@ -332,6 +333,10 @@ class ClientBookingOffer {
               'display_name',
             ]),
       note: _readString(json, const ['note', 'message', 'remarks']),
+      driverTimedOut: _readBool(json, const [
+        'driverTimedOut',
+        'driver_timed_out',
+      ]),
       createdAt: _parseDateTime(
         json['created_at'] ?? json['createdAt'] ?? json['updated_at'],
       ),
@@ -344,6 +349,7 @@ class ClientBookingOffer {
   final String amountText;
   final String brokerName;
   final String note;
+  final bool driverTimedOut;
   final DateTime? createdAt;
   final Map<String, dynamic> raw;
 

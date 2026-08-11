@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
+import '../../../client/presentation/widgets/client_flow_widgets.dart';
 
 class BrokerRequestDetailScreen extends ConsumerStatefulWidget {
   const BrokerRequestDetailScreen({super.key, this.initialRequest});
@@ -24,24 +26,23 @@ class _BrokerRequestDetailScreenState
   String? _selectedDriverId;
   String? _selectedTruckId;
 
-  BookingRequest get _request =>
-      widget.initialRequest is BookingRequest
-          ? widget.initialRequest as BookingRequest
-          : const BookingRequest(
-              id: '',
-              status: 'pending',
-              clientName: 'Customer',
-              clientInitials: 'C',
-              productName: 'Booking request',
-              from: 'Pickup location not provided',
-              to: 'Drop-off location not provided',
-              weight: 'N/A',
-              vehicleType: 'Truck',
-              value: '₹0',
-              distance: '',
-              etaText: '',
-              requestedAt: '',
-            );
+  BookingRequest get _request => widget.initialRequest is BookingRequest
+      ? widget.initialRequest as BookingRequest
+      : const BookingRequest(
+          id: '',
+          status: 'pending',
+          clientName: 'Customer',
+          clientInitials: 'C',
+          productName: 'Booking request',
+          from: 'Pickup location not provided',
+          to: 'Drop-off location not provided',
+          weight: 'N/A',
+          vehicleType: 'Truck',
+          value: '₹0',
+          distance: '',
+          etaText: '',
+          requestedAt: '',
+        );
 
   @override
   void initState() {
@@ -60,15 +61,14 @@ class _BrokerRequestDetailScreenState
   }
 
   double _readAmount(String value) {
-    final parsed = double.tryParse(
-      value.replaceAll(RegExp(r'[^0-9.]'), ''),
-    );
+    final parsed = double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
     return parsed == null || parsed.isNaN ? 0 : parsed;
   }
 
   String? _defaultDriverId(List<BrokerDriver> drivers) {
     for (final driver in drivers) {
-      if (driver.vehicleType.toLowerCase() == _request.vehicleType.toLowerCase()) {
+      if (driver.vehicleType.toLowerCase() ==
+          _request.vehicleType.toLowerCase()) {
         return driver.id;
       }
     }
@@ -170,10 +170,12 @@ class _BrokerRequestDetailScreenState
 
     final driverId = _selectedDriverId ?? _defaultDriverId(drivers);
     final truckId = _selectedTruckId ?? _defaultTruckId(trucks);
-    final selectedDriver = drivers.where((driver) => driver.id == driverId).isNotEmpty
+    final selectedDriver =
+        drivers.where((driver) => driver.id == driverId).isNotEmpty
         ? drivers.firstWhere((driver) => driver.id == driverId)
         : null;
-    final selectedTruck = trucks.where((truck) => truck.id == truckId).isNotEmpty
+    final selectedTruck =
+        trucks.where((truck) => truck.id == truckId).isNotEmpty
         ? trucks.firstWhere((truck) => truck.id == truckId)
         : null;
 
@@ -194,7 +196,7 @@ class _BrokerRequestDetailScreenState
             accessToken: session.tokens.accessToken,
             id: _request.id,
           );
-      await ref
+      final assignResponse = await ref
           .read(apiClientProvider)
           .assignDriverToJob(
             accessToken: session.tokens.accessToken,
@@ -204,12 +206,20 @@ class _BrokerRequestDetailScreenState
           );
       ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
 
-      final shipment = bookingRequestToShipment(
-        _request,
-        status: 'Assigned',
-        assignedDriverName: selectedDriver.name,
-        assignedTruckName: '${selectedTruck.label} • ${selectedTruck.plateNumber}',
+      final bookingShipment = _bookingShipmentFromAssignResponse(
+        assignResponse,
+        fallbackDriver: selectedDriver,
+        fallbackTruck: selectedTruck,
       );
+      final shipment =
+          bookingShipment ??
+          bookingRequestToShipment(
+            _request,
+            status: 'Assigned',
+            assignedDriverName: selectedDriver.name,
+            assignedTruckName:
+                '${selectedTruck.label} • ${selectedTruck.plateNumber}',
+          );
 
       if (!mounted) return;
       context.go('/broker/tracking/details', extra: shipment);
@@ -267,10 +277,11 @@ class _BrokerRequestDetailScreenState
                       Expanded(
                         child: Text(
                           request.productName,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF101828),
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF101828),
+                              ),
                         ),
                       ),
                       Container(
@@ -284,10 +295,11 @@ class _BrokerRequestDetailScreenState
                         ),
                         child: Text(
                           request.value,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF1F88C9),
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF1F88C9),
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                     ],
@@ -441,11 +453,11 @@ class _BrokerRequestDetailScreenState
                                 children: [
                                   Expanded(
                                     child: OutlinedButton(
-                                      onPressed:
-                                          _submitting ? null : _reject,
+                                      onPressed: _submitting ? null : _reject,
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor:
-                                            const Color(0xFFE23A4B),
+                                        foregroundColor: const Color(
+                                          0xFFE23A4B,
+                                        ),
                                         side: const BorderSide(
                                           color: Color(0xFFF5B7BF),
                                         ),
@@ -456,11 +468,11 @@ class _BrokerRequestDetailScreenState
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: OutlinedButton(
-                                      onPressed:
-                                          _submitting ? null : _counter,
+                                      onPressed: _submitting ? null : _counter,
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor:
-                                            const Color(0xFF1F88C9),
+                                        foregroundColor: const Color(
+                                          0xFF1F88C9,
+                                        ),
                                         side: const BorderSide(
                                           color: Color(0xFF1F88C9),
                                         ),
@@ -505,6 +517,42 @@ class _BrokerRequestDetailScreenState
       ),
     );
   }
+}
+
+TrackingDemoShipment? _bookingShipmentFromAssignResponse(
+  Map<String, dynamic> response, {
+  required BrokerDriver fallbackDriver,
+  required BrokerVehicle fallbackTruck,
+}) {
+  final data = response['data'];
+  final payload = data is Map<String, dynamic> ? data : response;
+  final booking = payload['booking'];
+  if (booking is! Map<String, dynamic>) {
+    return null;
+  }
+
+  final bookingModel = ClientBooking.fromJson(booking);
+  final base = trackingShipmentFromBooking(bookingModel);
+  return base.copyWith(
+    status: _shipmentStatusFromBooking(bookingModel.status),
+    assignedDriverName: fallbackDriver.name,
+    assignedTruckName: '${fallbackTruck.label} • ${fallbackTruck.plateNumber}',
+  );
+}
+
+String _shipmentStatusFromBooking(String status) {
+  final normalized = status.trim().toLowerCase();
+  return switch (normalized) {
+    'confirmed' => 'Confirmed',
+    'assigned' => 'Assigned',
+    'en_route_pickup' => 'En Route',
+    'picked_up' => 'Picked Up',
+    'in_transit' => 'In Transit',
+    'delivered' => 'Delivered',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled',
+    _ => status.isEmpty ? 'Assigned' : status,
+  };
 }
 
 class _SummaryRow extends StatelessWidget {

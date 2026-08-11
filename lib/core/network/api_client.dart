@@ -1157,11 +1157,16 @@ class SskApiClient {
   Future<Map<String, dynamic>> cancelBooking({
     required String accessToken,
     required String id,
+    required String reason,
   }) async {
-    developer.log('PATCH /api/bookings/$id/cancel', name: 'SSK.API');
+    developer.log(
+      'PATCH /api/bookings/$id/cancel reasonLength=${reason.trim().length}',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/bookings/$id/cancel',
+        data: {'reason': reason},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

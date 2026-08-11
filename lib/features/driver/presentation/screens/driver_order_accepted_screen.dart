@@ -66,12 +66,16 @@ class _DriverOrderAcceptedScreenState
 
       if (!mounted) return;
 
-      if (navigateOnSuccess && effectiveTripId.isNotEmpty) {
-        setState(() {
-          _accepted = true;
-        });
-        context.go('/driver/delivery-details/$effectiveTripId');
-        return;
+      if (navigateOnSuccess) {
+        if (mounted) {
+          setState(() {
+            _accepted = true;
+          });
+        }
+        if (effectiveTripId.isNotEmpty) {
+          context.go('/driver/delivery-details/$effectiveTripId');
+          return;
+        }
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,9 +226,7 @@ class _DriverOrderAcceptedScreenState
                             Text(
                               'Offer price',
                               style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             Text(
                               '₹${selectedAmount.toStringAsFixed(0)}',
@@ -259,16 +261,12 @@ class _DriverOrderAcceptedScreenState
                             Text(
                               '₹${minOffer.toStringAsFixed(0)}',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF98A2B3),
-                                  ),
+                                  ?.copyWith(color: const Color(0xFF98A2B3)),
                             ),
                             Text(
                               '₹${maxOffer.toStringAsFixed(0)}',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF98A2B3),
-                                  ),
+                                  ?.copyWith(color: const Color(0xFF98A2B3)),
                             ),
                           ],
                         ),
@@ -371,7 +369,7 @@ class _DriverOrderAcceptedScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        'Request accepted. Your trip screens are now unlocked.',
+                        'Request accepted. Waiting for the client to confirm the booking.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF2FA56E),
                           fontWeight: FontWeight.w700,

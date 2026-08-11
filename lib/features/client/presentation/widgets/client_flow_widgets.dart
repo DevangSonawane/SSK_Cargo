@@ -2323,9 +2323,13 @@ class BookingLocationScreen extends ConsumerStatefulWidget {
       _BookingLocationScreenState();
 }
 
-enum _BookingFlowStep { location, itemDetails, brokerSelection, payment }
-
-enum _NegotiationSheetStep { slider, loading, counterOffer }
+enum _BookingFlowStep {
+  location,
+  itemDetails,
+  brokerSelection,
+  payment,
+  waiting,
+}
 
 enum _TruckAction { continueBooking, negotiate }
 
@@ -2335,18 +2339,9 @@ class _NegotiationSheetResult {
   factory _NegotiationSheetResult.accepted(double amount) =>
       _NegotiationSheetResult._(true, amount);
 
-  factory _NegotiationSheetResult.chooseAnotherBroker() =>
-      const _NegotiationSheetResult._(false, null);
-
   final bool accepted;
   final double? amount;
 }
-
-const _brokerNegotiationMessages = <String>[
-  'Sending your negotiation offer',
-  'Waiting for the broker to review it',
-  'Give us a moment, the broker is responding',
-];
 
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   static const LatLng _fallbackMapCenter = LatLng(19.0760, 72.8777);
@@ -2378,6 +2373,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _resolvingCurrentLocation = false;
   bool _bookingCreated = false;
   String? _bookingReference;
+  ClientBookingOffer? _driverRequest;
   bool _weightUnknown = false;
   String? _weightError;
   late BookingData _draft;
@@ -2785,14 +2781,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         });
         await _submitBooking();
         return;
+      case _BookingFlowStep.waiting:
+        return;
     }
   }
 
   void _acceptSelectedBroker(NearbyTruck truck) {
     setState(() {
-      _draft = _draft.copyWith(brokerId: truck.id);
-      _step = _BookingFlowStep.payment;
+      _selectedTruck = truck;
+      _draft = _draft.copyWith(
+        brokerId: truck.id,
+        amount: _draft.amount > 0 ? _draft.amount : _priceValue(_vehicle.price),
+      );
     });
+    unawaited(_submitBookingAndRequestTruck(truckId: truck.id));
   }
 
   Future<void> _openNegotiationSheet(NearbyTruck truck) async {
@@ -2824,13 +2826,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     if (outcome.accepted) {
       setState(() {
+        _selectedTruck = truck;
         _draft = _draft.copyWith(brokerId: truck.id, amount: outcome.amount);
-        _step = _BookingFlowStep.payment;
       });
+      unawaited(_submitBookingAndRequestTruck(truckId: truck.id));
     }
   }
 
   Future<void> _handleTruckTap(NearbyTruck truck) async {
+    if (_submitting || _bookingCreated) {
+      return;
+    }
     setState(() {
       _selectedTruck = truck;
     });
@@ -3312,6 +3318,83 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  Future<void> _submitBookingAndRequestTruck({required String truckId}) async {
+    if (_submitting || _bookingCreated) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to create a booking.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+    });
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .createBooking(
+            accessToken: session.tokens.accessToken,
+            booking: _bookingPayload(),
+            idempotencyKey: _buildIdempotencyKey(),
+          );
+      final bookingNumber = _extractBookingNumber(response);
+      final bookingId = _extractBookingId(response);
+      final resolvedBookingNumber = bookingNumber.isNotEmpty
+          ? bookingNumber
+          : await _fetchLatestBookingNumber(session.tokens.accessToken);
+
+      ClientBookingOffer? driverRequest;
+      if (bookingId.isNotEmpty && truckId.trim().isNotEmpty) {
+        try {
+          final requestResponse = await ref
+              .read(apiClientProvider)
+              .requestTruckForBooking(
+                accessToken: session.tokens.accessToken,
+                bookingId: bookingId,
+                truckId: truckId,
+              );
+          driverRequest = _extractDriverRequest(requestResponse);
+        } catch (_) {
+          driverRequest = null;
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _submitting = false;
+        _bookingCreated = true;
+        _bookingReference = resolvedBookingNumber;
+        _driverRequest = driverRequest;
+        _step = driverRequest != null
+            ? _BookingFlowStep.waiting
+            : _BookingFlowStep.payment;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    }
+  }
+
   Map<String, dynamic> _bookingPayload() {
     final scheduled =
         _draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3));
@@ -3505,6 +3588,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final showBottomButton = switch (_step) {
       _BookingFlowStep.location || _BookingFlowStep.payment => true,
+      _BookingFlowStep.waiting => false,
       _BookingFlowStep.brokerSelection => false,
       _BookingFlowStep.itemDetails => false,
     };
@@ -3539,6 +3623,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           _BookingFlowStep.payment => 'Continue',
                           _BookingFlowStep.brokerSelection => 'Continue',
                           _BookingFlowStep.itemDetails => 'Next',
+                          _BookingFlowStep.waiting => 'Continue',
                         }),
                 ),
               ),
@@ -3577,6 +3662,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             _BookingFlowStep.itemDetails,
                                           _BookingFlowStep.payment =>
                                             _BookingFlowStep.brokerSelection,
+                                          _BookingFlowStep.waiting =>
+                                            _BookingFlowStep.payment,
                                         };
                                       });
                                     },
@@ -3598,6 +3685,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       _BookingFlowStep.brokerSelection =>
                                         'Choose trucks',
                                       _BookingFlowStep.payment => 'Payment',
+                                      _BookingFlowStep.waiting => 'Waiting',
                                     },
                                     style: Theme.of(context)
                                         .textTheme
@@ -3657,6 +3745,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                         _BookingFlowStep.itemDetails,
                                       _BookingFlowStep.payment =>
                                         _BookingFlowStep.brokerSelection,
+                                      _BookingFlowStep.waiting =>
+                                        _BookingFlowStep.payment,
                                     };
                                   });
                                 },
@@ -3678,6 +3768,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   _BookingFlowStep.brokerSelection =>
                                     'Choose trucks',
                                   _BookingFlowStep.payment => 'Payment',
+                                  _BookingFlowStep.waiting => 'Waiting',
                                 },
                                 style: Theme.of(context).textTheme.labelLarge
                                     ?.copyWith(
@@ -3720,6 +3811,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingCreated
             ? _buildSuccessStep(context)
             : _buildPaymentStep(context),
+      _BookingFlowStep.waiting => _buildWaitingStep(context),
     };
   }
 
@@ -4369,6 +4461,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
+  Widget _buildWaitingStep(BuildContext context) {
+    return _BookingWaitingCard(
+      bookingReference: _bookingReference,
+      driverRequest: _driverRequest,
+      onTrack: () => context.go('/client/tracking'),
+      onHome: _goToClientHome,
+    );
+  }
+
   void _goToClientHome() {
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
@@ -4520,10 +4621,7 @@ class _BrokerNegotiationSheet extends StatefulWidget {
 }
 
 class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
-  _NegotiationSheetStep _step = _NegotiationSheetStep.slider;
   late double _value;
-  double? _counterOffer;
-  int _negotiationToken = 0;
 
   @override
   void initState() {
@@ -4531,32 +4629,8 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
     _value = widget.initialPrice;
   }
 
-  void _startNegotiation() {
-    final token = ++_negotiationToken;
-    setState(() {
-      _step = _NegotiationSheetStep.loading;
-    });
-
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted || token != _negotiationToken) {
-        return;
-      }
-      final counterOffer = double.parse((_value * 1.11).toStringAsFixed(0));
-      setState(() {
-        _counterOffer = counterOffer;
-        _step = _NegotiationSheetStep.counterOffer;
-      });
-    });
-  }
-
-  void _acceptCounterOffer() {
-    Navigator.of(
-      context,
-    ).pop(_NegotiationSheetResult.accepted(_counterOffer ?? _value));
-  }
-
-  void _chooseAnotherBroker() {
-    Navigator.of(context).pop(_NegotiationSheetResult.chooseAnotherBroker());
+  void _continueWithSelectedPrice() {
+    Navigator.of(context).pop(_NegotiationSheetResult.accepted(_value));
   }
 
   @override
@@ -4589,38 +4663,17 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  child: switch (_step) {
-                    _NegotiationSheetStep.slider => _NegotiationSliderStep(
-                      key: const ValueKey('slider'),
-                      truck: widget.truck,
-                      value: _value,
-                      minPrice: widget.minPrice,
-                      maxPrice: widget.maxPrice,
-                      onChanged: (value) {
-                        setState(() {
-                          _value = value;
-                        });
-                      },
-                      onNegotiate: _startNegotiation,
-                    ),
-                    _NegotiationSheetStep.loading => _NegotiationLoadingStep(
-                      key: const ValueKey('loading'),
-                      truck: widget.truck,
-                      messages: _brokerNegotiationMessages,
-                    ),
-                    _NegotiationSheetStep.counterOffer =>
-                      _NegotiationCounterOfferStep(
-                        key: const ValueKey('counter'),
-                        truck: widget.truck,
-                        counterOfferAmount: _counterOffer ?? _value,
-                        onAccept: _acceptCounterOffer,
-                        onCancel: _chooseAnotherBroker,
-                      ),
+                _NegotiationSliderStep(
+                  truck: widget.truck,
+                  value: _value,
+                  minPrice: widget.minPrice,
+                  maxPrice: widget.maxPrice,
+                  onChanged: (value) {
+                    setState(() {
+                      _value = value;
+                    });
                   },
+                  onNegotiate: _continueWithSelectedPrice,
                 ),
               ],
             ),
@@ -4633,7 +4686,6 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
 
 class _NegotiationSliderStep extends StatelessWidget {
   const _NegotiationSliderStep({
-    super.key,
     required this.truck,
     required this.value,
     required this.minPrice,
@@ -4656,7 +4708,7 @@ class _NegotiationSliderStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Negotiate with ${truck.displayTitle}',
+          'Review price for ${truck.displayTitle}',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: const Color(0xFF101828),
             fontWeight: FontWeight.w800,
@@ -4664,7 +4716,7 @@ class _NegotiationSliderStep extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Use the slider to set a single offer amount. This stays inside the popup.',
+          'Use the slider to set the amount you want to continue with.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
             height: 1.45,
@@ -4738,186 +4790,10 @@ class _NegotiationSliderStep extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF2FA56E),
             ),
-            child: const Text('Negotiate'),
+            child: const Text('Continue with this price'),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _NegotiationLoadingStep extends StatelessWidget {
-  const _NegotiationLoadingStep({
-    super.key,
-    required this.truck,
-    required this.messages,
-  });
-
-  final NearbyTruck truck;
-  final List<String> messages;
-
-  @override
-  Widget build(BuildContext context) {
-    final message = messages.isEmpty
-        ? 'Waiting for broker response'
-        : messages.first;
-
-    return SizedBox(
-      height: 320,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(
-              color: Color(0xFF2FA56E),
-              strokeWidth: 3,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Negotiating with ${truck.displayTitle}...',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NegotiationCounterOfferStep extends StatelessWidget {
-  const _NegotiationCounterOfferStep({
-    super.key,
-    required this.truck,
-    required this.counterOfferAmount,
-    required this.onAccept,
-    required this.onCancel,
-  });
-
-  final NearbyTruck truck;
-  final double counterOfferAmount;
-  final VoidCallback onAccept;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${truck.displayTitle} replied with a new price',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'You can accept it or choose another broker.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.local_shipping_rounded,
-                      color: Color(0xFF2FA56E),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          truck.displaySubtitle,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: const Color(0xFF667085),
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Counter offer: ₹${counterOfferAmount.toStringAsFixed(counterOfferAmount % 1 == 0 ? 0 : 2)}',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: const Color(0xFF101828),
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: onAccept,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2FA56E),
-                    ),
-                    child: const Text('Accept'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onCancel,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFE23A4B),
-                      side: const BorderSide(color: Color(0xFFE23A4B)),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -5712,6 +5588,145 @@ class _BookingSuccessCard extends StatelessWidget {
   }
 }
 
+class _BookingWaitingCard extends StatelessWidget {
+  const _BookingWaitingCard({
+    required this.bookingReference,
+    required this.driverRequest,
+    required this.onTrack,
+    required this.onHome,
+  });
+
+  final String? bookingReference;
+  final ClientBookingOffer? driverRequest;
+  final VoidCallback onTrack;
+  final VoidCallback onHome;
+
+  @override
+  Widget build(BuildContext context) {
+    final request = driverRequest;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FB),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF2FF),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1A73E8).withValues(alpha: 0.16),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.hourglass_top_rounded,
+              color: Color(0xFF1A73E8),
+              size: 52,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Waiting for driver response',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            request == null
+                ? 'Your booking request has been sent. We will update you as soon as the truck responds.'
+                : 'Request sent to ${request.brokerName.isNotEmpty ? request.brokerName : 'the selected truck'}. Open tracking to review the live negotiation.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            bookingReference == null || bookingReference!.isEmpty
+                ? 'Booking Number: Pending'
+                : 'Booking Number: $bookingReference',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (request != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE8EDF2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    request.brokerName.isNotEmpty
+                        ? request.brokerName
+                        : 'Selected truck',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF101828),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    request.status == 'countered'
+                        ? 'Driver countered. Tracking will show the next action.'
+                        : request.driverTimedOut
+                        ? 'Driver timed out. The broker can take over now.'
+                        : 'Waiting on the driver to respond.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: onTrack,
+                  child: const Text('Open tracking'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onHome,
+                  child: const Text('Go to home'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 String _truckCategoryForVehicle(String label) {
   final text = label.toLowerCase();
   if (text.contains('small')) return 'small';
@@ -5856,6 +5871,56 @@ String _extractBookingNumber(Map<String, dynamic> json) {
     if (value != null && value.isNotEmpty) return value;
   }
   return '';
+}
+
+String _extractBookingId(Map<String, dynamic> json) {
+  final data = json['data'];
+  if (data is Map<String, dynamic>) {
+    for (final key in const ['booking_id', 'bookingId', 'id', 'uuid']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    final booking = data['booking'];
+    if (booking is Map<String, dynamic>) {
+      for (final key in const ['booking_id', 'bookingId', 'id', 'uuid']) {
+        final value = booking[key]?.toString().trim();
+        if (value != null && value.isNotEmpty) return value;
+      }
+    }
+  }
+  for (final key in const ['booking_id', 'bookingId', 'id', 'uuid']) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) return value;
+  }
+  return '';
+}
+
+ClientBookingOffer? _extractDriverRequest(Map<String, dynamic> json) {
+  final data = json['data'];
+  final root = data is Map<String, dynamic> ? data : json;
+
+  final candidates = <Object?>[
+    root['request'],
+    root['driverRequest'],
+    root['driver_request'],
+    root['item'],
+    root,
+  ];
+
+  for (final candidate in candidates) {
+    if (candidate is Map<String, dynamic>) {
+      if (candidate.containsKey('id') || candidate.containsKey('status')) {
+        return ClientBookingOffer.fromJson(candidate);
+      }
+    } else if (candidate is Map) {
+      final map = candidate.cast<String, dynamic>();
+      if (map.containsKey('id') || map.containsKey('status')) {
+        return ClientBookingOffer.fromJson(map);
+      }
+    }
+  }
+
+  return null;
 }
 
 class _BookingSummaryCard extends StatelessWidget {

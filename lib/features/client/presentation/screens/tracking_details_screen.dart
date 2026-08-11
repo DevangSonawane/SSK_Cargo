@@ -7,6 +7,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../widgets/client_flow_widgets.dart';
@@ -23,10 +24,14 @@ class TrackingDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
+  static const Duration _refreshInterval = Duration(seconds: 6);
+
   TrackingDemoShipment? _resolvedShipment;
   bool _isLiveTracking = false;
   bool _isCancelling = false;
   bool _isBookingCancelled = false;
+  Timer? _refreshTimer;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   void _setBottomNavVisible(bool visible) {
     ref.read(bottomNavVisibleProvider.notifier).state = visible;
@@ -49,6 +54,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     super.initState();
     _resolvedShipment = widget.shipment;
     _refreshShipment();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startLiveShipmentUpdates();
+      }
+    });
   }
 
   double? _toDouble(Object? value) {
@@ -110,10 +120,58 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
   }
 
+  String _readPayloadString(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final value = map[key];
+      if (value == null) {
+        continue;
+      }
+      final text = value.toString().trim();
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
   @override
   void dispose() {
+    _refreshTimer?.cancel();
+    _driverRequestSubscription?.cancel();
     _setBottomNavVisible(true);
     super.dispose();
+  }
+
+  Future<void> _startLiveShipmentUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final bookingId = _readPayloadString(payload, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      if (bookingId.isNotEmpty && bookingId == widget.shipment.bookingId) {
+        _refreshShipment();
+      }
+    });
+
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        _refreshShipment();
+      }
+    });
   }
 
   bool get _canCancelBooking {
@@ -121,7 +179,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     return _shipment.bookingId != null &&
         !_isBookingCancelled &&
         (status == null ||
-            const {'pending', 'confirmed', 'assigned'}.contains(status));
+            const {
+              'pending',
+              'confirmed',
+              'assigned',
+              'en_route_pickup',
+            }.contains(status));
   }
 
   Future<void> _cancelBooking() async {
@@ -145,11 +208,16 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     });
 
     try {
+      final reason = await _promptCancellationReason();
+      if (reason == null) {
+        return;
+      }
       await ref
           .read(apiClientProvider)
           .cancelBooking(
             accessToken: session.tokens.accessToken,
             id: bookingId,
+            reason: reason,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -179,43 +247,64 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
   }
 
+  Future<String?> _promptCancellationReason() async {
+    final controller = TextEditingController();
+    try {
+      return await showDialog<String?>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              final reason = controller.text.trim();
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Text('Cancel booking'),
+                content: TextField(
+                  controller: controller,
+                  minLines: 3,
+                  maxLines: 5,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason',
+                    hintText:
+                        'Tell the driver and broker why you are cancelling',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(null),
+                    child: const Text('Keep booking'),
+                  ),
+                  FilledButton(
+                    onPressed: reason.isEmpty
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(reason),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFE23A4B),
+                    ),
+                    child: const Text('Cancel booking'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
   Future<void> _confirmCancelBooking() async {
     if (!_canCancelBooking || _isCancelling) {
       return;
     }
 
-    final shouldCancel = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Cancel booking?'),
-          content: const Text(
-            'This booking will be cancelled and the status will be updated. Do you want to continue?',
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('No'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE23A4B),
-              ),
-              child: const Text('Yes, cancel'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldCancel == true && mounted) {
-      await _cancelBooking();
-    }
+    await _cancelBooking();
   }
 
   Future<void> _openBookingActions() async {
@@ -920,41 +1009,37 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                     SizedBox(
                                       width: double.infinity,
                                       height: 48,
-                                      child: OutlinedButton(
-                                        onPressed:
-                                            _canCancelBooking && !_isCancelling
-                                            ? _confirmCancelBooking
-                                            : null,
-                                        style: OutlinedButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          side: BorderSide(
-                                            color: _canCancelBooking
-                                                ? const Color(0xFFE23A4B)
-                                                : const Color(0xFFCFD4DC),
-                                          ),
-                                          foregroundColor: const Color(
-                                            0xFFE23A4B,
-                                          ),
-                                          backgroundColor: Colors.white,
-                                        ),
-                                        child: Text(
-                                          _isCancelling
-                                              ? 'Cancelling...'
-                                              : _isBookingCancelled
-                                              ? 'Booking cancelled'
-                                              : (_canCancelBooking
-                                                    ? 'Cancel booking'
-                                                    : 'Booking cannot be cancelled'),
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
+                                      child: _canCancelBooking
+                                          ? OutlinedButton(
+                                              onPressed: _isCancelling
+                                                  ? null
+                                                  : _confirmCancelBooking,
+                                              style: OutlinedButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        999,
+                                                      ),
+                                                ),
+                                                side: const BorderSide(
+                                                  color: Color(0xFFE23A4B),
+                                                ),
+                                                foregroundColor: const Color(
+                                                  0xFFE23A4B,
+                                                ),
+                                                backgroundColor: Colors.white,
+                                              ),
+                                              child: Text(
+                                                _isCancelling
+                                                    ? 'Cancelling...'
+                                                    : 'Cancel booking',
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            )
+                                          : const SizedBox.shrink(),
                                     ),
                                 ],
                               ),
@@ -2448,26 +2533,83 @@ class _BookingNegotiationSheet extends ConsumerStatefulWidget {
 
 class _BookingNegotiationSheetState
     extends ConsumerState<_BookingNegotiationSheet> {
+  static const Duration _refreshInterval = Duration(seconds: 6);
+
   bool _loading = true;
   bool _loadError = false;
   ClientBookingOffer? _driverRequest;
   List<ClientBookingOffer> _offers = const [];
   String? _errorMessage;
   bool _busy = false;
+  Timer? _pollTimer;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadNegotiation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startNegotiationUpdates();
+      }
+    });
   }
 
-  Future<void> _loadNegotiation() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startNegotiationUpdates() async {
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: widget.accessToken);
+
+    _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final payloadMap = _chatAsMap(payload);
+      if (payloadMap == null) {
+        return;
+      }
+
+      final bookingId = _chatReadString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      final requestId = _chatReadString(payloadMap, const [
+        'id',
+        'request_id',
+        'driver_request_id',
+      ]);
+      if (bookingId != widget.bookingId && requestId.isEmpty) {
+        return;
+      }
+
+      if (bookingId == widget.bookingId || requestId.isNotEmpty) {
+        _loadNegotiation(silent: true);
+      }
+    });
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        _loadNegotiation(silent: true);
+      }
+    });
+  }
+
+  Future<void> _loadNegotiation({bool silent = false}) async {
     try {
-      setState(() {
-        _loading = true;
-        _loadError = false;
-        _errorMessage = null;
-      });
+      if (!silent) {
+        setState(() {
+          _loading = true;
+          _loadError = false;
+          _errorMessage = null;
+        });
+      }
 
       final api = ref.read(apiClientProvider);
       ClientBookingOffer? driverRequest;
@@ -2491,15 +2633,22 @@ class _BookingNegotiationSheetState
       setState(() {
         _driverRequest = driverRequest;
         _offers = offers;
+        if (silent) {
+          _loadError = false;
+          _errorMessage = null;
+        }
       });
     } catch (error) {
       if (!mounted) return;
+      if (silent) {
+        return;
+      }
       setState(() {
         _loadError = true;
         _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     } finally {
-      if (mounted) {
+      if (mounted && !silent) {
         setState(() {
           _loading = false;
         });
@@ -2509,7 +2658,7 @@ class _BookingNegotiationSheetState
 
   Future<void> _acceptDriverRequest() async {
     final request = _driverRequest;
-    if (request == null || _busy) return;
+    if (request == null || _busy || !_isClientActionable(request)) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -2532,7 +2681,7 @@ class _BookingNegotiationSheetState
 
   Future<void> _rejectDriverRequest() async {
     final request = _driverRequest;
-    if (request == null || _busy) return;
+    if (request == null || _busy || !_isClientActionable(request)) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -2555,7 +2704,7 @@ class _BookingNegotiationSheetState
 
   Future<void> _counterDriverRequest() async {
     final request = _driverRequest;
-    if (request == null || _busy) return;
+    if (request == null || _busy || !_isClientActionable(request)) return;
 
     final amountController = TextEditingController(text: request.amountText);
     try {
@@ -2623,7 +2772,7 @@ class _BookingNegotiationSheetState
   }
 
   Future<void> _acceptOffer(ClientBookingOffer offer) async {
-    if (_busy) return;
+    if (_busy || !_isOfferActionable(offer)) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -2648,7 +2797,7 @@ class _BookingNegotiationSheetState
   }
 
   Future<void> _rejectOffer(ClientBookingOffer offer) async {
-    if (_busy) return;
+    if (_busy || !_isOfferActionable(offer)) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -2673,7 +2822,7 @@ class _BookingNegotiationSheetState
   }
 
   Future<void> _counterOffer(ClientBookingOffer offer) async {
-    if (_busy) return;
+    if (_busy || !_isOfferActionable(offer)) return;
     final amountController = TextEditingController(text: offer.amountText);
     try {
       final shouldSend = await showDialog<bool>(
@@ -2814,28 +2963,13 @@ class _BookingNegotiationSheetState
                                     ? _driverRequest!.note
                                     : 'Direct truck request',
                                 amountText: _driverRequest!.amountText,
-                                statusText: _driverRequest!.status,
+                                statusText: _driverRequestStatusText(
+                                  _driverRequest!,
+                                ),
                                 note: _driverRequest!.note,
-                                actions: [
-                                  FilledButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : _acceptDriverRequest,
-                                    child: const Text('Accept'),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : _counterDriverRequest,
-                                    child: const Text('Counter'),
-                                  ),
-                                  TextButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : _rejectDriverRequest,
-                                    child: const Text('Reject'),
-                                  ),
-                                ],
+                                actions: _clientActionButtonsForDriverRequest(
+                                  _driverRequest!,
+                                ),
                               ),
                               const SizedBox(height: 18),
                             ],
@@ -2865,27 +2999,9 @@ class _BookingNegotiationSheetState
                                     amountText: offer.amountText,
                                     statusText: offer.displayStatusLabel,
                                     note: offer.note,
-                                    actions: [
-                                      if (offer.isCountered || offer.isPending)
-                                        FilledButton(
-                                          onPressed: _busy
-                                              ? null
-                                              : () => _acceptOffer(offer),
-                                          child: const Text('Accept'),
-                                        ),
-                                      OutlinedButton(
-                                        onPressed: _busy
-                                            ? null
-                                            : () => _counterOffer(offer),
-                                        child: const Text('Counter'),
-                                      ),
-                                      TextButton(
-                                        onPressed: _busy
-                                            ? null
-                                            : () => _rejectOffer(offer),
-                                        child: const Text('Reject'),
-                                      ),
-                                    ],
+                                    actions: _clientActionButtonsForOffer(
+                                      offer,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -2898,6 +3014,81 @@ class _BookingNegotiationSheetState
         ),
       ),
     );
+  }
+}
+
+extension on _BookingNegotiationSheetState {
+  bool _isClientActionable(ClientBookingOffer request) {
+    return request.status.trim().toLowerCase() == 'countered';
+  }
+
+  bool _isOfferActionable(ClientBookingOffer offer) {
+    final status = offer.status.trim().toLowerCase();
+    return status != 'declined' && status != 'accepted';
+  }
+
+  String _driverRequestStatusText(ClientBookingOffer request) {
+    final status = request.status.trim().toLowerCase();
+    if (status == 'countered') {
+      return 'Your turn';
+    }
+    if (status == 'accepted') {
+      return 'Confirmed';
+    }
+    if (status == 'declined') {
+      return 'No longer available';
+    }
+    return 'Waiting for driver response';
+  }
+
+  List<Widget> _clientActionButtonsForDriverRequest(
+    ClientBookingOffer request,
+  ) {
+    if (!_isClientActionable(request)) {
+      return const [];
+    }
+
+    return [
+      FilledButton(
+        onPressed: _busy ? null : _acceptDriverRequest,
+        child: const Text('Accept'),
+      ),
+      OutlinedButton(
+        onPressed: _busy ? null : _counterDriverRequest,
+        child: const Text('Counter'),
+      ),
+      TextButton(
+        onPressed: _busy ? null : _rejectDriverRequest,
+        child: const Text('Reject'),
+      ),
+    ];
+  }
+
+  List<Widget> _clientActionButtonsForOffer(ClientBookingOffer offer) {
+    final buttons = <Widget>[];
+    if (_isOfferActionable(offer)) {
+      buttons.add(
+        FilledButton(
+          onPressed: _busy ? null : () => _acceptOffer(offer),
+          child: const Text('Accept'),
+        ),
+      );
+      buttons.add(
+        OutlinedButton(
+          onPressed: _busy ? null : () => _counterOffer(offer),
+          child: const Text('Counter'),
+        ),
+      );
+      if (offer.isCountered) {
+        buttons.add(
+          TextButton(
+            onPressed: _busy ? null : () => _rejectOffer(offer),
+            child: const Text('Reject'),
+          ),
+        );
+      }
+    }
+    return buttons;
   }
 }
 
