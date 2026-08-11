@@ -182,11 +182,6 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     final trucksAsync = ref.watch(brokerVehiclesProvider);
     final driverRequestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final notificationsAsync = ref.watch(clientNotificationsProvider);
-    final roster = _brokerDriverRoster(
-      driversAsync.valueOrNull ?? const <BrokerDriver>[],
-      trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
-    );
-    final List<BrokerDriver> availableDrivers = roster;
     final timedOutRequests =
         driverRequestsAsync.valueOrNull
             ?.where(isActiveBrokerDriverRequest)
@@ -375,44 +370,6 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
               badgeCount: pendingDriverRequests,
               icon: Icons.assignment_rounded,
               onTap: () => context.push('/broker/driver-requests'),
-            ),
-            const SizedBox(width: 10),
-            _HeaderActionButton(
-              icon: Icons.warning_amber_rounded,
-              onTap: () {
-                final preferredDriver = availableDrivers
-                    .where(
-                      (driver) => driver.status == BrokerDriverStatus.onTrip,
-                    )
-                    .toList();
-                if (preferredDriver.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'No active trip found for incident handling.',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                context.push(
-                  '/broker/drivers/${preferredDriver.first.id}',
-                  extra: preferredDriver.first,
-                );
-              },
-            ),
-            const SizedBox(width: 10),
-            FilledButton(
-              onPressed: () => context.push('/broker/drivers/add'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F88C9),
-                fixedSize: const Size(40, 40),
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Icon(Icons.add, size: 18),
             ),
           ],
         ),
