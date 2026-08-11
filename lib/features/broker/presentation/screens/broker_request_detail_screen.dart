@@ -121,6 +121,8 @@ class _BrokerRequestDetailScreenState
   bool get _isWaitingOnClient =>
       _isDriverNegotiation && _normalizedStatus == 'countered';
 
+  bool get _isPendingJobRequest => !_isDriverNegotiation && !_isTerminalStatus;
+
   bool get _canTakeAction =>
       !_submitting && !_isTerminalStatus && !_isWaitingOnClient;
 
@@ -436,6 +438,314 @@ class _BrokerRequestDetailScreenState
     }
   }
 
+  Widget _buildFinalStateCard(BuildContext context) {
+    final visual = _detailRequestStatusVisual(_normalizedStatus);
+    final isAccepted =
+        _normalizedStatus == 'accepted' ||
+        _normalizedStatus == 'confirmed' ||
+        _normalizedStatus == 'assigned';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: visual.backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(visual.icon, color: visual.textColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  visual.label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isAccepted
+                      ? 'This request has been accepted. No assignment card is shown here.'
+                      : 'This request has been declined. No further broker actions are available.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDriverNegotiationCard(BuildContext context) {
+    if (_isTerminalStatus) {
+      return _buildFinalStateCard(context);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Broker negotiation',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _isWaitingOnClient
+                ? 'Counter sent. Waiting for the client to respond before the broker can assign this booking.'
+                : 'Counter or reject the timed-out driver request, then accept to assign this truck.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+          ),
+          if (!_isWaitingOnClient) ...[
+            const SizedBox(height: 14),
+            _CounterAmountSlider(
+              label: 'Counter amount',
+              amount: _counterAmount,
+              minAmount: (_driverRequest!.amount * 0.75)
+                  .clamp(1, double.infinity)
+                  .toDouble(),
+              maxAmount: (_driverRequest!.amount * 1.25)
+                  .clamp(2, double.infinity)
+                  .toDouble(),
+              onChanged: _submitting
+                  ? null
+                  : (value) => setState(() => _counterAmount = value),
+            ),
+          ],
+          const SizedBox(height: 16),
+          if (_isWaitingOnClient) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _reject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE23A4B),
+                      side: const BorderSide(color: Color(0xFFF5B7BF)),
+                    ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFEFF6FF),
+                      foregroundColor: const Color(0xFF98A2B3),
+                    ),
+                    child: const Text('Accept & assign'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Accept & assign unlocks after the client responds.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _reject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE23A4B),
+                      side: const BorderSide(color: Color(0xFFF5B7BF)),
+                    ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _counter,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1F88C9),
+                      side: const BorderSide(color: Color(0xFF1F88C9)),
+                    ),
+                    child: const Text('Counter'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton(
+                onPressed: _submitting ? null : _acceptTimedOutDriverRequest,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF1F88C9),
+                ),
+                child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJobAssignmentCard(
+    BuildContext context,
+    List<BrokerDriver> drivers,
+    List<BrokerVehicle> trucks,
+  ) {
+    final selectedDriverName = _selectedDriverName(drivers);
+    final selectedTruckName = _selectedTruckName(trucks);
+    final selectedDriverId = _defaultDriverId(drivers);
+    final selectedTruckId = _defaultTruckId(trucks);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Assignment',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Driver and truck are auto-selected from the booking details.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Auto-selected assignment',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _SummaryRow(label: 'Driver', value: selectedDriverName),
+                const SizedBox(height: 10),
+                _SummaryRow(label: 'Truck', value: selectedTruckName),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _CounterAmountSlider(
+            label: 'Counter amount',
+            amount: _counterAmount,
+            minAmount: (_readAmount(_request.value) * 0.75)
+                .clamp(1, double.infinity)
+                .toDouble(),
+            maxAmount: (_readAmount(_request.value) * 1.25)
+                .clamp(2, double.infinity)
+                .toDouble(),
+            onChanged: _submitting
+                ? null
+                : (value) => setState(() => _counterAmount = value),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _submitting ? null : _reject,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE23A4B),
+                    side: const BorderSide(color: Color(0xFFF5B7BF)),
+                  ),
+                  child: const Text('Reject'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _submitting ? null : _counter,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1F88C9),
+                    side: const BorderSide(color: Color(0xFF1F88C9)),
+                  ),
+                  child: const Text('Counter'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              onPressed: _submitting
+                  ? null
+                  : () => _acceptAndAssign(drivers: drivers, trucks: trucks),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F88C9),
+              ),
+              child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+            ),
+          ),
+          if (selectedDriverId == null || selectedTruckId == null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'A fallback driver or truck will be used when you accept because the booking did not include an explicit assignment.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final driversAsync = ref.watch(
@@ -581,338 +891,113 @@ class _BrokerRequestDetailScreenState
             ),
             const SizedBox(height: 14),
             if (_isDriverNegotiation)
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
+              _buildDriverNegotiationCard(context)
+            else if (_isPendingJobRequest)
+              driversAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Broker negotiation',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isWaitingOnClient
-                          ? 'Counter sent. Waiting for the client to respond before any more broker actions.'
-                          : _isTerminalStatus
-                          ? 'This request has already reached a final state.'
-                          : 'Counter or reject the timed-out driver request, then accept to assign this truck.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                      ),
-                    ),
-                    if (_canTakeAction) ...[
-                      const SizedBox(height: 14),
-                      _CounterAmountSlider(
-                        label: 'Counter amount',
-                        amount: _counterAmount,
-                        minAmount: (_driverRequest!.amount * 0.75)
-                            .clamp(1, double.infinity)
-                            .toDouble(),
-                        maxAmount: (_driverRequest!.amount * 1.25)
-                            .clamp(2, double.infinity)
-                            .toDouble(),
-                        onChanged: _submitting
-                            ? null
-                            : (value) => setState(() => _counterAmount = value),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _submitting ? null : _reject,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFE23A4B),
-                                side: const BorderSide(
-                                  color: Color(0xFFF5B7BF),
-                                ),
-                              ),
-                              child: const Text('Reject'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _submitting ? null : _counter,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF1F88C9),
-                                side: const BorderSide(
-                                  color: Color(0xFF1F88C9),
-                                ),
-                              ),
-                              child: const Text('Counter'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _submitting
-                              ? null
-                              : _acceptTimedOutDriverRequest,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1F88C9),
-                          ),
-                          child: Text(
-                            _submitting ? 'Saving...' : 'Accept & assign',
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: _isWaitingOnClient
-                              ? const Color(0xFFFFF7ED)
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: _isWaitingOnClient
-                                ? const Color(0xFFFECF9E)
-                                : const Color(0xFFE8EDF2),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _isWaitingOnClient
-                                  ? Icons.hourglass_top_rounded
-                                  : Icons.lock_rounded,
-                              size: 18,
-                              color: _isWaitingOnClient
-                                  ? const Color(0xFFB54708)
-                                  : const Color(0xFF667085),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _isWaitingOnClient
-                                    ? 'Counter action is locked until the client responds.'
-                                    : 'This request is finalized. No further broker actions are available.',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: _isWaitingOnClient
-                                          ? const Color(0xFFB54708)
-                                          : const Color(0xFF667085),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                error: (error, _) => Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Text(
+                    error.toString().replaceFirst('Exception: ', ''),
+                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                  ),
                 ),
-              )
-            else
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Assignment',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                data: (drivers) {
+                  return trucksAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Driver and truck are auto-selected from the booking details.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                    error: (error, _) => Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    driversAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 18),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (error, _) => Text(
+                      child: Text(
                         error.toString().replaceFirst('Exception: ', ''),
                         style: const TextStyle(color: Color(0xFFE23A4B)),
                       ),
-                      data: (drivers) {
-                        return trucksAsync.when(
-                          loading: () => const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 18),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                          error: (error, _) => Text(
-                            error.toString().replaceFirst('Exception: ', ''),
-                            style: const TextStyle(color: Color(0xFFE23A4B)),
-                          ),
-                          data: (trucks) {
-                            final selectedDriverName = _selectedDriverName(
-                              drivers,
-                            );
-                            final selectedTruckName = _selectedTruckName(
-                              trucks,
-                            );
-                            final selectedDriverId = _defaultDriverId(drivers);
-                            final selectedTruckId = _defaultTruckId(trucks);
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xFFE8EDF2),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Auto-selected assignment',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w800,
-                                              color: const Color(0xFF101828),
-                                            ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _SummaryRow(
-                                        label: 'Driver',
-                                        value: selectedDriverName,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _SummaryRow(
-                                        label: 'Truck',
-                                        value: selectedTruckName,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                _CounterAmountSlider(
-                                  label: 'Counter amount',
-                                  amount: _counterAmount,
-                                  minAmount:
-                                      (_readAmount(_request.value) * 0.75)
-                                          .clamp(1, double.infinity)
-                                          .toDouble(),
-                                  maxAmount:
-                                      (_readAmount(_request.value) * 1.25)
-                                          .clamp(2, double.infinity)
-                                          .toDouble(),
-                                  onChanged: _submitting
-                                      ? null
-                                      : (value) => setState(
-                                          () => _counterAmount = value,
-                                        ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: _submitting ? null : _reject,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFFE23A4B,
-                                          ),
-                                          side: const BorderSide(
-                                            color: Color(0xFFF5B7BF),
-                                          ),
-                                        ),
-                                        child: const Text('Reject'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: _submitting
-                                            ? null
-                                            : _counter,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFF1F88C9,
-                                          ),
-                                          side: const BorderSide(
-                                            color: Color(0xFF1F88C9),
-                                          ),
-                                        ),
-                                        child: const Text('Counter'),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 52,
-                                  child: FilledButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => _acceptAndAssign(
-                                            drivers: drivers,
-                                            trucks: trucks,
-                                          ),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1F88C9),
-                                    ),
-                                    child: Text(
-                                      _submitting
-                                          ? 'Saving...'
-                                          : 'Accept & assign',
-                                    ),
-                                  ),
-                                ),
-                                if (selectedDriverId == null ||
-                                    selectedTruckId == null) ...[
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'A fallback driver or truck will be used when you accept because the booking did not include an explicit assignment.',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: const Color(0xFF667085),
-                                        ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
-                        );
-                      },
                     ),
-                  ],
-                ),
-              ),
+                    data: (trucks) =>
+                        _buildJobAssignmentCard(context, drivers, trucks),
+                  );
+                },
+              )
+            else
+              _buildFinalStateCard(context),
           ],
         ),
       ),
     );
+  }
+}
+
+class _DetailRequestStatusVisual {
+  const _DetailRequestStatusVisual({
+    required this.label,
+    required this.description,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.icon,
+  });
+
+  final String label;
+  final String description;
+  final Color backgroundColor;
+  final Color textColor;
+  final IconData icon;
+}
+
+_DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
+  switch (status) {
+    case 'accepted':
+    case 'confirmed':
+    case 'assigned':
+      return const _DetailRequestStatusVisual(
+        label: 'Accepted',
+        description:
+            'This request has been accepted. No assignment card is shown here.',
+        backgroundColor: Color(0xFFEAF8EF),
+        textColor: Color(0xFF136F3E),
+        icon: Icons.check_circle_rounded,
+      );
+    case 'countered':
+      return const _DetailRequestStatusVisual(
+        label: 'Countered',
+        description: 'Counter sent. Waiting for the client to respond.',
+        backgroundColor: Color(0xFFFEF3C7),
+        textColor: Color(0xFFB45309),
+        icon: Icons.payments_rounded,
+      );
+    case 'declined':
+    case 'rejected':
+    case 'expired':
+      return const _DetailRequestStatusVisual(
+        label: 'Declined',
+        description:
+            'This request has been declined. No further broker actions are available.',
+        backgroundColor: Color(0xFFFDECEC),
+        textColor: Color(0xFFB42318),
+        icon: Icons.cancel_rounded,
+      );
+    default:
+      return const _DetailRequestStatusVisual(
+        label: 'Pending',
+        description: 'This request is still waiting for action.',
+        backgroundColor: Color(0xFFEFF6FF),
+        textColor: Color(0xFF1F88C9),
+        icon: Icons.inbox_rounded,
+      );
   }
 }
 
