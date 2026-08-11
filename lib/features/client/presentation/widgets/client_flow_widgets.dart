@@ -2347,12 +2347,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
   StreamSubscription<TruckLocationEvent>? _truckLocationSubscription;
-  Timer? _nearbyTrucksRefreshTimer;
   final Set<String> _trackedTruckIds = <String>{};
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
   String? _brokerRouteKey;
-  String? _nearbyTrucksRefreshKey;
   String? _truckTrackingSyncKey;
   final Map<String, _LiveTruckLocation> _liveTruckLocations = {};
 
@@ -2460,7 +2458,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   void dispose() {
-    _nearbyTrucksRefreshTimer?.cancel();
     _truckLocationSubscription?.cancel();
     _socketService.clearTruckTrackingIds();
     _brokerMapController?.dispose();
@@ -2530,34 +2527,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _liveTruckLocations.clear();
   }
 
-  void _syncNearbyTrucksRefreshTimer({
-    required bool shouldRefresh,
-    required NearbyTrucksQuery? query,
-  }) {
-    final nextKey = shouldRefresh && query != null
-        ? '${query.pickupLat.toStringAsFixed(5)},'
-              '${query.pickupLng.toStringAsFixed(5)}|'
-              '${query.radiusKm ?? 25}|${query.page}|${query.limit}'
-        : 'off';
-
-    if (_nearbyTrucksRefreshKey == nextKey) {
-      return;
-    }
-    _nearbyTrucksRefreshKey = nextKey;
-
-    _nearbyTrucksRefreshTimer?.cancel();
-    _nearbyTrucksRefreshTimer = null;
-
-    if (!shouldRefresh || query == null) {
-      return;
-    }
-
-    _nearbyTrucksRefreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _step != _BookingFlowStep.brokerSelection) {
-        return;
-      }
-      ref.invalidate(clientNearbyTrucksProvider(query));
-    });
+  void _reloadNearbyTrucks(NearbyTrucksQuery query) {
+    ref.invalidate(clientNearbyTrucksProvider(query));
   }
 
   Future<void> _loadTruckMarkerIcon() async {
@@ -3582,11 +3553,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ? ref.watch(clientNearbyTrucksProvider(nearbyTrucksQuery!))
         : const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[]);
     final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
-    _syncNearbyTrucksRefreshTimer(
-      shouldRefresh:
-          _step == _BookingFlowStep.brokerSelection && pickup != null,
-      query: nearbyTrucksQuery,
-    );
     _scheduleTruckTrackingSync(nearbyTrucks);
 
     final hideInitialAutoLocationFrame =
@@ -3719,6 +3685,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 context,
                                 nearbyTrucks,
                                 nearbyTrucksAsync.isLoading,
+                                nearbyTrucksQuery,
                               ),
                             ],
                           ),
@@ -3800,6 +3767,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             context,
                             nearbyTrucks,
                             nearbyTrucksAsync.isLoading,
+                            nearbyTrucksQuery,
                           ),
                         ],
                       ),
@@ -3815,6 +3783,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     BuildContext context,
     List<NearbyTruck> nearbyTrucks,
     bool nearbyTrucksLoading,
+    NearbyTrucksQuery? nearbyTrucksQuery,
   ) {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
@@ -3823,6 +3792,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         context,
         nearbyTrucks,
         nearbyTrucksLoading,
+        nearbyTrucksQuery,
       ),
       _BookingFlowStep.payment =>
         _bookingCreated && !_postNegotiationPayment
@@ -3836,6 +3806,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     BuildContext context,
     List<NearbyTruck> nearbyTrucks,
     bool nearbyTrucksLoading,
+    NearbyTrucksQuery? nearbyTrucksQuery,
   ) {
     final height = MediaQuery.sizeOf(context).height * 0.72;
     return Align(
@@ -3857,28 +3828,50 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF8F2),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFBFE7CC)),
-                  ),
-                  child: Text(
-                    _draft.tripType == TripType.interCity
-                        ? 'This is an inter-city booking'
-                        : 'This is an intra-city booking',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: const Color(0xFF2FA56E),
-                      fontWeight: FontWeight.w800,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF8F2),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFBFE7CC)),
+                    ),
+                    child: Text(
+                      _draft.tripType == TripType.interCity
+                          ? 'This is an inter-city booking'
+                          : 'This is an intra-city booking',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: const Color(0xFF2FA56E),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: nearbyTrucksQuery == null
+                        ? null
+                        : () => _reloadNearbyTrucks(nearbyTrucksQuery),
+                    icon: nearbyTrucksLoading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('Reload'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF1F88C9),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
               SizedBox(

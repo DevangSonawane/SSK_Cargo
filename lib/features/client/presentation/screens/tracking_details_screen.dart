@@ -842,12 +842,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                               ...shipment.timeline.asMap().entries.map((entry) {
                                 final isLast =
                                     entry.key == shipment.timeline.length - 1;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _TimelineStepItem(
-                                    step: entry.value,
-                                    showConnector: !isLast,
-                                  ),
+                                return _TimelineStepItem(
+                                  step: entry.value,
+                                  showConnector: !isLast,
                                 );
                               }),
                               const SizedBox(height: 10),
@@ -1648,7 +1645,7 @@ class _TimelineStepItem extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      margin: EdgeInsets.zero,
                       decoration: BoxDecoration(
                         color: connectorColor,
                         borderRadius: BorderRadius.circular(999),

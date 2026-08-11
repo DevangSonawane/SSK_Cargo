@@ -299,6 +299,7 @@ class _DriverOrderAcceptedScreenState
         _brokerHandoffVisible ||
         request.driverTimedOut ||
         _secondsUntilBrokerHandoff <= 0;
+    final actionLocked = _submitting || _counterLocked || handoffExpired;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -344,7 +345,7 @@ class _DriverOrderAcceptedScreenState
                         Text(
                           handoffExpired
                               ? 'Broker will take over negotiation'
-                              : 'Waiting for client response',
+                              : 'Client is waiting for your request',
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
@@ -554,7 +555,7 @@ class _DriverOrderAcceptedScreenState
                     width: double.infinity,
                     height: 52,
                     child: FilledButton(
-                      onPressed: _submitting || _counterLocked
+                      onPressed: actionLocked
                           ? null
                           : () => _runAction(
                               (token) => ref
@@ -576,6 +577,8 @@ class _DriverOrderAcceptedScreenState
                       child: Text(
                         _submitting
                             ? 'Saving...'
+                            : handoffExpired
+                            ? 'Broker takeover'
                             : _counterLocked
                             ? 'Counter sent'
                             : 'Send counter',
@@ -588,7 +591,7 @@ class _DriverOrderAcceptedScreenState
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: _submitting
+                          onPressed: _submitting || handoffExpired
                               ? null
                               : () => _runAction(
                                   (token) => ref

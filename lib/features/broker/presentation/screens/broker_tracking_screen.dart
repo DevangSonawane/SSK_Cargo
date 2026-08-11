@@ -11,18 +11,59 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 
-class BrokerTrackingScreen extends ConsumerWidget {
+class BrokerTrackingScreen extends ConsumerStatefulWidget {
   const BrokerTrackingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BrokerTrackingScreen> createState() =>
+      _BrokerTrackingScreenState();
+}
+
+class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
+  static const _query = (page: 1, limit: 100);
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_connectSocket());
+  }
+
+  @override
+  void dispose() {
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _connectSocket() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((_) {
+      if (!mounted) return;
+      ref.invalidate(brokerDriverRequestsProvider(_query));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
     final trucksAsync = ref.watch(brokerVehiclesProvider);
-    final driverRequestsAsync = ref.watch(
-      brokerDriverRequestsProvider((page: 1, limit: 100)),
-    );
+    final driverRequestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final roster = _brokerDriverRoster(
       driversAsync.valueOrNull ?? const <BrokerDriver>[],
       trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
