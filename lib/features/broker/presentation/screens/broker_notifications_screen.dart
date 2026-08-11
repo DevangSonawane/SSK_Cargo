@@ -66,131 +66,53 @@ class _BrokerNotificationsScreenState
             );
       } catch (_) {}
       ref.invalidate(clientNotificationsProvider);
-      final timedOutRequest = await _resolveTimedOutDriverRequest(notification);
-      if (timedOutRequest != null) {
+      final request = await _resolveNegotiationTarget(notification);
+      if (request != null) {
         if (!mounted) return;
-        context.push('/broker/request', extra: timedOutRequest);
+        context.push('/broker/request', extra: request);
         return;
       }
     }
 
-    final timedOutRequest = await _resolveTimedOutDriverRequest(notification);
-    if (timedOutRequest != null) {
+    final request = await _resolveNegotiationTarget(notification);
+    if (request != null) {
       if (!mounted) return;
-      context.push('/broker/request', extra: timedOutRequest);
+      context.push('/broker/request', extra: request);
       return;
     }
 
     if (!mounted) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 54,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE1E5EB),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  notification.title.isEmpty
-                      ? 'Notification'
-                      : notification.title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  notification.message.isEmpty
-                      ? 'No message available.'
-                      : notification.message,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF344054),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          notification.message.isEmpty
+              ? (notification.title.isEmpty
+                    ? 'Notification opened.'
+                    : notification.title)
+              : notification.message,
+        ),
+      ),
     );
   }
 
-  bool _looksLikeTimedOutNegotiation(ClientNotification notification) {
-    final payload = notification.raw;
-    final combinedText = '${notification.title} ${notification.message}'
-        .toLowerCase();
-    return combinedText.contains('timed out') ||
-        combinedText.contains('broker handoff') ||
-        combinedText.contains('negotiation') ||
-        payload['driverTimedOut'] == true ||
-        payload['driver_timed_out'] == true ||
-        _extractNotificationId(payload, const [
-          'bookingId',
-          'booking_id',
-        ]).isNotEmpty ||
-        _extractNotificationId(payload, const [
-          'request_id',
-          'driver_request_id',
-        ]).isNotEmpty;
-  }
-
-  String _extractNotificationId(
-    Map<String, dynamic> payload,
-    List<String> keys,
-  ) {
-    for (final key in keys) {
-      final value = payload[key]?.toString().trim();
-      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
-        return value;
-      }
+  Future<BrokerDriverRequest?> _resolveNegotiationTarget(
+    ClientNotification notification,
+  ) async {
+    if (!brokerLooksLikeTimedOutNegotiationPayload(notification.raw)) {
+      return null;
     }
-    return '';
+
+    final request = await _resolveTimedOutDriverRequest(notification);
+    if (request != null) {
+      return request;
+    }
+
+    return brokerDriverRequestFromNotificationPayload(notification.raw);
   }
 
   Future<BrokerDriverRequest?> _resolveTimedOutDriverRequest(
     ClientNotification notification,
   ) async {
-    if (!_looksLikeTimedOutNegotiation(notification)) {
-      return null;
-    }
-
     final payload = notification.raw;
     final bookingId = _extractNotificationId(payload, const [
       'bookingId',
@@ -220,10 +142,23 @@ class _BrokerNotificationsScreenState
         }
       }
     } catch (_) {
-      // Fall back to the generic notification sheet if the request list fails.
+      // Fall back to a synthesized request below.
     }
 
     return null;
+  }
+
+  String _extractNotificationId(
+    Map<String, dynamic> payload,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
   }
 
   @override

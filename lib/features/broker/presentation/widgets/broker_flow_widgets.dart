@@ -88,7 +88,9 @@ final brokerDriverRequestsProvider = FutureProvider.autoDispose
             limit: query.limit,
           );
 
-      return _BrokerDriverRequestPage.fromJson(response).requests;
+      return _BrokerDriverRequestPage.fromJson(
+        response,
+      ).requests.where((request) => request.driverTimedOut).toList();
     });
 
 final brokerTrucksProvider = FutureProvider.autoDispose
@@ -245,6 +247,75 @@ class BrokerDriverRequest {
   final DateTime? requestedAt;
   final DateTime? updatedAt;
   final Map<String, dynamic> raw;
+}
+
+bool brokerLooksLikeTimedOutNegotiationPayload(Map<String, dynamic> payload) {
+  final combinedText = [
+    _readString(payload, const ['title']),
+    _readString(payload, const ['message']),
+    _readString(payload, const ['body']),
+    _readString(payload, const ['type']),
+  ].join(' ').toLowerCase();
+
+  return combinedText.contains('timed out') ||
+      combinedText.contains('broker handoff') ||
+      combinedText.contains('negotiation') ||
+      payload['driverTimedOut'] == true ||
+      payload['driver_timed_out'] == true ||
+      _readString(payload, const ['bookingId', 'booking_id']).isNotEmpty ||
+      _readString(payload, const [
+        'request_id',
+        'driver_request_id',
+      ]).isNotEmpty;
+}
+
+BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
+  Map<String, dynamic> payload,
+) {
+  final bookingId = _readString(payload, const ['bookingId', 'booking_id']);
+  final requestId = _readString(payload, const [
+    'request_id',
+    'driver_request_id',
+    'id',
+  ]);
+  final bookingNumber = _readString(payload, const [
+    'bookingNumber',
+    'booking_number',
+  ]);
+  final status = _readString(payload, const ['status']).isEmpty
+      ? 'requested'
+      : _readString(payload, const ['status']);
+  return BrokerDriverRequest(
+    id: requestId.isNotEmpty ? requestId : bookingId,
+    bookingId: bookingId,
+    bookingNumber: bookingNumber,
+    clientName: _readString(payload, const ['clientName', 'client_name']),
+    clientPhone: _readString(payload, const ['clientPhone', 'client_phone']),
+    driverName: _readString(payload, const ['driverName', 'driver_name']),
+    driverPhone: _readString(payload, const ['driverPhone', 'driver_phone']),
+    brokerName: _readString(payload, const ['brokerName', 'broker_name']),
+    brokerPhone: _readString(payload, const ['brokerPhone', 'broker_phone']),
+    truckReg: _readString(payload, const ['truckReg', 'truck_reg']),
+    truckType: _readString(payload, const ['truckType', 'truck_type']),
+    truckCategory: _readString(payload, const [
+      'truckCategory',
+      'truck_category',
+    ]),
+    pickup: _readString(payload, const ['pickup']),
+    drop: _readString(payload, const ['drop']),
+    weight: _readString(payload, const ['weight']),
+    amount: _readDouble(payload, const ['amount', 'price', 'value']),
+    status: status,
+    driverTimedOut: true,
+    offerCount: 0,
+    requestedAt: _parseDateTimeObject(
+      payload['createdAt'] ?? payload['created_at'] ?? payload['requested_at'],
+    ),
+    updatedAt: _parseDateTimeObject(
+      payload['updatedAt'] ?? payload['updated_at'],
+    ),
+    raw: payload,
+  );
 }
 
 class _BrokerJobRequestPage {

@@ -2343,6 +2343,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
   late final AppSocketService _socketService;
+  late final StateController<bool> _bottomNavVisibleController;
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
@@ -2374,7 +2375,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(bottomNavVisibleProvider.notifier).state = false;
+    _bottomNavVisibleController = ref.read(bottomNavVisibleProvider.notifier);
+    _bottomNavVisibleController.state = false;
     _socketService = ref.read(appSocketServiceProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -4481,7 +4483,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   void _goToClientHome() {
-    ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _bottomNavVisibleController.state = true;
     _socketService.clearTruckTrackingIds();
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {

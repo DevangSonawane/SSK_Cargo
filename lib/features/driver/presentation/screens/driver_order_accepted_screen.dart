@@ -28,7 +28,7 @@ class _DriverOrderAcceptedScreenState
   bool _counterLocked = false;
   bool _brokerHandoffVisible = false;
   late double _counterAmount;
-  int _secondsUntilBrokerHandoff = 60;
+  int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _pollTimer;
   Timer? _handoffTimer;
@@ -357,8 +357,8 @@ class _DriverOrderAcceptedScreenState
                         const SizedBox(height: 4),
                         Text(
                           handoffExpired
-                              ? 'The first minute is up. Broker will negotiate now, kindly wait.'
-                              : 'This request waits for 1 minute before broker handoff.',
+                              ? 'The driver window is up. Broker will negotiate now, kindly wait.'
+                              : 'This request waits for 2 minutes before broker handoff.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: handoffExpired

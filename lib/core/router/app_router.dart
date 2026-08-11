@@ -18,6 +18,7 @@ import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
+import '../../features/broker/presentation/screens/broker_driver_requests_screen.dart';
 import '../../features/broker/presentation/screens/broker_request_detail_screen.dart';
 import '../../features/broker/presentation/screens/broker_settings_screen.dart';
 import '../../features/broker/presentation/screens/broker_invoices_screen.dart';
@@ -136,6 +137,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => NoTransitionPage(
           child: DriverOrderAcceptedScreen(initialRequest: state.extra),
         ),
+      ),
+      GoRoute(
+        path: '/broker/driver-requests',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: BrokerDriverRequestsScreen()),
       ),
       GoRoute(
         path: '/driver/order-accepted',

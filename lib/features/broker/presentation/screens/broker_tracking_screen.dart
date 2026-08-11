@@ -8,6 +8,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../client/presentation/controllers/client_notifications_controller.dart';
+import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -22,11 +24,126 @@ class BrokerTrackingScreen extends ConsumerStatefulWidget {
 class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   static const _query = (page: 1, limit: 100);
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  String? _lastNegotiationDialogKey;
 
   @override
   void initState() {
     super.initState();
     unawaited(_connectSocket());
+  }
+
+  void _openNegotiationRequest(BrokerDriverRequest request) {
+    context.push('/broker/request', extra: request);
+  }
+
+  void _maybeShowNegotiationDialog({
+    required List<BrokerDriverRequest> timedOutRequests,
+    required List<ClientNotification> negotiationNotifications,
+  }) {
+    BrokerDriverRequest? targetRequest;
+    String? dialogKey;
+
+    if (timedOutRequests.isNotEmpty) {
+      targetRequest = timedOutRequests.first;
+      dialogKey = 'request:${targetRequest.id}';
+    } else if (negotiationNotifications.isNotEmpty) {
+      final notification = negotiationNotifications.first;
+      targetRequest = brokerDriverRequestFromNotificationPayload(
+        notification.raw,
+      );
+      dialogKey = 'notification:${notification.id}';
+    }
+
+    if (targetRequest == null || dialogKey == null) {
+      return;
+    }
+
+    if (_lastNegotiationDialogKey == dialogKey) {
+      return;
+    }
+    _lastNegotiationDialogKey = dialogKey;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(dialogContext).pop();
+                _openNegotiationRequest(targetRequest!);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Driver has not begun negotiation',
+                            style: Theme.of(dialogContext).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF101828),
+                                ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Click here to negotiate this timed-out request.',
+                      style: Theme.of(dialogContext).textTheme.bodyMedium
+                          ?.copyWith(
+                            color: const Color(0xFF344054),
+                            height: 1.45,
+                          ),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          _openNegotiationRequest(targetRequest!);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                        ),
+                        child: const Text('Negotiate'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   @override
@@ -64,6 +181,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     );
     final trucksAsync = ref.watch(brokerVehiclesProvider);
     final driverRequestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
+    final notificationsAsync = ref.watch(clientNotificationsProvider);
     final roster = _brokerDriverRoster(
       driversAsync.valueOrNull ?? const <BrokerDriver>[],
       trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
@@ -77,9 +195,22 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     final pendingDriverRequests =
         driverRequestsAsync.valueOrNull?.where((request) {
           final status = request.status.toLowerCase();
-          return status != 'accepted' && status != 'declined';
+          return status == 'requested';
         }).length ??
         0;
+    final negotiationNotifications =
+        notificationsAsync.valueOrNull
+            ?.where(
+              (notification) =>
+                  brokerLooksLikeTimedOutNegotiationPayload(notification.raw),
+            )
+            .toList() ??
+        const <ClientNotification>[];
+
+    _maybeShowNegotiationDialog(
+      timedOutRequests: timedOutRequests,
+      negotiationNotifications: negotiationNotifications,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -143,10 +274,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () => context.push(
-                        '/broker/request',
-                        extra: timedOutRequests[index],
-                      ),
+                      onPressed: () =>
+                          _openNegotiationRequest(timedOutRequests[index]),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF1F88C9),
                       ),
@@ -157,6 +286,72 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
               ),
             ),
             if (index != timedOutRequests.length - 1)
+              const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 18),
+        ],
+        if (timedOutRequests.isEmpty &&
+            negotiationNotifications.isNotEmpty) ...[
+          Text(
+            'Negotiation ready',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (
+            var index = 0;
+            index < negotiationNotifications.length;
+            index++
+          ) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFB7D7F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    negotiationNotifications[index].title.isEmpty
+                        ? 'Timed-out negotiation'
+                        : negotiationNotifications[index].title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF101828),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    negotiationNotifications[index].message.isEmpty
+                        ? 'Open to continue negotiation.'
+                        : negotiationNotifications[index].message,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF406B8F),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => _openNegotiationRequest(
+                        brokerDriverRequestFromNotificationPayload(
+                          negotiationNotifications[index].raw,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F88C9),
+                      ),
+                      child: const Text('Negotiate'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (index != negotiationNotifications.length - 1)
               const SizedBox(height: 12),
           ],
           const SizedBox(height: 18),
@@ -174,12 +369,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
             _HeaderActionButton(
               badgeCount: pendingDriverRequests,
               icon: Icons.assignment_rounded,
-              onTap: () => showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const _DriverRequestsSheet(),
-              ),
+              onTap: () => context.push('/broker/driver-requests'),
             ),
             const SizedBox(width: 10),
             _HeaderActionButton(
