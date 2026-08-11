@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+// ignore_for_file: unused_element
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/services/app_socket_service.dart';
@@ -305,61 +307,6 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
 
     await _cancelBooking();
-  }
-
-  Future<void> _openBookingActions() async {
-    final bookingId = _shipment.bookingId;
-    if (bookingId == null || bookingId.isEmpty) {
-      return;
-    }
-
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to use booking actions.'),
-        ),
-      );
-      return;
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _BookingActionsSheet(
-          onChat: () {
-            Navigator.of(sheetContext).pop();
-            return _openChatSheet();
-          },
-          onNegotiation: () {
-            Navigator.of(sheetContext).pop();
-            return _openNegotiationSheet();
-          },
-          onPay: () {
-            Navigator.of(sheetContext).pop();
-            return _payBooking();
-          },
-          onRate: () {
-            Navigator.of(sheetContext).pop();
-            return _rateBooking();
-          },
-          onEmailInvoice: () {
-            Navigator.of(sheetContext).pop();
-            return _emailInvoice();
-          },
-          onDownloadInvoice: () {
-            Navigator.of(sheetContext).pop();
-            return _downloadInvoice();
-          },
-          onDispute: () {
-            Navigator.of(sheetContext).pop();
-            return _raiseDispute();
-          },
-        );
-      },
-    );
   }
 
   Future<void> _openNegotiationSheet() async {
@@ -877,126 +824,57 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       _CompactSummaryCard(shipment: shipment),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(28),
-                                child: Container(
-                                  width: double.infinity,
-                                  color: const Color(0xFFF5F7FB),
-                                  child: SingleChildScrollView(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      18,
-                                      18,
-                                      18,
-                                      18,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tracking timeline',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF101828),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Tracking timeline',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: const Color(0xFF101828),
-                                              ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        ...shipment.timeline
-                                            .asMap()
-                                            .entries
-                                            .map(
-                                              (entry) => Padding(
-                                                padding: EdgeInsets.only(
-                                                  bottom:
-                                                      entry.key ==
-                                                          shipment
-                                                                  .timeline
-                                                                  .length -
-                                                              1
-                                                      ? 0
-                                                      : 16,
-                                                ),
-                                                child: _TimelineStepItem(
-                                                  step: entry.value,
-                                                  showConnector:
-                                                      entry.key !=
-                                                      shipment.timeline.length -
-                                                          1,
-                                                ),
-                                              ),
-                                            ),
-                                      ],
-                                    ),
+                              ),
+                              const SizedBox(height: 14),
+                              ...shipment.timeline.asMap().entries.map((entry) {
+                                final isLast =
+                                    entry.key == shipment.timeline.length - 1;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _TimelineStepItem(
+                                    step: entry.value,
+                                    showConnector: !isLast,
                                   ),
+                                );
+                              }),
+                              const SizedBox(height: 10),
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: MediaQuery.of(context).padding.bottom,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: MediaQuery.of(context).padding.bottom,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: FilledButton(
-                                      onPressed: _openLiveTracking,
-                                      style: FilledButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                        ),
-                                        backgroundColor: const Color(
-                                          0xFF2FA56E,
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'Live Tracking',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  if (shipment.bookingId != null)
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
                                     SizedBox(
                                       width: double.infinity,
                                       height: 48,
-                                      child: OutlinedButton.icon(
-                                        onPressed: _openBookingActions,
-                                        icon: const Icon(
-                                          Icons.more_horiz_rounded,
-                                          size: 18,
-                                        ),
-                                        style: OutlinedButton.styleFrom(
+                                      child: FilledButton(
+                                        onPressed: _openLiveTracking,
+                                        style: FilledButton.styleFrom(
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               999,
                                             ),
                                           ),
-                                          side: const BorderSide(
-                                            color: Color(0xFFCFD4DC),
+                                          backgroundColor: const Color(
+                                            0xFF2FA56E,
                                           ),
-                                          foregroundColor: const Color(
-                                            0xFF1C2430,
-                                          ),
-                                          backgroundColor: Colors.white,
                                         ),
-                                        label: const Text(
-                                          'More actions',
+                                        child: const Text(
+                                          'Live Tracking',
                                           style: TextStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
@@ -1004,47 +882,48 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         ),
                                       ),
                                     ),
-                                  const SizedBox(height: 10),
-                                  if (shipment.bookingId != null)
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 48,
-                                      child: _canCancelBooking
-                                          ? OutlinedButton(
-                                              onPressed: _isCancelling
-                                                  ? null
-                                                  : _confirmCancelBooking,
-                                              style: OutlinedButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        999,
-                                                      ),
+                                    const SizedBox(height: 10),
+                                    if (shipment.bookingId != null)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: _canCancelBooking
+                                            ? OutlinedButton(
+                                                onPressed: _isCancelling
+                                                    ? null
+                                                    : _confirmCancelBooking,
+                                                style: OutlinedButton.styleFrom(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          999,
+                                                        ),
+                                                  ),
+                                                  side: const BorderSide(
+                                                    color: Color(0xFFE23A4B),
+                                                  ),
+                                                  foregroundColor: const Color(
+                                                    0xFFE23A4B,
+                                                  ),
+                                                  backgroundColor: Colors.white,
                                                 ),
-                                                side: const BorderSide(
-                                                  color: Color(0xFFE23A4B),
+                                                child: Text(
+                                                  _isCancelling
+                                                      ? 'Cancelling...'
+                                                      : 'Cancel booking',
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
-                                                foregroundColor: const Color(
-                                                  0xFFE23A4B,
-                                                ),
-                                                backgroundColor: Colors.white,
-                                              ),
-                                              child: Text(
-                                                _isCancelling
-                                                    ? 'Cancelling...'
-                                                    : 'Cancel booking',
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            )
-                                          : const SizedBox.shrink(),
-                                    ),
-                                ],
+                                              )
+                                            : const SizedBox.shrink(),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -1744,56 +1623,72 @@ class _TimelineStepItem extends StatelessWidget {
     final activeColor = step.completed
         ? const Color(0xFF2FA56E)
         : const Color(0xFFE0F4E8);
+    final connectorColor = step.completed
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFD9E2EC);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: activeColor,
-                shape: BoxShape.circle,
-              ),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                if (showConnector)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: connectorColor,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            if (showConnector)
-              Container(
-                width: 2,
-                height: 38,
-                margin: const EdgeInsets.only(top: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F4E8),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                step.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                step.subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                  fontSize: 12,
-                ),
-              ),
-            ],
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  step.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: const Color(0xFF101828),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  step.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontSize: 11,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
