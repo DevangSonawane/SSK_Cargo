@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerDriverRequestsScreen extends ConsumerStatefulWidget {
@@ -28,6 +29,7 @@ class _BrokerDriverRequestsScreenState
   @override
   Widget build(BuildContext context) {
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
+    final notificationsAsync = ref.watch(clientNotificationsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -55,6 +57,40 @@ class _BrokerDriverRequestsScreenState
             ],
           ),
           data: (requests) {
+            final notificationRequests =
+                notificationsAsync.valueOrNull
+                    ?.where(
+                      (notification) =>
+                          brokerLooksLikeTimedOutNegotiationPayload(
+                            notification.raw,
+                          ),
+                    )
+                    .map(
+                      (notification) =>
+                          brokerDriverRequestFromNotificationPayload(
+                            notification.raw,
+                          ),
+                    )
+                    .toList() ??
+                const <BrokerDriverRequest>[];
+
+            final mergedRequests = <BrokerDriverRequest>[
+              ...requests,
+              ...notificationRequests,
+            ];
+            final visibleRequests = <BrokerDriverRequest>[];
+            final seenKeys = <String>{};
+            for (final request in mergedRequests) {
+              final key = [
+                request.id,
+                request.bookingId,
+                request.bookingNumber,
+              ].where((value) => value.isNotEmpty).join('|');
+              if (key.isNotEmpty && seenKeys.add(key)) {
+                visibleRequests.add(request);
+              }
+            }
+
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -78,21 +114,21 @@ class _BrokerDriverRequestsScreenState
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (requests.isEmpty)
+                if (visibleRequests.isEmpty)
                   const _EmptyState(
                     title: 'No driver requests yet',
                     subtitle:
                         'When a driver times out, the request will appear here for broker takeover.',
                   )
                 else
-                  ...requests.asMap().entries.expand((entry) {
+                  ...visibleRequests.asMap().entries.expand((entry) {
                     final request = entry.value;
                     return [
                       _BrokerRequestTile(
                         request: request,
                         onTap: () => _openRequest(request),
                       ),
-                      if (entry.key != requests.length - 1)
+                      if (entry.key != visibleRequests.length - 1)
                         const SizedBox(height: 12),
                     ];
                   }),

@@ -657,15 +657,18 @@ List<dynamic> _extractItems(
   Map<String, dynamic> root,
 ) {
   for (final candidate in [
+    data['requests'],
     data['trucks'],
     data['items'],
     data['results'],
     data['rows'],
     data['data'],
+    root['requests'],
     root['trucks'],
     root['items'],
     root['results'],
     root['rows'],
+    root['data'],
   ]) {
     if (candidate is List) {
       return candidate;
