@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../../../../core/network/api_client.dart';
+import '../widgets/broker_flow_widgets.dart';
 
 class BrokerNotificationsScreen extends ConsumerStatefulWidget {
   const BrokerNotificationsScreen({super.key});
@@ -64,6 +66,19 @@ class _BrokerNotificationsScreenState
             );
       } catch (_) {}
       ref.invalidate(clientNotificationsProvider);
+      final timedOutRequest = await _resolveTimedOutDriverRequest(notification);
+      if (timedOutRequest != null) {
+        if (!mounted) return;
+        context.push('/broker/request', extra: timedOutRequest);
+        return;
+      }
+    }
+
+    final timedOutRequest = await _resolveTimedOutDriverRequest(notification);
+    if (timedOutRequest != null) {
+      if (!mounted) return;
+      context.push('/broker/request', extra: timedOutRequest);
+      return;
     }
 
     if (!mounted) return;
@@ -135,6 +150,80 @@ class _BrokerNotificationsScreenState
         );
       },
     );
+  }
+
+  bool _looksLikeTimedOutNegotiation(ClientNotification notification) {
+    final payload = notification.raw;
+    final combinedText = '${notification.title} ${notification.message}'
+        .toLowerCase();
+    return combinedText.contains('timed out') ||
+        combinedText.contains('broker handoff') ||
+        combinedText.contains('negotiation') ||
+        payload['driverTimedOut'] == true ||
+        payload['driver_timed_out'] == true ||
+        _extractNotificationId(payload, const [
+          'bookingId',
+          'booking_id',
+        ]).isNotEmpty ||
+        _extractNotificationId(payload, const [
+          'request_id',
+          'driver_request_id',
+        ]).isNotEmpty;
+  }
+
+  String _extractNotificationId(
+    Map<String, dynamic> payload,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  Future<BrokerDriverRequest?> _resolveTimedOutDriverRequest(
+    ClientNotification notification,
+  ) async {
+    if (!_looksLikeTimedOutNegotiation(notification)) {
+      return null;
+    }
+
+    final payload = notification.raw;
+    final bookingId = _extractNotificationId(payload, const [
+      'bookingId',
+      'booking_id',
+    ]);
+    final requestId = _extractNotificationId(payload, const [
+      'request_id',
+      'driver_request_id',
+      'id',
+    ]);
+
+    try {
+      final requests = await ref.read(
+        brokerDriverRequestsProvider((page: 1, limit: 100)).future,
+      );
+      for (final request in requests) {
+        final matchesBooking =
+            bookingId.isNotEmpty &&
+            (request.bookingId == bookingId ||
+                request.id == bookingId ||
+                request.bookingNumber == bookingId);
+        final matchesRequest =
+            requestId.isNotEmpty &&
+            (request.id == requestId || request.bookingId == requestId);
+        if (matchesBooking || matchesRequest || request.driverTimedOut) {
+          return request;
+        }
+      }
+    } catch (_) {
+      // Fall back to the generic notification sheet if the request list fails.
+    }
+
+    return null;
   }
 
   @override

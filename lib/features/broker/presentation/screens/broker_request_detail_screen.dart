@@ -44,12 +44,67 @@ class _BrokerRequestDetailScreenState
           requestedAt: '',
         );
 
+  BrokerDriverRequest? get _driverRequest =>
+      widget.initialRequest is BrokerDriverRequest
+      ? widget.initialRequest as BrokerDriverRequest
+      : null;
+
+  bool get _isDriverNegotiation => _driverRequest != null;
+
+  String get _counterSeedText {
+    final driverRequest = _driverRequest;
+    if (driverRequest != null) {
+      return driverRequest.amount.toStringAsFixed(0);
+    }
+    return _readAmount(_request.value).toStringAsFixed(0);
+  }
+
+  String get _titleText => _isDriverNegotiation
+      ? (_driverRequest!.bookingNumber.isNotEmpty
+            ? _driverRequest!.bookingNumber
+            : _driverRequest!.bookingId)
+      : _request.productName;
+
+  String get _requestNumberText => _isDriverNegotiation
+      ? 'Driver request #${_driverRequest!.id}'
+      : 'Request #${_request.id}';
+
+  String get _pickupText => _isDriverNegotiation
+      ? (_driverRequest!.pickup.isNotEmpty
+            ? _driverRequest!.pickup
+            : 'Pickup location not provided')
+      : _request.from;
+
+  String get _dropText => _isDriverNegotiation
+      ? (_driverRequest!.drop.isNotEmpty
+            ? _driverRequest!.drop
+            : 'Drop-off location not provided')
+      : _request.to;
+
+  String get _vehicleText => _isDriverNegotiation
+      ? (_driverRequest!.truckType.isNotEmpty
+            ? _driverRequest!.truckType
+            : 'Truck')
+      : _request.vehicleType;
+
+  String get _weightText => _isDriverNegotiation
+      ? (_driverRequest!.weight.isNotEmpty ? _driverRequest!.weight : 'N/A')
+      : _request.weight;
+
+  String get _valueText => _isDriverNegotiation
+      ? '₹${_driverRequest!.amount.toStringAsFixed(0)}'
+      : _request.value;
+
+  String get _statusText => _isDriverNegotiation
+      ? (_driverRequest!.driverTimedOut
+            ? 'Driver timed out. Broker handoff active.'
+            : _driverRequest!.status)
+      : _request.status;
+
   @override
   void initState() {
     super.initState();
-    _counterController = TextEditingController(
-      text: _readAmount(_request.value).toStringAsFixed(0),
-    );
+    _counterController = TextEditingController(text: _counterSeedText);
     _noteController = TextEditingController();
   }
 
@@ -90,13 +145,23 @@ class _BrokerRequestDetailScreenState
 
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(apiClientProvider)
-          .declineJobRequest(
-            accessToken: session.tokens.accessToken,
-            id: _request.id,
-          );
-      ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+      if (_isDriverNegotiation) {
+        await ref
+            .read(apiClientProvider)
+            .rejectDriverRequest(
+              accessToken: session.tokens.accessToken,
+              id: _driverRequest!.id,
+            );
+        ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
+      } else {
+        await ref
+            .read(apiClientProvider)
+            .declineJobRequest(
+              accessToken: session.tokens.accessToken,
+              id: _request.id,
+            );
+        ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -132,15 +197,26 @@ class _BrokerRequestDetailScreenState
 
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(apiClientProvider)
-          .counterJobRequest(
-            accessToken: session.tokens.accessToken,
-            id: _request.id,
-            amount: amount,
-            note: _noteController.text.trim(),
-          );
-      ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+      if (_isDriverNegotiation) {
+        await ref
+            .read(apiClientProvider)
+            .counterDriverRequest(
+              accessToken: session.tokens.accessToken,
+              id: _driverRequest!.id,
+              amount: amount,
+            );
+        ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
+      } else {
+        await ref
+            .read(apiClientProvider)
+            .counterJobRequest(
+              accessToken: session.tokens.accessToken,
+              id: _request.id,
+              amount: amount,
+              note: _noteController.text.trim(),
+            );
+        ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -236,9 +312,44 @@ class _BrokerRequestDetailScreenState
     }
   }
 
+  Future<void> _acceptTimedOutDriverRequest() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final request = _driverRequest;
+    if (session == null || request == null) return;
+
+    setState(() => _submitting = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .acceptDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+      ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
+      if (!mounted) return;
+      final shipment = brokerDriverRequestToShipment(request);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Negotiation accepted.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+      context.go('/broker/tracking/details', extra: shipment);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final request = _request;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
@@ -276,7 +387,7 @@ class _BrokerRequestDetailScreenState
                     children: [
                       Expanded(
                         child: Text(
-                          request.productName,
+                          _titleText,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.w900,
@@ -290,14 +401,18 @@ class _BrokerRequestDetailScreenState
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: _isDriverNegotiation
+                              ? const Color(0xFFFFF4E5)
+                              : const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          request.value,
+                          _valueText,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: const Color(0xFF1F88C9),
+                                color: _isDriverNegotiation
+                                    ? const Color(0xFFB54708)
+                                    : const Color(0xFF1F88C9),
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -306,212 +421,356 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Request #${request.id}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SummaryRow(label: 'Pickup', value: request.from),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Drop-off', value: request.to),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Vehicle', value: request.vehicleType),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Weight', value: request.weight),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Assignment',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Choose the driver and truck before accepting the request.',
+                    _requestNumberText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF667085),
                     ),
                   ),
                   const SizedBox(height: 14),
-                  driversAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 18),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                    error: (error, _) => Text(
-                      error.toString().replaceFirst('Exception: ', ''),
-                      style: const TextStyle(color: Color(0xFFE23A4B)),
-                    ),
-                    data: (drivers) {
-                      final defaultDriverId = _defaultDriverId(drivers);
-                      final selectedDriverId =
-                          _selectedDriverId ?? defaultDriverId;
-                      return trucksAsync.when(
-                        loading: () => const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 18),
-                          child: Center(child: CircularProgressIndicator()),
+                  if (_isDriverNegotiation) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _driverRequest!.driverTimedOut
+                            ? const Color(0xFFFFF7ED)
+                            : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: _driverRequest!.driverTimedOut
+                              ? const Color(0xFFFECF9E)
+                              : const Color(0xFFE8EDF2),
                         ),
-                        error: (error, _) => Text(
-                          error.toString().replaceFirst('Exception: ', ''),
-                          style: const TextStyle(color: Color(0xFFE23A4B)),
-                        ),
-                        data: (trucks) {
-                          final defaultTruckId = _defaultTruckId(trucks);
-                          final selectedTruckId =
-                              _selectedTruckId ?? defaultTruckId;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              DropdownButtonFormField<String>(
-                                initialValue: selectedDriverId,
-                                decoration: const InputDecoration(
-                                  labelText: 'Driver',
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _statusText,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: _driverRequest!.driverTimedOut
+                                      ? const Color(0xFFB54708)
+                                      : const Color(0xFF101828),
                                 ),
-                                items: drivers
-                                    .map(
-                                      (driver) => DropdownMenuItem(
-                                        value: driver.id,
-                                        child: Text(
-                                          driver.name.isEmpty
-                                              ? driver.id
-                                              : driver.name,
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: _submitting
-                                    ? null
-                                    : (value) {
-                                        setState(() {
-                                          _selectedDriverId = value;
-                                        });
-                                      },
-                              ),
-                              const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
-                                initialValue: selectedTruckId,
-                                decoration: const InputDecoration(
-                                  labelText: 'Truck',
-                                ),
-                                items: trucks
-                                    .map(
-                                      (truck) => DropdownMenuItem(
-                                        value: truck.id,
-                                        child: Text(
-                                          truck.plateNumber.isEmpty
-                                              ? truck.label
-                                              : '${truck.label} • ${truck.plateNumber}',
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: _submitting
-                                    ? null
-                                    : (value) {
-                                        setState(() {
-                                          _selectedTruckId = value;
-                                        });
-                                      },
-                              ),
-                              const SizedBox(height: 14),
-                              TextField(
-                                controller: _counterController,
-                                enabled: !_submitting,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: 'Counter amount',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _noteController,
-                                enabled: !_submitting,
-                                minLines: 2,
-                                maxLines: 4,
-                                decoration: const InputDecoration(
-                                  labelText: 'Note',
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: _submitting ? null : _reject,
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFFE23A4B,
-                                        ),
-                                        side: const BorderSide(
-                                          color: Color(0xFFF5B7BF),
-                                        ),
-                                      ),
-                                      child: const Text('Reject'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: _submitting ? null : _counter,
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF1F88C9,
-                                        ),
-                                        side: const BorderSide(
-                                          color: Color(0xFF1F88C9),
-                                        ),
-                                      ),
-                                      child: const Text('Counter'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: FilledButton(
-                                  onPressed: _submitting
-                                      ? null
-                                      : () => _acceptAndAssign(
-                                          drivers: drivers,
-                                          trucks: trucks,
-                                        ),
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1F88C9),
-                                  ),
-                                  child: Text(
-                                    _submitting
-                                        ? 'Saving...'
-                                        : 'Accept & assign',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Driver: ${_driverRequest!.driverName.isEmpty ? 'Unavailable' : _driverRequest!.driverName}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF344054)),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Truck: ${_driverRequest!.truckType.isEmpty ? 'Truck' : _driverRequest!.truckType}${_driverRequest!.truckReg.isEmpty ? '' : ' • ${_driverRequest!.truckReg}'}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF344054)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  _SummaryRow(label: 'Pickup', value: _pickupText),
+                  const SizedBox(height: 10),
+                  _SummaryRow(label: 'Drop-off', value: _dropText),
+                  const SizedBox(height: 10),
+                  _SummaryRow(label: 'Vehicle', value: _vehicleText),
+                  const SizedBox(height: 10),
+                  _SummaryRow(label: 'Weight', value: _weightText),
+                  if (_isDriverNegotiation) ...[
+                    const SizedBox(height: 10),
+                    _SummaryRow(
+                      label: 'Broker',
+                      value: _driverRequest!.brokerName.isNotEmpty
+                          ? _driverRequest!.brokerName
+                          : 'Broker handoff active',
+                    ),
+                  ],
                 ],
               ),
             ),
+            const SizedBox(height: 14),
+            if (_isDriverNegotiation)
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Broker negotiation',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Counter or reject the timed-out driver request, then accept to assign this truck.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _counterController,
+                      enabled: !_submitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Counter amount',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _noteController,
+                      enabled: !_submitting,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(labelText: 'Note'),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting ? null : _reject,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFE23A4B),
+                              side: const BorderSide(color: Color(0xFFF5B7BF)),
+                            ),
+                            child: const Text('Reject'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting ? null : _counter,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1F88C9),
+                              side: const BorderSide(color: Color(0xFF1F88C9)),
+                            ),
+                            child: const Text('Counter'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        onPressed: _submitting
+                            ? null
+                            : _acceptTimedOutDriverRequest,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                        ),
+                        child: Text(
+                          _submitting ? 'Saving...' : 'Accept & assign',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assignment',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Choose the driver and truck before accepting the request.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    driversAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 18),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, _) => Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                        style: const TextStyle(color: Color(0xFFE23A4B)),
+                      ),
+                      data: (drivers) {
+                        final defaultDriverId = _defaultDriverId(drivers);
+                        final selectedDriverId =
+                            _selectedDriverId ?? defaultDriverId;
+                        return trucksAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 18),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          error: (error, _) => Text(
+                            error.toString().replaceFirst('Exception: ', ''),
+                            style: const TextStyle(color: Color(0xFFE23A4B)),
+                          ),
+                          data: (trucks) {
+                            final defaultTruckId = _defaultTruckId(trucks);
+                            final selectedTruckId =
+                                _selectedTruckId ?? defaultTruckId;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                DropdownButtonFormField<String>(
+                                  initialValue: selectedDriverId,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Driver',
+                                  ),
+                                  items: drivers
+                                      .map(
+                                        (driver) => DropdownMenuItem(
+                                          value: driver.id,
+                                          child: Text(
+                                            driver.name.isEmpty
+                                                ? driver.id
+                                                : driver.name,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: _submitting
+                                      ? null
+                                      : (value) {
+                                          setState(() {
+                                            _selectedDriverId = value;
+                                          });
+                                        },
+                                ),
+                                const SizedBox(height: 12),
+                                DropdownButtonFormField<String>(
+                                  initialValue: selectedTruckId,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Truck',
+                                  ),
+                                  items: trucks
+                                      .map(
+                                        (truck) => DropdownMenuItem(
+                                          value: truck.id,
+                                          child: Text(
+                                            truck.plateNumber.isEmpty
+                                                ? truck.label
+                                                : '${truck.label} • ${truck.plateNumber}',
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: _submitting
+                                      ? null
+                                      : (value) {
+                                          setState(() {
+                                            _selectedTruckId = value;
+                                          });
+                                        },
+                                ),
+                                const SizedBox(height: 14),
+                                TextField(
+                                  controller: _counterController,
+                                  enabled: !_submitting,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Counter amount',
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextField(
+                                  controller: _noteController,
+                                  enabled: !_submitting,
+                                  minLines: 2,
+                                  maxLines: 4,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Note',
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: _submitting ? null : _reject,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFFE23A4B,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFF5B7BF),
+                                          ),
+                                        ),
+                                        child: const Text('Reject'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: _submitting
+                                            ? null
+                                            : _counter,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFF1F88C9,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFF1F88C9),
+                                          ),
+                                        ),
+                                        child: const Text('Counter'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 52,
+                                  child: FilledButton(
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _acceptAndAssign(
+                                            drivers: drivers,
+                                            trucks: trucks,
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1F88C9),
+                                    ),
+                                    child: Text(
+                                      _submitting
+                                          ? 'Saving...'
+                                          : 'Accept & assign',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

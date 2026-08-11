@@ -2333,16 +2333,6 @@ enum _BookingFlowStep {
 
 enum _TruckAction { continueBooking, negotiate }
 
-class _NegotiationSheetResult {
-  const _NegotiationSheetResult._(this.accepted, this.amount);
-
-  factory _NegotiationSheetResult.accepted(double amount) =>
-      _NegotiationSheetResult._(true, amount);
-
-  final bool accepted;
-  final double? amount;
-}
-
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   static const LatLng _fallbackMapCenter = LatLng(19.0760, 72.8777);
 
@@ -2374,6 +2364,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _bookingCreated = false;
   String? _bookingReference;
   ClientBookingOffer? _driverRequest;
+  String? _activeBookingId;
+  bool _postNegotiationPayment = false;
   bool _weightUnknown = false;
   String? _weightError;
   late BookingData _draft;
@@ -2779,7 +2771,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             selectedPaymentLabel: _selectedPaymentMethod.label,
           );
         });
-        await _submitBooking();
+        if (_postNegotiationPayment) {
+          await _payExistingBooking();
+        } else {
+          await _submitBooking();
+        }
         return;
       case _BookingFlowStep.waiting:
         return;
@@ -2794,7 +2790,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         amount: _draft.amount > 0 ? _draft.amount : _priceValue(_vehicle.price),
       );
     });
-    unawaited(_submitBookingAndRequestTruck(truckId: truck.id));
+    unawaited(_openNegotiationSheet(truck));
   }
 
   Future<void> _openNegotiationSheet(NearbyTruck truck) async {
@@ -2807,7 +2803,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ? _draft.amount.clamp(lower, upper).toDouble()
         : basePrice.clamp(lower, upper).toDouble();
 
-    final outcome = await showModalBottomSheet<_NegotiationSheetResult>(
+    final outcome = await showModalBottomSheet<_DirectNegotiationOutcome?>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -2817,6 +2813,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         minPrice: lower,
         maxPrice: upper,
         initialPrice: initial,
+        onCreateRequest: (amount) =>
+            _createDirectTruckRequestSession(truckId: truck.id, amount: amount),
       ),
     );
 
@@ -2824,13 +2822,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
-    if (outcome.accepted) {
-      setState(() {
-        _selectedTruck = truck;
-        _draft = _draft.copyWith(brokerId: truck.id, amount: outcome.amount);
-      });
-      unawaited(_submitBookingAndRequestTruck(truckId: truck.id));
+    if (!outcome.accepted) {
+      _goToClientHome();
+      return;
     }
+
+    setState(() {
+      _draft = _draft.copyWith(
+        amount: outcome.amount ?? _draft.amount,
+      );
+      _bookingCreated = true;
+      _postNegotiationPayment = true;
+      _step = _BookingFlowStep.payment;
+    });
   }
 
   Future<void> _handleTruckTap(NearbyTruck truck) async {
@@ -3291,6 +3295,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             idempotencyKey: _buildIdempotencyKey(),
           );
       final bookingNumber = _extractBookingNumber(response);
+      final bookingId = _extractBookingId(response);
       final resolvedBookingNumber = bookingNumber.isNotEmpty
           ? bookingNumber
           : await _fetchLatestBookingNumber(session.tokens.accessToken);
@@ -3302,6 +3307,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _submitting = false;
         _bookingCreated = true;
         _bookingReference = resolvedBookingNumber;
+        _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
+        _postNegotiationPayment = false;
       });
     } catch (error) {
       if (!mounted) {
@@ -3318,81 +3325,96 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
-  Future<void> _submitBookingAndRequestTruck({required String truckId}) async {
-    if (_submitting || _bookingCreated) {
+  Future<void> _payExistingBooking() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
       return;
     }
 
+    try {
+      final response = await ref.read(apiClientProvider).payBooking(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _postNegotiationPayment = false;
+        _bookingCreated = true;
+      });
+      final message = _readString(response, const ['message']);
+      if (message.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    }
+  }
+
+  Future<_DirectRequestSession?> _createDirectTruckRequestSession({
+    required String truckId,
+    required double amount,
+  }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to create a booking.'),
-        ),
-      );
-      return;
+      throw StateError('Please sign in again to create a booking.');
     }
 
     setState(() {
-      _submitting = true;
+      _draft = _draft.copyWith(
+        brokerId: truckId,
+        amount: amount,
+      );
     });
 
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .createBooking(
-            accessToken: session.tokens.accessToken,
-            booking: _bookingPayload(),
-            idempotencyKey: _buildIdempotencyKey(),
-          );
-      final bookingNumber = _extractBookingNumber(response);
-      final bookingId = _extractBookingId(response);
-      final resolvedBookingNumber = bookingNumber.isNotEmpty
-          ? bookingNumber
-          : await _fetchLatestBookingNumber(session.tokens.accessToken);
+    final response = await ref
+        .read(apiClientProvider)
+        .createBooking(
+          accessToken: session.tokens.accessToken,
+          booking: _bookingPayload(),
+          idempotencyKey: _buildIdempotencyKey(),
+        );
+    final bookingNumber = _extractBookingNumber(response);
+    final bookingId = _extractBookingId(response);
+    final resolvedBookingNumber = bookingNumber.isNotEmpty
+        ? bookingNumber
+        : await _fetchLatestBookingNumber(session.tokens.accessToken);
 
-      ClientBookingOffer? driverRequest;
-      if (bookingId.isNotEmpty && truckId.trim().isNotEmpty) {
-        try {
-          final requestResponse = await ref
-              .read(apiClientProvider)
-              .requestTruckForBooking(
-                accessToken: session.tokens.accessToken,
-                bookingId: bookingId,
-                truckId: truckId,
-              );
-          driverRequest = _extractDriverRequest(requestResponse);
-        } catch (_) {
-          driverRequest = null;
-        }
+    ClientBookingOffer? driverRequest;
+    if (bookingId.isNotEmpty && truckId.trim().isNotEmpty) {
+      try {
+        final requestResponse = await ref
+            .read(apiClientProvider)
+            .requestTruckForBooking(
+              accessToken: session.tokens.accessToken,
+              bookingId: bookingId,
+              truckId: truckId,
+            );
+        driverRequest = _extractDriverRequest(requestResponse);
+      } catch (_) {
+        driverRequest = null;
       }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _submitting = false;
-        _bookingCreated = true;
-        _bookingReference = resolvedBookingNumber;
-        _driverRequest = driverRequest;
-        _step = driverRequest != null
-            ? _BookingFlowStep.waiting
-            : _BookingFlowStep.payment;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _submitting = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('ApiException: ', '')),
-        ),
-      );
     }
+
+    if (mounted) {
+      setState(() {
+        _bookingReference = resolvedBookingNumber;
+        _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
+      });
+    }
+
+    return _DirectRequestSession(
+      bookingId: bookingId,
+      bookingNumber: resolvedBookingNumber,
+      request: driverRequest,
+    );
   }
 
   Map<String, dynamic> _bookingPayload() {
@@ -3601,7 +3623,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _bookingCreated || !showBottomButton
+      bottomNavigationBar: (_bookingCreated && !_postNegotiationPayment) ||
+              !showBottomButton
           ? const SizedBox.shrink()
           : Padding(
               padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
@@ -3808,7 +3831,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         nearbyTrucksLoading,
       ),
       _BookingFlowStep.payment =>
-        _bookingCreated
+        _bookingCreated && !_postNegotiationPayment
             ? _buildSuccessStep(context)
             : _buildPaymentStep(context),
       _BookingFlowStep.waiting => _buildWaitingStep(context),
@@ -4602,26 +4625,69 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
   }
 }
 
-class _BrokerNegotiationSheet extends StatefulWidget {
+enum _DirectNegotiationStage { compose, waiting, payment, confirmed }
+
+class _DirectNegotiationOutcome {
+  const _DirectNegotiationOutcome._(this.accepted, this.amount);
+
+  factory _DirectNegotiationOutcome.accepted([double? amount]) =>
+      _DirectNegotiationOutcome._(true, amount);
+
+  factory _DirectNegotiationOutcome.rejected() =>
+      const _DirectNegotiationOutcome._(false, null);
+
+  final bool accepted;
+  final double? amount;
+}
+
+class _DirectRequestSession {
+  const _DirectRequestSession({
+    required this.bookingId,
+    required this.bookingNumber,
+    required this.request,
+  });
+
+  final String bookingId;
+  final String bookingNumber;
+  final ClientBookingOffer? request;
+}
+
+class _BrokerNegotiationSheet extends ConsumerStatefulWidget {
   const _BrokerNegotiationSheet({
     required this.truck,
     required this.minPrice,
     required this.maxPrice,
     required this.initialPrice,
+    required this.onCreateRequest,
   });
 
   final NearbyTruck truck;
   final double minPrice;
   final double maxPrice;
   final double initialPrice;
+  final Future<_DirectRequestSession?> Function(double amount) onCreateRequest;
 
   @override
-  State<_BrokerNegotiationSheet> createState() =>
+  ConsumerState<_BrokerNegotiationSheet> createState() =>
       _BrokerNegotiationSheetState();
 }
 
-class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
+class _BrokerNegotiationSheetState
+    extends ConsumerState<_BrokerNegotiationSheet> {
+  static const Duration _refreshInterval = Duration(seconds: 4);
+
   late double _value;
+  _DirectNegotiationStage _stage = _DirectNegotiationStage.compose;
+  ClientBookingOffer? _request;
+  String? _bookingId;
+  String? _bookingNumber;
+  bool _submitting = false;
+  bool _paymentSubmitting = false;
+  bool _loading = false;
+  String? _errorMessage;
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
+  Timer? _pollTimer;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   @override
   void initState() {
@@ -4629,17 +4695,562 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
     _value = widget.initialPrice;
   }
 
-  void _continueWithSelectedPrice() {
-    Navigator.of(context).pop(_NegotiationSheetResult.accepted(_value));
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _sendOffer() async {
+    if (_submitting) {
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final session = await widget.onCreateRequest(_value);
+      if (!mounted || session == null) {
+        return;
+      }
+
+      setState(() {
+        _bookingId = session.bookingId;
+        _bookingNumber = session.bookingNumber;
+        _request = session.request;
+        _stage = _DirectNegotiationStage.waiting;
+      });
+
+      await _startLiveUpdates();
+      await _loadCurrentRequest(silent: true);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _bookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final payloadMap = _payloadAsMap(payload);
+      if (payloadMap == null) {
+        return;
+      }
+
+      final payloadBookingId = _readString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      final payloadRequestId = _readString(payloadMap, const [
+        'id',
+        'request_id',
+        'driver_request_id',
+      ]);
+
+      if (payloadBookingId == bookingId ||
+          (_request != null && payloadRequestId == _request!.id)) {
+        _loadCurrentRequest(silent: true);
+      }
+    });
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        _loadCurrentRequest(silent: true);
+      }
+    });
+  }
+
+  Map<String, dynamic>? _payloadAsMap(Object? payload) {
+    if (payload is Map<String, dynamic>) {
+      return payload;
+    }
+    if (payload is Map) {
+      return payload.cast<String, dynamic>();
+    }
+    return null;
+  }
+
+  Future<void> _loadCurrentRequest({bool silent = false}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _bookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    try {
+      if (!silent) {
+        setState(() {
+          _loading = true;
+          _errorMessage = null;
+        });
+      }
+
+      final response = await ref.read(apiClientProvider).getDriverRequestByBooking(
+        accessToken: session.tokens.accessToken,
+        bookingId: bookingId,
+      );
+      final request = _extractDriverRequest(response);
+
+      if (!mounted || request == null) {
+        return;
+      }
+
+      setState(() {
+        _request = request;
+      });
+    } catch (_) {
+      if (!mounted || silent) {
+        return;
+      }
+      setState(() {
+        _errorMessage = 'Could not refresh the live request.';
+      });
+    } finally {
+      if (mounted && !silent) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _acceptRequest() async {
+    final request = _request;
+    if (request == null || _paymentSubmitting) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    setState(() {
+      _paymentSubmitting = true;
+    });
+
+    try {
+      await ref.read(apiClientProvider).acceptDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        _DirectNegotiationOutcome.accepted(
+          double.tryParse(
+            request.amountText.replaceAll(RegExp(r'[^0-9.]'), ''),
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _paymentSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _rejectRequest() async {
+    final request = _request;
+    if (request == null || _paymentSubmitting) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    setState(() {
+      _paymentSubmitting = true;
+    });
+
+    try {
+      await ref.read(apiClientProvider).rejectDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop(_DirectNegotiationOutcome.rejected());
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _paymentSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _counterRequest() async {
+    final request = _request;
+    if (request == null || _paymentSubmitting) {
+      return;
+    }
+
+    final amountController = TextEditingController(text: request.amountText);
+    try {
+      final shouldSend = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Counter offer'),
+          content: TextField(
+            controller: amountController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Amount'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Send'),
+            ),
+          ],
+        ),
+      );
+      if (shouldSend != true) return;
+
+      final amount =
+          double.tryParse(
+            amountController.text.replaceAll(RegExp(r'[^0-9.]'), ''),
+          ) ??
+          0;
+      if (amount <= 0) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enter a valid amount.')),
+        );
+        return;
+      }
+
+      final session = ref.read(authSessionProvider).valueOrNull;
+      if (session == null) {
+        return;
+      }
+
+      setState(() {
+        _paymentSubmitting = true;
+      });
+
+      await ref.read(apiClientProvider).counterDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+            amount: amount,
+          );
+      if (!mounted) return;
+      await _loadCurrentRequest();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      amountController.dispose();
+      if (mounted) {
+        setState(() {
+          _paymentSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _recordPayment() async {
+    final bookingId = _bookingId;
+    if (bookingId == null || bookingId.isEmpty || _paymentSubmitting) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    setState(() {
+      _paymentSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref.read(apiClientProvider).payBooking(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      if (!mounted) return;
+      setState(() {
+        _stage = _DirectNegotiationStage.confirmed;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _paymentSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildWaitingView() {
+    final request = _request;
+    final status = request?.status.trim().toLowerCase() ?? 'pending';
+    final actionable = status == 'countered' || status == 'accepted';
+    final title = status == 'accepted'
+        ? 'Driver accepted the request'
+        : status == 'countered'
+            ? 'Counter offer received'
+            : 'Waiting for driver response';
+    final body = status == 'accepted'
+        ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
+        : status == 'countered'
+            ? 'The driver sent a counter. Review it here and respond instantly.'
+            : request?.driverTimedOut == true
+                ? 'The driver did not respond in time. The broker can step in now.'
+                : 'Your request is live. We will update this popup as soon as the truck responds.';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: const Color(0xFF101828),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          body,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: const Color(0xFF667085),
+            height: 1.45,
+          ),
+        ),
+        if (_bookingNumber != null && _bookingNumber!.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(
+            'Booking #${_bookingNumber!}',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: const Color(0xFF2FA56E),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (_loading)
+          const LinearProgressIndicator(minHeight: 3)
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  request?.brokerName.isNotEmpty == true
+                      ? request!.brokerName
+                      : widget.truck.displayTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF101828),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  request == null
+                      ? 'Live updates will appear here.'
+                      : 'Current amount: ${request.amountText}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFFB42318),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (actionable) ...[
+          const SizedBox(height: 16),
+          _NegotiationActionButtons(
+            canCounter: status != 'accepted',
+            isBusy: _paymentSubmitting,
+            onAccept: _acceptRequest,
+            onCounter: _counterRequest,
+            onReject: _rejectRequest,
+          ),
+        ] else ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Waiting for a live counter offer...',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF667085),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildComposeView() {
+    return _NegotiationSliderStep(
+      truck: widget.truck,
+      value: _value,
+      minPrice: widget.minPrice,
+      maxPrice: widget.maxPrice,
+      onChanged: (value) {
+        setState(() {
+          _value = value;
+        });
+      },
+      onNegotiate: _sendOffer,
+      isBusy: _submitting,
+      errorMessage: _errorMessage,
+    );
+  }
+
+  Widget _buildPaymentView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Complete payment',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: const Color(0xFF101828),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'The booking is confirmed. Choose a payment method and record it here.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: const Color(0xFF667085),
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _PaymentMethodsCard(
+          selectedMethod: _selectedPaymentMethod,
+          onSelect: (method) {
+            setState(() => _selectedPaymentMethod = method);
+          },
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _paymentSubmitting ? null : _recordPayment,
+            child: _paymentSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Record payment'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmedView() {
+    return _BookingSuccessCard(
+      bookingReference: _bookingNumber,
+      onTrack: () => Navigator.of(context).pop(),
+      onHome: () => Navigator.of(context).pop(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.56,
+      initialChildSize: 0.62,
       minChildSize: 0.42,
-      maxChildSize: 0.78,
+      maxChildSize: 0.88,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -4663,18 +5274,12 @@ class _BrokerNegotiationSheetState extends State<_BrokerNegotiationSheet> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                _NegotiationSliderStep(
-                  truck: widget.truck,
-                  value: _value,
-                  minPrice: widget.minPrice,
-                  maxPrice: widget.maxPrice,
-                  onChanged: (value) {
-                    setState(() {
-                      _value = value;
-                    });
-                  },
-                  onNegotiate: _continueWithSelectedPrice,
-                ),
+                switch (_stage) {
+                  _DirectNegotiationStage.compose => _buildComposeView(),
+                  _DirectNegotiationStage.waiting => _buildWaitingView(),
+                  _DirectNegotiationStage.payment => _buildPaymentView(),
+                  _DirectNegotiationStage.confirmed => _buildConfirmedView(),
+                },
               ],
             ),
           ),
@@ -4692,6 +5297,8 @@ class _NegotiationSliderStep extends StatelessWidget {
     required this.maxPrice,
     required this.onChanged,
     required this.onNegotiate,
+    required this.isBusy,
+    required this.errorMessage,
   });
 
   final NearbyTruck truck;
@@ -4700,6 +5307,8 @@ class _NegotiationSliderStep extends StatelessWidget {
   final double maxPrice;
   final ValueChanged<double> onChanged;
   final VoidCallback onNegotiate;
+  final bool isBusy;
+  final String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -4786,12 +5395,80 @@ class _NegotiationSliderStep extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: onNegotiate,
+            onPressed: isBusy ? null : onNegotiate,
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF2FA56E),
             ),
-            child: const Text('Continue with this price'),
+            child: isBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Continue with this price'),
           ),
+        ),
+        if (errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            errorMessage!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFFB42318),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _NegotiationActionButtons extends StatelessWidget {
+  const _NegotiationActionButtons({
+    required this.canCounter,
+    required this.isBusy,
+    required this.onAccept,
+    required this.onCounter,
+    required this.onReject,
+  });
+
+  final bool canCounter;
+  final bool isBusy;
+  final VoidCallback onAccept;
+  final VoidCallback onCounter;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: isBusy ? null : onAccept,
+            child: const Text('Accept'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: isBusy ? null : onReject,
+                child: const Text('Reject'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: isBusy || !canCounter ? null : onCounter,
+                child: const Text('Counter'),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
@@ -16,6 +19,8 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   static const int _pageSize = 20;
+  String? _liveRefreshToken;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   Future<void> _refreshBookings() async {
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -28,6 +33,31 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
     await refreshed;
   }
 
+  Future<void> _ensureLiveRefresh() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final accessToken = session?.tokens.accessToken;
+    if (accessToken == null || accessToken.isEmpty || _liveRefreshToken == accessToken) {
+      return;
+    }
+
+    _liveRefreshToken = accessToken;
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: accessToken);
+
+    _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((_) {
+      if (mounted) {
+        ref.invalidate(clientBookingsProvider((status: null, page: 1, limit: _pageSize)));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
@@ -35,6 +65,10 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
     final bookingsAsync = session == null
         ? null
         : ref.watch(clientBookingsProvider(query));
+
+    if (session != null) {
+      _ensureLiveRefresh();
+    }
 
     return SafeArea(
       child: RefreshIndicator(

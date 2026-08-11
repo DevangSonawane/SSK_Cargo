@@ -28,6 +28,11 @@ class BrokerTrackingScreen extends ConsumerWidget {
       trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
     );
     final List<BrokerDriver> availableDrivers = roster;
+    final timedOutRequests =
+        driverRequestsAsync.valueOrNull
+            ?.where((request) => request.driverTimedOut)
+            .toList() ??
+        const <BrokerDriverRequest>[];
     final pendingDriverRequests =
         driverRequestsAsync.valueOrNull?.where((request) {
           final status = request.status.toLowerCase();
@@ -38,6 +43,83 @@ class BrokerTrackingScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       children: [
+        if (timedOutRequests.isNotEmpty) ...[
+          Text(
+            'Remaining negotiation',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (var index = 0; index < timedOutRequests.length; index++) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFECF9E)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          timedOutRequests[index].bookingNumber.isEmpty
+                              ? timedOutRequests[index].bookingId
+                              : timedOutRequests[index].bookingNumber,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF101828),
+                              ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFB54708),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF7C2D12),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF101828),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => context.push(
+                        '/broker/request',
+                        extra: timedOutRequests[index],
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F88C9),
+                      ),
+                      child: const Text('Negotiate'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (index != timedOutRequests.length - 1)
+              const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 18),
+        ],
         Row(
           children: [
             Text(
@@ -146,10 +228,8 @@ class BrokerTrackingScreen extends ConsumerWidget {
                       '/broker/drivers/${mergedDrivers[index].id}',
                       extra: mergedDrivers[index],
                     ),
-                    onEdit: () => _showDriverDetailsSheet(
-                      context,
-                      mergedDrivers[index],
-                    ),
+                    onEdit: () =>
+                        _showDriverDetailsSheet(context, mergedDrivers[index]),
                     onRemove: () => _confirmDeleteDriver(
                       context,
                       ref,
@@ -339,10 +419,7 @@ Future<void> _showDriverDetailsSheet(
 }
 
 class _DriverDetailsSheet extends StatelessWidget {
-  const _DriverDetailsSheet({
-    required this.driver,
-    required this.onEdit,
-  });
+  const _DriverDetailsSheet({required this.driver, required this.onEdit});
 
   final BrokerDriver driver;
   final VoidCallback onEdit;
@@ -351,13 +428,11 @@ class _DriverDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
-      padding: EdgeInsets.only(
-        left: 12,
-        right: 12,
-        bottom: bottomInset + 12,
-      ),
+      padding: EdgeInsets.only(left: 12, right: 12, bottom: bottomInset + 12),
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -376,9 +451,9 @@ class _DriverDetailsSheet extends StatelessWidget {
                       child: Text(
                         'Driver Details',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF101828),
-                            ),
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF101828),
+                        ),
                       ),
                     ),
                     IconButton(
@@ -400,7 +475,8 @@ class _DriverDetailsSheet extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         _driverInitials(driver.name),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               color: driverAvatarTextColor(driver.status),
                               fontWeight: FontWeight.w800,
                             ),
@@ -415,23 +491,28 @@ class _DriverDetailsSheet extends StatelessWidget {
                             driver.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF101828),
                                 ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            driver.phone.isEmpty ? 'No phone number' : driver.phone,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF667085),
-                                ),
+                            driver.phone.isEmpty
+                                ? 'No phone number'
+                                : driver.phone,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF667085)),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: driverStatusBackground(driver.status),
                         borderRadius: BorderRadius.circular(999),
@@ -439,9 +520,9 @@ class _DriverDetailsSheet extends StatelessWidget {
                       child: Text(
                         driverStatusLabel(driver.status),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: driverStatusColor(driver.status),
-                              fontWeight: FontWeight.w800,
-                            ),
+                          color: driverStatusColor(driver.status),
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
@@ -540,10 +621,7 @@ class _DriverDetailsSheet extends StatelessWidget {
 }
 
 class _DriverDetailTile extends StatelessWidget {
-  const _DriverDetailTile({
-    required this.label,
-    required this.value,
-  });
+  const _DriverDetailTile({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -562,9 +640,9 @@ class _DriverDetailTile extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFF98A2B3),
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -572,9 +650,9 @@ class _DriverDetailTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF1F2937),
-                  fontWeight: FontWeight.w800,
-                ),
+              color: const Color(0xFF1F2937),
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -583,12 +661,17 @@ class _DriverDetailTile extends StatelessWidget {
 }
 
 String _driverInitials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) {
     return parts.first.characters.first.toUpperCase();
   }
-  return '${parts.first.characters.first}${parts[1].characters.first}'.toUpperCase();
+  return '${parts.first.characters.first}${parts[1].characters.first}'
+      .toUpperCase();
 }
 
 String _maskAadhaar(String value) {

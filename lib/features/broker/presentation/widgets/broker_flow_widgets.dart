@@ -982,6 +982,77 @@ TrackingDemoShipment brokerRequestToShipment(BookingRequest request) {
   return bookingRequestToShipment(request, status: shipmentStatus);
 }
 
+TrackingDemoShipment brokerDriverRequestToShipment(
+  BrokerDriverRequest request,
+) {
+  final status = request.status.trim().toLowerCase();
+  final shipmentStatus = switch (status) {
+    'accepted' => 'Accepted',
+    'countered' => 'Countered',
+    'declined' || 'rejected' => 'Rejected',
+    _ when request.driverTimedOut => 'Driver timed out',
+    _ => request.status.isEmpty ? 'Pending' : request.status,
+  };
+
+  return TrackingDemoShipment(
+    packageName: request.bookingNumber.isNotEmpty
+        ? request.bookingNumber
+        : 'Timed-out negotiation',
+    trackingId: request.bookingNumber.isNotEmpty
+        ? request.bookingNumber
+        : request.bookingId,
+    fromLocation: request.pickup.isNotEmpty
+        ? request.pickup
+        : 'Pickup location not provided',
+    toLocation: request.drop.isNotEmpty
+        ? request.drop
+        : 'Drop-off location not provided',
+    status: shipmentStatus,
+    customerName: request.clientName.isNotEmpty ? request.clientName : 'Client',
+    weight: request.weight.isNotEmpty ? request.weight : 'N/A',
+    amount: request.amount,
+    paymentStatus: request.driverTimedOut ? 'pending' : 'confirmed',
+    bookingId: request.bookingId,
+    bookingStatus: status,
+    assignedDriverName: request.driverName.isNotEmpty
+        ? request.driverName
+        : request.brokerName,
+    assignedTruckName: request.truckReg.isNotEmpty
+        ? '${request.truckType} • ${request.truckReg}'
+        : request.truckType,
+    timeline: [
+      TrackingTimelineStep(
+        title: 'Driver request sent',
+        subtitle: request.pickup.isNotEmpty
+            ? request.pickup
+            : 'Pickup location not provided',
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: request.driverTimedOut ? 'Driver timed out' : 'Driver response',
+        subtitle: request.driverTimedOut
+            ? 'Broker handoff is active'
+            : (request.status.isNotEmpty ? request.status : 'Waiting'),
+        completed: true,
+      ),
+      TrackingTimelineStep(
+        title: 'Broker negotiation',
+        subtitle: request.drop.isNotEmpty
+            ? request.drop
+            : 'Drop-off location not provided',
+        completed: status == 'accepted',
+      ),
+      TrackingTimelineStep(
+        title: 'Assigned',
+        subtitle: status == 'accepted'
+            ? 'Truck assignment confirmed'
+            : 'Awaiting broker action',
+        completed: status == 'accepted',
+      ),
+    ],
+  );
+}
+
 bool isPendingBookingRequest(BookingRequest request) {
   return _normalizeRequestStatus(request.status) == 'pending';
 }
@@ -1424,11 +1495,12 @@ class BrokerRequestCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         request.productName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF1A365D),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: const Color(0xFF1A365D),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                     ],
                   ),
