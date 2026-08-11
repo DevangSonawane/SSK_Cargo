@@ -22,13 +22,20 @@ class _DriverDeliveryDetailsScreenState
     extends ConsumerState<DriverDeliveryDetailsScreen> {
   double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
+  bool _loadingTrip = true;
+  bool _confirmingArrival = false;
   Timer? _arrivalTimer;
+  String _paymentStatus = 'pending';
+  String _customerName = 'Customer';
+  String _customerPhone = '';
+  String _dropLocation = 'Drop location not provided';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
+      unawaited(_loadTrip());
     });
     _arrivalTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
@@ -40,6 +47,149 @@ class _DriverDeliveryDetailsScreenState
   void dispose() {
     _arrivalTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadTrip() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getTrip(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+          );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      if (!mounted) return;
+
+      setState(() {
+        _paymentStatus = _readString(trip, const [
+          'paymentStatus',
+          'payment_status',
+        ]).toLowerCase();
+        final loadedCustomerName = _readString(trip, const [
+          'clientName',
+          'customerName',
+          'customer_name',
+        ]);
+        if (loadedCustomerName.isNotEmpty) {
+          _customerName = loadedCustomerName;
+        }
+        final loadedCustomerPhone = _readString(trip, const [
+          'clientPhone',
+          'customerPhone',
+          'customer_phone',
+        ]);
+        if (loadedCustomerPhone.isNotEmpty) {
+          _customerPhone = loadedCustomerPhone;
+        }
+        final loadedDrop = _readLocation(trip, const [
+          'drop',
+          'dropLocation',
+          'dropoffLocation',
+          'destination',
+        ]);
+        if (loadedDrop.isNotEmpty) {
+          _dropLocation = loadedDrop;
+        }
+        _loadingTrip = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+    }
+  }
+
+  Future<void> _confirmArrival() async {
+    if (_confirmingArrival) return;
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+
+    setState(() => _confirmingArrival = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .updateTripStatus(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+            status: 'delivered',
+          );
+      if (!mounted) return;
+      final requiresPayment = _paymentStatus != 'paid';
+      context.go(
+        '/driver/delivery-proof/${widget.tripId}?payment=${requiresPayment ? 'pending' : 'paid'}',
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _confirmingArrival = false);
+      }
+    }
+  }
+
+  String _readString(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return '';
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) continue;
+      final text = value.toString().trim();
+      if (text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  String _readLocation(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return '';
+    for (final key in keys) {
+      final value = json[key];
+      if (value is Map<String, dynamic>) {
+        final nested = _readString(value, const [
+          'location',
+          'address',
+          'name',
+        ]);
+        if (nested.isNotEmpty) return nested;
+      }
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
   }
 
   void _showEmergencyAssistance(BuildContext context) {
@@ -220,11 +370,11 @@ class _DriverDeliveryDetailsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
@@ -507,6 +657,10 @@ class _DriverDeliveryDetailsScreenState
                                               child: Slider(
                                                 value: _arrivalSlide,
                                                 onChanged: (value) {
+                                                  if (_loadingTrip ||
+                                                      _confirmingArrival) {
+                                                    return;
+                                                  }
                                                   setState(
                                                     () => _arrivalSlide = value,
                                                   );
@@ -519,8 +673,8 @@ class _DriverDeliveryDetailsScreenState
                                                         if (!context.mounted) {
                                                           return;
                                                         }
-                                                        context.push(
-                                                          '/driver/delivery-proof/${widget.tripId}?payment=pending',
+                                                        unawaited(
+                                                          _confirmArrival(),
                                                         );
                                                         setState(
                                                           () =>
@@ -661,18 +815,19 @@ class _DriverDeliveryDetailsScreenState
                                       const SizedBox(height: 12),
                                       _DetailRow(
                                         label: 'Customer',
-                                        value: 'Rahul Sharma',
+                                        value: _customerName,
                                       ),
                                       const SizedBox(height: 10),
                                       _DetailRow(
                                         label: 'Phone',
-                                        value: '+91 98765 43210',
+                                        value: _customerPhone.isNotEmpty
+                                            ? _customerPhone
+                                            : '—',
                                       ),
                                       const SizedBox(height: 10),
                                       _DetailRow(
                                         label: 'Address',
-                                        value:
-                                            'Sector 137, Noida, Uttar Pradesh 201305',
+                                        value: _dropLocation,
                                       ),
                                       const SizedBox(height: 16),
                                       Container(
@@ -691,7 +846,9 @@ class _DriverDeliveryDetailsScreenState
                                           ),
                                         ),
                                         child: Text(
-                                          'Swipe control will appear automatically after 2 seconds.',
+                                          _loadingTrip
+                                              ? 'Loading live trip details...'
+                                              : 'Swipe control will appear automatically after 2 seconds.',
                                           textAlign: TextAlign.center,
                                           style: Theme.of(context)
                                               .textTheme

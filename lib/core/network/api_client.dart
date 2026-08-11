@@ -1306,6 +1306,24 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> updateTripStatus({
+    required String accessToken,
+    required String tripId,
+    required String status,
+  }) async {
+    developer.log(
+      'PATCH /api/trips/$tripId/status status=$status',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/trips/$tripId/status',
+        data: {'status': status},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> completeTrip({
     required String accessToken,
     required String tripId,
