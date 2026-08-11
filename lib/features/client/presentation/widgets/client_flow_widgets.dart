@@ -2342,6 +2342,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _amountController;
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
+  late final AppSocketService _socketService;
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
@@ -2376,6 +2377,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void initState() {
     super.initState();
     ref.read(bottomNavVisibleProvider.notifier).state = false;
+    _socketService = ref.read(appSocketServiceProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadTruckMarkerIcon();
@@ -2431,38 +2433,36 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
     }
 
-    _truckLocationSubscription = ref
-        .read(appSocketServiceProvider)
-        .truckLocationStream
-        .listen((event) {
-          if (!mounted || !_trackedTruckIds.contains(event.truckId)) {
-            developer.log(
-              'Client flow ignored truck-location truckId=${event.truckId} mounted=$mounted tracked=${_trackedTruckIds.contains(event.truckId)}',
-              name: 'SSK.ClientFlow',
-            );
-            return;
-          }
-          developer.log(
-            'Client flow received truck-location truckId=${event.truckId} lat=${event.lat} lng=${event.lng}',
-            name: 'SSK.ClientFlow',
-          );
-          setState(() {
-            _liveTruckLocations[event.truckId] = _LiveTruckLocation(
-              truckId: event.truckId,
-              latitude: event.lat,
-              longitude: event.lng,
-              lastLocationAt: event.lastLocationAt,
-            );
-          });
-        });
+    _truckLocationSubscription = _socketService.truckLocationStream.listen((
+      event,
+    ) {
+      if (!mounted || !_trackedTruckIds.contains(event.truckId)) {
+        developer.log(
+          'Client flow ignored truck-location truckId=${event.truckId} mounted=$mounted tracked=${_trackedTruckIds.contains(event.truckId)}',
+          name: 'SSK.ClientFlow',
+        );
+        return;
+      }
+      developer.log(
+        'Client flow received truck-location truckId=${event.truckId} lat=${event.lat} lng=${event.lng}',
+        name: 'SSK.ClientFlow',
+      );
+      setState(() {
+        _liveTruckLocations[event.truckId] = _LiveTruckLocation(
+          truckId: event.truckId,
+          latitude: event.lat,
+          longitude: event.lng,
+          lastLocationAt: event.lastLocationAt,
+        );
+      });
+    });
   }
 
   @override
   void dispose() {
-    ref.read(bottomNavVisibleProvider.notifier).state = true;
     _nearbyTrucksRefreshTimer?.cancel();
     _truckLocationSubscription?.cancel();
-    ref.read(appSocketServiceProvider).clearTruckTrackingIds();
+    _socketService.clearTruckTrackingIds();
     _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
@@ -2828,9 +2828,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     setState(() {
-      _draft = _draft.copyWith(
-        amount: outcome.amount ?? _draft.amount,
-      );
+      _draft = _draft.copyWith(amount: outcome.amount ?? _draft.amount);
       _bookingCreated = true;
       _postNegotiationPayment = true;
       _step = _BookingFlowStep.payment;
@@ -3333,10 +3331,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     try {
-      final response = await ref.read(apiClientProvider).payBooking(
-            accessToken: session.tokens.accessToken,
-            id: bookingId,
-          );
+      final response = await ref
+          .read(apiClientProvider)
+          .payBooking(accessToken: session.tokens.accessToken, id: bookingId);
       if (!mounted) {
         return;
       }
@@ -3346,15 +3343,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       final message = _readString(response, const ['message']);
       if (message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     }
   }
 
@@ -3368,10 +3365,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     setState(() {
-      _draft = _draft.copyWith(
-        brokerId: truckId,
-        amount: amount,
-      );
+      _draft = _draft.copyWith(brokerId: truckId, amount: amount);
     });
 
     final response = await ref
@@ -3623,8 +3617,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: (_bookingCreated && !_postNegotiationPayment) ||
-              !showBottomButton
+      bottomNavigationBar:
+          (_bookingCreated && !_postNegotiationPayment) || !showBottomButton
           ? const SizedBox.shrink()
           : Padding(
               padding: EdgeInsets.fromLTRB(18, 10, 18, bottomInset + 44),
@@ -4494,6 +4488,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   void _goToClientHome() {
+    ref.read(bottomNavVisibleProvider.notifier).state = true;
+    _socketService.clearTruckTrackingIds();
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
       navigator.popUntil((route) => route.isFirst);
@@ -4813,10 +4809,12 @@ class _BrokerNegotiationSheetState
         });
       }
 
-      final response = await ref.read(apiClientProvider).getDriverRequestByBooking(
-        accessToken: session.tokens.accessToken,
-        bookingId: bookingId,
-      );
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverRequestByBooking(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
       final request = _extractDriverRequest(response);
 
       if (!mounted || request == null) {
@@ -4858,7 +4856,9 @@ class _BrokerNegotiationSheetState
     });
 
     try {
-      await ref.read(apiClientProvider).acceptDriverRequest(
+      await ref
+          .read(apiClientProvider)
+          .acceptDriverRequest(
             accessToken: session.tokens.accessToken,
             id: request.id,
           );
@@ -4900,7 +4900,9 @@ class _BrokerNegotiationSheetState
     });
 
     try {
-      await ref.read(apiClientProvider).rejectDriverRequest(
+      await ref
+          .read(apiClientProvider)
+          .rejectDriverRequest(
             accessToken: session.tokens.accessToken,
             id: request.id,
           );
@@ -4961,9 +4963,9 @@ class _BrokerNegotiationSheetState
           0;
       if (amount <= 0) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a valid amount.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
         return;
       }
 
@@ -4976,7 +4978,9 @@ class _BrokerNegotiationSheetState
         _paymentSubmitting = true;
       });
 
-      await ref.read(apiClientProvider).counterDriverRequest(
+      await ref
+          .read(apiClientProvider)
+          .counterDriverRequest(
             accessToken: session.tokens.accessToken,
             id: request.id,
             amount: amount,
@@ -5015,10 +5019,9 @@ class _BrokerNegotiationSheetState
     });
 
     try {
-      await ref.read(apiClientProvider).payBooking(
-            accessToken: session.tokens.accessToken,
-            id: bookingId,
-          );
+      await ref
+          .read(apiClientProvider)
+          .payBooking(accessToken: session.tokens.accessToken, id: bookingId);
       if (!mounted) return;
       setState(() {
         _stage = _DirectNegotiationStage.confirmed;
@@ -5044,15 +5047,15 @@ class _BrokerNegotiationSheetState
     final title = status == 'accepted'
         ? 'Driver accepted the request'
         : status == 'countered'
-            ? 'Counter offer received'
-            : 'Waiting for driver response';
+        ? 'Counter offer received'
+        : 'Waiting for driver response';
     final body = status == 'accepted'
         ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
         : status == 'countered'
-            ? 'The driver sent a counter. Review it here and respond instantly.'
-            : request?.driverTimedOut == true
-                ? 'The driver did not respond in time. The broker can step in now.'
-                : 'Your request is live. We will update this popup as soon as the truck responds.';
+        ? 'The driver sent a counter. Review it here and respond instantly.'
+        : request?.driverTimedOut == true
+        ? 'The driver did not respond in time. The broker can step in now.'
+        : 'Your request is live. We will update this popup as soon as the truck responds.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

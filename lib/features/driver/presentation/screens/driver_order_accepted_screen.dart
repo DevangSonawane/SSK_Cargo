@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
 
@@ -23,7 +25,13 @@ class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
   bool _accepted = false;
+  bool _counterLocked = false;
+  bool _brokerHandoffVisible = false;
   late double _counterAmount;
+  int _secondsUntilBrokerHandoff = 60;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  Timer? _pollTimer;
+  Timer? _handoffTimer;
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -33,11 +41,185 @@ class _DriverOrderAcceptedScreenState
     super.initState();
     final request = DriverRequestItem.fromExtra(widget.initialRequest);
     _counterAmount = request.amount > 0 ? request.amount : 1000;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_startLiveUpdates());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _driverRequestSubscription?.cancel();
+    _pollTimer?.cancel();
+    _handoffTimer?.cancel();
+    super.dispose();
+  }
+
+  bool _matchesTarget(DriverRequestItem request) {
+    final target = _request;
+    final candidates = <String>{
+      target.id,
+      target.bookingId,
+      target.bookingNumber,
+      target.tripId,
+      request.id,
+      request.bookingId,
+      request.bookingNumber,
+      request.tripId,
+    }..removeWhere((value) => value.isEmpty);
+    return candidates.contains(request.id) ||
+        candidates.contains(request.bookingId) ||
+        candidates.contains(request.bookingNumber) ||
+        candidates.contains(request.tripId);
+  }
+
+  bool _payloadMatchesTarget(Map<String, dynamic> payload) {
+    final values = <String>{
+      _readPayloadString(payload, const [
+        'id',
+        'request_id',
+        'driver_request_id',
+      ]),
+      _readPayloadString(payload, const ['bookingId', 'booking_id']),
+      _readPayloadString(payload, const ['bookingNumber', 'booking_number']),
+      _readPayloadString(payload, const ['tripId', 'trip_id']),
+    }..removeWhere((value) => value.isEmpty);
+
+    final request = _request;
+    final targetValues = <String>{
+      request.id,
+      request.bookingId,
+      request.bookingNumber,
+      request.tripId,
+    }..removeWhere((value) => value.isEmpty);
+    return values.any(targetValues.contains);
+  }
+
+  String _readPayloadString(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  bool _isAcceptedStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'accepted' ||
+        normalized == 'confirmed' ||
+        normalized == 'assigned';
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      if (!mounted || !_payloadMatchesTarget(payload)) {
+        return;
+      }
+      unawaited(_refreshFromServer());
+    });
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (mounted) {
+        unawaited(_refreshFromServer());
+      }
+    });
+
+    _handoffTimer?.cancel();
+    _handoffTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        return;
+      }
+      if (_secondsUntilBrokerHandoff <= 0) {
+        if (!_brokerHandoffVisible) {
+          setState(() {
+            _brokerHandoffVisible = true;
+          });
+        }
+        return;
+      }
+
+      setState(() {
+        _secondsUntilBrokerHandoff -= 1;
+        if (_secondsUntilBrokerHandoff <= 0) {
+          _secondsUntilBrokerHandoff = 0;
+          _brokerHandoffVisible = true;
+        }
+      });
+    });
+
+    await _refreshFromServer();
+  }
+
+  Future<void> _refreshFromServer() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    try {
+      ref.invalidate(driverRequestsProvider);
+      final requests = await ref.read(driverRequestsProvider.future);
+      DriverRequestItem? latest;
+      for (final item in requests) {
+        if (_matchesTarget(item)) {
+          latest = item;
+          break;
+        }
+      }
+
+      if (latest == null) {
+        return;
+      }
+
+      final status = latest.status.trim().toLowerCase();
+      final effectiveTripId = _extractTripId(latest.raw, latest.tripId).trim();
+
+      if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
+        ref
+            .read(driverLocationTrackerProvider)
+            .setActiveTripId(effectiveTripId);
+        if (!mounted) return;
+        setState(() {
+          _accepted = true;
+        });
+        context.go('/driver/delivery-details/$effectiveTripId');
+        return;
+      }
+
+      if (mounted && (status == 'countered' || status == 'accepted')) {
+        setState(() {
+          _counterLocked = true;
+        });
+      }
+    } catch (_) {
+      // Keep the screen usable even if live refresh fails.
+    }
   }
 
   Future<void> _runAction(
     Future<Map<String, dynamic>> Function(String accessToken) action, {
     bool navigateOnSuccess = false,
+    bool isCounter = false,
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -57,6 +239,12 @@ class _DriverOrderAcceptedScreenState
       final payload = _extractPayload(response);
       final request = DriverRequestItem.fromMap(payload);
       final effectiveTripId = _extractTripId(payload, request.tripId).trim();
+
+      if (isCounter && mounted) {
+        setState(() {
+          _counterLocked = true;
+        });
+      }
 
       if (navigateOnSuccess && effectiveTripId.isNotEmpty) {
         ref
@@ -107,6 +295,10 @@ class _DriverOrderAcceptedScreenState
     final minOffer = math.max(1.0, baseAmount * 0.7);
     final maxOffer = math.max(minOffer + 1, baseAmount * 1.3);
     final selectedAmount = _counterAmount.clamp(minOffer, maxOffer).toDouble();
+    final handoffExpired =
+        _brokerHandoffVisible ||
+        request.driverTimedOut ||
+        _secondsUntilBrokerHandoff <= 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -119,6 +311,90 @@ class _DriverOrderAcceptedScreenState
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
           children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: handoffExpired
+                    ? const Color(0xFFFFF7ED)
+                    : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: handoffExpired
+                      ? const Color(0xFFFECF9E)
+                      : const Color(0xFFB7D7F0),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    handoffExpired
+                        ? Icons.support_agent_rounded
+                        : Icons.timer_outlined,
+                    color: handoffExpired
+                        ? const Color(0xFFB54708)
+                        : const Color(0xFF1F88C9),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          handoffExpired
+                              ? 'Broker will take over negotiation'
+                              : 'Waiting for client response',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: handoffExpired
+                                    ? const Color(0xFF9A5B13)
+                                    : const Color(0xFF1F88C9),
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          handoffExpired
+                              ? 'The first minute is up. Broker will negotiate now, kindly wait.'
+                              : 'This request waits for 1 minute before broker handoff.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: handoffExpired
+                                    ? const Color(0xFF9A5B13)
+                                    : const Color(0xFF406B8F),
+                                height: 1.35,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      handoffExpired
+                          ? 'Now waiting'
+                          : '00:${_secondsUntilBrokerHandoff.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: handoffExpired
+                            ? const Color(0xFF9A5B13)
+                            : const Color(0xFF1F88C9),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -278,7 +554,7 @@ class _DriverOrderAcceptedScreenState
                     width: double.infinity,
                     height: 52,
                     child: FilledButton(
-                      onPressed: _submitting
+                      onPressed: _submitting || _counterLocked
                           ? null
                           : () => _runAction(
                               (token) => ref
@@ -288,6 +564,7 @@ class _DriverOrderAcceptedScreenState
                                     id: request.id,
                                     amount: selectedAmount,
                                   ),
+                              isCounter: true,
                             ),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF1F88C9),
@@ -297,7 +574,11 @@ class _DriverOrderAcceptedScreenState
                         ),
                       ),
                       child: Text(
-                        _submitting ? 'Saving...' : 'Send counter',
+                        _submitting
+                            ? 'Saving...'
+                            : _counterLocked
+                            ? 'Counter sent'
+                            : 'Send counter',
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -327,32 +608,6 @@ class _DriverOrderAcceptedScreenState
                           ),
                           child: const Text(
                             'Accept',
-                            style: TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _submitting
-                              ? null
-                              : () => _runAction(
-                                  (token) => ref
-                                      .read(apiClientProvider)
-                                      .rejectDriverRequestAsDriver(
-                                        accessToken: token,
-                                        id: request.id,
-                                      ),
-                                ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFE23A4B),
-                            side: const BorderSide(color: Color(0xFFF5B7BF)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text(
-                            'Decline',
                             style: TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
