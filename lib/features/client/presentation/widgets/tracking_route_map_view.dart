@@ -91,6 +91,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
               _truckMarkerIcon ??
               BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           anchor: const Offset(0.5, 0.5),
+          zIndexInt: 3,
         ),
       );
     }
@@ -514,6 +515,7 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
             _truckMarkerIcon ??
             BitmapDescriptor.defaultMarkerWithHue(widget.markerHue),
         anchor: const Offset(0.5, 0.5),
+        zIndexInt: 3,
       ),
     };
   }

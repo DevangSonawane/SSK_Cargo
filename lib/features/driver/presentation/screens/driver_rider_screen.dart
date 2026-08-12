@@ -51,14 +51,27 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
       top: false,
       child: dashboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              error.toString().replaceFirst('Exception: ', ''),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFE23A4B)),
+        error: (error, _) => RefreshIndicator(
+          onRefresh: _refreshDashboard,
+          color: const Color(0xFF1F88C9),
+          backgroundColor: Colors.white,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
+            padding: const EdgeInsets.all(20),
+            children: [
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.55,
+                child: Center(
+                  child: Text(
+                    error.toString().replaceFirst('Exception: ', ''),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         data: (dashboard) {

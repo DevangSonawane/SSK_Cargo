@@ -111,6 +111,33 @@ class DriverLocationTracker {
     return startTracking(tripId: tripId);
   }
 
+  Future<String?> refreshCurrentLocation() async {
+    final session = _ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return 'Please sign in again before refreshing location.';
+    }
+
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return 'Enable location services on the device to share live tracking.';
+    }
+
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      final requested = await Geolocator.requestPermission();
+      if (requested == LocationPermission.denied ||
+          requested == LocationPermission.deniedForever) {
+        return 'Location permission is required for live driver tracking.';
+      }
+    } else if (permission == LocationPermission.deniedForever) {
+      return 'Location permission is permanently denied. Open app settings to enable it.';
+    }
+
+    final settings = _trackingSettings();
+    await _publishCurrentLocation(settings);
+    return null;
+  }
+
   void setActiveTripId(String? tripId) {
     _activeTripId = tripId;
   }

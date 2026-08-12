@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryDetailsScreen({super.key, required this.tripId});
@@ -30,6 +32,7 @@ class _DriverDeliveryDetailsScreenState
   String _customerName = 'Customer';
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
+  TrackingDemoShipment? _shipment;
 
   @override
   void initState() {
@@ -69,6 +72,7 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
 
       setState(() {
+        _shipment = _shipmentFromTrip(trip);
         _tripStatus = _readString(trip, const [
           'status',
           'rawStatus',
@@ -119,6 +123,20 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+
+    final locationError = await ref
+        .read(driverLocationTrackerProvider)
+        .refreshCurrentLocation();
+    if (locationError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(locationError),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
       );
       return;
     }
@@ -210,6 +228,20 @@ class _DriverDeliveryDetailsScreenState
       return;
     }
 
+    final locationError = await ref
+        .read(driverLocationTrackerProvider)
+        .refreshCurrentLocation();
+    if (locationError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(locationError),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
+
     setState(() => _confirmingArrival = true);
     try {
       await ref
@@ -278,6 +310,125 @@ class _DriverDeliveryDetailsScreenState
       }
     }
     return '';
+  }
+
+  double? _readDouble(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return null;
+    for (final key in keys) {
+      final value = json[key];
+      if (value is num) {
+        return value.toDouble();
+      }
+      final parsed = double.tryParse(value?.toString().trim() ?? '');
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+    return null;
+  }
+
+  Map<String, dynamic> _readMap(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return const <String, dynamic>{};
+    for (final key in keys) {
+      final value = json[key];
+      if (value is Map<String, dynamic>) {
+        return value;
+      }
+      if (value is Map) {
+        return value.cast<String, dynamic>();
+      }
+    }
+    return const <String, dynamic>{};
+  }
+
+  TrackingDemoShipment? _shipmentFromTrip(Map<String, dynamic> trip) {
+    final pickup = _readMap(trip, const ['pickup', 'pickupLocation']);
+    final drop = _readMap(trip, const ['drop', 'dropoffLocation']);
+    final currentLocation = _readMap(trip, const [
+      'currentLocation',
+      'liveLocation',
+      'truckLocation',
+    ]);
+    final bookingNumber = _readString(trip, const [
+      'bookingNumber',
+      'booking_number',
+    ]);
+    final id = _readString(trip, const ['id', 'tripId', 'trip_id']);
+    final status = _readString(trip, const [
+      'status',
+      'rawStatus',
+    ]).trim().toLowerCase();
+    final pickupLocation = _readLocation(trip, const [
+      'pickup',
+      'pickupLocation',
+    ]);
+    final dropLocation = _readLocation(trip, const ['drop', 'dropoffLocation']);
+
+    if (pickup.isEmpty &&
+        drop.isEmpty &&
+        currentLocation.isEmpty &&
+        bookingNumber.isEmpty &&
+        id.isEmpty) {
+      return null;
+    }
+
+    return TrackingDemoShipment(
+      packageName: bookingNumber.isNotEmpty ? bookingNumber : 'Trip',
+      trackingId: bookingNumber.isNotEmpty ? bookingNumber : id,
+      fromLocation: pickupLocation.isNotEmpty
+          ? pickupLocation
+          : 'Pickup location not provided',
+      toLocation: dropLocation.isNotEmpty
+          ? dropLocation
+          : 'Drop location not provided',
+      status: status.isEmpty ? 'Confirmed' : _titleCase(status),
+      customerName: _readString(trip, const ['clientName', 'customerName']),
+      weight:
+          _readString(trip, const [
+            'weight',
+            'cargoWeight',
+            'cargo_weight',
+          ]).isNotEmpty
+          ? _readString(trip, const ['weight', 'cargoWeight', 'cargo_weight'])
+          : 'N/A',
+      timeline: const [],
+      amount: _readDouble(trip, const ['earnings', 'amount', 'price']) ?? 0,
+      paymentStatus:
+          _readString(trip, const [
+            'paymentStatus',
+            'payment_status',
+          ]).isNotEmpty
+          ? _readString(trip, const ['paymentStatus', 'payment_status'])
+          : 'pending',
+      pickupLat:
+          _readDouble(pickup, const ['lat', 'latitude']) ??
+          _readDouble(trip, const ['pickupLat', 'pickup_lat']),
+      pickupLng:
+          _readDouble(pickup, const ['lng', 'longitude']) ??
+          _readDouble(trip, const ['pickupLng', 'pickup_lng']),
+      dropLat:
+          _readDouble(drop, const ['lat', 'latitude']) ??
+          _readDouble(trip, const ['dropLat', 'drop_lat']),
+      dropLng:
+          _readDouble(drop, const ['lng', 'longitude']) ??
+          _readDouble(trip, const ['dropLng', 'drop_lng']),
+      liveLat:
+          _readDouble(currentLocation, const ['lat', 'latitude']) ??
+          _readDouble(trip, const ['currentLat', 'current_lat']),
+      liveLng:
+          _readDouble(currentLocation, const ['lng', 'longitude']) ??
+          _readDouble(trip, const ['currentLng', 'current_lng']),
+      bookingId: id.isNotEmpty ? id : null,
+      bookingStatus: status,
+    );
+  }
+
+  String _titleCase(String value) {
+    return value
+        .split(RegExp(r'[_\s-]+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+        .join(' ');
   }
 
   void _showEmergencyAssistance(BuildContext context) {
@@ -498,27 +649,37 @@ class _DriverDeliveryDetailsScreenState
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Delivery ID',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: const Color(0xFF98A2B3),
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.tripId,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: const Color(0xFF101828),
-                                fontWeight: FontWeight.w900,
-                              ),
-                        ),
-                      ],
+                    Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivery ID',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: const Color(0xFF98A2B3),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.tripId,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF101828),
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                     const Spacer(),
                     InkWell(
@@ -581,21 +742,29 @@ class _DriverDeliveryDetailsScreenState
                   borderRadius: BorderRadius.circular(30),
                   child: Stack(
                     children: [
-                      const Positioned.fill(
-                        child: _DriverDeliveryMapBackdrop(),
+                      const Positioned.fill(child: SizedBox.shrink()),
+                      Positioned.fill(
+                        child: _shipment == null
+                            ? const _DriverDeliveryMapBackdrop()
+                            : TrackingRouteMapView(
+                                shipment: _shipment!,
+                                liveMode: true,
+                              ),
                       ),
                       Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.10),
-                                Colors.white.withValues(alpha: 0.36),
-                                Colors.white.withValues(alpha: 0.82),
-                              ],
-                              stops: const [0.0, 0.4, 1.0],
+                        child: IgnorePointer(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.08),
+                                  Colors.white.withValues(alpha: 0.18),
+                                  Colors.white.withValues(alpha: 0.54),
+                                ],
+                                stops: const [0.0, 0.56, 1.0],
+                              ),
                             ),
                           ),
                         ),
