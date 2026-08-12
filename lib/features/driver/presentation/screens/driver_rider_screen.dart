@@ -24,6 +24,10 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
     });
   }
 
+  Future<void> _refreshDashboard() async {
+    final _ = await ref.refresh(driverDashboardProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dashboardAsync = ref.watch(driverDashboardProvider);
@@ -46,88 +50,106 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           final activeTrip = dashboard.activeTrip;
           final history = dashboard.history;
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: [
-              if (activeTrip == null) ...[
-                const _EmptyCard(
-                  icon: Icons.route_rounded,
-                  title: 'No active delivery',
-                  subtitle: 'Accepted deliveries will appear here live.',
+          return RefreshIndicator(
+            onRefresh: _refreshDashboard,
+            color: const Color(0xFF1F88C9),
+            backgroundColor: Colors.white,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              children: [
+                if (activeTrip == null) ...[
+                  const _EmptyCard(
+                    icon: Icons.route_rounded,
+                    title: 'No active delivery',
+                    subtitle: 'Accepted deliveries will appear here live.',
+                  ),
+                  const SizedBox(height: 18),
+                ],
+                _SectionHeader(
+                  title: activeTrip != null
+                      ? 'Ongoing delivery'
+                      : 'Latest trip activity',
+                  subtitle: activeTrip != null
+                      ? 'Current trip in progress'
+                      : 'Recent deliveries and settlements',
                 ),
+                const SizedBox(height: 12),
+                if (activeTrip != null)
+                  _ActiveTripCard(
+                    shipment: activeTrip,
+                    onTap: () {
+                      final tripId = activeTrip.bookingId?.trim() ?? '';
+                      if (tripId.isEmpty) {
+                        return;
+                      }
+                      context.push('/driver/delivery-details/$tripId');
+                    },
+                  )
+                else if (history.isNotEmpty)
+                  _TripHistoryCard(
+                    settlement: history.first,
+                    onTap: () {
+                      final settlement = history.first;
+                      final bookingId = settlement.bookingId.isNotEmpty
+                          ? settlement.bookingId
+                          : settlement.bookingNumber;
+                      if (bookingId.isEmpty) {
+                        return;
+                      }
+                      context.push(
+                        '/driver/deliveries/$bookingId',
+                        extra: settlement,
+                      );
+                    },
+                  )
+                else
+                  const _EmptyCard(
+                    icon: Icons.local_shipping_outlined,
+                    title: 'No delivery history yet',
+                    subtitle:
+                        'Completed trips will appear here once available.',
+                  ),
                 const SizedBox(height: 18),
+                _SectionHeader(
+                  title: 'Deliveries done',
+                  subtitle: 'Recently completed deliveries',
+                ),
+                const SizedBox(height: 12),
+                if (history.isEmpty)
+                  const _EmptyCard(
+                    icon: Icons.inbox_rounded,
+                    title: 'No completed deliveries yet',
+                    subtitle:
+                        'Finished trips will be listed here once they close.',
+                  )
+                else
+                  ...history.asMap().entries.expand(
+                    (entry) => [
+                      _TripHistoryCard(
+                        settlement: entry.value,
+                        onTap: () {
+                          final settlement = entry.value;
+                          final bookingId = settlement.bookingId.isNotEmpty
+                              ? settlement.bookingId
+                              : settlement.bookingNumber;
+                          if (bookingId.isEmpty) {
+                            return;
+                          }
+                          context.push(
+                            '/driver/deliveries/$bookingId',
+                            extra: settlement,
+                          );
+                        },
+                      ),
+                      if (entry.key != history.length - 1)
+                        const SizedBox(height: 12),
+                    ],
+                  ),
               ],
-              _SectionHeader(
-                title: activeTrip != null
-                    ? 'Ongoing delivery'
-                    : 'Latest trip activity',
-                subtitle: activeTrip != null
-                    ? 'Current trip in progress'
-                    : 'Recent deliveries and settlements',
-              ),
-              const SizedBox(height: 12),
-              if (activeTrip != null)
-                _ActiveTripCard(shipment: activeTrip)
-              else if (history.isNotEmpty)
-                _TripHistoryCard(
-                  settlement: history.first,
-                  onTap: () {
-                    final settlement = history.first;
-                    final bookingId = settlement.bookingId.isNotEmpty
-                        ? settlement.bookingId
-                        : settlement.bookingNumber;
-                    if (bookingId.isEmpty) {
-                      return;
-                    }
-                    context.push(
-                      '/driver/deliveries/$bookingId',
-                      extra: settlement,
-                    );
-                  },
-                )
-              else
-                const _EmptyCard(
-                  icon: Icons.local_shipping_outlined,
-                  title: 'No delivery history yet',
-                  subtitle: 'Completed trips will appear here once available.',
-                ),
-              const SizedBox(height: 18),
-              _SectionHeader(
-                title: 'Deliveries done',
-                subtitle: 'Recently completed deliveries',
-              ),
-              const SizedBox(height: 12),
-              if (history.isEmpty)
-                const _EmptyCard(
-                  icon: Icons.inbox_rounded,
-                  title: 'No completed deliveries yet',
-                  subtitle:
-                      'Finished trips will be listed here once they close.',
-                )
-              else
-                ...history.asMap().entries.expand(
-                  (entry) => [
-                    _TripHistoryCard(
-                      settlement: entry.value,
-                      onTap: () {
-                        final settlement = entry.value;
-                        final bookingId = settlement.bookingId.isNotEmpty
-                            ? settlement.bookingId
-                            : settlement.bookingNumber;
-                        if (bookingId.isEmpty) {
-                          return;
-                        }
-                        context.push(
-                          '/driver/deliveries/$bookingId',
-                          extra: settlement,
-                        );
-                      },
-                    ),
-                    if (entry.key != history.length - 1)
-                      const SizedBox(height: 12),
-                  ],
-                ),
-            ],
+            ),
           );
         },
       ),
@@ -174,243 +196,265 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _ActiveTripCard extends StatelessWidget {
-  const _ActiveTripCard({required this.shipment});
+  const _ActiveTripCard({required this.shipment, required this.onTap});
 
   final TrackingDemoShipment shipment;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEFFAF4),
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Image.asset(
-                    'assets/trucks/speed.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current delivery',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121826),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      shipment.trackingId,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black45,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  shipment.status,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF2FA56E),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11,
-                  ),
-                ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFE8EDF2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 14,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 3),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
-                        shape: BoxShape.circle,
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEFFAF4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        'assets/trucks/speed.png',
+                        fit: BoxFit.contain,
                       ),
-                      child: Center(
-                        child: Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF2FA56E),
-                            shape: BoxShape.circle,
-                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current delivery',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF121826),
+                              ),
                         ),
-                      ),
-                    ),
-                    Container(
-                      width: 2,
-                      height: 30,
-                      margin: const EdgeInsets.symmetric(vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2FA56E).withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF2FA56E),
-                            shape: BoxShape.circle,
-                          ),
+                        const SizedBox(height: 3),
+                        Text(
+                          shipment.trackingId,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.black45,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'From:',
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF7EF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      shipment.status,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF2FA56E),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
                       ),
                     ),
-                    const SizedBox(height: 1),
-                    Text(
-                      shipment.fromLocation,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 3),
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.16),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2FA56E),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 2,
+                          height: 30,
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2FA56E),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'From:',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.black38,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          shipment.fromLocation,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: const Color(0xFF1C2430),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'To:',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.black38,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          shipment.toLocation,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: const Color(0xFF1C2430),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFECEFF3)),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 5),
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2FA56E),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF2FA56E,
+                          ).withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Status:',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFF1C2430),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      shipment.status,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'To:',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      shipment.toLocation,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF3)),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 5),
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2FA56E),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF2FA56E).withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Status:',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF1C2430),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  shipment.status,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF1C2430),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
                   ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

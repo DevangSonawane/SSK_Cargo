@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
 
@@ -26,14 +27,24 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   bool _collectingPayment = false;
   double? _amountToCollect;
   String? _driverQrUrl;
+  String? _bookingId;
+  String _paymentStatus = 'pending';
+  StreamSubscription<Map<String, dynamic>>? _paymentSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
+      unawaited(_startLiveUpdates());
       unawaited(_loadTripState());
     });
+  }
+
+  @override
+  void dispose() {
+    _paymentSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTripState() async {
@@ -52,32 +63,99 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             tripId: widget.tripId,
           );
       final data = response['data'];
-      final trip = data is Map<String, dynamic> ? data : response;
-      final paymentStatus = trip['paymentStatus']
-          ?.toString()
-          .trim()
-          .toLowerCase();
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      final paymentStatus = _readString(trip, const [
+        'paymentStatus',
+        'payment_status',
+      ]).toLowerCase();
       final amountToCollect = trip['amountToCollect'];
-      final driverQrUrl = trip['driverQrUrl']?.toString();
+      final driverQrUrl = _readString(trip, const [
+        'driverQrUrl',
+        'driver_qr_url',
+      ]);
 
       if (!mounted) return;
       setState(() {
+        _bookingId = _readString(trip, const [
+          'bookingId',
+          'booking_id',
+          'id',
+          'tripId',
+          'trip_id',
+        ]);
+        _paymentStatus = paymentStatus.isNotEmpty
+            ? paymentStatus
+            : _paymentStatus;
         _amountToCollect = amountToCollect is num
             ? amountToCollect.toDouble()
             : double.tryParse(amountToCollect?.toString() ?? '');
-        _driverQrUrl = driverQrUrl != null && driverQrUrl.isNotEmpty
-            ? driverQrUrl
-            : null;
+        _driverQrUrl = driverQrUrl.isNotEmpty ? driverQrUrl : null;
         _loadingTrip = false;
       });
 
-      if (paymentStatus == 'paid' && mounted) {
+      if (_paymentStatus == 'paid' && mounted) {
         context.go('/driver/thank-you/${widget.tripId}');
       }
     } catch (error) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
     }
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    await _paymentSubscription?.cancel();
+    _paymentSubscription = socketService.bookingPaymentStream.listen((payload) {
+      if (!mounted || !_matchesPaymentEvent(payload)) {
+        return;
+      }
+
+      final status = _readPayloadString(payload, const [
+        'paymentStatus',
+        'payment_status',
+        'status',
+      ]).toLowerCase();
+      final paymentMode = _readPayloadString(payload, const [
+        'paymentMode',
+        'payment_mode',
+      ]);
+
+      setState(() {
+        if (status.isNotEmpty) {
+          _paymentStatus = status;
+        }
+      });
+
+      if (_paymentStatus == 'paid' && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              paymentMode.isNotEmpty
+                  ? 'Payment marked as ${paymentMode.toUpperCase()}.'
+                  : 'Payment marked as paid.',
+            ),
+            backgroundColor: const Color(0xFF2FA56E),
+          ),
+        );
+        context.go('/driver/thank-you/${widget.tripId}');
+      }
+    });
   }
 
   String _formatCurrency(double amount) {
@@ -163,6 +241,11 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             tripId: widget.tripId,
             mode: mode,
           );
+      if (mounted) {
+        setState(() {
+          _paymentStatus = 'paid';
+        });
+      }
       await ref
           .read(apiClientProvider)
           .completeTrip(
@@ -319,6 +402,30 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                 fontWeight: FontWeight.w900,
               ),
             ),
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: _paymentStatus == 'paid'
+                      ? const Color(0xFFEAF7EF)
+                      : const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _paymentStatus == 'paid' ? 'Paid' : 'Payment pending',
+                  style: TextStyle(
+                    color: _paymentStatus == 'paid'
+                        ? const Color(0xFF2FA56E)
+                        : const Color(0xFFB54708),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 18),
             Container(
               width: double.infinity,
@@ -465,6 +572,52 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         ),
       ),
     );
+  }
+
+  bool _matchesPaymentEvent(Map<String, dynamic> payload) {
+    final bookingIds = <String>{
+      _bookingId ?? '',
+      widget.tripId,
+      _readPayloadString(payload, const ['bookingId', 'booking_id']),
+      _readPayloadString(payload, const ['bookingNumber', 'booking_number']),
+    }..removeWhere((value) => value.trim().isEmpty);
+
+    final eventBookingId = _readPayloadString(payload, const [
+      'bookingId',
+      'booking_id',
+    ]);
+    final eventBookingNumber = _readPayloadString(payload, const [
+      'bookingNumber',
+      'booking_number',
+    ]);
+    final eventTripId = _readPayloadString(payload, const [
+      'tripId',
+      'trip_id',
+    ]);
+
+    return bookingIds.contains(eventBookingId) ||
+        bookingIds.contains(eventBookingNumber) ||
+        bookingIds.contains(eventTripId);
+  }
+
+  String _readString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  String _readPayloadString(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
   }
 }
 

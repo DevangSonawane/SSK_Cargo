@@ -22,9 +22,10 @@ class _DriverDeliveryDetailsScreenState
     extends ConsumerState<DriverDeliveryDetailsScreen> {
   double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
+  bool _arrivalFlowActive = false;
   bool _loadingTrip = true;
   bool _confirmingArrival = false;
-  Timer? _arrivalTimer;
+  String _tripStatus = 'confirmed';
   String _paymentStatus = 'pending';
   String _customerName = 'Customer';
   String _customerPhone = '';
@@ -37,15 +38,10 @@ class _DriverDeliveryDetailsScreenState
       ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
       unawaited(_loadTrip());
     });
-    _arrivalTimer = Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _showArrivalSwipe = true);
-    });
   }
 
   @override
   void dispose() {
-    _arrivalTimer?.cancel();
     super.dispose();
   }
 
@@ -73,6 +69,10 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
 
       setState(() {
+        _tripStatus = _readString(trip, const [
+          'status',
+          'rawStatus',
+        ]).toLowerCase();
         _paymentStatus = _readString(trip, const [
           'paymentStatus',
           'payment_status',
@@ -107,6 +107,94 @@ class _DriverDeliveryDetailsScreenState
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
+    }
+  }
+
+  Future<void> _advanceTripStatus() async {
+    final nextStatus = _nextStatusForCurrentTrip();
+    if (nextStatus == null) return;
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+
+    setState(() => _loadingTrip = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .updateTripStatus(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+            status: nextStatus,
+          );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      if (!mounted) return;
+
+      setState(() {
+        _tripStatus = _readString(trip, const [
+          'status',
+          'rawStatus',
+        ]).toLowerCase();
+        _loadingTrip = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loadingTrip = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    }
+  }
+
+  String? _nextStatusForCurrentTrip() {
+    switch (_tripStatus) {
+      case 'confirmed':
+        return 'en_route_pickup';
+      case 'en_route_pickup':
+        return 'picked_up';
+      case 'picked_up':
+        return 'in_transit';
+      case 'in_transit':
+        return 'delivered';
+      default:
+        return null;
+    }
+  }
+
+  String _actionLabelForCurrentTrip() {
+    switch (_tripStatus) {
+      case 'confirmed':
+        return 'Start Trip to Pickup';
+      case 'en_route_pickup':
+        return "I've Reached Pickup";
+      case 'picked_up':
+        return 'Start Delivery';
+      case 'in_transit':
+        return 'Mark as Delivered';
+      default:
+        return 'Continue';
     }
   }
 
@@ -518,7 +606,7 @@ class _DriverDeliveryDetailsScreenState
                         bottom: 16,
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 220),
-                          child: _showArrivalSwipe
+                          child: (_arrivalFlowActive || _showArrivalSwipe)
                               ? Container(
                                   key: const ValueKey('arrival-swipe'),
                                   padding: const EdgeInsets.all(18),
@@ -603,7 +691,7 @@ class _DriverDeliveryDetailsScreenState
                                       ),
                                       const SizedBox(height: 14),
                                       Text(
-                                        'Swipe to continue',
+                                        'Swipe to confirm arrival',
                                         textAlign: TextAlign.center,
                                         style: Theme.of(context)
                                             .textTheme
@@ -615,7 +703,7 @@ class _DriverDeliveryDetailsScreenState
                                       ),
                                       const SizedBox(height: 10),
                                       Text(
-                                        'The on-route card is hidden now. Swipe to open photo upload.',
+                                        'Confirm when you have reached the drop point. This opens the photo upload flow next.',
                                         textAlign: TextAlign.center,
                                         style: Theme.of(context)
                                             .textTheme
@@ -848,7 +936,7 @@ class _DriverDeliveryDetailsScreenState
                                         child: Text(
                                           _loadingTrip
                                               ? 'Loading live trip details...'
-                                              : 'Swipe control will appear automatically after 2 seconds.',
+                                              : 'Tap the action button above when you are ready to move to the next step.',
                                           textAlign: TextAlign.center,
                                           style: Theme.of(context)
                                               .textTheme
@@ -857,6 +945,48 @@ class _DriverDeliveryDetailsScreenState
                                                 color: const Color(0xFF667085),
                                                 fontWeight: FontWeight.w600,
                                               ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 52,
+                                        child: FilledButton(
+                                          onPressed:
+                                              _loadingTrip || _confirmingArrival
+                                              ? null
+                                              : () {
+                                                  if (_tripStatus ==
+                                                      'in_transit') {
+                                                    setState(() {
+                                                      _arrivalFlowActive = true;
+                                                      _showArrivalSwipe = true;
+                                                    });
+                                                    return;
+                                                  }
+                                                  unawaited(
+                                                    _advanceTripStatus(),
+                                                  );
+                                                },
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF1F88C9,
+                                            ),
+                                            disabledBackgroundColor:
+                                                const Color(0xFFD0D5DD),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _loadingTrip
+                                                ? 'Loading...'
+                                                : _actionLabelForCurrentTrip(),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],

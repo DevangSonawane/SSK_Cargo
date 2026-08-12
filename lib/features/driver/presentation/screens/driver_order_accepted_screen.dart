@@ -30,7 +30,6 @@ class _DriverOrderAcceptedScreenState
   late double _counterAmount;
   int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
-  Timer? _pollTimer;
   Timer? _handoffTimer;
 
   DriverRequestItem get _request =>
@@ -51,27 +50,8 @@ class _DriverOrderAcceptedScreenState
   @override
   void dispose() {
     _driverRequestSubscription?.cancel();
-    _pollTimer?.cancel();
     _handoffTimer?.cancel();
     super.dispose();
-  }
-
-  bool _matchesTarget(DriverRequestItem request) {
-    final target = _request;
-    final candidates = <String>{
-      target.id,
-      target.bookingId,
-      target.bookingNumber,
-      target.tripId,
-      request.id,
-      request.bookingId,
-      request.bookingNumber,
-      request.tripId,
-    }..removeWhere((value) => value.isEmpty);
-    return candidates.contains(request.id) ||
-        candidates.contains(request.bookingId) ||
-        candidates.contains(request.bookingNumber) ||
-        candidates.contains(request.tripId);
   }
 
   bool _payloadMatchesTarget(Map<String, dynamic> payload) {
@@ -145,13 +125,6 @@ class _DriverOrderAcceptedScreenState
       unawaited(_handleLivePayload(payload));
     });
 
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-      if (mounted) {
-        unawaited(_refreshFromServer());
-      }
-    });
-
     _handoffTimer?.cancel();
     _handoffTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) {
@@ -174,8 +147,6 @@ class _DriverOrderAcceptedScreenState
         }
       });
     });
-
-    await _refreshFromServer();
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
@@ -209,61 +180,6 @@ class _DriverOrderAcceptedScreenState
       setState(() {
         _counterLocked = true;
       });
-    }
-
-    await _refreshFromServer();
-  }
-
-  Future<void> _refreshFromServer() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      return;
-    }
-
-    try {
-      ref.invalidate(driverRequestsProvider);
-      final requests = await ref.read(driverRequestsProvider.future);
-      DriverRequestItem? latest;
-      for (final item in requests) {
-        if (_matchesTarget(item)) {
-          latest = item;
-          break;
-        }
-      }
-
-      if (latest == null) {
-        return;
-      }
-
-      final status = latest.status.trim().toLowerCase();
-      final effectiveTripId = _extractTripId(latest.raw, latest.tripId).trim();
-
-      if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
-        ref
-            .read(driverLocationTrackerProvider)
-            .setActiveTripId(effectiveTripId);
-        if (!mounted) return;
-        setState(() {
-          _accepted = true;
-        });
-        context.go('/driver/delivery-details/$effectiveTripId');
-        return;
-      }
-
-      if (_isRejectedStatus(status)) {
-        if (!mounted) return;
-        ref.invalidate(driverRequestsProvider);
-        context.go('/driver/home');
-        return;
-      }
-
-      if (mounted && (status == 'countered' || status == 'accepted')) {
-        setState(() {
-          _counterLocked = true;
-        });
-      }
-    } catch (_) {
-      // Keep the screen usable even if live refresh fails.
     }
   }
 
