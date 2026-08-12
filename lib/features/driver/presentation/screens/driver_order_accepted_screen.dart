@@ -160,12 +160,7 @@ class _DriverOrderAcceptedScreenState
     final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
 
     if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
-      ref.read(driverLocationTrackerProvider).setActiveTripId(effectiveTripId);
-      if (!mounted) return;
-      setState(() {
-        _accepted = true;
-      });
-      context.go('/driver/delivery-details/$effectiveTripId');
+      await _navigateToUpcomingTrip(fallbackTripId: effectiveTripId);
       return;
     }
 
@@ -214,24 +209,11 @@ class _DriverOrderAcceptedScreenState
       }
 
       if (navigateOnSuccess && effectiveTripId.isNotEmpty) {
-        ref
-            .read(driverLocationTrackerProvider)
-            .setActiveTripId(effectiveTripId);
+        await _navigateToUpcomingTrip(fallbackTripId: effectiveTripId);
+        return;
       }
 
       if (!mounted) return;
-
-      if (navigateOnSuccess) {
-        if (mounted) {
-          setState(() {
-            _accepted = true;
-          });
-        }
-        if (effectiveTripId.isNotEmpty) {
-          context.go('/driver/delivery-details/$effectiveTripId');
-          return;
-        }
-      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request updated successfully.')),
@@ -253,6 +235,40 @@ class _DriverOrderAcceptedScreenState
         });
       }
     }
+  }
+
+  Future<void> _navigateToUpcomingTrip({required String fallbackTripId}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    String tripId = fallbackTripId;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getUpcomingTrip(accessToken: session.tokens.accessToken);
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      tripId = _extractTripId(trip, fallbackTripId).trim();
+    } catch (_) {
+      // Fall back to the trip id already known from the negotiation payload.
+    }
+
+    if (tripId.isEmpty || !mounted) {
+      return;
+    }
+
+    ref.read(driverLocationTrackerProvider).setActiveTripId(tripId);
+    if (!mounted) return;
+    setState(() {
+      _accepted = true;
+    });
+    context.go('/driver/delivery-details/$tripId');
   }
 
   @override

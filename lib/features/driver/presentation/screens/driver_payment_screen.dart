@@ -25,6 +25,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   bool _loadingTrip = true;
   bool _savingQr = false;
   bool _collectingPayment = false;
+  bool _finalizingTrip = false;
   double? _amountToCollect;
   String? _driverQrUrl;
   String? _bookingId;
@@ -98,7 +99,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       });
 
       if (_paymentStatus == 'paid' && mounted) {
-        context.go('/driver/thank-you/${widget.tripId}');
+        unawaited(_finalizeTripAfterPayment());
       }
     } catch (error) {
       if (!mounted) return;
@@ -153,9 +154,50 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             backgroundColor: const Color(0xFF2FA56E),
           ),
         );
-        context.go('/driver/thank-you/${widget.tripId}');
+        unawaited(_finalizeTripAfterPayment());
       }
     });
+  }
+
+  Future<void> _finalizeTripAfterPayment() async {
+    if (_finalizingTrip) return;
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    setState(() => _finalizingTrip = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .completeTrip(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+          );
+      if (!mounted) return;
+      context.go('/driver/thank-you/${widget.tripId}');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _finalizingTrip = false);
+      }
+    }
   }
 
   String _formatCurrency(double amount) {

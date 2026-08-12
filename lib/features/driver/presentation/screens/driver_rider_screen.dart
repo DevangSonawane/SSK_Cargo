@@ -15,13 +15,28 @@ class DriverRiderScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
+  late final _LifecycleRefreshObserver _lifecycleRefreshObserver;
+
   @override
   void initState() {
     super.initState();
+    _lifecycleRefreshObserver = _LifecycleRefreshObserver(
+      onResume: () {
+        if (!mounted) return;
+        ref.invalidate(driverDashboardProvider);
+      },
+    );
+    WidgetsBinding.instance.addObserver(_lifecycleRefreshObserver);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.invalidate(driverDashboardProvider);
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(_lifecycleRefreshObserver);
+    super.dispose();
   }
 
   Future<void> _refreshDashboard() async {
@@ -154,6 +169,19 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
         },
       ),
     );
+  }
+}
+
+class _LifecycleRefreshObserver extends WidgetsBindingObserver {
+  _LifecycleRefreshObserver({required this.onResume});
+
+  final VoidCallback onResume;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      onResume();
+    }
   }
 }
 
