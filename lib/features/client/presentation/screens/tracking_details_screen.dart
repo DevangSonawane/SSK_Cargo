@@ -2917,7 +2917,7 @@ class _BookingNegotiationSheetState
                                         ? offer.note
                                         : 'Broker offer received',
                                     amountText: offer.amountText,
-                                    statusText: offer.displayStatusLabel,
+                                    statusText: _offerStatusText(offer),
                                     note: offer.note,
                                     actions: _clientActionButtonsForOffer(
                                       offer,
@@ -2950,9 +2950,41 @@ extension on _BookingNegotiationSheetState {
 
   bool _isOfferActionable(ClientBookingOffer offer) {
     final status = offer.status.trim().toLowerCase();
-    return status != 'declined' &&
-        status != 'accepted' &&
-        status != 'confirmed';
+    final pendingConfirmationBy = offer.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+    if (status == 'countered') {
+      return true;
+    }
+    if (status == 'awaiting_confirmation') {
+      return pendingConfirmationBy == 'broker';
+    }
+    return false;
+  }
+
+  String _offerStatusText(ClientBookingOffer offer) {
+    final status = offer.status.trim().toLowerCase();
+    final pendingConfirmationBy = offer.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'broker') {
+      return 'Your turn';
+    }
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'client') {
+      return 'Waiting for broker confirmation';
+    }
+    if (status == 'countered') {
+      return 'Your turn';
+    }
+    if (status == 'accepted') {
+      return 'Confirmed';
+    }
+    if (status == 'declined') {
+      return 'No longer available';
+    }
+    return 'Waiting for broker response';
   }
 
   String _driverRequestStatusText(ClientBookingOffer request) {
@@ -3022,28 +3054,56 @@ extension on _BookingNegotiationSheetState {
   }
 
   List<Widget> _clientActionButtonsForOffer(ClientBookingOffer offer) {
-    final buttons = <Widget>[];
-    if (_isOfferActionable(offer)) {
-      buttons.add(
+    final status = offer.status.trim().toLowerCase();
+    final pendingConfirmationBy = offer.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'client') {
+      return const [];
+    }
+
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'broker') {
+      return [
+        FilledButton(
+          onPressed: _busy ? null : () => _acceptOffer(offer),
+          child: const Text('Confirm'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _rejectOffer(offer),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFE23A4B),
+            side: const BorderSide(color: Color(0xFFF3B4B4)),
+          ),
+          child: const Text('Decline'),
+        ),
+      ];
+    }
+
+    if (status == 'countered') {
+      return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptOffer(offer),
           child: const Text('Accept'),
         ),
-      );
-      if (offer.isCountered) {
-        buttons.add(
-          OutlinedButton(
-            onPressed: _busy ? null : () => _rejectOffer(offer),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFE23A4B),
-              side: const BorderSide(color: Color(0xFFF3B4B4)),
-            ),
-            child: const Text('Reject'),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _counterOffer(offer),
+          child: const Text('Counter'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _rejectOffer(offer),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFE23A4B),
+            side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
-        );
-      }
+          child: const Text('Reject'),
+        ),
+      ];
     }
-    return buttons;
+
+    return const [];
   }
 }
 

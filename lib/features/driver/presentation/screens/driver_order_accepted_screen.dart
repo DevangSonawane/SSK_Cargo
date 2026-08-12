@@ -27,14 +27,21 @@ class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
 class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
+  bool _resolvingTrip = false;
   bool _counterLocked = false;
+  bool _handoffInProgress = false;
+  bool _handoffNavigationRequested = false;
   late double _counterAmount;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
+  Timer? _handoffCountdownTimer;
+  Timer? _handoffPollTimer;
   String _latestStatus = '';
   String _latestPendingConfirmationBy = '';
   bool _latestDriverTimedOut = false;
   DateTime? _latestUpdatedAt;
+  DateTime? _handoffDeadline;
+  String? _handoffTripId;
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -47,13 +54,13 @@ class _DriverOrderAcceptedScreenState
       (_latestStatus == 'awaiting_confirmation' &&
           _currentPendingConfirmationBy == 'client');
 
+  bool get _awaitingDriverConfirmation =>
+      _latestStatus == 'awaiting_confirmation' &&
+      _currentPendingConfirmationBy == 'client';
+
   bool get _waitingOnClient =>
       _latestStatus == 'awaiting_confirmation' &&
       _currentPendingConfirmationBy == 'respondent';
-
-  bool get _waitingOnDriver =>
-      _latestStatus == 'awaiting_confirmation' &&
-      _currentPendingConfirmationBy == 'client';
 
   String get _currentPendingConfirmationBy =>
       _latestPendingConfirmationBy.isNotEmpty
@@ -74,6 +81,13 @@ class _DriverOrderAcceptedScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_startLiveUpdates());
+        if (_isAcceptedStatus(_latestStatus)) {
+          unawaited(
+            _beginTripHandoff(
+              tripId: request.tripId.trim().isNotEmpty ? request.tripId : null,
+            ),
+          );
+        }
       }
     });
   }
@@ -82,6 +96,8 @@ class _DriverOrderAcceptedScreenState
   void dispose() {
     _driverRequestSubscription?.cancel();
     _countdownTimer?.cancel();
+    _handoffCountdownTimer?.cancel();
+    _handoffPollTimer?.cancel();
     super.dispose();
   }
 
@@ -176,7 +192,7 @@ class _DriverOrderAcceptedScreenState
       return 'Broker takeover';
     }
 
-    if (_counterLocked || _waitingOnClient || _waitingOnDriver) {
+    if (_counterLocked || _waitingOnClient || _awaitingDriverConfirmation) {
       return 'Locked';
     }
 
@@ -282,8 +298,114 @@ class _DriverOrderAcceptedScreenState
     _driverRequestSubscription = null;
     _countdownTimer?.cancel();
     _countdownTimer = null;
+    _handoffCountdownTimer?.cancel();
+    _handoffCountdownTimer = null;
+    _handoffPollTimer?.cancel();
+    _handoffPollTimer = null;
     if (!mounted) return;
     context.go('/driver/home');
+  }
+
+  int get _handoffSecondsRemaining {
+    final deadline = _handoffDeadline;
+    if (deadline == null) {
+      return 0;
+    }
+    final remaining = deadline.difference(DateTime.now()).inSeconds;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  Future<void> _beginTripHandoff({String? tripId}) async {
+    final effectiveTripId = tripId?.trim() ?? '';
+    if (!mounted) return;
+
+    setState(() {
+      _handoffInProgress = true;
+      _handoffNavigationRequested = false;
+      if (effectiveTripId.isNotEmpty) {
+        _handoffTripId = effectiveTripId;
+      }
+      _handoffDeadline = DateTime.now().add(const Duration(seconds: 5));
+    });
+
+    _handoffCountdownTimer?.cancel();
+    _handoffCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+      unawaited(_tryCompleteTripHandoff());
+    });
+
+    _handoffPollTimer?.cancel();
+    _handoffPollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      unawaited(_refreshTripForHandoff());
+    });
+
+    unawaited(_refreshTripForHandoff());
+    unawaited(_tryCompleteTripHandoff());
+  }
+
+  Future<void> _refreshTripForHandoff() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (!mounted || session == null || _resolvingTrip) {
+      return;
+    }
+
+    _resolvingTrip = true;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getUpcomingTrip(accessToken: session.tokens.accessToken);
+      developer.log(
+        'Handoff trip lookup response received: $response',
+        name: 'driver.orderAccepted',
+      );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      final tripId = _extractTripId(trip, '').trim();
+      if (tripId.isNotEmpty && mounted) {
+        setState(() {
+          _handoffTripId = tripId;
+        });
+      }
+    } catch (error) {
+      developer.log(
+        'Handoff trip lookup failed: $error',
+        name: 'driver.orderAccepted',
+      );
+    } finally {
+      _resolvingTrip = false;
+      unawaited(_tryCompleteTripHandoff());
+    }
+  }
+
+  Future<void> _tryCompleteTripHandoff() async {
+    if (!mounted || !_handoffInProgress || _handoffNavigationRequested) {
+      return;
+    }
+
+    final tripId = _handoffTripId?.trim() ?? '';
+    final deadline = _handoffDeadline;
+    final readyToNavigate =
+        tripId.isNotEmpty &&
+        deadline != null &&
+        DateTime.now().isAfter(deadline);
+
+    if (!readyToNavigate) {
+      return;
+    }
+
+    _handoffNavigationRequested = true;
+    _handoffCountdownTimer?.cancel();
+    _handoffCountdownTimer = null;
+    _handoffPollTimer?.cancel();
+    _handoffPollTimer = null;
+
+    await _goToActiveTrip(tripId: tripId);
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
@@ -305,13 +427,11 @@ class _DriverOrderAcceptedScreenState
 
     if (_isAcceptedStatus(status)) {
       developer.log(
-        'Accepted status received from socket. Going straight to the active trip.',
+        'Accepted status received from socket. Starting booking handoff.',
         name: 'driver.orderAccepted',
       );
-      await _goToActiveTrip(
-        fallbackTripId: effectiveTripId.isNotEmpty
-            ? effectiveTripId
-            : _request.tripId,
+      await _beginTripHandoff(
+        tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
       );
       return;
     }
@@ -403,13 +523,11 @@ class _DriverOrderAcceptedScreenState
               responseStatus == 'confirmed' ||
               responseStatus == 'assigned')) {
         developer.log(
-          'Negotiation accepted locally. Going straight to the active trip.',
+          'Negotiation accepted locally. Starting booking handoff.',
           name: 'driver.orderAccepted',
         );
-        await _goToActiveTrip(
-          fallbackTripId: effectiveTripId.isNotEmpty
-              ? effectiveTripId
-              : (request.tripId.isNotEmpty ? request.tripId : request.id),
+        await _beginTripHandoff(
+          tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
         );
         return;
       }
@@ -464,65 +582,23 @@ class _DriverOrderAcceptedScreenState
     }
   }
 
-  Future<void> _goToActiveTrip({required String fallbackTripId}) async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || !mounted) {
+  Future<void> _goToActiveTrip({required String tripId}) async {
+    if (!mounted || tripId.trim().isEmpty) {
       developer.log(
-        'Trip resolution skipped: missing session or unmounted.',
+        'Trip navigation skipped: missing tripId or screen unmounted.',
         name: 'driver.orderAccepted',
       );
       return;
     }
 
-    String tripId = fallbackTripId;
+    ref.read(driverActiveTripIdProvider.notifier).state = tripId.trim();
     developer.log(
-      'Resolving active trip from upcoming API. fallbackTripId=$fallbackTripId',
+      'Navigating to delivery details for tripId=${tripId.trim()}',
       name: 'driver.orderAccepted',
     );
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .getUpcomingTrip(accessToken: session.tokens.accessToken);
-      developer.log(
-        'Upcoming trip API response received: $response',
-        name: 'driver.orderAccepted',
-      );
-      final data = response['data'];
-      final trip = data is Map<String, dynamic>
-          ? (data['trip'] is Map<String, dynamic>
-                ? data['trip'] as Map<String, dynamic>
-                : data)
-          : response;
-      tripId = _extractTripId(trip, fallbackTripId).trim();
-      developer.log(
-        'Upcoming trip resolved. tripId=$tripId',
-        name: 'driver.orderAccepted',
-      );
-    } catch (_) {
-      developer.log(
-        'Upcoming trip API failed. Falling back to known trip id.',
-        name: 'driver.orderAccepted',
-      );
-      // Fall back to the trip id already known from the negotiation payload.
-    }
-
-    if (tripId.isEmpty || !mounted) {
-      developer.log(
-        'Trip resolution aborted: tripId missing or screen unmounted.',
-        name: 'driver.orderAccepted',
-      );
-      return;
-    }
-
-    ref.read(driverActiveTripIdProvider.notifier).state = tripId;
-    developer.log(
-      'Navigating directly to delivery details for tripId=$tripId',
-      name: 'driver.orderAccepted',
-    );
-    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId),
+        builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId.trim()),
       ),
       (route) => route.isFirst,
     );
@@ -550,8 +626,9 @@ class _DriverOrderAcceptedScreenState
         _submitting ||
         _counterLocked ||
         serverTimedOut ||
+        _handoffInProgress ||
         _waitingOnClient ||
-        _waitingOnDriver;
+        _awaitingDriverConfirmation;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -787,7 +864,7 @@ class _DriverOrderAcceptedScreenState
                             activeColor: const Color(0xFF2FA56E),
                             inactiveColor: const Color(0xFFE4E7EC),
                             label: '₹${selectedAmount.toStringAsFixed(0)}',
-                            onChanged: _submitting
+                            onChanged: actionLocked
                                 ? null
                                 : (value) {
                                     setState(() {
@@ -814,7 +891,52 @@ class _DriverOrderAcceptedScreenState
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_waitingOnClient) ...[
+                    if (_handoffInProgress) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Color(0xFF1F88C9),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'Client completed the booking.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _handoffTripId?.isNotEmpty == true
+                                  ? 'Trip created. Redirecting in ${_handoffSecondsRemaining}s.'
+                                  : 'Waiting for the trip to be created. Redirecting in ${_handoffSecondsRemaining}s.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF667085),
+                                    height: 1.35,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_waitingOnClient) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -846,65 +968,23 @@ class _DriverOrderAcceptedScreenState
                           ],
                         ),
                       ),
-                    ] else if (_waitingOnDriver) ...[
+                    ] else if (_awaitingDriverConfirmation) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFD),
+                          color: const Color(0xFFEAF7EF),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(
-                              width: 26,
-                              height: 26,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: Color(0xFF1F88C9),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Accepted - waiting for the other side to confirm.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (_clientDecisionReady) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _accepted
-                              ? const Color(0xFFEAF7EF)
-                              : const Color(0xFFFEEFEF),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _accepted
-                                ? const Color(0xFFB7E1C8)
-                                : const Color(0xFFF3B4B4),
-                          ),
+                          border: Border.all(color: const Color(0xFFB7E1C8)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              _accepted
-                                  ? 'Client accepted the request.'
-                                  : 'Client rejected the request.',
+                              'Client accepted the request.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color: _accepted
-                                        ? const Color(0xFF2FA56E)
-                                        : const Color(0xFFB42318),
+                                    color: const Color(0xFF2FA56E),
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -972,6 +1052,71 @@ class _DriverOrderAcceptedScreenState
                                   ),
                                 ),
                               ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_clientDecisionReady) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _accepted
+                              ? const Color(0xFFEAF7EF)
+                              : const Color(0xFFFEEFEF),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _accepted
+                                ? const Color(0xFFB7E1C8)
+                                : const Color(0xFFF3B4B4),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              _accepted
+                                  ? 'Driver accepted the request.'
+                                  : 'Driver rejected the request.',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: _accepted
+                                        ? const Color(0xFF2FA56E)
+                                        : const Color(0xFFB42318),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_waitingOnClient) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Color(0xFF1F88C9),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Accepted - waiting for the other side to confirm.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                           ],
                         ),

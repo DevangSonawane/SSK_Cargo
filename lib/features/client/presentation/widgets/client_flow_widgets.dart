@@ -4842,6 +4842,11 @@ class _BrokerNegotiationSheetState
 
       setState(() {
         _request = request;
+        if (request.status.trim().toLowerCase() == 'accepted' &&
+            _stage != _DirectNegotiationStage.payment &&
+            _stage != _DirectNegotiationStage.confirmed) {
+          _stage = _DirectNegotiationStage.payment;
+        }
       });
     } catch (_) {
       if (!mounted || silent) {
@@ -5082,27 +5087,25 @@ class _BrokerNegotiationSheetState
     final pendingConfirmationBy =
         request?.pendingConfirmationBy.trim().toLowerCase() ?? '';
     final awaitingConfirmation = status == 'awaiting_confirmation';
-    final yourTurn = awaitingConfirmation && pendingConfirmationBy == 'client';
-    final waitingOnClient =
-        awaitingConfirmation &&
-        (pendingConfirmationBy == 'respondent' ||
-            pendingConfirmationBy == 'broker' ||
-            pendingConfirmationBy.isEmpty);
-    final actionable = status == 'countered' || yourTurn;
+    final yourTurnToConfirm =
+        awaitingConfirmation && pendingConfirmationBy == 'broker';
+    final waitingOnDriver =
+        awaitingConfirmation && pendingConfirmationBy == 'client';
+    final actionable = status == 'countered' || yourTurnToConfirm;
     final title = status == 'accepted'
         ? 'Driver accepted the request'
-        : yourTurn
+        : yourTurnToConfirm
         ? 'Driver accepted - your turn to confirm'
-        : waitingOnClient
+        : waitingOnDriver
         ? 'Waiting for driver confirmation'
         : status == 'countered'
         ? 'Counter offer received'
         : 'Waiting for driver response';
     final body = status == 'accepted'
         ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
-        : yourTurn
+        : yourTurnToConfirm
         ? 'The driver already committed. Confirm or decline to finish the handshake.'
-        : waitingOnClient
+        : waitingOnDriver
         ? 'You already confirmed this offer. We are waiting for the driver to confirm now.'
         : status == 'countered'
         ? 'The driver sent a counter. Review it here and respond instantly.'
@@ -5187,7 +5190,7 @@ class _BrokerNegotiationSheetState
         if (actionable) ...[
           const SizedBox(height: 16),
           _NegotiationActionButtons(
-            acceptLabel: yourTurn ? 'Confirm' : 'Accept',
+            acceptLabel: yourTurnToConfirm ? 'Confirm' : 'Accept',
             canCounter: status == 'countered',
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
