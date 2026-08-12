@@ -25,12 +25,15 @@ class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
   bool _accepted = false;
+  bool _trackRideReady = false;
   bool _counterLocked = false;
   bool _brokerHandoffVisible = false;
   late double _counterAmount;
   int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _handoffTimer;
+  String _resolvedTripId = '';
+  String _resolvedTripStatus = '';
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -160,7 +163,7 @@ class _DriverOrderAcceptedScreenState
     final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
 
     if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
-      await _navigateToUpcomingTrip(fallbackTripId: effectiveTripId);
+      await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
       return;
     }
 
@@ -180,7 +183,7 @@ class _DriverOrderAcceptedScreenState
 
   Future<void> _runAction(
     Future<Map<String, dynamic>> Function(String accessToken) action, {
-    bool navigateOnSuccess = false,
+    bool resolveTripOnSuccess = false,
     bool isCounter = false,
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -208,8 +211,8 @@ class _DriverOrderAcceptedScreenState
         });
       }
 
-      if (navigateOnSuccess && effectiveTripId.isNotEmpty) {
-        await _navigateToUpcomingTrip(fallbackTripId: effectiveTripId);
+      if (resolveTripOnSuccess && effectiveTripId.isNotEmpty) {
+        await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
         return;
       }
 
@@ -237,13 +240,16 @@ class _DriverOrderAcceptedScreenState
     }
   }
 
-  Future<void> _navigateToUpcomingTrip({required String fallbackTripId}) async {
+  Future<void> _resolveTripAndShowTrackOption({
+    required String fallbackTripId,
+  }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
       return;
     }
 
     String tripId = fallbackTripId;
+    String tripStatus = '';
     try {
       final response = await ref
           .read(apiClientProvider)
@@ -255,6 +261,10 @@ class _DriverOrderAcceptedScreenState
                 : data)
           : response;
       tripId = _extractTripId(trip, fallbackTripId).trim();
+      tripStatus = _readPayloadString(trip, const [
+        'status',
+        'rawStatus',
+      ]).trim().toLowerCase();
     } catch (_) {
       // Fall back to the trip id already known from the negotiation payload.
     }
@@ -264,11 +274,14 @@ class _DriverOrderAcceptedScreenState
     }
 
     ref.read(driverLocationTrackerProvider).setActiveTripId(tripId);
+    final readyToTrack = tripStatus == 'confirmed' || tripStatus == 'accepted';
     if (!mounted) return;
     setState(() {
       _accepted = true;
+      _resolvedTripId = tripId;
+      _resolvedTripStatus = tripStatus;
+      _trackRideReady = readyToTrack;
     });
-    context.go('/driver/delivery-details/$tripId');
   }
 
   @override
@@ -583,7 +596,7 @@ class _DriverOrderAcceptedScreenState
                                         accessToken: token,
                                         id: request.id,
                                       ),
-                                  navigateOnSuccess: true,
+                                  resolveTripOnSuccess: true,
                                 ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF2FA56E),
@@ -609,12 +622,57 @@ class _DriverOrderAcceptedScreenState
                         color: const Color(0xFFEAF7EF),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Text(
-                        'Request accepted. Waiting for the client to confirm the booking.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF2FA56E),
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            _trackRideReady
+                                ? 'Request accepted. Your trip is ready to track.'
+                                : 'Request accepted. Waiting for the trip to be ready.',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF2FA56E),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          if (_resolvedTripStatus.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Trip status: ${_titleCase(_resolvedTripStatus)}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF40916C),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                          if (_trackRideReady) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: FilledButton(
+                                onPressed: _resolvedTripId.isEmpty
+                                    ? null
+                                    : () {
+                                        context.go(
+                                          '/driver/delivery-details/$_resolvedTripId',
+                                        );
+                                      },
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1F88C9),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Track your ride',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],
@@ -705,4 +763,12 @@ String _extractTripId(Map<String, dynamic> payload, String fallback) {
   }
 
   return fallback.trim();
+}
+
+String _titleCase(String value) {
+  return value
+      .split(RegExp(r'[_\s-]+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+      .join(' ');
 }

@@ -25,6 +25,7 @@ class _DriverDeliveryDetailsScreenState
   double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
   bool _arrivalFlowActive = false;
+  bool _detailsPanelExpanded = true;
   bool _loadingTrip = true;
   bool _confirmingArrival = false;
   String _tripStatus = 'confirmed';
@@ -214,6 +215,247 @@ class _DriverDeliveryDetailsScreenState
       default:
         return 'Continue';
     }
+  }
+
+  Widget _buildTripPanel(BuildContext context) {
+    final isArrivalFlow = _arrivalFlowActive || _showArrivalSwipe;
+    final panelTitle = isArrivalFlow ? 'Arrived' : 'On route';
+    final panelBadge = isArrivalFlow ? 'Ready' : 'Active';
+    final panelSubtitle = isArrivalFlow
+        ? 'Confirm when you have reached the drop point.'
+        : 'Use the action below to advance the trip.';
+
+    return Container(
+      key: ValueKey(_detailsPanelExpanded),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current status',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      panelTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF101828),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF7EF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  panelBadge,
+                  style: const TextStyle(
+                    color: Color(0xFF2FA56E),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _detailsPanelExpanded = !_detailsPanelExpanded;
+                  });
+                },
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F6FB),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Icon(
+                    _detailsPanelExpanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    color: const Color(0xFF101828),
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_detailsPanelExpanded) ...[
+            const SizedBox(height: 14),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+            const SizedBox(height: 14),
+            Text(
+              panelSubtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF667085),
+                height: 1.4,
+              ),
+            ),
+            if (isArrivalFlow) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 92,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 52,
+                        trackShape: const RoundedRectSliderTrackShape(),
+                        thumbShape: const _ArrivalThumbShape(),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 0,
+                        ),
+                        activeTrackColor: const Color(0xFFE5E7EB),
+                        inactiveTrackColor: const Color(0xFFE5E7EB),
+                        thumbColor: Colors.white,
+                        overlayColor: Colors.transparent,
+                        trackGap: 6,
+                      ),
+                      child: Slider(
+                        value: _arrivalSlide,
+                        onChanged: (value) {
+                          if (_loadingTrip || _confirmingArrival) {
+                            return;
+                          }
+                          setState(() => _arrivalSlide = value);
+                          if (value >= 0.98) {
+                            Future.delayed(
+                              const Duration(milliseconds: 350),
+                              () {
+                                if (!context.mounted) {
+                                  return;
+                                }
+                                unawaited(_confirmArrival());
+                                setState(() => _arrivalSlide = 0);
+                              },
+                            );
+                          }
+                        },
+                        min: 0,
+                        max: 1,
+                        divisions: 100,
+                      ),
+                    ),
+                    IgnorePointer(
+                      child: AnimatedOpacity(
+                        opacity: (1 - (_arrivalSlide * 1.7)).clamp(0.18, 1.0),
+                        duration: const Duration(milliseconds: 90),
+                        child: Text(
+                          'Swipe to continue',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF6B7280),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 12),
+              _DetailRow(label: 'Customer', value: _customerName),
+              const SizedBox(height: 10),
+              _DetailRow(
+                label: 'Phone',
+                value: _customerPhone.isNotEmpty ? _customerPhone : '—',
+              ),
+              const SizedBox(height: 10),
+              _DetailRow(label: 'Address', value: _dropLocation),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Text(
+                  _loadingTrip
+                      ? 'Loading live trip details...'
+                      : 'Tap the action button below when you are ready to move to the next step.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: _loadingTrip || _confirmingArrival
+                      ? null
+                      : () {
+                          if (_tripStatus == 'in_transit') {
+                            setState(() {
+                              _arrivalFlowActive = true;
+                              _showArrivalSwipe = true;
+                              _detailsPanelExpanded = true;
+                            });
+                            return;
+                          }
+                          unawaited(_advanceTripStatus());
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F88C9),
+                    disabledBackgroundColor: const Color(0xFFD0D5DD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    _loadingTrip ? 'Loading...' : _actionLabelForCurrentTrip(),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmArrival() async {
@@ -775,392 +1017,7 @@ class _DriverDeliveryDetailsScreenState
                         bottom: 16,
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 220),
-                          child: (_arrivalFlowActive || _showArrivalSwipe)
-                              ? Container(
-                                  key: const ValueKey('arrival-swipe'),
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 18,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Current status',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(
-                                                      color: const Color(
-                                                        0xFF98A2B3,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                'Arrived',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge
-                                                    ?.copyWith(
-                                                      color: const Color(
-                                                        0xFF101828,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w900,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                          const Spacer(),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 8,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEAF7EF),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: const Text(
-                                              'Ready',
-                                              style: TextStyle(
-                                                color: Color(0xFF2FA56E),
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 14),
-                                      const Divider(
-                                        height: 1,
-                                        thickness: 1,
-                                        color: Color(0xFFE8EDF2),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      Text(
-                                        'Swipe to confirm arrival',
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: const Color(0xFF101828),
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'Confirm when you have reached the drop point. This opens the photo upload flow next.',
-                                        textAlign: TextAlign.center,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              color: const Color(0xFF667085),
-                                              height: 1.4,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 92,
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            SliderTheme(
-                                              data: SliderTheme.of(context).copyWith(
-                                                trackHeight: 52,
-                                                trackShape:
-                                                    const RoundedRectSliderTrackShape(),
-                                                thumbShape:
-                                                    const _ArrivalThumbShape(),
-                                                overlayShape:
-                                                    const RoundSliderOverlayShape(
-                                                      overlayRadius: 0,
-                                                    ),
-                                                activeTrackColor: const Color(
-                                                  0xFFE5E7EB,
-                                                ),
-                                                inactiveTrackColor: const Color(
-                                                  0xFFE5E7EB,
-                                                ),
-                                                thumbColor: Colors.white,
-                                                overlayColor:
-                                                    Colors.transparent,
-                                                trackGap: 6,
-                                              ),
-                                              child: Slider(
-                                                value: _arrivalSlide,
-                                                onChanged: (value) {
-                                                  if (_loadingTrip ||
-                                                      _confirmingArrival) {
-                                                    return;
-                                                  }
-                                                  setState(
-                                                    () => _arrivalSlide = value,
-                                                  );
-                                                  if (value >= 0.98) {
-                                                    Future.delayed(
-                                                      const Duration(
-                                                        milliseconds: 350,
-                                                      ),
-                                                      () {
-                                                        if (!context.mounted) {
-                                                          return;
-                                                        }
-                                                        unawaited(
-                                                          _confirmArrival(),
-                                                        );
-                                                        setState(
-                                                          () =>
-                                                              _arrivalSlide = 0,
-                                                        );
-                                                      },
-                                                    );
-                                                  }
-                                                },
-                                                min: 0,
-                                                max: 1,
-                                                divisions: 100,
-                                              ),
-                                            ),
-                                            IgnorePointer(
-                                              child: AnimatedOpacity(
-                                                opacity:
-                                                    (1 - (_arrivalSlide * 1.7))
-                                                        .clamp(0.18, 1.0),
-                                                duration: const Duration(
-                                                  milliseconds: 90,
-                                                ),
-                                                child: Text(
-                                                  'Swipe to continue',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                        color: const Color(
-                                                          0xFF6B7280,
-                                                        ),
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                      ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : Container(
-                                  key: const ValueKey('on-route-card'),
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 18,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Current status',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(
-                                                      color: const Color(
-                                                        0xFF98A2B3,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                'On route',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge
-                                                    ?.copyWith(
-                                                      color: const Color(
-                                                        0xFF101828,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w900,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                          const Spacer(),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 8,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEAF7EF),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: const Text(
-                                              'Active',
-                                              style: TextStyle(
-                                                color: Color(0xFF2FA56E),
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 14),
-                                      const Divider(
-                                        height: 1,
-                                        thickness: 1,
-                                        color: Color(0xFFE8EDF2),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      Text(
-                                        'Customer details',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: const Color(0xFF101828),
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _DetailRow(
-                                        label: 'Customer',
-                                        value: _customerName,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _DetailRow(
-                                        label: 'Phone',
-                                        value: _customerPhone.isNotEmpty
-                                            ? _customerPhone
-                                            : '—',
-                                      ),
-                                      const SizedBox(height: 10),
-                                      _DetailRow(
-                                        label: 'Address',
-                                        value: _dropLocation,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                          horizontal: 14,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF7FAFD),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFFE8EDF2),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          _loadingTrip
-                                              ? 'Loading live trip details...'
-                                              : 'Tap the action button above when you are ready to move to the next step.',
-                                          textAlign: TextAlign.center,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                color: const Color(0xFF667085),
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 52,
-                                        child: FilledButton(
-                                          onPressed:
-                                              _loadingTrip || _confirmingArrival
-                                              ? null
-                                              : () {
-                                                  if (_tripStatus ==
-                                                      'in_transit') {
-                                                    setState(() {
-                                                      _arrivalFlowActive = true;
-                                                      _showArrivalSwipe = true;
-                                                    });
-                                                    return;
-                                                  }
-                                                  unawaited(
-                                                    _advanceTripStatus(),
-                                                  );
-                                                },
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF1F88C9,
-                                            ),
-                                            disabledBackgroundColor:
-                                                const Color(0xFFD0D5DD),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            _loadingTrip
-                                                ? 'Loading...'
-                                                : _actionLabelForCurrentTrip(),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                          child: _buildTripPanel(context),
                         ),
                       ),
                     ],
