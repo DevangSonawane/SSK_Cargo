@@ -690,12 +690,27 @@ class SskApiClient {
     required String accessToken,
   }) async {
     developer.log('GET /api/trips/active', name: 'SSK.API');
-    return _request(
-      () => _dio.get<Map<String, dynamic>>(
-        '/api/trips/active',
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      ),
-    );
+    try {
+      final response = await _request(
+        () => _dio.get<Map<String, dynamic>>(
+          '/api/trips/active',
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+        ),
+      );
+      developer.log(
+        'GET /api/trips/active response=$response',
+        name: 'SSK.API',
+      );
+      return response;
+    } catch (error, stackTrace) {
+      developer.log(
+        'GET /api/trips/active failed: $error',
+        name: 'SSK.API',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> getUpcomingTrip({

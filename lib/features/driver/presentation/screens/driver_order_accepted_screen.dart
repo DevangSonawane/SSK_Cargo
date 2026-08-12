@@ -12,6 +12,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/utils/negotiation_timer.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
+import '../../data/driver_trip_handoff_utils.dart';
 import 'driver_delivery_details_screen.dart';
 
 class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
@@ -95,25 +96,13 @@ class _DriverOrderAcceptedScreenState
   }
 
   bool _payloadMatchesTarget(Map<String, dynamic> payload) {
-    final values = <String>{
-      _readPayloadString(payload, const [
-        'id',
-        'request_id',
-        'driver_request_id',
-      ]),
-      _readPayloadString(payload, const ['bookingId', 'booking_id']),
-      _readPayloadString(payload, const ['bookingNumber', 'booking_number']),
-      _readPayloadString(payload, const ['tripId', 'trip_id']),
-    }..removeWhere((value) => value.isEmpty);
-
     final request = _request;
-    final targetValues = <String>{
+    return responseMatchesAnyReference(payload, [
       request.id,
       request.bookingId,
       request.bookingNumber,
       request.tripId,
-    }..removeWhere((value) => value.isEmpty);
-    return values.any(targetValues.contains);
+    ]);
   }
 
   String _readPayloadString(Map<String, dynamic> payload, List<String> keys) {
@@ -336,7 +325,7 @@ class _DriverOrderAcceptedScreenState
         name: 'driver.orderAccepted',
       );
       final requestPayload = _extractPayload(requestResponse);
-      final requestTripId = _extractTripId(requestPayload, '').trim();
+      final requestTripId = extractTripId(requestPayload);
       final requestStatus = _readPayloadString(requestPayload, const [
         'status',
         'requestStatus',
@@ -353,6 +342,7 @@ class _DriverOrderAcceptedScreenState
             _latestStatus = requestStatus;
           }
         });
+        ref.read(driverActiveTripIdProvider.notifier).state = requestTripId;
         _handoffPollTimer?.cancel();
         _handoffPollTimer = null;
         return;
@@ -376,7 +366,7 @@ class _DriverOrderAcceptedScreenState
                   ? bookingData['booking'] as Map<String, dynamic>
                   : bookingData)
             : bookingResponse;
-        final bookingTripId = _extractTripId(booking, '').trim();
+        final bookingTripId = extractTripId(booking);
         final bookingStatus = _readPayloadString(booking, const [
           'status',
           'bookingStatus',
@@ -388,6 +378,7 @@ class _DriverOrderAcceptedScreenState
         ]).trim().toLowerCase();
         final bookingReady =
             bookingStatus == 'confirmed' ||
+            bookingStatus == 'assigned' ||
             bookingStatus == 'paid' ||
             bookingStatus == 'completed' ||
             paymentStatus == 'paid' ||
@@ -401,6 +392,9 @@ class _DriverOrderAcceptedScreenState
             }
           });
           if (bookingTripId.isNotEmpty) {
+            ref.read(driverActiveTripIdProvider.notifier).state = bookingTripId;
+          }
+          if (bookingTripId.isNotEmpty) {
             _handoffPollTimer?.cancel();
             _handoffPollTimer = null;
             return;
@@ -410,32 +404,39 @@ class _DriverOrderAcceptedScreenState
 
       final response = await ref
           .read(apiClientProvider)
-          .getUpcomingTrip(accessToken: session.tokens.accessToken);
+          .getActiveTrip(accessToken: session.tokens.accessToken);
       developer.log(
-        'Handoff upcoming trip response received: $response',
+        'Handoff active trip response received: $response',
         name: 'driver.orderAccepted',
       );
-      final data = response['data'];
-      final trip = data is Map<String, dynamic>
-          ? (data['trip'] is Map<String, dynamic>
-                ? data['trip'] as Map<String, dynamic>
-                : data)
-          : response;
-      final tripId = _extractTripId(trip, '').trim();
-      final tripBookingId = _readPayloadString(trip, const [
-        'bookingId',
-        'booking_id',
-      ]).trim();
-      if (tripId.isNotEmpty &&
-          mounted &&
-          (tripBookingId.isEmpty ||
-              tripBookingId == _request.bookingId.trim())) {
-        setState(() {
-          _handoffTripId = tripId;
-          _handoffBookingReady = true;
-        });
-        _handoffPollTimer?.cancel();
-        _handoffPollTimer = null;
+      final trip = extractTripFromResponse(response);
+      final tripId = trip == null ? '' : extractTripId(trip);
+      if (trip != null && tripId.isNotEmpty) {
+        final matchesRequest = tripMatchesContext(
+          trip,
+          bookingId: _request.bookingId,
+          bookingNumber: _request.bookingNumber,
+          tripId: _request.tripId,
+        );
+        if (!matchesRequest) {
+          developer.log(
+            'Handoff active trip matched a trip id but booking context differed. '
+            'tripId=$tripId requestBookingId=${_request.bookingId} '
+            'requestBookingNumber=${_request.bookingNumber} requestTripId=${_request.tripId}',
+            name: 'driver.orderAccepted',
+          );
+        }
+        if (mounted) {
+          setState(() {
+            _handoffTripId = tripId;
+            _handoffBookingReady = true;
+          });
+          ref.read(driverActiveTripIdProvider.notifier).state = tripId;
+        }
+        if (mounted) {
+          _handoffPollTimer?.cancel();
+          _handoffPollTimer = null;
+        }
       }
     } catch (error) {
       developer.log(
@@ -456,7 +457,7 @@ class _DriverOrderAcceptedScreenState
     }
 
     final resolvedTripId = _handoffTripId?.trim() ?? '';
-    if (resolvedTripId.isEmpty && !_handoffBookingReady) {
+    if (resolvedTripId.isEmpty && bookingId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -484,7 +485,7 @@ class _DriverOrderAcceptedScreenState
       'clientStatus',
       'client_status',
     ]).trim().toLowerCase();
-    final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
+    final effectiveTripId = extractTripId(payload, fallback: _request.tripId);
 
     developer.log(
       'Handling live payload on negotiation screen. status=$status tripId=$effectiveTripId',
@@ -548,7 +549,7 @@ class _DriverOrderAcceptedScreenState
       );
       final payload = _extractPayload(response);
       final request = DriverRequestItem.fromMap(payload);
-      final effectiveTripId = _extractTripId(payload, request.tripId).trim();
+      final effectiveTripId = extractTripId(payload, fallback: request.tripId);
       developer.log(
         'Negotiation payload resolved. tripId=$effectiveTripId requestId=${request.id}',
         name: 'driver.orderAccepted',
@@ -1450,23 +1451,4 @@ Map<String, dynamic> _extractPayload(Map<String, dynamic> response) {
   }
 
   return response;
-}
-
-String _extractTripId(Map<String, dynamic> payload, String fallback) {
-  final trip = payload['trip'];
-  if (trip is Map<String, dynamic>) {
-    final nested = trip['id']?.toString().trim();
-    if (nested != null && nested.isNotEmpty) {
-      return nested;
-    }
-  }
-
-  for (final key in const ['tripId', 'trip_id', 'tripID']) {
-    final value = payload[key]?.toString().trim();
-    if (value != null && value.isNotEmpty) {
-      return value;
-    }
-  }
-
-  return fallback.trim();
 }

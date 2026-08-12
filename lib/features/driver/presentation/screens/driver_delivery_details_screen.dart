@@ -10,6 +10,7 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../data/driver_trip_handoff_utils.dart';
 
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryDetailsScreen({
@@ -52,9 +53,12 @@ class _DriverDeliveryDetailsScreenState
   @override
   void initState() {
     super.initState();
-    if (widget.tripId.trim().isNotEmpty) {
-      ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId
-          .trim();
+    final initialTripId = widget.tripId.trim();
+    if (initialTripId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(driverActiveTripIdProvider.notifier).state = initialTripId;
+      });
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadTrip());
@@ -110,6 +114,24 @@ class _DriverDeliveryDetailsScreenState
                     : requestData)
               : requestResponse;
           tripId = _readString(request, const ['tripId', 'trip_id']);
+        }
+
+        if (tripId.isEmpty) {
+          final activeResponse = await api.getActiveTrip(
+            accessToken: session.tokens.accessToken,
+          );
+          final activeTrip = extractTripFromResponse(activeResponse);
+          if (activeTrip != null &&
+              tripMatchesContext(
+                activeTrip,
+                bookingId: _bookingId,
+                bookingNumber: _readString(booking, const [
+                  'bookingNumber',
+                  'booking_number',
+                ]),
+              )) {
+            tripId = extractTripId(activeTrip);
+          }
         }
 
         if (tripId.isEmpty) {

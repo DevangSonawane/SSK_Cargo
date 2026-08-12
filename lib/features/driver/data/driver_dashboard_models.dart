@@ -48,9 +48,7 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
     final truck = _truckFromResponse(results[4]);
 
     return DriverDashboardData(
-      activeTrip: activeTrip == null || !_isLiveTrip(activeTrip.status)
-          ? null
-          : activeTrip,
+      activeTrip: activeTrip,
       upcomingTrip: upcomingTrip,
       history: analytics,
       tripFeed: tripFeed,
@@ -73,6 +71,49 @@ TrackingDemoShipment? _shipmentFromTripResponse(Map<String, dynamic> response) {
     return _shipmentFromTrip(trip);
   }
   return null;
+}
+
+// Kept as a compatibility helper for hot-reloaded isolates that may still
+// reference the old dashboard filtering path.
+// ignore: unused_element
+bool _isLiveTrip(String status) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) return false;
+
+  const liveStatuses = {
+    'accepted',
+    'confirmed',
+    'live',
+    'ongoing',
+    'ontrip',
+    'on_trip',
+    'en_route_pickup',
+    'in_transit',
+    'in transit',
+    'picked_up',
+    'picked up',
+    'en_route',
+    'en route',
+    'started',
+    'delivered',
+  };
+
+  const inactiveStatuses = {
+    'requested',
+    'pending',
+    'completed',
+    'delivered',
+    'cancelled',
+    'canceled',
+    'rejected',
+    'declined',
+  };
+
+  if (inactiveStatuses.contains(normalized)) {
+    return false;
+  }
+
+  return liveStatuses.contains(normalized);
 }
 
 List<BrokerSettlement> _analyticsFromResponse(Map<String, dynamic> response) {
@@ -255,46 +296,6 @@ double _doubleFrom(Map<String, dynamic> value, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return 0;
-}
-
-bool _isLiveTrip(String status) {
-  final normalized = status.trim().toLowerCase();
-  if (normalized.isEmpty) return false;
-
-  const liveStatuses = {
-    'accepted',
-    'confirmed',
-    'live',
-    'ongoing',
-    'ontrip',
-    'on_trip',
-    'en_route_pickup',
-    'in_transit',
-    'in transit',
-    'picked_up',
-    'picked up',
-    'en_route',
-    'en route',
-    'started',
-    'delivered',
-  };
-
-  const inactiveStatuses = {
-    'requested',
-    'pending',
-    'completed',
-    'delivered',
-    'cancelled',
-    'canceled',
-    'rejected',
-    'declined',
-  };
-
-  if (inactiveStatuses.contains(normalized)) {
-    return false;
-  }
-
-  return liveStatuses.contains(normalized);
 }
 
 bool _looksLikePlaceholderTrip(Map<String, dynamic> trip) {

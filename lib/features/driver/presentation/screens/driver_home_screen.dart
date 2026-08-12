@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
 import 'driver_delivery_details_screen.dart';
 
@@ -72,18 +73,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     try {
       final response = await ref
           .read(apiClientProvider)
-          .getUpcomingTrip(accessToken: session.tokens.accessToken);
-      final data = response['data'];
-      final trip = data is Map<String, dynamic>
-          ? (data['trip'] is Map<String, dynamic>
-                ? data['trip'] as Map<String, dynamic>
-                : data)
-          : response;
-      final tripId = _readStringValue(trip, const ['id', 'tripId', 'trip_id']);
+          .getActiveTrip(accessToken: session.tokens.accessToken);
+      final trip = extractTripFromResponse(response);
+      final tripId = trip == null ? '' : extractTripId(trip);
 
       if (tripId.isEmpty || !mounted) {
         return;
       }
+
+      ref.read(driverActiveTripIdProvider.notifier).state = tripId;
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
@@ -307,16 +305,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       ),
     );
   }
-}
-
-String _readStringValue(Map<String, dynamic> json, List<String> keys) {
-  for (final key in keys) {
-    final value = json[key]?.toString().trim();
-    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
-      return value;
-    }
-  }
-  return '';
 }
 
 class _HomeLifecycleObserver extends WidgetsBindingObserver {

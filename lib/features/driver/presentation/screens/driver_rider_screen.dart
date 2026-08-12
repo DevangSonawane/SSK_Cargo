@@ -49,7 +49,40 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
     return SafeArea(
       top: false,
       child: dashboardAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => RefreshIndicator(
+          onRefresh: _refreshDashboard,
+          color: const Color(0xFF1F88C9),
+          backgroundColor: Colors.white,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: const [
+              _EmptyCard(
+                icon: Icons.route_rounded,
+                title: 'No active delivery',
+                subtitle: 'Accepted deliveries will appear here live.',
+              ),
+              SizedBox(height: 18),
+              _SectionHeader(
+                title: 'Latest trip activity',
+                subtitle: 'Pending deliveries and settlements',
+                actionLabel: 'View all',
+              ),
+              SizedBox(height: 12),
+              _InlineEmptyMessage(message: 'Loading active delivery...'),
+              SizedBox(height: 18),
+              _SectionHeader(
+                title: 'Deliveries done',
+                subtitle: 'Recently completed deliveries',
+                actionLabel: 'View all',
+              ),
+              SizedBox(height: 12),
+              _InlineEmptyMessage(message: 'Loading recent deliveries...'),
+            ],
+          ),
+        ),
         error: (error, _) => RefreshIndicator(
           onRefresh: _refreshDashboard,
           color: const Color(0xFF1F88C9),
@@ -181,16 +214,7 @@ TrackingDemoShipment? _selectCurrentTrip(
   TrackingDemoShipment? upcomingTrip,
 ) {
   final activeStatus = activeTrip?.status.trim().toLowerCase() ?? '';
-  if (_isVisibleDriverTripStatus(activeStatus)) {
-    return activeTrip;
-  }
-
-  final upcomingStatus = upcomingTrip?.status.trim().toLowerCase() ?? '';
-  if (_isVisibleDriverTripStatus(upcomingStatus)) {
-    return upcomingTrip;
-  }
-
-  return null;
+  return _isVisibleDriverTripStatus(activeStatus) ? activeTrip : null;
 }
 
 bool _isVisibleDriverTripStatus(String status) {
