@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../data/driver_trip_handoff_utils.dart';
 
 class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
   const DriverDeliveryPhotoUploadScreen({
@@ -63,8 +64,7 @@ class _DriverDeliveryPhotoUploadScreenState
             accessToken: session.tokens.accessToken,
             tripId: widget.tripId,
           );
-      final data = response['data'];
-      final trip = data is Map<String, dynamic> ? data : response;
+      final trip = extractTripFromResponse(response) ?? response;
       final paymentStatus = trip['paymentStatus']
           ?.toString()
           .trim()

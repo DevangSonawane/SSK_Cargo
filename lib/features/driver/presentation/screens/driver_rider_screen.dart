@@ -125,14 +125,34 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
               ),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               children: [
-                if (currentTrip == null) ...[
+                _SectionHeader(
+                  title: 'Active delivery',
+                  subtitle: 'Your live trip appears here first',
+                  actionLabel: 'Refresh',
+                  onActionTap: _refreshDashboard,
+                ),
+                const SizedBox(height: 12),
+                if (currentTrip == null)
                   const _EmptyCard(
                     icon: Icons.route_rounded,
                     title: 'No active delivery',
                     subtitle: 'Accepted deliveries will appear here live.',
+                  )
+                else
+                  PackageTrackingCard(
+                    shipment: currentTrip,
+                    onTap: () {
+                      final bookingId = currentTrip.bookingId?.trim() ?? '';
+                      final tripId = bookingId.isNotEmpty
+                          ? bookingId
+                          : currentTrip.trackingId.trim();
+                      if (tripId.isEmpty) {
+                        return;
+                      }
+                      context.push('/driver/delivery-details/$tripId');
+                    },
                   ),
-                  const SizedBox(height: 18),
-                ],
+                const SizedBox(height: 18),
                 _SectionHeader(
                   title: 'Latest trip activity',
                   subtitle: 'Pending deliveries and settlements',
