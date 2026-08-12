@@ -36,6 +36,15 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     context.push('/broker/request', extra: request);
   }
 
+  Future<void> _refreshTrackingData() async {
+    ref.invalidate(brokerDriversApiProvider((status: null, page: 1, limit: 100)));
+    await Future.wait([
+      ref.refresh(brokerDriverRequestsProvider(_query).future),
+      ref.refresh(brokerVehiclesProvider.future),
+      ref.refresh(clientNotificationsProvider.future),
+    ]);
+  }
+
   void _maybeShowNegotiationDialog({
     required List<BrokerDriverRequest> timedOutRequests,
     required List<ClientNotification> negotiationNotifications,
@@ -212,188 +221,117 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
       negotiationNotifications: negotiationNotifications,
     );
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      children: [
-        if (timedOutRequests.isNotEmpty) ...[
-          Text(
-            'Remaining negotiation',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (var index = 0; index < timedOutRequests.length; index++) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFFECF9E)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          timedOutRequests[index].bookingNumber.isEmpty
-                              ? timedOutRequests[index].bookingId
-                              : timedOutRequests[index].bookingNumber,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
-                              ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Color(0xFFB54708),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF7C2D12),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () =>
-                          _openNegotiationRequest(timedOutRequests[index]),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
-                      ),
-                      child: const Text('Negotiate'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (index != timedOutRequests.length - 1)
-              const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 18),
-        ],
-        if (timedOutRequests.isEmpty &&
-            negotiationNotifications.isNotEmpty) ...[
-          Text(
-            'Negotiation ready',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (
-            var index = 0;
-            index < negotiationNotifications.length;
-            index++
-          ) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFB7D7F0)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    negotiationNotifications[index].title.isEmpty
-                        ? 'Timed-out negotiation'
-                        : negotiationNotifications[index].title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    negotiationNotifications[index].message.isEmpty
-                        ? 'Open to continue negotiation.'
-                        : negotiationNotifications[index].message,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF406B8F),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => _openNegotiationRequest(
-                        brokerDriverRequestFromNotificationPayload(
-                          negotiationNotifications[index].raw,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
-                      ),
-                      child: const Text('Negotiate'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (index != negotiationNotifications.length - 1)
-              const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 18),
-        ],
-        Row(
-          children: [
+    return RefreshIndicator(
+      color: const Color(0xFF1F88C9),
+      onRefresh: _refreshTrackingData,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        children: [
+          if (timedOutRequests.isNotEmpty) ...[
             Text(
-              'Driver tracking',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              'Remaining negotiation',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: const Color(0xFF101828),
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const Spacer(),
-            _HeaderActionButton(
-              badgeCount: pendingDriverRequests,
-              icon: Icons.assignment_rounded,
-              onTap: () => context.push('/broker/driver-requests'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        driversAsync.when(
-          data: (drivers) {
-            final mergedDrivers = _brokerDriverRoster(
-              drivers,
-              trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
-            );
-
-            if (mergedDrivers.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(18),
+            const SizedBox(height: 10),
+            for (var index = 0; index < timedOutRequests.length; index++) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  color: const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFECF9E)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            timedOutRequests[index].bookingNumber.isEmpty
+                                ? timedOutRequests[index].bookingId
+                                : timedOutRequests[index].bookingNumber,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF101828),
+                                ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Color(0xFFB54708),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF7C2D12),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF101828),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () =>
+                            _openNegotiationRequest(timedOutRequests[index]),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                        ),
+                        child: const Text('Negotiate'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (index != timedOutRequests.length - 1)
+                const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 18),
+          ],
+          if (timedOutRequests.isEmpty &&
+              negotiationNotifications.isNotEmpty) ...[
+            Text(
+              'Negotiation ready',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (
+              var index = 0;
+              index < negotiationNotifications.length;
+              index++
+            ) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFB7D7F0)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'No drivers yet',
+                      negotiationNotifications[index].title.isEmpty
+                          ? 'Timed-out negotiation'
+                          : negotiationNotifications[index].title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF101828),
@@ -401,60 +339,163 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Create a driver from the + button to start tracking.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
+                      negotiationNotifications[index].message.isEmpty
+                          ? 'Open to continue negotiation.'
+                          : negotiationNotifications[index].message,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF406B8F),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => _openNegotiationRequest(
+                          brokerDriverRequestFromNotificationPayload(
+                            negotiationNotifications[index].raw,
+                          ),
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                        ),
+                        child: const Text('Negotiate'),
                       ),
                     ),
                   ],
                 ),
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var index = 0; index < mergedDrivers.length; index++) ...[
-                  DriverListTile(
-                    driver: mergedDrivers[index],
-                    onTap: () => context.push(
-                      '/broker/drivers/${mergedDrivers[index].id}',
-                      extra: mergedDrivers[index],
-                    ),
-                    onEdit: () =>
-                        _showDriverDetailsSheet(context, mergedDrivers[index]),
-                    onRemove: () => _confirmDeleteDriver(
-                      context,
-                      ref,
-                      mergedDrivers[index],
+              ),
+              if (index != negotiationNotifications.length - 1)
+                const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 18),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Driver tracking',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  _HeaderActionButton(
+                    badgeCount: pendingDriverRequests,
+                    icon: Icons.assignment_rounded,
+                    onTap: () => context.push('/broker/driver-requests'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => context.go('/broker/drivers/add'),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F88C9),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
-                  if (index != mergedDrivers.length - 1)
-                    const SizedBox(height: 10),
                 ],
-              ],
-            );
-          },
-          loading: () => const Padding(
-            padding: EdgeInsets.only(top: 36),
-            child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
           ),
-          error: (error, stackTrace) => Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+          const SizedBox(height: 14),
+          driversAsync.when(
+            data: (drivers) {
+              final mergedDrivers = _brokerDriverRoster(
+                drivers,
+                trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
+              );
+
+              if (mergedDrivers.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No drivers yet',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF101828),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Create a driver from the + button to start tracking.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF667085),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var index = 0; index < mergedDrivers.length; index++) ...[
+                    DriverListTile(
+                      driver: mergedDrivers[index],
+                      onTap: () => context.push(
+                        '/broker/drivers/${mergedDrivers[index].id}',
+                        extra: mergedDrivers[index],
+                      ),
+                      onEdit: () => context.push(
+                        '/broker/drivers/${mergedDrivers[index].id}',
+                        extra: mergedDrivers[index],
+                      ),
+                      onRemove: () => _confirmDeleteDriver(
+                        context,
+                        ref,
+                        mergedDrivers[index],
+                      ),
+                    ),
+                    if (index != mergedDrivers.length - 1)
+                      const SizedBox(height: 10),
+                  ],
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.only(top: 36),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            child: Text(
-              error.toString().replaceFirst('Exception: ', ''),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFB42318)),
+            error: (error, stackTrace) => Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE8EDF2)),
+              ),
+              child: Text(
+                error.toString().replaceFirst('Exception: ', ''),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFB42318)),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -589,290 +630,6 @@ Future<void> _confirmDeleteDriver(
       ),
     );
   }
-}
-
-Future<void> _showDriverDetailsSheet(
-  BuildContext context,
-  BrokerDriver driver,
-) async {
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) {
-      return _DriverDetailsSheet(
-        driver: driver,
-        onEdit: () {
-          Navigator.of(sheetContext).pop();
-          context.push('/broker/drivers/add', extra: driver);
-        },
-      );
-    },
-  );
-}
-
-class _DriverDetailsSheet extends StatelessWidget {
-  const _DriverDetailsSheet({required this.driver, required this.onEdit});
-
-  final BrokerDriver driver;
-  final VoidCallback onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(left: 12, right: 12, bottom: bottomInset + 12),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Driver Details',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF101828),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: driverAvatarColor(driver.status),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _driverInitials(driver.name),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: driverAvatarTextColor(driver.status),
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            driver.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF101828),
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            driver.phone.isEmpty
-                                ? 'No phone number'
-                                : driver.phone,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF667085)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: driverStatusBackground(driver.status),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        driverStatusLabel(driver.status),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: driverStatusColor(driver.status),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final tileWidth = constraints.maxWidth >= 640
-                        ? (constraints.maxWidth - 12) / 2
-                        : constraints.maxWidth;
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'License No.',
-                            value: driver.licenseNo.isEmpty
-                                ? 'Not available'
-                                : driver.licenseNo,
-                          ),
-                        ),
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'Aadhaar',
-                            value: _maskAadhaar(driver.aadhaar),
-                          ),
-                        ),
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'License Expiry',
-                            value: driver.licenseExpiry.isEmpty
-                                ? 'Not available'
-                                : driver.licenseExpiry,
-                          ),
-                        ),
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'Assigned Truck',
-                            value: driver.assignedVehicle.isEmpty
-                                ? 'Not assigned'
-                                : driver.assignedVehicle,
-                          ),
-                        ),
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'Location',
-                            value: driver.currentLocation.isEmpty
-                                ? 'Awaiting live location'
-                                : driver.currentLocation,
-                          ),
-                        ),
-                        SizedBox(
-                          width: tileWidth,
-                          child: _DriverDetailTile(
-                            label: 'Status',
-                            value: driver.tripStatus.isNotEmpty
-                                ? driver.tripStatus
-                                : driverStatusLabel(driver.status),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: onEdit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text(
-                      'Edit',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DriverDetailTile extends StatelessWidget {
-  const _DriverDetailTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF1F2937),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _driverInitials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) {
-    return parts.first.characters.first.toUpperCase();
-  }
-  return '${parts.first.characters.first}${parts[1].characters.first}'
-      .toUpperCase();
-}
-
-String _maskAadhaar(String value) {
-  final digits = value.replaceAll(RegExp(r'\D'), '');
-  if (digits.isEmpty) return 'Not available';
-  if (digits.length < 4) return digits;
-  final last4 = digits.substring(digits.length - 4);
-  return 'XXXX-XXXX-$last4';
 }
 
 class _HeaderActionButton extends StatelessWidget {

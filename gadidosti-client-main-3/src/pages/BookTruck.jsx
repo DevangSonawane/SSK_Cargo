@@ -1101,7 +1101,7 @@ export default function BookTruck() {
                       <span className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-card">
                         <Zap className="w-4 h-4 text-primary" />
                       </span>
-                      <p className="text-sm text-neutral-600">Choose how to pay in the next step — UPI, cards, netbanking, wallet, or pay later.</p>
+                      <p className="text-sm text-neutral-600">Once a driver or broker confirms your booking, you'll choose to pay now or pay later.</p>
                     </div>
                   </div>
                 </div>

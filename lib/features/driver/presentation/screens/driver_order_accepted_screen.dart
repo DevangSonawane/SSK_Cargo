@@ -33,6 +33,7 @@ class _DriverOrderAcceptedScreenState
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _handoffTimer;
   String _latestStatus = '';
+  String _latestPendingConfirmationBy = '';
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -40,7 +41,23 @@ class _DriverOrderAcceptedScreenState
   bool get _accepted => _isAcceptedStatus(_latestStatus);
 
   bool get _clientDecisionReady =>
-      _isAcceptedStatus(_latestStatus) || _isRejectedStatus(_latestStatus);
+      _isAcceptedStatus(_latestStatus) ||
+      _isRejectedStatus(_latestStatus) ||
+      (_latestStatus == 'awaiting_confirmation' &&
+          _currentPendingConfirmationBy == 'client');
+
+  bool get _waitingOnClient =>
+      _latestStatus == 'awaiting_confirmation' &&
+      _currentPendingConfirmationBy == 'respondent';
+
+  bool get _waitingOnDriver =>
+      _latestStatus == 'awaiting_confirmation' &&
+      _currentPendingConfirmationBy == 'client';
+
+  String get _currentPendingConfirmationBy =>
+      _latestPendingConfirmationBy.isNotEmpty
+      ? _latestPendingConfirmationBy
+      : _request.pendingConfirmationBy.trim().toLowerCase();
 
   @override
   void initState() {
@@ -48,6 +65,9 @@ class _DriverOrderAcceptedScreenState
     final request = DriverRequestItem.fromExtra(widget.initialRequest);
     _counterAmount = request.amount > 0 ? request.amount : 1000;
     _latestStatus = request.status.trim().toLowerCase();
+    _latestPendingConfirmationBy = request.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_startLiveUpdates());
@@ -188,6 +208,10 @@ class _DriverOrderAcceptedScreenState
       'clientStatus',
       'client_status',
     ]).trim().toLowerCase();
+    final pendingConfirmationBy = _readPayloadString(payload, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).trim().toLowerCase();
     final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
 
     developer.log(
@@ -198,6 +222,9 @@ class _DriverOrderAcceptedScreenState
     if (mounted && status.isNotEmpty) {
       setState(() {
         _latestStatus = status;
+        if (pendingConfirmationBy.isNotEmpty) {
+          _latestPendingConfirmationBy = pendingConfirmationBy;
+        }
       });
     }
 
@@ -267,6 +294,18 @@ class _DriverOrderAcceptedScreenState
       if (mounted && request.status.trim().isNotEmpty) {
         setState(() {
           _latestStatus = request.status.trim().toLowerCase();
+          if (request.pendingConfirmationBy.trim().isNotEmpty) {
+            _latestPendingConfirmationBy = request.pendingConfirmationBy
+                .trim()
+                .toLowerCase();
+          }
+        });
+      }
+
+      final responseStatus = request.status.trim().toLowerCase();
+      if (responseStatus == 'awaiting_confirmation' && mounted) {
+        setState(() {
+          _counterLocked = true;
         });
       }
 
@@ -276,7 +315,10 @@ class _DriverOrderAcceptedScreenState
         });
       }
 
-      if (resolveTripOnSuccess) {
+      if (resolveTripOnSuccess &&
+          (responseStatus == 'accepted' ||
+              responseStatus == 'confirmed' ||
+              responseStatus == 'assigned')) {
         developer.log(
           'Negotiation accepted locally. Going straight to the active trip.',
           name: 'driver.orderAccepted',
@@ -290,6 +332,15 @@ class _DriverOrderAcceptedScreenState
       }
 
       if (!mounted) return;
+
+      if (responseStatus == 'awaiting_confirmation') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accepted - waiting for the other side to confirm.'),
+          ),
+        );
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request updated successfully.')),
@@ -405,7 +456,12 @@ class _DriverOrderAcceptedScreenState
         _brokerHandoffVisible ||
         request.driverTimedOut ||
         _secondsUntilBrokerHandoff <= 0;
-    final actionLocked = _submitting || _counterLocked || handoffExpired;
+    final actionLocked =
+        _submitting ||
+        _counterLocked ||
+        handoffExpired ||
+        _waitingOnClient ||
+        _waitingOnDriver;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -672,7 +728,71 @@ class _DriverOrderAcceptedScreenState
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_clientDecisionReady) ...[
+                    if (_waitingOnClient) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Color(0xFF1F88C9),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Accepted - waiting for the client to confirm.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_waitingOnDriver) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Color(0xFF1F88C9),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Accepted - waiting for the other side to confirm.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_clientDecisionReady) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),

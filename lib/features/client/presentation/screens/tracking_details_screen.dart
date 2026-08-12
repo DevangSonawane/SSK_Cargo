@@ -2553,14 +2553,28 @@ class _BookingNegotiationSheetState
     if (request == null || _busy || !_isClientActionable(request)) return;
     setState(() => _busy = true);
     try {
-      await ref
+      final response = await ref
           .read(apiClientProvider)
           .acceptDriverRequest(accessToken: widget.accessToken, id: request.id);
+      final responseData = _chatAsMap(response['data']);
+      final updatedRequest =
+          _chatAsMap(responseData?['request']) ?? responseData;
+      final booking = _chatAsMap(responseData?['booking']);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Driver request accepted.')));
-      if (mounted) Navigator.of(context).maybePop();
+      if (booking != null ||
+          _chatReadString(updatedRequest, const ['status']) == 'accepted') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Driver request accepted.')),
+        );
+        if (mounted) Navigator.of(context).maybePop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accepted - waiting for the driver to confirm.'),
+          ),
+        );
+        await _loadNegotiation();
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -2667,17 +2681,31 @@ class _BookingNegotiationSheetState
     if (_busy || !_isOfferActionable(offer)) return;
     setState(() => _busy = true);
     try {
-      await ref
+      final response = await ref
           .read(apiClientProvider)
           .clientAcceptCounterOffer(
             accessToken: widget.accessToken,
             id: offer.id,
           );
+      final responseData = _chatAsMap(response['data']);
+      final booking = _chatAsMap(responseData?['booking']);
+      final updatedRequest =
+          _chatAsMap(responseData?['request']) ?? responseData;
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Offer accepted.')));
-      if (mounted) Navigator.of(context).maybePop();
+      if (booking != null ||
+          _chatReadString(updatedRequest, const ['status']) == 'accepted') {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Offer accepted.')));
+        if (mounted) Navigator.of(context).maybePop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accepted - waiting for the broker to confirm.'),
+          ),
+        );
+        await _loadNegotiation();
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -2911,16 +2939,35 @@ class _BookingNegotiationSheetState
 
 extension on _BookingNegotiationSheetState {
   bool _isClientActionable(ClientBookingOffer request) {
-    return request.status.trim().toLowerCase() == 'countered';
+    final status = request.status.trim().toLowerCase();
+    final pendingConfirmationBy = request.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+    return status == 'countered' ||
+        (status == 'awaiting_confirmation' &&
+            pendingConfirmationBy == 'broker');
   }
 
   bool _isOfferActionable(ClientBookingOffer offer) {
     final status = offer.status.trim().toLowerCase();
-    return status != 'declined' && status != 'accepted';
+    return status != 'declined' &&
+        status != 'accepted' &&
+        status != 'confirmed';
   }
 
   String _driverRequestStatusText(ClientBookingOffer request) {
     final status = request.status.trim().toLowerCase();
+    final pendingConfirmationBy = request.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'client') {
+      return 'Waiting for driver confirmation';
+    }
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'broker') {
+      return 'Your turn';
+    }
     if (status == 'countered') {
       return 'Your turn';
     }
@@ -2936,8 +2983,26 @@ extension on _BookingNegotiationSheetState {
   List<Widget> _clientActionButtonsForDriverRequest(
     ClientBookingOffer request,
   ) {
+    final status = request.status.trim().toLowerCase();
+    final pendingConfirmationBy = request.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
     if (!_isClientActionable(request)) {
       return const [];
+    }
+
+    if (status == 'awaiting_confirmation' &&
+        pendingConfirmationBy == 'broker') {
+      return [
+        FilledButton(
+          onPressed: _busy ? null : _acceptDriverRequest,
+          child: const Text('Confirm'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : _rejectDriverRequest,
+          child: const Text('Decline'),
+        ),
+      ];
     }
 
     return [

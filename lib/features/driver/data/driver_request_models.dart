@@ -14,6 +14,7 @@ class DriverRequestItem {
     required this.bookingId,
     required this.bookingNumber,
     required this.driverId,
+    required this.pendingConfirmationBy,
     required this.clientName,
     required this.clientPhone,
     required this.driverName,
@@ -40,6 +41,7 @@ class DriverRequestItem {
   final String bookingId;
   final String bookingNumber;
   final String driverId;
+  final String pendingConfirmationBy;
   final String clientName;
   final String clientPhone;
   final String driverName;
@@ -67,6 +69,9 @@ class DriverRequestItem {
           status.toLowerCase() == 'requested' ||
           status.toLowerCase() == 'pending');
 
+  bool get isAwaitingConfirmation =>
+      status.trim().toLowerCase() == 'awaiting_confirmation';
+
   String get displayRef =>
       bookingNumber.isNotEmpty ? bookingNumber : (id.isNotEmpty ? id : '-');
 
@@ -80,6 +85,10 @@ class DriverRequestItem {
     final driverTimedOut =
         json['driverTimedOut'] == true || json['driver_timed_out'] == true;
     final status = _readString(json, const ['status']).toLowerCase();
+    final pendingConfirmationBy = _readString(json, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).toLowerCase();
 
     return DriverRequestItem(
       id: _readString(json, const [
@@ -93,6 +102,7 @@ class DriverRequestItem {
         'bookingNumber',
         'booking_number',
       ]),
+      pendingConfirmationBy: pendingConfirmationBy,
       driverId: _firstNonEmpty([
         _readString(json, const ['driverId', 'driver_id']),
         _readString(driver, const ['id', 'driverId', 'driver_id']),
@@ -177,6 +187,7 @@ class DriverRequestItem {
       bookingId: '',
       bookingNumber: '',
       driverId: '',
+      pendingConfirmationBy: '',
       clientName: '',
       clientPhone: '',
       driverName: '',

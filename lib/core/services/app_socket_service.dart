@@ -32,6 +32,8 @@ class AppSocketService {
       StreamController<TruckLocationEvent>.broadcast();
   final StreamController<Map<String, dynamic>> _driverRequestController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _jobRequestController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<Map<String, dynamic>> _bookingPaymentController =
       StreamController<Map<String, dynamic>>.broadcast();
 
@@ -40,6 +42,9 @@ class AppSocketService {
 
   Stream<Map<String, dynamic>> get driverRequestStream =>
       _driverRequestController.stream;
+
+  Stream<Map<String, dynamic>> get jobRequestStream =>
+      _jobRequestController.stream;
 
   Stream<Map<String, dynamic>> get bookingPaymentStream =>
       _bookingPaymentController.stream;
@@ -113,6 +118,16 @@ class AppSocketService {
       final event = _parseDriverRequestPayload(payload);
       if (event != null && !_driverRequestController.isClosed) {
         _driverRequestController.add(event);
+      }
+    });
+    socket.on('job-request-updated', (payload) {
+      developer.log(
+        'Shared websocket job-request-updated payload: $payload',
+        name: 'SSK.Socket',
+      );
+      final event = _parseDriverRequestPayload(payload);
+      if (event != null && !_jobRequestController.isClosed) {
+        _jobRequestController.add(event);
       }
     });
     socket.on('booking-payment-updated', (payload) {
@@ -201,6 +216,7 @@ class AppSocketService {
     reset();
     _truckLocationController.close();
     _driverRequestController.close();
+    _jobRequestController.close();
     _bookingPaymentController.close();
   }
 

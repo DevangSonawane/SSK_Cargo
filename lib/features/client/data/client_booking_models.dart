@@ -278,6 +278,7 @@ class ClientBookingOffer {
   const ClientBookingOffer({
     required this.id,
     required this.status,
+    required this.pendingConfirmationBy,
     required this.amountText,
     required this.brokerName,
     required this.note,
@@ -305,6 +306,10 @@ class ClientBookingOffer {
       status: _readString(json, const ['status', 'job_status']).isEmpty
           ? 'pending'
           : _readString(json, const ['status', 'job_status']),
+      pendingConfirmationBy: _readString(json, const [
+        'pendingConfirmationBy',
+        'pending_confirmation_by',
+      ]),
       amountText: _formatAmount(amountValue),
       brokerName:
           _readNestedName(json, const [
@@ -346,6 +351,7 @@ class ClientBookingOffer {
 
   final String id;
   final String status;
+  final String pendingConfirmationBy;
   final String amountText;
   final String brokerName;
   final String note;
@@ -355,6 +361,8 @@ class ClientBookingOffer {
 
   bool get isCountered => _normalizeStatus(status) == 'countered';
   bool get isPending => _normalizeStatus(status) == 'pending';
+  bool get isAwaitingConfirmation =>
+      _normalizeStatus(status) == 'awaiting_confirmation';
   String get displayStatusLabel => _titleCase(status);
 }
 

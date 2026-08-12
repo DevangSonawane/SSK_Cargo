@@ -180,10 +180,10 @@ export default function ChooseBroker({ bookingId, bookingNumber, askingPrice, pi
     }
   };
 
-  const handlePaySuccess = async () => {
+  const handlePaySuccess = async (paymentMode) => {
     setShowPaymentSheet(false);
     try {
-      const res = await api.patch(`/api/bookings/${bookingId}/pay`, {}, token);
+      const res = await api.patch(`/api/bookings/${bookingId}/pay`, { payment_mode: paymentMode }, token);
       if (!res?.success) throw new Error(res?.message || "Failed to record payment");
     } catch (err) {
       toast.error(err?.message || "Failed to record payment");
@@ -268,12 +268,20 @@ export default function ChooseBroker({ bookingId, bookingNumber, askingPrice, pi
             <p className="text-sm text-neutral-400 mb-6">
               Final price: <span className="font-semibold text-primary">₹{Number(selectedOffer?.amount || askingPrice || 0).toLocaleString("en-IN")}</span>
             </p>
-            <button
-              onClick={() => setShowPaymentSheet(true)}
-              className="w-full py-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
-            >
-              Continue to Payment
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPaymentSheet(true)}
+                className="flex-1 py-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
+              >
+                Pay Now
+              </button>
+              <button
+                onClick={handlePayLater}
+                className="flex-1 py-3 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors"
+              >
+                Pay Later
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

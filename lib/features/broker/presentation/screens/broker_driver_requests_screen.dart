@@ -66,7 +66,10 @@ class _BrokerDriverRequestsScreenState
       request: request,
       successMessage: 'Request accepted.',
       action: (api, token) {
-        return api.acceptDriverRequest(accessToken: token, id: request.id);
+        return api.acceptDriverRequestAsDriver(
+          accessToken: token,
+          id: request.id,
+        );
       },
     );
   }
@@ -248,9 +251,19 @@ class _BrokerRequestTile extends StatelessWidget {
         ? request.bookingNumber
         : request.bookingId;
     final status = request.status.trim().toLowerCase();
+    final pendingConfirmationBy = request.pendingConfirmationBy
+        .trim()
+        .toLowerCase();
+    final awaitingConfirmation = status == 'awaiting_confirmation';
+    final waitingOnClient =
+        awaitingConfirmation && pendingConfirmationBy == 'broker';
+    final yourTurn = awaitingConfirmation && pendingConfirmationBy == 'client';
     final canAct =
         !busy &&
-        (status.isEmpty || status == 'requested' || status == 'pending');
+        (status.isEmpty ||
+            status == 'requested' ||
+            status == 'pending' ||
+            awaitingConfirmation);
 
     return Container(
       width: double.infinity,
@@ -388,39 +401,69 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  label: 'Accept',
-                  icon: Icons.check_circle_rounded,
-                  color: const Color(0xFF2FA56E),
-                  backgroundColor: const Color(0xFFEAF8EF),
-                  onPressed: canAct ? onAccept : null,
+          if (waitingOnClient) ...[
+            const _WaitingBadge(
+              label: 'Accepted - waiting for the client to confirm',
+            ),
+          ] else if (yourTurn) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Confirm',
+                    icon: Icons.check_circle_rounded,
+                    color: const Color(0xFF2FA56E),
+                    backgroundColor: const Color(0xFFEAF8EF),
+                    onPressed: canAct ? onAccept : null,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActionButton(
-                  label: 'Counter',
-                  icon: Icons.payments_rounded,
-                  color: const Color(0xFF1F88C9),
-                  backgroundColor: const Color(0xFFEFF6FF),
-                  onPressed: canAct ? onCounter : null,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Decline',
+                    icon: Icons.cancel_rounded,
+                    color: const Color(0xFFE23A4B),
+                    backgroundColor: const Color(0xFFFDECEC),
+                    onPressed: canAct ? onDecline : null,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActionButton(
-                  label: 'Decline',
-                  icon: Icons.cancel_rounded,
-                  color: const Color(0xFFE23A4B),
-                  backgroundColor: const Color(0xFFFDECEC),
-                  onPressed: canAct ? onDecline : null,
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Accept',
+                    icon: Icons.check_circle_rounded,
+                    color: const Color(0xFF2FA56E),
+                    backgroundColor: const Color(0xFFEAF8EF),
+                    onPressed: canAct ? onAccept : null,
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Counter',
+                    icon: Icons.payments_rounded,
+                    color: const Color(0xFF1F88C9),
+                    backgroundColor: const Color(0xFFEFF6FF),
+                    onPressed: canAct ? onCounter : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Decline',
+                    icon: Icons.cancel_rounded,
+                    color: const Color(0xFFE23A4B),
+                    backgroundColor: const Color(0xFFFDECEC),
+                    onPressed: canAct ? onDecline : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (request.driverTimedOut) ...[
             const SizedBox(height: 10),
             Text(
@@ -432,6 +475,32 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _WaitingBadge extends StatelessWidget {
+  const _WaitingBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC7DAFF)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFF1F88C9),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

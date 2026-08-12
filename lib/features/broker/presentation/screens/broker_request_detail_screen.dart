@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -22,12 +25,18 @@ class _BrokerRequestDetailScreenState
     extends ConsumerState<BrokerRequestDetailScreen> {
   bool _submitting = false;
   double _counterAmount = 0;
+  bool _jobRequestAwaitingConfirmation = false;
+  BookingRequest? _liveBookingRequest;
+  BrokerDriverRequest? _liveDriverRequest;
+  StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   BookingRequest get _request => widget.initialRequest is BookingRequest
-      ? widget.initialRequest as BookingRequest
+      ? _liveBookingRequest ?? widget.initialRequest as BookingRequest
       : const BookingRequest(
           id: '',
           status: 'pending',
+          pendingConfirmationBy: '',
           clientName: 'Customer',
           clientInitials: 'C',
           productName: 'Booking request',
@@ -46,9 +55,10 @@ class _BrokerRequestDetailScreenState
         );
 
   BrokerDriverRequest? get _driverRequest =>
-      widget.initialRequest is BrokerDriverRequest
-      ? widget.initialRequest as BrokerDriverRequest
-      : null;
+      _liveDriverRequest ??
+      (widget.initialRequest is BrokerDriverRequest
+          ? widget.initialRequest as BrokerDriverRequest
+          : null);
 
   bool get _isDriverNegotiation => _driverRequest != null;
 
@@ -119,20 +129,55 @@ class _BrokerRequestDetailScreenState
   }.contains(_normalizedStatus);
 
   bool get _isWaitingOnClient =>
-      _isDriverNegotiation && _normalizedStatus == 'countered';
+      _isDriverNegotiation &&
+      (_normalizedStatus == 'countered' ||
+          (_normalizedStatus == 'awaiting_confirmation' &&
+              _driverRequest!.pendingConfirmationBy == 'client'));
 
-  bool get _isPendingJobRequest => !_isDriverNegotiation && !_isTerminalStatus;
+  bool get _isWaitingOnBroker =>
+      _isDriverNegotiation &&
+      _normalizedStatus == 'awaiting_confirmation' &&
+      _driverRequest!.pendingConfirmationBy == 'broker';
+
+  bool get _isPendingJobRequest =>
+      !_isDriverNegotiation &&
+      !_isTerminalStatus &&
+      !_jobRequestAwaitingConfirmation;
+
+  bool get _isWaitingForClientConfirmation =>
+      !_isDriverNegotiation && _jobRequestAwaitingConfirmation;
 
   bool get _canTakeAction =>
-      !_submitting && !_isTerminalStatus && !_isWaitingOnClient;
+      !_submitting &&
+      !_isTerminalStatus &&
+      !_isWaitingOnClient &&
+      !_isWaitingOnBroker &&
+      !_jobRequestAwaitingConfirmation;
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialRequest is BookingRequest) {
+      _liveBookingRequest = widget.initialRequest as BookingRequest;
+    } else if (widget.initialRequest is BrokerDriverRequest) {
+      _liveDriverRequest = widget.initialRequest as BrokerDriverRequest;
+    }
     _counterAmount = _readAmount(_counterSeedText);
     if (_counterAmount <= 0) {
       _counterAmount = 1000;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_startLiveUpdates());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _jobRequestSubscription?.cancel();
+    _driverRequestSubscription?.cancel();
+    super.dispose();
   }
 
   double _readAmount(String value) {
@@ -226,6 +271,158 @@ class _BrokerRequestDetailScreenState
       }
     }
     return trucks.isNotEmpty ? trucks.first.id : null;
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    await _jobRequestSubscription?.cancel();
+    _jobRequestSubscription = socketService.jobRequestStream.listen((payload) {
+      final payloadMap = _detailAsMap(payload);
+      if (payloadMap == null || !mounted || _driverRequest != null) {
+        return;
+      }
+      if (!_matchesBookingRequestPayload(payloadMap)) {
+        return;
+      }
+      setState(() {
+        _liveBookingRequest = _updatedBookingRequest(payloadMap);
+        _jobRequestAwaitingConfirmation =
+            _request.status.trim().toLowerCase() == 'awaiting_confirmation';
+      });
+    });
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final payloadMap = _detailAsMap(payload);
+      if (payloadMap == null || !mounted || _driverRequest == null) {
+        return;
+      }
+      if (!_matchesDriverRequestPayload(payloadMap)) {
+        return;
+      }
+      setState(() {
+        _liveDriverRequest = _updatedDriverRequest(payloadMap);
+      });
+    });
+  }
+
+  bool _matchesBookingRequestPayload(Map<String, dynamic> payload) {
+    final requestId = _readString(payload, const [
+      'id',
+      'request_id',
+      'job_request_id',
+    ]);
+    return requestId.isNotEmpty && requestId == _request.id;
+  }
+
+  bool _matchesDriverRequestPayload(Map<String, dynamic> payload) {
+    final requestId = _readString(payload, const [
+      'id',
+      'request_id',
+      'driver_request_id',
+    ]);
+    final bookingId = _readString(payload, const ['bookingId', 'booking_id']);
+    return requestId.isNotEmpty &&
+            _driverRequest != null &&
+            requestId == _driverRequest!.id ||
+        bookingId.isNotEmpty &&
+            _driverRequest != null &&
+            bookingId == _driverRequest!.bookingId;
+  }
+
+  String _readString(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  BookingRequest _updatedBookingRequest(Map<String, dynamic> payload) {
+    final current = _request;
+    final status = _readString(payload, const [
+      'status',
+      'requestStatus',
+    ]).toLowerCase();
+    final pendingConfirmationBy = _readString(payload, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).toLowerCase();
+    return BookingRequest(
+      id: current.id,
+      status: status.isEmpty ? current.status : status,
+      pendingConfirmationBy: pendingConfirmationBy.isEmpty
+          ? current.pendingConfirmationBy
+          : pendingConfirmationBy,
+      clientName: current.clientName,
+      clientInitials: current.clientInitials,
+      productName: current.productName,
+      from: current.from,
+      to: current.to,
+      weight: current.weight,
+      vehicleType: current.vehicleType,
+      value: current.value,
+      distance: current.distance,
+      etaText: current.etaText,
+      requestedAt: current.requestedAt,
+      driverId: current.driverId,
+      truckId: current.truckId,
+      assignedDriverName: current.assignedDriverName,
+      assignedTruckName: current.assignedTruckName,
+      expiresInMinutes: current.expiresInMinutes,
+    );
+  }
+
+  BrokerDriverRequest _updatedDriverRequest(Map<String, dynamic> payload) {
+    final current = _driverRequest!;
+    final status = _readString(payload, const [
+      'status',
+      'requestStatus',
+    ]).toLowerCase();
+    final pendingConfirmationBy = _readString(payload, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).toLowerCase();
+    return BrokerDriverRequest(
+      id: current.id,
+      bookingId: current.bookingId,
+      bookingNumber: current.bookingNumber,
+      pendingConfirmationBy: pendingConfirmationBy.isEmpty
+          ? current.pendingConfirmationBy
+          : pendingConfirmationBy,
+      clientName: current.clientName,
+      clientPhone: current.clientPhone,
+      driverName: current.driverName,
+      driverPhone: current.driverPhone,
+      brokerName: current.brokerName,
+      brokerPhone: current.brokerPhone,
+      truckReg: current.truckReg,
+      truckType: current.truckType,
+      truckCategory: current.truckCategory,
+      pickup: current.pickup,
+      drop: current.drop,
+      weight: current.weight,
+      amount: current.amount,
+      status: status.isEmpty ? current.status : status,
+      driverTimedOut: current.driverTimedOut,
+      offerCount: current.offerCount,
+      requestedAt: current.requestedAt,
+      updatedAt: current.updatedAt,
+      raw: current.raw,
+    );
   }
 
   Future<void> _reject() async {
@@ -355,12 +552,35 @@ class _BrokerRequestDetailScreenState
 
     setState(() => _submitting = true);
     try {
-      await ref
+      final response = await ref
           .read(apiClientProvider)
           .acceptJobRequest(
             accessToken: session.tokens.accessToken,
             id: _request.id,
           );
+      final responseData = _detailAsMap(response['data']);
+      final booking = _detailAsMap(responseData?['booking']);
+      final requestData = _detailAsMap(responseData?['request']);
+      final status = _detailString(responseData, const ['status']).isNotEmpty
+          ? _detailString(responseData, const ['status']).toLowerCase()
+          : _detailString(requestData, const ['status']).toLowerCase();
+
+      if ((booking == null || booking.isEmpty) &&
+          status == 'awaiting_confirmation') {
+        if (!mounted) return;
+        setState(() {
+          _jobRequestAwaitingConfirmation = true;
+        });
+        ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accepted - waiting for the client to confirm.'),
+            backgroundColor: Color(0xFF1F88C9),
+          ),
+        );
+        return;
+      }
+
       final assignResponse = await ref
           .read(apiClientProvider)
           .assignDriverToJob(
@@ -411,7 +631,7 @@ class _BrokerRequestDetailScreenState
     try {
       await ref
           .read(apiClientProvider)
-          .acceptDriverRequest(
+          .acceptDriverRequestAsDriver(
             accessToken: session.tokens.accessToken,
             id: request.id,
           );
@@ -444,6 +664,7 @@ class _BrokerRequestDetailScreenState
         _normalizedStatus == 'accepted' ||
         _normalizedStatus == 'confirmed' ||
         _normalizedStatus == 'assigned';
+    final isAwaitingConfirmation = _normalizedStatus == 'awaiting_confirmation';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -478,7 +699,9 @@ class _BrokerRequestDetailScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isAccepted
+                  isAwaitingConfirmation
+                      ? 'This request is awaiting confirmation from the other side.'
+                      : isAccepted
                       ? 'This request has been accepted. No assignment card is shown here.'
                       : 'This request has been declined. No further broker actions are available.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -493,9 +716,69 @@ class _BrokerRequestDetailScreenState
     );
   }
 
+  Widget _buildJobAwaitingConfirmationCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Accepted - waiting for the client to confirm',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Your accept has been saved. Countering is locked until the client confirms or declines.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDriverNegotiationCard(BuildContext context) {
     if (_isTerminalStatus) {
       return _buildFinalStateCard(context);
+    }
+
+    if (_isWaitingOnBroker) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Accepted - waiting for the client to confirm',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your accept has been saved. No more countering is available until the client responds.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -892,6 +1175,8 @@ class _BrokerRequestDetailScreenState
             const SizedBox(height: 14),
             if (_isDriverNegotiation)
               _buildDriverNegotiationCard(context)
+            else if (_isWaitingForClientConfirmation)
+              _buildJobAwaitingConfirmationCard(context)
             else if (_isPendingJobRequest)
               driversAsync.when(
                 loading: () => const Padding(
@@ -940,6 +1225,23 @@ class _BrokerRequestDetailScreenState
       ),
     );
   }
+}
+
+Map<String, dynamic>? _detailAsMap(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
+  return null;
+}
+
+String _detailString(Map<String, dynamic>? json, List<String> keys) {
+  if (json == null) return '';
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
 }
 
 class _DetailRequestStatusVisual {

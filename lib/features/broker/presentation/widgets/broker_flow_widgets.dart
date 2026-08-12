@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -169,6 +170,7 @@ class BookingRequest {
   const BookingRequest({
     required this.id,
     required this.status,
+    required this.pendingConfirmationBy,
     required this.clientName,
     required this.clientInitials,
     required this.productName,
@@ -189,6 +191,7 @@ class BookingRequest {
 
   final String id;
   final String status;
+  final String pendingConfirmationBy;
   final String clientName;
   final String clientInitials;
   final String productName;
@@ -212,6 +215,7 @@ class BrokerDriverRequest {
     required this.id,
     required this.bookingId,
     required this.bookingNumber,
+    required this.pendingConfirmationBy,
     required this.clientName,
     required this.clientPhone,
     required this.driverName,
@@ -236,6 +240,7 @@ class BrokerDriverRequest {
   final String id;
   final String bookingId;
   final String bookingNumber;
+  final String pendingConfirmationBy;
   final String clientName;
   final String clientPhone;
   final String driverName;
@@ -298,6 +303,10 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     'bookingNumber',
     'booking_number',
   ]);
+  final pendingConfirmationBy = _readString(payload, const [
+    'pendingConfirmationBy',
+    'pending_confirmation_by',
+  ]).toLowerCase();
   final status = _readString(payload, const ['status']).isEmpty
       ? 'requested'
       : _readString(payload, const ['status']);
@@ -305,6 +314,7 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     id: requestId.isNotEmpty ? requestId : bookingId,
     bookingId: bookingId,
     bookingNumber: bookingNumber,
+    pendingConfirmationBy: pendingConfirmationBy,
     clientName: _firstNonEmpty([
       _readString(payload, const ['clientName', 'client_name']),
       _readString(source, const ['clientName', 'client_name']),
@@ -489,6 +499,24 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'booking_status',
       'bookingStatus',
       'state',
+    ]),
+  ]).toLowerCase();
+  final pendingConfirmationBy = _firstNonEmpty([
+    _readString(json, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]),
+    _readString(source, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]),
+    _readString(request, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]),
+    _readString(booking, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
     ]),
   ]).toLowerCase();
   final createdAt = _readString(json, const [
@@ -831,6 +859,7 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   return BookingRequest(
     id: _readString(json, const ['id', 'request_id', 'job_request_id', 'uuid']),
     status: status.isEmpty ? 'unknown' : status,
+    pendingConfirmationBy: pendingConfirmationBy,
     clientName: clientName,
     clientInitials: _initials(clientName),
     productName: productName,
@@ -866,6 +895,10 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
   final driver = _asMap(json['driver']);
   final broker = _asMap(json['broker']);
   final load = _asMap(json['load']);
+  final pendingConfirmationBy = _readString(json, const [
+    'pendingConfirmationBy',
+    'pending_confirmation_by',
+  ]).toLowerCase();
   return BrokerDriverRequest(
     id: _readString(json, const [
       'id',
@@ -875,6 +908,7 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
     ]),
     bookingId: _readString(json, const ['bookingId', 'booking_id']),
     bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
+    pendingConfirmationBy: pendingConfirmationBy,
     clientName: _firstNonEmpty([
       _readString(json, const ['clientName', 'client_name']),
     ]),
@@ -1605,7 +1639,10 @@ bool isAcceptedBookingRequest(BookingRequest request) {
 bool isActiveBrokerDriverRequest(BrokerDriverRequest request) {
   final status = _normalizeRequestStatus(request.status);
   return request.driverTimedOut &&
-      (status == 'requested' || status == 'pending' || status == 'countered');
+      (status == 'requested' ||
+          status == 'pending' ||
+          status == 'countered' ||
+          status == 'awaiting_confirmation');
 }
 
 String _normalizeRequestStatus(String status) {
@@ -2005,7 +2042,7 @@ class BrokerRequestCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -2369,6 +2406,15 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         textColor: Color(0xFFB45309),
         icon: Icons.payments_rounded,
       );
+    case 'awaiting_confirmation':
+      return const _BookingRequestStatusVisual(
+        label: 'Awaiting confirmation',
+        description: 'Waiting for the other side to confirm.',
+        backgroundColor: Color(0xFFEFF6FF),
+        borderColor: Color(0xFFC7DAFF),
+        textColor: Color(0xFF1F88C9),
+        icon: Icons.hourglass_top_rounded,
+      );
     case 'declined':
     case 'rejected':
     case 'expired':
@@ -2420,19 +2466,19 @@ class VehicleCard extends StatelessWidget {
     final meta = _vehicleCardMeta(vehicle.status);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE1E5EB)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE7EBF1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -2442,83 +2488,116 @@ class VehicleCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: meta.iconBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: meta.iconBackground,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            vehicle.assetPath,
-                            width: 34,
-                            height: 34,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              vehicle.plateNumber,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontSize: 18,
-                                    color: const Color(0xFF1A365D),
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                vehicle.plateNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontSize: 16,
+                                      height: 1.05,
+                                      color: const Color(0xFF101828),
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${vehicle.label} • ${vehicle.assignedDriverName}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    fontSize: 13,
-                                    color: const Color(0xFF667085),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                            const SizedBox(width: 10),
+                            _VehicleStatusBadge(
+                              label: vehicleStatusLabel(vehicle.status),
+                              backgroundColor: meta.badgeBackground,
+                              textColor: meta.badgeText,
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              size: 22,
+                              color: Color(0xFF667085),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          vehicle.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontSize: 12,
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              size: 15,
+                              color: Color(0xFF667085),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                vehicle.assignedDriverName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontSize: 12,
+                                      color: const Color(0xFF667085),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                _VehicleStatusBadge(
-                  label: vehicleStatusLabel(vehicle.status),
-                  backgroundColor: meta.badgeBackground,
-                  textColor: meta.badgeText,
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Container(height: 1, color: const Color(0xFFE8EDF2)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: _VehicleStatBlock(
                     label: 'Capacity',
                     value: vehicle.capacity,
+                    icon: Icons.shopping_bag_outlined,
                   ),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 12),
+                Container(width: 1, height: 28, color: const Color(0xFFE8EDF2)),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _VehicleStatBlock(
-                    label: meta.secondaryLabel,
+                    label: 'Location',
                     value: meta.secondaryValue,
+                    icon: Icons.location_on_outlined,
                     valueColor: meta.secondaryValueColor,
                   ),
                 ),
@@ -2545,11 +2624,11 @@ class _VehicleStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 68,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+      constraints: const BoxConstraints(minWidth: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
@@ -2558,7 +2637,7 @@ class _VehicleStatusBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: textColor,
-          fontSize: 13,
+          fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -2570,36 +2649,47 @@ class _VehicleStatBlock extends StatelessWidget {
   const _VehicleStatBlock({
     required this.label,
     required this.value,
+    required this.icon,
     this.valueColor = const Color(0xFF0B1C30),
   });
 
   final String label;
   final String value;
+  final IconData icon;
   final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFF667085),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: valueColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+        Icon(icon, size: 16, color: const Color(0xFF667085)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.1,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: valueColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -2675,24 +2765,25 @@ class DriverListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final meta = _driverCardMeta(driver);
     final visuals = _driverCardVisuals(driver);
+    final canCall = driver.phone.trim().isNotEmpty;
 
     return InkWell(
       onTap: onTap,
       onLongPress: onRemove,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: visuals.backgroundColor,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: visuals.borderColor),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF1A365D).withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -2701,54 +2792,6 @@ class DriverListTile extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 560;
-
-              final rightColumn = Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _DriverActionIconButton(
-                        icon: Icons.visibility_rounded,
-                        backgroundColor: const Color(0xFFE9EFF8),
-                        iconColor: const Color(0xFF1A365D),
-                        onPressed: onEdit,
-                        tooltip: 'View driver details',
-                      ),
-                      const SizedBox(width: 8),
-                      _DriverActionIconButton(
-                        icon: Icons.delete_rounded,
-                        backgroundColor: const Color(0xFFFDEDED),
-                        iconColor: const Color(0xFFD92D20),
-                        onPressed: onRemove,
-                        tooltip: 'Delete driver',
-                      ),
-                      if (meta.ctaLabel.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: onTap,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: visuals.ctaBackgroundColor,
-                            foregroundColor: visuals.ctaForegroundColor,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 10,
-                            ),
-                            minimumSize: const Size(0, 38),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            meta.ctaLabel,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              );
 
               final leftColumn = Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2759,36 +2802,51 @@ class DriverListTile extends StatelessWidget {
                     textColor: visuals.avatarTextColor,
                     statusColor: visuals.statusDotColor,
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              driver.name,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontSize: 15,
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                driver.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontSize: 15,
+                                      color: const Color(0xFF101828),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             _DriverCardMetaChip(
-                              label: 'ID: ${driver.id.toUpperCase()}',
+                              label: driverStatusLabel(driver.status),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ID: ${driver.id.toUpperCase()}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontSize: 11,
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
                               meta.statusIcon,
-                              size: 18,
+                              size: 16,
                               color: visuals.statusTextColor,
                             ),
                             const SizedBox(width: 6),
@@ -2811,21 +2869,23 @@ class DriverListTile extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(
-                              Icons.location_on_rounded,
+                              Icons.local_shipping_rounded,
                               size: 16,
-                              color: Color(0xFF667085),
+                              color: Color(0xFF1F5BD7),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                driver.currentLocation,
+                                driver.assignedVehicle.isEmpty
+                                    ? 'No vehicle assigned'
+                                    : driver.assignedVehicle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall
+                                style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      fontSize: 11,
-                                      color: const Color(0xFF667085),
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      color: const Color(0xFF344054),
+                                      fontWeight: FontWeight.w700,
                                     ),
                               ),
                             ),
@@ -2834,22 +2894,68 @@ class DriverListTile extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF667085),
+                    size: 28,
+                  ),
+                ],
+              );
+
+              final footer = Row(
+                children: [
+                  Expanded(
+                    child: _DriverFooterButton(
+                      icon: Icons.visibility_rounded,
+                      label: 'View',
+                      iconColor: const Color(0xFF1F5BD7),
+                      onTap: onEdit,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: const Color(0xFFE8EDF2),
+                  ),
+                  Expanded(
+                    child: _DriverFooterButton(
+                      icon: Icons.call_rounded,
+                      label: 'Call',
+                      iconColor: const Color(0xFF1F5BD7),
+                      onTap: canCall
+                          ? () async {
+                              final uri = Uri.parse('tel:${driver.phone}');
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                          : null,
+                    ),
+                  ),
                 ],
               );
 
               if (isWide) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: leftColumn),
-                    const SizedBox(width: 16),
-                    rightColumn,
+                    leftColumn,
+                    const SizedBox(height: 14),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE8EDF2),
+                    ),
+                    const SizedBox(height: 6),
+                    footer,
                   ],
                 );
               }
 
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   leftColumn,
                   const SizedBox(height: 14),
@@ -2858,8 +2964,8 @@ class DriverListTile extends StatelessWidget {
                     thickness: 1,
                     color: Color(0xFFE8EDF2),
                   ),
-                  const SizedBox(height: 12),
-                  Align(alignment: Alignment.centerLeft, child: rightColumn),
+                  const SizedBox(height: 6),
+                  footer,
                 ],
               );
             },
@@ -2925,43 +3031,6 @@ class _DriverAvatar extends StatelessWidget {
   }
 }
 
-class _DriverActionIconButton extends StatelessWidget {
-  const _DriverActionIconButton({
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-    required this.onPressed,
-    required this.tooltip,
-  });
-
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-  final VoidCallback onPressed;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: tooltip,
-      child: Material(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _DriverCardMetaChip extends StatelessWidget {
   const _DriverCardMetaChip({required this.label});
 
@@ -2970,10 +3039,10 @@ class _DriverCardMetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F4F7),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
@@ -2981,6 +3050,49 @@ class _DriverCardMetaChip extends StatelessWidget {
           fontSize: 10,
           color: const Color(0xFF344054),
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverFooterButton extends StatelessWidget {
+  const _DriverFooterButton({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontSize: 13,
+                  color: const Color(0xFF344054),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3041,13 +3153,13 @@ _DriverCardVisuals _driverCardVisuals(BrokerDriver driver) {
       );
     case BrokerDriverStatus.idle:
       return const _DriverCardVisuals(
-        backgroundColor: Color(0xFFF8F9FF),
-        borderColor: Color(0xFFC4C6CF),
-        avatarBackgroundColor: Color(0xFFFEECC8),
-        avatarTextColor: Color(0xFF875200),
-        statusDotColor: Color(0xFFF59E0B),
-        statusTextColor: Color(0xFF875200),
-        ctaBackgroundColor: Color(0xFF875200),
+        backgroundColor: Colors.white,
+        borderColor: Color(0xFFE5E7EB),
+        avatarBackgroundColor: Color(0xFFD9F6E3),
+        avatarTextColor: Color(0xFF136F3E),
+        statusDotColor: Color(0xFF22C55E),
+        statusTextColor: Color(0xFF136F3E),
+        ctaBackgroundColor: Color(0xFF136F3E),
         ctaForegroundColor: Colors.white,
         opacity: 1,
       );

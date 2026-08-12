@@ -73,7 +73,7 @@ export default function PaymentSheet({ open, amount, phone, onClose, onSuccess, 
 
   useEffect(() => {
     if (stage !== "success") return;
-    const t = setTimeout(() => onSuccess(), 1300);
+    const t = setTimeout(() => onSuccess(category === "recommended" ? "upi" : category), 1300);
     return () => clearTimeout(t);
   }, [stage, onSuccess]);
 

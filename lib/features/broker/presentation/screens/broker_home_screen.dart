@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/app_socket_service.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
@@ -13,10 +17,45 @@ class BrokerHomeScreen extends ConsumerStatefulWidget {
 
 class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   static const _requestsQuery = (page: 1, limit: 100);
+  StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_connectSocket());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _jobRequestSubscription?.cancel();
+    super.dispose();
+  }
 
   Future<void> _refresh() async {
     ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
     await ref.read(brokerJobRequestsProvider(_requestsQuery).future);
+  }
+
+  Future<void> _connectSocket() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    await _jobRequestSubscription?.cancel();
+    _jobRequestSubscription = socketService.jobRequestStream.listen((_) {
+      if (!mounted) return;
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+    });
   }
 
   @override

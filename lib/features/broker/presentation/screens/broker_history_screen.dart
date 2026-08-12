@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -108,7 +107,6 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
                 for (var index = 0; index < shipments.length; index++) ...[
                   PackageTrackingCard(
                     shipment: shipments[index],
-                    onTap: () => context.push('/client/tracking/details', extra: shipments[index]),
                   ),
                   if (index != shipments.length - 1) const SizedBox(height: 12),
                 ],
