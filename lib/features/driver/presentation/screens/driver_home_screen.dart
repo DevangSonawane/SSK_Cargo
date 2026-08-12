@@ -20,10 +20,18 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   double _acceptSlide = 0;
   bool _launchingRequest = false;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  late final WidgetsBindingObserver _lifecycleObserver;
 
   @override
   void initState() {
     super.initState();
+    _lifecycleObserver = _HomeLifecycleObserver(
+      onResume: () {
+        if (!mounted) return;
+        unawaited(_startLiveUpdates());
+      },
+    );
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_startLiveUpdates());
@@ -32,6 +40,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
     _driverRequestSubscription?.cancel();
     super.dispose();
   }
@@ -64,6 +73,21 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final isOnline = ref.watch(driverOnlineProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
     final requestsAsync = ref.watch(driverRequestsProvider);
+
+    ref.listen(authSessionProvider, (previous, next) {
+      final hadSession = previous?.valueOrNull != null;
+      final hasSession = next.valueOrNull != null;
+      if (!hadSession && hasSession) {
+        unawaited(_startLiveUpdates());
+      }
+    });
+
+    ref.listen(driverOnlineProvider, (previous, next) {
+      if (previous == next) return;
+      if (next) {
+        unawaited(_startLiveUpdates());
+      }
+    });
 
     return SafeArea(
       top: false,
@@ -242,6 +266,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         ),
       ),
     );
+  }
+}
+
+class _HomeLifecycleObserver extends WidgetsBindingObserver {
+  _HomeLifecycleObserver({required this.onResume});
+
+  final VoidCallback onResume;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      onResume();
+    }
   }
 }
 

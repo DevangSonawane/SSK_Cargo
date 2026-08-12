@@ -547,77 +547,13 @@ class _DriverOrderAcceptedScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: actionLocked
-                          ? null
-                          : () => _runAction(
-                              (token) => ref
-                                  .read(apiClientProvider)
-                                  .counterDriverRequestAsDriver(
-                                    accessToken: token,
-                                    id: request.id,
-                                    amount: selectedAmount,
-                                  ),
-                              isCounter: true,
-                            ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
-                        disabledBackgroundColor: const Color(0xFFD0D5DD),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        _submitting
-                            ? 'Saving...'
-                            : handoffExpired
-                            ? 'Broker takeover'
-                            : _counterLocked
-                            ? 'Counter sent'
-                            : 'Send counter',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _submitting || handoffExpired
-                              ? null
-                              : () => _runAction(
-                                  (token) => ref
-                                      .read(apiClientProvider)
-                                      .acceptDriverRequestAsDriver(
-                                        accessToken: token,
-                                        id: request.id,
-                                      ),
-                                  resolveTripOnSuccess: true,
-                                ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2FA56E),
-                            side: const BorderSide(color: Color(0xFFB7E1C8)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text(
-                            'Accept',
-                            style: TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   if (_accepted) ...[
-                    const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEAF7EF),
                         borderRadius: BorderRadius.circular(16),
@@ -674,6 +610,117 @@ class _DriverOrderAcceptedScreenState
                           ],
                         ],
                       ),
+                    ),
+                  ] else if (_counterLocked) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7FAFD),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 26,
+                            height: 26,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.6,
+                              color: Color(0xFF1F88C9),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Counter sent. Waiting for client response...',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF101828),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'We will unlock the tracking button once the client accepts the offer.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: const Color(0xFF667085),
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        onPressed: actionLocked
+                            ? null
+                            : () => _runAction(
+                                (token) => ref
+                                    .read(apiClientProvider)
+                                    .counterDriverRequestAsDriver(
+                                      accessToken: token,
+                                      id: request.id,
+                                      amount: selectedAmount,
+                                    ),
+                                isCounter: true,
+                              ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                          disabledBackgroundColor: const Color(0xFFD0D5DD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          _submitting
+                              ? 'Saving...'
+                              : handoffExpired
+                              ? 'Broker takeover'
+                              : 'Send counter',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting || handoffExpired
+                                ? null
+                                : () => _runAction(
+                                    (token) => ref
+                                        .read(apiClientProvider)
+                                        .acceptDriverRequestAsDriver(
+                                          accessToken: token,
+                                          id: request.id,
+                                        ),
+                                    resolveTripOnSuccess: true,
+                                  ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF2FA56E),
+                              side: const BorderSide(color: Color(0xFFB7E1C8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Accept',
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
