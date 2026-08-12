@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
-import '../../data/auth_models.dart';
 import '../controllers/auth_controller.dart';
 
 class GpsTrackingLoginScreen extends ConsumerStatefulWidget {
@@ -34,44 +34,57 @@ class _GpsTrackingLoginScreenState
       return;
     }
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter both email and password.')),
+      );
+      return;
+    }
+
     setState(() => _isLoggingIn = true);
-    await Future<void>.delayed(const Duration(milliseconds: 550));
-    if (!mounted) {
-      return;
+    try {
+      final session = await ref
+          .read(authSessionProvider.notifier)
+          .login(email: email, password: password);
+
+      final role = appRoleFromApiRole(session.user.role);
+      ref.read(selectedRoleProvider.notifier).state = role;
+
+      if (!mounted) {
+        return;
+      }
+
+      context.go(_routeForRole(session.user.role));
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoggingIn = false);
+      }
     }
-
-    final now = DateTime.now();
-    final session = AuthSession(
-      user: SskUser(
-        id: 'gps-demo-${now.millisecondsSinceEpoch}',
-        name: 'GPS Tracking',
-        email: 'gps@ssklogistics.in',
-        phone: '0000000000',
-        role: 'client',
-        status: 'active',
-        isPhoneVerified: true,
-        isEmailVerified: true,
-        profileImage: null,
-        lastLoginAt: now,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      tokens: const AuthTokens(
-        accessToken: 'gps-demo-access-token',
-        refreshToken: 'gps-demo-refresh-token',
-        tokenType: 'Bearer',
-        expiresIn: 'demo',
-      ),
-    );
-
-    ref.read(authSessionProvider.notifier).bootstrapSession(session);
-    ref.read(selectedRoleProvider.notifier).state = AppRole.client;
-
-    if (!mounted) {
-      return;
-    }
-
-    context.go('/gps/dashboard');
   }
 
   @override
@@ -382,6 +395,16 @@ class _GpsTrackingLoginScreenState
       ),
     );
   }
+}
+
+String _routeForRole(String role) {
+  return switch (role) {
+    'client' => '/client/home',
+    'broker' => '/broker/home',
+    'driver' => '/driver/home',
+    'admin' => '/gps/dashboard',
+    _ => '/gps/dashboard',
+  };
 }
 
 InputDecoration _pillDecoration({

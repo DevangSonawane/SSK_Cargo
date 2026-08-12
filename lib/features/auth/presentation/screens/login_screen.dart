@@ -770,8 +770,8 @@ String _routeForRole(String role) {
     'client' => '/client/home',
     'broker' => '/broker/home',
     'driver' => '/driver/home',
-    'admin' => '/broker/home',
-    _ => '/client/home',
+    'admin' => '/gps/dashboard',
+    _ => '/gps/dashboard',
   };
 }
 
