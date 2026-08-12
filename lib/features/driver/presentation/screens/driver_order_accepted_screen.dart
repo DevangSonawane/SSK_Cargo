@@ -11,6 +11,7 @@ import '../../../../core/providers/driver_location_tracker_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
+import 'driver_delivery_details_screen.dart';
 
 class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
   const DriverOrderAcceptedScreen({super.key, this.initialRequest});
@@ -25,16 +26,16 @@ class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
 class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
-  bool _accepted = false;
-  bool _trackRideReady = false;
+  final bool _accepted = false;
+  final bool _trackRideReady = false;
   bool _counterLocked = false;
   bool _brokerHandoffVisible = false;
   late double _counterAmount;
   int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _handoffTimer;
-  String _resolvedTripId = '';
-  String _resolvedTripStatus = '';
+  final String _resolvedTripId = '';
+  final String _resolvedTripStatus = '';
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -117,15 +118,9 @@ class _DriverOrderAcceptedScreenState
 
     final socketService = ref.read(appSocketServiceProvider);
     developer.log(
-      'Connecting driver request socket for negotiation screen.',
+      'Subscribing to shared driver request websocket on negotiation screen.',
       name: 'driver.orderAccepted',
     );
-    await socketService.ensureConnected(
-      accessToken: session.tokens.accessToken,
-    );
-    if (!mounted) {
-      return;
-    }
 
     await _driverRequestSubscription?.cancel();
     _driverRequestSubscription = socketService.driverRequestStream.listen((
@@ -188,12 +183,16 @@ class _DriverOrderAcceptedScreenState
       name: 'driver.orderAccepted',
     );
 
-    if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
+    if (_isAcceptedStatus(status)) {
       developer.log(
-        'Accepted status received from socket. Resolving trip and navigating.',
+        'Accepted status received from socket. Going straight to the active trip.',
         name: 'driver.orderAccepted',
       );
-      await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
+      await _goToActiveTrip(
+        fallbackTripId: effectiveTripId.isNotEmpty
+            ? effectiveTripId
+            : _request.tripId,
+      );
       return;
     }
 
@@ -253,12 +252,16 @@ class _DriverOrderAcceptedScreenState
         });
       }
 
-      if (resolveTripOnSuccess && effectiveTripId.isNotEmpty) {
+      if (resolveTripOnSuccess) {
         developer.log(
-          'Negotiation accepted locally. Resolving upcoming trip.',
+          'Negotiation accepted locally. Going straight to the active trip.',
           name: 'driver.orderAccepted',
         );
-        await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
+        await _goToActiveTrip(
+          fallbackTripId: effectiveTripId.isNotEmpty
+              ? effectiveTripId
+              : (request.tripId.isNotEmpty ? request.tripId : request.id),
+        );
         return;
       }
 
@@ -269,6 +272,23 @@ class _DriverOrderAcceptedScreenState
       );
     } on ApiException catch (error) {
       if (!mounted) return;
+      if (resolveTripOnSuccess &&
+          (error.statusCode == 400 || error.statusCode == 409)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This offer is no longer available.'),
+            backgroundColor: Color(0xFFE23A4B),
+          ),
+        );
+        ref.invalidate(driverRequestFeedProvider);
+        ref.invalidate(driverRequestsProvider);
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/driver/home');
+        }
+        return;
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
@@ -286,9 +306,7 @@ class _DriverOrderAcceptedScreenState
     }
   }
 
-  Future<void> _resolveTripAndShowTrackOption({
-    required String fallbackTripId,
-  }) async {
+  Future<void> _goToActiveTrip({required String fallbackTripId}) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
       developer.log(
@@ -299,9 +317,8 @@ class _DriverOrderAcceptedScreenState
     }
 
     String tripId = fallbackTripId;
-    String tripStatus = '';
     developer.log(
-      'Resolving trip from upcoming API. fallbackTripId=$fallbackTripId',
+      'Resolving active trip from upcoming API. fallbackTripId=$fallbackTripId',
       name: 'driver.orderAccepted',
     );
     try {
@@ -319,12 +336,8 @@ class _DriverOrderAcceptedScreenState
                 : data)
           : response;
       tripId = _extractTripId(trip, fallbackTripId).trim();
-      tripStatus = _readPayloadString(trip, const [
-        'status',
-        'rawStatus',
-      ]).trim().toLowerCase();
       developer.log(
-        'Upcoming trip resolved. tripId=$tripId status=$tripStatus',
+        'Upcoming trip resolved. tripId=$tripId',
         name: 'driver.orderAccepted',
       );
     } catch (_) {
@@ -344,31 +357,17 @@ class _DriverOrderAcceptedScreenState
     }
 
     ref.read(driverLocationTrackerProvider).setActiveTripId(tripId);
-    final readyToTrack = tripStatus == 'confirmed' || tripStatus == 'accepted';
     developer.log(
-      'Trip location tracker updated. readyToTrack=$readyToTrack tripId=$tripId',
+      'Navigating directly to delivery details for tripId=$tripId',
       name: 'driver.orderAccepted',
     );
     if (!mounted) return;
-    setState(() {
-      _accepted = true;
-      _resolvedTripId = tripId;
-      _resolvedTripStatus = tripStatus;
-      _trackRideReady = readyToTrack;
-    });
-
-    if (readyToTrack) {
-      developer.log(
-        'Trip is ready. Navigating directly to delivery details.',
-        name: 'driver.orderAccepted',
-      );
-      context.replace('/driver/delivery-details/$tripId');
-    } else {
-      developer.log(
-        'Trip not ready yet. Showing fallback track button instead of auto-navigation.',
-        name: 'driver.orderAccepted',
-      );
-    }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId),
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   @override

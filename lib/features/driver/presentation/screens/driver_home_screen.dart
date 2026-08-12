@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
+import 'driver_delivery_details_screen.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -19,7 +20,7 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   double _acceptSlide = 0;
   bool _launchingRequest = false;
-  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  bool _launchingActiveTrip = false;
   late final WidgetsBindingObserver _lifecycleObserver;
 
   @override
@@ -28,64 +29,103 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     _lifecycleObserver = _HomeLifecycleObserver(
       onResume: () {
         if (!mounted) return;
-        unawaited(_startLiveUpdates());
+        ref.invalidate(driverRequestFeedProvider);
       },
     );
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_startLiveUpdates());
-    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(_lifecycleObserver);
-    _driverRequestSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _startLiveUpdates() async {
+  DriverRequestItem? _acceptedRequestForUser(
+    List<DriverRequestItem>? requests,
+    String userId,
+  ) {
+    if (requests == null || userId.isEmpty) {
+      return null;
+    }
+
+    for (final request in requests) {
+      if (request.driverId == userId &&
+          request.status.trim().toLowerCase() == 'accepted') {
+        return request;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _goToActiveTrip() async {
+    if (_launchingActiveTrip) {
+      return;
+    }
+
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
       return;
     }
 
-    final socketService = ref.read(appSocketServiceProvider);
-    await socketService.ensureConnected(
-      accessToken: session.tokens.accessToken,
-    );
-    if (!mounted) {
-      return;
-    }
+    _launchingActiveTrip = true;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getUpcomingTrip(accessToken: session.tokens.accessToken);
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      final tripId = _readStringValue(trip, const ['id', 'tripId', 'trip_id']);
 
-    await _driverRequestSubscription?.cancel();
-    _driverRequestSubscription = socketService.driverRequestStream.listen((
-      payload,
-    ) {
+      if (tripId.isEmpty || !mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId),
+        ),
+        (route) => route.isFirst,
+      );
+    } on ApiException catch (error) {
       if (!mounted) return;
-      ref.invalidate(driverRequestsProvider);
-    });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      _launchingActiveTrip = false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isOnline = ref.watch(driverOnlineProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
-    final requestsAsync = ref.watch(driverRequestsProvider);
+    final requestsAsync = ref.watch(driverRequestFeedProvider);
 
-    ref.listen(authSessionProvider, (previous, next) {
-      final hadSession = previous?.valueOrNull != null;
-      final hasSession = next.valueOrNull != null;
-      if (!hadSession && hasSession) {
-        unawaited(_startLiveUpdates());
+    ref.listen(driverRequestFeedProvider, (previous, next) {
+      if (!mounted || _launchingActiveTrip) {
+        return;
       }
-    });
 
-    ref.listen(driverOnlineProvider, (previous, next) {
-      if (previous == next) return;
-      if (next) {
-        unawaited(_startLiveUpdates());
+      final userId = ref.read(authSessionProvider).valueOrNull?.user.id ?? '';
+      final previousAccepted = _acceptedRequestForUser(
+        previous?.valueOrNull,
+        userId,
+      );
+      final nextAccepted = _acceptedRequestForUser(next.valueOrNull, userId);
+
+      if (nextAccepted != null &&
+          nextAccepted.id != previousAccepted?.id &&
+          nextAccepted.driverId == userId) {
+        unawaited(_goToActiveTrip());
       }
     });
 
@@ -153,7 +193,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
                 IconButton(
                   onPressed: () {
-                    ref.invalidate(driverRequestsProvider);
+                    ref.invalidate(driverRequestFeedProvider);
                   },
                   icon: const Icon(Icons.refresh_rounded),
                   tooltip: 'Refresh requests',
@@ -267,6 +307,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       ),
     );
   }
+}
+
+String _readStringValue(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
 }
 
 class _HomeLifecycleObserver extends WidgetsBindingObserver {

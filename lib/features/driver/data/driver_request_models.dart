@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
+import '../../auth/data/auth_models.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 
 class DriverRequestItem {
@@ -8,6 +13,7 @@ class DriverRequestItem {
     required this.id,
     required this.bookingId,
     required this.bookingNumber,
+    required this.driverId,
     required this.clientName,
     required this.clientPhone,
     required this.driverName,
@@ -33,6 +39,7 @@ class DriverRequestItem {
   final String id;
   final String bookingId;
   final String bookingNumber;
+  final String driverId;
   final String clientName;
   final String clientPhone;
   final String driverName;
@@ -85,6 +92,10 @@ class DriverRequestItem {
       bookingNumber: _readString(json, const [
         'bookingNumber',
         'booking_number',
+      ]),
+      driverId: _firstNonEmpty([
+        _readString(json, const ['driverId', 'driver_id']),
+        _readString(driver, const ['id', 'driverId', 'driver_id']),
       ]),
       clientName: _firstNonEmpty([
         _readString(json, const ['clientName', 'client_name']),
@@ -165,6 +176,7 @@ class DriverRequestItem {
       id: '',
       bookingId: '',
       bookingNumber: '',
+      driverId: '',
       clientName: '',
       clientPhone: '',
       driverName: '',
@@ -221,6 +233,153 @@ final driverRequestsProvider =
           );
       return DriverRequestPage.fromJson(response).requests;
     });
+
+final driverRequestFeedProvider =
+    StateNotifierProvider.autoDispose<
+      DriverRequestFeedController,
+      AsyncValue<List<DriverRequestItem>>
+    >((ref) {
+      return DriverRequestFeedController(ref);
+    });
+
+class DriverRequestFeedController
+    extends StateNotifier<AsyncValue<List<DriverRequestItem>>> {
+  DriverRequestFeedController(this._ref)
+    : super(const AsyncLoading<List<DriverRequestItem>>()) {
+    _authSubscription = _ref.listen<AsyncValue<AuthSession?>>(
+      authSessionProvider,
+      (_, next) {
+        unawaited(_syncSession(next.valueOrNull));
+      },
+      fireImmediately: true,
+    );
+  }
+
+  final Ref _ref;
+  StreamSubscription<Map<String, dynamic>>? _socketSubscription;
+  Timer? _pollTimer;
+  String? _accessToken;
+  AuthSession? _currentSession;
+  ProviderSubscription<AsyncValue<AuthSession?>>? _authSubscription;
+
+  Future<void> _syncSession(AuthSession? session) async {
+    if (!mounted) {
+      return;
+    }
+
+    if (session == null) {
+      _currentSession = null;
+      _accessToken = null;
+      await _disposeLiveHandles();
+      state = const AsyncData<List<DriverRequestItem>>([]);
+      return;
+    }
+
+    final nextToken = session.tokens.accessToken;
+    final tokenChanged = _accessToken != nextToken;
+    _currentSession = session;
+
+    if (!tokenChanged && _socketSubscription != null && _pollTimer != null) {
+      await _refreshFromServer(nextToken);
+      return;
+    }
+
+    _accessToken = nextToken;
+    state = const AsyncLoading<List<DriverRequestItem>>();
+    await _disposeLiveHandles();
+
+    final socketService = _ref.read(appSocketServiceProvider);
+    developer.log(
+      'Starting driver request feed for shared websocket updates.',
+      name: 'SSK.DriverRequests',
+    );
+    await socketService.connect(nextToken);
+    if (!mounted || _accessToken != nextToken) {
+      return;
+    }
+
+    _socketSubscription = socketService.driverRequestStream.listen(
+      _handleSocketPayload,
+    );
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      unawaited(_refreshFromServer(nextToken));
+    });
+
+    await _refreshFromServer(nextToken);
+  }
+
+  Future<void> refresh() async {
+    final token = _accessToken;
+    if (token == null) {
+      return;
+    }
+    await _refreshFromServer(token);
+  }
+
+  Future<void> _refreshFromServer(String accessToken) async {
+    final session = _currentSession;
+    if (session == null || !mounted || _accessToken != accessToken) {
+      return;
+    }
+
+    try {
+      final response = await _ref
+          .read(apiClientProvider)
+          .getDriverRequests(accessToken: accessToken, page: 1, limit: 20);
+      final requests = DriverRequestPage.fromJson(response).requests;
+      if (!mounted || _accessToken != accessToken) {
+        return;
+      }
+      state = AsyncData<List<DriverRequestItem>>(requests);
+    } catch (error, stackTrace) {
+      if (!mounted || _accessToken != accessToken) {
+        return;
+      }
+      if (state.valueOrNull == null) {
+        state = AsyncError<List<DriverRequestItem>>(error, stackTrace);
+      }
+    }
+  }
+
+  void _handleSocketPayload(Map<String, dynamic> payload) {
+    final incoming = DriverRequestItem.fromMap(payload);
+    if (incoming.id.isEmpty || !mounted) {
+      return;
+    }
+
+    final current = state.valueOrNull ?? const <DriverRequestItem>[];
+    final next = _mergeRequest(current, incoming);
+    state = AsyncData<List<DriverRequestItem>>(next);
+  }
+
+  List<DriverRequestItem> _mergeRequest(
+    List<DriverRequestItem> requests,
+    DriverRequestItem incoming,
+  ) {
+    final next = List<DriverRequestItem>.from(requests);
+    final index = next.indexWhere((request) => request.id == incoming.id);
+    if (index == -1) {
+      next.insert(0, incoming);
+    } else {
+      next[index] = incoming;
+    }
+    return next;
+  }
+
+  Future<void> _disposeLiveHandles() async {
+    await _socketSubscription?.cancel();
+    _socketSubscription = null;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  @override
+  void dispose() {
+    unawaited(_disposeLiveHandles());
+    _authSubscription?.close();
+    super.dispose();
+  }
+}
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) {

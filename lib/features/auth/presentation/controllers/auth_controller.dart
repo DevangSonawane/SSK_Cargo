@@ -26,6 +26,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     unawaited(
       _ref.read(clientPushNotificationServiceProvider).syncForSession(session),
     );
+    unawaited(
+      _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
+    );
   }
 
   void debugSetSession(AuthSession session) {
@@ -48,6 +51,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         _ref
             .read(clientPushNotificationServiceProvider)
             .syncForSession(session),
+      );
+      unawaited(
+        _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
       return session;
     } catch (error, stackTrace) {
@@ -72,6 +78,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         _ref
             .read(clientPushNotificationServiceProvider)
             .syncForSession(session),
+      );
+      unawaited(
+        _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
       return session;
     } catch (error, stackTrace) {

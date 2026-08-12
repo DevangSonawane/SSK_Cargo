@@ -62,7 +62,7 @@ class AppSocketService {
     final socket = io.io(
       baseUrl,
       io.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
+          .setTransports(['websocket'])
           .setAuth({'token': accessToken})
           .disableAutoConnect()
           .build(),
@@ -130,6 +130,12 @@ class AppSocketService {
     socket.connect();
     return socket;
   }
+
+  Future<io.Socket?> connect(String accessToken) {
+    return ensureConnected(accessToken: accessToken);
+  }
+
+  void disconnect() => _disposeSocket();
 
   void setTruckTrackingIds(Iterable<String> truckIds) {
     final nextIds = truckIds

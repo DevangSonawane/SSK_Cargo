@@ -76,7 +76,10 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           ),
         ),
         data: (dashboard) {
-          final currentTrip = dashboard.activeTrip ?? dashboard.upcomingTrip;
+          final currentTrip = _selectCurrentTrip(
+            dashboard.activeTrip,
+            dashboard.upcomingTrip,
+          );
           final history = dashboard.history;
           final currentTripStatus =
               currentTrip?.status.trim().toLowerCase() ?? '';
@@ -209,6 +212,36 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
       ),
     );
   }
+}
+
+TrackingDemoShipment? _selectCurrentTrip(
+  TrackingDemoShipment? activeTrip,
+  TrackingDemoShipment? upcomingTrip,
+) {
+  final activeStatus = activeTrip?.status.trim().toLowerCase() ?? '';
+  if (_isVisibleDriverTripStatus(activeStatus)) {
+    return activeTrip;
+  }
+
+  final upcomingStatus = upcomingTrip?.status.trim().toLowerCase() ?? '';
+  if (_isVisibleDriverTripStatus(upcomingStatus)) {
+    return upcomingTrip;
+  }
+
+  return null;
+}
+
+bool _isVisibleDriverTripStatus(String status) {
+  const visibleStatuses = {
+    'accepted',
+    'confirmed',
+    'en_route_pickup',
+    'picked_up',
+    'in_transit',
+    'delivered',
+  };
+
+  return visibleStatuses.contains(status.trim().toLowerCase());
 }
 
 class _LifecycleRefreshObserver extends WidgetsBindingObserver {
