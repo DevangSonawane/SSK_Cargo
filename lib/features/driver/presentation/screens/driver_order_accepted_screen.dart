@@ -113,6 +113,14 @@ class _DriverOrderAcceptedScreenState
         normalized == 'assigned';
   }
 
+  bool _isRejectedStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'declined' ||
+        normalized == 'rejected' ||
+        normalized == 'cancelled' ||
+        normalized == 'expired';
+  }
+
   Future<void> _startLiveUpdates() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
@@ -134,7 +142,7 @@ class _DriverOrderAcceptedScreenState
       if (!mounted || !_payloadMatchesTarget(payload)) {
         return;
       }
-      unawaited(_refreshFromServer());
+      unawaited(_handleLivePayload(payload));
     });
 
     _pollTimer?.cancel();
@@ -166,6 +174,42 @@ class _DriverOrderAcceptedScreenState
         }
       });
     });
+
+    await _refreshFromServer();
+  }
+
+  Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
+    final status = _readPayloadString(payload, const [
+      'status',
+      'requestStatus',
+      'request_status',
+      'clientStatus',
+      'client_status',
+    ]).trim().toLowerCase();
+    final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
+
+    if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
+      ref.read(driverLocationTrackerProvider).setActiveTripId(effectiveTripId);
+      if (!mounted) return;
+      setState(() {
+        _accepted = true;
+      });
+      context.go('/driver/delivery-details/$effectiveTripId');
+      return;
+    }
+
+    if (_isRejectedStatus(status)) {
+      if (!mounted) return;
+      ref.invalidate(driverRequestsProvider);
+      context.go('/driver/home');
+      return;
+    }
+
+    if (mounted && (status == 'countered' || status == 'accepted')) {
+      setState(() {
+        _counterLocked = true;
+      });
+    }
 
     await _refreshFromServer();
   }
@@ -203,6 +247,13 @@ class _DriverOrderAcceptedScreenState
           _accepted = true;
         });
         context.go('/driver/delivery-details/$effectiveTripId');
+        return;
+      }
+
+      if (_isRejectedStatus(status)) {
+        if (!mounted) return;
+        ref.invalidate(driverRequestsProvider);
+        context.go('/driver/home');
         return;
       }
 

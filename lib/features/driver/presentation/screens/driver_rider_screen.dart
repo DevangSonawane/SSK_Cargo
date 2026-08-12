@@ -7,11 +7,25 @@ import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../data/driver_dashboard_models.dart';
 
-class DriverRiderScreen extends ConsumerWidget {
+class DriverRiderScreen extends ConsumerStatefulWidget {
   const DriverRiderScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DriverRiderScreen> createState() => _DriverRiderScreenState();
+}
+
+class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(driverDashboardProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return SafeArea(
@@ -440,25 +454,25 @@ class _TripHistoryCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: SvgPicture.string(
-                    _doneTickSvg,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFF10A64A),
-                      BlendMode.srcIn,
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF7EF),
+                      shape: BoxShape.circle,
                     ),
-                    fit: BoxFit.contain,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SvgPicture.string(
+                        _doneTickSvg,
+                        colorFilter: const ColorFilter.mode(
+                          Color(0xFF10A64A),
+                          BlendMode.srcIn,
+                        ),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
-                ),
-              ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

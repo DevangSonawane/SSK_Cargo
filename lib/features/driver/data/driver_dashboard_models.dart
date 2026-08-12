@@ -239,6 +239,7 @@ bool _isLiveTrip(String status) {
 
   const liveStatuses = {
     'accepted',
+    'confirmed',
     'live',
     'ongoing',
     'ontrip',
@@ -271,18 +272,15 @@ bool _isLiveTrip(String status) {
 }
 
 bool _looksLikePlaceholderTrip(Map<String, dynamic> trip) {
-  final status = _stringFrom(trip, const ['status', 'rawStatus'])
-      .trim()
-      .toLowerCase();
+  final status = _stringFrom(trip, const [
+    'status',
+    'rawStatus',
+  ]).trim().toLowerCase();
   if (status.isEmpty) {
     return false;
   }
 
-  const placeholderStatuses = {
-    'assigned',
-    'pending',
-    'requested',
-  };
+  const placeholderStatuses = {'assigned', 'pending', 'requested'};
   if (!placeholderStatuses.contains(status)) {
     return false;
   }
