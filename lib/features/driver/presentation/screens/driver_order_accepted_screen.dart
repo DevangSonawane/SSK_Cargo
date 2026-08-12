@@ -30,17 +30,15 @@ class _DriverOrderAcceptedScreenState
   bool _resolvingTrip = false;
   bool _counterLocked = false;
   bool _handoffInProgress = false;
-  bool _handoffNavigationRequested = false;
+  bool _handoffBookingReady = false;
   late double _counterAmount;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
-  Timer? _handoffCountdownTimer;
   Timer? _handoffPollTimer;
   String _latestStatus = '';
   String _latestPendingConfirmationBy = '';
   bool _latestDriverTimedOut = false;
   DateTime? _latestUpdatedAt;
-  DateTime? _handoffDeadline;
   String? _handoffTripId;
 
   DriverRequestItem get _request =>
@@ -92,7 +90,6 @@ class _DriverOrderAcceptedScreenState
   void dispose() {
     _driverRequestSubscription?.cancel();
     _countdownTimer?.cancel();
-    _handoffCountdownTimer?.cancel();
     _handoffPollTimer?.cancel();
     super.dispose();
   }
@@ -294,21 +291,10 @@ class _DriverOrderAcceptedScreenState
     _driverRequestSubscription = null;
     _countdownTimer?.cancel();
     _countdownTimer = null;
-    _handoffCountdownTimer?.cancel();
-    _handoffCountdownTimer = null;
     _handoffPollTimer?.cancel();
     _handoffPollTimer = null;
     if (!mounted) return;
     context.go('/driver/home');
-  }
-
-  int get _handoffSecondsRemaining {
-    final deadline = _handoffDeadline;
-    if (deadline == null) {
-      return 0;
-    }
-    final remaining = deadline.difference(DateTime.now()).inSeconds;
-    return remaining < 0 ? 0 : remaining;
   }
 
   Future<void> _beginTripHandoff({String? tripId}) async {
@@ -317,28 +303,18 @@ class _DriverOrderAcceptedScreenState
 
     setState(() {
       _handoffInProgress = true;
-      _handoffNavigationRequested = false;
+      _handoffBookingReady = false;
       if (effectiveTripId.isNotEmpty) {
         _handoffTripId = effectiveTripId;
       }
-      _handoffDeadline = DateTime.now().add(const Duration(seconds: 5));
-    });
-
-    _handoffCountdownTimer?.cancel();
-    _handoffCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {});
-      }
-      unawaited(_tryCompleteTripHandoff());
     });
 
     _handoffPollTimer?.cancel();
-    _handoffPollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    _handoffPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       unawaited(_refreshTripForHandoff());
     });
 
     unawaited(_refreshTripForHandoff());
-    unawaited(_tryCompleteTripHandoff());
   }
 
   Future<void> _refreshTripForHandoff() async {
@@ -349,34 +325,117 @@ class _DriverOrderAcceptedScreenState
 
     _resolvingTrip = true;
     try {
+      final requestResponse = await ref
+          .read(apiClientProvider)
+          .getDriverRequestById(
+            accessToken: session.tokens.accessToken,
+            id: _request.id,
+          );
+      developer.log(
+        'Handoff request response received: $requestResponse',
+        name: 'driver.orderAccepted',
+      );
+      final requestPayload = _extractPayload(requestResponse);
+      final requestTripId = _extractTripId(requestPayload, '').trim();
+      final requestStatus = _readPayloadString(requestPayload, const [
+        'status',
+        'requestStatus',
+        'request_status',
+        'clientStatus',
+        'client_status',
+      ]).trim().toLowerCase();
+
+      if (requestTripId.isNotEmpty && mounted) {
+        setState(() {
+          _handoffTripId = requestTripId;
+          _handoffBookingReady = true;
+          if (requestStatus.isNotEmpty) {
+            _latestStatus = requestStatus;
+          }
+        });
+        _handoffPollTimer?.cancel();
+        _handoffPollTimer = null;
+        return;
+      }
+
+      final bookingId = _request.bookingId.trim();
+      if (bookingId.isNotEmpty) {
+        final bookingResponse = await ref
+            .read(apiClientProvider)
+            .getBookingById(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+            );
+        developer.log(
+          'Handoff booking response received: $bookingResponse',
+          name: 'driver.orderAccepted',
+        );
+        final bookingData = bookingResponse['data'];
+        final booking = bookingData is Map<String, dynamic>
+            ? (bookingData['booking'] is Map<String, dynamic>
+                  ? bookingData['booking'] as Map<String, dynamic>
+                  : bookingData)
+            : bookingResponse;
+        final bookingTripId = _extractTripId(booking, '').trim();
+        final bookingStatus = _readPayloadString(booking, const [
+          'status',
+          'bookingStatus',
+          'booking_status',
+        ]).trim().toLowerCase();
+        final paymentStatus = _readPayloadString(booking, const [
+          'paymentStatus',
+          'payment_status',
+        ]).trim().toLowerCase();
+        final bookingReady =
+            bookingStatus == 'confirmed' ||
+            bookingStatus == 'paid' ||
+            bookingStatus == 'completed' ||
+            paymentStatus == 'paid' ||
+            paymentStatus == 'confirmed' ||
+            paymentStatus == 'settled';
+        if (mounted && (bookingReady || bookingTripId.isNotEmpty)) {
+          setState(() {
+            _handoffBookingReady = true;
+            if (bookingTripId.isNotEmpty) {
+              _handoffTripId = bookingTripId;
+            }
+          });
+          if (bookingTripId.isNotEmpty) {
+            _handoffPollTimer?.cancel();
+            _handoffPollTimer = null;
+            return;
+          }
+        }
+      }
+
       final response = await ref
           .read(apiClientProvider)
-          .getTrips(accessToken: session.tokens.accessToken, limit: 100);
+          .getUpcomingTrip(accessToken: session.tokens.accessToken);
       developer.log(
-        'Handoff trips list response received: $response',
+        'Handoff upcoming trip response received: $response',
         name: 'driver.orderAccepted',
       );
       final data = response['data'];
-      final trips = data is Map<String, dynamic>
-          ? (data['trips'] is List ? data['trips'] as List : const [])
-          : (response['trips'] is List ? response['trips'] as List : const []);
-      final bookingId = _request.bookingId.trim();
-      for (final item in trips) {
-        if (item is! Map<String, dynamic>) continue;
-        final tripBookingId = _readPayloadString(item, const [
-          'bookingId',
-          'booking_id',
-        ]).trim();
-        if (tripBookingId != bookingId) {
-          continue;
-        }
-        final tripId = _extractTripId(item, '').trim();
-        if (tripId.isNotEmpty && mounted) {
-          setState(() {
-            _handoffTripId = tripId;
-          });
-        }
-        break;
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      final tripId = _extractTripId(trip, '').trim();
+      final tripBookingId = _readPayloadString(trip, const [
+        'bookingId',
+        'booking_id',
+      ]).trim();
+      if (tripId.isNotEmpty &&
+          mounted &&
+          (tripBookingId.isEmpty ||
+              tripBookingId == _request.bookingId.trim())) {
+        setState(() {
+          _handoffTripId = tripId;
+          _handoffBookingReady = true;
+        });
+        _handoffPollTimer?.cancel();
+        _handoffPollTimer = null;
       }
     } catch (error) {
       developer.log(
@@ -385,27 +444,36 @@ class _DriverOrderAcceptedScreenState
       );
     } finally {
       _resolvingTrip = false;
-      unawaited(_tryCompleteTripHandoff());
     }
   }
 
-  Future<void> _tryCompleteTripHandoff() async {
-    if (!mounted || !_handoffInProgress || _handoffNavigationRequested) {
-      return;
-    }
-
+  Future<void> _startDelivery() async {
     final tripId = _handoffTripId?.trim() ?? '';
+    final bookingId = _request.bookingId.trim();
     if (tripId.isEmpty) {
+      await _refreshTripForHandoff();
+      if (!mounted) return;
+    }
+
+    final resolvedTripId = _handoffTripId?.trim() ?? '';
+    if (resolvedTripId.isEmpty && !_handoffBookingReady) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Still syncing the trip. Please try again in a moment.',
+          ),
+        ),
+      );
       return;
     }
 
-    _handoffNavigationRequested = true;
-    _handoffCountdownTimer?.cancel();
-    _handoffCountdownTimer = null;
     _handoffPollTimer?.cancel();
     _handoffPollTimer = null;
-
-    await _goToActiveTrip(tripId: tripId);
+    await _goToActiveTrip(
+      tripId: resolvedTripId.isNotEmpty ? resolvedTripId : null,
+      bookingId: bookingId.isNotEmpty ? bookingId : null,
+    );
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
@@ -427,7 +495,7 @@ class _DriverOrderAcceptedScreenState
 
     if (_isAcceptedStatus(status)) {
       developer.log(
-        'Accepted status received from socket. Starting trip handoff.',
+        'Accepted status received from socket. Starting trip polling.',
         name: 'driver.orderAccepted',
       );
       await _beginTripHandoff(
@@ -523,7 +591,7 @@ class _DriverOrderAcceptedScreenState
               responseStatus == 'confirmed' ||
               responseStatus == 'assigned')) {
         developer.log(
-          'Negotiation accepted locally. Starting trip handoff.',
+          'Negotiation accepted locally. Starting trip polling.',
           name: 'driver.orderAccepted',
         );
         await _beginTripHandoff(
@@ -582,23 +650,30 @@ class _DriverOrderAcceptedScreenState
     }
   }
 
-  Future<void> _goToActiveTrip({required String tripId}) async {
-    if (!mounted || tripId.trim().isEmpty) {
+  Future<void> _goToActiveTrip({String? tripId, String? bookingId}) async {
+    final resolvedTripId = tripId?.trim() ?? '';
+    final resolvedBookingId = bookingId?.trim() ?? '';
+    if (!mounted || (resolvedTripId.isEmpty && resolvedBookingId.isEmpty)) {
       developer.log(
-        'Trip navigation skipped: missing tripId or screen unmounted.',
+        'Trip navigation skipped: missing tripId/bookingId or screen unmounted.',
         name: 'driver.orderAccepted',
       );
       return;
     }
 
-    ref.read(driverActiveTripIdProvider.notifier).state = tripId.trim();
+    if (resolvedTripId.isNotEmpty) {
+      ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+    }
     developer.log(
-      'Navigating to delivery details for tripId=${tripId.trim()}',
+      'Navigating to delivery details for tripId=$resolvedTripId bookingId=$resolvedBookingId',
       name: 'driver.orderAccepted',
     );
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId.trim()),
+        builder: (_) => DriverDeliveryDetailsScreen(
+          tripId: resolvedTripId,
+          bookingId: resolvedBookingId.isNotEmpty ? resolvedBookingId : null,
+        ),
       ),
       (route) => route.isFirst,
     );
@@ -626,7 +701,6 @@ class _DriverOrderAcceptedScreenState
         _submitting ||
         _counterLocked ||
         serverTimedOut ||
-        _handoffInProgress ||
         _waitingOnClient ||
         _awaitingDriverConfirmation;
 
@@ -903,38 +977,141 @@ class _DriverOrderAcceptedScreenState
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: Color(0xFF1F88C9),
+                            if (_handoffTripId?.isEmpty ?? true) ...[
+                              const SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.6,
+                                  color: Color(0xFF1F88C9),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              'Client completed the booking.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w800,
+                              const SizedBox(height: 14),
+                              Text(
+                                _handoffBookingReady
+                                    ? 'Booking confirmed'
+                                    : 'Booking is still syncing.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF101828),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _handoffBookingReady
+                                    ? 'Tap start delivery to open the trip details while we finish resolving the trip.'
+                                    : 'We check the request, booking, and trip APIs every 5 seconds.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      height: 1.35,
+                                    ),
+                              ),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: _handoffBookingReady
+                                    ? FilledButton(
+                                        onPressed: _startDelivery,
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF1F88C9,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Start Delivery',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      )
+                                    : OutlinedButton(
+                                        onPressed: _refreshTripForHandoff,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFF1F88C9,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFB7D7F0),
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Check now',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ] else ...[
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEAF7EF),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: const Icon(
+                                  Icons.play_circle_fill_rounded,
+                                  color: Color(0xFF2FA56E),
+                                  size: 30,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Booking finalized',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF101828),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Tap start delivery to open the trip details.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      height: 1.35,
+                                    ),
+                              ),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: FilledButton(
+                                  onPressed: _startDelivery,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1F88C9),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _handoffTripId?.isNotEmpty == true
-                                  ? 'Trip created. Redirecting now.'
-                                  : _handoffSecondsRemaining > 0
-                                  ? 'Waiting for the trip to be created. Redirecting in ${_handoffSecondsRemaining}s.'
-                                  : 'Waiting for the trip to be created. Syncing trip details...',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF667085),
-                                    height: 1.35,
+                                  child: const Text(
+                                    'Start Delivery',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                            ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

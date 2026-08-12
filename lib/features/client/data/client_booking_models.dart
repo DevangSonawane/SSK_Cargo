@@ -359,10 +359,26 @@ class ClientBookingOffer {
   final DateTime? createdAt;
   final Map<String, dynamic> raw;
 
-  bool get isCountered => _normalizeStatus(status) == 'countered';
-  bool get isPending => _normalizeStatus(status) == 'pending';
+  String get normalizedStatus => _normalizeStatus(status);
+
+  String get normalizedPendingConfirmationBy =>
+      pendingConfirmationBy.trim().toLowerCase();
+
+  bool get isCountered => normalizedStatus == 'countered';
+
+  bool get isPending => normalizedStatus == 'pending';
+
   bool get isAwaitingConfirmation =>
-      _normalizeStatus(status) == 'awaiting_confirmation';
+      normalizedStatus == 'awaiting_confirmation';
+
+  bool get isClientTurnToConfirm =>
+      isAwaitingConfirmation && normalizedPendingConfirmationBy != 'client';
+
+  bool get isWaitingForCounterpartyConfirmation =>
+      isAwaitingConfirmation && normalizedPendingConfirmationBy == 'client';
+
+  bool get isActionableByClient => isCountered || isClientTurnToConfirm;
+
   String get displayStatusLabel => _titleCase(status);
 }
 

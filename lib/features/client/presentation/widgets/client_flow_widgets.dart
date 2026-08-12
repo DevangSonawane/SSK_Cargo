@@ -2801,9 +2801,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     setState(() {
-      _draft = _draft.copyWith(amount: outcome.amount ?? _draft.amount);
+      _bookingReference = outcome.bookingNumber;
+      _activeBookingId = outcome.bookingId.isNotEmpty
+          ? outcome.bookingId
+          : _activeBookingId;
       _bookingCreated = true;
       _postNegotiationPayment = true;
+      if (outcome.amount != null && outcome.amount! > 0) {
+        _draft = _draft.copyWith(amount: outcome.amount!);
+      }
       _step = _BookingFlowStep.payment;
     });
   }
@@ -4619,15 +4625,27 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
 enum _DirectNegotiationStage { compose, waiting, payment, confirmed }
 
 class _DirectNegotiationOutcome {
-  const _DirectNegotiationOutcome._(this.accepted, this.amount);
+  const _DirectNegotiationOutcome._(
+    this.accepted,
+    this.bookingId,
+    this.bookingNumber,
+    this.amount,
+  );
 
-  factory _DirectNegotiationOutcome.accepted([double? amount]) =>
-      _DirectNegotiationOutcome._(true, amount);
+  factory _DirectNegotiationOutcome.accepted({
+    required String bookingId,
+    required String bookingNumber,
+    required double? amount,
+  }) {
+    return _DirectNegotiationOutcome._(true, bookingId, bookingNumber, amount);
+  }
 
   factory _DirectNegotiationOutcome.rejected() =>
-      const _DirectNegotiationOutcome._(false, null);
+      const _DirectNegotiationOutcome._(false, '', '', null);
 
   final bool accepted;
+  final String bookingId;
+  final String bookingNumber;
   final double? amount;
 }
 
@@ -4840,13 +4858,23 @@ class _BrokerNegotiationSheetState
         return;
       }
 
+      if (request.normalizedStatus == 'accepted' &&
+          _stage != _DirectNegotiationStage.confirmed) {
+        final amount = double.tryParse(
+          request.amountText.replaceAll(RegExp(r'[^0-9.]'), ''),
+        );
+        Navigator.of(context).pop(
+          _DirectNegotiationOutcome.accepted(
+            bookingId: _bookingId ?? '',
+            bookingNumber: _bookingNumber ?? '',
+            amount: amount,
+          ),
+        );
+        return;
+      }
+
       setState(() {
         _request = request;
-        if (request.status.trim().toLowerCase() == 'accepted' &&
-            _stage != _DirectNegotiationStage.payment &&
-            _stage != _DirectNegotiationStage.confirmed) {
-          _stage = _DirectNegotiationStage.payment;
-        }
       });
     } catch (_) {
       if (!mounted || silent) {
@@ -4898,7 +4926,9 @@ class _BrokerNegotiationSheetState
       if (booking != null || responseStatus == 'accepted') {
         Navigator.of(context).pop(
           _DirectNegotiationOutcome.accepted(
-            double.tryParse(
+            bookingId: _bookingId ?? '',
+            bookingNumber: _bookingNumber ?? '',
+            amount: double.tryParse(
               request.amountText.replaceAll(RegExp(r'[^0-9.]'), ''),
             ),
           ),
@@ -5083,31 +5113,22 @@ class _BrokerNegotiationSheetState
 
   Widget _buildWaitingView() {
     final request = _request;
-    final status = request?.status.trim().toLowerCase() ?? 'pending';
-    final pendingConfirmationBy =
-        request?.pendingConfirmationBy.trim().toLowerCase() ?? '';
-    final awaitingConfirmation = status == 'awaiting_confirmation';
-    final yourTurnToConfirm =
-        awaitingConfirmation && pendingConfirmationBy == 'broker';
-    final waitingOnDriver =
-        awaitingConfirmation && pendingConfirmationBy == 'client';
-    final actionable = status == 'countered' || yourTurnToConfirm;
-    final title = status == 'accepted'
+    final title = request?.normalizedStatus == 'accepted'
         ? 'Driver accepted the request'
-        : yourTurnToConfirm
+        : request?.isClientTurnToConfirm == true
         ? 'Driver accepted - your turn to confirm'
-        : waitingOnDriver
+        : request?.isWaitingForCounterpartyConfirmation == true
         ? 'Waiting for driver confirmation'
-        : status == 'countered'
+        : request?.isCountered == true
         ? 'Counter offer received'
         : 'Waiting for driver response';
-    final body = status == 'accepted'
+    final body = request?.normalizedStatus == 'accepted'
         ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
-        : yourTurnToConfirm
+        : request?.isClientTurnToConfirm == true
         ? 'The driver already committed. Confirm or decline to finish the handshake.'
-        : waitingOnDriver
+        : request?.isWaitingForCounterpartyConfirmation == true
         ? 'You already confirmed this offer. We are waiting for the driver to confirm now.'
-        : status == 'countered'
+        : request?.isCountered == true
         ? 'The driver sent a counter. Review it here and respond instantly.'
         : request?.driverTimedOut == true
         ? 'The driver did not respond in time. The broker can step in now.'
@@ -5187,11 +5208,11 @@ class _BrokerNegotiationSheetState
             ),
           ),
         ],
-        if (actionable) ...[
+        if (request?.isActionableByClient == true) ...[
           const SizedBox(height: 16),
           _NegotiationActionButtons(
-            acceptLabel: yourTurnToConfirm ? 'Confirm' : 'Accept',
-            canCounter: status == 'countered',
+            acceptLabel: request!.isClientTurnToConfirm ? 'Confirm' : 'Accept',
+            canCounter: false,
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
             onCounter: _counterRequest,
@@ -5515,23 +5536,32 @@ class _NegotiationActionButtons extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: isBusy ? null : onReject,
-                child: const Text('Reject'),
+        if (canCounter)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: isBusy ? null : onReject,
+                  child: const Text('Reject'),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: isBusy || !canCounter ? null : onCounter,
-                child: const Text('Counter'),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: isBusy ? null : onCounter,
+                  child: const Text('Counter'),
+                ),
               ),
+            ],
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: isBusy ? null : onReject,
+              child: const Text('Reject'),
             ),
-          ],
-        ),
+          ),
       ],
     );
   }
@@ -6343,11 +6373,8 @@ class _BookingWaitingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final request = driverRequest;
-    final status = request?.status.trim().toLowerCase() ?? 'pending';
-    final pendingConfirmationBy =
-        request?.pendingConfirmationBy.trim().toLowerCase() ?? '';
-    final awaitingConfirmation = status == 'awaiting_confirmation';
-    final yourTurn = awaitingConfirmation && pendingConfirmationBy == 'broker';
+    final awaitingConfirmation = request?.isAwaitingConfirmation == true;
+    final yourTurn = request?.isClientTurnToConfirm == true;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -6446,7 +6473,7 @@ class _BookingWaitingCard extends StatelessWidget {
                         ? (yourTurn
                               ? 'The broker accepted. Confirm or decline to finish.'
                               : 'Waiting for the broker to confirm your earlier acceptance.')
-                        : request.status == 'countered'
+                        : request.isCountered
                         ? 'Driver countered. Tracking will show the next action.'
                         : request.driverTimedOut
                         ? 'Driver timed out. The broker can take over now.'

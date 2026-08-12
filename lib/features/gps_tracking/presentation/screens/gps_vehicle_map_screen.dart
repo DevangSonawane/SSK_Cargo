@@ -37,8 +37,8 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
       return null;
     }
     return LatLngBounds(
-      southwest: vehicle.position,
-      northeast: vehicle.position,
+      southwest: LatLng(vehicle.latitude!, vehicle.longitude!),
+      northeast: LatLng(vehicle.latitude!, vehicle.longitude!),
     );
   }
 
@@ -77,6 +77,63 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
     }
   }
 
+  Future<void> _loadVehicle({bool silent = false}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _vehicle = null;
+        _loading = false;
+        _error = 'Please sign in again to view this vehicle.';
+      });
+      return;
+    }
+
+    if (!silent && mounted) {
+      setState(() {
+        _loading = true;
+        _error = '';
+      });
+    }
+
+    try {
+      final vehicle = await ref
+          .read(gpsTrackingRepositoryProvider)
+          .fetchDeviceByImei(
+            accessToken: session.tokens.accessToken,
+            imei: widget.vehicleId,
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _vehicle = vehicle;
+        _loading = false;
+        _error = vehicle == null ? 'Vehicle not found' : '';
+      });
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _vehicle = null;
+        _loading = false;
+        _error = error.message;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _vehicle = null;
+        _loading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -100,9 +157,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF7F9FD),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -114,6 +169,17 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Vehicle not found'),
+              if (_error.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFB3261E),
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => context.go('/gps/maps'),
@@ -149,7 +215,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                           children: [
                             InkWell(
                               onTap: () => context.go('/gps/maps'),
-                        child: Text(
+                              child: Text(
                                 'Fleet',
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
@@ -197,6 +263,27 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _VehicleSummaryCard(vehicle: vehicle),
                 ),
+                if (vehicle.source == 'cached')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF4DA),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFF3D38C)),
+                      ),
+                      child: Text(
+                        'Live tracking is unavailable right now - showing the last known position${vehicle.lastSeenAt != null ? ', from ${vehicle.timeAgoLabel}' : ''}.',
+                        style: const TextStyle(
+                          color: Color(0xFF9A6B00),
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: Padding(
@@ -205,7 +292,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                       borderRadius: BorderRadius.circular(26),
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
-                          target: vehicle.position,
+                          target: LatLng(vehicle.latitude!, vehicle.longitude!),
                           zoom: 13,
                         ),
                         myLocationButtonEnabled: false,
@@ -214,7 +301,10 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                         markers: {
                           Marker(
                             markerId: MarkerId(vehicle.deviceImei),
-                            position: LatLng(vehicle.latitude!, vehicle.longitude!),
+                            position: LatLng(
+                              vehicle.latitude!,
+                              vehicle.longitude!,
+                            ),
                             infoWindow: InfoWindow(
                               title: vehicle.displayName,
                               snippet: vehicle.locationLabel,
@@ -305,7 +395,7 @@ class _HeaderButton extends StatelessWidget {
 class _VehicleSummaryCard extends StatelessWidget {
   const _VehicleSummaryCard({required this.vehicle});
 
-  final GpsDemoVehicle vehicle;
+  final GpsTrackerDevice vehicle;
 
   @override
   Widget build(BuildContext context) {
@@ -367,7 +457,7 @@ class _VehicleSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              vehicle.status,
+              vehicle.statusLabel,
               style: TextStyle(
                 color: vehicle.color,
                 fontSize: 11,

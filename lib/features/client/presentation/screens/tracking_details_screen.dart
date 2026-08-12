@@ -250,55 +250,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   Future<String?> _promptCancellationReason() async {
-    final controller = TextEditingController();
-    try {
-      return await showDialog<String?>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              final reason = controller.text.trim();
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: const Text('Cancel booking'),
-                content: TextField(
-                  controller: controller,
-                  minLines: 3,
-                  maxLines: 5,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Reason',
-                    hintText:
-                        'Tell the driver and broker why you are cancelling',
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(null),
-                    child: const Text('Keep booking'),
-                  ),
-                  FilledButton(
-                    onPressed: reason.isEmpty
-                        ? null
-                        : () => Navigator.of(dialogContext).pop(reason),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFE23A4B),
-                    ),
-                    child: const Text('Cancel booking'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    } finally {
-      controller.dispose();
-    }
+    return showDialog<String?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const _CancellationReasonDialog(),
+    );
   }
 
   Future<void> _confirmCancelBooking() async {
@@ -1603,6 +1559,69 @@ class _InfoGrid extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CancellationReasonDialog extends StatefulWidget {
+  const _CancellationReasonDialog();
+
+  @override
+  State<_CancellationReasonDialog> createState() =>
+      _CancellationReasonDialogState();
+}
+
+class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = _controller.text.trim();
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Cancel booking'),
+      content: TextField(
+        controller: _controller,
+        minLines: 3,
+        maxLines: 5,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          labelText: 'Reason',
+          hintText: 'Tell the driver and broker why you are cancelling',
+        ),
+        onChanged: (_) {
+          if (mounted) {
+            setState(() {});
+          }
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Keep booking'),
+        ),
+        FilledButton(
+          onPressed: reason.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(reason),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFE23A4B),
+          ),
+          child: const Text('Cancel booking'),
         ),
       ],
     );
@@ -2939,74 +2958,46 @@ class _BookingNegotiationSheetState
 
 extension on _BookingNegotiationSheetState {
   bool _isClientActionable(ClientBookingOffer request) {
-    final status = request.status.trim().toLowerCase();
-    final pendingConfirmationBy = request.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
-    return status == 'countered' ||
-        (status == 'awaiting_confirmation' &&
-            pendingConfirmationBy == 'broker');
+    return request.isActionableByClient;
   }
 
   bool _isOfferActionable(ClientBookingOffer offer) {
-    final status = offer.status.trim().toLowerCase();
-    final pendingConfirmationBy = offer.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
-    if (status == 'countered') {
-      return true;
-    }
-    if (status == 'awaiting_confirmation') {
-      return pendingConfirmationBy == 'broker';
-    }
-    return false;
+    return offer.isActionableByClient;
   }
 
   String _offerStatusText(ClientBookingOffer offer) {
-    final status = offer.status.trim().toLowerCase();
-    final pendingConfirmationBy = offer.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'broker') {
+    if (offer.isClientTurnToConfirm) {
       return 'Your turn';
     }
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'client') {
+    if (offer.isWaitingForCounterpartyConfirmation) {
       return 'Waiting for broker confirmation';
     }
-    if (status == 'countered') {
+    if (offer.isCountered) {
       return 'Your turn';
     }
-    if (status == 'accepted') {
+    if (offer.normalizedStatus == 'accepted') {
       return 'Confirmed';
     }
-    if (status == 'declined') {
+    if (offer.normalizedStatus == 'declined') {
       return 'No longer available';
     }
     return 'Waiting for broker response';
   }
 
   String _driverRequestStatusText(ClientBookingOffer request) {
-    final status = request.status.trim().toLowerCase();
-    final pendingConfirmationBy = request.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'client') {
+    if (request.isClientTurnToConfirm) {
+      return 'Your turn';
+    }
+    if (request.isWaitingForCounterpartyConfirmation) {
       return 'Waiting for driver confirmation';
     }
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'broker') {
+    if (request.isCountered) {
       return 'Your turn';
     }
-    if (status == 'countered') {
-      return 'Your turn';
-    }
-    if (status == 'accepted') {
+    if (request.normalizedStatus == 'accepted') {
       return 'Confirmed';
     }
-    if (status == 'declined') {
+    if (request.normalizedStatus == 'declined') {
       return 'No longer available';
     }
     return 'Waiting for driver response';
@@ -3015,16 +3006,11 @@ extension on _BookingNegotiationSheetState {
   List<Widget> _clientActionButtonsForDriverRequest(
     ClientBookingOffer request,
   ) {
-    final status = request.status.trim().toLowerCase();
-    final pendingConfirmationBy = request.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
     if (!_isClientActionable(request)) {
       return const [];
     }
 
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'broker') {
+    if (request.isClientTurnToConfirm) {
       return [
         FilledButton(
           onPressed: _busy ? null : _acceptDriverRequest,
@@ -3042,10 +3028,6 @@ extension on _BookingNegotiationSheetState {
         onPressed: _busy ? null : _acceptDriverRequest,
         child: const Text('Accept'),
       ),
-      OutlinedButton(
-        onPressed: _busy ? null : _counterDriverRequest,
-        child: const Text('Counter'),
-      ),
       TextButton(
         onPressed: _busy ? null : _rejectDriverRequest,
         child: const Text('Reject'),
@@ -3054,18 +3036,11 @@ extension on _BookingNegotiationSheetState {
   }
 
   List<Widget> _clientActionButtonsForOffer(ClientBookingOffer offer) {
-    final status = offer.status.trim().toLowerCase();
-    final pendingConfirmationBy = offer.pendingConfirmationBy
-        .trim()
-        .toLowerCase();
-
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'client') {
+    if (offer.isWaitingForCounterpartyConfirmation) {
       return const [];
     }
 
-    if (status == 'awaiting_confirmation' &&
-        pendingConfirmationBy == 'broker') {
+    if (offer.isClientTurnToConfirm) {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptOffer(offer),
@@ -3082,7 +3057,7 @@ extension on _BookingNegotiationSheetState {
       ];
     }
 
-    if (status == 'countered') {
+    if (offer.isCountered) {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptOffer(offer),

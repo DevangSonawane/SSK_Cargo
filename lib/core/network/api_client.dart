@@ -128,10 +128,7 @@ class SskApiClient {
     required String accessToken,
     required String name,
   }) async {
-    developer.log(
-      'GET /api/tracking/devices/name/$name',
-      name: 'SSK.API',
-    );
+    developer.log('GET /api/tracking/devices/name/$name', name: 'SSK.API');
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/tracking/devices/name/${Uri.encodeComponent(name)}',
@@ -144,10 +141,7 @@ class SskApiClient {
     required String accessToken,
     required String imei,
   }) async {
-    developer.log(
-      'GET /api/tracking/devices/imei/$imei',
-      name: 'SSK.API',
-    );
+    developer.log('GET /api/tracking/devices/imei/$imei', name: 'SSK.API');
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/tracking/devices/imei/${Uri.encodeComponent(imei)}',

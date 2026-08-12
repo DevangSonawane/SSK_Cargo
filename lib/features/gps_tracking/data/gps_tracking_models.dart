@@ -24,7 +24,8 @@ class GpsTrackerDevice {
     return GpsTrackerDevice(
       deviceId: json['deviceId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      deviceImei: json['deviceImei']?.toString() ?? json['imei']?.toString() ?? '',
+      deviceImei:
+          json['deviceImei']?.toString() ?? json['imei']?.toString() ?? '',
       type: json['type']?.toString(),
       phone: json['phone']?.toString(),
       latitude: _asDouble(json['latitude']),
@@ -112,7 +113,9 @@ class GpsTrackerDevice {
       return '—';
     }
     final rounded = speed!.roundToDouble();
-    final text = speed == rounded ? speed!.toStringAsFixed(0) : speed!.toStringAsFixed(1);
+    final text = speed == rounded
+        ? speed!.toStringAsFixed(0)
+        : speed!.toStringAsFixed(1);
     return '$text km/h';
   }
 
@@ -153,7 +156,11 @@ class GpsTrackerDevice {
 
 List<GpsTrackerDevice> parseGpsTrackerDevices(Map<String, dynamic> response) {
   final data = _asMap(response['data']);
-  final rawDevices = _asList(data['devices']) ?? _asList(response['devices']) ?? _asList(data) ?? const [];
+  final rawDevices =
+      _asList(data['devices']) ??
+      _asList(response['devices']) ??
+      _asList(data) ??
+      const [];
   return rawDevices
       .map((item) => item is Map<String, dynamic> ? item : null)
       .whereType<Map<String, dynamic>>()
@@ -232,7 +239,11 @@ Map<String, dynamic> _asMap(Object? value) {
 
 String _formatShortDateTime(DateTime value) {
   final local = value.toLocal();
-  final hour = local.hour == 0 ? 12 : local.hour > 12 ? local.hour - 12 : local.hour;
+  final hour = local.hour == 0
+      ? 12
+      : local.hour > 12
+      ? local.hour - 12
+      : local.hour;
   final minute = local.minute.toString().padLeft(2, '0');
   final period = local.hour >= 12 ? 'PM' : 'AM';
   return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year} $hour:$minute $period';

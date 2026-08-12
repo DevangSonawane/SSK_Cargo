@@ -12,9 +12,14 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
-  const DriverDeliveryDetailsScreen({super.key, required this.tripId});
+  const DriverDeliveryDetailsScreen({
+    super.key,
+    this.tripId = '',
+    this.bookingId,
+  });
 
   final String tripId;
+  final String? bookingId;
 
   @override
   ConsumerState<DriverDeliveryDetailsScreen> createState() =>
@@ -35,14 +40,39 @@ class _DriverDeliveryDetailsScreenState
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
   TrackingDemoShipment? _shipment;
+  Timer? _tripResolveTimer;
+  String? _resolvedTripId;
+
+  String get _tripId => _resolvedTripId?.trim().isNotEmpty == true
+      ? _resolvedTripId!.trim()
+      : widget.tripId.trim();
+
+  String get _bookingId => widget.bookingId?.trim() ?? '';
 
   @override
   void initState() {
     super.initState();
-    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+    if (widget.tripId.trim().isNotEmpty) {
+      ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId
+          .trim();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadTrip());
+      if (widget.tripId.trim().isEmpty && _bookingId.isNotEmpty) {
+        _tripResolveTimer?.cancel();
+        _tripResolveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+          if (mounted) {
+            unawaited(_loadTrip());
+          }
+        });
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _tripResolveTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTrip() async {
@@ -54,12 +84,50 @@ class _DriverDeliveryDetailsScreenState
     }
 
     try {
-      final response = await ref
-          .read(apiClientProvider)
-          .getTrip(
+      final api = ref.read(apiClientProvider);
+      var tripId = _tripId;
+      if (tripId.isEmpty && _bookingId.isNotEmpty) {
+        final bookingResponse = await api.getBookingById(
+          accessToken: session.tokens.accessToken,
+          id: _bookingId,
+        );
+        final bookingData = bookingResponse['data'];
+        final booking = bookingData is Map<String, dynamic>
+            ? (bookingData['booking'] is Map<String, dynamic>
+                  ? bookingData['booking'] as Map<String, dynamic>
+                  : bookingData)
+            : bookingResponse;
+        tripId = _readString(booking, const ['tripId', 'trip_id']);
+        if (tripId.isEmpty) {
+          final requestResponse = await api.getDriverRequestByBooking(
             accessToken: session.tokens.accessToken,
-            tripId: widget.tripId,
+            bookingId: _bookingId,
           );
+          final requestData = requestResponse['data'];
+          final request = requestData is Map<String, dynamic>
+              ? (requestData['request'] is Map<String, dynamic>
+                    ? requestData['request'] as Map<String, dynamic>
+                    : requestData)
+              : requestResponse;
+          tripId = _readString(request, const ['tripId', 'trip_id']);
+        }
+
+        if (tripId.isEmpty) {
+          if (!mounted) return;
+          setState(() => _loadingTrip = true);
+          return;
+        }
+
+        if (mounted) {
+          _resolvedTripId = tripId;
+          ref.read(driverActiveTripIdProvider.notifier).state = tripId;
+        }
+      }
+
+      final response = await api.getTrip(
+        accessToken: session.tokens.accessToken,
+        tripId: tripId,
+      );
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -67,6 +135,15 @@ class _DriverDeliveryDetailsScreenState
                 : data)
           : response;
       if (!mounted) return;
+      final resolvedTripId = _readString(trip, const [
+        'id',
+        'tripId',
+        'trip_id',
+      ]);
+      if (resolvedTripId.isNotEmpty) {
+        _resolvedTripId = resolvedTripId;
+        ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+      }
 
       setState(() {
         _shipment = _shipmentFromTrip(trip);
@@ -144,7 +221,7 @@ class _DriverDeliveryDetailsScreenState
           .read(apiClientProvider)
           .updateTripStatus(
             accessToken: session.tokens.accessToken,
-            tripId: widget.tripId,
+            tripId: _tripId,
             status: nextStatus,
           );
       final data = response['data'];
@@ -486,13 +563,13 @@ class _DriverDeliveryDetailsScreenState
           .read(apiClientProvider)
           .updateTripStatus(
             accessToken: session.tokens.accessToken,
-            tripId: widget.tripId,
+            tripId: _tripId,
             status: 'delivered',
           );
       if (!mounted) return;
       final requiresPayment = _paymentStatus != 'paid';
       context.go(
-        '/driver/delivery-proof/${widget.tripId}?payment=${requiresPayment ? 'pending' : 'paid'}',
+        '/driver/delivery-proof/$_tripId?payment=${requiresPayment ? 'pending' : 'paid'}',
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -786,7 +863,7 @@ class _DriverDeliveryDetailsScreenState
                     subtitle: 'Notify our support team immediately',
                     onTap: () {
                       Navigator.of(sheetContext).pop();
-                      _showIncidentReport(context, widget.tripId);
+                      _showIncidentReport(context, _tripId);
                     },
                   ),
                   const SizedBox(height: 10),
@@ -798,7 +875,7 @@ class _DriverDeliveryDetailsScreenState
                     subtitle: 'See breakdown and repair progress',
                     onTap: () {
                       Navigator.of(sheetContext).pop();
-                      _showMechanicStatus(context, widget.tripId);
+                      _showMechanicStatus(context, _tripId);
                     },
                   ),
                 ],
@@ -905,7 +982,7 @@ class _DriverDeliveryDetailsScreenState
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            widget.tripId,
+                            _tripId.isNotEmpty ? _tripId : _bookingId,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             softWrap: false,

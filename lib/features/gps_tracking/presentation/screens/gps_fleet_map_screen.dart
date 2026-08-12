@@ -71,6 +71,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
           ? maxLng
           : point.longitude;
     }
+
     return LatLngBounds(
       southwest: LatLng(minLat!, minLng!),
       northeast: LatLng(maxLat!, maxLng!),
@@ -90,7 +91,8 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
             _truckIcon ??
             BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         anchor: const Offset(0.5, 0.5),
-        onTap: () => context.go('/gps/maps/${Uri.encodeComponent(device.deviceImei)}'),
+        onTap: () =>
+            context.go('/gps/maps/${Uri.encodeComponent(device.deviceImei)}'),
       );
     }).toSet();
   }
@@ -140,8 +142,8 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
       }
       setState(() {
         _devices = [];
-        _error = 'Please sign in again to view live fleet tracking.';
         _loading = false;
+        _error = 'Please sign in again to view live fleet tracking.';
       });
       return;
     }
@@ -154,32 +156,32 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
     }
 
     try {
-      final devices = await ref.read(gpsTrackingRepositoryProvider).fetchDevices(
-            accessToken: session.tokens.accessToken,
-          );
+      final devices = await ref
+          .read(gpsTrackingRepositoryProvider)
+          .fetchDevices(accessToken: session.tokens.accessToken);
       if (!mounted) {
         return;
       }
       setState(() {
         _devices = devices;
-        _error = '';
         _loading = false;
+        _error = '';
       });
     } on ApiException catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
-        _error = error.message;
         _loading = false;
+        _error = error.message;
       });
     } catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
-        _error = error.toString();
         _loading = false;
+        _error = error.toString();
       });
     }
   }
@@ -200,6 +202,10 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final onlineCount = _devices
+        .where((device) => device.statusLabel.toLowerCase().contains('online'))
+        .length;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FD),
       drawer: const GpsSidebarDrawer(currentRoute: '/gps/maps'),
@@ -227,15 +233,18 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Fleet',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF0F1F44),
-                                    letterSpacing: -0.7,
-                                  ),
+                            InkWell(
+                              onTap: () => context.go('/gps/maps'),
+                              child: Text(
+                                'Fleet',
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFF0F1F44),
+                                      letterSpacing: -0.7,
+                                    ),
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -277,23 +286,42 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _FleetSummaryCard(
                     count: _devices.length,
-                    onlineCount: _devices
-                        .where((device) =>
-                            device.statusLabel.toLowerCase().contains('online'))
-                        .length,
+                    onlineCount: onlineCount,
                   ),
                 ),
-                if (_loading) ...[
-                  const SizedBox(height: 10),
+                if (_devices.any((device) => device.source == 'cached'))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF4DA),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFF3D38C)),
+                      ),
+                      child: const Text(
+                        'Live tracking is unavailable right now - showing each vehicle\'s last known position.',
+                        style: TextStyle(
+                          color: Color(0xFF9A6B00),
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_loading)
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.only(top: 10),
                     child: LinearProgressIndicator(minHeight: 2),
                   ),
-                ],
-                if (_error.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+                if (_error.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 10,
+                    ),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
@@ -302,16 +330,25 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFF3C0C0)),
                       ),
-                      child: Text(
-                        _error,
-                        style: const TextStyle(
-                          color: Color(0xFFB3261E),
-                          fontSize: 12.5,
-                        ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _error,
+                              style: const TextStyle(
+                                color: Color(0xFFB3261E),
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loadDevices,
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: Padding(
