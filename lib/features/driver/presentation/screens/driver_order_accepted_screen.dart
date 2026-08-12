@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -107,10 +108,18 @@ class _DriverOrderAcceptedScreenState
   Future<void> _startLiveUpdates() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
+      developer.log(
+        'Driver request live updates skipped: missing session or unmounted.',
+        name: 'driver.orderAccepted',
+      );
       return;
     }
 
     final socketService = ref.read(appSocketServiceProvider);
+    developer.log(
+      'Connecting driver request socket for negotiation screen.',
+      name: 'driver.orderAccepted',
+    );
     await socketService.ensureConnected(
       accessToken: session.tokens.accessToken,
     );
@@ -122,9 +131,21 @@ class _DriverOrderAcceptedScreenState
     _driverRequestSubscription = socketService.driverRequestStream.listen((
       payload,
     ) {
+      developer.log(
+        'driver-request-updated received on negotiation screen: $payload',
+        name: 'driver.orderAccepted',
+      );
       if (!mounted || !_payloadMatchesTarget(payload)) {
+        developer.log(
+          'driver-request-updated ignored: no matching request context.',
+          name: 'driver.orderAccepted',
+        );
         return;
       }
+      developer.log(
+        'driver-request-updated matched current request. Handling live payload.',
+        name: 'driver.orderAccepted',
+      );
       unawaited(_handleLivePayload(payload));
     });
 
@@ -162,12 +183,25 @@ class _DriverOrderAcceptedScreenState
     ]).trim().toLowerCase();
     final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
 
+    developer.log(
+      'Handling live payload on negotiation screen. status=$status tripId=$effectiveTripId',
+      name: 'driver.orderAccepted',
+    );
+
     if (_isAcceptedStatus(status) && effectiveTripId.isNotEmpty) {
+      developer.log(
+        'Accepted status received from socket. Resolving trip and navigating.',
+        name: 'driver.orderAccepted',
+      );
       await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
       return;
     }
 
     if (_isRejectedStatus(status)) {
+      developer.log(
+        'Rejected status received from socket. Sending driver back home.',
+        name: 'driver.orderAccepted',
+      );
       if (!mounted) return;
       ref.invalidate(driverRequestsProvider);
       context.go('/driver/home');
@@ -201,9 +235,17 @@ class _DriverOrderAcceptedScreenState
 
     try {
       final response = await action(session.tokens.accessToken);
+      developer.log(
+        'Negotiation action completed successfully. response=$response',
+        name: 'driver.orderAccepted',
+      );
       final payload = _extractPayload(response);
       final request = DriverRequestItem.fromMap(payload);
       final effectiveTripId = _extractTripId(payload, request.tripId).trim();
+      developer.log(
+        'Negotiation payload resolved. tripId=$effectiveTripId requestId=${request.id}',
+        name: 'driver.orderAccepted',
+      );
 
       if (isCounter && mounted) {
         setState(() {
@@ -212,6 +254,10 @@ class _DriverOrderAcceptedScreenState
       }
 
       if (resolveTripOnSuccess && effectiveTripId.isNotEmpty) {
+        developer.log(
+          'Negotiation accepted locally. Resolving upcoming trip.',
+          name: 'driver.orderAccepted',
+        );
         await _resolveTripAndShowTrackOption(fallbackTripId: effectiveTripId);
         return;
       }
@@ -245,15 +291,27 @@ class _DriverOrderAcceptedScreenState
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
+      developer.log(
+        'Trip resolution skipped: missing session or unmounted.',
+        name: 'driver.orderAccepted',
+      );
       return;
     }
 
     String tripId = fallbackTripId;
     String tripStatus = '';
+    developer.log(
+      'Resolving trip from upcoming API. fallbackTripId=$fallbackTripId',
+      name: 'driver.orderAccepted',
+    );
     try {
       final response = await ref
           .read(apiClientProvider)
           .getUpcomingTrip(accessToken: session.tokens.accessToken);
+      developer.log(
+        'Upcoming trip API response received: $response',
+        name: 'driver.orderAccepted',
+      );
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -265,16 +323,32 @@ class _DriverOrderAcceptedScreenState
         'status',
         'rawStatus',
       ]).trim().toLowerCase();
+      developer.log(
+        'Upcoming trip resolved. tripId=$tripId status=$tripStatus',
+        name: 'driver.orderAccepted',
+      );
     } catch (_) {
+      developer.log(
+        'Upcoming trip API failed. Falling back to known trip id.',
+        name: 'driver.orderAccepted',
+      );
       // Fall back to the trip id already known from the negotiation payload.
     }
 
     if (tripId.isEmpty || !mounted) {
+      developer.log(
+        'Trip resolution aborted: tripId missing or screen unmounted.',
+        name: 'driver.orderAccepted',
+      );
       return;
     }
 
     ref.read(driverLocationTrackerProvider).setActiveTripId(tripId);
     final readyToTrack = tripStatus == 'confirmed' || tripStatus == 'accepted';
+    developer.log(
+      'Trip location tracker updated. readyToTrack=$readyToTrack tripId=$tripId',
+      name: 'driver.orderAccepted',
+    );
     if (!mounted) return;
     setState(() {
       _accepted = true;
@@ -282,6 +356,19 @@ class _DriverOrderAcceptedScreenState
       _resolvedTripStatus = tripStatus;
       _trackRideReady = readyToTrack;
     });
+
+    if (readyToTrack) {
+      developer.log(
+        'Trip is ready. Navigating directly to delivery details.',
+        name: 'driver.orderAccepted',
+      );
+      context.replace('/driver/delivery-details/$tripId');
+    } else {
+      developer.log(
+        'Trip not ready yet. Showing fallback track button instead of auto-navigation.',
+        name: 'driver.orderAccepted',
+      );
+    }
   }
 
   @override
@@ -591,7 +678,7 @@ class _DriverOrderAcceptedScreenState
                                 onPressed: _resolvedTripId.isEmpty
                                     ? null
                                     : () {
-                                        context.go(
+                                        context.replace(
                                           '/driver/delivery-details/$_resolvedTripId',
                                         );
                                       },

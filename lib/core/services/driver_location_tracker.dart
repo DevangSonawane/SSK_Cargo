@@ -188,6 +188,10 @@ class DriverLocationTracker {
     }
 
     try {
+      developer.log(
+        'Publishing driver location lat=${position.latitude} lng=${position.longitude} tripId=$_activeTripId force=$force',
+        name: 'SSK.Location',
+      );
       await _ref
           .read(apiClientProvider)
           .updateDriverLocation(
@@ -200,6 +204,37 @@ class DriverLocationTracker {
     } catch (error, stackTrace) {
       developer.log(
         'Failed to publish driver location',
+        name: 'SSK.Location',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final tripId = _activeTripId;
+    if (tripId == null || tripId.isEmpty) {
+      developer.log(
+        'Skipping trip location publish because no active trip id is set.',
+        name: 'SSK.Location',
+      );
+      return;
+    }
+
+    try {
+      developer.log(
+        'Publishing trip location lat=${position.latitude} lng=${position.longitude} tripId=$tripId force=$force',
+        name: 'SSK.Location',
+      );
+      await _ref
+          .read(apiClientProvider)
+          .updateTripLocation(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            lat: position.latitude,
+            lng: position.longitude,
+          );
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to publish trip location',
         name: 'SSK.Location',
         error: error,
         stackTrace: stackTrace,
