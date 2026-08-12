@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -355,201 +356,141 @@ class _DriverDeliveryHistoryDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final shipment = _shipment;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null && _shipment == null
-              ? _ErrorState(message: _error!, onRetry: _loadDetails)
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _HeaderBar(
-                        bookingRef: _displayBookingRef,
-                        status: _statusLabel,
-                        onBack: () => context.pop(),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null && shipment == null
+            ? Padding(
+                padding: const EdgeInsets.all(14),
+                child: _ErrorState(message: _error!, onRetry: _loadDetails),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final pagePadding = constraints.maxWidth >= 900 ? 24.0 : 14.0;
+                  final maxWidth = constraints.maxWidth >= 1024
+                      ? 960.0
+                      : double.infinity;
+
+                  return RefreshIndicator(
+                    onRefresh: _loadDetails,
+                    color: const Color(0xFF2FA56E),
+                    backgroundColor: Colors.white,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
                       ),
-                      const SizedBox(height: 16),
-                      _RouteSummaryCard(
-                        pickup: _shipment?.fromLocation ?? 'Pickup unavailable',
-                        drop: _shipment?.toLocation ?? 'Drop unavailable',
-                      ),
-                      const SizedBox(height: 16),
-                      _ActionRow(
-                        onDownload: _downloading ? null : _downloadInvoice,
-                        onEmail: _emailing ? null : _emailInvoice,
-                        onShare: _sharing ? null : _shareViaWhatsApp,
-                        onNotify: _notifying ? null : _notifyClient,
-                        downloading: _downloading,
-                        emailing: _emailing,
-                        sharing: _sharing,
-                        notifying: _notifying,
-                      ),
-                      const SizedBox(height: 16),
-                      _MapPanel(shipment: _shipment),
-                      const SizedBox(height: 16),
-                      _SectionCard(
-                        title: 'Trip Details',
-                        child: Column(
-                          children: [
-                            _DetailRow(
-                              icon: Icons.local_shipping_outlined,
-                              label: 'Truck',
-                              value: _truckValue,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              pagePadding,
+                              12,
+                              pagePadding,
+                              16,
                             ),
-                            _DetailRow(
-                              icon: Icons.person_outline_rounded,
-                              label: 'Broker',
-                              value: _brokerValue,
-                            ),
-                            _DetailRow(
-                              icon: Icons.phone_outlined,
-                              label: 'Broker Phone',
-                              value: _brokerPhoneValue,
-                            ),
-                            _DetailRow(
-                              icon: Icons.calendar_month_outlined,
-                              label: 'Date',
-                              value: _dateValue,
-                            ),
-                            _DetailRow(
-                              icon: Icons.route_outlined,
-                              label: 'Distance',
-                              value: _distanceValue,
-                            ),
-                            _DetailRow(
-                              icon: Icons.schedule_outlined,
-                              label: 'Time Taken',
-                              value: _timeTakenValue,
-                            ),
-                            _DetailRow(
-                              icon: Icons.inventory_2_outlined,
-                              label: 'Cargo',
-                              value: _cargoValue,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _SectionCard(
-                        title: 'Earnings',
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final tileWidth = constraints.maxWidth >= 600
-                                ? (constraints.maxWidth - 12) / 2
-                                : constraints.maxWidth;
-                            return Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                SizedBox(
-                                  width: tileWidth,
-                                  child: _MetricTile(
-                                    label: 'Earnings',
-                                    value: _earningsValue,
-                                    accent: const Color(0xFF2FA56E),
+                                _HeaderBar(
+                                  bookingRef: _displayBookingRef,
+                                  status: _statusLabel,
+                                  onBack: () => context.pop(),
+                                ),
+                                const SizedBox(height: 16),
+                                _RouteSummaryCard(
+                                  pickup: shipment?.fromLocation ??
+                                      'Pickup unavailable',
+                                  drop: shipment?.toLocation ??
+                                      'Drop unavailable',
+                                  status: _statusLabel,
+                                  truckImage: 'assets/driver/active_truck_driver.png',
+                                ),
+                                const SizedBox(height: 16),
+                                _ActionRow(
+                                  onDownload:
+                                      _downloading ? null : _downloadInvoice,
+                                  onEmail: _emailing ? null : _emailInvoice,
+                                  onShare: _sharing ? null : _shareViaWhatsApp,
+                                  onNotify: _notifying ? null : _notifyClient,
+                                  downloading: _downloading,
+                                  emailing: _emailing,
+                                  sharing: _sharing,
+                                  notifying: _notifying,
+                                ),
+                                const SizedBox(height: 16),
+                                _MapPanel(shipment: shipment),
+                                const SizedBox(height: 16),
+                                _SectionCard(
+                                  title: 'Trip Details',
+                                  accentColor: const Color(0xFF2FA56E),
+                                  child: _TripDetailsGrid(
+                                    bookingTime: _bookingTimeValue,
+                                    expectedDelivery: _expectedDeliveryValue,
+                                    deliveredOn: _deliveredOnValue,
+                                    distanceTravelled: _distanceTravelledValue,
                                   ),
                                 ),
-                                SizedBox(
-                                  width: tileWidth,
-                                  child: _MetricTile(
-                                    label: 'Payment Status',
-                                    value: _paymentStatusValue,
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: tileWidth,
-                                  child: _MetricTile(
-                                    label: 'Started',
-                                    value: _startedValue,
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: tileWidth,
-                                  child: _MetricTile(
-                                    label: 'Delivered',
-                                    value: _deliveredValue,
+                                const SizedBox(height: 16),
+                                _SectionCard(
+                                  title: 'Earnings',
+                                  accentColor: const Color(0xFF2FA56E),
+                                  child: _EarningsPanel(
+                                    earningsValue: _earningsValue,
+                                    isPaid: _isPaidStatusText(_statusLabel),
                                   ),
                                 ),
                               ],
-                            );
-                          },
+                            ),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-        ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
 
-  String get _truckValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    final settlementTruck = widget.initialSettlement?.truck ?? '';
-    return _readFirstNonEmpty([
-      _readString(booking, const [
-        'truckReg',
-        'truck_reg',
-        'truckNumber',
-        'truck_number',
-        'vehicle_number',
-        'number_plate',
-        'reg_no',
-      ]),
-      settlementTruck,
-      _shipment?.assignedTruckName ?? '',
-    ]);
-  }
-
-  String get _brokerValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    return _readFirstNonEmpty([
-      _readString(booking, const ['brokerName', 'broker_name']),
-      _readNestedName(_mapFrom(booking['broker']), const [
-        'name',
-        'full_name',
-        'display_name',
-      ]),
-      _readNestedName(_mapFrom(booking['brokerUser']), const [
-        'name',
-        'full_name',
-        'display_name',
-      ]),
-      widget.initialSettlement?.driver ?? '',
-    ]);
-  }
-
-  String get _brokerPhoneValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    return _readFirstNonEmpty([
-      _readString(booking, const ['brokerPhone', 'broker_phone']),
-      _readString(_mapFrom(booking['broker']), const ['phone', 'mobile']),
-      _readString(_mapFrom(booking['brokerUser']), const ['phone', 'mobile']),
-      '—',
-    ]);
-  }
-
-  String get _dateValue {
+  String get _bookingTimeValue {
     final booking = _booking?.raw ?? const <String, dynamic>{};
     final value = _readDateTime(booking, const [
-      'startedAt',
-      'started_at',
-      'completedAt',
-      'completed_at',
-      'deliveredAt',
-      'delivered_at',
       'createdAt',
       'created_at',
+      'requestedAt',
+      'requested_at',
+      'startedAt',
+      'started_at',
     ]);
-    return value == null ? '—' : _formatDate(value);
+    return value == null ? '—' : _formatFullDateTime(value);
   }
 
-  String get _distanceValue {
+  String get _expectedDeliveryValue {
+    final booking = _booking?.raw ?? const <String, dynamic>{};
+    final etaText = _readFirstNonEmpty([
+      _readString(booking, const ['eta_text', 'eta', 'eta_minutes']),
+      _shipment?.status.isNotEmpty == true ? _activeStatusLabel(_shipment!.status) : '',
+    ]);
+    return etaText == '—' ? '—' : etaText;
+  }
+
+  String get _deliveredOnValue {
+    final booking = _booking?.raw ?? const <String, dynamic>{};
+    final value = _readDateTime(booking, const [
+      'deliveredAt',
+      'delivered_at',
+      'completedAt',
+      'completed_at',
+    ]);
+    return value == null ? '—' : _formatFullDateTime(value);
+  }
+
+  String get _distanceTravelledValue {
     final booking = _booking?.raw ?? const <String, dynamic>{};
     final distance = _readDouble(booking, const [
       'distance',
@@ -562,25 +503,6 @@ class _DriverDeliveryHistoryDetailsScreenState
         : '—';
   }
 
-  String get _timeTakenValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    final minutes = _readInt(booking, const [
-      'timeTakenMinutes',
-      'time_taken_minutes',
-      'duration_minutes',
-      'durationMinutes',
-    ]);
-    return minutes == null ? '—' : _formatDuration(minutes);
-  }
-
-  String get _cargoValue {
-    final booking = _booking;
-    if (booking == null) return '—';
-    final title = booking.displayTitle.isNotEmpty ? booking.displayTitle : '—';
-    final weight = booking.weight.isNotEmpty ? booking.weight : '—';
-    return '$title · ${_normalizeWeight(weight)}';
-  }
-
   String get _earningsValue {
     final amount =
         _shipment?.amount ??
@@ -588,41 +510,6 @@ class _DriverDeliveryHistoryDetailsScreenState
         widget.initialSettlement?.amount ??
         0;
     return 'Rs ${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
-  }
-
-  String get _paymentStatusValue {
-    final booking = _booking;
-    if (booking != null) {
-      final raw = _readString(booking.raw, const [
-        'payment_status',
-        'paymentStatus',
-      ]);
-      if (raw.isNotEmpty) {
-        return formatPaymentStatus(raw);
-      }
-    }
-    return widget.initialSettlement != null
-        ? _titleCase(widget.initialSettlement!.status)
-        : (_shipment?.paymentStatus.isNotEmpty == true
-              ? formatPaymentStatus(_shipment!.paymentStatus)
-              : '—');
-  }
-
-  String get _startedValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    final value = _readDateTime(booking, const ['startedAt', 'started_at']);
-    return value == null ? '—' : _formatDate(value);
-  }
-
-  String get _deliveredValue {
-    final booking = _booking?.raw ?? const <String, dynamic>{};
-    final value = _readDateTime(booking, const [
-      'deliveredAt',
-      'delivered_at',
-      'completedAt',
-      'completed_at',
-    ]);
-    return value == null ? '—' : _formatDate(value);
   }
 }
 
@@ -757,16 +644,18 @@ class _HeaderBar extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           InkWell(
             onTap: onBack,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F6FB),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE8EDF2)),
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
@@ -776,27 +665,32 @@ class _HeaderBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Booking ID',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
-                  fontWeight: FontWeight.w600,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Booking ID',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF98A2B3),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                bookingRef,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w900,
+                const SizedBox(height: 2),
+                Text(
+                  bookingRef,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           _StatusPill(status: status),
         ],
       ),
@@ -808,10 +702,14 @@ class _RouteSummaryCard extends StatelessWidget {
   const _RouteSummaryCard({
     required this.pickup,
     required this.drop,
+    required this.status,
+    required this.truckImage,
   });
 
   final String pickup;
   final String drop;
+  final String status;
+  final String truckImage;
 
   @override
   Widget build(BuildContext context) {
@@ -830,95 +728,48 @@ class _RouteSummaryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Pickup and drop',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w900,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 360;
+          final truckWidth = constraints.maxWidth < 560
+              ? constraints.maxWidth * 0.22
+              : constraints.maxWidth * 0.28;
+
+          final routeWidget = _PickupDropColumn(
+            pickup: pickup,
+            drop: drop,
+          );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                routeWidget,
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Image.asset(
+                    truckImage,
+                    width: truckWidth.clamp(96.0, 130.0),
+                    fit: BoxFit.contain,
+                  ),
                 ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2FA56E),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 34,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF59E0B),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pickup',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: const Color(0xFF98A2B3),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      pickup,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF101828),
-                            fontWeight: FontWeight.w700,
-                            height: 1.35,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Drop',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: const Color(0xFF98A2B3),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      drop,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF101828),
-                            fontWeight: FontWeight.w700,
-                            height: 1.35,
-                          ),
-                    ),
-                  ],
-                ),
+              Expanded(child: routeWidget),
+              const SizedBox(width: 14),
+              SizedBox(
+                width: truckWidth.clamp(100.0, 180.0),
+                child: Image.asset(truckImage, fit: BoxFit.contain),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -947,31 +798,52 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        _ActionButton(
-          label: downloading ? 'Downloading...' : 'Download Invoice',
-          icon: Icons.download_rounded,
-          onPressed: onDownload,
-        ),
-        _ActionButton(
-          label: emailing ? 'Sending...' : 'Send by Email',
-          icon: Icons.mail_outline_rounded,
-          onPressed: onEmail,
-        ),
-        _ActionButton(
-          label: sharing ? 'Preparing...' : 'Share via WhatsApp',
-          icon: Icons.share_rounded,
-          onPressed: onShare,
-        ),
-        _ActionButton(
-          label: notifying ? 'Sending...' : 'Notify Client',
-          icon: Icons.send_rounded,
-          onPressed: onNotify,
-        ),
-      ],
+    final buttons = [
+      _ActionButton(
+        label: downloading ? 'Downloading...' : 'Invoice',
+        svgIcon: _invoiceSvg,
+        onPressed: onDownload,
+      ),
+      _ActionButton(
+        label: emailing ? 'Sending...' : 'Email',
+        svgIcon: _emailSvg,
+        onPressed: onEmail,
+      ),
+      _ActionButton(
+        label: sharing ? 'Preparing...' : 'WhatsApp',
+        svgIcon: _whatsappSvg,
+        onPressed: onShare,
+      ),
+      _ActionButton(
+        label: notifying ? 'Sending...' : 'Notify',
+        svgIcon: _notifySvg,
+        onPressed: onNotify,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellWidth = (constraints.maxWidth - 10) / 2;
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: SizedBox(width: cellWidth, child: buttons[0])),
+                const SizedBox(width: 10),
+                Expanded(child: SizedBox(width: cellWidth, child: buttons[1])),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: SizedBox(width: cellWidth, child: buttons[2])),
+                const SizedBox(width: 10),
+                Expanded(child: SizedBox(width: cellWidth, child: buttons[3])),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -979,33 +851,61 @@ class _ActionRow extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.label,
-    required this.icon,
     required this.onPressed,
+    this.svgIcon,
   });
 
   final String label;
-  final IconData icon;
   final VoidCallback? onPressed;
+  final String? svgIcon;
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.22),
+    final leading = svgIcon == null
+        ? null
+        : SvgPicture.string(
+            svgIcon!,
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.primary,
+              BlendMode.srcIn,
+            ),
+          );
+
+    return SizedBox(
+      height: 52,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.22),
+          ),
+          foregroundColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        foregroundColor: Theme.of(context).colorScheme.primary,
-        backgroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      icon: Icon(icon, size: 16),
-      label: Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (leading != null) ...[
+              leading,
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1033,20 +933,66 @@ class _MapPanel extends StatelessWidget {
         ],
       ),
       child: SizedBox(
-        height: 270,
-        child: shipment == null
-            ? const Center(child: CircularProgressIndicator())
-            : TrackingRouteMapView(shipment: shipment!),
+        height: 280,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: shipment == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : TrackingRouteMapView(shipment: shipment!),
+            ),
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: FilledButton.tonalIcon(
+                onPressed: shipment == null
+                    ? null
+                    : () async {
+                        final pickup = shipment!.pickupLat;
+                        final pickupLng = shipment!.pickupLng;
+                        if (pickup == null || pickupLng == null) return;
+                        final uri = Uri.parse(
+                          'https://www.google.com/maps/search/?api=1&query=$pickup,$pickupLng',
+                        );
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF101828),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.navigation_rounded, size: 14),
+                label: Text(
+                  'Open in Maps',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    this.accentColor,
+  });
 
   final String title;
   final Widget child;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1068,12 +1014,25 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 3,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: accentColor ?? const Color(0xFF2FA56E),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           child,
@@ -1083,94 +1042,314 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
+class _PickupDropColumn extends StatelessWidget {
+  const _PickupDropColumn({required this.pickup, required this.drop});
+
+  final String pickup;
+  final String drop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _LocationBlock(
+                label: 'Pickup',
+                value: pickup,
+                color: const Color(0xFF2FA56E),
+                icon: Icons.arrow_upward_rounded,
+              ),
+              const SizedBox(height: 14),
+              _LocationBlock(
+                label: 'Drop',
+                value: drop,
+                color: const Color(0xFFF59E0B),
+                icon: Icons.location_on_rounded,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LocationBlock extends StatelessWidget {
+  const _LocationBlock({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 15, color: color),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TripDetailsGrid extends StatelessWidget {
+  const _TripDetailsGrid({
+    required this.bookingTime,
+    required this.expectedDelivery,
+    required this.deliveredOn,
+    required this.distanceTravelled,
+  });
+
+  final String bookingTime;
+  final String expectedDelivery;
+  final String deliveredOn;
+  final String distanceTravelled;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tiles = [
+          _DetailStatTile(
+            icon: Icons.calendar_month_outlined,
+            label: 'Booking Time',
+            value: bookingTime,
+            iconColor: const Color(0xFF2FA56E),
+          ),
+          _DetailStatTile(
+            icon: Icons.access_time_rounded,
+            label: 'Expected Delivery',
+            value: expectedDelivery,
+            iconColor: const Color(0xFF2FA56E),
+          ),
+          _DetailStatTile(
+            icon: Icons.local_shipping_outlined,
+            label: 'Delivered On',
+            value: deliveredOn,
+            iconColor: const Color(0xFF2FA56E),
+          ),
+          _DetailStatTile(
+            icon: Icons.route_outlined,
+            label: 'Distance Travelled',
+            value: distanceTravelled,
+            iconColor: const Color(0xFF2FA56E),
+          ),
+        ];
+
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: tiles[0]),
+                const SizedBox(width: 12),
+                Expanded(child: tiles[1]),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: tiles[2]),
+                const SizedBox(width: 12),
+                Expanded(child: tiles[3]),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DetailStatTile extends StatelessWidget {
+  const _DetailStatTile({
     required this.icon,
     required this.label,
     required this.value,
+    required this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: const Color(0xFF98A2B3)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
+    return SizedBox(
+      height: 102,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFD),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFECEFF3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w700,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EarningsPanel extends StatelessWidget {
+  const _EarningsPanel({
+    required this.earningsValue,
+    required this.isPaid,
+  });
+
+  final String earningsValue;
+  final bool isPaid;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFD),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFECEFF3)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Total Earnings',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 3),
+              ),
+              Text(
+                earningsValue,
+                textAlign: TextAlign.right,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF2FA56E),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isPaid) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF8EF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_rounded, color: Color(0xFF2FA56E)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Paid to Driver',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
                 Text(
-                  value,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
+                  earningsValue,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF2FA56E),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value, this.accent});
-
-  final String label;
-  final String value;
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final tileAccent = accent ?? const Color(0xFF667085);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFD),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFECEFF3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: tileAccent,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -1188,6 +1367,11 @@ class _StatusPill extends StatelessWidget {
       'delivered' ||
       'paid' ||
       'settled' => const Color(0xFF2FA56E),
+      'cancelled' ||
+      'canceled' ||
+      'declined' ||
+      'rejected' ||
+      'expired' => const Color(0xFFE23A4B),
       'pending' => const Color(0xFFF59E0B),
       _ => const Color(0xFF667085),
     };
@@ -1282,32 +1466,6 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
   return '';
 }
 
-String _readNestedName(Map<String, dynamic> json, List<String> keys) {
-  final direct = _readString(json, keys);
-  if (direct.isNotEmpty) return direct;
-
-  final nestedSources = <Map<String, dynamic>>[
-    _mapFrom(json['user']),
-    _mapFrom(json['broker']),
-    _mapFrom(json['client']),
-  ];
-  for (final source in nestedSources) {
-    final value = _readString(source, const [
-      'name',
-      'full_name',
-      'display_name',
-    ]);
-    if (value.isNotEmpty) return value;
-  }
-  return '';
-}
-
-Map<String, dynamic> _mapFrom(Object? value) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map) return value.cast<String, dynamic>();
-  return <String, dynamic>{};
-}
-
 String _readFirstNonEmpty(List<String> values) {
   for (final value in values) {
     final normalized = value.trim();
@@ -1318,6 +1476,63 @@ String _readFirstNonEmpty(List<String> values) {
   return '—';
 }
 
+String _activeStatusLabel(String status) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) return 'In Progress';
+  if (normalized == 'delivered') return 'Delivered';
+  if (normalized == 'completed') return 'Completed';
+  if (normalized == 'cancelled' || normalized == 'canceled') return 'Cancelled';
+  if (normalized == 'pending') return 'Pending';
+  if (normalized == 'accepted' ||
+      normalized == 'confirmed' ||
+      normalized == 'en_route_pickup' ||
+      normalized == 'en route' ||
+      normalized == 'en_route' ||
+      normalized == 'in_transit' ||
+      normalized == 'in transit' ||
+      normalized == 'picked_up' ||
+      normalized == 'picked up' ||
+      normalized == 'ongoing') {
+    return 'In Progress';
+  }
+  return _titleCase(normalized);
+}
+
+bool _isPaidStatusText(String status) {
+  final normalized = status.trim().toLowerCase();
+  return normalized == 'paid' || normalized == 'settled';
+}
+
+const String _invoiceSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+  <path fill="#fff" d="M15 3v5h5"/>
+  <path fill="currentColor" d="M8 12h8v1.5H8zm0 3.5h8V17H8z"/>
+</svg>
+''';
+
+const String _emailSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>
+  <path fill="#fff" d="m5 7 7 5 7-5v2l-7 5-7-5z"/>
+</svg>
+''';
+
+const String _whatsappSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="#25D366" d="M12 2C6.48 2 2 6.34 2 11.69c0 1.92.58 3.71 1.57 5.22L2.5 22l5.3-1.03A10.2 10.2 0 0 0 12 21.38c5.52 0 10-4.34 10-9.69S17.52 2 12 2z"/>
+  <path fill="#fff" d="M16.84 14.73c-.22-.11-1.29-.64-1.49-.72-.2-.08-.35-.11-.5.11-.15.22-.57.72-.7.87-.13.16-.26.18-.48.06-.22-.11-.93-.35-1.77-1.12-.65-.58-1.09-1.31-1.22-1.53-.13-.22-.01-.34.1-.45.1-.1.22-.26.33-.39.11-.13.15-.22.23-.37.08-.16.04-.3-.02-.42-.06-.11-.5-1.2-.68-1.63-.18-.42-.36-.36-.5-.37h-.43c-.15 0-.39.05-.59.26-.2.22-.76.74-.76 1.8 0 1.06.78 2.08.89 2.22.11.15 1.53 2.33 3.72 3.26.52.22.92.35 1.23.45.52.17.99.15 1.36.09.42-.06 1.29-.53 1.47-1.05.18-.52.18-.96.13-1.05-.05-.08-.2-.13-.42-.24z"/>
+</svg>
+''';
+
+const String _notifySvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="currentColor" d="M12 3a6 6 0 0 0-6 6v3.1L4.7 14.4A1 1 0 0 0 5.6 16h12.8a1 1 0 0 0 .9-1.6L18 12.1V9a6 6 0 0 0-6-6z"/>
+  <path fill="currentColor" d="M10 18a2 2 0 0 0 4 0z"/>
+</svg>
+''';
+
+
 double _readDouble(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
@@ -1326,17 +1541,6 @@ double _readDouble(Map<String, dynamic> json, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return 0;
-}
-
-int? _readInt(Map<String, dynamic> json, List<String> keys) {
-  for (final key in keys) {
-    final value = json[key];
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    final parsed = int.tryParse(value?.toString() ?? '');
-    if (parsed != null) return parsed;
-  }
-  return null;
 }
 
 DateTime? _readDateTime(Map<String, dynamic> json, List<String> keys) {
@@ -1371,24 +1575,13 @@ String _formatDate(DateTime dateTime) {
   return '$day $month ${local.year}';
 }
 
-String _formatDuration(int minutes) {
-  if (minutes < 0) return '—';
-  final hours = minutes ~/ 60;
-  final mins = minutes % 60;
-  if (hours == 0) return '${mins}m';
-  if (mins == 0) return '${hours}h';
-  return '${hours}h ${mins}m';
-}
-
-String _normalizeWeight(String weight) {
-  final trimmed = weight.trim();
-  if (trimmed == '—' || trimmed.isEmpty) return '—';
-  if (trimmed.toLowerCase().contains('ton')) return trimmed;
-  final numeric = double.tryParse(trimmed);
-  if (numeric != null) {
-    return '${numeric.toStringAsFixed(numeric % 1 == 0 ? 0 : 2)} tons';
-  }
-  return '$trimmed tons';
+String _formatFullDateTime(DateTime dateTime) {
+  final local = dateTime.toLocal();
+  final date = _formatDate(local);
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  final minute = local.minute.toString().padLeft(2, '0');
+  final period = local.hour >= 12 ? 'PM' : 'AM';
+  return '$date, ${hour.toString().padLeft(2, '0')}:$minute $period';
 }
 
 String _shortId(String id) {

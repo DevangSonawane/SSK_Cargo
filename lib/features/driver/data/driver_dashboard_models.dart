@@ -10,12 +10,14 @@ class DriverDashboardData {
     required this.activeTrip,
     required this.upcomingTrip,
     required this.history,
+    required this.tripFeed,
     required this.assignedTruck,
   });
 
   final TrackingDemoShipment? activeTrip;
   final TrackingDemoShipment? upcomingTrip;
   final List<BrokerSettlement> history;
+  final List<DriverTripSummary> tripFeed;
   final Map<String, dynamic>? assignedTruck;
 }
 
@@ -31,13 +33,19 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
       api.getActiveTrip(accessToken: session.tokens.accessToken),
       api.getUpcomingTrip(accessToken: session.tokens.accessToken),
       api.getBrokerAnalytics(accessToken: session.tokens.accessToken),
+      api.getTrips(
+        accessToken: session.tokens.accessToken,
+        status: 'delivered,completed,in_transit,cancelled',
+        limit: 100,
+      ),
       api.getDriverTruck(accessToken: session.tokens.accessToken),
     ]);
 
     final activeTrip = _shipmentFromTripResponse(results[0]);
     final upcomingTrip = _shipmentFromTripResponse(results[1]);
     final analytics = _analyticsFromResponse(results[2]);
-    final truck = _truckFromResponse(results[3]);
+    final tripFeed = _tripFeedFromResponse(results[3]);
+    final truck = _truckFromResponse(results[4]);
 
     return DriverDashboardData(
       activeTrip: activeTrip == null || !_isLiveTrip(activeTrip.status)
@@ -45,6 +53,7 @@ final driverDashboardProvider = FutureProvider.autoDispose<DriverDashboardData>(
           : activeTrip,
       upcomingTrip: upcomingTrip,
       history: analytics,
+      tripFeed: tripFeed,
       assignedTruck: truck,
     );
   },
@@ -90,6 +99,21 @@ Map<String, dynamic>? _truckFromResponse(Map<String, dynamic> response) {
     }
   }
   return null;
+}
+
+List<DriverTripSummary> _tripFeedFromResponse(Map<String, dynamic> response) {
+  final data = response['data'] is Map<String, dynamic>
+      ? response['data'] as Map<String, dynamic>
+      : response;
+  final trips = data['trips'] ?? const <dynamic>[];
+  if (trips is! List) {
+    return const <DriverTripSummary>[];
+  }
+
+  return trips
+      .whereType<Map<String, dynamic>>()
+      .map(DriverTripSummary.fromJson)
+      .toList();
 }
 
 TrackingDemoShipment _shipmentFromTrip(Map<String, dynamic> trip) {
@@ -310,4 +334,96 @@ bool _looksLikePlaceholderTrip(Map<String, dynamic> trip) {
       _doubleFrom(currentLocation, const ['lng', 'longitude']) != 0;
 
   return !hasLocationData && bookingNumber.isEmpty && id.isEmpty;
+}
+
+class DriverTripSummary {
+  const DriverTripSummary({
+    required this.id,
+    required this.bookingId,
+    required this.bookingNumber,
+    required this.fromLocation,
+    required this.toLocation,
+    required this.distanceKm,
+    required this.status,
+    required this.bookingTime,
+    required this.amount,
+    required this.driverName,
+    required this.truckReg,
+  });
+
+  factory DriverTripSummary.fromJson(Map<String, dynamic> json) {
+    final pickup = _mapFrom(json['pickup']);
+    final drop = _mapFrom(json['drop']);
+    final createdAt = _stringFrom(json, const ['createdAt', 'created_at']);
+    final deliveredAt = _stringFrom(json, const [
+      'deliveredAt',
+      'delivered_at',
+    ]);
+    return DriverTripSummary(
+      id: _stringFrom(json, const ['id', 'tripId', 'trip_id']),
+      bookingId: _stringFrom(json, const ['bookingId', 'booking_id']),
+      bookingNumber: _stringFrom(json, const [
+        'bookingNumber',
+        'booking_number',
+      ]),
+      fromLocation: _stringFrom(pickup, const ['location', 'address']),
+      toLocation: _stringFrom(drop, const ['location', 'address']),
+      distanceKm: _readTripDistance(json),
+      status: _stringFrom(json, const ['status', 'rawStatus']).isNotEmpty
+          ? _stringFrom(json, const ['status', 'rawStatus'])
+          : 'pending',
+      bookingTime: deliveredAt.isNotEmpty ? deliveredAt : createdAt,
+      amount: _doubleFrom(json, const [
+        'earnings',
+        'amountToCollect',
+        'amount',
+      ]),
+      driverName: _stringFrom(json, const ['driverName', 'driver_name']),
+      truckReg: _stringFrom(json, const ['truckReg', 'truck_reg']),
+    );
+  }
+
+  final String id;
+  final String bookingId;
+  final String bookingNumber;
+  final String fromLocation;
+  final String toLocation;
+  final double distanceKm;
+  final String status;
+  final String bookingTime;
+  final double amount;
+  final String driverName;
+  final String truckReg;
+
+  String get distanceLabel => distanceKm > 0
+      ? '${distanceKm.toStringAsFixed(distanceKm % 1 == 0 ? 0 : 1)} km'
+      : '—';
+
+  BrokerSettlement toSettlement() {
+    return BrokerSettlement(
+      id: id,
+      bookingId: bookingId,
+      bookingNumber: bookingNumber.isNotEmpty ? bookingNumber : 'Booking',
+      route: '$fromLocation -> $toLocation',
+      truck: truckReg,
+      driver: driverName,
+      amount: amount,
+      platformFee: 0,
+      netEarnings: amount,
+      status: status,
+      settledAt: bookingTime.isNotEmpty ? bookingTime : null,
+    );
+  }
+}
+
+double _readTripDistance(Map<String, dynamic> json) {
+  final raw = json['distance'];
+  if (raw is num) return raw.toDouble();
+  final parsed = double.tryParse(raw?.toString() ?? '');
+  if (parsed != null) return parsed;
+  return _doubleFrom(json, const [
+    'distance_km',
+    'distanceKm',
+    'route_distance',
+  ]);
 }

@@ -672,6 +672,27 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getTrips({
+    required String accessToken,
+    String? status,
+    int limit = 100,
+  }) async {
+    developer.log(
+      'GET /api/trips status=$status limit=$limit',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          'limit': limit,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getDriverTruck({
     required String accessToken,
   }) async {
