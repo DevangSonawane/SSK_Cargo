@@ -244,6 +244,7 @@ bool _isLiveTrip(String status) {
     'ongoing',
     'ontrip',
     'on_trip',
+    'en_route_pickup',
     'in_transit',
     'in transit',
     'picked_up',

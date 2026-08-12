@@ -380,7 +380,7 @@ class _ArrivalThumbShape extends SliderComponentShape {
   const _ArrivalThumbShape();
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(56, 56);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(48, 48);
 
   @override
   void paint(
@@ -411,9 +411,22 @@ class _ArrivalThumbShape extends SliderComponentShape {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    canvas.drawCircle(center + const Offset(0, 1.5), 22, shadowPaint);
-    canvas.drawCircle(center, 22, fillPaint);
-    canvas.drawCircle(center, 22, borderPaint);
+    final rect = Rect.fromCenter(center: center, width: 48, height: 48);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        rect.shift(const Offset(0, 2)),
+        const Radius.circular(16),
+      ),
+      shadowPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
+      fillPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
+      borderPaint,
+    );
 
     final textPainter = TextPainter(
       text: TextSpan(
@@ -433,7 +446,10 @@ class _ArrivalThumbShape extends SliderComponentShape {
 
     textPainter.paint(
       canvas,
-      center - Offset(textPainter.width / 2, textPainter.height / 2 + 1),
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2,
+      ),
     );
   }
 }

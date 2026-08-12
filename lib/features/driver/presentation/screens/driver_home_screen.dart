@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
@@ -16,6 +19,45 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   double _acceptSlide = 0;
   bool _launchingRequest = false;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_startLiveUpdates());
+    });
+  }
+
+  @override
+  void dispose() {
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      if (!mounted) return;
+      ref.invalidate(driverRequestsProvider);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,15 +188,18 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           setState(() => _acceptSlide = value);
                           if (value >= 0.98) {
                             _launchingRequest = true;
-                            Future.delayed(const Duration(milliseconds: 350), () {
-                              if (!context.mounted) return;
-                              context.push(
-                                '/driver/request',
-                                extra: newRequests.first.raw,
-                              );
-                              setState(() => _acceptSlide = 0);
-                              _launchingRequest = false;
-                            });
+                            Future.delayed(
+                              const Duration(milliseconds: 350),
+                              () {
+                                if (!context.mounted) return;
+                                context.push(
+                                  '/driver/request',
+                                  extra: newRequests.first.raw,
+                                );
+                                setState(() => _acceptSlide = 0);
+                                _launchingRequest = false;
+                              },
+                            );
                           }
                         },
                         onOpenNegotiation: () {
@@ -168,7 +213,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                         const SizedBox(height: 18),
                         Text(
                           'More requests',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 color: const Color(0xFF101828),
                                 fontWeight: FontWeight.w800,
                               ),
@@ -298,17 +344,17 @@ class _DeliveryOrderCard extends StatelessWidget {
                     Text(
                       'Delivery ID',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF98A2B3),
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: const Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       request.displayRef,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF101828),
-                            fontWeight: FontWeight.w800,
-                          ),
+                        color: const Color(0xFF101828),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -316,9 +362,9 @@ class _DeliveryOrderCard extends StatelessWidget {
               Text(
                 '₹${amount.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w900,
-                    ),
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -328,26 +374,23 @@ class _DeliveryOrderCard extends StatelessWidget {
           Text(
             request.drop.isNotEmpty ? request.drop : 'Drop location',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w800,
-                ),
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 3),
           Text(
             request.pickup.isNotEmpty ? request.pickup : 'Pickup location',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w500,
-                ),
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: _MiniMetric(
-                  label: 'Request',
-                  value: request.status,
-                ),
+                child: _MiniMetric(label: 'Request', value: request.status),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -371,10 +414,10 @@ class _DeliveryOrderCard extends StatelessWidget {
               child: Text(
                 'This request timed out for the driver. Broker handoff is active.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF9A5B13),
-                      fontWeight: FontWeight.w600,
-                      height: 1.35,
-                    ),
+                  color: const Color(0xFF9A5B13),
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
               ),
             ),
           ],
@@ -382,9 +425,9 @@ class _DeliveryOrderCard extends StatelessWidget {
           Text(
             'Slide to accept delivery',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF98A2B3),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           SliderTheme(
