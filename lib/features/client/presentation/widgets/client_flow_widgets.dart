@@ -920,6 +920,7 @@ class TrackingDemoShipment {
     this.liveLng,
     this.podUrl,
     this.ratingStars,
+    this.tripId,
     this.bookingId,
     this.bookingStatus,
     this.assignedDriverName,
@@ -945,6 +946,7 @@ class TrackingDemoShipment {
     String? bookingStatus,
     String? assignedDriverName,
     String? assignedTruckName,
+    String? tripId,
     double? amount,
     String? paymentStatus,
     String? podUrl,
@@ -973,6 +975,7 @@ class TrackingDemoShipment {
       liveLng: clearLiveLng ? null : (liveLng ?? this.liveLng),
       podUrl: podUrl ?? this.podUrl,
       ratingStars: ratingStars ?? this.ratingStars,
+      tripId: tripId ?? this.tripId,
       bookingId: bookingId ?? this.bookingId,
       bookingStatus: bookingStatus ?? this.bookingStatus,
       assignedDriverName: assignedDriverName ?? this.assignedDriverName,
@@ -1000,6 +1003,7 @@ class TrackingDemoShipment {
   final String paymentStatus;
   final String? podUrl;
   final int? ratingStars;
+  final String? tripId;
   final String? bookingId;
   final String? bookingStatus;
   final String? assignedDriverName;
@@ -1116,6 +1120,7 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     ),
     podUrl: _readString(raw, const ['podUrl', 'pod_url']),
     ratingStars: _readIntValue(raw, raw, const ['rating_stars', 'stars']),
+    tripId: '',
     bookingId: booking.id,
     bookingStatus: status,
     timeline: _timelineForStatus(status, booking),

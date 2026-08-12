@@ -25,7 +25,10 @@ class _DriverDeliveryArrivedScreenState
   @override
   void initState() {
     super.initState();
-    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+    });
     _revealTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _showSwipeControl = true);

@@ -669,6 +669,10 @@ class _DriverOrderAcceptedScreenState
       'Navigating to delivery details for tripId=$resolvedTripId bookingId=$resolvedBookingId',
       name: 'driver.orderAccepted',
     );
+    if (resolvedTripId.isNotEmpty) {
+      context.go('/driver/delivery-details/$resolvedTripId');
+      return;
+    }
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (_) => DriverDeliveryDetailsScreen(

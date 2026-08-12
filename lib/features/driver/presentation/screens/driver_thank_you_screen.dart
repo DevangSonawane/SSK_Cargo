@@ -18,7 +18,10 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(driverActiveTripIdProvider.notifier).state = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(driverActiveTripIdProvider.notifier).state = null;
+    });
   }
 
   @override

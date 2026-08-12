@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../../core/providers/driver_tracking_state_provider.dart';
 
 class DriverPaymentScreen extends ConsumerStatefulWidget {
   const DriverPaymentScreen({super.key, required this.tripId});
@@ -35,7 +34,6 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_startLiveUpdates());
       unawaited(_loadTripState());

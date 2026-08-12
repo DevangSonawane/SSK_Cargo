@@ -43,7 +43,10 @@ class _DriverDeliveryPhotoUploadScreenState
   @override
   void initState() {
     super.initState();
-    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadRemoteTripState());
     });

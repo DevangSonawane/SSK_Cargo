@@ -9,7 +9,6 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
-import 'driver_delivery_details_screen.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -82,13 +81,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       }
 
       ref.read(driverActiveTripIdProvider.notifier).state = tripId;
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => DriverDeliveryDetailsScreen(tripId: tripId),
-        ),
-        (route) => route.isFirst,
-      );
+      context.go('/driver/delivery-details/$tripId');
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

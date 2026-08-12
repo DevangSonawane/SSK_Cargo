@@ -169,10 +169,9 @@ class _DriverDeliveryDetailsScreenState
 
       setState(() {
         _shipment = _shipmentFromTrip(trip);
-        _tripStatus = _readString(trip, const [
-          'status',
-          'rawStatus',
-        ]).toLowerCase();
+        _tripStatus = _normalizeTripStatus(
+          _readString(trip, const ['status', 'rawStatus']),
+        );
         _paymentStatus = _readString(trip, const [
           'paymentStatus',
           'payment_status',
@@ -213,6 +212,18 @@ class _DriverDeliveryDetailsScreenState
   Future<void> _advanceTripStatus() async {
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_tripId.isEmpty) {
+      await _loadTrip();
+      if (!mounted || _tripId.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Trip is still syncing. Please try again.'),
+          ),
+        );
+        return;
+      }
+    }
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -254,13 +265,30 @@ class _DriverDeliveryDetailsScreenState
           : response;
       if (!mounted) return;
 
+      final updatedStatus = _normalizeTripStatus(
+        _readString(trip, const ['status', 'rawStatus']),
+      );
+      final resolvedStatus = updatedStatus.isNotEmpty
+          ? updatedStatus
+          : nextStatus;
+
       setState(() {
-        _tripStatus = _readString(trip, const [
-          'status',
-          'rawStatus',
-        ]).toLowerCase();
+        _tripStatus = resolvedStatus;
         _loadingTrip = false;
+        if (resolvedStatus == 'en_route_pickup') {
+          _arrivalFlowActive = false;
+          _showArrivalSwipe = false;
+          _detailsPanelExpanded = true;
+        }
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_statusChangeMessageFor(resolvedStatus)),
+          backgroundColor: const Color(0xFF2FA56E),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
@@ -285,6 +313,16 @@ class _DriverDeliveryDetailsScreenState
   String? _nextStatusForCurrentTrip() {
     switch (_tripStatus) {
       case 'confirmed':
+      case 'assigned':
+      case 'accepted':
+      case 'active':
+      case 'live':
+      case 'ongoing':
+      case 'started':
+      case 'on_route':
+      case 'en_route':
+      case 'route_to_pickup':
+      case 'to_pickup':
         return 'en_route_pickup';
       case 'en_route_pickup':
         return 'picked_up';
@@ -292,14 +330,33 @@ class _DriverDeliveryDetailsScreenState
         return 'in_transit';
       case 'in_transit':
         return 'delivered';
-      default:
+      case 'delivered':
+      case 'completed':
+      case 'paid':
+      case 'settled':
+      case 'cancelled':
+      case 'canceled':
+      case 'rejected':
+      case 'declined':
         return null;
+      default:
+        return 'en_route_pickup';
     }
   }
 
   String _actionLabelForCurrentTrip() {
     switch (_tripStatus) {
       case 'confirmed':
+      case 'assigned':
+      case 'accepted':
+      case 'active':
+      case 'live':
+      case 'ongoing':
+      case 'started':
+      case 'on_route':
+      case 'en_route':
+      case 'route_to_pickup':
+      case 'to_pickup':
         return 'Start Trip to Pickup';
       case 'en_route_pickup':
         return "I've Reached Pickup";
@@ -308,7 +365,22 @@ class _DriverDeliveryDetailsScreenState
       case 'in_transit':
         return 'Mark as Delivered';
       default:
-        return 'Continue';
+        return 'Start Trip to Pickup';
+    }
+  }
+
+  String _statusChangeMessageFor(String status) {
+    switch (status) {
+      case 'en_route_pickup':
+        return 'Trip started. Heading to pickup.';
+      case 'picked_up':
+        return 'Pickup marked. Start delivery next.';
+      case 'in_transit':
+        return 'Delivery is now in transit.';
+      case 'delivered':
+        return 'Delivery marked as delivered.';
+      default:
+        return 'Trip status updated.';
     }
   }
 
@@ -520,7 +592,8 @@ class _DriverDeliveryDetailsScreenState
                 width: double.infinity,
                 height: 52,
                 child: FilledButton(
-                  onPressed: _loadingTrip || _confirmingArrival
+                  onPressed:
+                      _loadingTrip || _confirmingArrival || _tripId.isEmpty
                       ? null
                       : () {
                           if (_tripStatus == 'in_transit') {
@@ -541,7 +614,11 @@ class _DriverDeliveryDetailsScreenState
                     ),
                   ),
                   child: Text(
-                    _loadingTrip ? 'Loading...' : _actionLabelForCurrentTrip(),
+                    _loadingTrip
+                        ? 'Loading...'
+                        : _tripId.isEmpty
+                        ? 'Syncing trip...'
+                        : _actionLabelForCurrentTrip(),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -555,6 +632,18 @@ class _DriverDeliveryDetailsScreenState
 
   Future<void> _confirmArrival() async {
     if (_confirmingArrival) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_tripId.isEmpty) {
+      await _loadTrip();
+      if (!mounted || _tripId.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Trip is still syncing. Please try again.'),
+          ),
+        );
+        return;
+      }
+    }
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -755,9 +844,18 @@ class _DriverDeliveryDetailsScreenState
       liveLng:
           _readDouble(currentLocation, const ['lng', 'longitude']) ??
           _readDouble(trip, const ['currentLng', 'current_lng']),
+      tripId: id.isNotEmpty ? id : null,
       bookingId: id.isNotEmpty ? id : null,
       bookingStatus: status,
     );
+  }
+
+  String _normalizeTripStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return '';
+    }
+    return normalized.replaceAll(RegExp(r'[\s-]+'), '_');
   }
 
   String _titleCase(String value) {
@@ -969,7 +1067,13 @@ class _DriverDeliveryDetailsScreenState
                 child: Row(
                   children: [
                     InkWell(
-                      onTap: () => context.go('/driver/home'),
+                      onTap: () {
+                        if (context.canPop()) {
+                          context.pop();
+                          return;
+                        }
+                        context.go('/driver/active');
+                      },
                       borderRadius: BorderRadius.circular(999),
                       child: Container(
                         width: 40,
