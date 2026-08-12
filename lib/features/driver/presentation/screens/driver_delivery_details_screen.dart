@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
@@ -38,15 +39,10 @@ class _DriverDeliveryDetailsScreenState
   @override
   void initState() {
     super.initState();
+    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
       unawaited(_loadTrip());
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> _loadTrip() async {

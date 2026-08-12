@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 
 class DriverDeliveryArrivedScreen extends ConsumerStatefulWidget {
   const DriverDeliveryArrivedScreen({super.key, required this.tripId});
@@ -25,9 +25,7 @@ class _DriverDeliveryArrivedScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
-    });
+    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
     _revealTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _showSwipeControl = true);

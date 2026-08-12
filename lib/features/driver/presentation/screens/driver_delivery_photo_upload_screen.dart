@@ -10,7 +10,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 
 class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
   const DriverDeliveryPhotoUploadScreen({
@@ -42,8 +42,8 @@ class _DriverDeliveryPhotoUploadScreenState
   @override
   void initState() {
     super.initState();
+    ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(driverLocationTrackerProvider).setActiveTripId(widget.tripId);
       unawaited(_loadRemoteTripState());
     });
   }

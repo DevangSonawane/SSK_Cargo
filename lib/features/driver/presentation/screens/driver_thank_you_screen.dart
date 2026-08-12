@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 
 class DriverThankYouScreen extends ConsumerStatefulWidget {
   const DriverThankYouScreen({super.key, required this.tripId});
@@ -18,9 +18,7 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(driverLocationTrackerProvider).setActiveTripId(null);
-    });
+    ref.read(driverActiveTripIdProvider.notifier).state = null;
   }
 
   @override

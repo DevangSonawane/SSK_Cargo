@@ -7,8 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
-import '../../../../core/providers/driver_location_tracker_provider.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/utils/negotiation_timer.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_request_models.dart';
 import 'driver_delivery_details_screen.dart';
@@ -27,13 +28,13 @@ class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
   bool _counterLocked = false;
-  bool _brokerHandoffVisible = false;
   late double _counterAmount;
-  int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
-  Timer? _handoffTimer;
+  Timer? _countdownTimer;
   String _latestStatus = '';
   String _latestPendingConfirmationBy = '';
+  bool _latestDriverTimedOut = false;
+  DateTime? _latestUpdatedAt;
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
@@ -68,6 +69,8 @@ class _DriverOrderAcceptedScreenState
     _latestPendingConfirmationBy = request.pendingConfirmationBy
         .trim()
         .toLowerCase();
+    _latestDriverTimedOut = request.driverTimedOut;
+    _latestUpdatedAt = request.updatedAt ?? request.requestedAt;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_startLiveUpdates());
@@ -78,7 +81,7 @@ class _DriverOrderAcceptedScreenState
   @override
   void dispose() {
     _driverRequestSubscription?.cancel();
-    _handoffTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -129,6 +132,105 @@ class _DriverOrderAcceptedScreenState
         normalized == 'expired';
   }
 
+  bool _readPayloadBool(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key];
+      if (value is bool) {
+        return value;
+      }
+      final text = value?.toString().trim().toLowerCase();
+      if (text == 'true') return true;
+      if (text == 'false') return false;
+    }
+    return false;
+  }
+
+  DateTime? _readPayloadDateTime(
+    Map<String, dynamic> payload,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  }
+
+  bool get _serverTimedOut => _latestDriverTimedOut || _request.driverTimedOut;
+
+  DateTime? get _countdownAnchor =>
+      _latestUpdatedAt ?? _request.updatedAt ?? _request.requestedAt;
+
+  Duration? get _negotiationRemaining => negotiationWindowRemaining(
+    anchorAt: _countdownAnchor,
+    driverTimedOut: _serverTimedOut,
+  );
+
+  String get _countdownLabel {
+    if (_serverTimedOut) {
+      return 'Broker takeover';
+    }
+
+    if (_counterLocked || _waitingOnClient || _waitingOnDriver) {
+      return 'Locked';
+    }
+
+    final remaining = _negotiationRemaining;
+    if (remaining == null) {
+      return '2:00';
+    }
+    if (remaining <= Duration.zero) {
+      return 'Any moment now';
+    }
+    return formatCountdown(remaining);
+  }
+
+  void _syncLiveRequestState(Map<String, dynamic> payload) {
+    final status = _readPayloadString(payload, const [
+      'status',
+      'requestStatus',
+      'request_status',
+      'clientStatus',
+      'client_status',
+    ]).trim().toLowerCase();
+    final pendingConfirmationBy = _readPayloadString(payload, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).trim().toLowerCase();
+    final driverTimedOut = _readPayloadBool(payload, const [
+      'driverTimedOut',
+      'driver_timed_out',
+    ]);
+    final updatedAt = _readPayloadDateTime(payload, const [
+      'updatedAt',
+      'updated_at',
+    ]);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (status.isNotEmpty) {
+        _latestStatus = status;
+      }
+      if (pendingConfirmationBy.isNotEmpty) {
+        _latestPendingConfirmationBy = pendingConfirmationBy;
+      }
+      if (driverTimedOut) {
+        _latestDriverTimedOut = true;
+      }
+      if (updatedAt != null) {
+        _latestUpdatedAt = updatedAt;
+      }
+    });
+  }
+
   Future<void> _startLiveUpdates() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
@@ -167,35 +269,19 @@ class _DriverOrderAcceptedScreenState
       unawaited(_handleLivePayload(payload));
     });
 
-    _handoffTimer?.cancel();
-    _handoffTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) {
-        return;
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
       }
-      if (_secondsUntilBrokerHandoff <= 0) {
-        if (!_brokerHandoffVisible) {
-          setState(() {
-            _brokerHandoffVisible = true;
-          });
-        }
-        return;
-      }
-
-      setState(() {
-        _secondsUntilBrokerHandoff -= 1;
-        if (_secondsUntilBrokerHandoff <= 0) {
-          _secondsUntilBrokerHandoff = 0;
-          _brokerHandoffVisible = true;
-        }
-      });
     });
   }
 
   Future<void> _goBackToHome() async {
     await _driverRequestSubscription?.cancel();
     _driverRequestSubscription = null;
-    _handoffTimer?.cancel();
-    _handoffTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
     if (!mounted) return;
     context.go('/driver/home');
   }
@@ -208,10 +294,6 @@ class _DriverOrderAcceptedScreenState
       'clientStatus',
       'client_status',
     ]).trim().toLowerCase();
-    final pendingConfirmationBy = _readPayloadString(payload, const [
-      'pendingConfirmationBy',
-      'pending_confirmation_by',
-    ]).trim().toLowerCase();
     final effectiveTripId = _extractTripId(payload, _request.tripId).trim();
 
     developer.log(
@@ -219,14 +301,7 @@ class _DriverOrderAcceptedScreenState
       name: 'driver.orderAccepted',
     );
 
-    if (mounted && status.isNotEmpty) {
-      setState(() {
-        _latestStatus = status;
-        if (pendingConfirmationBy.isNotEmpty) {
-          _latestPendingConfirmationBy = pendingConfirmationBy;
-        }
-      });
-    }
+    _syncLiveRequestState(payload);
 
     if (_isAcceptedStatus(status)) {
       developer.log(
@@ -291,13 +366,21 @@ class _DriverOrderAcceptedScreenState
         name: 'driver.orderAccepted',
       );
 
-      if (mounted && request.status.trim().isNotEmpty) {
+      if (mounted) {
         setState(() {
-          _latestStatus = request.status.trim().toLowerCase();
+          if (request.status.trim().isNotEmpty) {
+            _latestStatus = request.status.trim().toLowerCase();
+          }
           if (request.pendingConfirmationBy.trim().isNotEmpty) {
             _latestPendingConfirmationBy = request.pendingConfirmationBy
                 .trim()
                 .toLowerCase();
+          }
+          if (request.driverTimedOut) {
+            _latestDriverTimedOut = true;
+          }
+          if (request.updatedAt != null) {
+            _latestUpdatedAt = request.updatedAt;
           }
         });
       }
@@ -431,7 +514,7 @@ class _DriverOrderAcceptedScreenState
       return;
     }
 
-    ref.read(driverLocationTrackerProvider).setActiveTripId(tripId);
+    ref.read(driverActiveTripIdProvider.notifier).state = tripId;
     developer.log(
       'Navigating directly to delivery details for tripId=$tripId',
       name: 'driver.orderAccepted',
@@ -452,14 +535,21 @@ class _DriverOrderAcceptedScreenState
     final minOffer = math.max(1.0, baseAmount * 0.7);
     final maxOffer = math.max(minOffer + 1, baseAmount * 1.3);
     final selectedAmount = _counterAmount.clamp(minOffer, maxOffer).toDouble();
-    final handoffExpired =
-        _brokerHandoffVisible ||
-        request.driverTimedOut ||
-        _secondsUntilBrokerHandoff <= 0;
+    final serverTimedOut = _serverTimedOut;
+    final remaining = _negotiationRemaining;
+    final handoffText = negotiationWindowStatusText(
+      remaining: remaining,
+      serverTimedOut: serverTimedOut,
+      activeLabel: 'Broker handoff in',
+      expiredLabel: 'Broker will take over negotiation',
+      fallbackLabel: _counterLocked
+          ? 'Counter sent. Waiting for the other side to respond.'
+          : 'This request waits for 2 minutes before broker handoff.',
+    );
     final actionLocked =
         _submitting ||
         _counterLocked ||
-        handoffExpired ||
+        serverTimedOut ||
         _waitingOnClient ||
         _waitingOnDriver;
 
@@ -488,12 +578,12 @@ class _DriverOrderAcceptedScreenState
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: handoffExpired
+                  color: serverTimedOut
                       ? const Color(0xFFFFF7ED)
                       : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: handoffExpired
+                    color: serverTimedOut
                         ? const Color(0xFFFECF9E)
                         : const Color(0xFFB7D7F0),
                   ),
@@ -502,10 +592,10 @@ class _DriverOrderAcceptedScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      handoffExpired
+                      serverTimedOut
                           ? Icons.support_agent_rounded
                           : Icons.timer_outlined,
-                      color: handoffExpired
+                      color: serverTimedOut
                           ? const Color(0xFFB54708)
                           : const Color(0xFF1F88C9),
                     ),
@@ -515,25 +605,23 @@ class _DriverOrderAcceptedScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            handoffExpired
+                            serverTimedOut
                                 ? 'Broker will take over negotiation'
                                 : 'Client is waiting for your request',
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: handoffExpired
+                                  color: serverTimedOut
                                       ? const Color(0xFF9A5B13)
                                       : const Color(0xFF1F88C9),
                                 ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            handoffExpired
-                                ? 'The driver window is up. Broker will negotiate now, kindly wait.'
-                                : 'This request waits for 2 minutes before broker handoff.',
+                            handoffText,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: handoffExpired
+                                  color: serverTimedOut
                                       ? const Color(0xFF9A5B13)
                                       : const Color(0xFF406B8F),
                                   height: 1.35,
@@ -553,13 +641,11 @@ class _DriverOrderAcceptedScreenState
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        handoffExpired
-                            ? 'Now waiting'
-                            : '00:${_secondsUntilBrokerHandoff.toString().padLeft(2, '0')}',
+                        _countdownLabel,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: handoffExpired
+                              color: serverTimedOut
                                   ? const Color(0xFF9A5B13)
                                   : const Color(0xFF1F88C9),
                             ),
@@ -963,7 +1049,7 @@ class _DriverOrderAcceptedScreenState
                           child: Text(
                             _submitting
                                 ? 'Saving...'
-                                : handoffExpired
+                                : serverTimedOut
                                 ? 'Broker takeover'
                                 : 'Send counter',
                             style: const TextStyle(fontWeight: FontWeight.w800),

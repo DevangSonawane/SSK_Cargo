@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/utils/negotiation_timer.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -30,6 +31,7 @@ class _BrokerRequestDetailScreenState
   BrokerDriverRequest? _liveDriverRequest;
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  Timer? _countdownTimer;
 
   BookingRequest get _request => widget.initialRequest is BookingRequest
       ? _liveBookingRequest ?? widget.initialRequest as BookingRequest
@@ -128,16 +130,15 @@ class _BrokerRequestDetailScreenState
     'completed',
   }.contains(_normalizedStatus);
 
-  bool get _isWaitingOnClient =>
-      _isDriverNegotiation &&
-      (_normalizedStatus == 'countered' ||
-          (_normalizedStatus == 'awaiting_confirmation' &&
-              _driverRequest!.pendingConfirmationBy == 'client'));
-
   bool get _isWaitingOnBroker =>
       _isDriverNegotiation &&
       _normalizedStatus == 'awaiting_confirmation' &&
       _driverRequest!.pendingConfirmationBy == 'broker';
+
+  bool get _isLockedWaitingForClient =>
+      _isDriverNegotiation &&
+      _normalizedStatus == 'awaiting_confirmation' &&
+      _driverRequest!.pendingConfirmationBy == 'client';
 
   bool get _isPendingJobRequest =>
       !_isDriverNegotiation &&
@@ -150,9 +151,47 @@ class _BrokerRequestDetailScreenState
   bool get _canTakeAction =>
       !_submitting &&
       !_isTerminalStatus &&
-      !_isWaitingOnClient &&
       !_isWaitingOnBroker &&
       !_jobRequestAwaitingConfirmation;
+
+  DateTime? get _driverRequestCountdownAnchor =>
+      _driverRequest?.updatedAt ?? _driverRequest?.requestedAt;
+
+  Duration? get _driverRequestRemainingWindow {
+    final request = _driverRequest;
+    if (request == null || !request.driverTimedOut) {
+      return null;
+    }
+    return negotiationWindowRemaining(
+      anchorAt: _driverRequestCountdownAnchor,
+      driverTimedOut: true,
+    );
+  }
+
+  String get _driverRequestCountdownText {
+    final remaining = _driverRequestRemainingWindow;
+    if (_driverRequest == null) {
+      return '';
+    }
+    return negotiationWindowStatusText(
+      remaining: remaining,
+      serverTimedOut: _driverRequest!.driverTimedOut,
+      activeLabel: 'Broker handoff in',
+      expiredLabel: 'Broker handoff active',
+      fallbackLabel: 'Broker handoff active',
+    );
+  }
+
+  String get _driverRequestCountdownValue {
+    final remaining = _driverRequestRemainingWindow;
+    if (_driverRequest == null || remaining == null) {
+      return '—';
+    }
+    if (remaining <= Duration.zero) {
+      return 'Any moment now';
+    }
+    return formatCountdown(remaining);
+  }
 
   @override
   void initState() {
@@ -171,12 +210,18 @@ class _BrokerRequestDetailScreenState
         unawaited(_startLiveUpdates());
       }
     });
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
     _jobRequestSubscription?.cancel();
     _driverRequestSubscription?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -351,6 +396,32 @@ class _BrokerRequestDetailScreenState
     return '';
   }
 
+  bool _readBool(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key];
+      if (value is bool) {
+        return value;
+      }
+      final text = value?.toString().trim().toLowerCase();
+      if (text == 'true') return true;
+      if (text == 'false') return false;
+    }
+    return false;
+  }
+
+  DateTime? _readDateTime(Map<String, dynamic> payload, List<String> keys) {
+    for (final key in keys) {
+      final value = payload[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  }
+
   BookingRequest _updatedBookingRequest(Map<String, dynamic> payload) {
     final current = _request;
     final status = _readString(payload, const [
@@ -396,6 +467,11 @@ class _BrokerRequestDetailScreenState
       'pendingConfirmationBy',
       'pending_confirmation_by',
     ]).toLowerCase();
+    final driverTimedOut = _readBool(payload, const [
+      'driverTimedOut',
+      'driver_timed_out',
+    ]);
+    final updatedAt = _readDateTime(payload, const ['updatedAt', 'updated_at']);
     return BrokerDriverRequest(
       id: current.id,
       bookingId: current.bookingId,
@@ -417,10 +493,10 @@ class _BrokerRequestDetailScreenState
       weight: current.weight,
       amount: current.amount,
       status: status.isEmpty ? current.status : status,
-      driverTimedOut: current.driverTimedOut,
+      driverTimedOut: driverTimedOut || current.driverTimedOut,
       offerCount: current.offerCount,
       requestedAt: current.requestedAt,
-      updatedAt: current.updatedAt,
+      updatedAt: updatedAt ?? current.updatedAt,
       raw: current.raw,
     );
   }
@@ -781,6 +857,36 @@ class _BrokerRequestDetailScreenState
       );
     }
 
+    if (_isLockedWaitingForClient) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Accepted - waiting for the client to confirm',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your accept has been saved. The request is locked until the client confirms or declines.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -800,102 +906,65 @@ class _BrokerRequestDetailScreenState
           ),
           const SizedBox(height: 4),
           Text(
-            _isWaitingOnClient
+            _normalizedStatus == 'countered'
                 ? 'Counter sent. Waiting for the client to respond before the broker can assign this booking.'
                 : 'Counter or reject the timed-out driver request, then accept to assign this truck.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
           ),
-          if (!_isWaitingOnClient) ...[
-            const SizedBox(height: 14),
-            _CounterAmountSlider(
-              label: 'Counter amount',
-              amount: _counterAmount,
-              minAmount: (_driverRequest!.amount * 0.75)
-                  .clamp(1, double.infinity)
-                  .toDouble(),
-              maxAmount: (_driverRequest!.amount * 1.25)
-                  .clamp(2, double.infinity)
-                  .toDouble(),
-              onChanged: _submitting
-                  ? null
-                  : (value) => setState(() => _counterAmount = value),
-            ),
-          ],
+          const SizedBox(height: 14),
+          _CounterAmountSlider(
+            label: 'Counter amount',
+            amount: _counterAmount,
+            minAmount: (_driverRequest!.amount * 0.75)
+                .clamp(1, double.infinity)
+                .toDouble(),
+            maxAmount: (_driverRequest!.amount * 1.25)
+                .clamp(2, double.infinity)
+                .toDouble(),
+            onChanged: _submitting
+                ? null
+                : (value) => setState(() => _counterAmount = value),
+          ),
           const SizedBox(height: 16),
-          if (_isWaitingOnClient) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _submitting ? null : _reject,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFE23A4B),
-                      side: const BorderSide(color: Color(0xFFF5B7BF)),
-                    ),
-                    child: const Text('Reject'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _submitting ? null : _reject,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE23A4B),
+                    side: const BorderSide(color: Color(0xFFF5B7BF)),
                   ),
+                  child: const Text('Reject'),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFEFF6FF),
-                      foregroundColor: const Color(0xFF98A2B3),
-                    ),
-                    child: const Text('Accept & assign'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Accept & assign unlocks after the client responds.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
-            ),
-          ] else ...[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _submitting ? null : _reject,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFE23A4B),
-                      side: const BorderSide(color: Color(0xFFF5B7BF)),
-                    ),
-                    child: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _submitting ? null : _counter,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1F88C9),
-                      side: const BorderSide(color: Color(0xFF1F88C9)),
-                    ),
-                    child: const Text('Counter'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                onPressed: _submitting ? null : _acceptTimedOutDriverRequest,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1F88C9),
-                ),
-                child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _submitting ? null : _counter,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1F88C9),
+                    side: const BorderSide(color: Color(0xFF1F88C9)),
+                  ),
+                  child: const Text('Counter'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              onPressed: _submitting ? null : _acceptTimedOutDriverRequest,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F88C9),
+              ),
+              child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -1109,6 +1178,76 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 14),
                   if (_isDriverNegotiation) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _driverRequest!.driverTimedOut
+                            ? const Color(0xFFFFF7ED)
+                            : const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: _driverRequest!.driverTimedOut
+                              ? const Color(0xFFFECF9E)
+                              : const Color(0xFFB7D7F0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _driverRequest!.driverTimedOut
+                                ? Icons.schedule_rounded
+                                : Icons.timer_outlined,
+                            color: _driverRequest!.driverTimedOut
+                                ? const Color(0xFFB54708)
+                                : const Color(0xFF1F88C9),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _driverRequest!.driverTimedOut
+                                      ? 'Broker handoff active'
+                                      : 'Driver response window',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: _driverRequest!.driverTimedOut
+                                            ? const Color(0xFFB54708)
+                                            : const Color(0xFF101828),
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _driverRequestCountdownText,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: _driverRequest!.driverTimedOut
+                                            ? const Color(0xFF9A5B13)
+                                            : const Color(0xFF406B8F),
+                                        height: 1.35,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            _driverRequestCountdownValue,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: _driverRequest!.driverTimedOut
+                                      ? const Color(0xFF9A5B13)
+                                      : const Color(0xFF1F88C9),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),

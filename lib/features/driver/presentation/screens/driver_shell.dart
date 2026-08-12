@@ -28,20 +28,22 @@ class _DriverShellState extends ConsumerState<DriverShell>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_syncTracking(ref.read(driverOnlineProvider)));
+      unawaited(_syncTracking(ref.read(driverTrackingEnabledProvider)));
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed && ref.read(driverOnlineProvider)) {
+    if (state == AppLifecycleState.resumed &&
+        ref.read(driverTrackingEnabledProvider)) {
       unawaited(_syncTracking(true, restart: true));
     }
   }
 
   Future<void> _syncTracking(bool isOnline, {bool restart = false}) async {
     final tracker = ref.read(driverLocationTrackerProvider);
+    tracker.setActiveTripId(ref.read(driverActiveTripIdProvider));
     String? message;
     if (isOnline) {
       message = restart
@@ -73,11 +75,17 @@ class _DriverShellState extends ConsumerState<DriverShell>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(driverOnlineProvider, (previous, next) {
+    ref.listen<bool>(driverTrackingEnabledProvider, (previous, next) {
       if (previous == next) {
         return;
       }
       unawaited(_syncTracking(next));
+    });
+    ref.listen<String?>(driverActiveTripIdProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      ref.read(driverLocationTrackerProvider).setActiveTripId(next);
     });
 
     final session = ref.watch(authSessionProvider).valueOrNull;

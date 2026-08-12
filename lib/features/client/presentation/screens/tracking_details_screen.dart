@@ -3030,16 +3030,14 @@ extension on _BookingNegotiationSheetState {
           child: const Text('Accept'),
         ),
       );
-      buttons.add(
-        OutlinedButton(
-          onPressed: _busy ? null : () => _counterOffer(offer),
-          child: const Text('Counter'),
-        ),
-      );
       if (offer.isCountered) {
         buttons.add(
-          TextButton(
+          OutlinedButton(
             onPressed: _busy ? null : () => _rejectOffer(offer),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFE23A4B),
+              side: const BorderSide(color: Color(0xFFF3B4B4)),
+            ),
             child: const Text('Reject'),
           ),
         );
