@@ -26,25 +26,28 @@ class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
 class _DriverOrderAcceptedScreenState
     extends ConsumerState<DriverOrderAcceptedScreen> {
   bool _submitting = false;
-  final bool _accepted = false;
-  final bool _trackRideReady = false;
   bool _counterLocked = false;
   bool _brokerHandoffVisible = false;
   late double _counterAmount;
   int _secondsUntilBrokerHandoff = 120;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _handoffTimer;
-  final String _resolvedTripId = '';
-  final String _resolvedTripStatus = '';
+  String _latestStatus = '';
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
+
+  bool get _accepted => _isAcceptedStatus(_latestStatus);
+
+  bool get _clientDecisionReady =>
+      _isAcceptedStatus(_latestStatus) || _isRejectedStatus(_latestStatus);
 
   @override
   void initState() {
     super.initState();
     final request = DriverRequestItem.fromExtra(widget.initialRequest);
     _counterAmount = request.amount > 0 ? request.amount : 1000;
+    _latestStatus = request.status.trim().toLowerCase();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_startLiveUpdates());
@@ -168,6 +171,15 @@ class _DriverOrderAcceptedScreenState
     });
   }
 
+  Future<void> _goBackToHome() async {
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = null;
+    _handoffTimer?.cancel();
+    _handoffTimer = null;
+    if (!mounted) return;
+    context.go('/driver/home');
+  }
+
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
     final status = _readPayloadString(payload, const [
       'status',
@@ -182,6 +194,12 @@ class _DriverOrderAcceptedScreenState
       'Handling live payload on negotiation screen. status=$status tripId=$effectiveTripId',
       name: 'driver.orderAccepted',
     );
+
+    if (mounted && status.isNotEmpty) {
+      setState(() {
+        _latestStatus = status;
+      });
+    }
 
     if (_isAcceptedStatus(status)) {
       developer.log(
@@ -245,6 +263,12 @@ class _DriverOrderAcceptedScreenState
         'Negotiation payload resolved. tripId=$effectiveTripId requestId=${request.id}',
         name: 'driver.orderAccepted',
       );
+
+      if (mounted && request.status.trim().isNotEmpty) {
+        setState(() {
+          _latestStatus = request.status.trim().toLowerCase();
+        });
+      }
 
       if (isCounter && mounted) {
         setState(() {
@@ -388,143 +412,401 @@ class _DriverOrderAcceptedScreenState
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F7FB),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: _goBackToHome,
+        ),
         title: const Text('Driver request'),
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: handoffExpired
-                    ? const Color(0xFFFFF7ED)
-                    : const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          unawaited(_goBackToHome());
+        },
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
                   color: handoffExpired
-                      ? const Color(0xFFFECF9E)
-                      : const Color(0xFFB7D7F0),
+                      ? const Color(0xFFFFF7ED)
+                      : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: handoffExpired
+                        ? const Color(0xFFFECF9E)
+                        : const Color(0xFFB7D7F0),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      handoffExpired
+                          ? Icons.support_agent_rounded
+                          : Icons.timer_outlined,
+                      color: handoffExpired
+                          ? const Color(0xFFB54708)
+                          : const Color(0xFF1F88C9),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            handoffExpired
+                                ? 'Broker will take over negotiation'
+                                : 'Client is waiting for your request',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: handoffExpired
+                                      ? const Color(0xFF9A5B13)
+                                      : const Color(0xFF1F88C9),
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            handoffExpired
+                                ? 'The driver window is up. Broker will negotiate now, kindly wait.'
+                                : 'This request waits for 2 minutes before broker handoff.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: handoffExpired
+                                      ? const Color(0xFF9A5B13)
+                                      : const Color(0xFF406B8F),
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        handoffExpired
+                            ? 'Now waiting'
+                            : '00:${_secondsUntilBrokerHandoff.toString().padLeft(2, '0')}',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: handoffExpired
+                                  ? const Color(0xFF9A5B13)
+                                  : const Color(0xFF1F88C9),
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    handoffExpired
-                        ? Icons.support_agent_rounded
-                        : Icons.timer_outlined,
-                    color: handoffExpired
-                        ? const Color(0xFFB54708)
-                        : const Color(0xFF1F88C9),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          handoffExpired
-                              ? 'Broker will take over negotiation'
-                              : 'Client is waiting for your request',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: handoffExpired
-                                    ? const Color(0xFF9A5B13)
-                                    : const Color(0xFF1F88C9),
-                              ),
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF7EF),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            Icons.handshake_rounded,
+                            color: Color(0xFF2FA56E),
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          handoffExpired
-                              ? 'The driver window is up. Broker will negotiate now, kindly wait.'
-                              : 'This request waits for 2 minutes before broker handoff.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: handoffExpired
-                                    ? const Color(0xFF9A5B13)
-                                    : const Color(0xFF406B8F),
-                                height: 1.35,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _clientDecisionReady
+                                    ? 'Client response received'
+                                    : 'Request ready',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFF101828),
+                                    ),
                               ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _clientDecisionReady
+                                    ? 'Client has responded. Choose whether to continue or decline.'
+                                    : 'Send a counter first. Accept and reject stay locked until the client responds.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                    const SizedBox(height: 18),
+                    _SummaryPill(label: 'Request', value: request.displayRef),
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Pickup',
+                      value: request.pickup.isNotEmpty ? request.pickup : '-',
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(999),
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Drop',
+                      value: request.drop.isNotEmpty ? request.drop : '-',
                     ),
-                    child: Text(
-                      handoffExpired
-                          ? 'Now waiting'
-                          : '00:${_secondsUntilBrokerHandoff.toString().padLeft(2, '0')}',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Base offer',
+                      value: '₹${baseAmount.toStringAsFixed(0)}',
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Counter amount',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: handoffExpired
-                            ? const Color(0xFF9A5B13)
-                            : const Color(0xFF1F88C9),
+                        color: const Color(0xFF101828),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7EF),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: const Icon(
-                          Icons.handshake_rounded,
-                          color: Color(0xFF2FA56E),
-                        ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Slide to set your counter amount before you confirm the request.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Offer price',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                '₹${selectedAmount.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      color: const Color(0xFF2FA56E),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Slider(
+                            value: selectedAmount.clamp(minOffer, maxOffer),
+                            min: minOffer,
+                            max: maxOffer,
+                            divisions: 24,
+                            activeColor: const Color(0xFF2FA56E),
+                            inactiveColor: const Color(0xFFE4E7EC),
+                            label: '₹${selectedAmount.toStringAsFixed(0)}',
+                            onChanged: _submitting
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _counterAmount = value;
+                                    });
+                                  },
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '₹${minOffer.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: const Color(0xFF98A2B3)),
+                              ),
+                              Text(
+                                '₹${maxOffer.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: const Color(0xFF98A2B3)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_clientDecisionReady) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _accepted
+                              ? const Color(0xFFEAF7EF)
+                              : const Color(0xFFFEEFEF),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _accepted
+                                ? const Color(0xFFB7E1C8)
+                                : const Color(0xFFF3B4B4),
+                          ),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Request ready',
-                              style: Theme.of(context).textTheme.titleLarge
+                              _accepted
+                                  ? 'Client accepted the request.'
+                                  : 'Client rejected the request.',
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF101828),
+                                    color: _accepted
+                                        ? const Color(0xFF2FA56E)
+                                        : const Color(0xFFB42318),
+                                    fontWeight: FontWeight.w700,
                                   ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .acceptDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: request.id,
+                                                ),
+                                            resolveTripOnSuccess: true,
+                                          ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF2FA56E),
+                                      side: const BorderSide(
+                                        color: Color(0xFFB7E1C8),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Accept',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .rejectDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: request.id,
+                                                ),
+                                          ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFFE23A4B),
+                                      side: const BorderSide(
+                                        color: Color(0xFFF3B4B4),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Reject',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_counterLocked) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFD),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: Color(0xFF1F88C9),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Text(
-                              'Review the request, send a counter, or accept it to unlock the trip screens.',
+                              'Counter sent. Waiting for client response...',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'We will unlock the tracking button once the client accepts the offer.',
+                              textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     color: const Color(0xFF667085),
@@ -534,285 +816,46 @@ class _DriverOrderAcceptedScreenState
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  _SummaryPill(label: 'Request', value: request.displayRef),
-                  const SizedBox(height: 10),
-                  _SummaryPill(
-                    label: 'Pickup',
-                    value: request.pickup.isNotEmpty ? request.pickup : '-',
-                  ),
-                  const SizedBox(height: 10),
-                  _SummaryPill(
-                    label: 'Drop',
-                    value: request.drop.isNotEmpty ? request.drop : '-',
-                  ),
-                  const SizedBox(height: 10),
-                  _SummaryPill(
-                    label: 'Base offer',
-                    value: '₹${baseAmount.toStringAsFixed(0)}',
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Counter amount',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Slide to set your counter amount before you confirm the request.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Offer price',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              '₹${selectedAmount.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    color: const Color(0xFF2FA56E),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Slider(
-                          value: selectedAmount.clamp(minOffer, maxOffer),
-                          min: minOffer,
-                          max: maxOffer,
-                          divisions: 24,
-                          activeColor: const Color(0xFF2FA56E),
-                          inactiveColor: const Color(0xFFE4E7EC),
-                          label: '₹${selectedAmount.toStringAsFixed(0)}',
-                          onChanged: _submitting
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          onPressed: actionLocked
                               ? null
-                              : (value) {
-                                  setState(() {
-                                    _counterAmount = value;
-                                  });
-                                },
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '₹${minOffer.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: const Color(0xFF98A2B3)),
-                            ),
-                            Text(
-                              '₹${maxOffer.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: const Color(0xFF98A2B3)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_accepted) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAF7EF),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            _trackRideReady
-                                ? 'Request accepted. Your trip is ready to track.'
-                                : 'Request accepted. Waiting for the trip to be ready.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: const Color(0xFF2FA56E),
-                                  fontWeight: FontWeight.w700,
+                              : () => _runAction(
+                                  (token) => ref
+                                      .read(apiClientProvider)
+                                      .counterDriverRequestAsDriver(
+                                        accessToken: token,
+                                        id: request.id,
+                                        amount: selectedAmount,
+                                      ),
+                                  isCounter: true,
                                 ),
-                          ),
-                          if (_resolvedTripStatus.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              'Trip status: ${_titleCase(_resolvedTripStatus)}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF40916C),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ],
-                          if (_trackRideReady) ...[
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: FilledButton(
-                                onPressed: _resolvedTripId.isEmpty
-                                    ? null
-                                    : () {
-                                        context.replace(
-                                          '/driver/delivery-details/$_resolvedTripId',
-                                        );
-                                      },
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1F88C9),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Track your ride',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ] else if (_counterLocked) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 18,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7FAFD),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE8EDF2)),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 26,
-                            height: 26,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.6,
-                              color: Color(0xFF1F88C9),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF1F88C9),
+                            disabledBackgroundColor: const Color(0xFFD0D5DD),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Counter sent. Waiting for client response...',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: const Color(0xFF101828),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'We will unlock the tracking button once the client accepts the offer.',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: const Color(0xFF667085),
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton(
-                        onPressed: actionLocked
-                            ? null
-                            : () => _runAction(
-                                (token) => ref
-                                    .read(apiClientProvider)
-                                    .counterDriverRequestAsDriver(
-                                      accessToken: token,
-                                      id: request.id,
-                                      amount: selectedAmount,
-                                    ),
-                                isCounter: true,
-                              ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
-                          disabledBackgroundColor: const Color(0xFFD0D5DD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                          child: Text(
+                            _submitting
+                                ? 'Saving...'
+                                : handoffExpired
+                                ? 'Broker takeover'
+                                : 'Send counter',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
-                        child: Text(
-                          _submitting
-                              ? 'Saving...'
-                              : handoffExpired
-                              ? 'Broker takeover'
-                              : 'Send counter',
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _submitting || handoffExpired
-                                ? null
-                                : () => _runAction(
-                                    (token) => ref
-                                        .read(apiClientProvider)
-                                        .acceptDriverRequestAsDriver(
-                                          accessToken: token,
-                                          id: request.id,
-                                        ),
-                                    resolveTripOnSuccess: true,
-                                  ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF2FA56E),
-                              side: const BorderSide(color: Color(0xFFB7E1C8)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Text(
-                              'Accept',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -896,12 +939,4 @@ String _extractTripId(Map<String, dynamic> payload, String fallback) {
   }
 
   return fallback.trim();
-}
-
-String _titleCase(String value) {
-  return value
-      .split(RegExp(r'[_\s-]+'))
-      .where((part) => part.isNotEmpty)
-      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
-      .join(' ');
 }

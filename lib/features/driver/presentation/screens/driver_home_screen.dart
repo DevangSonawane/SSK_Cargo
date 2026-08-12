@@ -458,33 +458,18 @@ class _DeliveryOrderCard extends StatelessWidget {
           const SizedBox(height: 14),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
           const SizedBox(height: 14),
-          Text(
-            request.drop.isNotEmpty ? request.drop : 'Drop location',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            request.pickup.isNotEmpty ? request.pickup : 'Pickup location',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
+          Column(
             children: [
-              Expanded(
-                child: _MiniMetric(label: 'Request', value: request.status),
+              _RoutePointCard(
+                label: 'Pickup',
+                value: request.pickup,
+                accentColor: const Color(0xFF2FA56E),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MiniMetric(
-                  label: 'Offers',
-                  value: '${request.offerCount}',
-                ),
+              const SizedBox(height: 10),
+              _RoutePointCard(
+                label: 'Drop',
+                value: request.drop,
+                accentColor: const Color(0xFFE23A4B),
               ),
             ],
           ),
@@ -641,14 +626,22 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '${request.pickup.isNotEmpty ? request.pickup : 'Pickup'} → ${request.drop.isNotEmpty ? request.drop : 'Drop'}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              _RoutePointCard(
+                label: 'Pickup',
+                value: request.pickup,
+                accentColor: const Color(0xFF2FA56E),
+              ),
+              const SizedBox(height: 10),
+              _RoutePointCard(
+                label: 'Drop',
+                value: request.drop,
+                accentColor: const Color(0xFFE23A4B),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Text(
             [
               if (request.truckType.isNotEmpty) request.truckType,
@@ -658,21 +651,6 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniMetric(label: 'Request', value: request.status),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MiniMetric(
-                  label: 'Offers',
-                  value: '${request.offerCount}',
-                ),
-              ),
-            ],
           ),
           if (request.driverTimedOut) ...[
             const SizedBox(height: 12),
@@ -765,43 +743,115 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
   }
 }
 
-class _MiniMetric extends StatelessWidget {
-  const _MiniMetric({required this.label, required this.value});
+class _RoutePointCard extends StatelessWidget {
+  const _RoutePointCard({
+    required this.label,
+    required this.value,
+    required this.accentColor,
+  });
 
   final String label;
   final String value;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
+    final hasValue = value.trim().isNotEmpty;
+    final parts = _splitLocationText(value);
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFD),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           Text(
-            value.isEmpty ? '-' : value,
+            hasValue ? parts.title : '$label location',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF101828),
               fontWeight: FontWeight.w800,
+              height: 1.2,
             ),
           ),
+          if (hasValue && parts.subtitle.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              parts.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                height: 1.35,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _LocationTextParts {
+  const _LocationTextParts({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+}
+
+_LocationTextParts _splitLocationText(String value) {
+  final raw = value.trim();
+  if (raw.isEmpty) {
+    return const _LocationTextParts(title: '', subtitle: '');
+  }
+
+  final separators = ['\n', ' - ', ' | ', ', '];
+  for (final separator in separators) {
+    final index = raw.indexOf(separator);
+    if (index > 0) {
+      final title = raw.substring(0, index).trim();
+      final subtitle = raw.substring(index + separator.length).trim();
+      if (title.isNotEmpty) {
+        return _LocationTextParts(title: title, subtitle: subtitle);
+      }
+    }
+  }
+
+  return _LocationTextParts(title: raw, subtitle: '');
 }
 
 class _RequestThumbShape extends SliderComponentShape {

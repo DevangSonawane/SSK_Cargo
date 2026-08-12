@@ -114,6 +114,8 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                             ? 'Upload proof and complete payment'
                             : 'Current trip in progress')
                       : 'Recent deliveries and settlements',
+                  actionLabel: 'View all',
+                  onActionTap: () {},
                 ),
                 const SizedBox(height: 12),
                 if (currentTrip != null)
@@ -144,9 +146,17 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
 
                       context.push('/driver/delivery-details/$tripId');
                     },
-                  )
-                else if (history.isNotEmpty)
-                  _TripHistoryCard(
+                  ),
+                const SizedBox(height: 18),
+                _SectionHeader(
+                  title: 'Latest trip activity',
+                  subtitle: 'Recent deliveries and settlements',
+                  actionLabel: 'View all',
+                  onActionTap: () {},
+                ),
+                const SizedBox(height: 12),
+                if (history.isNotEmpty)
+                  _TripSummaryCard(
                     settlement: history.first,
                     onTap: () {
                       final settlement = history.first;
@@ -165,14 +175,16 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 else
                   const _EmptyCard(
                     icon: Icons.local_shipping_outlined,
-                    title: 'No delivery history yet',
+                    title: 'No trip activity yet',
                     subtitle:
-                        'Completed trips will appear here once available.',
+                        'Recent deliveries and settlements will appear here.',
                   ),
                 const SizedBox(height: 18),
                 _SectionHeader(
                   title: 'Deliveries done',
                   subtitle: 'Recently completed deliveries',
+                  actionLabel: 'View all',
+                  onActionTap: () {},
                 ),
                 const SizedBox(height: 12),
                 if (history.isEmpty)
@@ -183,28 +195,33 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                         'Finished trips will be listed here once they close.',
                   )
                 else
-                  ...history.asMap().entries.expand(
-                    (entry) => [
-                      _TripHistoryCard(
-                        settlement: entry.value,
-                        onTap: () {
-                          final settlement = entry.value;
-                          final bookingId = settlement.bookingId.isNotEmpty
-                              ? settlement.bookingId
-                              : settlement.bookingNumber;
-                          if (bookingId.isEmpty) {
-                            return;
-                          }
-                          context.push(
-                            '/driver/deliveries/$bookingId',
-                            extra: settlement,
-                          );
-                        },
+                  ...history
+                      .skip(1)
+                      .toList()
+                      .asMap()
+                      .entries
+                      .expand(
+                        (entry) => [
+                          _TripSummaryCard(
+                            settlement: entry.value,
+                            onTap: () {
+                              final settlement = entry.value;
+                              final bookingId = settlement.bookingId.isNotEmpty
+                                  ? settlement.bookingId
+                                  : settlement.bookingNumber;
+                              if (bookingId.isEmpty) {
+                                return;
+                              }
+                              context.push(
+                                '/driver/deliveries/$bookingId',
+                                extra: settlement,
+                              );
+                            },
+                          ),
+                          if (entry.key != history.skip(1).length - 1)
+                            const SizedBox(height: 12),
+                        ],
                       ),
-                      if (entry.key != history.length - 1)
-                        const SizedBox(height: 12),
-                    ],
-                  ),
               ],
             ),
           );
@@ -258,10 +275,17 @@ class _LifecycleRefreshObserver extends WidgetsBindingObserver {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    this.actionLabel,
+    this.onActionTap,
+  });
 
   final String title;
   final String subtitle;
+  final String? actionLabel;
+  final VoidCallback? onActionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -290,6 +314,30 @@ class _SectionHeader extends StatelessWidget {
             ],
           ),
         ),
+        if (actionLabel != null) ...[
+          const SizedBox(width: 12),
+          TextButton(
+            onPressed: onActionTap,
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF667085),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.chevron_right_rounded, size: 18),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -303,22 +351,30 @@ class _ActiveTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final route = _splitActiveRoute(shipment.fromLocation, shipment.toLocation);
+    final statusLabel = _activeStatusLabel(shipment.status);
+    final isDelivered = shipment.status.trim().toLowerCase() == 'delivered';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFF4FBF7), Color(0xFFEAF8EF), Colors.white],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFD7EEDF)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 22,
+                color: const Color(0xFF2FA56E).withValues(alpha: 0.08),
+                blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -327,21 +383,463 @@ class _ActiveTripCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFFAF4),
-                      shape: BoxShape.circle,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Active Delivery',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontSize: 17,
+                                color: const Color(0xFF12824A),
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                        const SizedBox(height: 6),
+                        _ActiveStatusPill(
+                          label: statusLabel,
+                          isDelivered: isDelivered,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          shipment.trackingId,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontSize: 17,
+                                color: const Color(0xFF101828),
+                                fontWeight: FontWeight.w900,
+                                height: 1.02,
+                              ),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'assets/trucks/speed.png',
-                        fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 92,
+                    height: 72,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned(
+                          right: 0,
+                          top: 2,
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF2FA56E,
+                              ).withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          child: Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF2FA56E),
+                                width: 1.4,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.location_on_rounded,
+                              color: Color(0xFF2FA56E),
+                              size: 8,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 2,
+                          child: Image.asset(
+                            'assets/driver/active_truck_driver.png',
+                            width: 70,
+                            height: 44,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE3ECE6)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _RouteSummaryColumn(
+                        label: 'From',
+                        value: route.from,
+                        subtitle: route.fromSubtitle,
+                        dotColor: const Color(0xFF2FA56E),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 34,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 2),
+                          Icon(
+                            Icons.local_shipping_rounded,
+                            size: 15,
+                            color: const Color(0xFF2FA56E),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 2,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFBFE7CE),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Icon(
+                            Icons.flag_rounded,
+                            size: 14,
+                            color: const Color(0xFF2FA56E),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _RouteSummaryColumn(
+                        label: 'To',
+                        value: route.to,
+                        subtitle: route.toSubtitle,
+                        dotColor: const Color(0xFF2FA56E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow = constraints.maxWidth < 360;
+                  final detailsButton = SizedBox(
+                    width: narrow ? double.infinity : 126,
+                    height: 38,
+                    child: FilledButton(
+                      onPressed: onTap,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F9D57),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'View Details',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: Colors.white.withValues(alpha: 0.95),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  if (narrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _ExpectedDeliveryBlock(
+                          label: 'Status',
+                          value: isDelivered ? 'Delivered' : 'In progress',
+                        ),
+                        const SizedBox(height: 10),
+                        detailsButton,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _ExpectedDeliveryBlock(
+                          label: 'Status',
+                          value: isDelivered ? 'Delivered' : 'In progress',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      detailsButton,
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RouteSummaryColumn extends StatelessWidget {
+  const _RouteSummaryColumn({
+    required this.label,
+    required this.value,
+    required this.subtitle,
+    required this.dotColor,
+  });
+
+  final String label;
+  final String value;
+  final String subtitle;
+  final Color dotColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayTitle = value.trim().isEmpty ? '$label location' : value;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: dotColor.withValues(alpha: 0.18),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                displayTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExpectedDeliveryBlock extends StatelessWidget {
+  const _ExpectedDeliveryBlock({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7FA),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE1E6ED)),
+          ),
+          child: const Icon(
+            Icons.access_time_rounded,
+            size: 18,
+            color: Color(0xFF667085),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActiveStatusPill extends StatelessWidget {
+  const _ActiveStatusPill({required this.label, required this.isDelivered});
+
+  final String label;
+  final bool isDelivered;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = isDelivered
+        ? const Color(0xFFBFE7CE)
+        : const Color(0xFF96DEB0);
+    final textColor = isDelivered
+        ? const Color(0xFF0F7A43)
+        : const Color(0xFF12824A);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _TripSummaryCard extends StatelessWidget {
+  const _TripSummaryCard({required this.settlement, required this.onTap});
+
+  final BrokerSettlement settlement;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final route = _splitRoute(settlement.route);
+    final bookingId = settlement.bookingId.isNotEmpty
+        ? settlement.bookingId
+        : settlement.bookingNumber;
+    final status = settlement.status.trim().toLowerCase();
+    final isCompleted =
+        status == 'completed' || status == 'paid' || status == 'settled';
+    final statusColor = isCompleted
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFF59E0B);
+    final leadingBg = isCompleted
+        ? const Color(0xFFE7F7EC)
+        : const Color(0xFFFDF1DA);
+    final leadingIcon = isCompleted
+        ? Icons.check_rounded
+        : Icons.schedule_rounded;
+    final dateLabel =
+        settlement.settledAt != null && settlement.settledAt!.trim().isNotEmpty
+        ? _formatDisplayDate(settlement.settledAt!)
+        : 'Today';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE4E8EE)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.035),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: leadingBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(leadingIcon, size: 30, color: statusColor),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -349,205 +847,71 @@ class _ActiveTripCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Current delivery',
+                          bookingId.isEmpty
+                              ? settlement.bookingNumber
+                              : bookingId,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF121826),
-                              ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          shipment.trackingId,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.black45,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF7EF),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      shipment.status,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF2FA56E),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 14,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 3),
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.16),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 4,
-                              height: 4,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 2,
-                          height: 30,
-                          margin: const EdgeInsets.symmetric(vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                        ),
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 4,
-                              height: 4,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'From:',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.black38,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          shipment.fromLocation,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: const Color(0xFF1C2430),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF101828),
+                                height: 1.15,
                               ),
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          'To:',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.black38,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          shipment.toLocation,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: const Color(0xFF1C2430),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: _StatusPill(status: settlement.status),
                         ),
                       ],
+                    ),
+                  ),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFD),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Icon(
+                      Icons.visibility_rounded,
+                      size: 20,
+                      color: Color(0xFF1F88C9),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
+              _TripRouteRow(from: route.from, to: route.to),
+              const SizedBox(height: 12),
               const Divider(height: 1, color: Color(0xFFECEFF3)),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 5),
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2FA56E),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(
-                            0xFF2FA56E,
-                          ).withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                  Expanded(
+                    child: _TripMetric(
+                      label: isCompleted ? 'Delivered on' : 'Booking time',
+                      value: dateLabel,
+                      icon: Icons.event_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    'Status:',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF1C2430),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                  Expanded(
+                    child: _TripMetric(
+                      label: isCompleted ? 'Earnings' : 'Amount',
+                      value: '₹${settlement.netEarnings.toStringAsFixed(0)}',
+                      icon: Icons.account_balance_wallet_outlined,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      shipment.status,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
+                    child: _TripMetric(
+                      label: 'Status',
+                      value: settlement.status,
+                      icon: Icons.circle,
+                      valueColor: statusColor,
+                      iconColor: statusColor,
                     ),
                   ),
                 ],
@@ -560,6 +924,232 @@ class _ActiveTripCard extends StatelessWidget {
   }
 }
 
+class _TripRouteRow extends StatelessWidget {
+  const _TripRouteRow({required this.from, required this.to});
+
+  final String from;
+  final String to;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 16,
+          child: Column(
+            children: [
+              const SizedBox(height: 4),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.fiber_manual_record,
+                    size: 4,
+                    color: Color(0xFFF59E0B),
+                  ),
+                ),
+              ),
+              Container(
+                width: 2,
+                height: 22,
+                margin: const EdgeInsets.symmetric(vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD8DDE5),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2FA56E).withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.fiber_manual_record,
+                    size: 4,
+                    color: Color(0xFF2FA56E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                from,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF1C2430),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                to,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF1C2430),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TripMetric extends StatelessWidget {
+  const _TripMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.valueColor,
+    this.iconColor,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color? valueColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolvedIconColor = iconColor ?? const Color(0xFF98A2B3);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: resolvedIconColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: valueColor ?? const Color(0xFF101828),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+({String from, String fromSubtitle, String to, String toSubtitle})
+_splitActiveRoute(String from, String to) {
+  return (
+    from: _splitRouteText(from).title,
+    fromSubtitle: _splitRouteText(from).subtitle,
+    to: _splitRouteText(to).title,
+    toSubtitle: _splitRouteText(to).subtitle,
+  );
+}
+
+({String title, String subtitle}) _splitRouteText(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) {
+    return (title: 'Location unavailable', subtitle: '');
+  }
+
+  final separators = ['\n', ' - ', ' | ', ', '];
+  for (final separator in separators) {
+    final index = normalized.indexOf(separator);
+    if (index > 0) {
+      final title = normalized.substring(0, index).trim();
+      final subtitle = normalized.substring(index + separator.length).trim();
+      if (title.isNotEmpty) {
+        return (title: title, subtitle: subtitle);
+      }
+    }
+  }
+
+  return (title: normalized, subtitle: '');
+}
+
+String _activeStatusLabel(String status) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return 'In Progress';
+  }
+  if (normalized == 'delivered') {
+    return 'Delivered';
+  }
+  if (normalized == 'accepted' ||
+      normalized == 'confirmed' ||
+      normalized == 'en_route_pickup' ||
+      normalized == 'en route' ||
+      normalized == 'en_route' ||
+      normalized == 'in_transit' ||
+      normalized == 'in transit' ||
+      normalized == 'picked_up' ||
+      normalized == 'picked up') {
+    return 'In Progress';
+  }
+  return normalized
+      .split(RegExp(r'[_\s-]+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+      .join(' ');
+}
+
+String _formatDisplayDate(String value) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) {
+    return value;
+  }
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final hour = parsed.hour % 12 == 0 ? 12 : parsed.hour % 12;
+  final minute = parsed.minute.toString().padLeft(2, '0');
+  final period = parsed.hour >= 12 ? 'PM' : 'AM';
+  return '${months[parsed.month - 1]} ${parsed.day}, $hour:$minute $period';
+}
+
+// ignore: unused_element
 class _TripHistoryCard extends StatelessWidget {
   const _TripHistoryCard({required this.settlement, required this.onTap});
 
