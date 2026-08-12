@@ -82,11 +82,7 @@ class _DriverOrderAcceptedScreenState
       if (mounted) {
         unawaited(_startLiveUpdates());
         if (_isAcceptedStatus(_latestStatus)) {
-          unawaited(
-            _beginTripHandoff(
-              tripId: request.tripId.trim().isNotEmpty ? request.tripId : null,
-            ),
-          );
+          unawaited(_beginTripHandoff(tripId: request.tripId.trim()));
         }
       }
     });
@@ -355,22 +351,32 @@ class _DriverOrderAcceptedScreenState
     try {
       final response = await ref
           .read(apiClientProvider)
-          .getUpcomingTrip(accessToken: session.tokens.accessToken);
+          .getTrips(accessToken: session.tokens.accessToken, limit: 100);
       developer.log(
-        'Handoff trip lookup response received: $response',
+        'Handoff trips list response received: $response',
         name: 'driver.orderAccepted',
       );
       final data = response['data'];
-      final trip = data is Map<String, dynamic>
-          ? (data['trip'] is Map<String, dynamic>
-                ? data['trip'] as Map<String, dynamic>
-                : data)
-          : response;
-      final tripId = _extractTripId(trip, '').trim();
-      if (tripId.isNotEmpty && mounted) {
-        setState(() {
-          _handoffTripId = tripId;
-        });
+      final trips = data is Map<String, dynamic>
+          ? (data['trips'] is List ? data['trips'] as List : const [])
+          : (response['trips'] is List ? response['trips'] as List : const []);
+      final bookingId = _request.bookingId.trim();
+      for (final item in trips) {
+        if (item is! Map<String, dynamic>) continue;
+        final tripBookingId = _readPayloadString(item, const [
+          'bookingId',
+          'booking_id',
+        ]).trim();
+        if (tripBookingId != bookingId) {
+          continue;
+        }
+        final tripId = _extractTripId(item, '').trim();
+        if (tripId.isNotEmpty && mounted) {
+          setState(() {
+            _handoffTripId = tripId;
+          });
+        }
+        break;
       }
     } catch (error) {
       developer.log(
@@ -389,13 +395,7 @@ class _DriverOrderAcceptedScreenState
     }
 
     final tripId = _handoffTripId?.trim() ?? '';
-    final deadline = _handoffDeadline;
-    final readyToNavigate =
-        tripId.isNotEmpty &&
-        deadline != null &&
-        DateTime.now().isAfter(deadline);
-
-    if (!readyToNavigate) {
+    if (tripId.isEmpty) {
       return;
     }
 
@@ -427,7 +427,7 @@ class _DriverOrderAcceptedScreenState
 
     if (_isAcceptedStatus(status)) {
       developer.log(
-        'Accepted status received from socket. Starting booking handoff.',
+        'Accepted status received from socket. Starting trip handoff.',
         name: 'driver.orderAccepted',
       );
       await _beginTripHandoff(
@@ -523,7 +523,7 @@ class _DriverOrderAcceptedScreenState
               responseStatus == 'confirmed' ||
               responseStatus == 'assigned')) {
         developer.log(
-          'Negotiation accepted locally. Starting booking handoff.',
+          'Negotiation accepted locally. Starting trip handoff.',
           name: 'driver.orderAccepted',
         );
         await _beginTripHandoff(
@@ -924,8 +924,10 @@ class _DriverOrderAcceptedScreenState
                             const SizedBox(height: 6),
                             Text(
                               _handoffTripId?.isNotEmpty == true
-                                  ? 'Trip created. Redirecting in ${_handoffSecondsRemaining}s.'
-                                  : 'Waiting for the trip to be created. Redirecting in ${_handoffSecondsRemaining}s.',
+                                  ? 'Trip created. Redirecting now.'
+                                  : _handoffSecondsRemaining > 0
+                                  ? 'Waiting for the trip to be created. Redirecting in ${_handoffSecondsRemaining}s.'
+                                  : 'Waiting for the trip to be created. Syncing trip details...',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(

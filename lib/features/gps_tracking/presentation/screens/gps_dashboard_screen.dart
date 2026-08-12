@@ -382,80 +382,87 @@ class _FleetStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+    return Material(
+      color: Colors.white.withValues(alpha: 0.96),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: () => context.go('/gps/maps'),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF101828).withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Fleet Status',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF10213F),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'View All',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF33405C),
-                ),
-              ),
-              const SizedBox(width: 2),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: Color(0xFF8B96AB),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF101828).withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 680;
-              final chart = const SizedBox(
-                width: 200,
-                height: 200,
-                child: _FleetDonutChart(),
-              );
-
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    SizedBox(width: constraints.maxWidth, child: chart),
-                    const SizedBox(height: 12),
-                    const _StatusBreakdownList(),
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  chart,
-                  const SizedBox(width: 18),
-                  const Expanded(child: _StatusBreakdownList()),
+                  Text(
+                    'Fleet Status',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF10213F),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'View All',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF33405C),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: Color(0xFF8B96AB),
+                  ),
                 ],
-              );
-            },
+              ),
+              const SizedBox(height: 14),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 680;
+                  final chart = const SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: _FleetDonutChart(),
+                  );
+
+                  if (isNarrow) {
+                    return Column(
+                      children: [
+                        SizedBox(width: constraints.maxWidth, child: chart),
+                        const SizedBox(height: 12),
+                        const _StatusBreakdownList(),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      chart,
+                      const SizedBox(width: 18),
+                      const Expanded(child: _StatusBreakdownList()),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

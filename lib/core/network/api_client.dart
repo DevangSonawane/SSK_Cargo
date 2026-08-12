@@ -112,6 +112,50 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getTrackingDevices({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/tracking/devices', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/tracking/devices',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getTrackingDeviceByName({
+    required String accessToken,
+    required String name,
+  }) async {
+    developer.log(
+      'GET /api/tracking/devices/name/$name',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/tracking/devices/name/${Uri.encodeComponent(name)}',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getTrackingDeviceByImei({
+    required String accessToken,
+    required String imei,
+  }) async {
+    developer.log(
+      'GET /api/tracking/devices/imei/$imei',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/tracking/devices/imei/${Uri.encodeComponent(imei)}',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getBookingById({
     required String accessToken,
     required String id,

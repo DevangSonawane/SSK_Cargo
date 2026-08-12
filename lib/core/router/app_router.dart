@@ -9,6 +9,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_dashboard_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_geofences_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_fleet_map_screen.dart';
+import '../../features/gps_tracking/presentation/screens/gps_vehicle_map_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_reports_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_profile_screen.dart';
 import '../../features/gps_tracking/presentation/screens/gps_wallet_billing_screen.dart';
@@ -96,6 +98,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/gps/dashboard',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: GpsDashboardScreen()),
+      ),
+      GoRoute(
+        path: '/gps/maps',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GpsFleetMapScreen()),
+      ),
+      GoRoute(
+        path: '/gps/maps/:vehicleId',
+        pageBuilder: (context, state) {
+          final vehicleId = state.pathParameters['vehicleId'] ?? '';
+          return NoTransitionPage(
+            child: GpsVehicleMapScreen(vehicleId: vehicleId),
+          );
+        },
       ),
       GoRoute(
         path: '/gps/vehicles',
