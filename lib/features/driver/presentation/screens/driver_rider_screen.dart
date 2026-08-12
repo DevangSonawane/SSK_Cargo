@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:developer' as developer;
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
@@ -75,8 +76,11 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           ),
         ),
         data: (dashboard) {
-          final activeTrip = dashboard.activeTrip;
+          final currentTrip = dashboard.activeTrip ?? dashboard.upcomingTrip;
           final history = dashboard.history;
+          final currentTripStatus =
+              currentTrip?.status.trim().toLowerCase() ?? '';
+          final isResumableCompletionTrip = currentTripStatus == 'delivered';
 
           return RefreshIndicator(
             onRefresh: _refreshDashboard,
@@ -88,7 +92,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
               ),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               children: [
-                if (activeTrip == null) ...[
+                if (currentTrip == null) ...[
                   const _EmptyCard(
                     icon: Icons.route_rounded,
                     title: 'No active delivery',
@@ -97,22 +101,44 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                   const SizedBox(height: 18),
                 ],
                 _SectionHeader(
-                  title: activeTrip != null
-                      ? 'Ongoing delivery'
+                  title: currentTrip != null
+                      ? (isResumableCompletionTrip
+                            ? 'Finish delivery'
+                            : 'Ongoing delivery')
                       : 'Latest trip activity',
-                  subtitle: activeTrip != null
-                      ? 'Current trip in progress'
+                  subtitle: currentTrip != null
+                      ? (isResumableCompletionTrip
+                            ? 'Upload proof and complete payment'
+                            : 'Current trip in progress')
                       : 'Recent deliveries and settlements',
                 ),
                 const SizedBox(height: 12),
-                if (activeTrip != null)
+                if (currentTrip != null)
                   _ActiveTripCard(
-                    shipment: activeTrip,
+                    shipment: currentTrip,
                     onTap: () {
-                      final tripId = activeTrip.bookingId?.trim() ?? '';
+                      final tripId = currentTrip.bookingId?.trim() ?? '';
                       if (tripId.isEmpty) {
+                        developer.log(
+                          'Active trip card tap ignored: missing trip id.',
+                          name: 'driver.rider',
+                        );
                         return;
                       }
+                      developer.log(
+                        'Opening driver delivery details from active tab. tripId=$tripId status=${currentTrip.status}',
+                        name: 'driver.rider',
+                      );
+                      if (isResumableCompletionTrip) {
+                        final requiresPayment =
+                            currentTrip.paymentStatus.trim().toLowerCase() !=
+                            'paid';
+                        context.push(
+                          '/driver/delivery-proof/$tripId?payment=${requiresPayment ? 'pending' : 'paid'}',
+                        );
+                        return;
+                      }
+
                       context.push('/driver/delivery-details/$tripId');
                     },
                   )

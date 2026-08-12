@@ -252,6 +252,7 @@ bool _isLiveTrip(String status) {
     'en_route',
     'en route',
     'started',
+    'delivered',
   };
 
   const inactiveStatuses = {
