@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class DriverPaymentScreen extends ConsumerStatefulWidget {
@@ -30,6 +31,37 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   String? _bookingId;
   String _paymentStatus = 'pending';
   StreamSubscription<Map<String, dynamic>>? _paymentSubscription;
+
+  void _setTripSession({
+    required String tripId,
+    String? bookingId,
+    String? paymentStatus,
+  }) {
+    final resolvedTripId = tripId.trim();
+    if (resolvedTripId.isEmpty) {
+      return;
+    }
+
+    final currentSession = ref.read(driverTripSessionProvider);
+    ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+    ref.read(driverTripSessionProvider.notifier).state = DriverTripSession(
+      tripId: resolvedTripId,
+      bookingId: bookingId?.trim().isNotEmpty == true
+          ? bookingId!.trim()
+          : currentSession?.bookingId,
+      bookingNumber: currentSession?.bookingNumber,
+      status: currentSession?.status,
+      paymentStatus: paymentStatus?.trim().isNotEmpty == true
+          ? paymentStatus!.trim()
+          : currentSession?.paymentStatus,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  void _clearTripSession() {
+    ref.read(driverActiveTripIdProvider.notifier).state = null;
+    ref.read(driverTripSessionProvider.notifier).state = null;
+  }
 
   @override
   void initState() {
@@ -95,6 +127,11 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         _driverQrUrl = driverQrUrl.isNotEmpty ? driverQrUrl : null;
         _loadingTrip = false;
       });
+      _setTripSession(
+        tripId: widget.tripId,
+        bookingId: _bookingId,
+        paymentStatus: paymentStatus,
+      );
 
       if (_paymentStatus == 'paid' && mounted) {
         unawaited(_finalizeTripAfterPayment());
@@ -174,6 +211,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             tripId: widget.tripId,
           );
       if (!mounted) return;
+      _clearTripSession();
       context.go('/driver/thank-you/${widget.tripId}');
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -425,6 +463,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
               ),
               const SizedBox(height: 12),
             ],
+            const SizedBox(height: 16),
             Text(
               'Amount to be collected',
               textAlign: TextAlign.center,

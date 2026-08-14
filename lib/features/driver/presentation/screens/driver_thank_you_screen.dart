@@ -21,6 +21,7 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(driverActiveTripIdProvider.notifier).state = null;
+      ref.read(driverTripSessionProvider.notifier).state = null;
     });
   }
 

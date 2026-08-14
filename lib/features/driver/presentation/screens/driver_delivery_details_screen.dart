@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
@@ -41,7 +43,8 @@ class _DriverDeliveryDetailsScreenState
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
   TrackingDemoShipment? _shipment;
-  Timer? _tripResolveTimer;
+  Timer? _tripRefreshTimer;
+  bool _loadingTripInFlight = false;
   String? _resolvedTripId;
 
   String get _tripId => _resolvedTripId?.trim().isNotEmpty == true
@@ -50,6 +53,39 @@ class _DriverDeliveryDetailsScreenState
 
   String get _bookingId => widget.bookingId?.trim() ?? '';
 
+  void _setTripSession({
+    required String tripId,
+    String? bookingId,
+    String? bookingNumber,
+    String? status,
+    String? paymentStatus,
+  }) {
+    final resolvedTripId = tripId.trim();
+    if (resolvedTripId.isEmpty) {
+      return;
+    }
+
+    ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+    ref.read(driverTripSessionProvider.notifier).state = DriverTripSession(
+      tripId: resolvedTripId,
+      bookingId: bookingId?.trim().isNotEmpty == true
+          ? bookingId!.trim()
+          : null,
+      bookingNumber: bookingNumber?.trim().isNotEmpty == true
+          ? bookingNumber!.trim()
+          : null,
+      status: status?.trim().isNotEmpty == true ? status!.trim() : null,
+      paymentStatus: paymentStatus?.trim().isNotEmpty == true
+          ? paymentStatus!.trim()
+          : null,
+    );
+  }
+
+  void _clearTripSession() {
+    ref.read(driverActiveTripIdProvider.notifier).state = null;
+    ref.read(driverTripSessionProvider.notifier).state = null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,37 +93,40 @@ class _DriverDeliveryDetailsScreenState
     if (initialTripId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref.read(driverActiveTripIdProvider.notifier).state = initialTripId;
+        _setTripSession(tripId: initialTripId);
       });
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadTrip());
-      if (widget.tripId.trim().isEmpty && _bookingId.isNotEmpty) {
-        _tripResolveTimer?.cancel();
-        _tripResolveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-          if (mounted) {
-            unawaited(_loadTrip());
-          }
-        });
-      }
+      _tripRefreshTimer?.cancel();
+      _tripRefreshTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+        if (mounted) {
+          unawaited(_loadTrip());
+        }
+      });
     });
   }
 
   @override
   void dispose() {
-    _tripResolveTimer?.cancel();
+    _tripRefreshTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _loadTrip() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      if (!mounted) return;
-      setState(() => _loadingTrip = false);
+    if (_loadingTripInFlight) {
       return;
     }
 
+    _loadingTripInFlight = true;
     try {
+      final session = ref.read(authSessionProvider).valueOrNull;
+      if (session == null) {
+        if (!mounted) return;
+        setState(() => _loadingTrip = false);
+        return;
+      }
+
       final api = ref.read(apiClientProvider);
       var tripId = _tripId;
       if (tripId.isEmpty && _bookingId.isNotEmpty) {
@@ -142,7 +181,14 @@ class _DriverDeliveryDetailsScreenState
 
         if (mounted) {
           _resolvedTripId = tripId;
-          ref.read(driverActiveTripIdProvider.notifier).state = tripId;
+          _setTripSession(
+            tripId: tripId,
+            bookingId: _bookingId,
+            bookingNumber: _readString(booking, const [
+              'bookingNumber',
+              'booking_number',
+            ]),
+          );
         }
       }
 
@@ -164,7 +210,19 @@ class _DriverDeliveryDetailsScreenState
       ]);
       if (resolvedTripId.isNotEmpty) {
         _resolvedTripId = resolvedTripId;
-        ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+        _setTripSession(
+          tripId: resolvedTripId,
+          bookingId: _bookingId,
+          bookingNumber: _readString(trip, const [
+            'bookingNumber',
+            'booking_number',
+          ]),
+          status: _readString(trip, const ['status', 'rawStatus']),
+          paymentStatus: _readString(trip, const [
+            'paymentStatus',
+            'payment_status',
+          ]),
+        );
       }
 
       setState(() {
@@ -203,9 +261,15 @@ class _DriverDeliveryDetailsScreenState
         }
         _loadingTrip = false;
       });
+
+      if (_tripStatus == 'completed' || _tripStatus == 'cancelled') {
+        _clearTripSession();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
+    } finally {
+      _loadingTripInFlight = false;
     }
   }
 
@@ -213,7 +277,16 @@ class _DriverDeliveryDetailsScreenState
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
     final messenger = ScaffoldMessenger.of(context);
+    final stopwatch = Stopwatch()..start();
+    developer.log(
+      'Primary trip action started. tripId=$_tripId nextStatus=$nextStatus loadingTrip=$_loadingTrip confirmingArrival=$_confirmingArrival',
+      name: 'driver.deliveryDetails',
+    );
     if (_tripId.isEmpty) {
+      developer.log(
+        'Trip id missing before status update, reloading trip first.',
+        name: 'driver.deliveryDetails',
+      );
       await _loadTrip();
       if (!mounted || _tripId.isEmpty) {
         messenger.showSnackBar(
@@ -234,11 +307,27 @@ class _DriverDeliveryDetailsScreenState
       return;
     }
 
+    if (!mounted) return;
+    setState(() => _loadingTrip = true);
+
+    developer.log(
+      'Refreshing current location before status update for tripId=$_tripId nextStatus=$nextStatus',
+      name: 'driver.deliveryDetails',
+    );
+    final locationStopwatch = Stopwatch()..start();
     final locationError = await ref
         .read(driverLocationTrackerProvider)
         .refreshCurrentLocation();
+    locationStopwatch.stop();
+    developer.log(
+      locationError == null
+          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
+          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
+      name: 'driver.deliveryDetails',
+    );
     if (locationError != null) {
       if (!mounted) return;
+      setState(() => _loadingTrip = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(locationError),
@@ -248,8 +337,12 @@ class _DriverDeliveryDetailsScreenState
       return;
     }
 
-    setState(() => _loadingTrip = true);
     try {
+      developer.log(
+        'Sending trip status update to backend. tripId=$_tripId status=$nextStatus',
+        name: 'driver.deliveryDetails',
+      );
+      final apiStopwatch = Stopwatch()..start();
       final response = await ref
           .read(apiClientProvider)
           .updateTripStatus(
@@ -257,6 +350,11 @@ class _DriverDeliveryDetailsScreenState
             tripId: _tripId,
             status: nextStatus,
           );
+      apiStopwatch.stop();
+      developer.log(
+        'Backend returned trip status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId status=$nextStatus',
+        name: 'driver.deliveryDetails',
+      );
       final data = response['data'];
       final trip = data is Map<String, dynamic>
           ? (data['trip'] is Map<String, dynamic>
@@ -272,6 +370,23 @@ class _DriverDeliveryDetailsScreenState
           ? updatedStatus
           : nextStatus;
 
+      _resolvedTripId = _readString(trip, const ['id', 'tripId', 'trip_id']);
+      if (_resolvedTripId?.trim().isNotEmpty == true) {
+        _setTripSession(
+          tripId: _resolvedTripId!,
+          bookingId: _bookingId,
+          bookingNumber: _readString(trip, const [
+            'bookingNumber',
+            'booking_number',
+          ]),
+          status: resolvedStatus,
+          paymentStatus: _readString(trip, const [
+            'paymentStatus',
+            'payment_status',
+          ]),
+        );
+      }
+
       setState(() {
         _tripStatus = resolvedStatus;
         _loadingTrip = false;
@@ -281,6 +396,7 @@ class _DriverDeliveryDetailsScreenState
           _detailsPanelExpanded = true;
         }
       });
+      ref.invalidate(driverDashboardProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -288,6 +404,10 @@ class _DriverDeliveryDetailsScreenState
           backgroundColor: const Color(0xFF2FA56E),
           duration: const Duration(seconds: 2),
         ),
+      );
+      developer.log(
+        'Primary trip action completed. tripId=$_tripId resolvedStatus=$resolvedStatus totalElapsedMs=${stopwatch.elapsedMilliseconds}',
+        name: 'driver.deliveryDetails',
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -298,6 +418,10 @@ class _DriverDeliveryDetailsScreenState
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
+      developer.log(
+        'Primary trip action failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
+        name: 'driver.deliveryDetails',
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() => _loadingTrip = false);
@@ -306,6 +430,10 @@ class _DriverDeliveryDetailsScreenState
           content: Text(error.toString()),
           backgroundColor: const Color(0xFFE23A4B),
         ),
+      );
+      developer.log(
+        'Primary trip action failed after ${stopwatch.elapsedMilliseconds}ms: $error',
+        name: 'driver.deliveryDetails',
       );
     }
   }
@@ -392,240 +520,245 @@ class _DriverDeliveryDetailsScreenState
         ? 'Confirm when you have reached the drop point.'
         : 'Use the action below to advance the trip.';
 
-    return Container(
-      key: ValueKey(_detailsPanelExpanded),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current status',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
-                        fontWeight: FontWeight.w600,
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOutCubicEmphasized,
+      alignment: Alignment.topCenter,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Current status',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF98A2B3),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      panelTitle,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF101828),
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(height: 2),
+                      Text(
+                        panelTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  panelBadge,
-                  style: const TextStyle(
-                    color: Color(0xFF2FA56E),
-                    fontWeight: FontWeight.w800,
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    _detailsPanelExpanded = !_detailsPanelExpanded;
-                  });
-                },
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  width: 40,
-                  height: 40,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F6FB),
+                    color: const Color(0xFFEAF7EF),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Icon(
-                    _detailsPanelExpanded
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.keyboard_arrow_up_rounded,
-                    color: const Color(0xFF101828),
-                    size: 24,
+                  child: Text(
+                    panelBadge,
+                    style: const TextStyle(
+                      color: Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (_detailsPanelExpanded) ...[
-            const SizedBox(height: 14),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
-            const SizedBox(height: 14),
-            Text(
-              panelSubtitle,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-                height: 1.4,
-              ),
-            ),
-            if (isArrivalFlow) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 92,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 52,
-                        trackShape: const RoundedRectSliderTrackShape(),
-                        thumbShape: const _ArrivalThumbShape(),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 0,
-                        ),
-                        activeTrackColor: const Color(0xFFE5E7EB),
-                        inactiveTrackColor: const Color(0xFFE5E7EB),
-                        thumbColor: Colors.white,
-                        overlayColor: Colors.transparent,
-                        trackGap: 6,
-                      ),
-                      child: Slider(
-                        value: _arrivalSlide,
-                        onChanged: (value) {
-                          if (_loadingTrip || _confirmingArrival) {
-                            return;
-                          }
-                          setState(() => _arrivalSlide = value);
-                          if (value >= 0.98) {
-                            Future.delayed(
-                              const Duration(milliseconds: 350),
-                              () {
-                                if (!context.mounted) {
-                                  return;
-                                }
-                                unawaited(_confirmArrival());
-                                setState(() => _arrivalSlide = 0);
-                              },
-                            );
-                          }
-                        },
-                        min: 0,
-                        max: 1,
-                        divisions: 100,
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _detailsPanelExpanded = !_detailsPanelExpanded;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F6FB),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: AnimatedRotation(
+                      turns: _detailsPanelExpanded ? 0.0 : 0.5,
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeInOutCubicEmphasized,
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF101828),
+                        size: 24,
                       ),
                     ),
-                    IgnorePointer(
-                      child: AnimatedOpacity(
-                        opacity: (1 - (_arrivalSlide * 1.7)).clamp(0.18, 1.0),
-                        duration: const Duration(milliseconds: 90),
-                        child: Text(
-                          'Swipe to continue',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: const Color(0xFF6B7280),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 14),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+                  const SizedBox(height: 14),
+                  Text(
+                    panelSubtitle,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF667085),
+                      height: 1.4,
+                    ),
+                  ),
+                  if (isArrivalFlow) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 92,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 52,
+                              trackShape: const RoundedRectSliderTrackShape(),
+                              thumbShape: const _ArrivalThumbShape(),
+                              overlayShape: const RoundSliderOverlayShape(
+                                overlayRadius: 0,
                               ),
+                              activeTrackColor: const Color(0xFFE5E7EB),
+                              inactiveTrackColor: const Color(0xFFE5E7EB),
+                              thumbColor: Colors.white,
+                              overlayColor: Colors.transparent,
+                              trackGap: 6,
+                            ),
+                            child: Slider(
+                              value: _arrivalSlide,
+                              onChanged: (value) {
+                                if (_loadingTrip || _confirmingArrival) {
+                                  return;
+                                }
+                                setState(() => _arrivalSlide = value);
+                                if (value >= 0.98) {
+                                  Future.delayed(
+                                    const Duration(milliseconds: 350),
+                                    () {
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+                                      unawaited(_confirmArrival());
+                                      setState(() => _arrivalSlide = 0);
+                                    },
+                                  );
+                                }
+                              },
+                              min: 0,
+                              max: 1,
+                              divisions: 100,
+                            ),
+                          ),
+                          IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: (1 - (_arrivalSlide * 1.7)).clamp(
+                                0.18,
+                                1.0,
+                              ),
+                              duration: const Duration(milliseconds: 90),
+                              child: Text(
+                                'Swipe to continue',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF6B7280),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 12),
+                    _DetailRow(label: 'Customer', value: _customerName),
+                    const SizedBox(height: 10),
+                    _DetailRow(
+                      label: 'Phone',
+                      value: _customerPhone.isNotEmpty ? _customerPhone : '—',
+                    ),
+                    const SizedBox(height: 10),
+                    _DetailRow(label: 'Address', value: _dropLocation),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        onPressed:
+                            _loadingTrip || _confirmingArrival || _tripId.isEmpty
+                            ? null
+                            : () {
+                                developer.log(
+                                  'Primary trip button pressed. tripId=$_tripId tripStatus=$_tripStatus',
+                                  name: 'driver.deliveryDetails',
+                                );
+                                if (_tripStatus == 'in_transit') {
+                                  setState(() {
+                                    _arrivalFlowActive = true;
+                                    _showArrivalSwipe = true;
+                                    _detailsPanelExpanded = true;
+                                  });
+                                  return;
+                                }
+                                unawaited(_advanceTripStatus());
+                              },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                          disabledBackgroundColor: const Color(0xFFD0D5DD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          _loadingTrip
+                              ? 'Loading...'
+                              : _tripId.isEmpty
+                              ? 'Syncing trip...'
+                              : _actionLabelForCurrentTrip(),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-            ] else ...[
-              const SizedBox(height: 12),
-              _DetailRow(label: 'Customer', value: _customerName),
-              const SizedBox(height: 10),
-              _DetailRow(
-                label: 'Phone',
-                value: _customerPhone.isNotEmpty ? _customerPhone : '—',
-              ),
-              const SizedBox(height: 10),
-              _DetailRow(label: 'Address', value: _dropLocation),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAFD),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                ),
-                child: Text(
-                  _loadingTrip
-                      ? 'Loading live trip details...'
-                      : 'Tap the action button below when you are ready to move to the next step.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed:
-                      _loadingTrip || _confirmingArrival || _tripId.isEmpty
-                      ? null
-                      : () {
-                          if (_tripStatus == 'in_transit') {
-                            setState(() {
-                              _arrivalFlowActive = true;
-                              _showArrivalSwipe = true;
-                              _detailsPanelExpanded = true;
-                            });
-                            return;
-                          }
-                          unawaited(_advanceTripStatus());
-                        },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F88C9),
-                    disabledBackgroundColor: const Color(0xFFD0D5DD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    _loadingTrip
-                        ? 'Loading...'
-                        : _tripId.isEmpty
-                        ? 'Syncing trip...'
-                        : _actionLabelForCurrentTrip(),
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ),
-            ],
+              crossFadeState: _detailsPanelExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 280),
+              reverseDuration: const Duration(milliseconds: 220),
+              sizeCurve: Curves.easeInOutCubicEmphasized,
+              firstCurve: Curves.easeInOutCubicEmphasized,
+              secondCurve: Curves.easeInOutCubicEmphasized,
+            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -633,7 +766,16 @@ class _DriverDeliveryDetailsScreenState
   Future<void> _confirmArrival() async {
     if (_confirmingArrival) return;
     final messenger = ScaffoldMessenger.of(context);
+    final stopwatch = Stopwatch()..start();
+    developer.log(
+      'Confirm arrival started. tripId=$_tripId loadingTrip=$_loadingTrip',
+      name: 'driver.deliveryDetails',
+    );
     if (_tripId.isEmpty) {
+      developer.log(
+        'Trip id missing before confirm arrival, reloading trip first.',
+        name: 'driver.deliveryDetails',
+      );
       await _loadTrip();
       if (!mounted || _tripId.isEmpty) {
         messenger.showSnackBar(
@@ -654,11 +796,27 @@ class _DriverDeliveryDetailsScreenState
       return;
     }
 
+    if (!mounted) return;
+    setState(() => _confirmingArrival = true);
+
+    developer.log(
+      'Refreshing current location before confirm arrival for tripId=$_tripId',
+      name: 'driver.deliveryDetails',
+    );
+    final locationStopwatch = Stopwatch()..start();
     final locationError = await ref
         .read(driverLocationTrackerProvider)
         .refreshCurrentLocation();
+    locationStopwatch.stop();
+    developer.log(
+      locationError == null
+          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
+          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
+      name: 'driver.deliveryDetails',
+    );
     if (locationError != null) {
       if (!mounted) return;
+      setState(() => _confirmingArrival = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(locationError),
@@ -668,8 +826,12 @@ class _DriverDeliveryDetailsScreenState
       return;
     }
 
-    setState(() => _confirmingArrival = true);
     try {
+      developer.log(
+        'Sending delivered status update to backend. tripId=$_tripId',
+        name: 'driver.deliveryDetails',
+      );
+      final apiStopwatch = Stopwatch()..start();
       await ref
           .read(apiClientProvider)
           .updateTripStatus(
@@ -677,8 +839,18 @@ class _DriverDeliveryDetailsScreenState
             tripId: _tripId,
             status: 'delivered',
           );
+      apiStopwatch.stop();
+      developer.log(
+        'Backend returned delivered status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId',
+        name: 'driver.deliveryDetails',
+      );
       if (!mounted) return;
+      ref.invalidate(driverDashboardProvider);
       final requiresPayment = _paymentStatus != 'paid';
+      developer.log(
+        'Navigating to delivery proof. tripId=$_tripId requiresPayment=$requiresPayment totalElapsedMs=${stopwatch.elapsedMilliseconds}',
+        name: 'driver.deliveryDetails',
+      );
       context.go(
         '/driver/delivery-proof/$_tripId?payment=${requiresPayment ? 'pending' : 'paid'}',
       );
@@ -690,6 +862,10 @@ class _DriverDeliveryDetailsScreenState
           backgroundColor: const Color(0xFFE23A4B),
         ),
       );
+      developer.log(
+        'Confirm arrival failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
+        name: 'driver.deliveryDetails',
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -697,6 +873,10 @@ class _DriverDeliveryDetailsScreenState
           content: Text(error.toString()),
           backgroundColor: const Color(0xFFE23A4B),
         ),
+      );
+      developer.log(
+        'Confirm arrival failed after ${stopwatch.elapsedMilliseconds}ms: $error',
+        name: 'driver.deliveryDetails',
       );
     } finally {
       if (mounted) {

@@ -40,12 +40,35 @@ class _DriverDeliveryPhotoUploadScreenState
   String? _tripPaymentStatus;
   List<dynamic> _remotePodPhotos = const [];
 
+  void _setTripSession({
+    required String tripId,
+    String? paymentStatus,
+  }) {
+    final resolvedTripId = tripId.trim();
+    if (resolvedTripId.isEmpty) {
+      return;
+    }
+
+    final currentSession = ref.read(driverTripSessionProvider);
+    ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+    ref.read(driverTripSessionProvider.notifier).state = DriverTripSession(
+      tripId: resolvedTripId,
+      bookingId: currentSession?.bookingId,
+      bookingNumber: currentSession?.bookingNumber,
+      status: currentSession?.status,
+      paymentStatus: paymentStatus?.trim().isNotEmpty == true
+          ? paymentStatus!.trim()
+          : currentSession?.paymentStatus,
+      updatedAt: DateTime.now(),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(driverActiveTripIdProvider.notifier).state = widget.tripId;
+      _setTripSession(tripId: widget.tripId);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadRemoteTripState());
@@ -80,6 +103,10 @@ class _DriverDeliveryPhotoUploadScreenState
         _remotePodPhotos = podPhotos is List ? podPhotos : const [];
         _loadingTrip = false;
       });
+      _setTripSession(
+        tripId: widget.tripId,
+        paymentStatus: paymentStatus,
+      );
 
       if (_remotePodPhotos.isNotEmpty && !_resumingFromRemoteState) {
         _resumingFromRemoteState = true;

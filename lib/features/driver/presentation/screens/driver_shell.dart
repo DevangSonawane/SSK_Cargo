@@ -1,12 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/providers/driver_location_tracker_provider.dart';
-import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../data/driver_dashboard_models.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/driver_flow_widgets.dart';
@@ -20,74 +16,19 @@ class DriverShell extends ConsumerStatefulWidget {
   ConsumerState<DriverShell> createState() => _DriverShellState();
 }
 
-class _DriverShellState extends ConsumerState<DriverShell>
-    with WidgetsBindingObserver {
+class _DriverShellState extends ConsumerState<DriverShell> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_syncTracking(ref.read(driverTrackingEnabledProvider)));
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed &&
-        ref.read(driverTrackingEnabledProvider)) {
-      unawaited(_syncTracking(true, restart: true));
+  void didUpdateWidget(covariant DriverShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigationShell.currentIndex !=
+            widget.navigationShell.currentIndex &&
+        widget.navigationShell.currentIndex == 1) {
+      ref.invalidate(driverDashboardProvider);
     }
-  }
-
-  Future<void> _syncTracking(bool isOnline, {bool restart = false}) async {
-    final tracker = ref.read(driverLocationTrackerProvider);
-    tracker.setActiveTripId(ref.read(driverActiveTripIdProvider));
-    String? message;
-    if (isOnline) {
-      message = restart
-          ? await tracker.restartTracking()
-          : await tracker.startTracking();
-    } else {
-      await tracker.stopTracking();
-    }
-
-    if (message != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          action: SnackBarAction(
-            label: 'Settings',
-            onPressed: () => Geolocator.openLocationSettings(),
-          ),
-        ),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    unawaited(ref.read(driverLocationTrackerProvider).stopTracking());
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(driverTrackingEnabledProvider, (previous, next) {
-      if (previous == next) {
-        return;
-      }
-      unawaited(_syncTracking(next));
-    });
-    ref.listen<String?>(driverActiveTripIdProvider, (previous, next) {
-      if (previous == next) {
-        return;
-      }
-      ref.read(driverLocationTrackerProvider).setActiveTripId(next);
-    });
-
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final firstName = displayName?.split(' ').first ?? 'Driver';

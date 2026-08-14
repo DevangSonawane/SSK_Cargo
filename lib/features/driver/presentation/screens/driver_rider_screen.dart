@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,7 @@ class DriverRiderScreen extends ConsumerStatefulWidget {
 
 class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   late final _LifecycleRefreshObserver _lifecycleRefreshObserver;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -28,11 +31,16 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
     WidgetsBinding.instance.addObserver(_lifecycleRefreshObserver);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _invalidateDashboard();
+      _refreshTimer?.cancel();
+      _refreshTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+        _invalidateDashboard();
+      });
     });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(_lifecycleRefreshObserver);
     super.dispose();
   }

@@ -11,9 +11,9 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/utils/negotiation_timer.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
-import 'driver_delivery_details_screen.dart';
 
 class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
   const DriverOrderAcceptedScreen({super.key, this.initialRequest});
@@ -229,6 +229,34 @@ class _DriverOrderAcceptedScreenState
     });
   }
 
+  void _setTripSession({
+    required String tripId,
+    String? bookingId,
+    String? bookingNumber,
+    String? status,
+    String? paymentStatus,
+  }) {
+    final resolvedTripId = tripId.trim();
+    if (resolvedTripId.isEmpty) {
+      return;
+    }
+
+    ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
+    ref.read(driverTripSessionProvider.notifier).state = DriverTripSession(
+      tripId: resolvedTripId,
+      bookingId: bookingId?.trim().isNotEmpty == true
+          ? bookingId!.trim()
+          : null,
+      bookingNumber: bookingNumber?.trim().isNotEmpty == true
+          ? bookingNumber!.trim()
+          : null,
+      status: status?.trim().isNotEmpty == true ? status!.trim() : null,
+      paymentStatus: paymentStatus?.trim().isNotEmpty == true
+          ? paymentStatus!.trim()
+          : null,
+    );
+  }
+
   Future<void> _startLiveUpdates() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || !mounted) {
@@ -342,7 +370,12 @@ class _DriverOrderAcceptedScreenState
             _latestStatus = requestStatus;
           }
         });
-        ref.read(driverActiveTripIdProvider.notifier).state = requestTripId;
+        _setTripSession(
+          tripId: requestTripId,
+          bookingId: _request.bookingId,
+          bookingNumber: _request.bookingNumber,
+          status: requestStatus,
+        );
         _handoffPollTimer?.cancel();
         _handoffPollTimer = null;
         return;
@@ -392,7 +425,13 @@ class _DriverOrderAcceptedScreenState
             }
           });
           if (bookingTripId.isNotEmpty) {
-            ref.read(driverActiveTripIdProvider.notifier).state = bookingTripId;
+            _setTripSession(
+              tripId: bookingTripId,
+              bookingId: bookingId,
+              bookingNumber: _request.bookingNumber,
+              status: bookingStatus,
+              paymentStatus: paymentStatus,
+            );
           }
           if (bookingTripId.isNotEmpty) {
             _handoffPollTimer?.cancel();
@@ -431,7 +470,12 @@ class _DriverOrderAcceptedScreenState
             _handoffTripId = tripId;
             _handoffBookingReady = true;
           });
-          ref.read(driverActiveTripIdProvider.notifier).state = tripId;
+          _setTripSession(
+            tripId: tripId,
+            bookingId: _request.bookingId,
+            bookingNumber: _request.bookingNumber,
+            status: _readPayloadString(trip, const ['status', 'rawStatus']),
+          );
         }
         if (mounted) {
           _handoffPollTimer?.cancel();
@@ -453,28 +497,26 @@ class _DriverOrderAcceptedScreenState
     final bookingId = _request.bookingId.trim();
     if (tripId.isEmpty) {
       await _refreshTripForHandoff();
-      if (!mounted) return;
     }
 
     final resolvedTripId = _handoffTripId?.trim() ?? '';
-    if (resolvedTripId.isEmpty && bookingId.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Still syncing the trip. Please try again in a moment.',
-          ),
-        ),
+    if (resolvedTripId.isNotEmpty) {
+      _setTripSession(
+        tripId: resolvedTripId,
+        bookingId: bookingId,
+        bookingNumber: _request.bookingNumber,
       );
-      return;
     }
 
     _handoffPollTimer?.cancel();
     _handoffPollTimer = null;
-    await _goToActiveTrip(
-      tripId: resolvedTripId.isNotEmpty ? resolvedTripId : null,
-      bookingId: bookingId.isNotEmpty ? bookingId : null,
+    ref.invalidate(driverDashboardProvider);
+    developer.log(
+      'Start delivery moving driver to active tab. tripId=$resolvedTripId bookingId=$bookingId',
+      name: 'driver.orderAccepted',
     );
+    if (!mounted) return;
+    context.go('/driver/active');
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
@@ -649,39 +691,6 @@ class _DriverOrderAcceptedScreenState
         });
       }
     }
-  }
-
-  Future<void> _goToActiveTrip({String? tripId, String? bookingId}) async {
-    final resolvedTripId = tripId?.trim() ?? '';
-    final resolvedBookingId = bookingId?.trim() ?? '';
-    if (!mounted || (resolvedTripId.isEmpty && resolvedBookingId.isEmpty)) {
-      developer.log(
-        'Trip navigation skipped: missing tripId/bookingId or screen unmounted.',
-        name: 'driver.orderAccepted',
-      );
-      return;
-    }
-
-    if (resolvedTripId.isNotEmpty) {
-      ref.read(driverActiveTripIdProvider.notifier).state = resolvedTripId;
-    }
-    developer.log(
-      'Navigating to delivery details for tripId=$resolvedTripId bookingId=$resolvedBookingId',
-      name: 'driver.orderAccepted',
-    );
-    if (resolvedTripId.isNotEmpty) {
-      context.go('/driver/delivery-details/$resolvedTripId');
-      return;
-    }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => DriverDeliveryDetailsScreen(
-          tripId: resolvedTripId,
-          bookingId: resolvedBookingId.isNotEmpty ? resolvedBookingId : null,
-        ),
-      ),
-      (route) => route.isFirst,
-    );
   }
 
   @override
