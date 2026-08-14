@@ -99,6 +99,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   Widget build(BuildContext context) {
     final isOnline = ref.watch(driverOnlineProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
+    final tripSession = ref.watch(driverTripSessionProvider);
+    final activeTripId =
+        (tripSession?.tripId ?? ref.watch(driverActiveTripIdProvider) ?? '')
+            .trim();
+    final hasActiveTrip = activeTripId.isNotEmpty;
     final requestsAsync = ref.watch(driverRequestFeedProvider);
 
     ref.listen(driverRequestFeedProvider, (previous, next) {
@@ -144,8 +149,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   const SizedBox(width: 10),
                   Switch(
                     value: isOnline,
-                    onChanged: (value) =>
-                        ref.read(driverOnlineProvider.notifier).state = value,
+                    onChanged: (value) {
+                      if (!value && hasActiveTrip) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'You cannot go offline while a trip is active.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      ref.read(driverOnlineProvider.notifier).state = value;
+                    },
                     activeThumbColor: const Color(0xFF2FA56E),
                     activeTrackColor: const Color(
                       0xFF2FA56E,
@@ -168,6 +184,30 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ],
               ),
             ),
+            if (hasActiveTrip) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7FAFD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                ),
+                child: Text(
+                  'Active trip in progress. Online mode stays locked until the trip is completed.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
             const SizedBox(height: 18),
