@@ -14,8 +14,7 @@ class DriverEarningsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
-      body: SafeArea(
-        child: dashboardAsync.when(
+      body: dashboardAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => RefreshIndicator(
             onRefresh: () async {
@@ -63,7 +62,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 children: [
                   _HeroBalanceCard(
                     total: total,
@@ -126,7 +125,6 @@ class DriverEarningsScreen extends ConsumerWidget {
             );
           },
         ),
-      ),
     );
   }
 }
