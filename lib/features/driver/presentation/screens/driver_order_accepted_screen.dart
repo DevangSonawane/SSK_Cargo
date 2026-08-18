@@ -365,9 +365,7 @@ class _DriverOrderAcceptedScreenState
                                 onPressed: _submitting
                                     ? null
                                     : () {
-                                        _suppressClientConfirmationDialog =
-                                            true;
-                                        _dismissClientConfirmationDialog();
+                                        _forceDismissClientConfirmationDialog();
                                         unawaited(
                                           _runAction(
                                             (token) => ref
@@ -403,9 +401,7 @@ class _DriverOrderAcceptedScreenState
                                 onPressed: _submitting
                                     ? null
                                     : () {
-                                        _suppressClientConfirmationDialog =
-                                            true;
-                                        _dismissClientConfirmationDialog();
+                                        _forceDismissClientConfirmationDialog();
                                         unawaited(
                                           _runAction(
                                             (token) => ref
@@ -463,6 +459,15 @@ class _DriverOrderAcceptedScreenState
     _clientConfirmationDialogEntry?.remove();
     _clientConfirmationDialogEntry = null;
     _clientConfirmationDialogVisible = false;
+  }
+
+  void _forceDismissClientConfirmationDialog() {
+    _suppressClientConfirmationDialog = true;
+    _dismissClientConfirmationDialog();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _suppressClientConfirmationDialog = true;
+      _dismissClientConfirmationDialog();
+    });
   }
 
   void _setTripSession({
@@ -936,6 +941,7 @@ class _DriverOrderAcceptedScreenState
         context,
       ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
+      _forceDismissClientConfirmationDialog();
       if (mounted) {
         setState(() {
           _submitting = false;
