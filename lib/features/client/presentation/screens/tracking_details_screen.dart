@@ -34,6 +34,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   bool _isBookingCancelled = false;
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
 
   void _setBottomNavVisible(bool visible) {
     ref.read(bottomNavVisibleProvider.notifier).state = visible;
@@ -140,6 +141,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   void dispose() {
     _refreshTimer?.cancel();
     _driverRequestSubscription?.cancel();
+    _tripStatusSubscription?.cancel();
     _setBottomNavVisible(true);
     super.dispose();
   }
@@ -159,6 +161,17 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     _driverRequestSubscription = socketService.driverRequestStream.listen((
       payload,
     ) {
+      final bookingId = _readPayloadString(payload, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      if (bookingId.isNotEmpty && bookingId == widget.shipment.bookingId) {
+        _refreshShipment();
+      }
+    });
+
+    await _tripStatusSubscription?.cancel();
+    _tripStatusSubscription = socketService.tripStatusStream.listen((payload) {
       final bookingId = _readPayloadString(payload, const [
         'bookingId',
         'booking_id',

@@ -147,29 +147,39 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Switch(
-                    value: isOnline,
-                    onChanged: (value) {
-                      if (!value && hasActiveTrip) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'You cannot go offline while a trip is active.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                      ref.read(driverOnlineProvider.notifier).state = value;
-                    },
-                    activeThumbColor: const Color(0xFF2FA56E),
-                    activeTrackColor: const Color(
-                      0xFF2FA56E,
-                    ).withValues(alpha: 0.35),
-                    inactiveThumbColor: Colors.white,
-                    inactiveTrackColor: const Color(
-                      0xFFE23A4B,
-                    ).withValues(alpha: 0.35),
+                  Tooltip(
+                    message: hasActiveTrip && isOnline
+                        ? "Can't go offline while you have an active trip"
+                        : isOnline
+                        ? 'Toggle offline'
+                        : 'Toggle online',
+                    child: Switch(
+                      value: isOnline,
+                      onChanged: (isOnline && hasActiveTrip)
+                          ? null
+                          : (value) {
+                              if (!value && hasActiveTrip) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'You cannot go offline while a trip is active.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              ref.read(driverOnlineProvider.notifier).state =
+                                  value;
+                            },
+                      activeThumbColor: const Color(0xFF2FA56E),
+                      activeTrackColor: const Color(
+                        0xFF2FA56E,
+                      ).withValues(alpha: 0.35),
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: const Color(
+                        0xFFE23A4B,
+                      ).withValues(alpha: 0.35),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(

@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../../../core/services/app_socket_service.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart'
     show TrackingDemoShipment;
+import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_dashboard_models.dart';
 
 class DriverRiderScreen extends ConsumerStatefulWidget {
@@ -19,6 +23,7 @@ class DriverRiderScreen extends ConsumerStatefulWidget {
 class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   late final _LifecycleRefreshObserver _lifecycleRefreshObserver;
   Timer? _refreshTimer;
+  StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
 
   @override
   void initState() {
@@ -31,6 +36,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
     WidgetsBinding.instance.addObserver(_lifecycleRefreshObserver);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _invalidateDashboard();
+      unawaited(_startLiveUpdates());
       _refreshTimer?.cancel();
       _refreshTimer = Timer.periodic(const Duration(seconds: 8), (_) {
         _invalidateDashboard();
@@ -41,8 +47,46 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _tripStatusSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(_lifecycleRefreshObserver);
     super.dispose();
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    await _tripStatusSubscription?.cancel();
+    _tripStatusSubscription = socketService.tripStatusStream.listen((payload) {
+      if (!mounted) {
+        return;
+      }
+
+      final dashboard = ref.read(driverDashboardProvider).valueOrNull;
+      final currentTrip = _selectCurrentTrip(
+        dashboard?.activeTrip,
+        dashboard?.upcomingTrip,
+      );
+      if (currentTrip == null) {
+        return;
+      }
+
+      if (!responseMatchesAnyReference(payload, [
+        currentTrip.tripId ?? '',
+        currentTrip.bookingId ?? '',
+      ])) {
+        return;
+      }
+
+      _invalidateDashboard();
+    });
   }
 
   void _invalidateDashboard() {

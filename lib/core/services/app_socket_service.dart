@@ -36,6 +36,8 @@ class AppSocketService {
       StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<Map<String, dynamic>> _bookingPaymentController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _tripStatusController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<TruckLocationEvent> get truckLocationStream =>
       _truckLocationController.stream;
@@ -48,6 +50,9 @@ class AppSocketService {
 
   Stream<Map<String, dynamic>> get bookingPaymentStream =>
       _bookingPaymentController.stream;
+
+  Stream<Map<String, dynamic>> get tripStatusStream =>
+      _tripStatusController.stream;
 
   io.Socket? get socket => _socket;
 
@@ -140,6 +145,16 @@ class AppSocketService {
         _bookingPaymentController.add(event);
       }
     });
+    socket.on('trip-status-updated', (payload) {
+      developer.log(
+        'Shared websocket trip-status-updated payload: $payload',
+        name: 'SSK.Socket',
+      );
+      final event = _parseTripStatusPayload(payload);
+      if (event != null && !_tripStatusController.isClosed) {
+        _tripStatusController.add(event);
+      }
+    });
 
     _socket = socket;
     socket.connect();
@@ -218,6 +233,7 @@ class AppSocketService {
     _driverRequestController.close();
     _jobRequestController.close();
     _bookingPaymentController.close();
+    _tripStatusController.close();
   }
 
   void _resyncTruckTrackingRooms() {
@@ -339,6 +355,14 @@ class AppSocketService {
   }
 
   Map<String, dynamic>? _parseDriverRequestPayload(Object? payload) {
+    if (payload is! Map) {
+      return null;
+    }
+
+    return payload.cast<String, dynamic>();
+  }
+
+  Map<String, dynamic>? _parseTripStatusPayload(Object? payload) {
     if (payload is! Map) {
       return null;
     }

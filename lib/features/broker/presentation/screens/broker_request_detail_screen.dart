@@ -11,6 +11,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../driver/data/driver_trip_handoff_utils.dart';
 
 class BrokerRequestDetailScreen extends ConsumerStatefulWidget {
   const BrokerRequestDetailScreen({super.key, this.initialRequest});
@@ -31,6 +32,7 @@ class _BrokerRequestDetailScreenState
   BrokerDriverRequest? _liveDriverRequest;
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   Timer? _countdownTimer;
 
   BookingRequest get _request => widget.initialRequest is BookingRequest
@@ -221,6 +223,7 @@ class _BrokerRequestDetailScreenState
   void dispose() {
     _jobRequestSubscription?.cancel();
     _driverRequestSubscription?.cancel();
+    _tripStatusSubscription?.cancel();
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -360,6 +363,28 @@ class _BrokerRequestDetailScreenState
         _liveDriverRequest = _updatedDriverRequest(payloadMap);
       });
     });
+
+    await _tripStatusSubscription?.cancel();
+    _tripStatusSubscription = socketService.tripStatusStream.listen((payload) {
+      final payloadMap = _detailAsMap(payload);
+      if (payloadMap == null || !mounted) {
+        return;
+      }
+      if (!_matchesTripStatusPayload(payloadMap)) {
+        return;
+      }
+
+      setState(() {
+        if (_driverRequest != null) {
+          _liveDriverRequest = _updatedDriverRequest(payloadMap);
+        } else {
+          _liveBookingRequest = _updatedBookingRequest(payloadMap);
+        }
+      });
+
+      ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+      ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
+    });
   }
 
   bool _matchesBookingRequestPayload(Map<String, dynamic> payload) {
@@ -384,6 +409,17 @@ class _BrokerRequestDetailScreenState
         bookingId.isNotEmpty &&
             _driverRequest != null &&
             bookingId == _driverRequest!.bookingId;
+  }
+
+  bool _matchesTripStatusPayload(Map<String, dynamic> payload) {
+    final references = <String>[
+      _request.id,
+      _driverRequest?.id ?? '',
+      _driverRequest?.bookingId ?? '',
+      _driverRequest?.bookingNumber ?? '',
+    ];
+
+    return responseMatchesAnyReference(payload, references);
   }
 
   String _readString(Map<String, dynamic> payload, List<String> keys) {

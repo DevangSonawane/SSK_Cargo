@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
@@ -44,6 +45,7 @@ class _DriverDeliveryDetailsScreenState
   String _dropLocation = 'Drop location not provided';
   TrackingDemoShipment? _shipment;
   Timer? _tripRefreshTimer;
+  StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   bool _loadingTripInFlight = false;
   String? _resolvedTripId;
 
@@ -98,6 +100,7 @@ class _DriverDeliveryDetailsScreenState
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_loadTrip());
+      unawaited(_startLiveUpdates());
       _tripRefreshTimer?.cancel();
       _tripRefreshTimer = Timer.periodic(const Duration(seconds: 12), (_) {
         if (mounted) {
@@ -110,7 +113,42 @@ class _DriverDeliveryDetailsScreenState
   @override
   void dispose() {
     _tripRefreshTimer?.cancel();
+    _tripStatusSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(
+      accessToken: session.tokens.accessToken,
+    );
+
+    await _tripStatusSubscription?.cancel();
+    _tripStatusSubscription = socketService.tripStatusStream.listen((payload) {
+      if (!mounted || !_matchesTripStatusPayload(payload)) {
+        return;
+      }
+      unawaited(_loadTrip());
+    });
+  }
+
+  bool _matchesTripStatusPayload(Map<String, dynamic> payload) {
+    final currentTripId = _tripId;
+    final bookingId = _bookingId;
+    if (currentTripId.isEmpty && bookingId.isEmpty) {
+      return false;
+    }
+
+    return tripMatchesContext(
+      payload,
+      bookingId: bookingId,
+      tripId: currentTripId,
+    );
   }
 
   Future<void> _loadTrip() async {
@@ -617,7 +655,11 @@ class _DriverDeliveryDetailsScreenState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 14),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+                  const Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Color(0xFFE8EDF2),
+                  ),
                   const SizedBox(height: 14),
                   Text(
                     panelSubtitle,
@@ -711,7 +753,9 @@ class _DriverDeliveryDetailsScreenState
                       height: 52,
                       child: FilledButton(
                         onPressed:
-                            _loadingTrip || _confirmingArrival || _tripId.isEmpty
+                            _loadingTrip ||
+                                _confirmingArrival ||
+                                _tripId.isEmpty
                             ? null
                             : () {
                                 developer.log(
