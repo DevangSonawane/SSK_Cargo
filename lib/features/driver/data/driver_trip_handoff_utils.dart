@@ -2,6 +2,7 @@ bool responseMatchesAnyReference(
   Map<String, dynamic> payload,
   Iterable<String> references,
 ) {
+  final normalizedPayload = _unwrapRequestPayload(payload);
   final targetValues = references
       .map((value) => value.trim())
       .where((value) => value.isNotEmpty)
@@ -13,13 +14,16 @@ bool responseMatchesAnyReference(
   }
 
   final values = <String>{
-    readString(payload, const ['id', 'request_id', 'driver_request_id']),
-    readString(payload, const ['bookingId', 'booking_id']),
-    readString(payload, const ['bookingNumber', 'booking_number']),
-    readString(payload, const ['tripId', 'trip_id']),
+    readString(
+      normalizedPayload,
+      const ['id', 'request_id', 'driver_request_id'],
+    ),
+    readString(normalizedPayload, const ['bookingId', 'booking_id']),
+    readString(normalizedPayload, const ['bookingNumber', 'booking_number']),
+    readString(normalizedPayload, const ['tripId', 'trip_id']),
   }..removeWhere((value) => value.isEmpty);
 
-  final trip = _asMap(payload['trip']);
+  final trip = _asMap(normalizedPayload['trip']);
   values.addAll(
     {
       readString(trip, const ['id', 'tripId', 'trip_id']),
@@ -50,14 +54,15 @@ Map<String, dynamic>? extractTripFromResponse(Map<String, dynamic> response) {
 }
 
 String extractTripId(Map<String, dynamic> payload, {String fallback = ''}) {
-  final trip = _asMap(payload['trip']);
+  final normalizedPayload = _unwrapRequestPayload(payload);
+  final trip = _asMap(normalizedPayload['trip']);
   final nested = readString(trip, const ['id', 'tripId', 'trip_id']);
   if (nested.isNotEmpty) {
     return nested;
   }
 
   for (final key in const ['tripId', 'trip_id', 'tripID']) {
-    final value = payload[key]?.toString().trim();
+    final value = normalizedPayload[key]?.toString().trim();
     if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
       return value;
     }
@@ -106,4 +111,16 @@ Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return value.cast<String, dynamic>();
   return <String, dynamic>{};
+}
+
+Map<String, dynamic> _unwrapRequestPayload(Map<String, dynamic> payload) {
+  final data = _asMap(payload['data']);
+  final request = data['request'];
+  if (request is Map<String, dynamic>) {
+    return request;
+  }
+  if (request is Map) {
+    return request.cast<String, dynamic>();
+  }
+  return payload;
 }

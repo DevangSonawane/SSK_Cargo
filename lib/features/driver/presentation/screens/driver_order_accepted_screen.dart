@@ -32,10 +32,12 @@ class _DriverOrderAcceptedScreenState
   bool _counterLocked = false;
   bool _handoffInProgress = false;
   bool _handoffBookingReady = false;
+  bool _clientConfirmationDialogVisible = false;
   late double _counterAmount;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
   Timer? _handoffPollTimer;
+  OverlayEntry? _clientConfirmationDialogEntry;
   String _latestStatus = '';
   String _latestPendingConfirmationBy = '';
   bool _latestDriverTimedOut = false;
@@ -97,7 +99,7 @@ class _DriverOrderAcceptedScreenState
 
   bool _payloadMatchesTarget(Map<String, dynamic> payload) {
     final request = _request;
-    return responseMatchesAnyReference(payload, [
+    return responseMatchesAnyReference(_extractPayload(payload), [
       request.id,
       request.bookingId,
       request.bookingNumber,
@@ -227,6 +229,229 @@ class _DriverOrderAcceptedScreenState
         _latestUpdatedAt = updatedAt;
       }
     });
+
+    _syncClientConfirmationDialogVisibility();
+  }
+
+  void _stopTripHandoff() {
+    _handoffPollTimer?.cancel();
+    _handoffPollTimer = null;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _handoffInProgress = false;
+      _handoffBookingReady = false;
+      _handoffTripId = null;
+    });
+  }
+
+  bool get _shouldShowClientConfirmationDialog =>
+      _latestStatus == 'awaiting_confirmation' &&
+      _currentPendingConfirmationBy == 'client';
+
+  void _syncClientConfirmationDialogVisibility() {
+    if (!mounted) {
+      return;
+    }
+
+    if (_shouldShowClientConfirmationDialog) {
+      if (_clientConfirmationDialogEntry == null &&
+          !_clientConfirmationDialogVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _shouldShowClientConfirmationDialog) {
+            _showClientConfirmationDialog();
+          }
+        });
+      }
+      return;
+    }
+
+    _dismissClientConfirmationDialog();
+  }
+
+  void _showClientConfirmationDialog() {
+    if (!mounted || !_shouldShowClientConfirmationDialog) {
+      return;
+    }
+    if (_clientConfirmationDialogVisible) {
+      return;
+    }
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+
+    _clientConfirmationDialogVisible = true;
+    _clientConfirmationDialogEntry?.remove();
+    _clientConfirmationDialogEntry = OverlayEntry(
+      builder: (overlayContext) {
+        return Material(
+          color: Colors.black.withValues(alpha: 0.42),
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              onPressed: _dismissClientConfirmationDialog,
+                              icon: const Icon(Icons.close_rounded),
+                              color: const Color(0xFF98A2B3),
+                              tooltip: 'Close',
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEAF7EF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.handshake_rounded,
+                            color: Color(0xFF2FA56E),
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Client accepted the request',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(overlayContext).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF101828),
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'The client accepted your offer. Please confirm to finalize the booking or reject to decline it.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(overlayContext).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                height: 1.45,
+                              ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _submitting
+                                    ? null
+                                    : () {
+                                        unawaited(
+                                          _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .rejectDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: _request.id,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFE23A4B),
+                                  side: const BorderSide(
+                                    color: Color(0xFFF3B4B4),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Reject',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: _submitting
+                                    ? null
+                                    : () {
+                                        unawaited(
+                                          _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .acceptDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: _request.id,
+                                                ),
+                                            resolveTripOnSuccess: true,
+                                          ),
+                                        );
+                                      },
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2D6EF2),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: _submitting
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.4,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Accept',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    overlay.insert(_clientConfirmationDialogEntry!);
+  }
+
+  void _dismissClientConfirmationDialog() {
+    _clientConfirmationDialogEntry?.remove();
+    _clientConfirmationDialogEntry = null;
+    _clientConfirmationDialogVisible = false;
   }
 
   void _setTripSession({
@@ -520,31 +745,42 @@ class _DriverOrderAcceptedScreenState
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
-    final status = _readPayloadString(payload, const [
+    final normalizedPayload = _extractPayload(payload);
+    final status = _readPayloadString(normalizedPayload, const [
       'status',
       'requestStatus',
       'request_status',
       'clientStatus',
       'client_status',
     ]).trim().toLowerCase();
-    final effectiveTripId = extractTripId(payload, fallback: _request.tripId);
+    final effectiveTripId = extractTripId(
+      normalizedPayload,
+      fallback: _request.tripId,
+    );
 
     developer.log(
       'Handling live payload on negotiation screen. status=$status tripId=$effectiveTripId',
       name: 'driver.orderAccepted',
     );
 
-    _syncLiveRequestState(payload);
+    _syncLiveRequestState(normalizedPayload);
 
     if (_isAcceptedStatus(status)) {
       developer.log(
         'Accepted status received from socket. Starting trip polling.',
         name: 'driver.orderAccepted',
       );
+      _dismissClientConfirmationDialog();
       await _beginTripHandoff(
         tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
       );
       return;
+    }
+
+    if (_latestStatus == 'awaiting_confirmation' ||
+        _latestStatus == 'countered' ||
+        _latestStatus == 'pending') {
+      _stopTripHandoff();
     }
 
     if (_isRejectedStatus(status)) {
@@ -552,6 +788,7 @@ class _DriverOrderAcceptedScreenState
         'Rejected status received from socket. Sending driver back home.',
         name: 'driver.orderAccepted',
       );
+      _dismissClientConfirmationDialog();
       if (!mounted) return;
       ref.invalidate(driverRequestsProvider);
       context.go('/driver/home');
@@ -621,6 +858,8 @@ class _DriverOrderAcceptedScreenState
         setState(() {
           _counterLocked = true;
         });
+        _stopTripHandoff();
+        _syncClientConfirmationDialogVisibility();
       }
 
       if (isCounter && mounted) {
@@ -633,6 +872,7 @@ class _DriverOrderAcceptedScreenState
           (responseStatus == 'accepted' ||
               responseStatus == 'confirmed' ||
               responseStatus == 'assigned')) {
+        _dismissClientConfirmationDialog();
         developer.log(
           'Negotiation accepted locally. Starting trip polling.',
           name: 'driver.orderAccepted',
