@@ -364,17 +364,16 @@ class _DriverOrderAcceptedScreenState
                               child: OutlinedButton(
                                 onPressed: _submitting
                                     ? null
-                                    : () {
-                                        _forceDismissClientConfirmationDialog();
-                                        unawaited(
-                                          _runAction(
+                                    : () async {
+                                        _suppressClientConfirmationDialog =
+                                            true;
+                                        await _runAction(
                                             (token) => ref
                                                 .read(apiClientProvider)
                                                 .rejectDriverRequestAsDriver(
                                                   accessToken: token,
                                                   id: _request.id,
                                                 ),
-                                          ),
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
@@ -400,10 +399,10 @@ class _DriverOrderAcceptedScreenState
                               child: FilledButton(
                                 onPressed: _submitting
                                     ? null
-                                    : () {
-                                        _forceDismissClientConfirmationDialog();
-                                        unawaited(
-                                          _runAction(
+                                    : () async {
+                                        _suppressClientConfirmationDialog =
+                                            true;
+                                        await _runAction(
                                             (token) => ref
                                                 .read(apiClientProvider)
                                                 .acceptDriverRequestAsDriver(
@@ -411,7 +410,6 @@ class _DriverOrderAcceptedScreenState
                                                   id: _request.id,
                                                 ),
                                             resolveTripOnSuccess: true,
-                                          ),
                                         );
                                       },
                                 style: FilledButton.styleFrom(
@@ -578,6 +576,42 @@ class _DriverOrderAcceptedScreenState
     unawaited(_refreshTripForHandoff());
   }
 
+  Future<void> _completeTripHandoff({
+    required String tripId,
+    String? bookingId,
+    String? bookingNumber,
+    String? status,
+    String? paymentStatus,
+  }) async {
+    final resolvedTripId = tripId.trim();
+    if (resolvedTripId.isEmpty || !mounted) {
+      return;
+    }
+
+    _setTripSession(
+      tripId: resolvedTripId,
+      bookingId: bookingId,
+      bookingNumber: bookingNumber,
+      status: status,
+      paymentStatus: paymentStatus,
+    );
+    ref.invalidate(driverDashboardProvider);
+    _handoffPollTimer?.cancel();
+    _handoffPollTimer = null;
+    if (!mounted) {
+      return;
+    }
+    context.go('/driver/active');
+  }
+
+  void _goToDriverActiveTab() {
+    if (!mounted) {
+      return;
+    }
+    ref.invalidate(driverDashboardProvider);
+    context.go('/driver/active');
+  }
+
   Future<void> _refreshTripForHandoff() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (!mounted || session == null || _resolvingTrip) {
@@ -614,14 +648,12 @@ class _DriverOrderAcceptedScreenState
             _latestStatus = requestStatus;
           }
         });
-        _setTripSession(
+        await _completeTripHandoff(
           tripId: requestTripId,
           bookingId: _request.bookingId,
           bookingNumber: _request.bookingNumber,
           status: requestStatus,
         );
-        _handoffPollTimer?.cancel();
-        _handoffPollTimer = null;
         return;
       }
 
@@ -669,17 +701,13 @@ class _DriverOrderAcceptedScreenState
             }
           });
           if (bookingTripId.isNotEmpty) {
-            _setTripSession(
+            await _completeTripHandoff(
               tripId: bookingTripId,
               bookingId: bookingId,
               bookingNumber: _request.bookingNumber,
               status: bookingStatus,
               paymentStatus: paymentStatus,
             );
-          }
-          if (bookingTripId.isNotEmpty) {
-            _handoffPollTimer?.cancel();
-            _handoffPollTimer = null;
             return;
           }
         }
@@ -714,16 +742,12 @@ class _DriverOrderAcceptedScreenState
             _handoffTripId = tripId;
             _handoffBookingReady = true;
           });
-          _setTripSession(
+          await _completeTripHandoff(
             tripId: tripId,
             bookingId: _request.bookingId,
             bookingNumber: _request.bookingNumber,
             status: _readPayloadString(trip, const ['status', 'rawStatus']),
           );
-        }
-        if (mounted) {
-          _handoffPollTimer?.cancel();
-          _handoffPollTimer = null;
         }
       }
     } catch (error) {
@@ -734,33 +758,6 @@ class _DriverOrderAcceptedScreenState
     } finally {
       _resolvingTrip = false;
     }
-  }
-
-  Future<void> _startDelivery() async {
-    final tripId = _handoffTripId?.trim() ?? '';
-    final bookingId = _request.bookingId.trim();
-    if (tripId.isEmpty) {
-      await _refreshTripForHandoff();
-    }
-
-    final resolvedTripId = _handoffTripId?.trim() ?? '';
-    if (resolvedTripId.isNotEmpty) {
-      _setTripSession(
-        tripId: resolvedTripId,
-        bookingId: bookingId,
-        bookingNumber: _request.bookingNumber,
-      );
-    }
-
-    _handoffPollTimer?.cancel();
-    _handoffPollTimer = null;
-    ref.invalidate(driverDashboardProvider);
-    developer.log(
-      'Start delivery moving driver to active tab. tripId=$resolvedTripId bookingId=$bookingId',
-      name: 'driver.orderAccepted',
-    );
-    if (!mounted) return;
-    context.go('/driver/active');
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
@@ -786,13 +783,20 @@ class _DriverOrderAcceptedScreenState
 
     if (_isAcceptedStatus(status)) {
       developer.log(
-        'Accepted status received from socket. Starting trip polling.',
+        'Accepted status received from socket. Moving to active trip tab.',
         name: 'driver.orderAccepted',
       );
       _dismissClientConfirmationDialog();
-      await _beginTripHandoff(
-        tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
-      );
+      if (effectiveTripId.isNotEmpty) {
+        _setTripSession(
+          tripId: effectiveTripId,
+          bookingId: _request.bookingId,
+          bookingNumber: _request.bookingNumber,
+          status: status,
+        );
+      }
+      _stopTripHandoff();
+      _goToDriverActiveTab();
       return;
     }
 
@@ -890,27 +894,30 @@ class _DriverOrderAcceptedScreenState
       if (resolveTripOnSuccess &&
           (responseStatus == 'accepted' ||
               responseStatus == 'confirmed' ||
-              responseStatus == 'assigned')) {
+              responseStatus == 'assigned' ||
+              responseStatus == 'awaiting_confirmation')) {
         _dismissClientConfirmationDialog();
         developer.log(
-          'Negotiation accepted locally. Starting trip polling.',
+          'Negotiation accepted locally. Moving to active trip tab.',
           name: 'driver.orderAccepted',
         );
-        await _beginTripHandoff(
-          tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
-          preserveBookingReady: true,
-        );
+        if (effectiveTripId.isNotEmpty) {
+          _setTripSession(
+            tripId: effectiveTripId,
+            bookingId: _request.bookingId,
+            bookingNumber: _request.bookingNumber,
+            status: responseStatus,
+          );
+        }
+        _stopTripHandoff();
+        _goToDriverActiveTab();
         return;
       }
 
       if (!mounted) return;
 
       if (responseStatus == 'awaiting_confirmation') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Accepted - waiting for the other side to confirm.'),
-          ),
-        );
+        _goToDriverActiveTab();
         return;
       }
 
@@ -1276,7 +1283,7 @@ class _DriverOrderAcceptedScreenState
                               const SizedBox(height: 6),
                               Text(
                                 _handoffBookingReady
-                                    ? 'Tap start delivery to open the trip details while we finish resolving the trip.'
+                                    ? 'We are opening the active trip view as soon as the trip is ready.'
                                     : 'We check the request, booking, and trip APIs every 5 seconds.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodySmall
@@ -1285,53 +1292,35 @@ class _DriverOrderAcceptedScreenState
                                       height: 1.35,
                                     ),
                               ),
-                              const SizedBox(height: 14),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: _handoffBookingReady
-                                    ? FilledButton(
-                                        onPressed: _startDelivery,
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF1F88C9,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Start Delivery',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      )
-                                    : OutlinedButton(
-                                        onPressed: _refreshTripForHandoff,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFF1F88C9,
-                                          ),
-                                          side: const BorderSide(
-                                            color: Color(0xFFB7D7F0),
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Check now',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                              if (!_handoffBookingReady) ...[
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: OutlinedButton(
+                                    onPressed: _refreshTripForHandoff,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(
+                                        0xFF1F88C9,
+                                      ),
+                                      side: const BorderSide(
+                                        color: Color(0xFFB7D7F0),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          14,
                                         ),
                                       ),
-                              ),
+                                    ),
+                                    child: const Text(
+                                      'Check now',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ] else ...[
                               Container(
                                 width: 52,
@@ -1358,33 +1347,13 @@ class _DriverOrderAcceptedScreenState
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Tap start delivery to open the trip details.',
+                                'Opening the active trip view.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: const Color(0xFF667085),
                                       height: 1.35,
                                     ),
-                              ),
-                              const SizedBox(height: 14),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: FilledButton(
-                                  onPressed: _startDelivery,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1F88C9),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Start Delivery',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
                               ),
                             ],
                           ],
