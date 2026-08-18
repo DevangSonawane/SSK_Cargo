@@ -555,13 +555,16 @@ class _DriverOrderAcceptedScreenState
     context.go('/driver/home');
   }
 
-  Future<void> _beginTripHandoff({String? tripId}) async {
+  Future<void> _beginTripHandoff({
+    String? tripId,
+    bool preserveBookingReady = false,
+  }) async {
     final effectiveTripId = tripId?.trim() ?? '';
     if (!mounted) return;
 
     setState(() {
       _handoffInProgress = true;
-      _handoffBookingReady = false;
+      _handoffBookingReady = preserveBookingReady || _handoffBookingReady;
       if (effectiveTripId.isNotEmpty) {
         _handoffTripId = effectiveTripId;
       }
@@ -895,6 +898,7 @@ class _DriverOrderAcceptedScreenState
         );
         await _beginTripHandoff(
           tripId: effectiveTripId.isNotEmpty ? effectiveTripId : null,
+          preserveBookingReady: true,
         );
         return;
       }
