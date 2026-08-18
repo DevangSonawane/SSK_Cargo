@@ -33,6 +33,7 @@ class _DriverOrderAcceptedScreenState
   bool _handoffInProgress = false;
   bool _handoffBookingReady = false;
   bool _clientConfirmationDialogVisible = false;
+  bool _suppressClientConfirmationDialog = false;
   late double _counterAmount;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
@@ -46,8 +47,6 @@ class _DriverOrderAcceptedScreenState
 
   DriverRequestItem get _request =>
       DriverRequestItem.fromExtra(widget.initialRequest);
-
-  bool get _accepted => _isAcceptedStatus(_latestStatus);
 
   bool get _clientDecisionReady =>
       _isAcceptedStatus(_latestStatus) ||
@@ -230,6 +229,11 @@ class _DriverOrderAcceptedScreenState
       }
     });
 
+    if (_latestStatus != 'awaiting_confirmation' ||
+        _currentPendingConfirmationBy != 'client') {
+      _suppressClientConfirmationDialog = false;
+    }
+
     _syncClientConfirmationDialogVisibility();
   }
 
@@ -247,6 +251,7 @@ class _DriverOrderAcceptedScreenState
   }
 
   bool get _shouldShowClientConfirmationDialog =>
+      !_suppressClientConfirmationDialog &&
       _latestStatus == 'awaiting_confirmation' &&
       _currentPendingConfirmationBy == 'client';
 
@@ -360,6 +365,9 @@ class _DriverOrderAcceptedScreenState
                                 onPressed: _submitting
                                     ? null
                                     : () {
+                                        _suppressClientConfirmationDialog =
+                                            true;
+                                        _dismissClientConfirmationDialog();
                                         unawaited(
                                           _runAction(
                                             (token) => ref
@@ -395,6 +403,9 @@ class _DriverOrderAcceptedScreenState
                                 onPressed: _submitting
                                     ? null
                                     : () {
+                                        _suppressClientConfirmationDialog =
+                                            true;
+                                        _dismissClientConfirmationDialog();
                                         unawaited(
                                           _runAction(
                                             (token) => ref
@@ -1395,127 +1406,6 @@ class _DriverOrderAcceptedScreenState
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (_awaitingDriverConfirmation) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7EF),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFB7E1C8)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Client accepted the request.',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF2FA56E),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .acceptDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: request.id,
-                                                ),
-                                            resolveTripOnSuccess: true,
-                                          ),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF2FA56E),
-                                      side: const BorderSide(
-                                        color: Color(0xFFB7E1C8),
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Accept',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .rejectDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: request.id,
-                                                ),
-                                          ),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFE23A4B),
-                                      side: const BorderSide(
-                                        color: Color(0xFFF3B4B4),
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Reject',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (_clientDecisionReady) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _accepted
-                              ? const Color(0xFFEAF7EF)
-                              : const Color(0xFFFEEFEF),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _accepted
-                                ? const Color(0xFFB7E1C8)
-                                : const Color(0xFFF3B4B4),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              _accepted
-                                  ? 'Driver accepted the request.'
-                                  : 'Driver rejected the request.',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: _accepted
-                                        ? const Color(0xFF2FA56E)
-                                        : const Color(0xFFB42318),
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
