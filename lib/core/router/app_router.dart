@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/app_providers.dart';
 import '../../features/auth/presentation/screens/access_entry_screen.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/gps_tracking_login_screen.dart';
@@ -66,7 +67,9 @@ BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final rootNavigatorKey = ref.read(rootNavigatorKeyProvider);
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(

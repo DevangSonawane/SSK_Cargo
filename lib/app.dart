@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'core/router/app_router.dart';
+import 'core/providers/app_providers.dart';
 import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
 import 'core/providers/driver_tracking_state_provider.dart';
@@ -22,17 +23,18 @@ class SSKApp extends ConsumerStatefulWidget {
 class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
-  StreamSubscription<Map<String, dynamic>>? _sessionTerminatedSubscription;
-  bool _handlingSessionTermination = false;
+  StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
+  bool _showingLoginAttemptAlert = false;
+  OverlayEntry? _loginAttemptAlertEntry;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _sessionTerminatedSubscription = ref
+    _loginAttemptAlertSubscription = ref
         .read(appSocketServiceProvider)
-        .sessionTerminatedStream
-        .listen(_handleSessionTerminated);
+        .loginAttemptAlertStream
+        .listen(_handleLoginAttemptAlert);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_syncDriverTracking());
@@ -84,45 +86,124 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _handleSessionTerminated(Map<String, dynamic> payload) async {
-    if (!mounted || _handlingSessionTermination) {
+  Future<void> _handleLoginAttemptAlert(Map<String, dynamic> payload) async {
+    if (!mounted || _showingLoginAttemptAlert) {
       return;
     }
 
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      return;
-    }
-
-    _handlingSessionTermination = true;
+    _showingLoginAttemptAlert = true;
     try {
-      final message = _sessionTerminationMessage(payload);
-      final loginRoute = switch (session.user.role.trim().toLowerCase()) {
-        'driver' => '/driver/login',
-        'broker' => '/broker/login',
-        _ => '/login',
-      };
-
-      await ref.read(authSessionProvider.notifier).forceLocalLogout();
-
-      final messenger = _messengerKey.currentState;
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: const Color(0xFFE23A4B),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-
-      if (mounted) {
-        ref.read(appRouterProvider).go(loginRoute);
+      final message = _loginAttemptAlertMessage(payload);
+      final navigatorState = ref.read(rootNavigatorKeyProvider).currentState;
+      final overlay = navigatorState?.overlay;
+      if (overlay == null) {
+        return;
       }
+
+      _loginAttemptAlertEntry?.remove();
+      _loginAttemptAlertEntry = OverlayEntry(
+        builder: (overlayContext) {
+          return Material(
+            color: Colors.black.withValues(alpha: 0.42),
+            child: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 24,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFFF3D6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.shield_rounded,
+                              color: Color(0xFFE3A008),
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Login attempt blocked',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(overlayContext).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF101828),
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(overlayContext).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF667085),
+                                  height: 1.45,
+                                ),
+                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () {
+                                _loginAttemptAlertEntry?.remove();
+                                _loginAttemptAlertEntry = null;
+                                _showingLoginAttemptAlert = false;
+                              },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF2D6EF2),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text(
+                                'OK',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      overlay.insert(_loginAttemptAlertEntry!);
     } finally {
-      _handlingSessionTermination = false;
+      if (_loginAttemptAlertEntry == null) {
+        _showingLoginAttemptAlert = false;
+      }
     }
   }
 
-  String _sessionTerminationMessage(Map<String, dynamic> payload) {
+  String _loginAttemptAlertMessage(Map<String, dynamic> payload) {
     final message = payload['message']?.toString().trim();
     if (message != null &&
         message.isNotEmpty &&
@@ -130,7 +211,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       return message;
     }
 
-    return 'Your account was used to log in on another device. You have been logged out here.';
+    return "Someone just tried to log in to your account from another device. If this wasn't you, please contact support.";
   }
 
   void _showTrackingMessage(String message) {
@@ -149,7 +230,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _sessionTerminatedSubscription?.cancel();
+    _loginAttemptAlertSubscription?.cancel();
+    _loginAttemptAlertEntry?.remove();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
