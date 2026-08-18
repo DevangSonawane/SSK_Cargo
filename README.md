@@ -1,17 +1,26 @@
-# ssk
+# SSK Cargo
 
-A new Flutter project.
+Flutter app for the SSK Cargo mobile experience.
 
-## Getting Started
+## Layout
 
-This project is a starting point for a Flutter application.
+- `lib/` active application code
+- `assets/` runtime images, icons, and bundled app media
+- `docs/apis/` API notes and request/response references
+- `docs/driver/` driver workflow, socket, and handoff notes
+- `docs/reference/` product and feature reference docs
+- `archive/legacy-web/` older React app snapshots kept for reference
+- `archive/legacy-flutter/` older Flutter snapshot kept for reference
+- `archive/artifacts/`, `archive/media/`, `archive/config-backups/` one-off files and backups
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# SSK_Cargo
+## Notes
+
+- The archived folders are not part of the active app.
+- Keep new product or API documentation in `docs/` instead of the root or `assets/`.

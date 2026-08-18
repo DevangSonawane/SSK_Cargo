@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/client_push_notification_service.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../data/auth_models.dart';
 
 final authSessionProvider =
@@ -125,6 +126,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
     }
     _ref.read(appSocketServiceProvider).reset();
+    state = const AsyncValue.data(null);
+  }
+
+  Future<void> forceLocalLogout() async {
+    _ref.read(appSocketServiceProvider).reset();
+    _ref.read(driverOnlineProvider.notifier).state = false;
+    _ref.read(driverActiveTripIdProvider.notifier).state = null;
+    _ref.read(driverTripSessionProvider.notifier).state = null;
     state = const AsyncValue.data(null);
   }
 
