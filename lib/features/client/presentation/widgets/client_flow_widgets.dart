@@ -743,7 +743,11 @@ enum PaymentMethod {
   netBanking,
   emi,
   payLater,
+  advance,
 }
+
+const double _advancePaymentThreshold = 5000.0;
+const double _advancePaymentPct = 0.2;
 
 extension PaymentMethodLabel on PaymentMethod {
   String get label {
@@ -757,6 +761,7 @@ extension PaymentMethodLabel on PaymentMethod {
       PaymentMethod.netBanking => 'Net Banking',
       PaymentMethod.emi => 'EMI',
       PaymentMethod.payLater => 'Pay later',
+      PaymentMethod.advance => 'Pay 20% Advance',
     };
   }
 }
@@ -3233,6 +3238,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         'truck_category': _truckCategoryForVehicle(_vehicle.label),
         'transport_type': _draft.transportType,
         'truck_type': _vehicle.label,
+        if (_draft.pickupLat != null) 'pickup_lat': _draft.pickupLat,
+        if (_draft.pickupLng != null) 'pickup_lng': _draft.pickupLng,
       };
       if (durationMin != null) {
         payload['duration_min'] = durationMin;
@@ -3314,10 +3321,28 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    final selectedMethod = _selectedPaymentMethod;
+    if (selectedMethod == PaymentMethod.payLater) {
+      if (!mounted) return;
+      setState(() {
+        _postNegotiationPayment = false;
+        _bookingCreated = true;
+      });
+      return;
+    }
+
+    final payType = selectedMethod == PaymentMethod.advance
+        ? 'advance'
+        : 'full';
+
     try {
       final response = await ref
           .read(apiClientProvider)
-          .payBooking(accessToken: session.tokens.accessToken, id: bookingId);
+          .payBooking(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+            payType: payType,
+          );
       if (!mounted) {
         return;
       }
@@ -4470,6 +4495,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Widget _buildPaymentStep(BuildContext context) {
     return _PaymentMethodsCard(
       selectedMethod: _selectedPaymentMethod,
+      requiresAdvance: false,
+      advanceAmount: 0,
       onSelect: (method) {
         setState(() => _selectedPaymentMethod = method);
       },
@@ -4703,6 +4730,21 @@ class _BrokerNegotiationSheetState
   Timer? _pollTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+
+  double get _finalNegotiationAmount {
+    final request = _request;
+    final source = request?.amountText.isNotEmpty == true
+        ? request!.amountText
+        : widget.initialPrice.toString();
+    final parsed = double.tryParse(source.replaceAll(RegExp(r'[^0-9.]'), ''));
+    return parsed ?? widget.initialPrice;
+  }
+
+  bool get _requiresAdvancePayment =>
+      _finalNegotiationAmount > _advancePaymentThreshold;
+
+  double get _advancePaymentAmount =>
+      (_finalNegotiationAmount * _advancePaymentPct * 100).round() / 100;
 
   @override
   void initState() {
@@ -5094,10 +5136,28 @@ class _BrokerNegotiationSheetState
       _errorMessage = null;
     });
 
+    final selectedMethod = _selectedPaymentMethod;
+    if (selectedMethod == PaymentMethod.payLater) {
+      if (!mounted) return;
+      setState(() {
+        _paymentSubmitting = false;
+        _stage = _DirectNegotiationStage.confirmed;
+      });
+      return;
+    }
+
+    final payType = selectedMethod == PaymentMethod.advance
+        ? 'advance'
+        : 'full';
+
     try {
       await ref
           .read(apiClientProvider)
-          .payBooking(accessToken: session.tokens.accessToken, id: bookingId);
+          .payBooking(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+            payType: payType,
+          );
       if (!mounted) return;
       setState(() {
         _stage = _DirectNegotiationStage.confirmed;
@@ -5276,11 +5336,13 @@ class _BrokerNegotiationSheetState
   }
 
   Widget _buildPaymentView() {
+    final requiresAdvance = _requiresAdvancePayment;
+    final advanceAmount = _advancePaymentAmount;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Complete payment',
+          requiresAdvance ? 'Choose payment' : 'Complete payment',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: const Color(0xFF101828),
             fontWeight: FontWeight.w800,
@@ -5288,15 +5350,29 @@ class _BrokerNegotiationSheetState
         ),
         const SizedBox(height: 6),
         Text(
-          'The booking is confirmed. Choose a payment method and record it here.',
+          requiresAdvance
+              ? 'Bookings over ₹${_advancePaymentThreshold.toStringAsFixed(0)} need a 20% advance to confirm. You can still pay the full amount now.'
+              : 'The booking is confirmed. Choose a payment method and record it here.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
             height: 1.45,
           ),
         ),
+        if (requiresAdvance) ...[
+          const SizedBox(height: 10),
+          Text(
+            '20% advance: ${_formatRupees(advanceAmount)}',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: const Color(0xFF2FA56E),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         _PaymentMethodsCard(
           selectedMethod: _selectedPaymentMethod,
+          requiresAdvance: requiresAdvance,
+          advanceAmount: advanceAmount,
           onSelect: (method) {
             setState(() => _selectedPaymentMethod = method);
           },
@@ -5620,10 +5696,14 @@ class _MapHintPill extends StatelessWidget {
 class _PaymentMethodsCard extends StatelessWidget {
   const _PaymentMethodsCard({
     required this.selectedMethod,
+    required this.requiresAdvance,
+    required this.advanceAmount,
     required this.onSelect,
   });
 
   final PaymentMethod selectedMethod;
+  final bool requiresAdvance;
+  final double advanceAmount;
   final ValueChanged<PaymentMethod> onSelect;
 
   @override
@@ -5683,13 +5763,22 @@ class _PaymentMethodsCard extends StatelessWidget {
             onTap: () => onSelect(PaymentMethod.emi),
           ),
           const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentListTile(
-            icon: Icons.schedule_send_rounded,
-            title: 'Pay later',
-            subtitle: 'Confirm now and pay after delivery',
-            selected: selectedMethod == PaymentMethod.payLater,
-            onTap: () => onSelect(PaymentMethod.payLater),
-          ),
+          requiresAdvance
+              ? _PaymentListTile(
+                  icon: Icons.payments_rounded,
+                  title: 'Pay 20% Advance',
+                  subtitle:
+                      '${_formatRupees(advanceAmount)} now, balance on delivery',
+                  selected: selectedMethod == PaymentMethod.advance,
+                  onTap: () => onSelect(PaymentMethod.advance),
+                )
+              : _PaymentListTile(
+                  icon: Icons.schedule_send_rounded,
+                  title: 'Pay later',
+                  subtitle: 'Confirm now and pay after delivery',
+                  selected: selectedMethod == PaymentMethod.payLater,
+                  onTap: () => onSelect(PaymentMethod.payLater),
+                ),
         ],
       ),
     );

@@ -6,8 +6,9 @@ import ChatWindow from "../components/ChatWindow";
 import MapView from "../components/MapView";
 import { useAuth } from "../context/AuthContext";
 import { api, getToken } from "../services/api";
-import { adaptBooking, bookingRef, TIMELINE_STEPS } from "../utils";
-import { TRUCK_IMAGES } from "../lib/truckImages";
+import { adaptBooking, bookingRef, formatBookingStatus, TIMELINE_STEPS } from "../utils";
+import { useTripStatusSocket } from "../hooks/useTripStatusSocket";
+import { useTruckLocationSocket } from "../hooks/useTruckLocationSocket";
 
 // Friendly, non-technical phrasing for the tracking banner — never expose the raw enum value.
 const INCIDENT_REASON_LABELS = {
@@ -98,6 +99,12 @@ export default function TrackShipment() {
   // Booking list/search responses don't carry incident or live-location data — both only
   // come back from the dedicated tracking endpoint, polled every few seconds while the
   // shipment is actually en route (per the backend's own polling comment on that route).
+  // refreshTick lets the trip-status-updated socket handler below force an immediate re-poll
+  // (bumping it re-runs this effect, which calls poll() right away) instead of waiting out the
+  // rest of the current 7s interval — the poll is still what actually supplies driverLat/
+  // driverLng, since those come from a different backend source (the driver's live device
+  // position) than the socket payload's trip-scoped location.
+  const [refreshTick, setRefreshTick] = useState(0);
   useEffect(() => {
     if (!activeBooking?.id) {
       setIncident(null);
@@ -114,6 +121,7 @@ export default function TrackShipment() {
         setTracking({
           driverLat: data.driverLat,
           driverLng: data.driverLng,
+          driverHeading: data.driverHeading,
           etaMinutes: data.etaMinutes,
           distanceRemainingKm: data.distanceRemainingKm,
           isTerminal: !!data.isTerminal,
@@ -127,7 +135,31 @@ export default function TrackShipment() {
     poll();
     const interval = LIVE_TRACKING_LABELS.includes(activeBooking.status) ? setInterval(poll, TRACK_POLL_MS) : null;
     return () => { cancelled = true; if (interval) clearInterval(interval); };
-  }, [activeBooking?.id, activeBooking?.status, token]);
+  }, [activeBooking?.id, activeBooking?.status, token, refreshTick]);
+
+  // Live push — the moment the driver's trip status changes (picked up, delivered, etc.), this
+  // updates the status badge/labels instantly instead of waiting up to 7s for the next poll,
+  // and immediately triggers a fresh poll (above) to pick up the location/ETA fields that go
+  // with the new status. No reload needed.
+  useTripStatusSocket((trip) => {
+    if (!trip?.bookingId || trip.bookingId !== activeBooking?.id) return;
+    setActiveBooking((current) => (current ? { ...current, status: formatBookingStatus(trip.status) } : current));
+    setRefreshTick((n) => n + 1);
+  });
+
+  // Primary path for the live truck marker while a trip is actually en route — updates
+  // lat/lng/heading the instant a location ping lands, instead of waiting out the rest of the
+  // 7s poll interval above. The poll (still running per the same LIVE_TRACKING_LABELS gate)
+  // remains the fallback: if this socket is disconnected, `tracking` just keeps getting
+  // refreshed from there instead, same as before this existed.
+  useTruckLocationSocket(
+    LIVE_TRACKING_LABELS.includes(activeBooking?.status) ? activeBooking?.truckId : null,
+    ({ lat, lng, heading }) => {
+      setTracking((current) =>
+        current ? { ...current, driverLat: lat, driverLng: lng, driverHeading: heading } : current
+      );
+    }
+  );
 
   // Throttled live route origin for the post-pickup phase — see POST_PICKUP_LABELS/
   // ROUTE_ORIGIN_UPDATE_THRESHOLD_M above for why this only updates on real movement.
@@ -413,7 +445,8 @@ export default function TrackShipment() {
                   ...(tracking?.driverLat != null && tracking?.driverLng != null ? [{
                     id: "truck",
                     position: { lat: Number(tracking.driverLat), lng: Number(tracking.driverLng) },
-                    iconUrl: TRUCK_IMAGES[activeBooking.truckCategory] || TRUCK_IMAGES.medium,
+                    truckCategory: activeBooking.truckCategory || "medium",
+                    heading: tracking.driverHeading,
                     iconSize: 44,
                     title: tracking.isTerminal ? "Delivered here" : "Your truck",
                   }] : []),

@@ -407,6 +407,22 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     final amountToCollect = _amountToCollect == null
         ? '₹0'
         : _formatCurrency(_amountToCollect!);
+    final hasAdvance = _paymentStatus == 'partial';
+    final paymentStatusLabel = _paymentStatus == 'paid'
+        ? 'Paid'
+        : hasAdvance
+        ? 'Advance paid - balance due'
+        : 'Payment pending';
+    final paymentStatusBackground = _paymentStatus == 'paid'
+        ? const Color(0xFFEAF7EF)
+        : hasAdvance
+        ? const Color(0xFFFFF4DB)
+        : const Color(0xFFFFF7ED);
+    final paymentStatusForeground = _paymentStatus == 'paid'
+        ? const Color(0xFF2FA56E)
+        : hasAdvance
+        ? const Color(0xFFB54708)
+        : const Color(0xFFB54708);
     const paidToWallet = '₹40.30';
     const orderValue = '₹101.00';
 
@@ -465,7 +481,9 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             ],
             const SizedBox(height: 16),
             Text(
-              'Amount to be collected',
+              hasAdvance
+                  ? 'Remaining balance to collect'
+                  : 'Amount to be collected',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: const Color(0xFF101828),
@@ -489,17 +507,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: _paymentStatus == 'paid'
-                      ? const Color(0xFFEAF7EF)
-                      : const Color(0xFFFFF7ED),
+                  color: paymentStatusBackground,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  _paymentStatus == 'paid' ? 'Paid' : 'Payment pending',
+                  paymentStatusLabel,
                   style: TextStyle(
-                    color: _paymentStatus == 'paid'
-                        ? const Color(0xFF2FA56E)
-                        : const Color(0xFFB54708),
+                    color: paymentStatusForeground,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

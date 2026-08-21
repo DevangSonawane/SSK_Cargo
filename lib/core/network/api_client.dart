@@ -299,11 +299,16 @@ class SskApiClient {
   Future<Map<String, dynamic>> payBooking({
     required String accessToken,
     required String id,
+    String payType = 'full',
   }) async {
-    developer.log('PATCH /api/bookings/$id/pay', name: 'SSK.API');
+    developer.log(
+      'PATCH /api/bookings/$id/pay payType=$payType',
+      name: 'SSK.API',
+    );
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/bookings/$id/pay',
+        data: {'pay_type': payType},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
