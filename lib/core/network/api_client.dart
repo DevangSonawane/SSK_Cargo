@@ -502,6 +502,179 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getSavedAddresses({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/addresses', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/addresses',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> createSavedAddress({
+    required String accessToken,
+    required String label,
+    required String address,
+    String? floor,
+    double? latitude,
+    double? longitude,
+    String? city,
+  }) async {
+    developer.log('POST /api/addresses label=$label', name: 'SSK.API');
+    final data = <String, dynamic>{
+      'label': label,
+      'address': address,
+    };
+    if (floor != null && floor.isNotEmpty) {
+      data['floor'] = floor;
+    }
+    if (latitude != null) {
+      data['lat'] = latitude;
+    }
+    if (longitude != null) {
+      data['lng'] = longitude;
+    }
+    if (city != null && city.isNotEmpty) {
+      data['city'] = city;
+    }
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/addresses',
+        data: data,
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateSavedAddress({
+    required String accessToken,
+    required String id,
+    String? label,
+    String? address,
+    String? floor,
+    double? latitude,
+    double? longitude,
+    String? city,
+  }) async {
+    developer.log('PATCH /api/addresses/$id', name: 'SSK.API');
+    final data = <String, dynamic>{};
+    if (label != null) {
+      data['label'] = label;
+    }
+    if (address != null) {
+      data['address'] = address;
+    }
+    if (floor != null) {
+      data['floor'] = floor;
+    }
+    if (latitude != null) {
+      data['lat'] = latitude;
+    }
+    if (longitude != null) {
+      data['lng'] = longitude;
+    }
+    if (city != null) {
+      data['city'] = city;
+    }
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/addresses/$id',
+        data: data,
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> setDefaultSavedAddress({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/addresses/$id/default', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/addresses/$id/default',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteSavedAddress({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('DELETE /api/addresses/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/addresses/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getSavedPaymentMethods({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/payment-methods', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/payment-methods',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> createSavedPaymentMethod({
+    required String accessToken,
+    required String methodType,
+    required String label,
+    required Map<String, dynamic> details,
+  }) async {
+    developer.log(
+      'POST /api/payment-methods methodType=$methodType label=$label',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/payment-methods',
+        data: {
+          'method_type': methodType,
+          'label': label,
+          'details': details,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> setDefaultSavedPaymentMethod({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/payment-methods/$id/default', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/payment-methods/$id/default',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteSavedPaymentMethod({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('DELETE /api/payment-methods/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/payment-methods/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getDriverRequestById({
     required String accessToken,
     required String id,

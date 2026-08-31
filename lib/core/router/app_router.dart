@@ -51,6 +51,8 @@ import '../../features/client/presentation/screens/client_delivery_screen.dart';
 import '../../features/client/presentation/screens/client_home_screen.dart';
 import '../../features/client/presentation/screens/client_profile_screen.dart';
 import '../../features/client/presentation/screens/client_notifications_screen.dart';
+import '../../features/client/presentation/screens/client_payment_methods_screen.dart';
+import '../../features/client/presentation/screens/client_saved_addresses_screen.dart';
 import '../../features/client/presentation/screens/client_settings_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
@@ -314,6 +316,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/client/settings',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientSettingsScreen()),
+      ),
+      GoRoute(
+        path: '/client/saved-addresses',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientSavedAddressesScreen()),
+      ),
+      GoRoute(
+        path: '/client/payment-methods',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientPaymentMethodsScreen()),
       ),
       GoRoute(
         path: '/client/notifications',
