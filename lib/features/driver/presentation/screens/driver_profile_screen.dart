@@ -207,7 +207,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                 onTap: () async {
                   await ref.read(authSessionProvider.notifier).logout();
                   if (context.mounted) {
-                    context.go('/driver/login');
+                    context.go('/login');
                   }
                 },
                 titleColor: const Color(0xFFE23A4B),
@@ -323,8 +323,11 @@ class _ProfileMenuTile extends StatelessWidget {
               ),
             ),
             if (completed) ...[
-              const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFF2FA56E), size: 18),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF2FA56E),
+                size: 18,
+              ),
               const SizedBox(width: 8),
             ],
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),

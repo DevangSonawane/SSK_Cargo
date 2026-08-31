@@ -112,7 +112,7 @@ class GpsSidebarDrawer extends ConsumerWidget {
                         onTap: () async {
                           await ref.read(authSessionProvider.notifier).logout();
                           if (!context.mounted) return;
-                          context.go('/gps/login');
+                          context.go('/login');
                         },
                       ),
                       const SizedBox(height: 14),
@@ -130,7 +130,8 @@ class GpsSidebarDrawer extends ConsumerWidget {
                           ),
                           child: Text(
                             'App Version 2.4.0',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF72809B),
@@ -156,9 +157,9 @@ class GpsSidebarDrawer extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context, String name) {
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$name screen coming next.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$name screen coming next.')));
   }
 }
 
@@ -250,19 +251,19 @@ class _SidebarHero extends StatelessWidget {
                     Text(
                       userName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
                       userEmail,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.84),
-                          ),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.84),
+                      ),
                     ),
                   ],
                 ),
@@ -295,8 +296,8 @@ class _SidebarNavTile extends StatelessWidget {
     final fg = danger
         ? const Color(0xFFE23A4B)
         : selected
-            ? const Color(0xFF2D6EF2)
-            : const Color(0xFF24324B);
+        ? const Color(0xFF2D6EF2)
+        : const Color(0xFF24324B);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
@@ -321,10 +322,10 @@ class _SidebarNavTile extends StatelessWidget {
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: fg,
-                        ),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: fg,
+                    ),
                   ),
                 ),
                 const Icon(
@@ -353,11 +354,11 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF8492AA),
-              letterSpacing: 0.5,
-            ),
+          fontSize: 9.5,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF8492AA),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

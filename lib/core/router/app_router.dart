@@ -2,9 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/app_providers.dart';
-import '../../features/auth/presentation/screens/access_entry_screen.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
-import '../../features/auth/presentation/screens/gps_tracking_login_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
@@ -84,21 +82,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: LoginScreen()),
-      ),
-      GoRoute(
-        path: '/broker/login',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerLoginScreen()),
-      ),
-      GoRoute(
-        path: '/driver/login',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverLoginScreen()),
-      ),
-      GoRoute(
-        path: '/gps/login',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: GpsTrackingLoginScreen()),
       ),
       GoRoute(
         path: '/gps/dashboard',
@@ -230,42 +213,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/signup',
-        pageBuilder: (context, state) {
-          final roleParam = state.uri.queryParameters['role'];
-          final initialRole = switch (roleParam) {
-            'broker' => SignupRole.broker,
-            'client' => SignupRole.client,
-            'driver' => SignupRole.driver,
-            _ => null,
-          };
-
-          return NoTransitionPage(
-            child: SignupScreen(initialRole: initialRole),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/client/signup',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SignupScreen(initialRole: SignupRole.client),
-        ),
-      ),
-      GoRoute(
-        path: '/broker/signup',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SignupScreen(initialRole: SignupRole.broker),
-        ),
-      ),
-      GoRoute(
-        path: '/driver/signup',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SignupScreen(initialRole: SignupRole.driver),
-        ),
-      ),
-      GoRoute(
-        path: '/access',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AccessEntryScreen()),
+            const NoTransitionPage(child: SignupScreen()),
       ),
       GoRoute(
         path: '/change-password',

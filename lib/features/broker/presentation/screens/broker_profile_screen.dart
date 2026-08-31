@@ -268,7 +268,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 onTap: () async {
                   await ref.read(authSessionProvider.notifier).logout();
                   if (context.mounted) {
-                    context.go('/broker/login');
+                    context.go('/login');
                   }
                 },
                 titleColor: const Color(0xFFE23A4B),

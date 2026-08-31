@@ -13,7 +13,9 @@ class GpsProfileScreen extends ConsumerWidget {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final userName = session?.user.displayName ?? 'Gadidost';
     final userEmail = session?.user.email ?? 'sskcargoservices@gmail.com';
-    final initial = userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'G';
+    final initial = userName.trim().isNotEmpty
+        ? userName.trim()[0].toUpperCase()
+        : 'G';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FD),
@@ -38,7 +40,7 @@ class GpsProfileScreen extends ConsumerWidget {
                       onLogout: () async {
                         await ref.read(authSessionProvider.notifier).logout();
                         if (!context.mounted) return;
-                        context.go('/gps/login');
+                        context.go('/login');
                       },
                     ),
                   ),
@@ -82,9 +84,9 @@ class _ProfileBanner extends StatelessWidget {
       height: width < 390 ? 188 : 206,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(0),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
             Image.asset(
               'assets/gps_tracking_screen_fotos/sidebar_image.png',
               fit: BoxFit.cover,
@@ -111,11 +113,11 @@ class _ProfileBanner extends StatelessWidget {
                   Text(
                     'Profile',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: width < 390 ? 22 : 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          height: 1,
-                        ),
+                      fontSize: width < 390 ? 22 : 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -123,10 +125,10 @@ class _ProfileBanner extends StatelessWidget {
                     child: Text(
                       'Manage your account and preferences',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontSize: width < 390 ? 12.5 : 13.5,
-                            height: 1.45,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
+                        fontSize: width < 390 ? 12.5 : 13.5,
+                        height: 1.45,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ],
@@ -301,18 +303,18 @@ class _ProfileSummaryRow extends StatelessWidget {
               Text(
                 userName,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF111C36),
-                    ),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF111C36),
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 userEmail,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.5,
-                      color: const Color(0xFF64748B),
-                    ),
+                  fontSize: 12.5,
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ],
           ),
@@ -339,8 +341,12 @@ class _ProfileMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = danger ? const Color(0xFFFF4A4A) : const Color(0xFF111C36);
-    final iconColor = danger ? const Color(0xFFFF4A4A) : const Color(0xFF2D6EF2);
+    final titleColor = danger
+        ? const Color(0xFFFF4A4A)
+        : const Color(0xFF111C36);
+    final iconColor = danger
+        ? const Color(0xFFFF4A4A)
+        : const Color(0xFF2D6EF2);
     final iconBg = danger ? const Color(0xFFFFEEEE) : const Color(0xFFEAF1FF);
 
     return InkWell(
@@ -366,23 +372,27 @@ class _ProfileMenuTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w900,
-                          color: titleColor,
-                        ),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w900,
+                      color: titleColor,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 11,
-                          color: const Color(0xFF70819A),
-                        ),
+                      fontSize: 11,
+                      color: const Color(0xFF70819A),
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF8A96AB), size: 20),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF8A96AB),
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -509,10 +519,10 @@ class _GpsNavItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 10.5,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: color,
-                  ),
+                fontSize: 10.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+              ),
             ),
           ],
         ),

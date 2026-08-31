@@ -33,11 +33,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   String _loginRouteForRole(String? role) {
-    return switch (role) {
-      'broker' => '/broker/login',
-      'driver' => '/driver/login',
-      _ => '/login',
-    };
+    return '/login';
   }
 
   Future<void> _submit() async {

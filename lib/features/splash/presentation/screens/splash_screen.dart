@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _timer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
-      context.go('/access');
+      context.go('/login');
     });
   }
 
@@ -73,20 +73,13 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFEAF2FF),
-              Color(0xFFDDFBFB),
-              Color(0xFFBDF3F5),
-            ],
+            colors: [Color(0xFFEAF2FF), Color(0xFFDDFBFB), Color(0xFFBDF3F5)],
           ),
         ),
         child: Stack(
           children: [
             AnimatedBuilder(
-              animation: Listenable.merge([
-                _driveController,
-                _idleController,
-              ]),
+              animation: Listenable.merge([_driveController, _idleController]),
               builder: (context, child) {
                 final startX = -truckWidth;
                 final endX = (size.width - truckWidth) / 2;

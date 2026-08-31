@@ -41,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
-    context.go('/access');
+    context.go('/login');
   }
 
   @override
@@ -68,7 +68,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         return FadeTransition(
                           opacity: animation,
                           child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
+                            scale: Tween<double>(
+                              begin: 0.98,
+                              end: 1,
+                            ).animate(animation),
                             child: child,
                           ),
                         );
@@ -95,7 +98,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: _index == i ? 22 : 7,
                           height: 7,
                           decoration: BoxDecoration(
-                            color: _index == i ? page.accent : const Color(0xFFE3E8EF),
+                            color: _index == i
+                                ? page.accent
+                                : const Color(0xFFE3E8EF),
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
@@ -185,7 +190,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: double.infinity,
                       height: 52,
                       child: OutlinedButton(
-                        onPressed: () => context.go('/access'),
+                        onPressed: () => context.go('/login'),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           elevation: 0,
