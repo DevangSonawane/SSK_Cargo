@@ -19,6 +19,7 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   static const int _pageSize = 20;
+  final TextEditingController _trackingController = TextEditingController();
   String? _liveRefreshToken;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
@@ -55,6 +56,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   @override
   void dispose() {
     _driverRequestSubscription?.cancel();
+    _trackingController.dispose();
     super.dispose();
   }
 
@@ -76,10 +78,13 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
         onRefresh: _refreshBookings,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           children: [
-            const _TrackingHeroCard(),
-            const SizedBox(height: 14),
+            _TrackingSearchField(
+              controller: _trackingController,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
             if (session == null)
               const _EmptyState(
                 icon: Icons.lock_outline_rounded,
@@ -102,8 +107,36 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   onAction: _refreshBookings,
                 ),
                 data: (page) {
-                  final bookings = page.bookings;
+                  final query = _trackingController.text.trim().toLowerCase();
+                  final bookings = query.isEmpty
+                      ? page.bookings
+                      : page.bookings.where((booking) {
+                          final searchableText = <String>[
+                            booking.id,
+                            booking.bookingRef,
+                            booking.bookingNumber,
+                            booking.displaySubtitle,
+                            booking.displayTitle,
+                            booking.pickupLocation,
+                            booking.dropoffLocation,
+                          ].join(' ').toLowerCase();
+                          return searchableText.contains(query);
+                        }).toList(growable: false);
+
                   if (bookings.isEmpty) {
+                    if (query.isNotEmpty && page.bookings.isNotEmpty) {
+                      return _EmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'No bookings match that tracking number',
+                        subtitle: 'Try a different booking reference or clear the search field.',
+                        actionLabel: 'Clear search',
+                        onAction: () {
+                          _trackingController.clear();
+                          setState(() {});
+                        },
+                      );
+                    }
+
                     return _EmptyState(
                       icon: Icons.inbox_rounded,
                       title: 'No bookings found',
@@ -163,91 +196,67 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   }
 }
 
-class _TrackingHeroCard extends StatelessWidget {
-  const _TrackingHeroCard();
+class _TrackingSearchField extends StatelessWidget {
+  const _TrackingSearchField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2FA56E),
-        borderRadius: BorderRadius.circular(28),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Track your package',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 22,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Please enter tracking number',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.88),
-                  fontSize: 13,
-                ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 10),
-                const Icon(Icons.search_rounded, color: Colors.black45, size: 24),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Tracking number',
-                      hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.black54,
-                            fontSize: 15,
-                          ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          const SizedBox(width: 6),
+          const Icon(Icons.search_rounded, color: Color(0xFF667085), size: 24),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Search by tracking number',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF98A2B3),
                     ),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF101828),
-                          fontSize: 15,
-                        ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8B84D),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.qr_code_scanner_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ],
             ),
           ),
+          if (controller.text.isNotEmpty)
+            IconButton(
+              onPressed: () {
+                controller.clear();
+                onChanged('');
+              },
+              icon: const Icon(Icons.close_rounded, color: Color(0xFF98A2B3)),
+              tooltip: 'Clear search',
+            ),
+          const SizedBox(width: 6),
         ],
       ),
     );

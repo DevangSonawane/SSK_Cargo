@@ -105,6 +105,7 @@ flutter:
     - assets/gps_tracking_screen_fotos/sidebar.png
     - assets/gps_tracking_screen_fotos/sidebar_image.png
     - assets/svgs/
+    - assets/banks/
     - assets/images/
     - assets/selectionscreen/
     - "assets/client/test.png"

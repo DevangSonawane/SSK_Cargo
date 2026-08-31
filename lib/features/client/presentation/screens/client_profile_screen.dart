@@ -83,78 +83,15 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                 context,
               ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
             ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: _ProfileActionCard(
-                    title: 'Help',
-                    icon: Icons.support_agent_rounded,
-                    backgroundColor: const Color(0xFFF5F7FB),
-                    iconColor: const Color(0xFF2D6EF2),
-                    onTap: () {},
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ProfileActionCard(
-                    title: 'Safety',
-                    icon: Icons.shield_rounded,
-                    backgroundColor: const Color(0xFFF5F7FB),
-                    iconColor: const Color(0xFF2FA56E),
-                    onTap: () {},
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Text(
-              'Notifications',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _ProfileMenuTile(
-                    title: 'Open notifications',
-                    icon: Icons.notifications_active_rounded,
-                    onTap: () => context.push('/client/notifications'),
-                    titleColor: const Color(0xFF101828),
-                    iconColor: const Color(0xFF2FA56E),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Booking updates, invoice alerts, negotiation replies, and other account activity are shown here.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 16),
+            const Divider(color: Color(0xFFE8EDF2), height: 1),
+            const SizedBox(height: 16),
             _ProfileMenuTile(
-              title: 'Settings',
-              icon: Icons.settings_rounded,
-              onTap: () => context.push('/client/settings'),
+              title: 'Notifications',
+              icon: Icons.notifications_active_rounded,
+              onTap: () => context.push('/client/notifications'),
+              titleColor: const Color(0xFF101828),
+              iconColor: const Color(0xFF2FA56E),
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(
@@ -170,6 +107,18 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(
+              title: 'Saved Addresses',
+              icon: Icons.location_on_outlined,
+              onTap: () => context.push('/client/saved-addresses'),
+            ),
+            const SizedBox(height: 10),
+            _ProfileMenuTile(
+              title: 'Payment Methods',
+              icon: Icons.credit_card_outlined,
+              onTap: () => context.push('/client/payment-methods'),
+            ),
+            const SizedBox(height: 18),
+            _ProfileMenuTile(
               title: 'Logout',
               icon: Icons.logout_rounded,
               onTap: () async {
@@ -180,53 +129,6 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
               },
               titleColor: const Color(0xFFE23A4B),
               iconColor: const Color(0xFFE23A4B),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileActionCard extends StatelessWidget {
-  const _ProfileActionCard({
-    required this.title,
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-    required this.onTap,
-  });
-
-  final String title;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 86,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28, color: iconColor),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
-              ),
             ),
           ],
         ),
