@@ -314,71 +314,109 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
             : _truckIdForDriver(trucks, driver.assignedVehicle));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Edit driver' : 'Add driver'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => context.go('/broker/tracking'),
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Back',
-        ),
-      ),
+      backgroundColor: const Color(0xFFF4F9FF),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
         children: [
+          Row(
+            children: [
+              InkWell(
+                onTap: () => context.go('/broker/tracking'),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFD6E6FA)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x16176ACA),
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF1769D1),
+                    size: 28,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _isEditing ? 'Edit Driver' : 'Add Driver',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF10245B),
+                ),
+              ),
+              const Spacer(),
+              const SizedBox(width: 48),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _isEditing ? 'Update the driver account' : 'Create a driver account',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF5B6B91),
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 20),
           Center(
             child: Column(
               children: [
-                SskProfileAvatar(
-                  imageUrl: _avatarPreviewUrl,
-                  imageBytes: _pickedAvatarBytes,
-                  size: 108,
-                  onTap: _pickAvatar,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SskProfileAvatar(
+                      imageUrl: _avatarPreviewUrl,
+                      imageBytes: _pickedAvatarBytes,
+                      size: 148,
+                      borderColor: const Color(0xFF1769D1),
+                      onTap: _pickAvatar,
+                    ),
+                    Positioned(
+                      right: -4,
+                      bottom: 0,
+                      child: Material(
+                        color: const Color(0xFF1769D1),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: _pickAvatar,
+                          customBorder: const CircleBorder(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(13),
+                            child: Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.white,
+                              size: 25,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
+                Text(
+                  'Add driver photo',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: const Color(0xFF10245B),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
                 Text(
                   'Tap to choose driver photo',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: const Color(0xFF5B6B91),
                     fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3EEFF),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.person_add_alt_rounded,
-                    color: Color(0xFF7A5AF8),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _isEditing
-                        ? 'Update the driver profile details and save the changes.'
-                        : 'Create a driver login, then attach the driver profile to a truck.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
                   ),
                 ),
               ],
@@ -647,9 +685,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         ? null
                         : () => _submitDriver(trucks),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
+                      backgroundColor: const Color(0xFF1769D1),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: _isSubmitting
@@ -663,12 +701,30 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               ),
                             ),
                           )
-                        : Text(
-                            _isEditing ? 'Update driver' : 'Create driver',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.local_shipping_rounded,
+                                color: Colors.white,
+                                size: 23,
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 1,
+                                height: 24,
+                                color: Colors.white.withValues(alpha: 0.55),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _isEditing ? 'Update Driver' : 'Add Driver',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                   ),
                 ),
@@ -738,19 +794,19 @@ InputDecoration _fieldDecoration({
     hintText: hintText,
     filled: true,
     fillColor: Colors.white,
-    prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    prefixIcon: Icon(prefixIcon, color: const Color(0xFF1769D1)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFF1F88C9), width: 1.4),
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFF1769D1), width: 1.4),
     ),
   );
 }

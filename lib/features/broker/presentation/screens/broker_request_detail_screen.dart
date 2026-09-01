@@ -1140,6 +1140,320 @@ class _BrokerRequestDetailScreenState
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
     final trucksAsync = ref.watch(brokerVehiclesProvider);
+    final requestVisual = _detailRequestStatusVisual(_normalizedStatus);
+    final isDeclined = const {'declined', 'rejected', 'expired'}
+        .contains(_normalizedStatus);
+    final topAmount = _isDriverNegotiation ? _valueText : _request.value;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F7FB),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text('Booking Details'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (_) {},
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'refresh',
+                child: Text('Refresh'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'close',
+                child: Text('Close'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          children: [
+            _DetailCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2152D0),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.receipt_long_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _titleText,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF0F172A),
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _requestNumberText,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF667085),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: requestVisual.backgroundColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      topAmount,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: requestVisual.textColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _StatusBanner(
+              visual: requestVisual,
+              title: _statusText,
+              subtitle: isDeclined
+                  ? 'Declined - no longer available'
+                  : _isDriverNegotiation
+                  ? (_driverRequest!.driverTimedOut
+                      ? 'Broker handoff active'
+                      : _driverRequestCountdownText)
+                  : 'Request still in progress',
+            ),
+            const SizedBox(height: 14),
+            _DetailCard(
+              title: 'Route Information',
+              child: Column(
+                children: [
+                  _TimelineRouteRow(
+                    icon: Icons.place_rounded,
+                    iconBackground: const Color(0xFFEFF4FF),
+                    iconColor: const Color(0xFF2152D0),
+                    label: 'Pickup',
+                    value: _pickupText,
+                  ),
+                  const SizedBox(height: 14),
+                  _TimelineRouteRow(
+                    icon: Icons.near_me_rounded,
+                    iconBackground: const Color(0xFFEFF4FF),
+                    iconColor: const Color(0xFF2152D0),
+                    label: 'Drop-off',
+                    value: _dropText,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F8FF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.local_shipping_rounded,
+                          color: Color(0xFF2152D0),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${_weightText} • ${_vehicleText}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF0F172A),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _DetailCard(
+              title: 'Overview',
+              child: Column(
+                children: [
+                  _OverviewRow(
+                    icon: Icons.calendar_today_rounded,
+                    label: 'Requested On',
+                    value: _request.requestedAt.isEmpty
+                        ? 'Unavailable'
+                        : _request.requestedAt,
+                  ),
+                  const SizedBox(height: 18),
+                  _OverviewRow(
+                    icon: Icons.person_rounded,
+                    label: 'Requested By',
+                    value: _isDriverNegotiation
+                        ? (_driverRequest!.clientName.isEmpty
+                            ? 'Customer'
+                            : _driverRequest!.clientName)
+                        : (_request.clientName.isEmpty
+                            ? 'Customer'
+                            : _request.clientName),
+                  ),
+                  const SizedBox(height: 18),
+                  _OverviewRow(
+                    icon: Icons.local_offer_rounded,
+                    label: 'Load Type',
+                    value: _isDriverNegotiation
+                        ? (_driverRequest!.truckCategory.isEmpty
+                            ? 'General'
+                            : _driverRequest!.truckCategory)
+                        : (_request.productName.isEmpty
+                            ? 'General'
+                            : _request.productName),
+                  ),
+                  const SizedBox(height: 18),
+                  _OverviewRow(
+                    icon: Icons.currency_rupee_rounded,
+                    label: 'Payment',
+                    value: topAmount,
+                    valueColor: const Color(0xFF0F172A),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _DetailCard(
+              title: 'Timeline',
+              child: _TimelineStack(
+                entries: [
+                  _TimelineEntry(
+                    icon: isDeclined
+                        ? Icons.cancel_rounded
+                        : Icons.check_circle_rounded,
+                    iconColor: isDeclined
+                        ? const Color(0xFFE23A4B)
+                        : const Color(0xFF2152D0),
+                    title: isDeclined ? 'Declined' : 'Requested',
+                    subtitle: isDeclined
+                        ? 'No longer available'
+                        : 'Requested booking received',
+                    trailing: _request.requestedAt,
+                  ),
+                  if (isDeclined)
+                    _TimelineEntry(
+                      icon: Icons.circle_rounded,
+                      iconColor: const Color(0xFF98A2B3),
+                      title: 'Requested',
+                      subtitle: 'Waiting for broker action',
+                      trailing: _request.requestedAt,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _HelpCard(
+              onPressed: () => context.push('/broker/notifications'),
+            ),
+            const SizedBox(height: 14),
+            if (_isDriverNegotiation)
+              _buildDriverNegotiationCard(context)
+            else if (_isWaitingForClientConfirmation)
+              _buildJobAwaitingConfirmationCard(context)
+            else if (_isPendingJobRequest)
+              driversAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) => Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Text(
+                    error.toString().replaceFirst('Exception: ', ''),
+                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                  ),
+                ),
+                data: (drivers) {
+                  return trucksAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, _) => Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                      ),
+                      child: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                        style: const TextStyle(color: Color(0xFFE23A4B)),
+                      ),
+                    ),
+                    data: (trucks) =>
+                        _buildJobAssignmentCard(context, drivers, trucks),
+                  );
+                },
+              )
+            else
+              _buildFinalStateCard(context),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton(
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/broker/home');
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2152D0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'View Other Bookings',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -1397,6 +1711,410 @@ class _BrokerRequestDetailScreenState
               _buildFinalStateCard(context),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DetailCard extends StatelessWidget {
+  const _DetailCard({this.title, required this.child});
+
+  final String? title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Text(
+              title!,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({
+    required this.visual,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final _DetailRequestStatusVisual visual;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: visual.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: visual.textColor.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: visual.textColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              visual.icon,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: visual.textColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF344054),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineRouteRow extends StatelessWidget {
+  const _TimelineRouteRow({
+    required this.icon,
+    required this.iconBackground,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: iconBackground,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF0F172A),
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OverviewRow extends StatelessWidget {
+  const _OverviewRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor = const Color(0xFF0F172A),
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF667085)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF667085),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: valueColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TimelineStack extends StatelessWidget {
+  const _TimelineStack({required this.entries});
+
+  final List<_TimelineEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return Text(
+        'No timeline items available.',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFF667085),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < entries.length; index++) ...[
+          _TimelineEntryRow(entry: entries[index], isLast: index == entries.length - 1),
+          if (index != entries.length - 1) const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+}
+
+class _TimelineEntry {
+  const _TimelineEntry({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final String trailing;
+}
+
+class _TimelineEntryRow extends StatelessWidget {
+  const _TimelineEntryRow({
+    required this.entry,
+    required this.isLast,
+  });
+
+  final _TimelineEntry entry;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: entry.iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(entry.icon, color: entry.iconColor, size: 18),
+            ),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 34,
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    entry.trailing,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                entry.subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HelpCard extends StatelessWidget {
+  const _HelpCard({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF7FAFF), Color(0xFFE8F0FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: const Color(0xFFD7E3FF)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need Help?',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Contact support for assistance',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: 160,
+                  height: 44,
+                  child: FilledButton.tonalIcon(
+                    onPressed: onPressed,
+                    icon: const Icon(Icons.call_rounded, size: 18),
+                    label: const Text(
+                      'Contact Support',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: const Color(0xFF2152D0),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(
+            Icons.support_agent_rounded,
+            size: 72,
+            color: Color(0xFF2152D0),
+          ),
+        ],
       ),
     );
   }

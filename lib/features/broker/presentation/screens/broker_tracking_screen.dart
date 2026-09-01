@@ -228,6 +228,12 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: [
+          _TrackingPageHeader(
+            pendingCount: pendingDriverRequests,
+            onNotificationsTap: () => context.push('/broker/notifications'),
+            onProfileTap: () => context.push('/broker/profile'),
+          ),
+          const SizedBox(height: 24),
           if (timedOutRequests.isNotEmpty) ...[
             Text(
               'Remaining negotiation',
@@ -627,6 +633,144 @@ Future<void> _confirmDeleteDriver(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(error.toString().replaceFirst('ApiException: ', '')),
+      ),
+    );
+  }
+}
+
+class _TrackingPageHeader extends StatelessWidget {
+  const _TrackingPageHeader({
+    required this.pendingCount,
+    required this.onNotificationsTap,
+    required this.onProfileTap,
+  });
+
+  final int pendingCount;
+  final VoidCallback onNotificationsTap;
+  final VoidCallback onProfileTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 18,
+        20,
+        30,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tracking',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Monitor driver movement',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _TrackingHeaderIcon(
+            icon: Icons.notifications_none_rounded,
+            showBadge: pendingCount > 0,
+            onTap: onNotificationsTap,
+          ),
+          const SizedBox(width: 10),
+          InkWell(
+            onTap: onProfileTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.26),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset('assets/user.png', fit: BoxFit.cover),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrackingHeaderIcon extends StatelessWidget {
+  const _TrackingHeaderIcon({
+    required this.icon,
+    required this.showBadge,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool showBadge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.26),
+              ),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          if (showBadge)
+            Positioned(
+              right: -1,
+              top: -1,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF634D),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF0B5DCC)),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

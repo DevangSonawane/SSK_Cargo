@@ -1636,6 +1636,11 @@ bool isAcceptedBookingRequest(BookingRequest request) {
   return status == 'accepted' || status == 'confirmed' || status == 'assigned';
 }
 
+bool isDeclinedBookingRequest(BookingRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  return status == 'declined' || status == 'rejected' || status == 'expired';
+}
+
 bool isActiveBrokerDriverRequest(BrokerDriverRequest request) {
   final status = _normalizeRequestStatus(request.status);
   return request.driverTimedOut &&
@@ -3485,22 +3490,19 @@ class VehicleSelectionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = selected ? vehicle.accentColor : const Color(0xFF98A2B3);
+    final accent = selected ? const Color(0xFF1769D1) : const Color(0xFFACB9CF);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
         decoration: BoxDecoration(
-          color: selected
-              ? vehicle.accentColor.withValues(alpha: 0.08)
-              : const Color(0xFFF8FAFC),
+          color: selected ? const Color(0xFFF1F6FF) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? vehicle.accentColor.withValues(alpha: 0.24)
-                : const Color(0xFFE5E7EB),
+            color: selected ? const Color(0xFF1769D1) : const Color(0xFFE1E7F0),
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: Column(
@@ -3509,16 +3511,16 @@ class VehicleSelectionTile extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFF1F6FF),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  child: Icon(
-                    Icons.local_shipping_rounded,
-                    color: accent,
-                    size: 20,
+                  padding: const EdgeInsets.all(5),
+                  child: Image.asset(
+                    vehicle.assetPath,
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const Spacer(),
@@ -3526,27 +3528,35 @@ class VehicleSelectionTile extends StatelessWidget {
                   selected
                       ? Icons.radio_button_checked_rounded
                       : Icons.radio_button_off_rounded,
-                  color: selected
-                      ? vehicle.accentColor
-                      : const Color(0xFFCBD5E1),
+                  color: accent,
+                  size: 34,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const Spacer(),
+            const SizedBox(height: 14),
             Text(
               vehicle.label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF102044),
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              vehicle.capacity,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.scale_outlined, color: accent, size: 25),
+                const SizedBox(width: 10),
+                Text(
+                  vehicle.capacity,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 15,
+                    color: const Color(0xFF60708D),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
