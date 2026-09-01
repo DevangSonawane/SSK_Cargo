@@ -1231,6 +1231,13 @@ class _LiveInfoCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
+                const SizedBox(height: 12),
+                PickupOtpBanner(
+                  pickupOtp: shipment.pickupOtp,
+                  pickupOtpVerified: shipment.pickupOtpVerified,
+                ),
+              ],
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -1411,6 +1418,13 @@ class _CompactSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            PickupOtpBanner(
+              pickupOtp: shipment.pickupOtp,
+              pickupOtpVerified: shipment.pickupOtpVerified,
+            ),
+          ],
           const SizedBox(height: 10),
           Container(
             width: double.infinity,

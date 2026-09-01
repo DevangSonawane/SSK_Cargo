@@ -14,7 +14,8 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
   const ClientDeliveryScreen({super.key});
 
   @override
-  ConsumerState<ClientDeliveryScreen> createState() => _ClientDeliveryScreenState();
+  ConsumerState<ClientDeliveryScreen> createState() =>
+      _ClientDeliveryScreenState();
 }
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
@@ -37,7 +38,9 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   Future<void> _ensureLiveRefresh() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     final accessToken = session?.tokens.accessToken;
-    if (accessToken == null || accessToken.isEmpty || _liveRefreshToken == accessToken) {
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        _liveRefreshToken == accessToken) {
       return;
     }
 
@@ -48,7 +51,9 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
     _driverRequestSubscription?.cancel();
     _driverRequestSubscription = socketService.driverRequestStream.listen((_) {
       if (mounted) {
-        ref.invalidate(clientBookingsProvider((status: null, page: 1, limit: _pageSize)));
+        ref.invalidate(
+          clientBookingsProvider((status: null, page: 1, limit: _pageSize)),
+        );
       }
     });
   }
@@ -89,7 +94,8 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
               const _EmptyState(
                 icon: Icons.lock_outline_rounded,
                 title: 'Sign in to view bookings',
-                subtitle: 'We need an active client session before we can load your activity feed.',
+                subtitle:
+                    'We need an active client session before we can load your activity feed.',
               )
             else if (bookingsAsync == null)
               const SizedBox.shrink()
@@ -110,25 +116,28 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   final query = _trackingController.text.trim().toLowerCase();
                   final bookings = query.isEmpty
                       ? page.bookings
-                      : page.bookings.where((booking) {
-                          final searchableText = <String>[
-                            booking.id,
-                            booking.bookingRef,
-                            booking.bookingNumber,
-                            booking.displaySubtitle,
-                            booking.displayTitle,
-                            booking.pickupLocation,
-                            booking.dropoffLocation,
-                          ].join(' ').toLowerCase();
-                          return searchableText.contains(query);
-                        }).toList(growable: false);
+                      : page.bookings
+                            .where((booking) {
+                              final searchableText = <String>[
+                                booking.id,
+                                booking.bookingRef,
+                                booking.bookingNumber,
+                                booking.displaySubtitle,
+                                booking.displayTitle,
+                                booking.pickupLocation,
+                                booking.dropoffLocation,
+                              ].join(' ').toLowerCase();
+                              return searchableText.contains(query);
+                            })
+                            .toList(growable: false);
 
                   if (bookings.isEmpty) {
                     if (query.isNotEmpty && page.bookings.isNotEmpty) {
                       return _EmptyState(
                         icon: Icons.search_off_rounded,
                         title: 'No bookings match that tracking number',
-                        subtitle: 'Try a different booking reference or clear the search field.',
+                        subtitle:
+                            'Try a different booking reference or clear the search field.',
                         actionLabel: 'Clear search',
                         onAction: () {
                           _trackingController.clear();
@@ -140,7 +149,8 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                     return _EmptyState(
                       icon: Icons.inbox_rounded,
                       title: 'No bookings found',
-                      subtitle: 'Once a booking is created, it will show up here.',
+                      subtitle:
+                          'Once a booking is created, it will show up here.',
                       actionLabel: 'Refresh',
                       onAction: _refreshBookings,
                     );
@@ -152,36 +162,38 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                       Text(
                         '${bookings.length} booking${bookings.length == 1 ? '' : 's'} loaded',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF667085),
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: const Color(0xFF667085),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       ...bookings.asMap().entries.expand(
-                            (entry) => [
-                              ClientBookingCard(
-                                booking: entry.value,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => TrackingDetailsScreen(
-                                        shipment: trackingShipmentFromBooking(entry.value),
-                                      ),
+                        (entry) => [
+                          ClientBookingCard(
+                            booking: entry.value,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => TrackingDetailsScreen(
+                                    shipment: trackingShipmentFromBooking(
+                                      entry.value,
                                     ),
-                                  );
-                                },
-                              ),
-                              if (entry.key != bookings.length - 1) const SizedBox(height: 12),
-                            ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
+                          if (entry.key != bookings.length - 1)
+                            const SizedBox(height: 12),
+                        ],
+                      ),
                       if (page.totalPages > 1) ...[
                         const SizedBox(height: 14),
                         Center(
                           child: Text(
                             'Page ${page.page} of ${page.totalPages}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: const Color(0xFF98A2B3),
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: const Color(0xFF98A2B3)),
                           ),
                         ),
                       ],
@@ -235,16 +247,16 @@ class _TrackingSearchField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'Search by tracking number',
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF98A2B3),
-                    ),
+                  color: const Color(0xFF98A2B3),
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           if (controller.text.isNotEmpty)
@@ -311,24 +323,21 @@ class _EmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onAction,
-              child: Text(actionLabel!),
-            ),
+            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
           ],
         ],
       ),
@@ -337,11 +346,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class ClientBookingCard extends StatelessWidget {
-  const ClientBookingCard({
-    super.key,
-    required this.booking,
-    this.onTap,
-  });
+  const ClientBookingCard({super.key, required this.booking, this.onTap});
 
   final ClientBooking booking;
   final VoidCallback? onTap;
@@ -379,10 +384,7 @@ class ClientBookingCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(7),
-                child: Image.asset(
-                  'assets/package.png',
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset('assets/package.png', fit: BoxFit.contain),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -392,25 +394,28 @@ class ClientBookingCard extends StatelessWidget {
                     Text(
                       booking.displayTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF121826),
-                          ),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF121826),
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       booking.displaySubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black45,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black45,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              _StatusBadge(label: booking.displayStatusLabel, color: statusColor),
+              _StatusBadge(
+                label: booking.displayStatusLabel,
+                color: statusColor,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -477,41 +482,45 @@ class ClientBookingCard extends StatelessWidget {
                     Text(
                       'From:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      booking.pickupLocation.isEmpty ? 'Pickup location not provided' : booking.pickupLocation,
+                      booking.pickupLocation.isEmpty
+                          ? 'Pickup location not provided'
+                          : booking.pickupLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Shipping to:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.black38,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.black38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      booking.dropoffLocation.isEmpty ? 'Drop-off location not provided' : booking.dropoffLocation,
+                      booking.dropoffLocation.isEmpty
+                          ? 'Drop-off location not provided'
+                          : booking.dropoffLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -531,7 +540,11 @@ class ClientBookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_rounded, color: Color(0xFF667085), size: 18),
+                  const Icon(
+                    Icons.inventory_2_rounded,
+                    color: Color(0xFF667085),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -543,16 +556,19 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF1C2430),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                        color: const Color(0xFF1C2430),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   if (booking.amountText.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(12),
@@ -560,16 +576,23 @@ class ClientBookingCard extends StatelessWidget {
                       child: Text(
                         booking.amountText,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF1F88C9),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
+                          color: const Color(0xFF1F88C9),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
                 ],
               ),
-          ),
+            ),
+          if ((booking.pickupOtp ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            PickupOtpBanner(
+              pickupOtp: booking.pickupOtp,
+              pickupOtpVerified: booking.pickupOtpVerified,
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
@@ -577,9 +600,9 @@ class ClientBookingCard extends StatelessWidget {
                 Text(
                   booking.id,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: const Color(0xFF98A2B3),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
             ],
           ),
@@ -600,10 +623,7 @@ class ClientBookingCard extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.label,
-    required this.color,
-  });
+  const _StatusBadge({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -619,10 +639,10 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 10,
-            ),
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: 10,
+        ),
       ),
     );
   }

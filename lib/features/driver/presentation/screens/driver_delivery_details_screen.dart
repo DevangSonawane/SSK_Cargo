@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -314,6 +315,10 @@ class _DriverDeliveryDetailsScreenState
   Future<void> _advanceTripStatus() async {
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
+    if (nextStatus == 'picked_up') {
+      await _showPickupOtpPrompt();
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final stopwatch = Stopwatch()..start();
     developer.log(
@@ -473,6 +478,148 @@ class _DriverDeliveryDetailsScreenState
         'Primary trip action failed after ${stopwatch.elapsedMilliseconds}ms: $error',
         name: 'driver.deliveryDetails',
       );
+    }
+  }
+
+  Future<void> _showPickupOtpPrompt() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PickupOtpDialog(onSubmit: _submitPickupOtp),
+    );
+  }
+
+  Future<String?> _submitPickupOtp(String pickupOtp) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final stopwatch = Stopwatch()..start();
+    developer.log(
+      'Pickup OTP confirmation started. tripId=$_tripId',
+      name: 'driver.deliveryDetails',
+    );
+    if (_tripId.isEmpty) {
+      await _loadTrip();
+      if (_tripId.isEmpty) {
+        return 'Trip is still syncing. Please try again.';
+      }
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return 'Please sign in again to continue.';
+    }
+
+    setState(() => _loadingTrip = true);
+
+    developer.log(
+      'Refreshing current location before pickup OTP update for tripId=$_tripId',
+      name: 'driver.deliveryDetails',
+    );
+    final locationStopwatch = Stopwatch()..start();
+    final locationError = await ref
+        .read(driverLocationTrackerProvider)
+        .refreshCurrentLocation();
+    locationStopwatch.stop();
+    developer.log(
+      locationError == null
+          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
+          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
+      name: 'driver.deliveryDetails',
+    );
+    if (locationError != null) {
+      if (mounted) {
+        setState(() => _loadingTrip = false);
+      }
+      return locationError;
+    }
+
+    try {
+      developer.log(
+        'Sending pickup OTP status update to backend. tripId=$_tripId',
+        name: 'driver.deliveryDetails',
+      );
+      final apiStopwatch = Stopwatch()..start();
+      final response = await ref
+          .read(apiClientProvider)
+          .updateTripStatus(
+            accessToken: session.tokens.accessToken,
+            tripId: _tripId,
+            status: 'picked_up',
+            pickupOtp: pickupOtp,
+          );
+      apiStopwatch.stop();
+      developer.log(
+        'Backend returned pickup OTP status update in ${apiStopwatch.elapsedMilliseconds}ms for tripId=$_tripId',
+        name: 'driver.deliveryDetails',
+      );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      if (!mounted) return null;
+
+      final updatedStatus = _normalizeTripStatus(
+        _readString(trip, const ['status', 'rawStatus']),
+      );
+      final resolvedStatus = updatedStatus.isNotEmpty
+          ? updatedStatus
+          : 'picked_up';
+
+      _resolvedTripId = _readString(trip, const ['id', 'tripId', 'trip_id']);
+      if (_resolvedTripId?.trim().isNotEmpty == true) {
+        _setTripSession(
+          tripId: _resolvedTripId!,
+          bookingId: _bookingId,
+          bookingNumber: _readString(trip, const [
+            'bookingNumber',
+            'booking_number',
+          ]),
+          status: resolvedStatus,
+          paymentStatus: _readString(trip, const [
+            'paymentStatus',
+            'payment_status',
+          ]),
+        );
+      }
+
+      setState(() {
+        _tripStatus = resolvedStatus;
+        _loadingTrip = false;
+        _detailsPanelExpanded = true;
+      });
+      ref.invalidate(driverDashboardProvider);
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_statusChangeMessageFor(resolvedStatus)),
+          backgroundColor: const Color(0xFF2FA56E),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      developer.log(
+        'Pickup OTP confirmation completed. tripId=$_tripId resolvedStatus=$resolvedStatus totalElapsedMs=${stopwatch.elapsedMilliseconds}',
+        name: 'driver.deliveryDetails',
+      );
+      return null;
+    } on ApiException catch (error) {
+      if (mounted) {
+        setState(() => _loadingTrip = false);
+      }
+      developer.log(
+        'Pickup OTP confirmation failed with ApiException after ${stopwatch.elapsedMilliseconds}ms: ${error.message}',
+        name: 'driver.deliveryDetails',
+      );
+      return error.message;
+    } catch (error) {
+      if (mounted) {
+        setState(() => _loadingTrip = false);
+      }
+      developer.log(
+        'Pickup OTP confirmation failed after ${stopwatch.elapsedMilliseconds}ms: $error',
+        name: 'driver.deliveryDetails',
+      );
+      return error.toString();
     }
   }
 
@@ -649,157 +796,164 @@ class _DriverDeliveryDetailsScreenState
                 ),
               ],
             ),
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 14),
-                  const Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Color(0xFFE8EDF2),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    panelSubtitle,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                      height: 1.4,
-                    ),
-                  ),
-                  if (isArrivalFlow) ...[
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 92,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              trackHeight: 52,
-                              trackShape: const RoundedRectSliderTrackShape(),
-                              thumbShape: const _ArrivalThumbShape(),
-                              overlayShape: const RoundSliderOverlayShape(
-                                overlayRadius: 0,
+            AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              reverseDuration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOutCubicEmphasized,
+              alignment: Alignment.topCenter,
+              child: _detailsPanelExpanded
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 14),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFE8EDF2),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          panelSubtitle,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                height: 1.4,
                               ),
-                              activeTrackColor: const Color(0xFFE5E7EB),
-                              inactiveTrackColor: const Color(0xFFE5E7EB),
-                              thumbColor: Colors.white,
-                              overlayColor: Colors.transparent,
-                              trackGap: 6,
-                            ),
-                            child: Slider(
-                              value: _arrivalSlide,
-                              onChanged: (value) {
-                                if (_loadingTrip || _confirmingArrival) {
-                                  return;
-                                }
-                                setState(() => _arrivalSlide = value);
-                                if (value >= 0.98) {
-                                  Future.delayed(
-                                    const Duration(milliseconds: 350),
-                                    () {
-                                      if (!context.mounted) {
+                        ),
+                        if (isArrivalFlow) ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 92,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    trackHeight: 52,
+                                    trackShape:
+                                        const RoundedRectSliderTrackShape(),
+                                    thumbShape: const _ArrivalThumbShape(),
+                                    overlayShape: const RoundSliderOverlayShape(
+                                      overlayRadius: 0,
+                                    ),
+                                    activeTrackColor: const Color(0xFFE5E7EB),
+                                    inactiveTrackColor: const Color(0xFFE5E7EB),
+                                    thumbColor: Colors.white,
+                                    overlayColor: Colors.transparent,
+                                    trackGap: 6,
+                                  ),
+                                  child: Slider(
+                                    value: _arrivalSlide,
+                                    onChanged: (value) {
+                                      if (_loadingTrip || _confirmingArrival) {
                                         return;
                                       }
-                                      unawaited(_confirmArrival());
-                                      setState(() => _arrivalSlide = 0);
+                                      setState(() => _arrivalSlide = value);
+                                      if (value >= 0.98) {
+                                        Future.delayed(
+                                          const Duration(milliseconds: 350),
+                                          () {
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+                                            unawaited(_confirmArrival());
+                                            setState(() => _arrivalSlide = 0);
+                                          },
+                                        );
+                                      }
                                     },
-                                  );
-                                }
-                              },
-                              min: 0,
-                              max: 1,
-                              divisions: 100,
+                                    min: 0,
+                                    max: 1,
+                                    divisions: 100,
+                                  ),
+                                ),
+                                IgnorePointer(
+                                  child: AnimatedOpacity(
+                                    opacity: (1 - (_arrivalSlide * 1.7)).clamp(
+                                      0.18,
+                                      1.0,
+                                    ),
+                                    duration: const Duration(milliseconds: 90),
+                                    child: Text(
+                                      'Swipe to continue',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFF6B7280),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          IgnorePointer(
-                            child: AnimatedOpacity(
-                              opacity: (1 - (_arrivalSlide * 1.7)).clamp(
-                                0.18,
-                                1.0,
+                        ] else ...[
+                          const SizedBox(height: 12),
+                          _DetailRow(label: 'Customer', value: _customerName),
+                          const SizedBox(height: 10),
+                          _DetailRow(
+                            label: 'Phone',
+                            value: _customerPhone.isNotEmpty
+                                ? _customerPhone
+                                : '—',
+                          ),
+                          const SizedBox(height: 10),
+                          _DetailRow(label: 'Address', value: _dropLocation),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: FilledButton(
+                              onPressed:
+                                  _loadingTrip ||
+                                      _confirmingArrival ||
+                                      _tripId.isEmpty
+                                  ? null
+                                  : () {
+                                      developer.log(
+                                        'Primary trip button pressed. tripId=$_tripId tripStatus=$_tripStatus',
+                                        name: 'driver.deliveryDetails',
+                                      );
+                                      if (_tripStatus == 'in_transit') {
+                                        setState(() {
+                                          _arrivalFlowActive = true;
+                                          _showArrivalSwipe = true;
+                                          _detailsPanelExpanded = true;
+                                        });
+                                        return;
+                                      }
+                                      unawaited(_advanceTripStatus());
+                                    },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF1F88C9),
+                                disabledBackgroundColor: const Color(
+                                  0xFFD0D5DD,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
-                              duration: const Duration(milliseconds: 90),
                               child: Text(
-                                'Swipe to continue',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF6B7280),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                _loadingTrip
+                                    ? 'Loading...'
+                                    : _tripId.isEmpty
+                                    ? 'Syncing trip...'
+                                    : _actionLabelForCurrentTrip(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 12),
-                    _DetailRow(label: 'Customer', value: _customerName),
-                    const SizedBox(height: 10),
-                    _DetailRow(
-                      label: 'Phone',
-                      value: _customerPhone.isNotEmpty ? _customerPhone : '—',
-                    ),
-                    const SizedBox(height: 10),
-                    _DetailRow(label: 'Address', value: _dropLocation),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton(
-                        onPressed:
-                            _loadingTrip ||
-                                _confirmingArrival ||
-                                _tripId.isEmpty
-                            ? null
-                            : () {
-                                developer.log(
-                                  'Primary trip button pressed. tripId=$_tripId tripStatus=$_tripStatus',
-                                  name: 'driver.deliveryDetails',
-                                );
-                                if (_tripStatus == 'in_transit') {
-                                  setState(() {
-                                    _arrivalFlowActive = true;
-                                    _showArrivalSwipe = true;
-                                    _detailsPanelExpanded = true;
-                                  });
-                                  return;
-                                }
-                                unawaited(_advanceTripStatus());
-                              },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
-                          disabledBackgroundColor: const Color(0xFFD0D5DD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          _loadingTrip
-                              ? 'Loading...'
-                              : _tripId.isEmpty
-                              ? 'Syncing trip...'
-                              : _actionLabelForCurrentTrip(),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              crossFadeState: _detailsPanelExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 280),
-              reverseDuration: const Duration(milliseconds: 220),
-              sizeCurve: Curves.easeInOutCubicEmphasized,
-              firstCurve: Curves.easeInOutCubicEmphasized,
-              secondCurve: Curves.easeInOutCubicEmphasized,
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -1451,6 +1605,97 @@ class _DriverDeliveryDetailsScreenState
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PickupOtpDialog extends StatefulWidget {
+  const _PickupOtpDialog({required this.onSubmit});
+
+  final Future<String?> Function(String pickupOtp) onSubmit;
+
+  @override
+  State<_PickupOtpDialog> createState() => _PickupOtpDialogState();
+}
+
+class _PickupOtpDialogState extends State<_PickupOtpDialog> {
+  final _controller = TextEditingController();
+  bool _submitting = false;
+  String _errorText = '';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _submitting = true;
+      _errorText = '';
+    });
+    final error = await widget.onSubmit(_controller.text.trim());
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _submitting = false;
+      _errorText = error;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canSubmit = _controller.text.trim().length == 4 && !_submitting;
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text('Enter pickup code'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ask the customer for their 4-digit pickup code and enter it here to confirm pickup.',
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 4,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: '0000',
+              errorText: _errorText.isEmpty ? null : _errorText,
+            ),
+            onChanged: (_) => setState(() => _errorText = ''),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canSubmit ? _submit : null,
+          child: _submitting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Confirm pickup'),
+        ),
+      ],
     );
   }
 }

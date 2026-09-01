@@ -163,6 +163,8 @@ class ClientBooking {
     required this.vehicleType,
     required this.amountText,
     required this.requestedAt,
+    required this.pickupOtp,
+    required this.pickupOtpVerified,
     required this.raw,
   });
 
@@ -241,6 +243,23 @@ class ClientBooking {
             json['booked_at'] ??
             json['updated_at'],
       ),
+      pickupOtp:
+          _readString(json, const [
+            'pickupOtp',
+            'pickup_otp',
+            'pickup_otp_code',
+            'trip_pickup_otp_code',
+          ]).isEmpty
+          ? null
+          : _readString(json, const [
+              'pickupOtp',
+              'pickup_otp',
+              'pickup_otp_code',
+              'trip_pickup_otp_code',
+            ]),
+      pickupOtpVerified:
+          _readBool(json, const ['pickupOtpVerified', 'pickup_otp_verified']) ||
+          _readString(json, const ['pickup_otp_verified_at']).isNotEmpty,
       raw: json,
     );
   }
@@ -258,6 +277,8 @@ class ClientBooking {
   final String vehicleType;
   final String amountText;
   final DateTime? requestedAt;
+  final String? pickupOtp;
+  final bool pickupOtpVerified;
   final Map<String, dynamic> raw;
 
   String get displayTitle => material.isNotEmpty

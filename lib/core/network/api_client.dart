@@ -524,10 +524,7 @@ class SskApiClient {
     String? city,
   }) async {
     developer.log('POST /api/addresses label=$label', name: 'SSK.API');
-    final data = <String, dynamic>{
-      'label': label,
-      'address': address,
-    };
+    final data = <String, dynamic>{'label': label, 'address': address};
     if (floor != null && floor.isNotEmpty) {
       data['floor'] = floor;
     }
@@ -639,11 +636,7 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/payment-methods',
-        data: {
-          'method_type': methodType,
-          'label': label,
-          'details': details,
-        },
+        data: {'method_type': methodType, 'label': label, 'details': details},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -1562,6 +1555,7 @@ class SskApiClient {
     required String accessToken,
     required String tripId,
     required String status,
+    String? pickupOtp,
   }) async {
     developer.log(
       'PATCH /api/trips/$tripId/status status=$status',
@@ -1570,7 +1564,12 @@ class SskApiClient {
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/trips/$tripId/status',
-        data: {'status': status},
+        data: {
+          'status': status,
+          ...(pickupOtp != null
+              ? {'pickup_otp': pickupOtp}
+              : const <String, dynamic>{}),
+        },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

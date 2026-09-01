@@ -930,6 +930,8 @@ class TrackingDemoShipment {
     this.bookingStatus,
     this.assignedDriverName,
     this.assignedTruckName,
+    this.pickupOtp,
+    this.pickupOtpVerified = false,
   });
 
   TrackingDemoShipment copyWith({
@@ -956,6 +958,8 @@ class TrackingDemoShipment {
     String? paymentStatus,
     String? podUrl,
     int? ratingStars,
+    String? pickupOtp,
+    bool? pickupOtpVerified,
     bool clearPickupLat = false,
     bool clearPickupLng = false,
     bool clearDropLat = false,
@@ -985,6 +989,8 @@ class TrackingDemoShipment {
       bookingStatus: bookingStatus ?? this.bookingStatus,
       assignedDriverName: assignedDriverName ?? this.assignedDriverName,
       assignedTruckName: assignedTruckName ?? this.assignedTruckName,
+      pickupOtp: pickupOtp ?? this.pickupOtp,
+      pickupOtpVerified: pickupOtpVerified ?? this.pickupOtpVerified,
       amount: amount ?? this.amount,
       paymentStatus: paymentStatus ?? this.paymentStatus,
     );
@@ -1013,6 +1019,8 @@ class TrackingDemoShipment {
   final String? bookingStatus;
   final String? assignedDriverName;
   final String? assignedTruckName;
+  final String? pickupOtp;
+  final bool pickupOtpVerified;
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {
@@ -1061,6 +1069,114 @@ class TrackingTimelineStep {
   final String title;
   final String subtitle;
   final bool completed;
+}
+
+class PickupOtpBanner extends StatelessWidget {
+  const PickupOtpBanner({
+    super.key,
+    required this.pickupOtp,
+    required this.pickupOtpVerified,
+  });
+
+  final String? pickupOtp;
+  final bool pickupOtpVerified;
+
+  @override
+  Widget build(BuildContext context) {
+    final otp = pickupOtp?.trim();
+    if (otp == null || otp.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final isVerified = pickupOtpVerified;
+    final backgroundColor = isVerified
+        ? const Color(0xFFEAF7EF)
+        : const Color(0xFFFFF6DB);
+    final borderColor = isVerified
+        ? const Color(0xFFCDEFD9)
+        : const Color(0xFFF3DC8C);
+    final accentColor = isVerified
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFB88900);
+    final title = isVerified ? 'Pickup verified' : 'Pickup code';
+    final message = isVerified
+        ? 'Pickup verified with your code'
+        : 'Share this code with your driver when they arrive to confirm pickup';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isVerified ? Icons.verified_rounded : Icons.key_rounded,
+                size: 18,
+                color: accentColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF101828),
+                ),
+              ),
+              const Spacer(),
+              if (isVerified)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Done',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: accentColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF475467),
+              height: 1.35,
+            ),
+          ),
+          if (!isVerified) ...[
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                otp,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3,
+                  color: const Color(0xFF101828),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _LiveTruckLocation {
@@ -1117,6 +1233,8 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
       'truck_lng',
       'truckLng',
     ]),
+    pickupOtp: booking.pickupOtp,
+    pickupOtpVerified: booking.pickupOtpVerified,
     amount: _readMoneyValue(raw, raw),
     paymentStatus: formatPaymentStatus(
       _readString(raw, const ['payment_status', 'paymentStatus']).isEmpty
