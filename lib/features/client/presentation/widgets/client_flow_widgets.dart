@@ -321,14 +321,36 @@ class _LocationDetailsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              InkWell(
-                onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(999),
-                child: const SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: Icon(Icons.arrow_back_rounded, size: 24),
-                ),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(999),
+                    child: const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Icon(Icons.arrow_back_rounded, size: 24),
+                    ),
+                  ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: _openMapPicker,
+                    icon: const Icon(Icons.map_outlined, size: 17),
+                    label: const Text('Select on map'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1F88C9),
+                      side: const BorderSide(color: Color(0xFFD7E7F4)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 22),
               Row(
@@ -515,6 +537,315 @@ class _LocationDetailsScreenState
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMapPicker() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final selection = await Navigator.of(context).push<GooglePlaceSelection>(
+      MaterialPageRoute(
+        builder: (context) => _MapLocationPickerScreen(kind: widget.kind),
+      ),
+    );
+    if (selection == null || !mounted) {
+      return;
+    }
+
+    _controller
+      ..text = selection.formattedAddress
+      ..selection = TextSelection.collapsed(offset: _controller.text.length);
+    Navigator.of(context).pop(selection);
+  }
+}
+
+class _MapLocationPickerScreen extends ConsumerStatefulWidget {
+  const _MapLocationPickerScreen({required this.kind});
+
+  final _LocationFieldKind kind;
+
+  @override
+  ConsumerState<_MapLocationPickerScreen> createState() =>
+      _MapLocationPickerScreenState();
+}
+
+class _MapLocationPickerScreenState
+    extends ConsumerState<_MapLocationPickerScreen> {
+  static const LatLng _defaultCenter = LatLng(19.0760, 72.8777);
+
+  GoogleMapController? _mapController;
+  LatLng _center = _defaultCenter;
+  LatLng? _ownLocation;
+  bool _locationPermissionGranted = false;
+  bool _resolving = false;
+  String? _address;
+
+  String get _locationLabel =>
+      widget.kind == _LocationFieldKind.pickup ? 'pickup' : 'drop-off';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentPosition();
+  }
+
+  Future<void> _loadCurrentPosition() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _locationPermissionGranted = true;
+        });
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      if (!mounted) return;
+      final center = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _center = center;
+        _ownLocation = center;
+      });
+      _mapController?.animateCamera(CameraUpdate.newLatLng(center));
+    } catch (_) {
+      // The picker remains usable from the default map center.
+    }
+  }
+
+  Future<void> _returnToOwnLocation() async {
+    if (_ownLocation == null) {
+      await _loadCurrentPosition();
+    }
+    final ownLocation = _ownLocation;
+    if (ownLocation == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your location is not available yet.')),
+      );
+      return;
+    }
+    setState(() {
+      _center = ownLocation;
+    });
+    await _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(ownLocation, 15),
+    );
+  }
+
+  Future<void> _confirmLocation() async {
+    if (_resolving) {
+      return;
+    }
+    setState(() {
+      _resolving = true;
+    });
+    try {
+      final address = await ref
+          .read(googlePlacesServiceProvider)
+          .reverseGeocode(
+            latitude: _center.latitude,
+            longitude: _center.longitude,
+          );
+      if (!mounted) return;
+      if (address.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not resolve this map point.')),
+        );
+        return;
+      }
+      Navigator.of(context).pop(
+        GooglePlaceSelection(
+          placeId: '',
+          formattedAddress: address,
+          latitude: _center.latitude,
+          longitude: _center.longitude,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolving = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(target: _center, zoom: 15),
+            myLocationEnabled: _locationPermissionGranted,
+            myLocationButtonEnabled: true,
+            zoomControlsEnabled: false,
+            compassEnabled: false,
+            mapToolbarEnabled: false,
+            onMapCreated: (controller) {
+              _mapController = controller;
+            },
+            onCameraMove: (position) {
+              _center = position.target;
+              _address = null;
+            },
+          ),
+          const IgnorePointer(
+            child: Center(
+              child: Icon(
+                Icons.location_on_rounded,
+                size: 48,
+                color: Color(0xFFE53935),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Row(
+                children: [
+                  _MapCircleButton(
+                    icon: Icons.arrow_back_rounded,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Set $_locationLabel location',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Move the map to position the pin',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _address ??
+                          'The exact address will be detected after you confirm.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _returnToOwnLocation,
+                        icon: const Icon(Icons.my_location_rounded, size: 18),
+                        label: const Text('Use my location'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF1F88C9),
+                          side: const BorderSide(color: Color(0xFFD7E7F4)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _resolving ? null : _confirmLocation,
+                        icon: _resolving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check_rounded),
+                        label: Text(
+                          _resolving
+                              ? 'Finding address...'
+                              : 'Use this $_locationLabel',
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFE53935),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapCircleButton extends StatelessWidget {
+  const _MapCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 42,
+          height: 42,
+          child: Icon(icon, color: const Color(0xFF101828)),
         ),
       ),
     );
