@@ -23,6 +23,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   final TextEditingController _trackingController = TextEditingController();
   String? _liveRefreshToken;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
 
   Future<void> _refreshBookings() async {
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -56,11 +57,21 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
         );
       }
     });
+
+    _tripStatusSubscription?.cancel();
+    _tripStatusSubscription = socketService.tripStatusStream.listen((_) {
+      if (mounted) {
+        ref.invalidate(
+          clientBookingsProvider((status: null, page: 1, limit: _pageSize)),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _driverRequestSubscription?.cancel();
+    _tripStatusSubscription?.cancel();
     _trackingController.dispose();
     super.dispose();
   }

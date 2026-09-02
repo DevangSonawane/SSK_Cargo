@@ -3,7 +3,7 @@ import { useJsApiLoader } from "@react-google-maps/api";
 import {
   Building2, Route, ArrowUpDown, Check, Truck,
   ArrowRight, ArrowLeft, ArrowDown, MapPin, Package, Weight, Hash, ClipboardList, Zap,
-  Pencil, LocateFixed, Plus, X, PackagePlus, PackageMinus,
+  Pencil, LocateFixed, Plus, X, PackagePlus, PackageMinus, Crosshair,
 } from "lucide-react";
 import StepIndicator from "../components/StepIndicator";
 import PlacesAutocompleteInput from "../components/PlacesAutocompleteInput";
@@ -55,6 +55,24 @@ const INITIAL_FORM = {
   selectedTruckId: null,
   selectedTruckReg: null,
 };
+
+// Straight-line distance across the full visit order — pickup -> loading stops -> unloading
+// stops -> drop — used both for the live "~X km" shown as soon as both ends are picked (Step 1,
+// no truck type needed yet) and by the price-quote effect below, so the two never disagree.
+function chainDistanceKm({ pickupLat, pickupLng, dropLat, dropLng, loadingLocations, unloadingLocations }) {
+  if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) return null;
+  const chain = [
+    { lat: pickupLat, lng: pickupLng },
+    ...loadingLocations.filter((s) => s.lat != null && s.lng != null),
+    ...unloadingLocations.filter((s) => s.lat != null && s.lng != null),
+    { lat: dropLat, lng: dropLng },
+  ];
+  let distance = 0;
+  for (let i = 0; i < chain.length - 1; i++) {
+    distance += haversineDistanceKm(chain[i].lat, chain[i].lng, chain[i + 1].lat, chain[i + 1].lng);
+  }
+  return Math.round(distance * 10) / 10;
+}
 
 // A custom-styled, type-to-filter dropdown for Material Type, replacing the native
 // <input list="..."> + <datalist> combo — datalist's suggestion popup is rendered by the
@@ -156,6 +174,13 @@ export default function BookTruck() {
   // flow, which was already kicked off automatically when the booking was created either way.
   const [showBrokerFallback, setShowBrokerFallback] = useState(false);
   const [locatingPickup, setLocatingPickup] = useState(false);
+  // Live "you are here" blue dot on the Step 1 map — watched only while Step 1 is showing, not
+  // for the whole wizard's lifetime, since nothing past Step 1 needs it.
+  const [myLocation, setMyLocation] = useState(null);
+  // Which field a map tap fills: "pickup" | "drop" | { key: "loadingLocations"|"unloadingLocations", index }.
+  // Defaults to whichever of pickup/drop is still empty (see the auto-advance effect below), but
+  // stays put once a stop is explicitly armed via its own "pin on map" button.
+  const [pinTarget, setPinTarget] = useState("pickup");
   // The DOM node NearbyTrucksMap portals its real, truck-populated map into for Step 3 — state
   // (not a plain ref) so the callback ref below re-renders once the node actually mounts,
   // letting the summary panel's right-hand column show the same live map instead of the
@@ -300,6 +325,111 @@ export default function BookTruck() {
     );
   };
 
+  // Live blue dot — only while Step 1 is actually showing, so this doesn't keep the GPS radio
+  // active for the rest of the wizard (or after the client leaves this page mid-flow).
+  useEffect(() => {
+    if (step !== 1 || !navigator.geolocation) return undefined;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* silent — the blue dot just doesn't appear, rest of Step 1 still works */ },
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [step]);
+
+  // Keeps the map-tap target pointed at whichever of pickup/drop is still empty, so a client who
+  // never touches the pill selector still gets sensible tap-to-pin behavior by default. Only
+  // acts while pinTarget is "pickup"/"drop" — never overrides an explicit stop pin (an object).
+  useEffect(() => {
+    if (typeof pinTarget !== "string") return;
+    if (!form.pickup) { setPinTarget("pickup"); return; }
+    if (!form.drop) setPinTarget("drop");
+  }, [form.pickup, form.drop]);
+
+  // Shared by every "resolve a raw {lat,lng} into an address" path below — map taps, marker
+  // drags, and the live-location auto-fill — so there's exactly one place that decides how a
+  // point becomes a display address + city, matching what "Use current location" above already did.
+  const reverseGeocode = async (lat, lng) => {
+    const geocoder = new window.google.maps.Geocoder();
+    const { results } = await geocoder.geocode({ location: { lat, lng } });
+    const result = results?.[0];
+    const address = result?.formatted_address?.replace(/,\s*India$/, "") || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    const components = result?.address_components || [];
+    const city = components.find((c) => c.types?.includes("locality"))?.long_name
+      || components.find((c) => c.types?.includes("administrative_area_level_2"))?.long_name
+      || null;
+    return { address, city };
+  };
+
+  // Reverse-geocodes a tapped map point into whichever field pinTarget currently points at.
+  const handleMapClick = async ({ lat, lng }) => {
+    if (!mapsLoaded || !window.google?.maps) return;
+    try {
+      const { address, city } = await reverseGeocode(lat, lng);
+      if (pinTarget === "pickup") {
+        updateForm("pickup", address);
+        updateForm("pickupLat", lat);
+        updateForm("pickupLng", lng);
+        updateForm("pickupCity", city);
+      } else if (pinTarget === "drop") {
+        updateForm("drop", address);
+        updateForm("dropLat", lat);
+        updateForm("dropLng", lng);
+        updateForm("dropCity", city);
+      } else if (pinTarget && typeof pinTarget === "object") {
+        updateStop(pinTarget.key, pinTarget.index, { location: address, lat, lng });
+      }
+    } catch {
+      toast.error("Couldn't resolve an address for that point");
+    }
+  };
+
+  // Once a pickup/drop pin exists on the Step 1 map, it's draggable — fine-tuning the exact spot
+  // (a specific gate, dock, building entrance) by dragging beats re-searching an address for it.
+  const handlePinDragEnd = async (target, { lat, lng }) => {
+    if (!mapsLoaded || !window.google?.maps) return;
+    try {
+      const { address, city } = await reverseGeocode(lat, lng);
+      if (target === "pickup") {
+        updateForm("pickup", address);
+        updateForm("pickupLat", lat);
+        updateForm("pickupLng", lng);
+        updateForm("pickupCity", city);
+      } else {
+        updateForm("drop", address);
+        updateForm("dropLat", lat);
+        updateForm("dropLng", lng);
+        updateForm("dropCity", city);
+      }
+    } catch {
+      toast.error("Couldn't resolve an address for that point");
+    }
+  };
+
+  // Pickup defaults to the client's own live location the moment it's known — mirrors how most
+  // ride-hailing apps start the pickup pin at "where you are" rather than an empty field, while
+  // still leaving it fully draggable/editable from there. Only fires once (guarded on
+  // form.pickup being empty) — never overrides an address the client already typed, searched,
+  // tapped, or dragged in.
+  useEffect(() => {
+    if (step !== 1 || form.pickup || !myLocation || !mapsLoaded || !window.google?.maps) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { address, city } = await reverseGeocode(myLocation.lat, myLocation.lng);
+        if (cancelled) return;
+        updateForm("pickup", address);
+        updateForm("pickupLat", myLocation.lat);
+        updateForm("pickupLng", myLocation.lng);
+        updateForm("pickupCity", city);
+      } catch {
+        // Silent — the client can still search or tap the map manually.
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, myLocation, mapsLoaded, form.pickup]);
+
   useEffect(() => {
     const loadConfig = async () => {
       const [citiesRes, vehiclesRes, materialsRes] = await Promise.all([
@@ -389,17 +519,10 @@ export default function BookTruck() {
         // sum rather than blocking the whole quote, since PlacesAutocompleteInput always
         // resolves lat/lng once a suggestion is actually picked.
         if (pickupLat != null && pickupLng != null && dropLat != null && dropLng != null) {
-          const chain = [
-            { lat: pickupLat, lng: pickupLng },
-            ...form.loadingLocations.filter((s) => s.lat != null && s.lng != null),
-            ...form.unloadingLocations.filter((s) => s.lat != null && s.lng != null),
-            { lat: dropLat, lng: dropLng },
-          ];
-          distance = 0;
-          for (let i = 0; i < chain.length - 1; i++) {
-            distance += haversineDistanceKm(chain[i].lat, chain[i].lng, chain[i + 1].lat, chain[i + 1].lng);
-          }
-          distance = Math.round(distance * 10) / 10;
+          distance = chainDistanceKm({
+            pickupLat, pickupLng, dropLat, dropLng,
+            loadingLocations: form.loadingLocations, unloadingLocations: form.unloadingLocations,
+          });
         } else {
           const distanceRes = await api.post("/api/config/distance", { pickup: form.pickup, drop: form.drop });
           if (!distanceRes?.success) throw new Error(distanceRes?.message || "Distance unavailable");
@@ -636,6 +759,12 @@ export default function BookTruck() {
   // Summary panel below, not a separate card — one combined map+summary panel on every step.
   const hasPickupCoords = form.pickupLat != null && form.pickupLng != null;
   const hasDropCoords = form.dropLat != null && form.dropLng != null;
+  // Shown the moment both ends are picked, well before a truck type (and therefore a real
+  // price quote) is chosen in Step 3 — see chainDistanceKm above.
+  const routeDistanceKm = chainDistanceKm({
+    pickupLat: form.pickupLat, pickupLng: form.pickupLng, dropLat: form.dropLat, dropLng: form.dropLng,
+    loadingLocations: form.loadingLocations, unloadingLocations: form.unloadingLocations,
+  });
   const summaryMapRoutes = hasPickupCoords && hasDropCoords ? [{
     id: "summary-map",
     origin: { lat: form.pickupLat, lng: form.pickupLng },
@@ -643,7 +772,21 @@ export default function BookTruck() {
     originLabel: form.pickup,
     destinationLabel: form.drop,
   }] : [];
-  const summaryMapMarkers = [
+  // Step 1 always uses explicit, draggable pickup/drop pins instead of the route-inferred ones
+  // other steps fall back to — dragging needs a marker MapView isn't deriving from a Directions
+  // result itself (see suppressRouteMarkers on the MapView call below).
+  const summaryMapMarkers = step === 1 ? [
+    ...(hasPickupCoords ? [{
+      id: "pickup", position: { lat: form.pickupLat, lng: form.pickupLng }, color: "blue",
+      title: form.pickup || "Pickup — drag to adjust", draggable: true,
+      onDragEnd: (pt) => handlePinDragEnd("pickup", pt),
+    }] : []),
+    ...(hasDropCoords ? [{
+      id: "drop", position: { lat: form.dropLat, lng: form.dropLng }, color: "green",
+      title: form.drop || "Drop-off — drag to adjust", draggable: true,
+      onDragEnd: (pt) => handlePinDragEnd("drop", pt),
+    }] : []),
+  ] : [
     ...(hasPickupCoords && !hasDropCoords ? [{ id: "pickup-only", position: { lat: form.pickupLat, lng: form.pickupLng }, color: "blue", title: form.pickup }] : []),
     ...(hasDropCoords && !hasPickupCoords ? [{ id: "drop-only", position: { lat: form.dropLat, lng: form.dropLng }, color: "green", title: form.drop }] : []),
   ];
@@ -660,7 +803,13 @@ export default function BookTruck() {
         // with radius circle, traffic and truck markers instead of a plain route line.
         <div ref={setTruckMapNode} className="absolute inset-0" />
       ) : (
-        <MapView routes={summaryMapRoutes} markers={summaryMapMarkers} height="100%" className="absolute inset-0" />
+        <MapView
+          routes={summaryMapRoutes}
+          markers={summaryMapMarkers}
+          height="100%"
+          className="absolute inset-0"
+          {...(step === 1 ? { onMapClick: handleMapClick, myLocation, suppressRouteMarkers: true } : {})}
+        />
       )}
 
       {hasSummaryContent && (
@@ -700,6 +849,9 @@ export default function BookTruck() {
                 <p className="text-[11px] text-neutral-400 mt-1.5">
                   +{form.loadingLocations.length} loading, +{form.unloadingLocations.length} unloading stop{(form.loadingLocations.length + form.unloadingLocations.length) === 1 ? "" : "s"}
                 </p>
+              )}
+              {routeDistanceKm != null && (
+                <p className="text-xs font-semibold text-primary mt-1.5 tabular-nums">~{routeDistanceKm} km</p>
               )}
             </div>
           )}
@@ -817,6 +969,33 @@ export default function BookTruck() {
                     Define Route
                   </h2>
                   <p className="text-sm text-neutral-400 mb-4">Enter the pickup and drop-off to calculate the route and estimate delivery times.</p>
+
+                  {/* Lets the client set a location by tapping the map instead of typing —
+                      useful when the exact spot (a gate, a loading dock) doesn't have a clean
+                      Places result. The armed target also drives handleMapClick above. */}
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide flex items-center gap-1">
+                      <Crosshair className="w-3 h-3" /> Tap map to set:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPinTarget("pickup")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                        pinTarget === "pickup" ? "bg-primary text-white" : "bg-neutral-50 text-neutral-500 hover:bg-primary-50 hover:text-primary"
+                      }`}
+                    >
+                      Pickup
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPinTarget("drop")}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                        pinTarget === "drop" ? "bg-primary text-white" : "bg-neutral-50 text-neutral-500 hover:bg-primary-50 hover:text-primary"
+                      }`}
+                    >
+                      Drop-off
+                    </button>
+                  </div>
 
                   {/* Pickup/drop entry: a connected rail (dot → dashed line → pin) mirrors the
                       route itself, so the two fields read as one trip instead of two unrelated
@@ -943,6 +1122,18 @@ export default function BookTruck() {
                                   className="flex-1 bg-transparent text-sm text-neutral-700 outline-none placeholder:text-neutral-300 min-w-0"
                                 />
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => setPinTarget({ key, index })}
+                                title="Pin this stop on the map"
+                                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                                  pinTarget?.key === key && pinTarget?.index === index
+                                    ? "bg-primary text-white"
+                                    : "text-neutral-400 hover:text-primary hover:bg-primary-50"
+                                }`}
+                              >
+                                <Crosshair className="w-4 h-4" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => removeStop(key, index)}

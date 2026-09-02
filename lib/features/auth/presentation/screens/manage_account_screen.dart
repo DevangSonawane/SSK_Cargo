@@ -14,7 +14,8 @@ class ManageAccountScreen extends ConsumerStatefulWidget {
   const ManageAccountScreen({super.key});
 
   @override
-  ConsumerState<ManageAccountScreen> createState() => _ManageAccountScreenState();
+  ConsumerState<ManageAccountScreen> createState() =>
+      _ManageAccountScreenState();
 }
 
 class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
@@ -71,7 +72,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final session = await ref.read(authSessionProvider.notifier).refreshProfile();
+      final session = await ref
+          .read(authSessionProvider.notifier)
+          .refreshProfile();
       final user = session.user;
       _originalName = user.displayName;
       _originalEmail = user.email ?? '';
@@ -93,6 +96,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
     );
     if (picked == null) {
       return;
@@ -116,11 +121,18 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
     setState(() => _saving = true);
     try {
-      developer.log('Saving profile from manage account page', name: 'SSK.Auth');
-      final saved = await ref.read(authSessionProvider.notifier).updateProfile(
+      developer.log(
+        'Saving profile from manage account page',
+        name: 'SSK.Auth',
+      );
+      final saved = await ref
+          .read(authSessionProvider.notifier)
+          .updateProfile(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
-            phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
             profileImage: _pickedAvatarDataUrl ?? _originalProfileImage,
           );
 
@@ -171,7 +183,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
-    final profileImage = _pickedAvatarBytes != null ? null : (_originalProfileImage ?? user?.profileImage);
+    final profileImage = _pickedAvatarBytes != null
+        ? null
+        : (_originalProfileImage ?? user?.profileImage);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
@@ -221,7 +235,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                             const SizedBox(height: 10),
                             Text(
                               'Tap to choose from gallery',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     color: const Color(0xFF667085),
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -241,7 +256,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                           children: [
                             TextFormField(
                               controller: _nameController,
-                              decoration: const InputDecoration(labelText: 'Full name'),
+                              decoration: const InputDecoration(
+                                labelText: 'Full name',
+                              ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Enter a name';
@@ -253,7 +270,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(labelText: 'Email'),
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                              ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Enter an email';
@@ -292,7 +311,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text('Save changes'),
                           ),
@@ -308,10 +329,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -327,9 +345,9 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: const Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -337,9 +355,9 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

@@ -40,10 +40,7 @@ class _DriverDeliveryPhotoUploadScreenState
   String? _tripPaymentStatus;
   List<dynamic> _remotePodPhotos = const [];
 
-  void _setTripSession({
-    required String tripId,
-    String? paymentStatus,
-  }) {
+  void _setTripSession({required String tripId, String? paymentStatus}) {
     final resolvedTripId = tripId.trim();
     if (resolvedTripId.isEmpty) {
       return;
@@ -103,10 +100,7 @@ class _DriverDeliveryPhotoUploadScreenState
         _remotePodPhotos = podPhotos is List ? podPhotos : const [];
         _loadingTrip = false;
       });
-      _setTripSession(
-        tripId: widget.tripId,
-        paymentStatus: paymentStatus,
-      );
+      _setTripSession(tripId: widget.tripId, paymentStatus: paymentStatus);
 
       if (_remotePodPhotos.isNotEmpty && !_resumingFromRemoteState) {
         _resumingFromRemoteState = true;
@@ -135,7 +129,12 @@ class _DriverDeliveryPhotoUploadScreenState
     }
 
     try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      final picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
       if (picked == null) return;
 
       final bytes = await picked.readAsBytes();

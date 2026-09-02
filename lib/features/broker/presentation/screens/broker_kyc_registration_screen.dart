@@ -405,7 +405,12 @@ class _BrokerKycRegistrationScreenState
 
   Future<void> _pickDocument(_KycDocument document, ImageSource source) async {
     try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      final picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
       if (picked == null) {
         return;
       }

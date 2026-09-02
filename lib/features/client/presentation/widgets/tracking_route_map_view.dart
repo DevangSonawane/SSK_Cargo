@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/widgets/truck_marker_icon.dart';
@@ -30,6 +31,8 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   List<LatLng> _routePoints = const [];
   int _routeRequestToken = 0;
   BitmapDescriptor? _truckMarkerIcon;
+  LatLng? _lastRoutedOrigin;
+  String? _lastRoutedPhase;
 
   LatLng? get _pickupPoint =>
       _latLng(widget.shipment.pickupLat, widget.shipment.pickupLng);
@@ -210,8 +213,15 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   Future<void> _loadRoute() async {
     final pickup = _pickupPoint;
     final drop = _dropPoint;
+    final live = _livePoint;
+    final status = (widget.shipment.bookingStatus ?? widget.shipment.status)
+        .trim()
+        .toLowerCase();
+    final prePickup = const {'assigned', 'en_route_pickup'}.contains(status);
+    final origin = live ?? pickup;
+    final destination = prePickup ? pickup : drop;
     final token = ++_routeRequestToken;
-    if (pickup == null || drop == null) {
+    if (origin == null || destination == null) {
       if (mounted) {
         setState(() {
           _routePoints = const [];
@@ -220,12 +230,29 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
       return;
     }
 
+    final previousOrigin = _lastRoutedOrigin;
+    if (_lastRoutedPhase == status &&
+        previousOrigin != null &&
+        Geolocator.distanceBetween(
+              previousOrigin.latitude,
+              previousOrigin.longitude,
+              origin.latitude,
+              origin.longitude,
+            ) <
+            150 &&
+        _routePoints.length >= 2) {
+      return;
+    }
+
+    _lastRoutedOrigin = origin;
+    _lastRoutedPhase = status;
+
     try {
       final route = await _routesService.fetchDrivingRoute(
-        originLatitude: pickup.latitude,
-        originLongitude: pickup.longitude,
-        destinationLatitude: drop.latitude,
-        destinationLongitude: drop.longitude,
+        originLatitude: origin.latitude,
+        originLongitude: origin.longitude,
+        destinationLatitude: destination.latitude,
+        destinationLongitude: destination.longitude,
       );
       if (!mounted || token != _routeRequestToken) {
         return;

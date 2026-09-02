@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 // ignore_for_file: unused_element
@@ -921,7 +920,6 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
   static const MethodChannel _mapsLauncherChannel = MethodChannel(
     'ssk/google_maps_launcher',
   );
-  GoogleMapController? _mapController;
 
   Uri? get _googleMapsDirectionsUri {
     final pickupLat = widget.shipment.pickupLat;
@@ -965,26 +963,6 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
     }
   }
 
-  Future<void> _zoomIn() async {
-    final controller = _mapController;
-    if (controller == null) {
-      debugPrint('[LiveTracking] zoom in ignored: map controller not ready');
-      return;
-    }
-    debugPrint('[LiveTracking] zoom in');
-    await controller.animateCamera(CameraUpdate.zoomIn());
-  }
-
-  Future<void> _zoomOut() async {
-    final controller = _mapController;
-    if (controller == null) {
-      debugPrint('[LiveTracking] zoom out ignored: map controller not ready');
-      return;
-    }
-    debugPrint('[LiveTracking] zoom out');
-    await controller.animateCamera(CameraUpdate.zoomOut());
-  }
-
   @override
   Widget build(BuildContext context) {
     debugPrint(
@@ -993,7 +971,6 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
       'drop=${widget.shipment.dropLat},${widget.shipment.dropLng} '
       'live=${widget.shipment.liveLat},${widget.shipment.liveLng}',
     );
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Stack(
       children: [
         Positioned.fill(
@@ -1022,6 +999,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
           ),
         ),
         SafeArea(
+          bottom: false,
           child: Stack(
             children: [
               Positioned(
@@ -1082,28 +1060,23 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                   ),
                 ),
               ),
-              Positioned(
-                right: 14,
-                top: 110,
-                child: Column(
-                  children: [
-                    _ZoomButton(icon: Icons.remove, onTap: _zoomOut),
-                    const SizedBox(height: 10),
-                    _ZoomButton(icon: Icons.add, onTap: _zoomIn),
-                  ],
+              if ((widget.shipment.pickupOtp ?? '').trim().isNotEmpty)
+                Positioned(
+                  right: 14,
+                  top: 62,
+                  child: _LivePickupOtpCard(shipment: widget.shipment),
                 ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: bottomInset + 24,
-                child: _LiveInfoCard(
-                  shipment: widget.shipment,
-                  bottomInset: bottomInset,
-                  onChatTap: widget.onChatTap,
-                ),
-              ),
             ],
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _LiveInfoCard(
+            shipment: widget.shipment,
+            bottomInset: MediaQuery.of(context).viewPadding.bottom,
+            onChatTap: widget.onChatTap,
           ),
         ),
       ],
@@ -1111,7 +1084,53 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
   }
 }
 
-class _LiveInfoCard extends StatelessWidget {
+class _LivePickupOtpCard extends StatelessWidget {
+  const _LivePickupOtpCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final verified = shipment.pickupOtpVerified;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: verified ? const Color(0xFFEAF7EF) : const Color(0xFFFFF6DB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: verified ? const Color(0xFFCDEFD9) : const Color(0xFFF3DC8C),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            verified ? Icons.verified_rounded : Icons.key_rounded,
+            size: 16,
+            color: verified ? const Color(0xFF2FA56E) : const Color(0xFFB88900),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            verified ? 'Verified' : 'OTP ${shipment.pickupOtp}',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveInfoCard extends StatefulWidget {
   const _LiveInfoCard({
     required this.shipment,
     required this.bottomInset,
@@ -1123,11 +1142,93 @@ class _LiveInfoCard extends StatelessWidget {
   final VoidCallback onChatTap;
 
   @override
+  State<_LiveInfoCard> createState() => _LiveInfoCardState();
+}
+
+class _LiveInfoCardState extends State<_LiveInfoCard> {
+  bool _expanded = true;
+
+  TrackingDemoShipment get shipment => widget.shipment;
+  double get bottomInset => widget.bottomInset;
+  VoidCallback get onChatTap => widget.onChatTap;
+
+  void _handleSheetSwipe(DragEndDetails details) {
+    final velocity = details.velocity.pixelsPerSecond.dy;
+    if (velocity > 180 && _expanded) {
+      setState(() => _expanded = false);
+    } else if (velocity < -180 && !_expanded) {
+      setState(() => _expanded = true);
+    }
+  }
+
+  Widget _buildCollapsedContent(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.local_shipping_rounded, color: Color(0xFF2FA56E)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  shipment.packageName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  shipment.status,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _ContactIconButton(
+            icon: Icons.chat_bubble_outline_rounded,
+            onTap: onChatTap,
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.black54),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSheetHandle() {
+    return GestureDetector(
+      onVerticalDragEnd: _handleSheetSwipe,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: double.infinity,
+        height: 28,
+        child: Center(
+          child: Container(
+            width: 56,
+            height: 5,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE1E5EB),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.of(context).size.height * 0.34;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+      padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.97),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -1139,170 +1240,183 @@ class _LiveInfoCard extends StatelessWidget {
           ),
         ],
       ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 56,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE1E5EB),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Package information',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: const Color(0xFF101828),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F4FA),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Delivery Type:',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Colors.black45,
-                                      fontSize: 11,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Express delivery',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Package weight:',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Colors.black45,
-                                      fontSize: 11,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                shipment.weight,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
-                const SizedBox(height: 12),
-                PickupOtpBanner(
-                  pickupOtp: shipment.pickupOtp,
-                  pickupOtpVerified: shipment.pickupOtpVerified,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B0B14),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4F4F4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: Color(0xFF2FA56E),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSheetHandle(),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: _expanded
+                ? ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxHeight),
+                    child: SingleChildScrollView(
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 6),
                           Text(
-                            'Rahul Patil',
+                            'Package information',
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: Colors.white,
+                                  fontSize: 18,
+                                  color: const Color(0xFF101828),
                                 ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Delivery man',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.white70, fontSize: 11),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F4FA),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Delivery Type:',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.black45,
+                                                  fontSize: 11,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Express delivery',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Package weight:',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.black45,
+                                                  fontSize: 11,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            shipment.weight,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0B0B14),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF4F4F4),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.person_rounded,
+                                    color: Color(0xFF2FA56E),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Rahul Patil',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Delivery man',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Colors.white70,
+                                              fontSize: 11,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Row(
+                                  children: [
+                                    _ContactIconButton(
+                                      icon: Icons.chat_bubble_outline_rounded,
+                                      onTap: onChatTap,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    _ContactIconButton(
+                                      icon: Icons.call_rounded,
+                                      onTap: () {},
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Row(
-                      children: [
-                        _ContactIconButton(
-                          icon: Icons.chat_bubble_outline_rounded,
-                          onTap: onChatTap,
-                        ),
-                        const SizedBox(width: 10),
-                        _ContactIconButton(
-                          icon: Icons.call_rounded,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  )
+                : _buildCollapsedContent(context),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -3437,31 +3551,6 @@ class _ContactIconButton extends StatelessWidget {
         height: 42,
         decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
         child: Icon(icon, size: 18, color: const Color(0xFF2FA56E)),
-      ),
-    );
-  }
-}
-
-class _ZoomButton extends StatelessWidget {
-  const _ZoomButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Icon(icon, size: 24, color: const Color(0xFF111111)),
       ),
     );
   }

@@ -25,6 +25,8 @@ enum TripType { interCity, intraCity }
 
 enum _LocationFieldKind { pickup, drop }
 
+enum _MapPinTarget { pickup, drop }
+
 class _LocationDetailsScreen extends ConsumerStatefulWidget {
   const _LocationDetailsScreen({
     required this.kind,
@@ -729,6 +731,26 @@ class BookingData {
       selectedPaymentLabel: selectedPaymentLabel ?? this.selectedPaymentLabel,
     );
   }
+}
+
+double? _routeDistanceKm(Iterable<LatLng> points) {
+  final values = points.toList(growable: false);
+  if (values.length < 2) {
+    return null;
+  }
+
+  var meters = 0.0;
+  for (var index = 1; index < values.length; index++) {
+    final previous = values[index - 1];
+    final current = values[index];
+    meters += Geolocator.distanceBetween(
+      previous.latitude,
+      previous.longitude,
+      current.latitude,
+      current.longitude,
+    );
+  }
+  return meters / 1000;
 }
 
 enum PaymentMode { payNow, payLater }
@@ -2499,6 +2521,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late BookingData _draft;
   late int _vehicleIndex;
   bool _autoLocationFlowStarted = false;
+  _MapPinTarget _mapPinTarget = _MapPinTarget.pickup;
+  Position? _currentPosition;
+  StreamSubscription<Position>? _positionSubscription;
+  bool _locationStreamStarted = false;
 
   @override
   void initState() {
@@ -2549,6 +2575,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ? _priceInputText(_draft.amount.toString())
           : _priceInputText(_vehicle.price),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _step == _BookingFlowStep.location) {
+        unawaited(_startLocationStream());
+      }
+    });
     if (widget.skipLocationStep) {
       _step = _BookingFlowStep.itemDetails;
     }
@@ -2589,6 +2620,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   @override
   void dispose() {
     _truckLocationSubscription?.cancel();
+    _positionSubscription?.cancel();
     _socketService.clearTruckTrackingIds();
     _brokerMapController?.dispose();
     _fromController.dispose();
@@ -2596,6 +2628,228 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _weightController.dispose();
     _amountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _startLocationStream() async {
+    if (_locationStreamStarted || !mounted) {
+      return;
+    }
+
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever ||
+        !mounted) {
+      return;
+    }
+
+    _locationStreamStarted = true;
+    _positionSubscription =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        ).listen((position) {
+          if (!mounted || _step != _BookingFlowStep.location) {
+            return;
+          }
+          setState(() {
+            _currentPosition = position;
+          });
+        });
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      if (mounted && _step == _BookingFlowStep.location) {
+        setState(() {
+          _currentPosition = position;
+        });
+      }
+    } catch (_) {
+      // The stream can still provide a position after the initial lookup fails.
+    }
+  }
+
+  void _stopLocationStream() {
+    _positionSubscription?.cancel();
+    _positionSubscription = null;
+    _locationStreamStarted = false;
+  }
+
+  Future<void> _handleBookingMapTap(LatLng point) async {
+    if (_resolvingCurrentLocation) {
+      return;
+    }
+
+    setState(() {
+      _resolvingCurrentLocation = true;
+    });
+    try {
+      final address = await ref
+          .read(googlePlacesServiceProvider)
+          .reverseGeocode(latitude: point.latitude, longitude: point.longitude);
+      if (!mounted) return;
+      if (address.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not resolve this map point.')),
+        );
+        return;
+      }
+
+      setState(() {
+        if (_mapPinTarget == _MapPinTarget.pickup) {
+          _draft = _draft.copyWith(
+            from: address,
+            pickupLat: point.latitude,
+            pickupLng: point.longitude,
+            city: _deriveCityFromLocation(address, ''),
+          );
+          _fromController.text = address;
+          _mapPinTarget = _MapPinTarget.drop;
+        } else {
+          _draft = _draft.copyWith(
+            to: address,
+            dropLat: point.latitude,
+            dropLng: point.longitude,
+          );
+          _toController.text = address;
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingCurrentLocation = false;
+        });
+      }
+    }
+  }
+
+  Set<Marker> _buildLocationMapMarkers() {
+    final markers = <Marker>{};
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    final current = _currentPosition;
+    if (pickup != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('booking-pickup'),
+          position: pickup,
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen,
+          ),
+          infoWindow: const InfoWindow(title: 'Pickup'),
+        ),
+      );
+    }
+    if (drop != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('booking-drop'),
+          position: drop,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          infoWindow: const InfoWindow(title: 'Drop-off'),
+        ),
+      );
+    }
+    if (current != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('booking-current-location'),
+          position: LatLng(current.latitude, current.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueAzure,
+          ),
+          anchor: const Offset(0.5, 0.5),
+          infoWindow: const InfoWindow(title: 'You are here'),
+        ),
+      );
+    }
+    return markers;
+  }
+
+  Widget _buildLocationMap(BuildContext context) {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    final current = _currentPosition;
+    final target =
+        pickup ??
+        drop ??
+        (current == null
+            ? _fallbackMapCenter
+            : LatLng(current.latitude, current.longitude));
+    final distance = _routeDistanceKm([?pickup, ?drop]);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Tap map to set'),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: const Text('Pickup'),
+              selected: _mapPinTarget == _MapPinTarget.pickup,
+              onSelected: (_) => setState(() {
+                _mapPinTarget = _MapPinTarget.pickup;
+              }),
+            ),
+            const SizedBox(width: 6),
+            ChoiceChip(
+              label: const Text('Drop-off'),
+              selected: _mapPinTarget == _MapPinTarget.drop,
+              onSelected: (_) => setState(() {
+                _mapPinTarget = _MapPinTarget.drop;
+              }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 220,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(target: target, zoom: 10.5),
+              markers: _buildLocationMapMarkers(),
+              myLocationEnabled: _locationStreamStarted,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              compassEnabled: false,
+              mapToolbarEnabled: false,
+              onTap: _handleBookingMapTap,
+            ),
+          ),
+        ),
+        if (distance != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Estimated route distance: ${distance.toStringAsFixed(distance < 10 ? 1 : 0)} km',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   void _scheduleTruckTrackingSync(List<NearbyTruck> trucks) {
@@ -3183,6 +3437,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             : _priceInputText(estimatedAmount.toString());
         _step = _BookingFlowStep.itemDetails;
       });
+      _stopLocationStream();
     } catch (error) {
       if (!mounted) {
         return;
@@ -4357,6 +4612,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             });
           },
         ),
+        const SizedBox(height: 14),
+        _buildLocationMap(context),
       ],
     );
   }
