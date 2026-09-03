@@ -33,6 +33,15 @@ class ClientSettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 _SettingsMenuTile(
+                  title: 'Chats',
+                  subtitle: 'View conversations from all your bookings',
+                  icon: Icons.chat_bubble_outline_rounded,
+                  iconBackgroundColor: const Color(0xFFDDEBFF),
+                  iconColor: const Color(0xFF1F88C9),
+                  onTap: () => context.push('/chats'),
+                ),
+                const SizedBox(height: 12),
+                _SettingsMenuTile(
                   title: 'Notifications',
                   subtitle: 'Review booking updates and invoice alerts',
                   icon: Icons.notifications_active_outlined,
@@ -148,10 +157,7 @@ class _SettingsMenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFF98A2B3),
-            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
           ],
         ),
       ),

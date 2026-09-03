@@ -6,6 +6,7 @@ import '../../data/driver_dashboard_models.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/driver_flow_widgets.dart';
+import '../../../chat/presentation/widgets/chat_unread_badge.dart';
 
 class DriverShell extends ConsumerStatefulWidget {
   const DriverShell({super.key, required this.navigationShell});
@@ -93,6 +94,21 @@ class _DriverShellState extends ConsumerState<DriverShell> {
                   ),
                 ),
                 const SizedBox(width: 12),
+                ChatUnreadBadge(
+                  child: InkWell(
+                    onTap: () => context.push('/driver/chats'),
+                    borderRadius: BorderRadius.circular(999),
+                    child: const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
                 InkWell(
                   onTap: () => context.push('/driver/profile'),
                   borderRadius: BorderRadius.circular(999),

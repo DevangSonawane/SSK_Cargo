@@ -95,6 +95,14 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
             ),
             const SizedBox(height: 10),
             _ProfileMenuTile(
+              title: 'Chats',
+              icon: Icons.chat_bubble_outline_rounded,
+              onTap: () => context.push('/chats'),
+              titleColor: const Color(0xFF101828),
+              iconColor: const Color(0xFF1F88C9),
+            ),
+            const SizedBox(height: 10),
+            _ProfileMenuTile(
               title: 'Change password',
               icon: Icons.password_rounded,
               onTap: () => context.push('/change-password'),

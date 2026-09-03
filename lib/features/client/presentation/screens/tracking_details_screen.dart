@@ -13,6 +13,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
+import '../../../chat/presentation/widgets/booking_chat_view.dart';
 
 class TrackingDetailsScreen extends ConsumerStatefulWidget {
   const TrackingDetailsScreen({super.key, required this.shipment});
@@ -2044,7 +2045,7 @@ class _ActionSheetTile extends StatelessWidget {
   }
 }
 
-class _ClientBookingChatSheet extends ConsumerStatefulWidget {
+class _ClientBookingChatSheet extends StatelessWidget {
   const _ClientBookingChatSheet({
     required this.bookingId,
     required this.accessToken,
@@ -2056,12 +2057,81 @@ class _ClientBookingChatSheet extends ConsumerStatefulWidget {
   final String currentUserId;
 
   @override
-  ConsumerState<_ClientBookingChatSheet> createState() =>
-      _ClientBookingChatSheetState();
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return FractionallySizedBox(
+      heightFactor: 0.88,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + bottomInset),
+          child: Column(
+            children: [
+              Container(
+                width: 54,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE1E5EB),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Booking chat',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF101828),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: BookingChatView(
+                  bookingId: bookingId,
+                  accessToken: accessToken,
+                  currentUserId: currentUserId,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _ClientBookingChatSheetState
-    extends ConsumerState<_ClientBookingChatSheet> {
+class _LegacyClientBookingChatSheet extends ConsumerStatefulWidget {
+  const _LegacyClientBookingChatSheet({
+    required this.bookingId,
+    required this.accessToken,
+    required this.currentUserId,
+  });
+
+  final String bookingId;
+  final String accessToken;
+  final String currentUserId;
+
+  @override
+  ConsumerState<_LegacyClientBookingChatSheet> createState() =>
+      _LegacyClientBookingChatSheetState();
+}
+
+class _LegacyClientBookingChatSheetState
+    extends ConsumerState<_LegacyClientBookingChatSheet> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
   final Map<String, bool> _typingUsers = <String, bool>{};

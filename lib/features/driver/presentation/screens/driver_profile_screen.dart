@@ -183,6 +183,13 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 10),
               _ProfileMenuTile(
+                title: 'Chats',
+                icon: Icons.chat_bubble_outline_rounded,
+                onTap: () => context.push('/driver/chats'),
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
                 title: 'Change password',
                 icon: Icons.password_rounded,
                 onTap: () => context.push('/change-password'),

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/network/api_client.dart';
-import '../../../../core/providers/app_providers.dart';
 import '../../data/chat_models.dart';
 
 class BookingChatView extends ConsumerStatefulWidget {
@@ -92,7 +91,11 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
         bookingId: widget.bookingId,
       );
       final thread = chatThreadFromResponse(threadResponse);
-      final threadId = chatReadString(thread, const ['id', 'thread_id', 'threadId']);
+      final threadId = chatReadString(thread, const [
+        'id',
+        'thread_id',
+        'threadId',
+      ]);
       if (threadId.isEmpty) {
         throw StateError('Chat thread unavailable');
       }
@@ -155,7 +158,11 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
         return;
       }
 
-      final messageId = chatReadString(message, const ['id', 'message_id', 'uuid']);
+      final messageId = chatReadString(message, const [
+        'id',
+        'message_id',
+        'uuid',
+      ]);
       if (messageId.isNotEmpty &&
           _messages.any(
             (item) =>
@@ -167,26 +174,52 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
 
       if (!mounted) return;
       setState(() {
-        _messages = [..._messages, message];
-        final senderRole = chatReadString(
-          message,
-          const ['senderRole', 'sender_role'],
-        ).toLowerCase();
+        final messageText = chatReadString(message, const [
+          'message',
+          'body',
+          'content',
+          'text',
+        ]);
+        final senderId = chatReadString(message, const [
+          'senderId',
+          'sender_id',
+          'user_id',
+        ]);
+        final withoutPendingEcho = _messages.where((item) {
+          final pendingId = chatReadString(item, const [
+            'id',
+            'message_id',
+            'uuid',
+          ]);
+          return !(pendingId.startsWith('local-') &&
+              chatReadString(item, const [
+                    'senderId',
+                    'sender_id',
+                    'user_id',
+                  ]) ==
+                  senderId &&
+              chatReadString(item, const [
+                    'message',
+                    'body',
+                    'content',
+                    'text',
+                  ]) ==
+                  messageText);
+        }).toList();
+        _messages = [...withoutPendingEcho, message];
+        final senderRole = chatReadString(message, const [
+          'senderRole',
+          'sender_role',
+        ]).toLowerCase();
         if (senderRole == 'broker' ||
             senderRole == 'driver' ||
             senderRole == 'admin') {
-          _thread = <String, dynamic>{
-            ...?_thread,
-            'stage': 'human',
-          };
+          _thread = <String, dynamic>{...?_thread, 'stage': 'human'};
         }
       });
 
       if (!widget.readOnly &&
-          chatReadString(
-                message,
-                const ['senderId', 'sender_id', 'user_id'],
-              ) !=
+          chatReadString(message, const ['senderId', 'sender_id', 'user_id']) !=
               widget.currentUserId) {
         socket.emit('read', {'threadId': threadId});
       }
@@ -216,13 +249,14 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
         _messages = _messages
             .map(
               (message) =>
-                  chatReadString(message, const ['senderId', 'sender_id', 'user_id']) ==
-                          widget.currentUserId
-                      ? {
-                          ...message,
-                          'readAt': DateTime.now().toIso8601String(),
-                        }
-                      : message,
+                  chatReadString(message, const [
+                        'senderId',
+                        'sender_id',
+                        'user_id',
+                      ]) ==
+                      widget.currentUserId
+                  ? {...message, 'readAt': DateTime.now().toIso8601String()}
+                  : message,
             )
             .toList();
       });
@@ -251,15 +285,38 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
 
   Future<void> _sendMessage() async {
     final socket = _socket;
-    final threadId = chatReadString(_thread, const ['id', 'thread_id', 'threadId']);
+    final threadId = chatReadString(_thread, const [
+      'id',
+      'thread_id',
+      'threadId',
+    ]);
     final message = _messageController.text.trim();
-    if (socket == null || threadId.isEmpty || message.isEmpty || _sending || !_canSend) {
+    if (socket == null ||
+        threadId.isEmpty ||
+        message.isEmpty ||
+        _sending ||
+        !_canSend) {
       return;
     }
 
+    final localMessageId = 'local-${DateTime.now().microsecondsSinceEpoch}';
     setState(() {
       _sending = true;
+      _messages = [
+        ..._messages,
+        {
+          'id': localMessageId,
+          'threadId': threadId,
+          'senderId': widget.currentUserId,
+          'senderName': 'You',
+          'senderRole': 'client',
+          'message': message,
+          'createdAt': DateTime.now().toIso8601String(),
+        },
+      ];
     });
+    _messageController.clear();
+    _scrollToBottom();
 
     socket.emitWithAck(
       'send-message',
@@ -271,14 +328,27 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
           _sending = false;
         });
         if (success) {
-          _messageController.clear();
           if (ack is Map && ack['botMessage'] != null) {
             setState(() {
               _thread = <String, dynamic>{...?_thread, 'stage': 'human'};
             });
           }
         } else {
-          final messageText = ack is Map ? ack['message']?.toString() : null;
+          setState(() {
+            _messages = _messages
+                .where(
+                  (item) =>
+                      chatReadString(item, const [
+                        'id',
+                        'message_id',
+                        'uuid',
+                      ]) !=
+                      localMessageId,
+                )
+                .toList();
+          });
+          final ackMap = chatAsMap(ack);
+          final messageText = ackMap?['message']?.toString();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -294,8 +364,15 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
   }
 
   Future<void> _handleBotAction(String actionId) async {
-    final threadId = chatReadString(_thread, const ['id', 'thread_id', 'threadId']);
-    if (!_canSend || threadId.isEmpty || _actionLoading || !widget.allowBotActions) {
+    final threadId = chatReadString(_thread, const [
+      'id',
+      'thread_id',
+      'threadId',
+    ]);
+    if (!_canSend ||
+        threadId.isEmpty ||
+        _actionLoading ||
+        !widget.allowBotActions) {
       return;
     }
 
@@ -304,19 +381,21 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
     });
 
     try {
-      final response = await ref.read(apiClientProvider).postChatBotAction(
-        accessToken: widget.accessToken,
-        threadId: threadId,
-        actionId: actionId,
-      );
+      final response = await ref
+          .read(apiClientProvider)
+          .postChatBotAction(
+            accessToken: widget.accessToken,
+            threadId: threadId,
+            actionId: actionId,
+          );
       if (!mounted) return;
       final success = response['success'] != false;
       if (!success) {
         final messageText = response['message']?.toString();
         if (messageText != null && messageText.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(messageText)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(messageText)));
         }
         setState(() {
           _thread = <String, dynamic>{...?_thread, 'stage': 'human'};
@@ -335,9 +414,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            error.toString().replaceFirst('Exception: ', ''),
-          ),
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
     } finally {
@@ -351,7 +428,11 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
 
   void _handleTyping(String value) {
     final socket = _socket;
-    final threadId = chatReadString(_thread, const ['id', 'thread_id', 'threadId']);
+    final threadId = chatReadString(_thread, const [
+      'id',
+      'thread_id',
+      'threadId',
+    ]);
     if (socket == null || threadId.isEmpty) {
       return;
     }
@@ -374,37 +455,37 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _loadError
-                  ? Center(
-                      child: Text(
-                        'Could not load this chat.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF667085),
-                            ),
-                      ),
-                    )
-                  : _messages.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No messages yet.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF667085),
-                                ),
-                          ),
-                        )
-                      : ListView.separated(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: _messages.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final message = _messages[index];
-                            return _ChatMessageBubble(
-                              message: message,
-                              currentUserId: widget.currentUserId,
-                            );
-                          },
-                        ),
+              ? Center(
+                  child: Text(
+                    'Could not load this chat.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF667085),
+                    ),
+                  ),
+                )
+              : _messages.isEmpty
+              ? Center(
+                  child: Text(
+                    'No messages yet.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF667085),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _messages.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return _ChatMessageBubble(
+                      message: message,
+                      currentUserId: widget.currentUserId,
+                    );
+                  },
+                ),
         ),
         if (_typingUsers.values.any((value) => value))
           Align(
@@ -414,9 +495,9 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
               child: Text(
                 'Typing...',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                      fontStyle: FontStyle.italic,
-                    ),
+                  color: const Color(0xFF667085),
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ),
@@ -435,16 +516,20 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFF98A2B3)),
+                  const Icon(
+                    Icons.lock_outline_rounded,
+                    size: 16,
+                    color: Color(0xFF98A2B3),
+                  ),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       'This trip is complete — the chat has closed.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF667085),
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: const Color(0xFF667085),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -560,26 +645,46 @@ class _ChatMessageBubble extends StatelessWidget {
         chatReadString(message, const ['senderId', 'sender_id', 'user_id']) ==
         currentUserId;
     final isBot =
-        chatReadString(message, const ['senderRole', 'sender_role']).toLowerCase() ==
+        chatReadString(message, const [
+          'senderRole',
+          'sender_role',
+        ]).toLowerCase() ==
         'bot';
-    final createdAt = chatReadDateTime(message, const ['createdAt', 'created_at']);
-    final messageText = chatReadString(message, const ['message', 'body', 'content', 'text']);
-    final senderName = chatReadString(message, const ['senderName', 'sender_name', 'name']);
-    final isRead = chatReadDateTime(message, const ['readAt', 'read_at']) != null;
+    final createdAt = chatReadDateTime(message, const [
+      'createdAt',
+      'created_at',
+    ]);
+    final messageText = chatReadString(message, const [
+      'message',
+      'body',
+      'content',
+      'text',
+    ]);
+    final senderName = chatReadString(message, const [
+      'senderName',
+      'sender_name',
+      'name',
+    ]);
+    final isRead =
+        chatReadDateTime(message, const ['readAt', 'read_at']) != null;
 
     return Row(
-      mainAxisAlignment: isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isMine
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: [
         ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.72,
+          ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isMine
                   ? const Color(0xFF2FA56E)
                   : isBot
-                      ? const Color(0xFFF3F0FF)
-                      : const Color(0xFFF5F7FB),
+                  ? const Color(0xFFF3F0FF)
+                  : const Color(0xFFF5F7FB),
               borderRadius: BorderRadius.circular(18).copyWith(
                 bottomRight: Radius.circular(isMine ? 6 : 18),
                 bottomLeft: Radius.circular(isMine ? 18 : 6),
@@ -589,21 +694,26 @@ class _ChatMessageBubble extends StatelessWidget {
                   : null,
             ),
             child: Column(
-              crossAxisAlignment:
-                  isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isMine
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 if (!isMine && isBot)
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.smart_toy_outlined, size: 14, color: Color(0xFF7F56D9)),
+                      const Icon(
+                        Icons.smart_toy_outlined,
+                        size: 14,
+                        color: Color(0xFF7F56D9),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'SSK Assistant',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFF7F56D9),
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: const Color(0xFF7F56D9),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   )
@@ -611,37 +721,38 @@ class _ChatMessageBubble extends StatelessWidget {
                   Text(
                     senderName,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF667085),
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: const Color(0xFF667085),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                if ((!isMine && (isBot || senderName.isNotEmpty))) const SizedBox(height: 4),
+                if ((!isMine && (isBot || senderName.isNotEmpty)))
+                  const SizedBox(height: 4),
                 Text(
                   messageText.isEmpty ? 'Message' : messageText,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isMine ? Colors.white : const Color(0xFF101828),
-                        height: 1.35,
-                      ),
+                    color: isMine ? Colors.white : const Color(0xFF101828),
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   chatTimeLabel(createdAt),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isMine
-                            ? Colors.white70
-                            : isBot
-                                ? const Color(0xFF9B8CDC)
-                                : const Color(0xFF98A2B3),
-                        fontSize: 10,
-                      ),
+                    color: isMine
+                        ? Colors.white70
+                        : isBot
+                        ? const Color(0xFF9B8CDC)
+                        : const Color(0xFF98A2B3),
+                    fontSize: 10,
+                  ),
                 ),
                 if (isMine && isRead)
                   Text(
                     'Read',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Colors.white70,
-                          fontSize: 10,
-                        ),
+                      color: Colors.white70,
+                      fontSize: 10,
+                    ),
                   ),
               ],
             ),
@@ -651,4 +762,3 @@ class _ChatMessageBubble extends StatelessWidget {
     );
   }
 }
-

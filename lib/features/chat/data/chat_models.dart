@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-
-enum ChatAudience { client, staff }
+enum ChatAudience { client, broker, driver }
 
 class ChatThreadSummary {
   const ChatThreadSummary({
@@ -50,42 +48,57 @@ class ChatThreadSummary {
   factory ChatThreadSummary.fromJson(Map<String, dynamic> json) {
     return ChatThreadSummary(
       raw: json,
-      threadId: _readString(json, const ['threadId', 'thread_id', 'id']),
-      bookingId: _readString(json, const ['bookingId', 'booking_id']),
-      bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
-      bookingStatus: _readString(json, const ['bookingStatus', 'booking_status']),
-      stage: _readString(json, const ['stage']).toLowerCase(),
-      isLocked: _readBool(json, const ['isLocked', 'is_locked']),
-      pickup: _readString(json, const ['pickup']),
-      drop: _readString(json, const ['drop', 'destination']),
-      clientId: _readString(json, const ['clientId', 'client_id']),
-      clientName: _readString(json, const ['clientName', 'client_name']),
-      brokerId: _readString(json, const ['brokerId', 'broker_id']),
-      brokerName: _readString(json, const ['brokerName', 'broker_name']),
-      driverId: _readString(json, const ['driverId', 'driver_id']),
-      driverName: _readString(json, const ['driverName', 'driver_name']),
-      lastMessage: _readString(json, const ['lastMessage', 'last_message']),
-      lastMessageAt: _readDateTime(json, const ['lastMessageAt', 'last_message_at']),
-      lastSenderId: _readString(json, const ['lastSenderId', 'last_sender_id']),
-      lastSenderRole: _readString(json, const ['lastSenderRole', 'last_sender_role']).toLowerCase(),
-      unreadCount: _readInt(json, const ['unreadCount', 'unread_count']),
+      threadId: chatReadString(json, const ['threadId', 'thread_id', 'id']),
+      bookingId: chatReadString(json, const ['bookingId', 'booking_id']),
+      bookingNumber: chatReadString(json, const [
+        'bookingNumber',
+        'booking_number',
+      ]),
+      bookingStatus: chatReadString(json, const [
+        'bookingStatus',
+        'booking_status',
+      ]),
+      stage: chatReadString(json, const ['stage']).toLowerCase(),
+      isLocked: chatReadBool(json, const ['isLocked', 'is_locked']),
+      pickup: chatReadString(json, const ['pickup']),
+      drop: chatReadString(json, const ['drop', 'destination']),
+      clientId: chatReadString(json, const ['clientId', 'client_id']),
+      clientName: chatReadString(json, const ['clientName', 'client_name']),
+      brokerId: chatReadString(json, const ['brokerId', 'broker_id']),
+      brokerName: chatReadString(json, const ['brokerName', 'broker_name']),
+      driverId: chatReadString(json, const ['driverId', 'driver_id']),
+      driverName: chatReadString(json, const ['driverName', 'driver_name']),
+      lastMessage: chatReadString(json, const ['lastMessage', 'last_message']),
+      lastMessageAt: chatReadDateTime(json, const [
+        'lastMessageAt',
+        'last_message_at',
+      ]),
+      lastSenderId: chatReadString(json, const [
+        'lastSenderId',
+        'last_sender_id',
+      ]),
+      lastSenderRole: chatReadString(json, const [
+        'lastSenderRole',
+        'last_sender_role',
+      ]).toLowerCase(),
+      unreadCount: chatReadInt(json, const ['unreadCount', 'unread_count']),
     );
   }
 
-  String get bookingLabel => bookingNumber.isNotEmpty ? bookingNumber : bookingId;
+  String get bookingLabel =>
+      bookingNumber.isNotEmpty ? bookingNumber : bookingId;
 
   String get clientDisplayName => clientName.isNotEmpty ? clientName : 'Client';
 
-  String get staffDisplayName =>
-      clientName.isNotEmpty ? clientName : 'Client';
+  String get staffDisplayName => clientName.isNotEmpty ? clientName : 'Client';
 
   String displayNameFor(ChatAudience audience) {
     if (audience == ChatAudience.client) {
       final candidate = driverName.isNotEmpty
           ? driverName
           : brokerName.isNotEmpty
-              ? brokerName
-              : 'Support';
+          ? brokerName
+          : 'Support';
       return candidate;
     }
     return clientDisplayName;
@@ -95,8 +108,8 @@ class ChatThreadSummary {
     return driverName.isNotEmpty
         ? driverName
         : brokerName.isNotEmpty
-            ? brokerName
-            : 'Support';
+        ? brokerName
+        : 'Support';
   }
 }
 
@@ -187,7 +200,9 @@ Map<String, dynamic>? chatThreadFromResponse(Map<String, dynamic> response) {
   return thread;
 }
 
-List<Map<String, dynamic>> chatMessagesFromResponse(Map<String, dynamic> response) {
+List<Map<String, dynamic>> chatMessagesFromResponse(
+  Map<String, dynamic> response,
+) {
   final data = chatAsMap(response['data']);
   final items =
       data?['messages'] ??
@@ -270,7 +285,10 @@ String chatRelativeLabel(DateTime? value) {
 }
 
 String chatInitials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty);
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty);
   final buffer = StringBuffer();
   for (final part in parts.take(2)) {
     buffer.write(part.isEmpty ? '' : part[0]);

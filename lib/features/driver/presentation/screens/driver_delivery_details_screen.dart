@@ -15,6 +15,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import '../../../chat/presentation/widgets/booking_chat_view.dart';
 
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryDetailsScreen({
@@ -45,6 +46,7 @@ class _DriverDeliveryDetailsScreenState
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
   TrackingDemoShipment? _shipment;
+  String? _resolvedBookingId;
   Timer? _tripRefreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   bool _loadingTripInFlight = false;
@@ -54,7 +56,9 @@ class _DriverDeliveryDetailsScreenState
       ? _resolvedTripId!.trim()
       : widget.tripId.trim();
 
-  String get _bookingId => widget.bookingId?.trim() ?? '';
+  String get _bookingId => _resolvedBookingId?.trim().isNotEmpty == true
+      ? _resolvedBookingId!.trim()
+      : widget.bookingId?.trim() ?? '';
 
   void _setTripSession({
     required String tripId,
@@ -247,6 +251,14 @@ class _DriverDeliveryDetailsScreenState
         'tripId',
         'trip_id',
       ]);
+      final tripBooking = _readMap(trip, const ['booking']);
+      final resolvedBookingId =
+          _readString(trip, const ['bookingId', 'booking_id']).isNotEmpty
+          ? _readString(trip, const ['bookingId', 'booking_id'])
+          : _readString(tripBooking, const ['id', 'bookingId', 'booking_id']);
+      if (resolvedBookingId.isNotEmpty) {
+        _resolvedBookingId = resolvedBookingId;
+      }
       if (resolvedTripId.isNotEmpty) {
         _resolvedTripId = resolvedTripId;
         _setTripSession(
@@ -1158,6 +1170,11 @@ class _DriverDeliveryDetailsScreenState
       'booking_number',
     ]);
     final id = _readString(trip, const ['id', 'tripId', 'trip_id']);
+    final booking = _readMap(trip, const ['booking']);
+    final bookingId =
+        _readString(trip, const ['bookingId', 'booking_id']).isNotEmpty
+        ? _readString(trip, const ['bookingId', 'booking_id'])
+        : _readString(booking, const ['id', 'bookingId', 'booking_id']);
     final status = _readString(trip, const [
       'status',
       'rawStatus',
@@ -1223,7 +1240,7 @@ class _DriverDeliveryDetailsScreenState
           _readDouble(currentLocation, const ['lng', 'longitude']) ??
           _readDouble(trip, const ['currentLng', 'current_lng']),
       tripId: id.isNotEmpty ? id : null,
-      bookingId: id.isNotEmpty ? id : null,
+      bookingId: bookingId.isNotEmpty ? bookingId : null,
       bookingStatus: status,
     );
   }
@@ -1419,6 +1436,32 @@ class _DriverDeliveryDetailsScreenState
     );
   }
 
+  Future<void> _openChat() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _bookingId.isNotEmpty
+        ? _bookingId
+        : (_shipment?.bookingId ?? '').trim();
+    if (session == null || bookingId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chat is not available for this trip yet.'),
+        ),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DriverBookingChatSheet(
+        bookingId: bookingId,
+        accessToken: session.tokens.accessToken,
+        currentUserId: session.user.id,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1531,6 +1574,24 @@ class _DriverDeliveryDetailsScreenState
                                   ),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _openChat,
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F6FB),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: Color(0xFF1F88C9),
+                          size: 20,
                         ),
                       ),
                     ),
@@ -2084,6 +2145,76 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverBookingChatSheet extends StatelessWidget {
+  const _DriverBookingChatSheet({
+    required this.bookingId,
+    required this.accessToken,
+    required this.currentUserId,
+  });
+
+  final String bookingId;
+  final String accessToken;
+  final String currentUserId;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return FractionallySizedBox(
+      heightFactor: 0.88,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + bottomInset),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 54,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE1E5EB),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Booking chat',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF101828),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: BookingChatView(
+                  bookingId: bookingId,
+                  accessToken: accessToken,
+                  currentUserId: currentUserId,
+                  allowBotActions: false,
+                ),
+              ),
+            ],
           ),
         ),
       ),

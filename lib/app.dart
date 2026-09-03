@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'core/router/app_router.dart';
+import 'core/network/api_client.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
@@ -24,6 +25,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
+  StreamSubscription<Map<String, dynamic>>? _chatMessageSubscription;
+  StreamSubscription<Map<String, dynamic>>? _chatEscalatedSubscription;
   bool _showingLoginAttemptAlert = false;
   OverlayEntry? _loginAttemptAlertEntry;
 
@@ -35,10 +38,97 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
         .read(appSocketServiceProvider)
         .loginAttemptAlertStream
         .listen(_handleLoginAttemptAlert);
+    final socketService = ref.read(appSocketServiceProvider);
+    _chatMessageSubscription = socketService.chatMessageStream.listen(
+      _handleChatMessage,
+    );
+    _chatEscalatedSubscription = socketService.chatEscalatedStream.listen(
+      _handleChatEscalated,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_syncDriverTracking());
+      unawaited(_refreshChatUnreadCount());
     });
+  }
+
+  Future<void> _refreshChatUnreadCount() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ref.read(chatUnreadCountProvider.notifier).state = 0;
+      return;
+    }
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getUnreadChatCount(accessToken: session.tokens.accessToken);
+      final data = response['data'];
+      final rawCount = data is Map
+          ? data['unreadCount'] ?? data['count']
+          : null;
+      final count = rawCount is num
+          ? rawCount.toInt()
+          : int.tryParse(rawCount?.toString() ?? '') ?? 0;
+      if (mounted) {
+        ref.read(chatUnreadCountProvider.notifier).state = count;
+      }
+    } catch (_) {
+      // Chat badges are best-effort and should not interrupt app startup.
+    }
+  }
+
+  void _handleChatMessage(Map<String, dynamic> payload) {
+    _incrementChatUnreadCount(payload);
+    final text = _chatPreview(payload['message']?.toString() ?? '');
+    _showChatMessage(
+      title:
+          'New message from ${payload['senderName']?.toString() ?? 'Support'}',
+      message: text,
+    );
+  }
+
+  void _handleChatEscalated(Map<String, dynamic> payload) {
+    _incrementChatUnreadCount(payload);
+    final booking = payload['bookingNumber']?.toString();
+    final suffix = booking == null || booking.isEmpty
+        ? ''
+        : ' - Booking #$booking';
+    _showChatMessage(
+      title: 'New chat request',
+      message:
+          'New chat request from ${payload['byName']?.toString() ?? 'a client'}$suffix',
+    );
+  }
+
+  void _incrementChatUnreadCount(Map<String, dynamic> payload) {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final senderId = payload['senderId']?.toString();
+    if (session != null && senderId == session.user.id) return;
+    final current = ref.read(chatUnreadCountProvider);
+    ref.read(chatUnreadCountProvider.notifier).state = current + 1;
+  }
+
+  String _chatPreview(String text) {
+    final normalized = text.trim();
+    if (normalized.length <= 80) return normalized;
+    return '${normalized.substring(0, 80)}...';
+  }
+
+  void _showChatMessage({required String title, required String message}) {
+    if (!mounted || message.isEmpty) return;
+    _messengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
@@ -46,6 +136,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       unawaited(_syncDriverTracking(restart: true));
+      unawaited(_refreshChatUnreadCount());
     }
   }
 
@@ -231,6 +322,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     _loginAttemptAlertSubscription?.cancel();
+    _chatMessageSubscription?.cancel();
+    _chatEscalatedSubscription?.cancel();
     _loginAttemptAlertEntry?.remove();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -245,6 +338,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
         return;
       }
       unawaited(_syncDriverTracking());
+      unawaited(_refreshChatUnreadCount());
     });
     ref.listen<bool>(driverTrackingEnabledProvider, (previous, next) {
       if (previous == next) {

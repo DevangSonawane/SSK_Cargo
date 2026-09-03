@@ -1658,6 +1658,8 @@ class BrokerHeader extends StatelessWidget {
     required this.pendingRequestsCount,
     required this.onAvatarTap,
     this.onNotificationsTap,
+    this.onChatTap,
+    this.chatUnreadCount = 0,
   });
 
   final bool highlighted;
@@ -1666,6 +1668,8 @@ class BrokerHeader extends StatelessWidget {
   final int pendingRequestsCount;
   final VoidCallback onAvatarTap;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onChatTap;
+  final int chatUnreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -1724,6 +1728,15 @@ class BrokerHeader extends StatelessWidget {
                 ],
               ],
             ),
+          ),
+          const SizedBox(width: 8),
+          _HeaderIconButton(
+            icon: Icons.chat_bubble_outline_rounded,
+            hasBadge: chatUnreadCount > 0,
+            iconColor: iconAccent,
+            size: 30,
+            badgeOffset: const Offset(5, 2),
+            onTap: onChatTap ?? () {},
           ),
           const SizedBox(width: 8),
           _HeaderIconButton(

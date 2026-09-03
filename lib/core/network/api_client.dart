@@ -419,6 +419,18 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getChatThreads({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/chat/threads', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/threads',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getChatThread({
     required String accessToken,
     required String bookingId,
@@ -458,6 +470,24 @@ class SskApiClient {
     return _request(
       () => _dio.patch<Map<String, dynamic>>(
         '/api/chat/threads/$threadId/read',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> postChatBotAction({
+    required String accessToken,
+    required String threadId,
+    required String actionId,
+  }) async {
+    developer.log(
+      'POST /api/chat/threads/$threadId/bot-action',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/chat/threads/$threadId/bot-action',
+        data: {'actionId': actionId},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

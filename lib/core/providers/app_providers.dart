@@ -5,6 +5,7 @@ enum AppRole { admin, broker, client, driver }
 
 final selectedRoleProvider = StateProvider<AppRole>((ref) => AppRole.client);
 final bottomNavVisibleProvider = StateProvider<bool>((ref) => true);
+final chatUnreadCountProvider = StateProvider<int>((ref) => 0);
 final rootNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>(
   (ref) => GlobalKey<NavigatorState>(),
 );

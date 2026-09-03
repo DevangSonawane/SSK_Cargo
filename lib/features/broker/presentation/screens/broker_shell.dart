@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -53,6 +54,8 @@ class BrokerShell extends ConsumerWidget {
               pendingRequestsCount: pendingCount,
               onAvatarTap: () => context.push('/broker/profile'),
               onNotificationsTap: () => context.push('/broker/notifications'),
+              onChatTap: () => context.push('/broker/chats'),
+              chatUnreadCount: ref.watch(chatUnreadCountProvider),
             ),
             const SizedBox(height: 8),
           ],

@@ -40,6 +40,10 @@ class AppSocketService {
       StreamController<Map<String, dynamic>>.broadcast();
   final StreamController<Map<String, dynamic>> _loginAttemptAlertController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _chatMessageController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _chatEscalatedController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<TruckLocationEvent> get truckLocationStream =>
       _truckLocationController.stream;
@@ -58,6 +62,12 @@ class AppSocketService {
 
   Stream<Map<String, dynamic>> get loginAttemptAlertStream =>
       _loginAttemptAlertController.stream;
+
+  Stream<Map<String, dynamic>> get chatMessageStream =>
+      _chatMessageController.stream;
+
+  Stream<Map<String, dynamic>> get chatEscalatedStream =>
+      _chatEscalatedController.stream;
 
   io.Socket? get socket => _socket;
 
@@ -170,6 +180,18 @@ class AppSocketService {
         _loginAttemptAlertController.add(event);
       }
     });
+    socket.on('chat-message', (payload) {
+      final event = _parseMapPayload(payload);
+      if (event != null && !_chatMessageController.isClosed) {
+        _chatMessageController.add(event);
+      }
+    });
+    socket.on('chat-escalated', (payload) {
+      final event = _parseMapPayload(payload);
+      if (event != null && !_chatEscalatedController.isClosed) {
+        _chatEscalatedController.add(event);
+      }
+    });
 
     _socket = socket;
     socket.connect();
@@ -250,6 +272,8 @@ class AppSocketService {
     _bookingPaymentController.close();
     _tripStatusController.close();
     _loginAttemptAlertController.close();
+    _chatMessageController.close();
+    _chatEscalatedController.close();
   }
 
   void _resyncTruckTrackingRooms() {
@@ -391,6 +415,11 @@ class AppSocketService {
       return null;
     }
 
+    return payload.cast<String, dynamic>();
+  }
+
+  Map<String, dynamic>? _parseMapPayload(Object? payload) {
+    if (payload is! Map) return null;
     return payload.cast<String, dynamic>();
   }
 }

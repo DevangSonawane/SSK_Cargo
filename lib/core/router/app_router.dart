@@ -57,6 +57,8 @@ import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
 import '../../features/client/presentation/screens/tracking_details_screen.dart';
 import '../../features/client/presentation/widgets/client_flow_widgets.dart';
+import '../../features/chat/data/chat_models.dart';
+import '../../features/chat/presentation/screens/chat_screens.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 
 BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
@@ -286,6 +288,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/client/notifications',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientNotificationsScreen()),
+      ),
+      GoRoute(
+        path: '/chats',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: ChatListScreen(audience: ChatAudience.client),
+        ),
+      ),
+      GoRoute(
+        path: '/chats/:bookingId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: state.pathParameters['bookingId'] ?? '',
+            audience: ChatAudience.client,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/chats',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: ChatListScreen(audience: ChatAudience.broker),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/chats/:bookingId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: state.pathParameters['bookingId'] ?? '',
+            audience: ChatAudience.broker,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/chats',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: ChatListScreen(audience: ChatAudience.driver),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/chats/:bookingId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: state.pathParameters['bookingId'] ?? '',
+            audience: ChatAudience.driver,
+          ),
+        ),
       ),
       GoRoute(
         path: '/client/tracking/details',
