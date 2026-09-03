@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
@@ -1462,6 +1463,27 @@ class _DriverDeliveryDetailsScreenState
     );
   }
 
+  Future<void> _callCustomer() async {
+    final number = _customerPhone.trim();
+    if (number.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Customer phone number is not available.'),
+        ),
+      );
+      return;
+    }
+    final launched = await launchUrl(
+      Uri.parse('tel:$number'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the phone app.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1545,7 +1567,7 @@ class _DriverDeliveryDetailsScreenState
                     ),
                     const Spacer(),
                     InkWell(
-                      onTap: () {},
+                      onTap: _callCustomer,
                       borderRadius: BorderRadius.circular(999),
                       child: Container(
                         padding: const EdgeInsets.symmetric(

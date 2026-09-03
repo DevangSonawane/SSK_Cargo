@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:url_launcher/url_launcher.dart';
 
 // ignore_for_file: unused_element
 
@@ -48,6 +49,25 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   void _closeLiveTracking() {
     _setBottomNavVisible(true);
     setState(() => _isLiveTracking = false);
+  }
+
+  Future<void> _callDriver(String? phone) async {
+    final number = phone?.trim() ?? '';
+    if (number.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Driver phone number is not available.')),
+      );
+      return;
+    }
+    final launched = await launchUrl(
+      Uri.parse('tel:$number'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the phone app.')),
+      );
+    }
   }
 
   TrackingDemoShipment get _shipment => _resolvedShipment ?? widget.shipment;
@@ -782,6 +802,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 shipment: shipment,
                 onBack: _closeLiveTracking,
                 onChatTap: _openChatSheet,
+                onCallTap: () => _callDriver(shipment.assignedDriverPhone),
               )
             : SafeArea(
                 key: const ValueKey('details'),
@@ -907,11 +928,13 @@ class _LiveTrackingView extends StatefulWidget {
     required this.shipment,
     required this.onBack,
     required this.onChatTap,
+    required this.onCallTap,
   });
 
   final TrackingDemoShipment shipment;
   final VoidCallback onBack;
   final VoidCallback onChatTap;
+  final VoidCallback onCallTap;
 
   @override
   State<_LiveTrackingView> createState() => _LiveTrackingViewState();
@@ -1078,6 +1101,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
             shipment: widget.shipment,
             bottomInset: MediaQuery.of(context).viewPadding.bottom,
             onChatTap: widget.onChatTap,
+            onCallTap: widget.onCallTap,
           ),
         ),
       ],
@@ -1136,11 +1160,13 @@ class _LiveInfoCard extends StatefulWidget {
     required this.shipment,
     required this.bottomInset,
     required this.onChatTap,
+    required this.onCallTap,
   });
 
   final TrackingDemoShipment shipment;
   final double bottomInset;
   final VoidCallback onChatTap;
+  final VoidCallback onCallTap;
 
   @override
   State<_LiveInfoCard> createState() => _LiveInfoCardState();
@@ -1152,6 +1178,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
   TrackingDemoShipment get shipment => widget.shipment;
   double get bottomInset => widget.bottomInset;
   VoidCallback get onChatTap => widget.onChatTap;
+  VoidCallback get onCallTap => widget.onCallTap;
 
   void _handleSheetSwipe(DragEndDetails details) {
     final velocity = details.velocity.pixelsPerSecond.dy;
@@ -1404,7 +1431,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                     const SizedBox(width: 10),
                                     _ContactIconButton(
                                       icon: Icons.call_rounded,
-                                      onTap: () {},
+                                      onTap: onCallTap,
                                     ),
                                   ],
                                 ),

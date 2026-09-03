@@ -1282,6 +1282,7 @@ class TrackingDemoShipment {
     this.bookingId,
     this.bookingStatus,
     this.assignedDriverName,
+    this.assignedDriverPhone,
     this.assignedTruckName,
     this.pickupOtp,
     this.pickupOtpVerified = false,
@@ -1305,6 +1306,7 @@ class TrackingDemoShipment {
     String? bookingId,
     String? bookingStatus,
     String? assignedDriverName,
+    String? assignedDriverPhone,
     String? assignedTruckName,
     String? tripId,
     double? amount,
@@ -1341,6 +1343,7 @@ class TrackingDemoShipment {
       bookingId: bookingId ?? this.bookingId,
       bookingStatus: bookingStatus ?? this.bookingStatus,
       assignedDriverName: assignedDriverName ?? this.assignedDriverName,
+      assignedDriverPhone: assignedDriverPhone ?? this.assignedDriverPhone,
       assignedTruckName: assignedTruckName ?? this.assignedTruckName,
       pickupOtp: pickupOtp ?? this.pickupOtp,
       pickupOtpVerified: pickupOtpVerified ?? this.pickupOtpVerified,
@@ -1371,6 +1374,7 @@ class TrackingDemoShipment {
   final String? bookingId;
   final String? bookingStatus;
   final String? assignedDriverName;
+  final String? assignedDriverPhone;
   final String? assignedTruckName;
   final String? pickupOtp;
   final bool pickupOtpVerified;
@@ -1599,6 +1603,18 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     tripId: '',
     bookingId: booking.id,
     bookingStatus: status,
+    assignedDriverName: booking.raw['driver'] is Map
+        ? _readString(
+            (booking.raw['driver'] as Map).cast<String, dynamic>(),
+            const ['name'],
+          )
+        : _readString(raw, const ['driverName', 'driver_name']),
+    assignedDriverPhone: booking.raw['driver'] is Map
+        ? _readString(
+            (booking.raw['driver'] as Map).cast<String, dynamic>(),
+            const ['phone', 'phoneNumber', 'phone_number'],
+          )
+        : _readString(raw, const ['driverPhone', 'driver_phone']),
     timeline: _timelineForStatus(status, booking),
   );
 }
