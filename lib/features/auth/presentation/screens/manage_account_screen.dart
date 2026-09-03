@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
@@ -174,137 +175,292 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     final profileImage = _pickedAvatarBytes != null ? null : (_originalProfileImage ?? user?.profileImage);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Manage account'),
-      ),
+      backgroundColor: const Color(0xFFF2F8FF),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFE8EDF2)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_errorMessage != null) ...[
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Color(0xFFE23A4B)),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      Center(
-                        child: Column(
-                          children: [
-                            SskProfileAvatar(
-                              imageUrl: profileImage,
-                              imageBytes: _pickedAvatarBytes,
-                              size: 96,
-                              onTap: _pickAvatar,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Tap to choose from gallery',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: const Color(0xFF667085),
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                child: Column(
+                  children: [
+                    _ManageAccountHeader(
+                      onBack: () => context.pop(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: const Color(0xFFDCEAFF)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1769D1).withValues(alpha: 0.08),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Form(
-                        key: _formKey,
-                        onChanged: () {
-                          if (mounted) {
-                            setState(() {});
-                          }
-                        },
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            TextFormField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(labelText: 'Full name'),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter a name';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(labelText: 'Email'),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter an email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                labelText: 'Phone',
-                                helperText: 'Optional',
+                            if (_errorMessage != null) ...[
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: Color(0xFFE23A4B)),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            Center(
+                              child: Column(
+                                children: [
+                                  Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      SskProfileAvatar(
+                                        imageUrl: profileImage,
+                                        imageBytes: _pickedAvatarBytes,
+                                        size: 148,
+                                        borderColor: const Color(0xFF1769D1),
+                                        onTap: _pickAvatar,
+                                      ),
+                                      Positioned(
+                                        right: -2,
+                                        bottom: 0,
+                                        child: Material(
+                                          color: const Color(0xFF1769D1),
+                                          shape: const CircleBorder(),
+                                          child: InkWell(
+                                            onTap: _pickAvatar,
+                                            customBorder: const CircleBorder(),
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Icon(
+                                                Icons.camera_alt_outlined,
+                                                color: Colors.white,
+                                                size: 24,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Text(
+                                    'Tap to choose from gallery',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: const Color(0xFF10245B),
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'JPG, PNG up to 5MB',
+                                    style: TextStyle(
+                                      color: Color(0xFF5B6B91),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 26),
+                            Form(
+                              key: _formKey,
+                              onChanged: () {
+                                if (mounted) setState(() {});
+                              },
+                              child: Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _nameController,
+                                    decoration: _accountFieldDecoration(
+                                      labelText: 'Full name',
+                                      icon: Icons.person_rounded,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Enter a name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: _accountFieldDecoration(
+                                      labelText: 'Email',
+                                      icon: Icons.email_rounded,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Enter an email';
+                                      }
+                                      if (!value.contains('@')) {
+                                        return 'Enter a valid email';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: _accountFieldDecoration(
+                                      labelText: 'Phone',
+                                      icon: Icons.phone_rounded,
+                                    ).copyWith(helperText: 'Optional'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            if (user != null) ...[
+                              const Text(
+                                'Optional',
+                                style: TextStyle(
+                                  color: Color(0xFF60708D),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _DetailRow(label: 'Role', value: user.role),
+                              _DetailRow(label: 'Status', value: user.status),
+                            ],
+                            if (_hasChanges) ...[
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 58,
+                                child: ElevatedButton(
+                                  onPressed: _saving ? null : _save,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1769D1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                  child: _saving
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.save_rounded, color: Colors.white),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              'Save Changes',
+                                              style: TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      if (user != null) ...[
-                        _DetailRow(label: 'Role', value: user.role),
-                        _DetailRow(label: 'Status', value: user.status),
-                      ],
-                      if (_hasChanges) ...[
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton(
-                            onPressed: _saving ? null : _save,
-                            child: _saving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Text('Save changes'),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
+      ),
       ),
     );
   }
+}
+
+class _ManageAccountHeader extends StatelessWidget {
+  const _ManageAccountHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        28,
+        MediaQuery.of(context).padding.top + 20,
+        28,
+        26,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF075FC7), Color(0xFF147FE5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onBack,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          ),
+          const SizedBox(width: 20),
+          const Text(
+            'Manage account',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+InputDecoration _accountFieldDecoration({
+  required String labelText,
+  required IconData icon,
+}) {
+  return InputDecoration(
+    labelText: labelText,
+    filled: true,
+    fillColor: Colors.white,
+    prefixIcon: Icon(icon, color: const Color(0xFF1769D1)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFF1769D1), width: 1.4),
+    ),
+  );
 }
 
 class _DetailRow extends StatelessWidget {
@@ -318,30 +474,54 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F8FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCEAFF)),
+      ),
       child: Row(
         children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                    fontWeight: FontWeight.w600,
-                  ),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE3F0FF),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              label == 'Role' ? Icons.work_rounded : Icons.verified_user_rounded,
+              color: const Color(0xFF1769D1),
+              size: 18,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w700,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF5B6B91),
+                    fontSize: 12,
                   ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Color(0xFF10245B),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
+          const Icon(Icons.edit_rounded, color: Color(0xFF1769D1), size: 20),
         ],
       ),
     );

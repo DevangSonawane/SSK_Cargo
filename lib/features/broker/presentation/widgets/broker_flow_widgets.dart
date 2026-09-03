@@ -3262,6 +3262,7 @@ class BrokerProfileActionCard extends StatelessWidget {
   const BrokerProfileActionCard({
     super.key,
     required this.title,
+    this.subtitle,
     required this.icon,
     required this.backgroundColor,
     required this.iconColor,
@@ -3269,6 +3270,7 @@ class BrokerProfileActionCard extends StatelessWidget {
   });
 
   final String title;
+  final String? subtitle;
   final IconData icon;
   final Color backgroundColor;
   final Color iconColor;
@@ -3294,11 +3296,24 @@ class BrokerProfileActionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF101828),
               ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 8,
+                  color: const Color(0xFF6B7A98),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -3310,6 +3325,7 @@ class BrokerMenuTile extends StatelessWidget {
   const BrokerMenuTile({
     super.key,
     required this.title,
+    this.subtitle,
     required this.icon,
     required this.onTap,
     this.titleColor = const Color(0xFF101828),
@@ -3318,6 +3334,7 @@ class BrokerMenuTile extends StatelessWidget {
   });
 
   final String title;
+  final String? subtitle;
   final IconData icon;
   final VoidCallback onTap;
   final Color titleColor;
@@ -3330,7 +3347,7 @@ class BrokerMenuTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -3345,20 +3362,45 @@ class BrokerMenuTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: completed ? const Color(0xFF2FA56E) : iconColor,
-              size: 22,
+            Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEAF3FF),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: completed ? const Color(0xFF2FA56E) : iconColor,
+                size: 17,
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: completed ? const Color(0xFF1F7A52) : titleColor,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: completed ? const Color(0xFF1F7A52) : titleColor,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 8,
+                        color: const Color(0xFF6B7A98),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             if (completed) ...[
