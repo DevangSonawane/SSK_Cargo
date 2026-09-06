@@ -177,12 +177,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 22),
               _ProfileMenuTile(
-                title: 'Settings',
-                icon: Icons.settings_rounded,
-                onTap: () => context.push('/manage-account'),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
                 title: 'Chats',
                 icon: Icons.chat_bubble_outline_rounded,
                 onTap: () => context.push('/driver/chats'),
