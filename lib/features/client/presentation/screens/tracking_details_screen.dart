@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/client_booking_models.dart';
 import '../widgets/client_flow_widgets.dart';
@@ -222,6 +223,24 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
             }.contains(status));
   }
 
+  bool get _isPayable {
+    final status = _shipment.bookingStatus?.toLowerCase();
+    final paymentStatus = _shipment.paymentStatus.toLowerCase();
+    return _shipment.bookingId != null &&
+        status != 'cancelled' &&
+        (paymentStatus == 'pending' || paymentStatus == 'partial');
+  }
+
+  bool get _isRatable {
+    final status = _shipment.bookingStatus?.toLowerCase();
+    return _shipment.bookingId != null &&
+        (status == 'delivered' || status == 'completed') &&
+        _shipment.ratingStars == null;
+  }
+
+  double get _remainingAmount =>
+      (_shipment.amount - _shipment.amountPaid).clamp(0, double.infinity);
+
   Future<void> _cancelBooking() async {
     final bookingId = _shipment.bookingId;
     if (bookingId == null || _isCancelling || !_canCancelBooking) {
@@ -354,13 +373,22 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       return;
     }
 
+    final amount = _remainingAmount;
+    if (amount <= 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Payment amount is unavailable.')),
+      );
+      return;
+    }
+
     final shouldPay = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Record payment?'),
-        content: const Text(
-          'This will mark the booking as paid on the backend. Continue only if the payment has been collected.',
+        title: const Text('Continue to payment?'),
+        content: Text(
+          'This will open secure checkout for ₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}.',
         ),
         actions: [
           TextButton(
@@ -378,14 +406,25 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     if (shouldPay != true) {
       return;
     }
+    if (!mounted) return;
 
     try {
-      await ref
-          .read(apiClientProvider)
-          .payBooking(accessToken: session.tokens.accessToken, id: bookingId);
+      final paymentGateway = BookingPaymentGateway(
+        apiClient: ref.read(apiClientProvider),
+      );
+      await paymentGateway.payBooking(
+        accessToken: session.tokens.accessToken,
+        bookingId: bookingId,
+        payType: 'full',
+        contact: session.user.phone,
+        email: session.user.email,
+        description: 'Booking payment',
+        context: context,
+      );
       if (!mounted) return;
+      unawaited(_refreshShipment());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment recorded successfully.')),
+        const SnackBar(content: Text('Payment completed successfully.')),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -870,6 +909,62 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 10),
+                                    if (_isPayable)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: FilledButton.icon(
+                                          onPressed: _payBooking,
+                                          icon: const Icon(
+                                            Icons.payments_outlined,
+                                          ),
+                                          label: Text(
+                                            shipment.paymentStatus
+                                                        .toLowerCase() ==
+                                                    'partial'
+                                                ? 'Pay remaining'
+                                                : 'Pay now',
+                                          ),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF1976D2,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if (_isPayable && _isRatable)
+                                      const SizedBox(height: 10),
+                                    if (_isRatable)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: OutlinedButton.icon(
+                                          onPressed: _rateBooking,
+                                          icon: const Icon(
+                                            Icons.star_outline_rounded,
+                                          ),
+                                          label: const Text('Rate delivery'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFFB88900,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFF3DC8C),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if ((_isPayable || _isRatable) &&
+                                        shipment.bookingId != null)
+                                      const SizedBox(height: 10),
                                     if (shipment.bookingId != null)
                                       SizedBox(
                                         width: double.infinity,
@@ -1969,8 +2064,8 @@ class _BookingActionsSheet extends StatelessWidget {
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: Icons.payments_outlined,
-                title: 'Record payment',
-                subtitle: 'Mark the booking as paid',
+                title: 'Pay booking',
+                subtitle: 'Open secure checkout',
                 onTap: () => onPay(),
               ),
               const SizedBox(height: 10),

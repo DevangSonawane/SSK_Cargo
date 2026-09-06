@@ -15,6 +15,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -26,6 +27,63 @@ enum TripType { interCity, intraCity }
 enum _LocationFieldKind { pickup, drop }
 
 enum _MapPinTarget { pickup, drop }
+
+class _SavedLocationShortcut {
+  const _SavedLocationShortcut({
+    required this.id,
+    required this.label,
+    required this.address,
+    this.latitude,
+    this.longitude,
+    this.city = '',
+    this.addressType = 'pickup',
+  });
+
+  final String id;
+  final String label;
+  final String address;
+  final double? latitude;
+  final double? longitude;
+  final String city;
+  final String addressType;
+
+  factory _SavedLocationShortcut.fromJson(Map<String, dynamic> json) {
+    return _SavedLocationShortcut(
+      id: _locationString(json, const ['id']),
+      label: _locationString(json, const ['label']).isEmpty
+          ? 'Saved address'
+          : _locationString(json, const ['label']),
+      address: _locationString(json, const ['address']),
+      latitude: _locationDouble(json, const ['lat', 'latitude']),
+      longitude: _locationDouble(json, const ['lng', 'longitude']),
+      city: _locationString(json, const ['city']),
+      addressType: _locationString(json, const [
+        'addressType',
+        'address_type',
+      ]).toLowerCase(),
+    );
+  }
+}
+
+String _locationString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
+}
+
+double? _locationDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
 
 class _LocationDetailsScreen extends ConsumerStatefulWidget {
   const _LocationDetailsScreen({
@@ -52,6 +110,7 @@ class _LocationDetailsScreenState
   bool _selectingSuggestion = false;
   String? _errorMessage;
   List<GooglePlaceSuggestion> _suggestions = const [];
+  List<_SavedLocationShortcut> _savedAddresses = const [];
   bool _resolvingCurrentLocation = false;
 
   @override
@@ -62,11 +121,72 @@ class _LocationDetailsScreenState
     _sessionToken = _newSessionToken();
     _controller.addListener(_onTextChanged);
     _focusNode.addListener(_onFocusChanged);
+    unawaited(_loadSavedAddresses());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
       }
     });
+  }
+
+  Future<void> _loadSavedAddresses() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getSavedAddresses(accessToken: session.tokens.accessToken);
+      if (!mounted) return;
+      final payload = response['data'];
+      final data = payload is Map<String, dynamic> ? payload : response;
+      final raw =
+          data['addresses'] ??
+          data['items'] ??
+          data['results'] ??
+          data['rows'] ??
+          data['data'];
+      if (raw is! List) return;
+      setState(() {
+        _savedAddresses = raw
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  _SavedLocationShortcut.fromJson(item.cast<String, dynamic>()),
+            )
+            .where(
+              (address) => address.id.isNotEmpty && address.address.isNotEmpty,
+            )
+            .toList(growable: false);
+      });
+    } catch (_) {
+      // Saved addresses are a convenience; autocomplete remains available.
+    }
+  }
+
+  List<_SavedLocationShortcut> get _matchingSavedAddresses {
+    final isDropoff = widget.kind == _LocationFieldKind.drop;
+    return _savedAddresses
+        .where(
+          (address) => isDropoff
+              ? address.addressType == 'dropoff'
+              : address.addressType != 'dropoff',
+        )
+        .take(8)
+        .toList(growable: false);
+  }
+
+  void _selectSavedAddress(_SavedLocationShortcut address) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context).pop(
+      GooglePlaceSelection(
+        placeId: '',
+        formattedAddress: address.address,
+        latitude: address.latitude,
+        longitude: address.longitude,
+        city: address.city,
+      ),
+    );
   }
 
   @override
@@ -502,6 +622,43 @@ class _LocationDetailsScreenState
                 ),
                 const SizedBox(height: 18),
                 Container(height: 1, color: const Color(0xFFE6EAF0)),
+              ],
+              if (_matchingSavedAddresses.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Saved addresses',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFF98A2B3),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final address in _matchingSavedAddresses) ...[
+                        ActionChip(
+                          avatar: Icon(
+                            widget.kind == _LocationFieldKind.pickup
+                                ? Icons.upload_rounded
+                                : Icons.download_rounded,
+                            size: 16,
+                            color: widget.kind == _LocationFieldKind.pickup
+                                ? const Color(0xFF2FA56E)
+                                : const Color(0xFFE05252),
+                          ),
+                          label: Text(address.label),
+                          onPressed: () => _selectSavedAddress(address),
+                          backgroundColor: const Color(0xFFF0F7F3),
+                          side: const BorderSide(color: Color(0xFFD7EBDD)),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ),
               ],
               if (_errorMessage != null) ...[
                 const SizedBox(height: 12),
@@ -1269,6 +1426,7 @@ class TrackingDemoShipment {
     required this.weight,
     required this.timeline,
     this.amount = 0,
+    this.amountPaid = 0,
     this.paymentStatus = 'pending',
     this.pickupLat,
     this.pickupLng,
@@ -1310,6 +1468,7 @@ class TrackingDemoShipment {
     String? assignedTruckName,
     String? tripId,
     double? amount,
+    double? amountPaid,
     String? paymentStatus,
     String? podUrl,
     int? ratingStars,
@@ -1348,6 +1507,7 @@ class TrackingDemoShipment {
       pickupOtp: pickupOtp ?? this.pickupOtp,
       pickupOtpVerified: pickupOtpVerified ?? this.pickupOtpVerified,
       amount: amount ?? this.amount,
+      amountPaid: amountPaid ?? this.amountPaid,
       paymentStatus: paymentStatus ?? this.paymentStatus,
     );
   }
@@ -1367,6 +1527,7 @@ class TrackingDemoShipment {
   final double? liveLat;
   final double? liveLng;
   final double amount;
+  final double amountPaid;
   final String paymentStatus;
   final String? podUrl;
   final int? ratingStars;
@@ -1593,6 +1754,14 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     pickupOtp: booking.pickupOtp,
     pickupOtpVerified: booking.pickupOtpVerified,
     amount: _readMoneyValue(raw, raw),
+    amountPaid:
+        _readDoubleValue(raw, raw, const [
+          'amount_paid',
+          'amountPaid',
+          'paid_amount',
+          'paidAmount',
+        ]) ??
+        0,
     paymentStatus: formatPaymentStatus(
       _readString(raw, const ['payment_status', 'paymentStatus']).isEmpty
           ? 'pending'
@@ -4056,13 +4225,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         : 'full';
 
     try {
-      final response = await ref
-          .read(apiClientProvider)
-          .payBooking(
-            accessToken: session.tokens.accessToken,
-            id: bookingId,
-            payType: payType,
-          );
+      final paymentGateway = BookingPaymentGateway(
+        apiClient: ref.read(apiClientProvider),
+      );
+      await paymentGateway.payBooking(
+        accessToken: session.tokens.accessToken,
+        bookingId: bookingId,
+        payType: payType,
+        contact: session.user.phone,
+        email: session.user.email,
+        description: selectedMethod == PaymentMethod.advance
+            ? '20% advance payment'
+            : 'Booking payment',
+        context: context,
+      );
       if (!mounted) {
         return;
       }
@@ -4070,17 +4246,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _postNegotiationPayment = false;
         _bookingCreated = true;
       });
-      final message = _readString(response, const ['message']);
-      if (message.isNotEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-      }
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
     }
   }
 
@@ -5873,13 +6050,20 @@ class _BrokerNegotiationSheetState
         : 'full';
 
     try {
-      await ref
-          .read(apiClientProvider)
-          .payBooking(
-            accessToken: session.tokens.accessToken,
-            id: bookingId,
-            payType: payType,
-          );
+      final paymentGateway = BookingPaymentGateway(
+        apiClient: ref.read(apiClientProvider),
+      );
+      await paymentGateway.payBooking(
+        accessToken: session.tokens.accessToken,
+        bookingId: bookingId,
+        payType: payType,
+        contact: session.user.phone,
+        email: session.user.email,
+        description: selectedMethod == PaymentMethod.advance
+            ? '20% advance payment'
+            : 'Booking payment',
+        context: context,
+      );
       if (!mounted) return;
       setState(() {
         _stage = _DirectNegotiationStage.confirmed;
@@ -5888,6 +6072,11 @@ class _BrokerNegotiationSheetState
       if (!mounted) return;
       setState(() {
         _errorMessage = error.message;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     } finally {
       if (mounted) {
@@ -6074,7 +6263,7 @@ class _BrokerNegotiationSheetState
         Text(
           requiresAdvance
               ? 'Bookings over ₹${_advancePaymentThreshold.toStringAsFixed(0)} need a 20% advance to confirm. You can still pay the full amount now.'
-              : 'The booking is confirmed. Choose a payment method and record it here.',
+              : 'The booking is confirmed. Continue to secure checkout to complete payment.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
             height: 1.45,
@@ -6090,6 +6279,13 @@ class _BrokerNegotiationSheetState
             ),
           ),
         ],
+        const SizedBox(height: 10),
+        Text(
+          'Razorpay checkout will show the available payment methods before you pay.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+        ),
         const SizedBox(height: 16),
         _PaymentMethodsCard(
           selectedMethod: _selectedPaymentMethod,
@@ -6113,7 +6309,7 @@ class _BrokerNegotiationSheetState
                       color: Colors.white,
                     ),
                   )
-                : const Text('Record payment'),
+                : const Text('Continue to secure checkout'),
           ),
         ),
       ],

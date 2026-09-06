@@ -314,6 +314,50 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createPaymentOrder({
+    required String accessToken,
+    required String bookingId,
+    String payType = 'full',
+  }) async {
+    developer.log(
+      'POST /api/bookings/$bookingId/payment/order payType=$payType',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/payment/order',
+        data: {'pay_type': payType},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyPayment({
+    required String accessToken,
+    required String bookingId,
+    required String orderId,
+    required String payType,
+    required String paymentMode,
+    Map<String, dynamic>? gatewayPayload,
+  }) async {
+    developer.log(
+      'POST /api/bookings/$bookingId/payment/verify payType=$payType paymentMode=$paymentMode',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/payment/verify',
+        data: {
+          'order_id': orderId,
+          'pay_type': payType,
+          'payment_mode': paymentMode,
+          ...?gatewayPayload,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> rateBooking({
     required String accessToken,
     required String id,
