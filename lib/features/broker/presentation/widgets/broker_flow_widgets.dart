@@ -3551,7 +3551,7 @@ class VehicleSelectionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFFF1F6FF) : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -3566,17 +3566,14 @@ class VehicleSelectionTile extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F6FF),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.all(5),
-                  child: Image.asset(
-                    vehicle.assetPath,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
                 ),
                 const Spacer(),
                 Icon(
@@ -3584,31 +3581,36 @@ class VehicleSelectionTile extends StatelessWidget {
                       ? Icons.radio_button_checked_rounded
                       : Icons.radio_button_off_rounded,
                   color: accent,
-                  size: 34,
+                  size: 26,
                 ),
               ],
             ),
-            const Spacer(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Text(
               vehicle.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF102044),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.scale_outlined, color: accent, size: 25),
-                const SizedBox(width: 10),
-                Text(
-                  vehicle.capacity,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 15,
-                    color: const Color(0xFF60708D),
-                    fontWeight: FontWeight.w600,
+                Icon(Icons.scale_outlined, color: accent, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    vehicle.capacity,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 12,
+                      color: const Color(0xFF60708D),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

@@ -124,7 +124,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       backgroundColor: const Color(0xFFF4F8FF),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -163,8 +163,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     ),
                   ),
                   Container(
-                    width: 68,
-                    height: 94,
+                    width: 54,
+                    height: 76,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: const Color(0xFFEAF2FF),
@@ -173,17 +173,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     child: const Icon(
                       Icons.shield_rounded,
                       color: Color(0xFF1764E8),
-                      size: 54,
+                      size: 40,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
               Container(
-                padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF416DAA).withValues(alpha: 0.08),
@@ -198,8 +198,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     Row(
                       children: [
                         Container(
-                          width: 76,
-                          height: 76,
+                          width: 56,
+                          height: 56,
                           decoration: const BoxDecoration(
                             color: Color(0xFFEFF4FF),
                             shape: BoxShape.circle,
@@ -207,10 +207,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                           child: const Icon(
                             Icons.lock_outline_rounded,
                             color: Color(0xFF1764E8),
-                            size: 39,
+                            size: 30,
                           ),
                         ),
-                        const SizedBox(width: 18),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +220,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   color: const Color(0xFF101B43),
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 17,
+                                  fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 5),
@@ -236,92 +236,41 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 22),
                     _passwordField(
                       label: 'Current password',
                       hint: 'Enter your current password',
                       controller: _currentPasswordController,
                       obscureText: _obscureCurrent,
-                      onToggle: () => setState(
-                        () => _obscureCurrent = !_obscureCurrent,
-                      ),
+                      onToggle: () =>
+                          setState(() => _obscureCurrent = !_obscureCurrent),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 16),
                     _passwordField(
                       label: 'New password',
                       hint: 'Enter your new password',
                       controller: _newPasswordController,
                       obscureText: _obscureNew,
-                      onToggle: () => setState(
-                        () => _obscureNew = !_obscureNew,
-                      ),
+                      onChanged: (_) => setState(() {}),
+                      onToggle: () =>
+                          setState(() => _obscureNew = !_obscureNew),
                     ),
                     const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE9FAF2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.verified_user_outlined,
-                            color: Color(0xFF13A86B),
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Use 8+ characters with a mix of letters, numbers & symbols',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF5C6B8C),
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: List.generate(
-                                  4,
-                                  (index) => Expanded(
-                                    child: Container(
-                                      height: 7,
-                                      margin: EdgeInsets.only(
-                                        right: index == 3 ? 0 : 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: index == 0
-                                            ? const Color(0xFF16B579)
-                                            : const Color(0xFFE0E7F3),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    _PasswordStrengthMeter(
+                      password: _newPasswordController.text,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 18),
                     _passwordField(
                       label: 'Confirm new password',
                       hint: 'Confirm your new password',
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirm,
-                      onToggle: () => setState(
-                        () => _obscureConfirm = !_obscureConfirm,
-                      ),
+                      onToggle: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 22),
                     Container(
-                      height: 64,
+                      height: 54,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFF12B978), Color(0xFF1098B5)],
@@ -329,7 +278,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF13A78C).withValues(alpha: 0.22),
+                            color: const Color(
+                              0xFF13A78C,
+                            ).withValues(alpha: 0.22),
                             blurRadius: 14,
                             offset: const Offset(0, 7),
                           ),
@@ -359,11 +310,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                                 children: [
                                   Text(
                                     'Change password',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
                                   ),
                                   const SizedBox(width: 18),
                                   const Icon(
@@ -391,10 +343,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }) {
     return Container(
       width: 58,
-      height: 58,
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF45638F).withValues(alpha: 0.09),
@@ -405,7 +357,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       ),
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icon, color: const Color(0xFF0F1D43), size: 27),
+        icon: Icon(icon, color: const Color(0xFF0F1D43), size: 24),
       ),
     );
   }
@@ -416,6 +368,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     required TextEditingController controller,
     required bool obscureText,
     required VoidCallback onToggle,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,21 +381,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 7),
         TextField(
           controller: controller,
           obscureText: obscureText,
-          style: const TextStyle(
-            color: Color(0xFF182344),
-            fontSize: 14,
-          ),
+          onChanged: onChanged,
+          style: const TextStyle(color: Color(0xFF182344), fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF7783A2)),
             prefixIcon: const Icon(
               Icons.lock_outline_rounded,
               color: Color(0xFF657291),
-              size: 25,
+              size: 22,
             ),
             suffixIcon: IconButton(
               onPressed: onToggle,
@@ -451,14 +402,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
                 color: const Color(0xFF3E4867),
-                size: 24,
+                size: 22,
               ),
             ),
             filled: true,
             fillColor: const Color(0xFFFCFDFF),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 18,
-              vertical: 18,
+              vertical: 14,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(18),
@@ -471,6 +422,144 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 width: 1.5,
               ),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PasswordStrengthMeter extends StatelessWidget {
+  const _PasswordStrengthMeter({required this.password});
+
+  final String password;
+
+  int get _score {
+    if (password.isEmpty) return 0;
+
+    final checks = [
+      password.length >= 8,
+      RegExp(r'[A-Z]').hasMatch(password),
+      RegExp(r'[a-z]').hasMatch(password),
+      RegExp(r'\d').hasMatch(password),
+      RegExp(r'[^A-Za-z0-9]').hasMatch(password),
+    ];
+
+    return checks.where((passed) => passed).length.clamp(1, 4);
+  }
+
+  Color get _color {
+    return switch (_score) {
+      0 => const Color(0xFF98A2B3),
+      1 => const Color(0xFFE23A4B),
+      2 => const Color(0xFFF59E0B),
+      3 => const Color(0xFF1764E8),
+      _ => const Color(0xFF13A86B),
+    };
+  }
+
+  String get _label {
+    return switch (_score) {
+      0 => 'Password strength',
+      1 => 'Weak password',
+      2 => 'Fair password',
+      3 => 'Good password',
+      _ => 'Strong password',
+    };
+  }
+
+  String get _hint {
+    if (password.isEmpty) return 'Type a new password to check strength.';
+    if (password.length < 8) return 'Use at least 8 characters.';
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Add an uppercase letter.';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return 'Add a lowercase letter.';
+    }
+    if (!RegExp(r'\d').hasMatch(password)) return 'Add a number.';
+    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(password)) {
+      return 'Add a symbol for extra protection.';
+    }
+    return 'Nice. This password has a strong mix.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final score = _score;
+    final color = _color;
+
+    return Row(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            score >= 4 ? Icons.verified_user_outlined : Icons.shield_outlined,
+            color: color,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF354267),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (password.isNotEmpty)
+                    Text(
+                      '$score/4',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _hint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF5C6B8C),
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: List.generate(
+                  4,
+                  (index) => Expanded(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      height: 7,
+                      margin: EdgeInsets.only(right: index == 3 ? 0 : 8),
+                      decoration: BoxDecoration(
+                        color: index < score ? color : const Color(0xFFE0E7F3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

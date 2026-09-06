@@ -69,71 +69,80 @@ class _BrokerSettlementsScreenState
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              padding: EdgeInsets.zero,
               itemCount: settlements.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (context, index) =>
+                  SizedBox(height: index == 0 ? 18 : 12),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return const _SettlementsHeader();
                 }
                 final settlement = settlements[index - 1];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => _showSettlementDetails(context, settlement),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                settlement.bookingNumber,
-                                style: Theme.of(context).textTheme.titleMedium
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    0,
+                    20,
+                    index == settlements.length ? 24 : 0,
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () => _showSettlementDetails(context, settlement),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  settlement.bookingNumber,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF101828),
+                                      ),
+                                ),
+                              ),
+                              _StatusPill(status: settlement.status),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            settlement.route,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF667085)),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Text(
+                                'Gross: ₹${settlement.amount.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                       color: const Color(0xFF101828),
                                     ),
                               ),
-                            ),
-                            _StatusPill(status: settlement.status),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          settlement.route,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Text(
-                              'Gross: ₹${settlement.amount.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF101828),
-                                  ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Net: ₹${settlement.netEarnings.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF1F88C9),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 12),
+                              Text(
+                                'Net: ₹${settlement.netEarnings.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF1F88C9),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -228,33 +237,45 @@ class _SettlementsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        12,
-        MediaQuery.of(context).padding.top + 6,
-        12,
-        10,
+        20,
+        MediaQuery.of(context).padding.top + 18,
+        20,
+        26,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
       ),
       child: Row(
         children: [
           InkWell(
             onTap: () => Navigator.of(context).maybePop(),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(999),
             child: Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEAF3FF),
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
-                color: Color(0xFF10245B),
-                size: 22,
+                color: Colors.white,
+                size: 24,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,18 +283,15 @@ class _SettlementsHeader extends StatelessWidget {
                 Text(
                   'Settlements',
                   style: TextStyle(
-                    color: Color(0xFF10245B),
-                    fontSize: 16,
+                    color: Colors.white,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 SizedBox(height: 3),
                 Text(
                   'View all settlement requests',
-                  style: TextStyle(
-                    color: Color(0xFF5B6B91),
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 13),
                 ),
               ],
             ),
@@ -282,183 +300,17 @@ class _SettlementsHeader extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: Color(0x26FFFFFF),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x0D10245B),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
             ),
             child: const Icon(
               Icons.filter_alt_outlined,
-              color: Color(0xFF60708D),
+              color: Colors.white,
               size: 19,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SettlementCard extends StatelessWidget {
-  const _SettlementCard({required this.settlement, required this.onTap});
-
-  final BrokerSettlement settlement;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0EBFA)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1769D1).withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEAF3FF),
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  child: const Icon(
-                    Icons.description_outlined,
-                    color: Color(0xFF1769D1),
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    settlement.bookingNumber,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF10245B),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                _StatusPill(status: settlement.status),
-                const SizedBox(width: 6),
-                IconButton(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.more_vert_rounded),
-                  color: const Color(0xFF10245B),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(width: 28, height: 40),
-                ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.location_on_rounded, color: Color(0xFF8795AD), size: 14),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    settlement.route.isEmpty ? 'Route not provided' : settlement.route,
-                    style: const TextStyle(
-                      color: Color(0xFF5B6B91),
-                      fontSize: 9,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            const Divider(height: 1, color: Color(0xFFDCE8F8)),
-            const SizedBox(height: 7),
-            Row(
-              children: [
-                Expanded(
-                  child: _SettlementAmount(
-                    label: 'Gross',
-                    amount: '₹${settlement.amount.toStringAsFixed(0)}',
-                    icon: Icons.account_balance_wallet_outlined,
-                    color: const Color(0xFF10A866),
-                  ),
-                ),
-                Container(width: 1, height: 28, color: const Color(0xFFE1E8F2)),
-                Expanded(
-                  child: _SettlementAmount(
-                    label: 'Net',
-                    amount: '₹${settlement.netEarnings.toStringAsFixed(0)}',
-                    icon: Icons.payments_outlined,
-                    color: const Color(0xFF1769D1),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SettlementAmount extends StatelessWidget {
-  const _SettlementAmount({
-    required this.label,
-    required this.amount,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String amount;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 14),
-        ),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(color: Color(0xFF5B6B91), fontSize: 8)),
-            const SizedBox(height: 2),
-            Text(
-              amount,
-              style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

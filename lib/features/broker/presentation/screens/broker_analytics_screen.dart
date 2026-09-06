@@ -47,94 +47,104 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
             final tripHistory = analytics.tripHistory;
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              padding: EdgeInsets.zero,
               children: [
                 _AnalyticsHeader(onBack: () => context.pop()),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MetricCard(
-                        label: 'This month',
-                        value: '₹${analytics.thisMonth.toStringAsFixed(0)}',
-                        accent: const Color(0xFF1F88C9),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _MetricCard(
-                        label: 'Last month',
-                        value: '₹${analytics.lastMonth.toStringAsFixed(0)}',
-                        accent: const Color(0xFF2FA56E),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Trip history',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 20,
-                          color: const Color(0xFF10245B),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0D10245B),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
                         children: [
-                          Icon(
-                            Icons.filter_list_rounded,
-                            color: Color(0xFF1769D1),
-                            size: 18,
+                          Expanded(
+                            child: _MetricCard(
+                              label: 'This month',
+                              value:
+                                  '₹${analytics.thisMonth.toStringAsFixed(0)}',
+                              accent: const Color(0xFF1F88C9),
+                            ),
                           ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Filter',
-                            style: TextStyle(
-                              color: Color(0xFF1769D1),
-                              fontWeight: FontWeight.w800,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _MetricCard(
+                              label: 'Last month',
+                              value:
+                                  '₹${analytics.lastMonth.toStringAsFixed(0)}',
+                              accent: const Color(0xFF2FA56E),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                if (tripHistory.isEmpty)
-                  const _EmptyState(
-                    icon: Icons.timeline_rounded,
-                    title: 'No trip history yet',
-                    subtitle:
-                        'Completed settlements will appear here once trips close.',
-                  )
-                else
-                  ...tripHistory.asMap().entries.expand(
-                    (entry) => [
-                      _SettlementMiniCard(settlement: entry.value),
-                      if (entry.key != tripHistory.length - 1)
-                        const SizedBox(height: 10),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Trip history',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                    color: const Color(0xFF10245B),
+                                  ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0D10245B),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.filter_list_rounded,
+                                  color: Color(0xFF1769D1),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Filter',
+                                  style: TextStyle(
+                                    color: Color(0xFF1769D1),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (tripHistory.isEmpty)
+                        const _EmptyState(
+                          icon: Icons.timeline_rounded,
+                          title: 'No trip history yet',
+                          subtitle:
+                              'Completed settlements will appear here once trips close.',
+                        )
+                      else
+                        ...tripHistory.asMap().entries.expand(
+                          (entry) => [
+                            _SettlementMiniCard(settlement: entry.value),
+                            if (entry.key != tripHistory.length - 1)
+                              const SizedBox(height: 10),
+                          ],
+                        ),
                     ],
                   ),
+                ),
               ],
             );
           },
@@ -151,67 +161,80 @@ class _AnalyticsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        InkWell(
-          onTap: onBack ?? () => Navigator.of(context).maybePop(),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 18,
+        20,
+        26,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onBack ?? () => Navigator.of(context).maybePop(),
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Analytics',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Track your earnings and trip history',
+                  style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Container(
             width: 48,
             height: 48,
             decoration: const BoxDecoration(
-              color: Color(0xFFEAF3FF),
+              color: Color(0x26FFFFFF),
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.arrow_back_rounded,
-              color: Color(0xFF10245B),
-              size: 27,
+              Icons.calendar_month_outlined,
+              color: Colors.white,
+              size: 24,
             ),
           ),
-        ),
-        const SizedBox(width: 18),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Analytics',
-                style: TextStyle(
-                  color: Color(0xFF10245B),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              SizedBox(height: 3),
-              Text(
-                'Track your earnings and trip history',
-                style: TextStyle(color: Color(0xFF5B6B91), fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x0D10245B),
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.calendar_month_outlined,
-            color: Color(0xFF1769D1),
-            size: 24,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -353,7 +376,8 @@ class _WaveLinePainter extends CustomPainter {
       ..strokeWidth = 1.5;
     final path = Path()..moveTo(0, size.height * 0.62);
     for (var x = 0.0; x <= size.width; x += 1) {
-      final y = size.height * 0.62 +
+      final y =
+          size.height * 0.62 +
           (size.height * 0.18) * math.sin(x / size.width * math.pi * 2 * 3);
       path.lineTo(x, y);
     }

@@ -15,6 +15,7 @@ class _VehiclesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         20,
         MediaQuery.of(context).padding.top + 12,
@@ -203,53 +204,67 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
       child: trucksAsync.when(
         loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          padding: EdgeInsets.zero,
           children: [
             _VehiclesHeader(),
-            SizedBox(height: 140),
-            Center(child: CircularProgressIndicator()),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Column(
+                children: [
+                  SizedBox(height: 122),
+                  Center(child: CircularProgressIndicator()),
+                ],
+              ),
+            ),
           ],
         ),
         error: (error, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          padding: EdgeInsets.zero,
           children: [
             const _VehiclesHeader(),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Text(
-                  'Your fleet',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w800,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Your fleet',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Spacer(),
+                      FilledButton.icon(
+                        onPressed: () {
+                          context.push('/broker/vehicles/add');
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add truck'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F88C9),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          shape: const StadiumBorder(),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: () {
-                    context.push('/broker/vehicles/add');
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add truck'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F88C9),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    shape: const StadiumBorder(),
+                  const SizedBox(height: 18),
+                  _FleetEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Could not load trucks',
+                    subtitle: error.toString().replaceFirst('Exception: ', ''),
+                    actionLabel: 'Try again',
+                    onAction: refreshTrucks,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _FleetEmptyState(
-              icon: Icons.error_outline_rounded,
-              title: 'Could not load trucks',
-              subtitle: error.toString().replaceFirst('Exception: ', ''),
-              actionLabel: 'Try again',
-              onAction: refreshTrucks,
+                ],
+              ),
             ),
           ],
         ),
@@ -270,154 +285,163 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            padding: EdgeInsets.zero,
             children: [
               _VehiclesHeader(
                 controller: _searchController,
                 onSearchChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Text(
-                    'Your fleet',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w800,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Your fleet',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: const Color(0xFF101828),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '(${visibleVehicles.length})',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const Spacer(),
+                        FilledButton.icon(
+                          onPressed: () {
+                            context.push('/broker/vehicles/add');
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add truck'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF1F88C9),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            shape: const StadiumBorder(),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '(${visibleVehicles.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: () {
-                      context.push('/broker/vehicles/add');
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add truck'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      shape: const StadiumBorder(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              if (visibleVehicles.isEmpty)
-                const _FleetEmptyState(
-                  icon: Icons.local_shipping_outlined,
-                  title: 'No matching vehicles',
-                  subtitle: 'Try a different search or add a new truck.',
-                )
-              else
-                ...visibleVehicles.asMap().entries.expand(
-                  (entry) => [
-                    VehicleCard(
-                      vehicle: entry.value,
-                      onTap: () async {
-                        await showModalBottomSheet<void>(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) {
-                            return SheetContainer(
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  20,
-                                  14,
-                                  20,
-                                  28,
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Center(
-                                      child: Container(
-                                        width: 54,
-                                        height: 5,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE1E5EB),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
+                    const SizedBox(height: 14),
+                    if (visibleVehicles.isEmpty)
+                      const _FleetEmptyState(
+                        icon: Icons.local_shipping_outlined,
+                        title: 'No matching vehicles',
+                        subtitle: 'Try a different search or add a new truck.',
+                      )
+                    else
+                      ...visibleVehicles.asMap().entries.expand(
+                        (entry) => [
+                          VehicleCard(
+                            vehicle: entry.value,
+                            onTap: () async {
+                              await showModalBottomSheet<void>(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) {
+                                  return SheetContainer(
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        14,
+                                        20,
+                                        28,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Center(
+                                            child: Container(
+                                              width: 54,
+                                              height: 5,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE1E5EB),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          const SizedBox(height: 18),
+                                          Text(
+                                            entry.value.label,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFF101828),
+                                                ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            entry.value.plateNumber,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: const Color(0xFF667085),
+                                                ),
+                                          ),
+                                          const SizedBox(height: 18),
+                                          OptionTile(
+                                            title: 'Edit vehicle',
+                                            subtitle:
+                                                'Update vehicle info and assignment',
+                                            icon: Icons.edit_rounded,
+                                            selected: false,
+                                            onTap: () {
+                                              Navigator.of(context).pop();
+                                              context.push(
+                                                '/broker/vehicles/add',
+                                                extra: entry.value,
+                                              );
+                                            },
+                                          ),
+                                          const SizedBox(height: 10),
+                                          OptionTile(
+                                            title: 'Remove vehicle',
+                                            subtitle:
+                                                'Archive this vehicle from the fleet',
+                                            icon: Icons.delete_rounded,
+                                            selected: false,
+                                            onTap: () async {
+                                              Navigator.of(context).pop();
+                                              await _confirmDeleteTruck(
+                                                context,
+                                                ref,
+                                                entry.value,
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 18),
-                                    Text(
-                                      entry.value.label,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF101828),
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      entry.value.plateNumber,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: const Color(0xFF667085),
-                                          ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    OptionTile(
-                                      title: 'Edit vehicle',
-                                      subtitle:
-                                          'Update vehicle info and assignment',
-                                      icon: Icons.edit_rounded,
-                                      selected: false,
-                                      onTap: () {
-                                        Navigator.of(context).pop();
-                                        context.push(
-                                          '/broker/vehicles/add',
-                                          extra: entry.value,
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 10),
-                                    OptionTile(
-                                      title: 'Remove vehicle',
-                                      subtitle:
-                                          'Archive this vehicle from the fleet',
-                                      icon: Icons.delete_rounded,
-                                      selected: false,
-                                      onTap: () async {
-                                        Navigator.of(context).pop();
-                                        await _confirmDeleteTruck(
-                                          context,
-                                          ref,
-                                          entry.value,
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    if (entry.key != visibleVehicles.length - 1)
-                      const SizedBox(height: 12),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          if (entry.key != visibleVehicles.length - 1)
+                            const SizedBox(height: 12),
+                        ],
+                      ),
                   ],
                 ),
+              ),
             ],
           );
         },

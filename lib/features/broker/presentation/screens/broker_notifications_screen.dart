@@ -209,9 +209,10 @@ class _BrokerNotificationsScreenState
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              padding: EdgeInsets.zero,
               itemCount: notifications.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (context, index) =>
+                  SizedBox(height: index == 0 ? 18 : 10),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _NotificationsHeader(
@@ -220,69 +221,112 @@ class _BrokerNotificationsScreenState
                   );
                 }
                 final notification = notifications[index - 1];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(24),
-                  onTap: () => _openNotification(notification),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    decoration: BoxDecoration(
-                      color: notification.isRead
-                          ? Colors.white
-                          : const Color(0xFFF7FBF9),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFDCE8E5)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: notification.isRead
-                                ? const Color(0xFFF1F5F9)
-                                : const Color(0xFFEFF6FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            notification.isRead
-                                ? Icons.notifications_none_rounded
-                                : Icons.notifications_active_rounded,
-                            color: const Color(0xFF1F88C9),
-                          ),
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    0,
+                    20,
+                    index == notifications.length ? 24 : 0,
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => _openNotification(notification),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: notification.isRead
+                              ? const Color(0xFFE5EAF2)
+                              : const Color(0xFFB9D7FF),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                notification.title.isEmpty
-                                    ? 'Notification'
-                                    : notification.title,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF101828),
-                                    fontSize: 17,
-                                    ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                notification.message,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF64748B),
-                                      fontSize: 14,
-                                      height: 1.35,
-                                    ),
-                              ),
-                            ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1769D1).withValues(
+                              alpha: notification.isRead ? 0.04 : 0.09,
+                            ),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: notification.isRead
+                                  ? const Color(0xFFF1F5F9)
+                                  : const Color(0xFFEAF3FF),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              notification.isRead
+                                  ? Icons.notifications_none_rounded
+                                  : Icons.notifications_active_rounded,
+                              color: notification.isRead
+                                  ? const Color(0xFF64748B)
+                                  : const Color(0xFF1F88C9),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        notification.title.isEmpty
+                                            ? 'Notification'
+                                            : notification.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color: const Color(0xFF101828),
+                                              fontSize: 15,
+                                            ),
+                                      ),
+                                    ),
+                                    if (!notification.isRead) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF1F88C9),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  notification.message,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFF64748B),
+                                        fontSize: 13,
+                                        height: 1.35,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -296,34 +340,47 @@ class _BrokerNotificationsScreenState
 }
 
 class _NotificationsHeader extends StatelessWidget {
-  const _NotificationsHeader({
-    this.onMarkAllRead,
-    this.markingAllRead = false,
-  });
+  const _NotificationsHeader({this.onMarkAllRead, this.markingAllRead = false});
 
   final VoidCallback? onMarkAllRead;
   final bool markingAllRead;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         20,
-        MediaQuery.of(context).padding.top + 12,
-        8,
+        MediaQuery.of(context).padding.top + 18,
         20,
+        26,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
       ),
       child: Row(
         children: [
           InkWell(
             onTap: () => Navigator.of(context).maybePop(),
             borderRadius: BorderRadius.circular(999),
-            child: const SizedBox(
-              width: 34,
-              height: 34,
-              child: Icon(
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
                 Icons.arrow_back_rounded,
-                color: Color(0xFF101828),
+                color: Colors.white,
                 size: 24,
               ),
             ),
@@ -333,24 +390,26 @@ class _NotificationsHeader extends StatelessWidget {
             child: Text(
               'Notifications',
               style: TextStyle(
-                color: Color(0xFF101828),
+                color: Colors.white,
                 fontSize: 24,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
           TextButton(
             onPressed: onMarkAllRead,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: const StadiumBorder(),
             ),
             child: Text(
               markingAllRead ? 'Saving...' : 'Mark all read',
               style: const TextStyle(
-                color: Color(0xFF1683D0),
-                fontSize: 14,
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),

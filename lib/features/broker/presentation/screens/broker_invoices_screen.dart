@@ -120,14 +120,17 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
             if (bookings.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
                 children: const [
                   _InvoicesHeader(),
-                  SizedBox(height: 24),
-                  _EmptyState(
-                    icon: Icons.receipt_long_rounded,
-                    title: 'No invoice-ready bookings yet',
-                    subtitle:
-                        'Completed or delivered bookings will appear here.',
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    child: _EmptyState(
+                      icon: Icons.receipt_long_rounded,
+                      title: 'No invoice-ready bookings yet',
+                      subtitle:
+                          'Completed or delivered bookings will appear here.',
+                    ),
                   ),
                 ],
               );
@@ -135,18 +138,26 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
               children: [
                 const _InvoicesHeader(),
-                const SizedBox(height: 24),
-                for (var index = 0; index < bookings.length; index++) ...[
-                  _InvoiceBookingCard(
-                    shipment: trackingShipmentFromBooking(bookings[index]),
-                    onTap: () => _openInvoice(bookings[index]),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                  child: Column(
+                    children: [
+                      for (var index = 0; index < bookings.length; index++) ...[
+                        _InvoiceBookingCard(
+                          shipment: trackingShipmentFromBooking(
+                            bookings[index],
+                          ),
+                          onTap: () => _openInvoice(bookings[index]),
+                        ),
+                        if (index != bookings.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ],
                   ),
-                  if (index != bookings.length - 1)
-                    const SizedBox(height: 14),
-                ],
-                const SizedBox(height: 24),
+                ),
               ],
             );
           },
@@ -162,10 +173,11 @@ class _InvoicesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        28,
+        20,
         MediaQuery.of(context).padding.top + 18,
-        28,
+        20,
         26,
       ),
       decoration: const BoxDecoration(
@@ -183,13 +195,13 @@ class _InvoicesHeader extends StatelessWidget {
         children: [
           InkWell(
             onTap: () => context.pop(),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(999),
             child: Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(16),
+                shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.arrow_back_rounded,
@@ -198,12 +210,12 @@ class _InvoicesHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 26),
+          const SizedBox(width: 16),
           const Text(
             'Invoices',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 21,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -232,12 +244,12 @@ class _InvoiceBookingCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: const Color(0xFFE0EBFA)),
           boxShadow: [
             BoxShadow(
@@ -254,16 +266,16 @@ class _InvoiceBookingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 62,
-                  height: 62,
-                  padding: const EdgeInsets.all(9),
+                  width: 48,
+                  height: 48,
+                  padding: const EdgeInsets.all(7),
                   decoration: const BoxDecoration(
                     color: Color(0xFFE7F1FF),
                     shape: BoxShape.circle,
                   ),
                   child: Image.asset('assets/package.png', fit: BoxFit.contain),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +288,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF10245B),
-                          fontSize: 17,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -287,7 +299,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF5B6B91),
-                          fontSize: 11,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -303,7 +315,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -314,21 +326,24 @@ class _InvoiceBookingCard extends StatelessWidget {
                       _InvoiceRouteDot(color: statusColor),
                       Container(
                         width: 3,
-                        height: 48,
+                        height: 36,
                         color: statusColor.withValues(alpha: 0.18),
                       ),
                       _InvoiceRouteDot(color: statusColor),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'From:',
-                        style: TextStyle(color: Color(0xFF5B6B91), fontSize: 12),
+                        style: TextStyle(
+                          color: Color(0xFF5B6B91),
+                          fontSize: 12,
+                        ),
                       ),
                       Text(
                         shipment.fromLocation,
@@ -336,14 +351,17 @@ class _InvoiceBookingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF102044),
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 17),
+                      const SizedBox(height: 10),
                       const Text(
                         'Shipping to:',
-                        style: TextStyle(color: Color(0xFF5B6B91), fontSize: 12),
+                        style: TextStyle(
+                          color: Color(0xFF5B6B91),
+                          fontSize: 12,
+                        ),
                       ),
                       Text(
                         shipment.toLocation,
@@ -351,7 +369,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF102044),
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -360,11 +378,11 @@ class _InvoiceBookingCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            const Divider(height: 1, color: Color(0xFFDCE8F8)),
             const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFDCE8F8)),
+            const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: statusBackground,
                 borderRadius: BorderRadius.circular(999),
@@ -373,18 +391,16 @@ class _InvoiceBookingCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isCompleted
-                        ? Icons.check_circle_rounded
-                        : Icons.circle,
+                    _isCompleted ? Icons.check_circle_rounded : Icons.circle,
                     color: statusColor,
-                    size: 22,
+                    size: 18,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Status:',
                     style: TextStyle(
                       color: statusColor,
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -393,7 +409,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                     shipment.status,
                     style: const TextStyle(
                       color: Color(0xFF102044),
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

@@ -8,8 +8,6 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
-enum _BrokerBookingFilter { all, pending, accepted, declined }
-
 class BrokerHomeScreen extends ConsumerStatefulWidget {
   const BrokerHomeScreen({super.key});
 
@@ -22,7 +20,6 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
 
-  _BrokerBookingFilter _filter = _BrokerBookingFilter.all;
   bool _sortNewestFirst = true;
 
   @override
@@ -70,13 +67,6 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
     final filtered = requests.where((request) {
       final status = _normalizeStatus(request.status);
-      final matchesFilter = switch (_filter) {
-        _BrokerBookingFilter.all => true,
-        _BrokerBookingFilter.pending => isPendingBookingRequest(request),
-        _BrokerBookingFilter.accepted => isAcceptedBookingRequest(request),
-        _BrokerBookingFilter.declined => isDeclinedBookingRequest(request),
-      };
-      if (!matchesFilter) return false;
       if (query.isEmpty) return true;
 
       final haystack = [
@@ -118,7 +108,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
   String _greetingName() {
     final session = ref.watch(authSessionProvider).valueOrNull;
-    final displayName = session?.user.displayName?.trim() ?? '';
+    final displayName = session?.user.displayName.trim() ?? '';
     if (displayName.isEmpty) {
       return 'Test';
     }
@@ -131,8 +121,6 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
     final visibleRequests = _visibleRequests(requests);
     final pendingCount = _countMatching(requests, isPendingBookingRequest);
-    final acceptedCount = _countMatching(requests, isAcceptedBookingRequest);
-    final declinedCount = _countMatching(requests, isDeclinedBookingRequest);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FF),
@@ -150,55 +138,12 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 onProfileTap: () => context.push('/broker/profile'),
               ),
               const SizedBox(height: 18),
-              _NewBookingsHero(
-                pendingCount: pendingCount,
-                onTap: () {
-                  setState(() => _filter = _BrokerBookingFilter.pending);
-                },
-              ),
+              _NewBookingsHero(pendingCount: pendingCount),
               const SizedBox(height: 18),
               _SearchField(
                 controller: _searchController,
                 hintText: 'Search booking ID, location...',
                 onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _FilterChip(
-                    label: 'All',
-                    count: requests.length,
-                    selected: _filter == _BrokerBookingFilter.all,
-                    color: const Color(0xFF2152D0),
-                    onTap: () => setState(() => _filter = _BrokerBookingFilter.all),
-                  ),
-                  _FilterChip(
-                    label: 'Pending',
-                    count: pendingCount,
-                    selected: _filter == _BrokerBookingFilter.pending,
-                    color: const Color(0xFFF59E0B),
-                    onTap: () =>
-                        setState(() => _filter = _BrokerBookingFilter.pending),
-                  ),
-                  _FilterChip(
-                    label: 'Accepted',
-                    count: acceptedCount,
-                    selected: _filter == _BrokerBookingFilter.accepted,
-                    color: const Color(0xFF22C55E),
-                    onTap: () =>
-                        setState(() => _filter = _BrokerBookingFilter.accepted),
-                  ),
-                  _FilterChip(
-                    label: 'Declined',
-                    count: declinedCount,
-                    selected: _filter == _BrokerBookingFilter.declined,
-                    color: const Color(0xFFEF4444),
-                    onTap: () =>
-                        setState(() => _filter = _BrokerBookingFilter.declined),
-                  ),
-                ],
               ),
               const SizedBox(height: 22),
               Row(
@@ -213,7 +158,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
+                    onPressed: () =>
+                        setState(() => _sortNewestFirst = !_sortNewestFirst),
                     icon: Icon(
                       _sortNewestFirst
                           ? Icons.south_rounded
@@ -231,15 +177,19 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 data: (_) {
                   if (visibleRequests.isEmpty) {
                     return _EmptyBookingsState(
-                      title: 'No bookings match this filter',
+                      title: 'No bookings found',
                       subtitle:
-                          'Try another status tab or clear the search field to see more requests.',
+                          'Try clearing the search field to see more requests.',
                     );
                   }
 
                   return Column(
                     children: [
-                      for (var index = 0; index < visibleRequests.length; index++) ...[
+                      for (
+                        var index = 0;
+                        index < visibleRequests.length;
+                        index++
+                      ) ...[
                         _BookingRequestCard(
                           request: visibleRequests[index],
                           onTap: () => context.push(
@@ -332,136 +282,101 @@ class _BrokerHomeTopBar extends StatelessWidget {
 }
 
 class _NewBookingsHero extends StatelessWidget {
-  const _NewBookingsHero({
-    required this.pendingCount,
-    required this.onTap,
-  });
+  const _NewBookingsHero({required this.pendingCount});
 
   final int pendingCount;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(26),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF5F83FF), Color(0xFFB5CCFF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF5F83FF), Color(0xFFB5CCFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5F83FF).withValues(alpha: 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF5F83FF).withValues(alpha: 0.22),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'New bookings',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'waiting for you',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.24),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  pendingCount.toString(),
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'New bookings',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 110,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(22),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'waiting for you',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.88),
-                      fontWeight: FontWeight.w600,
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.local_shipping_outlined,
+                      size: 50,
+                      color: Colors.white.withValues(alpha: 0.92),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.24),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Text(
-                        pendingCount.toString(),
-                        style: Theme.of(context).textTheme.displayMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                            ),
-                      ),
-                      const SizedBox(width: 14),
-                      Text(
-                        'Pending',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF2F5AE5),
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 110,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
+                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 34,
+                      color: Colors.white.withValues(alpha: 0.78),
                     ),
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.local_shipping_outlined,
-                        size: 50,
-                        color: Colors.white.withValues(alpha: 0.92),
-                      ),
-                      const SizedBox(height: 8),
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 34,
-                        color: Colors.white.withValues(alpha: 0.78),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -508,100 +423,8 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: const Icon(Icons.tune_rounded, color: Color(0xFF64748B)),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String label;
-  final int count;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = selected ? color.withValues(alpha: 0.12) : Colors.white;
-    final textColor = selected ? color : const Color(0xFF334155);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: selected ? color.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: selected ? color : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  color: selected ? Colors.white : const Color(0xFF475569),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _BookingRequestCard extends StatelessWidget {
-  const _BookingRequestCard({
-    required this.request,
-    required this.onTap,
-  });
+  const _BookingRequestCard({required this.request, required this.onTap});
 
   final BookingRequest request;
   final VoidCallback onTap;
@@ -613,10 +436,7 @@ class _BookingRequestCard extends StatelessWidget {
       request.from,
       'Pickup location unavailable',
     );
-    final dropText = _locationText(
-      request.to,
-      'Drop-off location unavailable',
-    );
+    final dropText = _locationText(request.to, 'Drop-off location unavailable');
 
     return InkWell(
       onTap: onTap,
@@ -672,10 +492,12 @@ class _BookingRequestCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              request.requestedAt.isEmpty ? 'Requested just now' : request.requestedAt,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667085),
-              ),
+              request.requestedAt.isEmpty
+                  ? 'Requested just now'
+                  : request.requestedAt,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -713,7 +535,10 @@ class _BookingRequestCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.local_shipping_rounded, color: Color(0xFF2152D0)),
+                  const Icon(
+                    Icons.local_shipping_rounded,
+                    color: Color(0xFF2152D0),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -879,10 +704,7 @@ class _RouteLine extends StatelessWidget {
 }
 
 class _EmptyBookingsState extends StatelessWidget {
-  const _EmptyBookingsState({
-    required this.title,
-    required this.subtitle,
-  });
+  const _EmptyBookingsState({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -962,10 +784,7 @@ class _AvatarButton extends StatelessWidget {
 }
 
 class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({
-    required this.onTap,
-    required this.count,
-  });
+  const _NotificationButton({required this.onTap, required this.count});
 
   final VoidCallback onTap;
   final int count;
@@ -986,7 +805,10 @@ class _NotificationButton extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: const Icon(Icons.notifications_none_rounded, color: Color(0xFF334155)),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: Color(0xFF334155),
+            ),
           ),
           if (count > 0)
             Positioned(
@@ -1002,124 +824,6 @@ class _NotificationButton extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({
-    required this.icon,
-    required this.onTap,
-    required this.backgroundColor,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color backgroundColor;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: 54,
-        height: 54,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Icon(icon, color: iconColor),
-      ),
-    );
-  }
-}
-
-class _SortSheet extends StatelessWidget {
-  const _SortSheet({
-    required this.newestFirst,
-    required this.onChanged,
-  });
-
-  final bool newestFirst;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sort bookings',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SortOption(
-              label: 'Newest first',
-              selected: newestFirst,
-              onTap: () => onChanged(true),
-            ),
-            const SizedBox(height: 10),
-            _SortOption(
-              label: 'Oldest first',
-              selected: !newestFirst,
-              onTap: () => onChanged(false),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SortOption extends StatelessWidget {
-  const _SortOption({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEFF4FF) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? const Color(0xFF2152D0) : const Color(0xFFE5E7EB),
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0F172A),
-          ),
-        ),
       ),
     );
   }
@@ -1182,7 +886,9 @@ _BookingVisual _bookingRequestVisual(String status) {
     default:
       return _BookingVisual(
         label: status.isEmpty ? 'Pending' : _titleCase(status),
-        description: status.isEmpty ? 'Waiting for your review' : _titleCase(status),
+        description: status.isEmpty
+            ? 'Waiting for your review'
+            : _titleCase(status),
         backgroundColor: const Color(0xFFEFF4FF),
         borderColor: const Color(0xFFC7D7FE),
         textColor: const Color(0xFF2152D0),

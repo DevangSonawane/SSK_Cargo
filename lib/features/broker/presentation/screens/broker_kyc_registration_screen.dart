@@ -696,13 +696,13 @@ class _BrokerKycRegistrationScreenState
         final lineInset = stepWidth / 2;
 
         return SizedBox(
-          height: 92,
+          height: 66,
           child: Stack(
             children: [
               Positioned(
                 left: lineInset,
                 right: lineInset,
-                    top: 22,
+                top: 18,
                 child: Row(
                   children: [
                     for (var i = 0; i < _stepLabels.length - 1; i++) ...[
@@ -752,10 +752,11 @@ class _BrokerKycRegistrationScreenState
           'Complete your KYC to verify your brokerage account.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
+            fontSize: 12,
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _PremiumTextField(
           controller: _panController,
           label: 'PAN Number',
@@ -766,7 +767,7 @@ class _BrokerKycRegistrationScreenState
           onChanged: (_) => setState(() {}),
           requiredField: false,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         _PremiumTextField(
           controller: _aadhaarController,
           label: 'Aadhaar Number',
@@ -782,7 +783,7 @@ class _BrokerKycRegistrationScreenState
           onChanged: (_) => setState(() {}),
           requiredField: false,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         _PremiumTextField(
           controller: _gstController,
           label: 'GST Number',
@@ -793,7 +794,7 @@ class _BrokerKycRegistrationScreenState
           onChanged: (_) => setState(() {}),
           requiredField: false,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         _PremiumTextField(
           controller: _bankAccountController,
           label: 'Bank Account Number',
@@ -808,7 +809,7 @@ class _BrokerKycRegistrationScreenState
           onChanged: (_) => setState(() {}),
           requiredField: false,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         _PremiumTextField(
           controller: _bankAccountConfirmController,
           label: 'Confirm Account Number',
@@ -826,7 +827,7 @@ class _BrokerKycRegistrationScreenState
           validator: (_) => null,
           onChanged: (_) => setState(() {}),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         _PremiumTextField(
           controller: _businessRegController,
           label: 'Business Registration Number',
@@ -857,7 +858,7 @@ class _BrokerKycRegistrationScreenState
           title: 'Upload Documents',
           subtitle: 'Upload clear photos of the following documents.',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         for (var i = 0; i < _kycDocuments.length; i++) ...[
           _KycUploadCard(
             document: _kycDocuments[i],
@@ -870,7 +871,7 @@ class _BrokerKycRegistrationScreenState
             onView: () => _showAttachmentPreview(_kycDocuments[i].key),
             onReplace: () => _showUploadOptions(_kycDocuments[i]),
           ),
-          if (i != _kycDocuments.length - 1) const SizedBox(height: 12),
+          if (i != _kycDocuments.length - 1) const SizedBox(height: 9),
         ],
         if (_errorMessage != null) ...[
           const SizedBox(height: 14),
@@ -895,7 +896,7 @@ class _BrokerKycRegistrationScreenState
           title: 'Review Your Information',
           subtitle: 'Please verify everything before submitting.',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _CardSection(
           title: 'Business Information',
           child: Column(
@@ -938,7 +939,7 @@ class _BrokerKycRegistrationScreenState
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         _CardSection(
           title: 'Uploaded Documents',
           child: Column(
@@ -952,17 +953,17 @@ class _BrokerKycRegistrationScreenState
                       _showAttachmentPreview(uploadedItems[i].key.key),
                   onReplace: () => _showUploadOptions(uploadedItems[i].key),
                 ),
-                if (i != uploadedItems.length - 1) const SizedBox(height: 10),
+                if (i != uploadedItems.length - 1) const SizedBox(height: 8),
               ],
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         _WarningCard(
           message:
               'Please verify all information carefully. Incorrect information may delay KYC approval.',
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         ValueListenableBuilder<bool>(
           valueListenable: _confirmCheckboxController,
           builder: (context, checked, _) {
@@ -1009,10 +1010,10 @@ class _BrokerKycRegistrationScreenState
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 34, 20, 34),
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
@@ -1024,8 +1025,8 @@ class _BrokerKycRegistrationScreenState
           child: Column(
             children: [
               Container(
-                width: 170,
-                height: 170,
+                width: 112,
+                height: 112,
                 decoration: BoxDecoration(
                   color: isApproved
                       ? const Color(0xFFEAF9F1)
@@ -1033,7 +1034,7 @@ class _BrokerKycRegistrationScreenState
                   shape: BoxShape.circle,
                 ),
                 child: Container(
-                  margin: const EdgeInsets.all(26),
+                  margin: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: isApproved
                         ? const Color(0xFF20B978)
@@ -1044,16 +1045,16 @@ class _BrokerKycRegistrationScreenState
                     isApproved
                         ? Icons.check_rounded
                         : Icons.hourglass_top_rounded,
-                    size: 54,
+                    size: 38,
                     color: Colors.white,
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 38,
-                  vertical: 9,
+                  horizontal: 24,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
                   color: isApproved
@@ -1065,41 +1066,41 @@ class _BrokerKycRegistrationScreenState
                   badgeLabel,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
                   ),
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 14),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: const Color(0xFF101B43),
-                  fontSize: 21,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 description,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF5F6D8E),
-                  fontSize: 15,
-                  height: 1.55,
+                  fontSize: 12,
+                  height: 1.42,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.fromLTRB(24, 26, 24, 16),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
@@ -1118,18 +1119,18 @@ class _BrokerKycRegistrationScreenState
                     color: const Color(0xFF2D72E8),
                     background: const Color(0xFFEAF2FF),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   Text(
                     'Verification Details',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: const Color(0xFF101B43),
-                      fontSize: 17,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
               _verificationInfoRow(
                 icon: Icons.verified_rounded,
                 iconColor: const Color(0xFF20B978),
@@ -1166,52 +1167,46 @@ class _BrokerKycRegistrationScreenState
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: isApproved ? _showAllDocuments : null,
-          icon: const Icon(Icons.insert_drive_file_outlined, size: 24),
+          icon: const Icon(Icons.insert_drive_file_outlined, size: 20),
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFF2D72E8),
             disabledBackgroundColor: const Color(0xFFB8C9E8),
             foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(60),
+            minimumSize: const Size.fromHeight(48),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
-          label: const Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'View My Documents',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Icon(Icons.arrow_forward_rounded, size: 24),
-              ],
-            ),
+          label: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'View My Documents',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(width: 10),
+              Icon(Icons.arrow_forward_rounded, size: 18),
+            ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         OutlinedButton.icon(
           onPressed: _goBack,
-          icon: const Icon(Icons.arrow_back_rounded, size: 23),
+          icon: const Icon(Icons.arrow_back_rounded, size: 19),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF1764E8),
-            minimumSize: const Size.fromHeight(60),
+            minimumSize: const Size.fromHeight(48),
             side: const BorderSide(color: Color(0xFF1764E8), width: 1.5),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
-          label: const Expanded(
-            child: Text(
-              'Go Back',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
+          label: const Text(
+            'Go Back',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -1228,7 +1223,7 @@ class _BrokerKycRegistrationScreenState
     bool valueBadge = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE5EAF2))),
       ),
@@ -1239,23 +1234,25 @@ class _BrokerKycRegistrationScreenState
             color: iconColor,
             background: iconBackground,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
+            flex: 4,
             child: Text(
               label,
               style: const TextStyle(
                 color: Color(0xFF5E6D8D),
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           Flexible(
+            flex: 5,
             child: valueBadge
                 ? Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 9,
+                      horizontal: 12,
+                      vertical: 7,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE9F9F1),
@@ -1266,17 +1263,19 @@ class _BrokerKycRegistrationScreenState
                       children: [
                         Text(
                           value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: valueColor ?? const Color(0xFF20B978),
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: 7),
+                        const SizedBox(width: 5),
                         Icon(
                           Icons.check_rounded,
                           color: valueColor ?? const Color(0xFF20B978),
-                          size: 20,
+                          size: 17,
                         ),
                       ],
                     ),
@@ -1284,9 +1283,11 @@ class _BrokerKycRegistrationScreenState
                 : Text(
                     value,
                     textAlign: TextAlign.right,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: valueColor ?? const Color(0xFF101B43),
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1295,6 +1296,7 @@ class _BrokerKycRegistrationScreenState
       ),
     );
   }
+
   void _showAllDocuments() {
     showModalBottomSheet<void>(
       context: context,
@@ -1434,7 +1436,7 @@ class _BrokerKycRegistrationScreenState
       top: false,
       child: Container(
         clipBehavior: Clip.antiAlias,
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
@@ -1444,7 +1446,7 @@ class _BrokerKycRegistrationScreenState
           ),
         ),
         child: SizedBox(
-          height: 54,
+          height: 48,
           child: FilledButton(
             onPressed: _saving ? null : action,
             style: FilledButton.styleFrom(
@@ -1501,74 +1503,102 @@ class _BrokerKycRegistrationScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FC),
-        elevation: 0,
-        centerTitle: true,
-        toolbarHeight: 72,
-        leadingWidth: 72,
-        titleSpacing: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: InkWell(
-            onTap: _goBack,
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+      body: _initialLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _KycPageHeader(onBack: _goBack),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: _buildStepper(),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      10,
+                      16,
+                      _step == _KycStep.submitted ? 20 : 84,
+                    ),
+                    child: body,
                   ),
-                ],
+                ),
+              ],
+            ),
+      bottomNavigationBar: _bottomBar(context),
+    );
+  }
+}
+
+class _KycPageHeader extends StatelessWidget {
+  const _KycPageHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 12,
+        16,
+        18,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onBack,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.chevron_left_rounded,
-                color: Color(0xFF173E9A),
-                size: 26,
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 21,
               ),
             ),
           ),
-        ),
-        title: Text(
-          'KYC Registration',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 21,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF101B43),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'KYC Registration',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Verify your broker account',
+                  style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 12),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
-      body: SafeArea(
-        child: _initialLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: _buildStepper(),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        20,
-                        16,
-                        20,
-                        _step == _KycStep.submitted ? 24 : 120,
-                      ),
-                      child: body,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-      bottomNavigationBar: _bottomBar(context),
     );
   }
 }
@@ -1648,18 +1678,18 @@ class _StepperItem extends StatelessWidget {
     Widget circle;
     if (isCompleted) {
       circle = Container(
-        width: 42,
-        height: 42,
+        width: 34,
+        height: 34,
         decoration: const BoxDecoration(
           color: Color(0xFF2FA56E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check_rounded, size: 22, color: Colors.white),
+        child: const Icon(Icons.check_rounded, size: 18, color: Colors.white),
       );
     } else if (isActive) {
       circle = Container(
-        width: 42,
-        height: 42,
+        width: 34,
+        height: 34,
         decoration: const BoxDecoration(
           color: Color(0xFF1F88C9),
           shape: BoxShape.circle,
@@ -1670,15 +1700,15 @@ class _StepperItem extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontSize: 13,
             ),
           ),
         ),
       );
     } else {
       circle = Container(
-        width: 42,
-        height: 42,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
@@ -1690,7 +1720,7 @@ class _StepperItem extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF98A2B3),
               fontWeight: FontWeight.w700,
-              fontSize: 15,
+              fontSize: 13,
             ),
           ),
         ),
@@ -1702,14 +1732,14 @@ class _StepperItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Center(child: circle),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               height: 1.0,
               fontWeight: FontWeight.w600,
               color: isCompleted || isActive
@@ -1764,7 +1794,7 @@ class _CardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1788,7 +1818,7 @@ class _CardSection extends StatelessWidget {
               color: const Color(0xFF101828),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           child,
         ],
       ),
@@ -1804,7 +1834,7 @@ class _WarningCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7E8),
         borderRadius: BorderRadius.circular(12),
@@ -1820,14 +1850,19 @@ class _WarningCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFFB54708)),
-          const SizedBox(width: 12),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: Color(0xFFB54708),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF8A4B0F),
                 fontWeight: FontWeight.w600,
+                fontSize: 12,
                 height: 1.35,
               ),
             ),
@@ -1881,7 +1916,7 @@ class _PremiumTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
@@ -1908,7 +1943,7 @@ class _PremiumTextField extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: const Color(0xFF101828),
                               ),
                         ),
@@ -1919,13 +1954,13 @@ class _PremiumTextField extends StatelessWidget {
                             style: TextStyle(
                               color: Color(0xFFE23A4B),
                               fontWeight: FontWeight.w800,
-                              fontSize: 13,
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     TextFormField(
                       controller: controller,
                       validator: validator,
@@ -1955,8 +1990,8 @@ class _PremiumTextField extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Icon(statusIcon, color: statusColor, size: 14),
+              const SizedBox(width: 8),
+              Icon(statusIcon, color: statusColor, size: 13),
             ],
           ),
         ),
@@ -1999,10 +2034,10 @@ class _KycUploadCard extends StatelessWidget {
         : 'In details';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
@@ -2019,8 +2054,8 @@ class _KycUploadCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: uploaded
                       ? const Color(0xFFD9F3E5)
@@ -2034,10 +2069,10 @@ class _KycUploadCard extends StatelessWidget {
                   color: uploaded
                       ? const Color(0xFF2FA56E)
                       : const Color(0xFF1F88C9),
-                  size: 18,
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2050,7 +2085,7 @@ class _KycUploadCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   color: titleColor,
                                 ),
                             maxLines: 1,
@@ -2061,24 +2096,24 @@ class _KycUploadCard extends StatelessWidget {
                         _TinyTag(label: badgeLabel, uploaded: uploaded),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       'Supported formats: ${document.formats}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF667085),
-                        fontSize: 10,
+                        fontSize: 9,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       document.maxSize,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF667085),
-                        fontSize: 10,
+                        fontSize: 9,
                       ),
                     ),
                   ],
@@ -2095,14 +2130,14 @@ class _KycUploadCard extends StatelessWidget {
                     ? onUpload
                     : () => _showDetailInfo(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _MiniIconButton(
                 icon: Icons.photo_camera_rounded,
                 onPressed: document.uploadable
                     ? onCamera
                     : () => _showDetailInfo(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _MiniIconButton(
                 icon: Icons.photo_library_rounded,
                 onPressed: document.uploadable
@@ -2110,13 +2145,13 @@ class _KycUploadCard extends StatelessWidget {
                     : () => _showDetailInfo(context),
               ),
               if (uploaded) ...[
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 _MiniIconButton(
                   icon: Icons.visibility_rounded,
                   onPressed: onView,
                   filled: true,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _MiniIconButton(
                   icon: Icons.swap_horiz_rounded,
                   onPressed: document.uploadable
@@ -2161,8 +2196,8 @@ class _MiniIconButton extends StatelessWidget {
         : const Color(0xFFD0D5DD);
 
     return SizedBox(
-      width: 34,
-      height: 34,
+      width: 30,
+      height: 30,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -2170,11 +2205,9 @@ class _MiniIconButton extends StatelessWidget {
           backgroundColor: background,
           foregroundColor: iconColor,
           side: BorderSide(color: borderColor),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
         ),
-        child: Icon(icon, size: 16, color: iconColor),
+        child: Icon(icon, size: 14, color: iconColor),
       ),
     );
   }
@@ -2372,46 +2405,6 @@ class _ReviewDocumentRow extends StatelessWidget {
           _MiniIconButton(icon: Icons.swap_horiz_rounded, onPressed: onReplace),
         ],
       ),
-    );
-  }
-}
-
-class _StatusInfoRow extends StatelessWidget {
-  const _StatusInfoRow({
-    required this.label,
-    required this.value,
-    required this.valueColor,
-  });
-
-  final String label;
-  final String value;
-  final Color valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: valueColor,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -196,8 +196,13 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     );
     final drivers = driversAsync.valueOrNull ?? const <BrokerDriver>[];
     final isEditing = widget.existingTruck != null;
-    if (_selectedDriver == null && widget.existingTruck != null && drivers.isNotEmpty) {
-      final resolved = _driverForName(drivers, widget.existingTruck!.assignedDriverName);
+    if (_selectedDriver == null &&
+        widget.existingTruck != null &&
+        drivers.isNotEmpty) {
+      final resolved = _driverForName(
+        drivers,
+        widget.existingTruck!.assignedDriverName,
+      );
       if (resolved != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _selectedDriver == null) {
@@ -219,11 +224,11 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   onTap: () => Navigator.of(context).maybePop(),
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
-                    width: 56,
-                    height: 56,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+                      shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFE1E7F0)),
                       boxShadow: const [
                         BoxShadow(
@@ -236,29 +241,30 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     child: const Icon(
                       Icons.arrow_back_rounded,
                       color: Color(0xFF102044),
-                      size: 34,
+                      size: 24,
                     ),
                   ),
                 ),
-                const SizedBox(width: 26),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         isEditing ? 'Edit Truck' : 'Add Truck',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF102044),
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF102044),
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Choose the truck type and fill in the fleet details.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: const Color(0xFF60708D),
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -276,7 +282,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     'Select truck type',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: const Color(0xFF102044),
-                      fontSize: 22,
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -290,7 +296,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                           crossAxisCount: 2,
                           mainAxisSpacing: 14,
                           crossAxisSpacing: 14,
-                          childAspectRatio: 0.98,
+                          childAspectRatio: 1.08,
                         ),
                     itemBuilder: (context, index) {
                       final vehicle = vehicleOptions[index];

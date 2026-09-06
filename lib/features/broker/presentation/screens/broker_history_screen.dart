@@ -36,124 +36,112 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
     final shipments = filteredRequests.map(brokerRequestToShipment).toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: EdgeInsets.zero,
       children: [
         _HistoryPageHeader(
           onNotificationsTap: () => context.push('/broker/notifications'),
           onProfileTap: () => context.push('/broker/profile'),
         ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Container(
-              width: 6,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1478E8),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Text(
-              'Booking History',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF10245B),
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _HistoryFilterButton(
-                label: 'All',
-                icon: Icons.grid_view_rounded,
-                selected: _filter == _HistoryFilter.all,
-                onTap: () => setState(() => _filter = _HistoryFilter.all),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _HistoryFilterButton(
-                label: 'Completed',
-                icon: Icons.check_circle_outline_rounded,
-                selected: _filter == _HistoryFilter.completed,
-                onTap: () => setState(() => _filter = _HistoryFilter.completed),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _HistoryFilterButton(
-                label: 'Cancelled',
-                icon: Icons.cancel_outlined,
-                selected: _filter == _HistoryFilter.cancelled,
-                onTap: () => setState(() => _filter = _HistoryFilter.cancelled),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _HistoryFilterButton(
-                label: 'Accepted',
-                icon: Icons.check_circle_outline_rounded,
-                selected: _filter == _HistoryFilter.accepted,
-                onTap: () => setState(() => _filter = _HistoryFilter.accepted),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        requestsAsync.when(
-          data: (_) {
-            if (shipments.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 46,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: 4,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final filter = switch (index) {
+                      0 => _HistoryFilter.all,
+                      1 => _HistoryFilter.completed,
+                      2 => _HistoryFilter.cancelled,
+                      _ => _HistoryFilter.accepted,
+                    };
+                    final label = switch (filter) {
+                      _HistoryFilter.all => 'All',
+                      _HistoryFilter.completed => 'Completed',
+                      _HistoryFilter.cancelled => 'Cancelled',
+                      _HistoryFilter.accepted => 'Accepted',
+                    };
+                    final icon = switch (filter) {
+                      _HistoryFilter.all => Icons.grid_view_rounded,
+                      _HistoryFilter.completed =>
+                        Icons.check_circle_outline_rounded,
+                      _HistoryFilter.cancelled => Icons.cancel_outlined,
+                      _HistoryFilter.accepted =>
+                        Icons.check_circle_outline_rounded,
+                    };
+
+                    return SizedBox(
+                      width: 122,
+                      child: _HistoryFilterButton(
+                        label: label,
+                        icon: icon,
+                        selected: _filter == filter,
+                        onTap: () => setState(() => _filter = filter),
+                      ),
+                    );
+                  },
                 ),
-                child: Center(
+              ),
+              const SizedBox(height: 14),
+              requestsAsync.when(
+                data: (_) {
+                  if (shipments.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No bookings found for this filter.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF667085),
+                              ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      for (var index = 0; index < shipments.length; index++) ...[
+                        PackageTrackingCard(
+                          shipment: shipments[index],
+                        ),
+                        if (index != shipments.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.only(top: 36),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, stackTrace) => Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
                   child: Text(
-                    'No bookings found for this filter.',
+                    error.toString().replaceFirst('Exception: ', ''),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: const Color(0xFFB42318),
                         ),
                   ),
                 ),
-              );
-            }
-
-            return Column(
-              children: [
-                for (var index = 0; index < shipments.length; index++) ...[
-                  PackageTrackingCard(
-                    shipment: shipments[index],
-                  ),
-                  if (index != shipments.length - 1) const SizedBox(height: 12),
-                ],
-              ],
-            );
-          },
-          loading: () => const Padding(
-            padding: EdgeInsets.only(top: 36),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, stackTrace) => Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-            ),
-            child: Text(
-              error.toString().replaceFirst('Exception: ', ''),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFB42318),
-                  ),
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -173,6 +161,7 @@ class _HistoryPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         20,
         MediaQuery.of(context).padding.top + 12,
@@ -296,7 +285,7 @@ class _HistoryFilterButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(18),

@@ -226,278 +226,291 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
       onRefresh: _refreshTrackingData,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        padding: EdgeInsets.zero,
         children: [
           _TrackingPageHeader(
             pendingCount: pendingDriverRequests,
             onNotificationsTap: () => context.push('/broker/notifications'),
             onProfileTap: () => context.push('/broker/profile'),
           ),
-          const SizedBox(height: 24),
-          if (timedOutRequests.isNotEmpty) ...[
-            Text(
-              'Remaining negotiation',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            for (var index = 0; index < timedOutRequests.length; index++) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFECF9E)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            timedOutRequests[index].bookingNumber.isEmpty
-                                ? timedOutRequests[index].bookingId
-                                : timedOutRequests[index].bookingNumber,
-                            style: Theme.of(context).textTheme.titleMedium
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (timedOutRequests.isNotEmpty) ...[
+                  Text(
+                    'Remaining negotiation',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (var index = 0; index < timedOutRequests.length; index++) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFFECF9E)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  timedOutRequests[index].bookingNumber.isEmpty
+                                      ? timedOutRequests[index].bookingId
+                                      : timedOutRequests[index].bookingNumber,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF101828),
+                                      ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Color(0xFFB54708),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF7C2D12),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF101828),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () => _openNegotiationRequest(
+                                timedOutRequests[index],
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF1F88C9),
+                              ),
+                              child: const Text('Negotiate'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (index != timedOutRequests.length - 1)
+                      const SizedBox(height: 12),
+                  ],
+                  const SizedBox(height: 18),
+                ],
+                if (timedOutRequests.isEmpty &&
+                    negotiationNotifications.isNotEmpty) ...[
+                  Text(
+                    'Negotiation ready',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (
+                    var index = 0;
+                    index < negotiationNotifications.length;
+                    index++
+                  ) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFB7D7F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            negotiationNotifications[index].title.isEmpty
+                                ? 'Timed-out negotiation'
+                                : negotiationNotifications[index].title,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF101828),
                                 ),
                           ),
+                          const SizedBox(height: 6),
+                          Text(
+                            negotiationNotifications[index].message.isEmpty
+                                ? 'Open to continue negotiation.'
+                                : negotiationNotifications[index].message,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF406B8F),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () => _openNegotiationRequest(
+                                brokerDriverRequestFromNotificationPayload(
+                                  negotiationNotifications[index].raw,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF1F88C9),
+                              ),
+                              child: const Text('Negotiate'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (index != negotiationNotifications.length - 1)
+                      const SizedBox(height: 12),
+                  ],
+                  const SizedBox(height: 18),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Driver tracking',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontWeight: FontWeight.w800,
                         ),
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          color: Color(0xFFB54708),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        _HeaderActionButton(
+                          badgeCount: pendingDriverRequests,
+                          icon: Icons.assignment_rounded,
+                          onTap: () => context.push('/broker/driver-requests'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () => context.go('/broker/drivers/add'),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Add'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF1F88C9),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF7C2D12),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF101828),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () =>
-                            _openNegotiationRequest(timedOutRequests[index]),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
-                        ),
-                        child: const Text('Negotiate'),
-                      ),
-                    ),
                   ],
                 ),
-              ),
-              if (index != timedOutRequests.length - 1)
-                const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 18),
-          ],
-          if (timedOutRequests.isEmpty &&
-              negotiationNotifications.isNotEmpty) ...[
-            Text(
-              'Negotiation ready',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            for (
-              var index = 0;
-              index < negotiationNotifications.length;
-              index++
-            ) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFB7D7F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      negotiationNotifications[index].title.isEmpty
-                          ? 'Timed-out negotiation'
-                          : negotiationNotifications[index].title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      negotiationNotifications[index].message.isEmpty
-                          ? 'Open to continue negotiation.'
-                          : negotiationNotifications[index].message,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF406B8F),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => _openNegotiationRequest(
-                          brokerDriverRequestFromNotificationPayload(
-                            negotiationNotifications[index].raw,
+                const SizedBox(height: 14),
+                driversAsync.when(
+                  data: (drivers) {
+                    final mergedDrivers = _brokerDriverRoster(
+                      drivers,
+                      trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
+                    );
+
+                    if (mergedDrivers.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'No drivers yet',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF101828),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Create a driver from the + button to start tracking.',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF667085),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var index = 0; index < mergedDrivers.length; index++) ...[
+                          DriverListTile(
+                            driver: mergedDrivers[index],
+                            onTap: () => context.push(
+                              '/broker/drivers/${mergedDrivers[index].id}',
+                              extra: mergedDrivers[index],
+                            ),
+                            onEdit: () => context.push(
+                              '/broker/drivers/${mergedDrivers[index].id}',
+                              extra: mergedDrivers[index],
+                            ),
+                            onRemove: () => _confirmDeleteDriver(
+                              context,
+                              ref,
+                              mergedDrivers[index],
+                            ),
                           ),
-                        ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
-                        ),
-                        child: const Text('Negotiate'),
-                      ),
+                          if (index != mergedDrivers.length - 1)
+                            const SizedBox(height: 10),
+                        ],
+                      ],
+                    );
+                  },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.only(top: 36),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (error, stackTrace) => Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE8EDF2)),
                     ),
-                  ],
+                    child: Text(
+                      error.toString().replaceFirst('Exception: ', ''),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFFB42318),
+                          ),
+                    ),
+                  ),
                 ),
-              ),
-              if (index != negotiationNotifications.length - 1)
-                const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 18),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Driver tracking',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.end,
-                children: [
-                  _HeaderActionButton(
-                    badgeCount: pendingDriverRequests,
-                    icon: Icons.assignment_rounded,
-                    onTap: () => context.push('/broker/driver-requests'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: () => context.go('/broker/drivers/add'),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          driversAsync.when(
-            data: (drivers) {
-              final mergedDrivers = _brokerDriverRoster(
-                drivers,
-                trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
-              );
-
-              if (mergedDrivers.isEmpty) {
-                return Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE8EDF2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'No drivers yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF101828),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Create a driver from the + button to start tracking.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var index = 0; index < mergedDrivers.length; index++) ...[
-                    DriverListTile(
-                      driver: mergedDrivers[index],
-                      onTap: () => context.push(
-                        '/broker/drivers/${mergedDrivers[index].id}',
-                        extra: mergedDrivers[index],
-                      ),
-                      onEdit: () => context.push(
-                        '/broker/drivers/${mergedDrivers[index].id}',
-                        extra: mergedDrivers[index],
-                      ),
-                      onRemove: () => _confirmDeleteDriver(
-                        context,
-                        ref,
-                        mergedDrivers[index],
-                      ),
-                    ),
-                    if (index != mergedDrivers.length - 1)
-                      const SizedBox(height: 10),
-                  ],
-                ],
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.only(top: 36),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (error, stackTrace) => Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-              ),
-              child: Text(
-                error.toString().replaceFirst('Exception: ', ''),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFB42318)),
-              ),
+              ],
             ),
           ),
         ],
@@ -652,6 +665,7 @@ class _TrackingPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         20,
         MediaQuery.of(context).padding.top + 18,

@@ -317,432 +317,442 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F9FF),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-        children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => context.go('/broker/tracking'),
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFD6E6FA)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x16176ACA),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: Color(0xFF1769D1),
-                    size: 28,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _isEditing ? 'Edit Driver' : 'Add Driver',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF10245B),
-                ),
-              ),
-              const Spacer(),
-              const SizedBox(width: 48),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _isEditing ? 'Update the driver account' : 'Create a driver account',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF5B6B91),
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: Column(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+          children: [
+            Row(
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    SskProfileAvatar(
-                      imageUrl: _avatarPreviewUrl,
-                      imageBytes: _pickedAvatarBytes,
-                      size: 148,
-                      borderColor: const Color(0xFF1769D1),
-                      onTap: _pickAvatar,
-                    ),
-                    Positioned(
-                      right: -4,
-                      bottom: 0,
-                      child: Material(
-                        color: const Color(0xFF1769D1),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: _pickAvatar,
-                          customBorder: const CircleBorder(),
-                          child: const Padding(
-                            padding: EdgeInsets.all(13),
-                            child: Icon(
-                              Icons.camera_alt_outlined,
-                              color: Colors.white,
-                              size: 25,
-                            ),
-                          ),
+                InkWell(
+                  onTap: () => context.go('/broker/tracking'),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFD6E6FA)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x16176ACA),
+                          blurRadius: 12,
+                          offset: Offset(0, 6),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF1769D1),
+                      size: 24,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 18),
+                const Spacer(),
                 Text(
-                  'Add driver photo',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF10245B),
+                  _isEditing ? 'Edit Driver' : 'Add Driver',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
+                    color: const Color(0xFF10245B),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  'Tap to choose driver photo',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF5B6B91),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                const Spacer(),
+                const SizedBox(width: 44),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                if (!_isEditing) ...[
-                  TextFormField(
-                    controller: _nameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
-                      labelText: 'Full name',
-                      prefixIcon: Icons.person_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter full name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icons.email_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s-]')),
-                    ],
-                    decoration: _fieldDecoration(
-                      labelText: 'Mobile number',
-                      prefixIcon: Icons.phone_rounded,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: const Icon(
-                        Icons.lock_rounded,
-                        color: Color(0xFF667085),
+            const SizedBox(height: 6),
+            Text(
+              _isEditing
+                  ? 'Update the driver account'
+                  : 'Create a driver account',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: const Color(0xFF5B6B91),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Column(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      SskProfileAvatar(
+                        imageUrl: _avatarPreviewUrl,
+                        imageBytes: _pickedAvatarBytes,
+                        size: 148,
+                        borderColor: const Color(0xFF1769D1),
+                        onTap: _pickAvatar,
                       ),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1F88C9),
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter password';
-                      }
-                      if (value.length < 8) {
-                        return 'Use at least 8 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ] else ...[
-                  _ReadonlyDriverHeader(driver: driver!),
-                  const SizedBox(height: 12),
-                ],
-                TextFormField(
-                  controller: _licenseController,
-                  textInputAction: TextInputAction.next,
-                  decoration: _fieldDecoration(
-                    labelText: 'License number',
-                    prefixIcon: Icons.badge_rounded,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter license number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _aadhaarController,
-                  textInputAction: TextInputAction.next,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(12),
-                    _AadhaarSpacingFormatter(),
-                  ],
-                  decoration: _fieldDecoration(
-                    labelText: 'Aadhaar number',
-                    prefixIcon: Icons.credit_card_rounded,
-                  ),
-                  validator: (value) {
-                    final digits = value?.replaceAll(' ', '').trim() ?? '';
-                    if (digits.isEmpty) {
-                      return 'Enter Aadhaar number';
-                    }
-                    if (digits.length != 12) {
-                      return 'Aadhaar must be 12 digits';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _licenseExpiryController,
-                  readOnly: true,
-                  onTap: _pickLicenseExpiry,
-                  decoration:
-                      _fieldDecoration(
-                        labelText: 'License expiry',
-                        prefixIcon: Icons.event_rounded,
-                        hintText: 'YYYY-MM-DD',
-                      ).copyWith(
-                        suffixIcon: IconButton(
-                          onPressed: _pickLicenseExpiry,
-                          icon: const Icon(Icons.calendar_month_rounded),
-                          tooltip: 'Pick date',
-                        ),
-                      ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Select license expiry';
-                    }
-                    if (DateTime.tryParse(value.trim()) == null) {
-                      return 'Use a valid date';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                if (trucks.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedTruckId,
-                    isExpanded: true,
-                    decoration: _fieldDecoration(
-                      labelText: 'Assign truck',
-                      prefixIcon: Icons.local_shipping_rounded,
-                    ),
-                    items: trucks
-                        .map(
-                          (truck) => DropdownMenuItem<String>(
-                            value: truck.id,
-                            child: Text(
-                              '${truck.label} • ${truck.plateNumber}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      Positioned(
+                        right: -4,
+                        bottom: 0,
+                        child: Material(
+                          color: const Color(0xFF1769D1),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: _pickAvatar,
+                            customBorder: const CircleBorder(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(13),
+                              child: Icon(
+                                Icons.camera_alt_outlined,
+                                color: Colors.white,
+                                size: 25,
+                              ),
                             ),
                           ),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _selectedTruckId = value),
-                    validator: (value) {
-                      if ((value ?? '').isEmpty) {
-                        return 'Select a truck';
-                      }
-                      return null;
-                    },
-                  )
-                else
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Add driver photo',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF10245B),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Tap to choose driver photo',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF5B6B91),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  if (!_isEditing) ...[
+                    TextFormField(
+                      controller: _nameController,
+                      textInputAction: TextInputAction.next,
+                      decoration: _fieldDecoration(
+                        labelText: 'Full name',
+                        prefixIcon: Icons.person_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter full name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      decoration: _fieldDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icons.email_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter email';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s-]')),
+                      ],
+                      decoration: _fieldDecoration(
+                        labelText: 'Mobile number',
+                        prefixIcon: Icons.phone_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        filled: true,
+                        fillColor: Colors.white,
+                        prefixIcon: const Icon(
+                          Icons.lock_rounded,
+                          color: Color(0xFF667085),
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
+                          },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          tooltip: _obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE3E8EF),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE3E8EF),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF1F88C9),
+                            width: 1.4,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Enter password';
+                        }
+                        if (value.length < 8) {
+                          return 'Use at least 8 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    _ReadonlyDriverHeader(driver: driver!),
+                    const SizedBox(height: 12),
+                  ],
                   TextFormField(
-                    controller: _truckIdController,
+                    controller: _licenseController,
                     textInputAction: TextInputAction.next,
                     decoration: _fieldDecoration(
-                      labelText: 'Truck ID',
-                      prefixIcon: Icons.local_shipping_rounded,
-                      hintText: 'Enter truck UUID',
+                      labelText: 'License number',
+                      prefixIcon: Icons.badge_rounded,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Enter truck ID';
+                        return 'Enter license number';
                       }
                       return null;
                     },
                   ),
-                const SizedBox(height: 12),
-                if (_isEditing)
-                  DropdownButtonFormField<String>(
-                    initialValue:
-                        _selectedStatus ??
-                        _driverStatusToApiValue(driver!.status),
-                    isExpanded: true,
-                    decoration: _fieldDecoration(
-                      labelText: 'Status',
-                      prefixIcon: Icons.toggle_on_rounded,
-                    ),
-                    items: const [
-                      DropdownMenuItem<String>(
-                        value: 'available',
-                        child: Text('Available'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'on_trip',
-                        child: Text('On trip'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'offline',
-                        child: Text('Offline'),
-                      ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _aadhaarController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(12),
+                      _AadhaarSpacingFormatter(),
                     ],
-                    onChanged: (value) =>
-                        setState(() => _selectedStatus = value),
-                  ),
-                if (_isEditing) const SizedBox(height: 12),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _submitDriver(trucks),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1769D1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    decoration: _fieldDecoration(
+                      labelText: 'Aadhaar number',
+                      prefixIcon: Icons.credit_card_rounded,
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                    validator: (value) {
+                      final digits = value?.replaceAll(' ', '').trim() ?? '';
+                      if (digits.isEmpty) {
+                        return 'Enter Aadhaar number';
+                      }
+                      if (digits.length != 12) {
+                        return 'Aadhaar must be 12 digits';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _licenseExpiryController,
+                    readOnly: true,
+                    onTap: _pickLicenseExpiry,
+                    decoration:
+                        _fieldDecoration(
+                          labelText: 'License expiry',
+                          prefixIcon: Icons.event_rounded,
+                          hintText: 'YYYY-MM-DD',
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            onPressed: _pickLicenseExpiry,
+                            icon: const Icon(Icons.calendar_month_rounded),
+                            tooltip: 'Pick date',
+                          ),
+                        ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Select license expiry';
+                      }
+                      if (DateTime.tryParse(value.trim()) == null) {
+                        return 'Use a valid date';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  if (trucks.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedTruckId,
+                      isExpanded: true,
+                      decoration: _fieldDecoration(
+                        labelText: 'Assign truck',
+                        prefixIcon: Icons.local_shipping_rounded,
+                      ),
+                      items: trucks
+                          .map(
+                            (truck) => DropdownMenuItem<String>(
+                              value: truck.id,
+                              child: Text(
+                                '${truck.label} • ${truck.plateNumber}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.local_shipping_rounded,
-                                color: Colors.white,
-                                size: 23,
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                width: 1,
-                                height: 24,
-                                color: Colors.white.withValues(alpha: 0.55),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                _isEditing ? 'Update Driver' : 'Add Driver',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedTruckId = value),
+                      validator: (value) {
+                        if ((value ?? '').isEmpty) {
+                          return 'Select a truck';
+                        }
+                        return null;
+                      },
+                    )
+                  else
+                    TextFormField(
+                      controller: _truckIdController,
+                      textInputAction: TextInputAction.next,
+                      decoration: _fieldDecoration(
+                        labelText: 'Truck ID',
+                        prefixIcon: Icons.local_shipping_rounded,
+                        hintText: 'Enter truck UUID',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter truck ID';
+                        }
+                        return null;
+                      },
+                    ),
+                  const SizedBox(height: 12),
+                  if (_isEditing)
+                    DropdownButtonFormField<String>(
+                      initialValue:
+                          _selectedStatus ??
+                          _driverStatusToApiValue(driver!.status),
+                      isExpanded: true,
+                      decoration: _fieldDecoration(
+                        labelText: 'Status',
+                        prefixIcon: Icons.toggle_on_rounded,
+                      ),
+                      items: const [
+                        DropdownMenuItem<String>(
+                          value: 'available',
+                          child: Text('Available'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'on_trip',
+                          child: Text('On trip'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'offline',
+                          child: Text('Offline'),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedStatus = value),
+                    ),
+                  if (_isEditing) const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _submitDriver(trucks),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1769D1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
                                 ),
                               ),
-                            ],
-                          ),
-                  ),
-                ),
-                if (trucksAsync.hasError) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    'Truck list could not be loaded. You can still enter a truck ID manually.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.local_shipping_rounded,
+                                  color: Colors.white,
+                                  size: 23,
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  width: 1,
+                                  height: 24,
+                                  color: Colors.white.withValues(alpha: 0.55),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _isEditing ? 'Update Driver' : 'Add Driver',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
+                  if (trucksAsync.hasError) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Truck list could not be loaded. You can still enter a truck ID manually.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
