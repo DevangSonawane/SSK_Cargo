@@ -6,17 +6,194 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
-class BrokerVehiclesScreen extends ConsumerWidget {
+class _VehiclesHeader extends StatelessWidget {
+  const _VehiclesHeader({this.controller, this.onSearchChanged});
+
+  final TextEditingController? controller;
+  final ValueChanged<String>? onSearchChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        16,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B68C7), Color(0xFF147BD6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Vehicles',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Manage your fleet at a glance',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.84),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _VehicleHeaderIcon(
+                icon: Icons.notifications_none_rounded,
+                showBadge: true,
+                onTap: () => context.push('/broker/notifications'),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => context.push('/broker/profile'),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset('assets/user.png', fit: BoxFit.cover),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: controller,
+            onChanged: onSearchChanged,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Search vehicles, drivers or location',
+              hintStyle: const TextStyle(
+                color: Color(0xFF98A2B3),
+                fontSize: 11,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF667085),
+                size: 18,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VehicleHeaderIcon extends StatelessWidget {
+  const _VehicleHeaderIcon({
+    required this.icon,
+    required this.showBadge,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool showBadge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Icon(icon, color: Colors.white, size: 19),
+          ),
+          if (showBadge)
+            Positioned(
+              right: -1,
+              top: -1,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF3B30),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF0B68C7)),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class BrokerVehiclesScreen extends ConsumerStatefulWidget {
   const BrokerVehiclesScreen({super.key});
 
   static const BrokerTrucksQuery _query = (status: null, page: 1, limit: 50);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trucksAsync = ref.watch(brokerTrucksProvider(_query));
+  ConsumerState<BrokerVehiclesScreen> createState() =>
+      _BrokerVehiclesScreenState();
+}
+
+class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trucksAsync = ref.watch(brokerTrucksProvider(BrokerVehiclesScreen._query));
 
     Future<void> refreshTrucks() async {
-      final refreshed = ref.refresh(brokerTrucksProvider(_query).future);
+      final refreshed = ref.refresh(
+        brokerTrucksProvider(BrokerVehiclesScreen._query).future,
+      );
       await refreshed;
     }
 
@@ -27,7 +204,8 @@ class BrokerVehiclesScreen extends ConsumerWidget {
         loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          children: const [
+          children: [
+            _VehiclesHeader(),
             SizedBox(height: 140),
             Center(child: CircularProgressIndicator()),
           ],
@@ -36,6 +214,8 @@ class BrokerVehiclesScreen extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           children: [
+            const _VehiclesHeader(),
+            const SizedBox(height: 18),
             Row(
               children: [
                 Text(
@@ -74,10 +254,29 @@ class BrokerVehiclesScreen extends ConsumerWidget {
           ],
         ),
         data: (vehicles) {
+          final query = _searchController.text.trim().toLowerCase();
+          final visibleVehicles = query.isEmpty
+              ? vehicles
+              : vehicles.where((vehicle) {
+                  final searchable = [
+                    vehicle.label,
+                    vehicle.plateNumber,
+                    vehicle.truckType,
+                    vehicle.category,
+                    vehicle.assignedDriverName,
+                  ].join(' ').toLowerCase();
+                  return searchable.contains(query);
+                }).toList();
+
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             children: [
+              _VehiclesHeader(
+                controller: _searchController,
+                onSearchChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Text(
@@ -89,7 +288,7 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '(${vehicles.length})',
+                    '(${visibleVehicles.length})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: const Color(0xFF667085),
                       fontWeight: FontWeight.w700,
@@ -114,15 +313,14 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              if (vehicles.isEmpty)
+              if (visibleVehicles.isEmpty)
                 const _FleetEmptyState(
                   icon: Icons.local_shipping_outlined,
-                  title: 'No trucks yet',
-                  subtitle:
-                      'Add your first truck to start managing your fleet.',
+                  title: 'No matching vehicles',
+                  subtitle: 'Try a different search or add a new truck.',
                 )
               else
-                ...vehicles.asMap().entries.expand(
+                ...visibleVehicles.asMap().entries.expand(
                   (entry) => [
                     VehicleCard(
                       vehicle: entry.value,
@@ -216,7 +414,7 @@ class BrokerVehiclesScreen extends ConsumerWidget {
                         );
                       },
                     ),
-                    if (entry.key != vehicles.length - 1)
+                    if (entry.key != visibleVehicles.length - 1)
                       const SizedBox(height: 12),
                   ],
                 ),

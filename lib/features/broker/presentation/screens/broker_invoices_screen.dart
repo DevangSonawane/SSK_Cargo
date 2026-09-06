@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -90,20 +91,23 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
     final bookingsAsync = ref.watch(_bookingsProvider(_query));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Invoices'),
-      ),
+      backgroundColor: const Color(0xFFF3F8FF),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: bookingsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              _InvoicesHeader(),
+              SizedBox(height: 180),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
             children: [
+              const _InvoicesHeader(),
+              const SizedBox(height: 24),
               _EmptyState(
                 icon: Icons.receipt_long_rounded,
                 title: 'Could not load invoices',
@@ -116,8 +120,9 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
             if (bookings.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 children: const [
+                  _InvoicesHeader(),
+                  SizedBox(height: 24),
                   _EmptyState(
                     icon: Icons.receipt_long_rounded,
                     title: 'No invoice-ready bookings yet',
@@ -128,20 +133,299 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               );
             }
 
-            return ListView.separated(
+            return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              itemCount: bookings.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-                return PackageTrackingCard(
-                  shipment: trackingShipmentFromBooking(booking),
-                  onTap: () => _openInvoice(booking),
-                );
-              },
+              children: [
+                const _InvoicesHeader(),
+                const SizedBox(height: 24),
+                for (var index = 0; index < bookings.length; index++) ...[
+                  _InvoiceBookingCard(
+                    shipment: trackingShipmentFromBooking(bookings[index]),
+                    onTap: () => _openInvoice(bookings[index]),
+                  ),
+                  if (index != bookings.length - 1)
+                    const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 24),
+              ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _InvoicesHeader extends StatelessWidget {
+  const _InvoicesHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        28,
+        MediaQuery.of(context).padding.top + 18,
+        28,
+        26,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF075FC7), Color(0xFF147FE5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () => context.pop(),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          ),
+          const SizedBox(width: 26),
+          const Text(
+            'Invoices',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InvoiceBookingCard extends StatelessWidget {
+  const _InvoiceBookingCard({required this.shipment, required this.onTap});
+
+  final TrackingDemoShipment shipment;
+  final VoidCallback onTap;
+
+  bool get _isCompleted => shipment.status.toLowerCase() == 'completed';
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _isCompleted
+        ? const Color(0xFF10A866)
+        : const Color(0xFF1769D1);
+    final statusBackground = _isCompleted
+        ? const Color(0xFFE8F8F0)
+        : const Color(0xFFEAF3FF);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: const Color(0xFFE0EBFA)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1769D1).withValues(alpha: 0.08),
+              blurRadius: 22,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  padding: const EdgeInsets.all(9),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE7F1FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.asset('assets/package.png', fit: BoxFit.contain),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shipment.packageName.isEmpty
+                            ? 'Booking'
+                            : shipment.packageName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF10245B),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '#Tracking ID: ${shipment.trackingId}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF5B6B91),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: onTap,
+                  icon: const Icon(Icons.more_horiz_rounded),
+                  color: const Color(0xFF1769D1),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFEAF3FF),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Column(
+                    children: [
+                      _InvoiceRouteDot(color: statusColor),
+                      Container(
+                        width: 3,
+                        height: 48,
+                        color: statusColor.withValues(alpha: 0.18),
+                      ),
+                      _InvoiceRouteDot(color: statusColor),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'From:',
+                        style: TextStyle(color: Color(0xFF5B6B91), fontSize: 12),
+                      ),
+                      Text(
+                        shipment.fromLocation,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF102044),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 17),
+                      const Text(
+                        'Shipping to:',
+                        style: TextStyle(color: Color(0xFF5B6B91), fontSize: 12),
+                      ),
+                      Text(
+                        shipment.toLocation,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF102044),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const Divider(height: 1, color: Color(0xFFDCE8F8)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: statusBackground,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isCompleted
+                        ? Icons.check_circle_rounded
+                        : Icons.circle,
+                    color: statusColor,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Status:',
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Text(
+                    shipment.status,
+                    style: const TextStyle(
+                      color: Color(0xFF102044),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InvoiceRouteDot extends StatelessWidget {
+  const _InvoiceRouteDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );

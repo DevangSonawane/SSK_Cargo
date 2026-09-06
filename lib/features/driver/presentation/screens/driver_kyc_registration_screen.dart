@@ -607,13 +607,13 @@ class _DriverKycRegistrationScreenState
         final lineInset = stepWidth / 2;
 
         return SizedBox(
-          height: 54,
+          height: 92,
           child: Stack(
             children: [
               Positioned(
                 left: lineInset,
                 right: lineInset,
-                top: 14,
+                    top: 22,
                 child: Row(
                   children: [
                     for (var i = 0; i < _stepLabels.length - 1; i++) ...[
@@ -861,7 +861,7 @@ class _DriverKycRegistrationScreenState
     final title = isApproved
         ? 'KYC Verification Complete'
         : 'KYC Submitted Successfully';
-    final badgeLabel = isApproved ? 'Verified' : 'Submitted for Review';
+    final badgeLabel = isApproved ? 'VERIFIED' : 'SUBMITTED';
     final description = isApproved
         ? 'Your KYC has been verified. Your driver account is now active.'
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
@@ -873,19 +873,16 @@ class _DriverKycRegistrationScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(title: title, subtitle: description),
-        const SizedBox(height: 18),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.fromLTRB(20, 34, 20, 34),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 18,
+                color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                blurRadius: 22,
                 offset: const Offset(0, 8),
               ),
             ],
@@ -893,109 +890,252 @@ class _DriverKycRegistrationScreenState
           child: Column(
             children: [
               Container(
-                width: 84,
-                height: 84,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF7EE),
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  color: isApproved
+                      ? const Color(0xFFEAF9F1)
+                      : const Color(0xFFEAF2FF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.verified_rounded,
-                  size: 52,
-                  color: Color(0xFF2FA56E),
+                child: Container(
+                  margin: const EdgeInsets.all(26),
+                  decoration: BoxDecoration(
+                    color: isApproved
+                        ? const Color(0xFF20B978)
+                        : const Color(0xFF2D72E8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isApproved
+                        ? Icons.check_rounded
+                        : Icons.hourglass_top_rounded,
+                    size: 54,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 38,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: isApproved
+                      ? const Color(0xFF20B978)
+                      : const Color(0xFF2D72E8),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  badgeLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
               Text(
-                badgeLabel,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: const Color(0xFF2FA56E),
-                  fontWeight: FontWeight.w800,
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: const Color(0xFF101B43),
+                  fontSize: 23,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 description,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  height: 1.45,
+                  color: const Color(0xFF5F6D8E),
+                  fontSize: 15,
+                  height: 1.55,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        _CardSection(
-          title: 'Status Card',
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.fromLTRB(24, 26, 24, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                blurRadius: 22,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _StatusInfoRow(
+              Row(
+                children: [
+                  _KycIconBadge(
+                    icon: Icons.assignment_outlined,
+                    color: const Color(0xFF2D72E8),
+                    background: const Color(0xFFEAF2FF),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    'Verification Details',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF101B43),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _verificationInfoRow(
+                icon: Icons.verified_rounded,
+                iconColor: const Color(0xFF20B978),
+                iconBackground: const Color(0xFFE9F9F1),
                 label: 'Current Status',
                 value: currentStatus,
                 valueColor: statusColor,
+                valueBadge: isApproved,
               ),
-              const SizedBox(height: 10),
-              _StatusInfoRow(
+              _verificationInfoRow(
+                icon: Icons.calendar_month_outlined,
+                iconColor: const Color(0xFF2D72E8),
+                iconBackground: const Color(0xFFEAF2FF),
                 label: 'Submitted Date',
                 value: _submittedAt != null
                     ? _formatDateTime(_submittedAt!)
                     : 'Not available',
-                valueColor: const Color(0xFF101828),
               ),
-              const SizedBox(height: 10),
-              _StatusInfoRow(
+              _verificationInfoRow(
+                icon: Icons.badge_outlined,
+                iconColor: const Color(0xFF7656D9),
+                iconBackground: const Color(0xFFF0ECFF),
                 label: 'Submission ID',
                 value: _submissionId ?? 'Not available',
-                valueColor: const Color(0xFF101828),
               ),
-              if (_reviewedAt != null) ...[
-                const SizedBox(height: 10),
-                _StatusInfoRow(
+              if (_reviewedAt != null)
+                _verificationInfoRow(
+                  icon: Icons.schedule_outlined,
+                  iconColor: const Color(0xFFF5A623),
+                  iconBackground: const Color(0xFFFFF5E6),
                   label: 'Reviewed At',
                   value: _formatDateTime(_reviewedAt!),
-                  valueColor: const Color(0xFF101828),
                 ),
-              ],
             ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        OutlinedButton.icon(
+          onPressed: _goBack,
+          icon: const Icon(Icons.arrow_back_rounded, size: 23),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF1764E8),
+            minimumSize: const Size.fromHeight(60),
+            side: const BorderSide(color: Color(0xFF1764E8), width: 1.5),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+          ),
+          label: const Expanded(
+            child: Text(
+              'Go Back',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _bottomBar(BuildContext context) {
-    if (_step == _KycStep.submitted) {
-      return SafeArea(
-        top: false,
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(22),
-              topRight: Radius.circular(22),
-            ),
+  Widget _verificationInfoRow({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBackground,
+    required String label,
+    required String value,
+    Color? valueColor,
+    bool valueBadge = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE5EAF2))),
+      ),
+      child: Row(
+        children: [
+          _KycIconBadge(
+            icon: icon,
+            color: iconColor,
+            background: iconBackground,
           ),
-          child: OutlinedButton(
-            onPressed: _goBack,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              foregroundColor: const Color(0xFF101828),
-              side: const BorderSide(color: Color(0xFFD0D5DD)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF5E6D8D),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            child: const Text(
-              'Go Back',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
           ),
-        ),
-      );
+          Flexible(
+            child: valueBadge
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9F9F1),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          value,
+                          style: TextStyle(
+                            color: valueColor ?? const Color(0xFF20B978),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.check_rounded,
+                          color: valueColor ?? const Color(0xFF20B978),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  )
+                : Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: valueColor ?? const Color(0xFF101B43),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bottomBar(BuildContext context) {
+    if (_step == _KycStep.submitted) {
+      return const SizedBox.shrink();
     }
 
     final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
@@ -1080,34 +1220,42 @@ class _DriverKycRegistrationScreenState
         backgroundColor: const Color(0xFFF8F9FC),
         elevation: 0,
         centerTitle: true,
-        leadingWidth: 56,
+        toolbarHeight: 72,
+        leadingWidth: 72,
         titleSpacing: 0,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
+          padding: const EdgeInsets.only(left: 16),
           child: InkWell(
             onTap: () => context.pop(),
             borderRadius: BorderRadius.circular(18),
             child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.chevron_left_rounded,
-                color: Color(0xFF101828),
+                color: Color(0xFF173E9A),
+                size: 30,
               ),
             ),
           ),
         ),
         title: Text(
-          'KYC registration',
+          'KYC Registration',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF101828),
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF101B43),
           ),
         ),
       ),
@@ -1117,7 +1265,7 @@ class _DriverKycRegistrationScreenState
             : Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                     child: _buildStepper(),
                   ),
                   Expanded(
@@ -1136,6 +1284,31 @@ class _DriverKycRegistrationScreenState
               ),
       ),
       bottomNavigationBar: _bottomBar(context),
+    );
+  }
+}
+
+class _KycIconBadge extends StatelessWidget {
+  const _KycIconBadge({
+    required this.icon,
+    required this.color,
+    required this.background,
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(icon, color: color, size: 26),
     );
   }
 }
@@ -1188,18 +1361,18 @@ class _StepperItem extends StatelessWidget {
     Widget circle;
     if (isCompleted) {
       circle = Container(
-        width: 28,
-        height: 28,
+        width: 42,
+        height: 42,
         decoration: const BoxDecoration(
           color: Color(0xFF2FA56E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+        child: const Icon(Icons.check_rounded, size: 22, color: Colors.white),
       );
     } else if (isActive) {
       circle = Container(
-        width: 28,
-        height: 28,
+        width: 42,
+        height: 42,
         decoration: const BoxDecoration(
           color: Color(0xFF1F88C9),
           shape: BoxShape.circle,
@@ -1210,15 +1383,15 @@ class _StepperItem extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
-              fontSize: 12,
+              fontSize: 16,
             ),
           ),
         ),
       );
     } else {
       circle = Container(
-        width: 28,
-        height: 28,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
@@ -1230,7 +1403,7 @@ class _StepperItem extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF98A2B3),
               fontWeight: FontWeight.w700,
-              fontSize: 12,
+              fontSize: 16,
             ),
           ),
         ),
@@ -1242,14 +1415,14 @@ class _StepperItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Center(child: circle),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 13,
               height: 1.0,
               fontWeight: FontWeight.w600,
               color: isCompleted || isActive

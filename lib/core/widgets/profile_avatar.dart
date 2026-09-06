@@ -11,6 +11,7 @@ class SskProfileAvatar extends StatelessWidget {
     this.onTap,
     this.size = 72,
     this.fallbackAsset = 'assets/user.png',
+    this.borderColor = const Color(0xFFE5EAF0),
   });
 
   final String? imageUrl;
@@ -18,6 +19,7 @@ class SskProfileAvatar extends StatelessWidget {
   final VoidCallback? onTap;
   final double size;
   final String fallbackAsset;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class SskProfileAvatar extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFF1F4F8),
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE5EAF0), width: 1.2),
+            border: Border.all(color: borderColor, width: 1.8),
           ),
           clipBehavior: Clip.antiAlias,
           child: child,

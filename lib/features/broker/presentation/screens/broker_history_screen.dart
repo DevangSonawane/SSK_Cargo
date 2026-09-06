@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -37,12 +38,31 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       children: [
-        Text(
-          'Booking history',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
+        _HistoryPageHeader(
+          onNotificationsTap: () => context.push('/broker/notifications'),
+          onProfileTap: () => context.push('/broker/profile'),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1478E8),
+                borderRadius: BorderRadius.circular(99),
               ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              'Booking History',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: const Color(0xFF10245B),
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         Row(
@@ -50,6 +70,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
             Expanded(
               child: _HistoryFilterButton(
                 label: 'All',
+                icon: Icons.grid_view_rounded,
                 selected: _filter == _HistoryFilter.all,
                 onTap: () => setState(() => _filter = _HistoryFilter.all),
               ),
@@ -58,6 +79,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
             Expanded(
               child: _HistoryFilterButton(
                 label: 'Completed',
+                icon: Icons.check_circle_outline_rounded,
                 selected: _filter == _HistoryFilter.completed,
                 onTap: () => setState(() => _filter = _HistoryFilter.completed),
               ),
@@ -66,6 +88,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
             Expanded(
               child: _HistoryFilterButton(
                 label: 'Cancelled',
+                icon: Icons.cancel_outlined,
                 selected: _filter == _HistoryFilter.cancelled,
                 onTap: () => setState(() => _filter = _HistoryFilter.cancelled),
               ),
@@ -74,6 +97,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
             Expanded(
               child: _HistoryFilterButton(
                 label: 'Accepted',
+                icon: Icons.check_circle_outline_rounded,
                 selected: _filter == _HistoryFilter.accepted,
                 onTap: () => setState(() => _filter = _HistoryFilter.accepted),
               ),
@@ -137,52 +161,170 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
   }
 }
 
+class _HistoryPageHeader extends StatelessWidget {
+  const _HistoryPageHeader({
+    required this.onNotificationsTap,
+    required this.onProfileTap,
+  });
+
+  final VoidCallback onNotificationsTap;
+  final VoidCallback onProfileTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        24,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'History',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Review recent bookings',
+                  style: TextStyle(
+                    color: Color(0xE6FFFFFF),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _HistoryHeaderIcon(
+            icon: Icons.notifications_none_rounded,
+            onTap: onNotificationsTap,
+          ),
+          const SizedBox(width: 10),
+          InkWell(
+            onTap: onProfileTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset('assets/user.png', fit: BoxFit.cover),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryHeaderIcon extends StatelessWidget {
+  const _HistoryHeaderIcon({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 24),
+      ),
+    );
+  }
+}
+
 class _HistoryFilterButton extends StatelessWidget {
   const _HistoryFilterButton({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = selected ? const Color(0xFF1F88C9) : const Color(0xFF667085);
-    final backgroundColor = selected ? const Color(0xFFEFF6FF) : Colors.transparent;
+    final foregroundColor = selected ? Colors.white : const Color(0xFF425A88);
+    final backgroundColor = selected ? const Color(0xFF1478E8) : Colors.transparent;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF1F88C9).withValues(alpha: 0.24)
-                  : const Color(0xFFE8EDF2),
+                  ? const Color(0xFF1478E8)
+                  : const Color(0xFFD6E6FA),
             ),
           ),
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: foregroundColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: foregroundColor,
                       fontWeight: FontWeight.w700,
-                      fontSize: 10,
+                      fontSize: 13,
                     ),
+                  ),
+                ],
               ),
             ),
           ),

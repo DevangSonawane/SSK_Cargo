@@ -21,7 +21,12 @@ class BrokerShell extends ConsumerWidget {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final location = GoRouterState.of(context).uri.path;
-    final showHeader = location != '/broker/profile';
+    final showHeader =
+        location != '/broker/profile' &&
+        location != '/broker/home' &&
+        location != '/broker/vehicles' &&
+        location != '/broker/tracking' &&
+        location != '/broker/history';
     final showBottomNav = location != '/broker/profile';
     final currentTab = navigationShell.currentIndex;
     final headerTitle = switch (currentTab) {
@@ -67,13 +72,14 @@ class BrokerShell extends ConsumerWidget {
               currentIndex: navigationShell.currentIndex,
               pendingRequestsCount: pendingCount,
               onTap: (index) {
-                if (index == navigationShell.currentIndex) {
-                  return;
-                }
-                navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
-                );
+                final route = switch (index) {
+                  0 => '/broker/home',
+                  1 => '/broker/vehicles',
+                  2 => '/broker/tracking',
+                  3 => '/broker/history',
+                  _ => '/broker/home',
+                };
+                context.go(route);
               },
             )
           : const SizedBox.shrink(),

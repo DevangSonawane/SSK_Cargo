@@ -208,10 +208,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF8FAFD),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
           children: [
             Row(
               children: [
@@ -219,25 +219,49 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   onTap: () => Navigator.of(context).maybePop(),
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
-                    width: 44,
-                    height: 44,
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE3E8EF)),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE1E7F0)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0A102044),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.arrow_back_rounded,
-                      color: Color(0xFF101828),
+                      color: Color(0xFF102044),
+                      size: 34,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  isEditing ? 'Edit truck' : 'Add truck',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                const SizedBox(width: 26),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEditing ? 'Edit Truck' : 'Add Truck',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF102044),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Choose the truck type and fill in the fleet details.',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xFF60708D),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -249,14 +273,14 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isEditing
-                        ? 'Update the truck details and save the changes.'
-                        : 'Choose the truck type and fill in the fleet details.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
+                    'Select truck type',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: const Color(0xFF102044),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   GridView.builder(
                     itemCount: vehicleOptions.length,
                     shrinkWrap: true,
@@ -264,9 +288,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 1.05,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.98,
                         ),
                     itemBuilder: (context, index) {
                       final vehicle = vehicleOptions[index];
@@ -440,9 +464,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     child: ElevatedButton(
                       onPressed: _submitting ? null : _submitTruck,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
+                        backgroundColor: const Color(0xFF1769D1),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                       child: _submitting
@@ -454,10 +478,11 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Save truck',
+                          : Text(
+                              isEditing ? 'Save changes' : 'Continue',
                               style: TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
                                 color: Colors.white,
                               ),
                             ),

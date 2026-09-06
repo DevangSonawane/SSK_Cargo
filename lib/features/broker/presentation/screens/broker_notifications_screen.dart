@@ -166,29 +166,23 @@ class _BrokerNotificationsScreenState
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Notifications'),
-        actions: [
-          TextButton(
-            onPressed: _markingAllRead ? null : _markAllRead,
-            child: Text(
-              _markingAllRead ? 'Saving...' : 'Mark all read',
-              style: const TextStyle(color: Color(0xFF1F88C9)),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF4F8FC),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: notificationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              _NotificationsHeader(),
+              SizedBox(height: 180),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
             children: [
+              const _NotificationsHeader(),
+              const SizedBox(height: 24),
               _EmptyState(
                 icon: Icons.notifications_off_outlined,
                 title: 'Could not load notifications',
@@ -200,8 +194,9 @@ class _BrokerNotificationsScreenState
             if (notifications.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
                 children: const [
+                  _NotificationsHeader(),
+                  SizedBox(height: 24),
                   _EmptyState(
                     icon: Icons.notifications_none_rounded,
                     title: 'No notifications yet',
@@ -214,22 +209,28 @@ class _BrokerNotificationsScreenState
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              itemCount: notifications.length,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              itemCount: notifications.length + 1,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final notification = notifications[index];
+                if (index == 0) {
+                  return _NotificationsHeader(
+                    onMarkAllRead: _markingAllRead ? null : _markAllRead,
+                    markingAllRead: _markingAllRead,
+                  );
+                }
+                final notification = notifications[index - 1];
                 return InkWell(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   onTap: () => _openNotification(notification),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
                     decoration: BoxDecoration(
                       color: notification.isRead
                           ? Colors.white
                           : const Color(0xFFF7FBF9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFDCE8E5)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,8 +262,9 @@ class _BrokerNotificationsScreenState
                                     : notification.title,
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF101828),
+                                    fontSize: 17,
                                     ),
                               ),
                               const SizedBox(height: 6),
@@ -272,7 +274,8 @@ class _BrokerNotificationsScreenState
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF667085),
+                                      color: const Color(0xFF64748B),
+                                      fontSize: 14,
                                       height: 1.35,
                                     ),
                               ),
@@ -287,6 +290,71 @@ class _BrokerNotificationsScreenState
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationsHeader extends StatelessWidget {
+  const _NotificationsHeader({
+    this.onMarkAllRead,
+    this.markingAllRead = false,
+  });
+
+  final VoidCallback? onMarkAllRead;
+  final bool markingAllRead;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        8,
+        20,
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () => Navigator.of(context).maybePop(),
+            borderRadius: BorderRadius.circular(999),
+            child: const SizedBox(
+              width: 34,
+              height: 34,
+              child: Icon(
+                Icons.arrow_back_rounded,
+                color: Color(0xFF101828),
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              'Notifications',
+              style: TextStyle(
+                color: Color(0xFF101828),
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onMarkAllRead,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              markingAllRead ? 'Saving...' : 'Mark all read',
+              style: const TextStyle(
+                color: Color(0xFF1683D0),
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

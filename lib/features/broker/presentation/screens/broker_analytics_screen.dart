@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -13,23 +16,26 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
     final analyticsAsync = ref.watch(_analyticsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Analytics'),
-      ),
+      backgroundColor: const Color(0xFFF4F8FF),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_analyticsProvider);
           await ref.read(_analyticsProvider.future);
         },
         child: analyticsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              _AnalyticsHeader(),
+              SizedBox(height: 180),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
             children: [
+              const _AnalyticsHeader(),
+              const SizedBox(height: 24),
               _EmptyState(
                 icon: Icons.bar_chart_rounded,
                 title: 'Could not load analytics',
@@ -43,6 +49,8 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               children: [
+                _AnalyticsHeader(onBack: () => context.pop()),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
@@ -63,12 +71,53 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Trip history',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Trip history',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: const Color(0xFF10245B),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0D10245B),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.filter_list_rounded,
+                            color: Color(0xFF1769D1),
+                            size: 18,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Filter',
+                            style: TextStyle(
+                              color: Color(0xFF1769D1),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 if (tripHistory.isEmpty)
@@ -91,6 +140,78 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _AnalyticsHeader extends StatelessWidget {
+  const _AnalyticsHeader({this.onBack});
+
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        InkWell(
+          onTap: onBack ?? () => Navigator.of(context).maybePop(),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF3FF),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF10245B),
+              size: 27,
+            ),
+          ),
+        ),
+        const SizedBox(width: 18),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Analytics',
+                style: TextStyle(
+                  color: Color(0xFF10245B),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Track your earnings and trip history',
+                style: TextStyle(color: Color(0xFF5B6B91), fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: 48,
+          height: 48,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x0D10245B),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.calendar_month_outlined,
+            color: Color(0xFF1769D1),
+            size: 24,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -153,32 +274,95 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      height: 174,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.12)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.trending_up_rounded, color: accent, size: 27),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF425A88),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: accent,
+                  fontSize: 24,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Total earnings',
+                style: TextStyle(color: Color(0xFF425A88), fontSize: 13),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: accent,
+          Positioned(
+            top: 18,
+            right: 0,
+            child: Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+          ),
+          Positioned(
+            left: -16,
+            right: -16,
+            bottom: -14,
+            child: SizedBox(
+              height: 34,
+              child: CustomPaint(painter: _WaveLinePainter(color: accent)),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _WaveLinePainter extends CustomPainter {
+  const _WaveLinePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.65)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final path = Path()..moveTo(0, size.height * 0.62);
+    for (var x = 0.0; x <= size.width; x += 1) {
+      final y = size.height * 0.62 +
+          (size.height * 0.18) * math.sin(x / size.width * math.pi * 2 * 3);
+      path.lineTo(x, y);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaveLinePainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
@@ -190,11 +374,18 @@ class _SettlementMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: const Color(0xFFE0EBFA)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1769D1).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,16 +393,19 @@ class _SettlementMiniCard extends StatelessWidget {
           Text(
             settlement.bookingNumber,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF10245B),
+              fontSize: 16,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             settlement.route,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF5B6B91),
+              fontSize: 12,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
