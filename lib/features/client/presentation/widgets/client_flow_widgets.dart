@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -3684,6 +3683,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         minPrice: lower,
         maxPrice: upper,
         initialPrice: initial,
+        onTrack: () => _navigateAfterNegotiation('/client/tracking'),
+        onHome: _navigateHomeAfterNegotiation,
         onCreateRequest: (amount) =>
             _createDirectTruckRequestSession(truckId: truck.id, amount: amount),
       ),
@@ -3709,6 +3710,37 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _draft = _draft.copyWith(amount: outcome.amount!);
       }
       _step = _BookingFlowStep.payment;
+    });
+  }
+
+  void _navigateAfterNegotiation(String location) {
+    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.go(location);
+      });
+      return;
+    }
+    router.go(location);
+  }
+
+  void _navigateHomeAfterNegotiation() {
+    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
+    if (!navigator.canPop()) {
+      router.go('/client/home');
+      return;
+    }
+
+    // Negotiation is opened above the booking sheet, so close both layers.
+    navigator.pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (navigator.mounted && navigator.canPop()) {
+        navigator.pop();
+      }
+      router.go('/client/home');
     });
   }
 
@@ -5392,7 +5424,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildPaymentStep(BuildContext context) {
-    return _PaymentMethodsCard(
+    return _CheckoutChoiceCard(
       selectedMethod: _selectedPaymentMethod,
       requiresAdvance: false,
       advanceAmount: 0,
@@ -5422,12 +5454,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void _goToClientHome() {
     _bottomNavVisibleController.state = true;
     _socketService.clearTruckTrackingIds();
+    final router = GoRouter.of(context);
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
-      navigator.popUntil((route) => route.isFirst);
+      navigator.pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.go('/client/home');
+      });
       return;
     }
-    context.go('/client/home');
+    router.go('/client/home');
   }
 }
 
@@ -5563,14 +5599,6 @@ class _DirectNegotiationOutcome {
     this.amount,
   );
 
-  factory _DirectNegotiationOutcome.accepted({
-    required String bookingId,
-    required String bookingNumber,
-    required double? amount,
-  }) {
-    return _DirectNegotiationOutcome._(true, bookingId, bookingNumber, amount);
-  }
-
   factory _DirectNegotiationOutcome.rejected() =>
       const _DirectNegotiationOutcome._(false, '', '', null);
 
@@ -5598,6 +5626,8 @@ class _BrokerNegotiationSheet extends ConsumerStatefulWidget {
     required this.minPrice,
     required this.maxPrice,
     required this.initialPrice,
+    required this.onTrack,
+    required this.onHome,
     required this.onCreateRequest,
   });
 
@@ -5605,6 +5635,8 @@ class _BrokerNegotiationSheet extends ConsumerStatefulWidget {
   final double minPrice;
   final double maxPrice;
   final double initialPrice;
+  final VoidCallback onTrack;
+  final VoidCallback onHome;
   final Future<_DirectRequestSession?> Function(double amount) onCreateRequest;
 
   @override
@@ -5805,17 +5837,11 @@ class _BrokerNegotiationSheetState
       }
 
       if (request.normalizedStatus == 'accepted' &&
-          _stage != _DirectNegotiationStage.confirmed) {
-        final amount = double.tryParse(
-          request.amountText.replaceAll(RegExp(r'[^0-9.]'), ''),
-        );
-        Navigator.of(context).pop(
-          _DirectNegotiationOutcome.accepted(
-            bookingId: _bookingId ?? '',
-            bookingNumber: _bookingNumber ?? '',
-            amount: amount,
-          ),
-        );
+          _stage == _DirectNegotiationStage.waiting) {
+        setState(() {
+          _request = request;
+          _stage = _DirectNegotiationStage.payment;
+        });
         return;
       }
 
@@ -5870,15 +5896,10 @@ class _BrokerNegotiationSheetState
         const ['status'],
       ).toLowerCase();
       if (booking != null || responseStatus == 'accepted') {
-        Navigator.of(context).pop(
-          _DirectNegotiationOutcome.accepted(
-            bookingId: _bookingId ?? '',
-            bookingNumber: _bookingNumber ?? '',
-            amount: double.tryParse(
-              request.amountText.replaceAll(RegExp(r'[^0-9.]'), ''),
-            ),
-          ),
-        );
+        setState(() {
+          _stage = _DirectNegotiationStage.payment;
+        });
+        await _loadCurrentRequest(silent: true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -6287,7 +6308,7 @@ class _BrokerNegotiationSheetState
           ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
         ),
         const SizedBox(height: 16),
-        _PaymentMethodsCard(
+        _CheckoutChoiceCard(
           selectedMethod: _selectedPaymentMethod,
           requiresAdvance: requiresAdvance,
           advanceAmount: advanceAmount,
@@ -6319,8 +6340,8 @@ class _BrokerNegotiationSheetState
   Widget _buildConfirmedView() {
     return _BookingSuccessCard(
       bookingReference: _bookingNumber,
-      onTrack: () => Navigator.of(context).pop(),
-      onHome: () => Navigator.of(context).pop(),
+      onTrack: widget.onTrack,
+      onHome: widget.onHome,
     );
   }
 
@@ -6611,8 +6632,8 @@ class _MapHintPill extends StatelessWidget {
   }
 }
 
-class _PaymentMethodsCard extends StatelessWidget {
-  const _PaymentMethodsCard({
+class _CheckoutChoiceCard extends StatelessWidget {
+  const _CheckoutChoiceCard({
     required this.selectedMethod,
     required this.requiresAdvance,
     required this.advanceAmount,
@@ -6626,6 +6647,9 @@ class _PaymentMethodsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fullSelected =
+        selectedMethod != PaymentMethod.advance &&
+        selectedMethod != PaymentMethod.payLater;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -6641,310 +6665,64 @@ class _PaymentMethodsCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text(
-              'UPI, Cards & Other Methods',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
-              ),
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentTopRow(selectedMethod: selectedMethod, onSelect: onSelect),
-          const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentListTile(
-            icon: Icons.credit_card_rounded,
-            title: 'Pay using card',
-            subtitle: 'All card supported',
-            selected: selectedMethod == PaymentMethod.card,
-            onTap: () => onSelect(PaymentMethod.card),
-          ),
-          const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentListTile(
-            icon: Icons.account_balance_rounded,
-            title: 'Net banking',
-            subtitle: 'All Indian banks',
-            selected: selectedMethod == PaymentMethod.netBanking,
-            onTap: () => onSelect(PaymentMethod.netBanking),
-          ),
-          const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          _PaymentListTile(
-            icon: Icons.calendar_month_rounded,
-            title: 'EMI',
-            subtitle: 'Card, EarlySalary and more',
-            selected: selectedMethod == PaymentMethod.emi,
-            trailingChip: 'NO COST EMI AVAILABLE',
-            onTap: () => onSelect(PaymentMethod.emi),
-          ),
-          const Divider(height: 1, color: Color(0xFFE8EDF2)),
-          requiresAdvance
-              ? _PaymentListTile(
-                  icon: Icons.payments_rounded,
-                  title: 'Pay 20% Advance',
-                  subtitle:
-                      '${_formatRupees(advanceAmount)} now, balance on delivery',
-                  selected: selectedMethod == PaymentMethod.advance,
-                  onTap: () => onSelect(PaymentMethod.advance),
-                )
-              : _PaymentListTile(
-                  icon: Icons.schedule_send_rounded,
-                  title: 'Pay later',
-                  subtitle: 'Confirm now and pay after delivery',
-                  selected: selectedMethod == PaymentMethod.payLater,
-                  onTap: () => onSelect(PaymentMethod.payLater),
-                ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaymentTopRow extends StatelessWidget {
-  const _PaymentTopRow({required this.selectedMethod, required this.onSelect});
-
-  final PaymentMethod selectedMethod;
-  final ValueChanged<PaymentMethod> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _PaymentListTile(
-            icon: Icons.double_arrow_rounded,
-            title: 'UPI',
-            subtitle: 'Pay with one-set UPI, apps or choose other',
-            selected: _isUpiSelected(selectedMethod),
-            compact: true,
-            leadingWidget: SvgPicture.asset(
-              'assets/upi-icon.svg',
-              width: 32,
-              height: 32,
-            ),
+          _CheckoutChoiceTile(
+            title: 'Pay securely now',
+            subtitle: 'Choose UPI, card, bank, or wallet in checkout',
+            icon: Icons.lock_outline_rounded,
+            selected: fullSelected,
             onTap: () => onSelect(PaymentMethod.googlePay),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _UpiAppTile(
-                  label: 'Google Pay',
-                  selected: selectedMethod == PaymentMethod.googlePay,
-                  accentColor: const Color(0xFF1A73E8),
-                  logoAssetPath: 'assets/svgs/icons8-google-pay.svg',
-                  onTap: () => onSelect(PaymentMethod.googlePay),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _UpiAppTile(
-                  label: 'PhonePe',
-                  selected: selectedMethod == PaymentMethod.phonePe,
-                  accentColor: const Color(0xFF5F3DC4),
-                  logoAssetPath: 'assets/svgs/icons8-phone-pe.svg',
-                  onTap: () => onSelect(PaymentMethod.phonePe),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _UpiAppTile(
-                  label: 'PayTM',
-                  selected: selectedMethod == PaymentMethod.paytm,
-                  accentColor: const Color(0xFF0F4C81),
-                  logoAssetPath: 'assets/svgs/icons8-paytm.svg',
-                  onTap: () => onSelect(PaymentMethod.paytm),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _isUpiSelected(PaymentMethod method) {
-    return method == PaymentMethod.googlePay ||
-        method == PaymentMethod.phonePe ||
-        method == PaymentMethod.paytm ||
-        method == PaymentMethod.otherUpi;
-  }
-}
-
-class _UpiAppTile extends StatelessWidget {
-  const _UpiAppTile({
-    required this.label,
-    required this.selected,
-    required this.accentColor,
-    this.logoAssetPath,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final Color accentColor;
-  final String? logoAssetPath;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        children: [
-          Container(
-            height: 56,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: selected
-                  ? accentColor.withValues(alpha: 0.08)
-                  : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: selected ? accentColor : const Color(0xFFE8EDF2),
-                width: selected ? 1.5 : 1,
-              ),
+          if (requiresAdvance)
+            _CheckoutChoiceTile(
+              title: 'Pay 20% advance',
+              subtitle:
+                  '${_formatRupees(advanceAmount)} now, balance on delivery',
+              icon: Icons.payments_outlined,
+              selected: selectedMethod == PaymentMethod.advance,
+              onTap: () => onSelect(PaymentMethod.advance),
+            )
+          else
+            _CheckoutChoiceTile(
+              title: 'Pay later',
+              subtitle: 'Confirm now and settle after delivery',
+              icon: Icons.schedule_send_rounded,
+              selected: selectedMethod == PaymentMethod.payLater,
+              onTap: () => onSelect(PaymentMethod.payLater),
             ),
-            alignment: Alignment.center,
-            child: logoAssetPath != null
-                ? Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: SvgPicture.asset(
-                      logoAssetPath!,
-                      fit: BoxFit.contain,
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _PaymentListTile extends StatelessWidget {
-  const _PaymentListTile({
-    required this.icon,
+class _CheckoutChoiceTile extends StatelessWidget {
+  const _CheckoutChoiceTile({
     required this.title,
     required this.subtitle,
+    required this.icon,
     required this.selected,
     required this.onTap,
-    this.trailingChip,
-    this.leadingWidget,
-    this.compact = false,
   });
 
-  final IconData? icon;
   final String title;
   final String subtitle;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
-  final String? trailingChip;
-  final Widget? leadingWidget;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final accent = const Color(0xFF1F88C9);
-    return InkWell(
+    final accent = Theme.of(context).colorScheme.primary;
+    return ListTile(
       onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 0 : 16,
-          vertical: compact ? 6 : 14,
-        ),
-        child: Row(
-          children: [
-            if (leadingWidget != null)
-              SizedBox(
-                width: compact ? 28 : 34,
-                height: compact ? 28 : 34,
-                child: Center(child: leadingWidget!),
-              )
-            else
-              Icon(
-                icon,
-                color: selected ? accent : const Color(0xFF667085),
-                size: compact ? 22 : 26,
-              ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF101828),
-                              ),
-                        ),
-                      ),
-                      if (trailingChip != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF8F2),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            trailingChip!,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: const Color(0xFF2FA56E),
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            if (selected)
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF2FA56E),
-                size: 20,
-              )
-            else
-              const Icon(
-                Icons.circle_outlined,
-                color: Color(0xFFD0D5DD),
-                size: 20,
-              ),
-          ],
-        ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      leading: Icon(icon, color: selected ? accent : const Color(0xFF667085)),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_off,
+        color: selected ? accent : const Color(0xFF98A2B3),
       ),
     );
   }
