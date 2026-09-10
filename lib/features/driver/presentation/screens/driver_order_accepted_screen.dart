@@ -90,6 +90,7 @@ class _DriverOrderAcceptedScreenState
 
   @override
   void dispose() {
+    _dismissClientConfirmationDialog();
     _driverRequestSubscription?.cancel();
     _countdownTimer?.cancel();
     _handoffPollTimer?.cancel();
@@ -367,13 +368,14 @@ class _DriverOrderAcceptedScreenState
                                     : () async {
                                         _suppressClientConfirmationDialog =
                                             true;
+                                        _dismissClientConfirmationDialog();
                                         await _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .rejectDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: _request.id,
-                                                ),
+                                          (token) => ref
+                                              .read(apiClientProvider)
+                                              .rejectDriverRequestAsDriver(
+                                                accessToken: token,
+                                                id: _request.id,
+                                              ),
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
@@ -402,14 +404,15 @@ class _DriverOrderAcceptedScreenState
                                     : () async {
                                         _suppressClientConfirmationDialog =
                                             true;
+                                        _dismissClientConfirmationDialog();
                                         await _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .acceptDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: _request.id,
-                                                ),
-                                            resolveTripOnSuccess: true,
+                                          (token) => ref
+                                              .read(apiClientProvider)
+                                              .acceptDriverRequestAsDriver(
+                                                accessToken: token,
+                                                id: _request.id,
+                                              ),
+                                          resolveTripOnSuccess: true,
                                         );
                                       },
                                 style: FilledButton.styleFrom(
@@ -543,6 +546,7 @@ class _DriverOrderAcceptedScreenState
   }
 
   Future<void> _goBackToHome() async {
+    _forceDismissClientConfirmationDialog();
     await _driverRequestSubscription?.cancel();
     _driverRequestSubscription = null;
     _countdownTimer?.cancel();
@@ -596,6 +600,7 @@ class _DriverOrderAcceptedScreenState
       paymentStatus: paymentStatus,
     );
     ref.invalidate(driverDashboardProvider);
+    _forceDismissClientConfirmationDialog();
     _handoffPollTimer?.cancel();
     _handoffPollTimer = null;
     if (!mounted) {
@@ -608,6 +613,7 @@ class _DriverOrderAcceptedScreenState
     if (!mounted) {
       return;
     }
+    _forceDismissClientConfirmationDialog();
     ref.invalidate(driverDashboardProvider);
     context.go('/driver/active');
   }
@@ -1300,16 +1306,12 @@ class _DriverOrderAcceptedScreenState
                                   child: OutlinedButton(
                                     onPressed: _refreshTripForHandoff,
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(
-                                        0xFF1F88C9,
-                                      ),
+                                      foregroundColor: const Color(0xFF1F88C9),
                                       side: const BorderSide(
                                         color: Color(0xFFB7D7F0),
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          14,
-                                        ),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
                                     child: const Text(

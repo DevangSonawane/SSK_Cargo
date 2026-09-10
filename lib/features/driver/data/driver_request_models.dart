@@ -67,7 +67,18 @@ class DriverRequestItem {
       !driverTimedOut &&
       (status.toLowerCase().isEmpty ||
           status.toLowerCase() == 'requested' ||
-          status.toLowerCase() == 'pending');
+          status.toLowerCase() == 'pending' ||
+          (status.toLowerCase() == 'awaiting_confirmation' &&
+              pendingConfirmationBy.toLowerCase() == 'client'));
+
+  bool get isVisibleInNewTravel {
+    final normalized = status.trim().toLowerCase();
+    return normalized.isEmpty ||
+        normalized == 'requested' ||
+        normalized == 'pending' ||
+        normalized == 'countered' ||
+        normalized == 'awaiting_confirmation';
+  }
 
   bool get isAwaitingConfirmation =>
       status.trim().toLowerCase() == 'awaiting_confirmation';
@@ -82,9 +93,16 @@ class DriverRequestItem {
     final broker = _asMap(json['broker']);
     final route = _asMap(json['route']);
     final truck = _asMap(json['truck']);
-    final driverTimedOut =
-        json['driverTimedOut'] == true || json['driver_timed_out'] == true;
-    final status = _readString(json, const ['status']).toLowerCase();
+    final driverTimedOut = _readBool(json, const [
+      'driverTimedOut',
+      'driver_timed_out',
+    ]);
+    final status = _readString(json, const [
+      'status',
+      'request_status',
+      'driverRequestStatus',
+      'driver_request_status',
+    ]).toLowerCase();
     final pendingConfirmationBy = _readString(json, const [
       'pendingConfirmationBy',
       'pending_confirmation_by',
@@ -101,6 +119,10 @@ class DriverRequestItem {
       bookingNumber: _readString(json, const [
         'bookingNumber',
         'booking_number',
+        'bookingRef',
+        'booking_ref',
+        'bookingNo',
+        'booking_no',
       ]),
       pendingConfirmationBy: pendingConfirmationBy,
       driverId: _firstNonEmpty([
@@ -148,12 +170,34 @@ class DriverRequestItem {
         ]),
       ]),
       pickup: _firstNonEmpty([
-        _readString(json, const ['pickup']),
+        _readString(json, const [
+          'pickup',
+          'pickupLocation',
+          'pickup_location',
+          'pickup_address',
+        ]),
         _readString(route, const ['from', 'pickup', 'origin', 'source']),
+        _readString(_asMap(json['pickup']), const [
+          'location',
+          'address',
+          'name',
+        ]),
       ]),
       drop: _firstNonEmpty([
-        _readString(json, const ['drop']),
+        _readString(json, const [
+          'drop',
+          'dropLocation',
+          'drop_location',
+          'dropoffLocation',
+          'dropoff_location',
+          'drop_address',
+        ]),
         _readString(route, const ['to', 'dropoff', 'destination', 'target']),
+        _readString(_asMap(json['drop']), const [
+          'location',
+          'address',
+          'name',
+        ]),
       ]),
       weight: _readString(json, const ['weight']),
       amount: _readDouble(json, const ['amount', 'price', 'value']),
@@ -299,24 +343,36 @@ class DriverRequestFeedController
     state = const AsyncLoading<List<DriverRequestItem>>();
     await _disposeLiveHandles();
 
+    await _refreshFromServer(nextToken);
+    if (!mounted || _accessToken != nextToken) {
+      return;
+    }
+
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      unawaited(_refreshFromServer(nextToken));
+    });
+
     final socketService = _ref.read(appSocketServiceProvider);
     developer.log(
       'Starting driver request feed for shared websocket updates.',
       name: 'SSK.DriverRequests',
     );
-    await socketService.connect(nextToken);
-    if (!mounted || _accessToken != nextToken) {
-      return;
+    try {
+      await socketService.connect(nextToken);
+      if (!mounted || _accessToken != nextToken) {
+        return;
+      }
+      _socketSubscription = socketService.driverRequestStream.listen(
+        _handleSocketPayload,
+      );
+    } catch (error, stackTrace) {
+      developer.log(
+        'Driver request websocket unavailable; continuing with polling.',
+        name: 'SSK.DriverRequests',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
-
-    _socketSubscription = socketService.driverRequestStream.listen(
-      _handleSocketPayload,
-    );
-    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
-      unawaited(_refreshFromServer(nextToken));
-    });
-
-    await _refreshFromServer(nextToken);
   }
 
   Future<void> refresh() async {
@@ -353,7 +409,7 @@ class DriverRequestFeedController
   }
 
   void _handleSocketPayload(Map<String, dynamic> payload) {
-    final incoming = DriverRequestItem.fromMap(payload);
+    final incoming = DriverRequestItem.fromMap(_requestPayloadMap(payload));
     if (incoming.id.isEmpty || !mounted) {
       return;
     }
@@ -392,6 +448,22 @@ class DriverRequestFeedController
   }
 }
 
+Map<String, dynamic> _requestPayloadMap(Map<String, dynamic> payload) {
+  final data = _asMap(payload['data']);
+  final request = _asMap(payload['request']).isNotEmpty
+      ? _asMap(payload['request'])
+      : _asMap(payload['driverRequest']).isNotEmpty
+      ? _asMap(payload['driverRequest'])
+      : _asMap(payload['driver_request']).isNotEmpty
+      ? _asMap(payload['driver_request'])
+      : _asMap(data['request']).isNotEmpty
+      ? _asMap(data['request'])
+      : _asMap(data['driverRequest']).isNotEmpty
+      ? _asMap(data['driverRequest'])
+      : _asMap(data['driver_request']);
+  return request.isEmpty ? payload : request;
+}
+
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) {
     return value;
@@ -415,9 +487,13 @@ List<Object?> _extractItems(
 ) {
   final candidates = <Object?>[
     data['requests'],
+    data['driverRequests'],
+    data['driver_requests'],
     data['items'],
     data['data'],
     root['requests'],
+    root['driverRequests'],
+    root['driver_requests'],
     root['items'],
   ];
 
@@ -453,6 +529,23 @@ double _readDouble(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return 0;
+}
+
+bool _readBool(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is bool) {
+      return value;
+    }
+    final normalized = value?.toString().trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+      return true;
+    }
+    if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+      return false;
+    }
+  }
+  return false;
 }
 
 DateTime? _parseDateTimeObject(Object? value) {

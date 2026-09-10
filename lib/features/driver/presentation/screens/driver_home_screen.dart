@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
 
@@ -21,6 +22,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   double _acceptSlide = 0;
   bool _launchingRequest = false;
   bool _launchingActiveTrip = false;
+  bool _reconcilingActiveTrip = false;
+  String _reconcilingTripId = '';
+  Timer? _activeTripReconcileTimer;
   late final WidgetsBindingObserver _lifecycleObserver;
 
   @override
@@ -30,6 +34,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       onResume: () {
         if (!mounted) return;
         ref.invalidate(driverRequestFeedProvider);
+        _reconcileActiveTripLock();
       },
     );
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
@@ -37,8 +42,126 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   void dispose() {
+    _activeTripReconcileTimer?.cancel();
     WidgetsBinding.instance.removeObserver(_lifecycleObserver);
     super.dispose();
+  }
+
+  void _clearActiveTripLock() {
+    ref.read(driverActiveTripIdProvider.notifier).state = null;
+    ref.read(driverTripSessionProvider.notifier).state = null;
+    ref.invalidate(driverDashboardProvider);
+  }
+
+  bool _isInactiveTripStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'completed' ||
+        normalized == 'delivered' ||
+        normalized == 'cancelled' ||
+        normalized == 'canceled' ||
+        normalized == 'rejected' ||
+        normalized == 'declined' ||
+        normalized == 'expired';
+  }
+
+  String _readStatus(Map<String, dynamic> json) {
+    for (final key in const [
+      'status',
+      'rawStatus',
+      'bookingStatus',
+      'booking_status',
+    ]) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  void _syncActiveTripReconciliation(String activeTripId) {
+    final normalizedTripId = activeTripId.trim();
+    if (normalizedTripId.isEmpty) {
+      _activeTripReconcileTimer?.cancel();
+      _activeTripReconcileTimer = null;
+      _reconcilingTripId = '';
+      return;
+    }
+
+    if (_reconcilingTripId == normalizedTripId &&
+        _activeTripReconcileTimer != null) {
+      return;
+    }
+
+    _activeTripReconcileTimer?.cancel();
+    _reconcilingTripId = normalizedTripId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _reconcilingTripId == normalizedTripId) {
+        unawaited(_reconcileActiveTripLock());
+      }
+    });
+    _activeTripReconcileTimer = Timer.periodic(const Duration(seconds: 12), (
+      _,
+    ) {
+      unawaited(_reconcileActiveTripLock());
+    });
+  }
+
+  Future<void> _reconcileActiveTripLock() async {
+    if (_reconcilingActiveTrip || !mounted) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final localTripId =
+        (ref.read(driverTripSessionProvider)?.tripId ??
+                ref.read(driverActiveTripIdProvider) ??
+                '')
+            .trim();
+    if (session == null || localTripId.isEmpty) {
+      return;
+    }
+
+    _reconcilingActiveTrip = true;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getActiveTrip(accessToken: session.tokens.accessToken);
+      final trip = extractTripFromResponse(response);
+      if (!mounted || localTripId != _reconcilingTripId) {
+        return;
+      }
+
+      if (trip == null) {
+        _clearActiveTripLock();
+        return;
+      }
+
+      final tripStatus = _readStatus(trip);
+      if (_isInactiveTripStatus(tripStatus)) {
+        _clearActiveTripLock();
+        return;
+      }
+
+      final serverTripId = extractTripId(trip);
+      if (serverTripId.isNotEmpty && serverTripId != localTripId) {
+        ref.read(driverActiveTripIdProvider.notifier).state = serverTripId;
+        final currentSession = ref.read(driverTripSessionProvider);
+        ref
+            .read(driverTripSessionProvider.notifier)
+            .state = (currentSession ?? DriverTripSession(tripId: serverTripId))
+            .copyWith(tripId: serverTripId, status: tripStatus);
+      }
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      if (error.statusCode == 404) {
+        _clearActiveTripLock();
+      }
+    } finally {
+      _reconcilingActiveTrip = false;
+    }
   }
 
   DriverRequestItem? _acceptedRequestForUser(
@@ -76,11 +199,22 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       final trip = extractTripFromResponse(response);
       final tripId = trip == null ? '' : extractTripId(trip);
 
-      if (tripId.isEmpty || !mounted) {
+      if (!mounted) {
+        return;
+      }
+
+      if (trip == null ||
+          tripId.isEmpty ||
+          _isInactiveTripStatus(_readStatus(trip))) {
+        _clearActiveTripLock();
         return;
       }
 
       ref.read(driverActiveTripIdProvider.notifier).state = tripId;
+      ref.read(driverTripSessionProvider.notifier).state = DriverTripSession(
+        tripId: tripId,
+        status: _readStatus(trip),
+      );
       context.go('/driver/delivery-details/$tripId');
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -105,6 +239,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             .trim();
     final hasActiveTrip = activeTripId.isNotEmpty;
     final requestsAsync = ref.watch(driverRequestFeedProvider);
+    _syncActiveTripReconciliation(activeTripId);
 
     ref.listen(driverRequestFeedProvider, (previous, next) {
       if (!mounted || _launchingActiveTrip) {
@@ -234,7 +369,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
                 IconButton(
                   onPressed: () {
-                    ref.invalidate(driverRequestFeedProvider);
+                    ref.read(driverRequestFeedProvider.notifier).refresh();
                   },
                   icon: const Icon(Icons.refresh_rounded),
                   tooltip: 'Refresh requests',
@@ -270,7 +405,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
                 data: (requests) {
                   final newRequests = requests
-                      .where((request) => request.canNegotiate)
+                      .where((request) => request.isVisibleInNewTravel)
                       .toList();
 
                   if (newRequests.isEmpty) {
@@ -434,6 +569,8 @@ class _DeliveryOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final amount = request.amount > 0 ? request.amount : 0;
+    final canOpen = request.canNegotiate;
+    final statusLabel = _driverRequestStatusLabel(request);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -526,47 +663,64 @@ class _DeliveryOrderCard extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           Text(
-            'Slide to accept delivery',
+            canOpen ? 'Slide to open negotiation' : statusLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: const Color(0xFF98A2B3),
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 48,
-              trackShape: const RoundedRectSliderTrackShape(),
-              thumbShape: const _RequestThumbShape(),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-              activeTrackColor: const Color(0xFFE5E7EB),
-              inactiveTrackColor: const Color(0xFFE5E7EB),
-              thumbColor: Colors.white,
-              overlayColor: Colors.transparent,
-            ),
-            child: Slider(
-              value: request.canNegotiate ? acceptSlide : 0,
-              min: 0,
-              max: 1,
-              divisions: 100,
-              onChanged: request.canNegotiate
-                  ? (value) {
-                      onSlideChanged(value);
-                      if (value >= 0.98) {
-                        Future.delayed(const Duration(milliseconds: 250), () {
-                          if (context.mounted) {
-                            onOpenNegotiation();
-                          }
-                        });
+          if (canOpen)
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 48,
+                trackShape: const RoundedRectSliderTrackShape(),
+                thumbShape: const _RequestThumbShape(),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                activeTrackColor: const Color(0xFFE5E7EB),
+                inactiveTrackColor: const Color(0xFFE5E7EB),
+                thumbColor: Colors.white,
+                overlayColor: Colors.transparent,
+              ),
+              child: Slider(
+                value: acceptSlide,
+                min: 0,
+                max: 1,
+                divisions: 100,
+                onChanged: (value) {
+                  onSlideChanged(value);
+                  if (value >= 0.98) {
+                    Future.delayed(const Duration(milliseconds: 250), () {
+                      if (context.mounted) {
+                        onOpenNegotiation();
                       }
-                    }
-                  : null,
+                    });
+                  }
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
   }
+}
+
+String _driverRequestStatusLabel(DriverRequestItem request) {
+  final status = request.status.trim().toLowerCase();
+  final pendingBy = request.pendingConfirmationBy.trim().toLowerCase();
+  if (request.driverTimedOut) {
+    return 'Broker handoff active';
+  }
+  if (status == 'countered') {
+    return 'Waiting for the client response';
+  }
+  if (status == 'awaiting_confirmation') {
+    if (pendingBy == 'client') {
+      return 'Client accepted. Open the request to confirm.';
+    }
+    return 'Waiting for client confirmation';
+  }
+  return 'Negotiation unavailable';
 }
 
 class _DriverRequestCard extends StatefulWidget {
@@ -591,6 +745,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
     final request = widget.request;
     final amount = request.amount > 0 ? request.amount : 0;
     final canOpen = request.canNegotiate;
+    final statusLabel = _driverRequestStatusLabel(request);
 
     return Container(
       width: double.infinity,
@@ -705,7 +860,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           ],
           const SizedBox(height: 14),
           Text(
-            canOpen ? 'Swipe to open negotiation' : 'Negotiation unavailable',
+            canOpen ? 'Swipe to open negotiation' : statusLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: const Color(0xFF98A2B3),
               fontWeight: FontWeight.w600,

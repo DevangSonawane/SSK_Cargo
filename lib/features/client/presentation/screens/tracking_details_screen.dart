@@ -2858,13 +2858,21 @@ class _BookingNegotiationSheetState
       final api = ref.read(apiClientProvider);
       ClientBookingOffer? driverRequest;
       try {
-        final requestResponse = await api.getDriverRequestByBooking(
+        final requestResponse = await api.getDriverRequestsForBooking(
           accessToken: widget.accessToken,
           bookingId: widget.bookingId,
         );
-        driverRequest = _firstRequestFromResponse(requestResponse);
+        driverRequest = _bestDriverRequestFromResponse(requestResponse);
       } catch (_) {
-        driverRequest = null;
+        try {
+          final requestResponse = await api.getDriverRequestByBooking(
+            accessToken: widget.accessToken,
+            bookingId: widget.bookingId,
+          );
+          driverRequest = _firstRequestFromResponse(requestResponse);
+        } catch (_) {
+          driverRequest = null;
+        }
       }
 
       final offersResponse = await api.getBookingOffers(
@@ -3614,6 +3622,42 @@ ClientBookingOffer? _firstRequestFromResponse(Map<String, dynamic> response) {
       _chatAsMap(data['item']) ??
       data;
   return _bookingOfferFromMap(request);
+}
+
+ClientBookingOffer? _bestDriverRequestFromResponse(
+  Map<String, dynamic> response,
+) {
+  final data = _chatAsMap(response['data']) ?? response;
+  final dynamic items =
+      data['requests'] ??
+      data['driverRequests'] ??
+      data['items'] ??
+      data['results'] ??
+      data['rows'] ??
+      data['data'];
+  if (items is! List) {
+    return _firstRequestFromResponse(response);
+  }
+  final requests = items
+      .whereType<Map<String, dynamic>>()
+      .map(_bookingOfferFromMap)
+      .where((request) => request.id.isNotEmpty)
+      .toList(growable: false);
+  if (requests.isEmpty) {
+    return null;
+  }
+  for (final request in requests) {
+    if (request.isActionableByClient) {
+      return request;
+    }
+  }
+  for (final request in requests) {
+    if (request.normalizedStatus == 'accepted' ||
+        request.normalizedStatus == 'countered') {
+      return request;
+    }
+  }
+  return requests.first;
 }
 
 List<ClientBookingOffer> _bookingOffersFromResponse(

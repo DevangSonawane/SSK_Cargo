@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -1126,6 +1125,10 @@ class BookingData {
     this.amount = 0,
     this.brokerId = '',
     this.truckId = '',
+    this.isScheduled = false,
+    this.searchMode,
+    this.searchRadiusKm = 15,
+    this.selectedBrokerId = '',
     this.paymentMode = PaymentMode.payLater,
     this.selectedPaymentLabel = '',
   });
@@ -1152,6 +1155,10 @@ class BookingData {
   final double amount;
   final String brokerId;
   final String truckId;
+  final bool isScheduled;
+  final BookingSearchMode? searchMode;
+  final double searchRadiusKm;
+  final String selectedBrokerId;
   final PaymentMode paymentMode;
   final String selectedPaymentLabel;
 
@@ -1188,6 +1195,10 @@ class BookingData {
     double? amount,
     String? brokerId,
     String? truckId,
+    bool? isScheduled,
+    BookingSearchMode? searchMode,
+    double? searchRadiusKm,
+    String? selectedBrokerId,
     PaymentMode? paymentMode,
     String? selectedPaymentLabel,
   }) {
@@ -1214,6 +1225,10 @@ class BookingData {
       amount: amount ?? this.amount,
       brokerId: brokerId ?? this.brokerId,
       truckId: truckId ?? this.truckId,
+      isScheduled: isScheduled ?? this.isScheduled,
+      searchMode: searchMode ?? this.searchMode,
+      searchRadiusKm: searchRadiusKm ?? this.searchRadiusKm,
+      selectedBrokerId: selectedBrokerId ?? this.selectedBrokerId,
       paymentMode: paymentMode ?? this.paymentMode,
       selectedPaymentLabel: selectedPaymentLabel ?? this.selectedPaymentLabel,
     );
@@ -1301,28 +1316,28 @@ class VehicleOption {
 const vehicleOptions = <VehicleOption>[
   VehicleOption(
     label: 'Small truck',
-    capacity: '500 kg',
+    capacity: 'Up to 1 Ton',
     price: '₹899',
     accentColor: Color(0xFF2FA56E),
     assetPath: 'assets/trucks/small truck.png',
   ),
   VehicleOption(
     label: 'Medium truck',
-    capacity: '1.5 ton',
+    capacity: '1 - 5 Tons',
     price: '₹1,499',
     accentColor: Color(0xFF1F88C9),
     assetPath: 'assets/trucks/medium truck.png',
   ),
   VehicleOption(
     label: 'Big truck',
-    capacity: '3 ton',
+    capacity: '5 - 15 Tons',
     price: '₹2,299',
     accentColor: Color(0xFF7A5AF8),
     assetPath: 'assets/trucks/big truck.png',
   ),
   VehicleOption(
     label: 'Truck pooling',
-    capacity: 'Shared capacity',
+    capacity: 'Shared Space',
     price: '₹499',
     accentColor: Color(0xFFF59E0B),
     assetPath: 'assets/trucks/truck pooling.png',
@@ -1399,6 +1414,17 @@ String _vehiclePriceLabel({
 
 String _formatRupees(double amount) {
   return '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
+}
+
+String _formatDateTime(DateTime value) {
+  final hour12 = value.hour == 0
+      ? 12
+      : value.hour > 12
+      ? value.hour - 12
+      : value.hour;
+  final minute = value.minute.toString().padLeft(2, '0');
+  final period = value.hour >= 12 ? 'PM' : 'AM';
+  return '${value.day}/${value.month}/${value.year} at $hour12:$minute $period';
 }
 
 ClientTruckPricingTier? _intraCityTierForVehicle(
@@ -1694,20 +1720,6 @@ class PickupOtpBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LiveTruckLocation {
-  const _LiveTruckLocation({
-    required this.truckId,
-    required this.latitude,
-    required this.longitude,
-    this.lastLocationAt,
-  });
-
-  final String truckId;
-  final double latitude;
-  final double longitude;
-  final DateTime? lastLocationAt;
 }
 
 TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
@@ -2998,6 +3010,65 @@ enum _BookingFlowStep {
 
 enum _TruckAction { continueBooking, negotiate }
 
+enum BookingSearchMode { truck, broker }
+
+class _EligibleBroker {
+  const _EligibleBroker({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.serviceCity,
+    required this.isOnline,
+    required this.truckCount,
+  });
+
+  factory _EligibleBroker.fromJson(Map<String, dynamic> json) {
+    return _EligibleBroker(
+      id: _readString(json, const ['id', 'broker_id', 'uuid']),
+      name: _readString(json, const [
+        'name',
+        'broker_name',
+        'displayName',
+      ]).ifEmpty('Broker'),
+      phone: _readString(json, const ['phone', 'mobile', 'phone_number']),
+      serviceCity: _readString(json, const [
+        'serviceCity',
+        'service_city',
+        'city',
+      ]),
+      isOnline: _readBool(json['isOnline'] ?? json['is_online']),
+      truckCount: _readIntLoose(json['truckCount'] ?? json['truck_count']),
+    );
+  }
+
+  final String id;
+  final String name;
+  final String phone;
+  final String serviceCity;
+  final bool isOnline;
+  final int truckCount;
+}
+
+extension _EmptyStringFallback on String {
+  String ifEmpty(String fallback) => isEmpty ? fallback : this;
+}
+
+bool _readBool(Object? value) {
+  if (value is bool) return value;
+  final text = value?.toString().trim().toLowerCase();
+  return text == 'true' || text == '1' || text == 'yes';
+}
+
+int _readIntLoose(Object? value) {
+  if (value is num) return value.round();
+  return int.tryParse(value?.toString().trim() ?? '') ?? 0;
+}
+
+double _readNumberLoose(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString().trim() ?? '') ?? 0;
+}
+
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   static const LatLng _fallbackMapCenter = LatLng(19.0760, 72.8777);
 
@@ -3007,18 +3078,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _amountController;
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
-  late final AppSocketService _socketService;
   late final StateController<bool> _bottomNavVisibleController;
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
   BitmapDescriptor? _dropMarkerIcon;
-  StreamSubscription<TruckLocationEvent>? _truckLocationSubscription;
-  final Set<String> _trackedTruckIds = <String>{};
   List<LatLng> _brokerRoutePoints = const [];
   int _brokerRouteRequestToken = 0;
   String? _brokerRouteKey;
-  String? _truckTrackingSyncKey;
-  final Map<String, _LiveTruckLocation> _liveTruckLocations = {};
 
   _BookingFlowStep _step = _BookingFlowStep.location;
   NearbyTruck? _selectedTruck;
@@ -3030,7 +3096,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   String? _bookingReference;
   ClientBookingOffer? _driverRequest;
   String? _activeBookingId;
+  int _findTruckRequestCount = 0;
+  int _findTruckDeclinedCount = 0;
+  bool _findTruckNegotiationOpen = false;
   bool _postNegotiationPayment = false;
+  bool _loadingEligibleBrokers = false;
+  String? _eligibleBrokersError;
+  List<_EligibleBroker> _eligibleBrokers = const [];
+  String? _haltingNote;
   bool _weightUnknown = false;
   String? _weightError;
   late BookingData _draft;
@@ -3039,6 +3112,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   _MapPinTarget _mapPinTarget = _MapPinTarget.pickup;
   Position? _currentPosition;
   StreamSubscription<Position>? _positionSubscription;
+  Timer? _findTruckPollTimer;
+  StreamSubscription<Map<String, dynamic>>? _findTruckRequestSubscription;
   bool _locationStreamStarted = false;
 
   @override
@@ -3046,7 +3121,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     super.initState();
     _bottomNavVisibleController = ref.read(bottomNavVisibleProvider.notifier);
     _bottomNavVisibleController.state = false;
-    _socketService = ref.read(appSocketServiceProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadTruckMarkerIcon();
@@ -3106,37 +3180,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         }
       });
     }
-
-    _truckLocationSubscription = _socketService.truckLocationStream.listen((
-      event,
-    ) {
-      if (!mounted || !_trackedTruckIds.contains(event.truckId)) {
-        developer.log(
-          'Client flow ignored truck-location truckId=${event.truckId} mounted=$mounted tracked=${_trackedTruckIds.contains(event.truckId)}',
-          name: 'SSK.ClientFlow',
-        );
-        return;
-      }
-      developer.log(
-        'Client flow received truck-location truckId=${event.truckId} lat=${event.lat} lng=${event.lng}',
-        name: 'SSK.ClientFlow',
-      );
-      setState(() {
-        _liveTruckLocations[event.truckId] = _LiveTruckLocation(
-          truckId: event.truckId,
-          latitude: event.lat,
-          longitude: event.lng,
-          lastLocationAt: event.lastLocationAt,
-        );
-      });
-    });
   }
 
   @override
   void dispose() {
-    _truckLocationSubscription?.cancel();
     _positionSubscription?.cancel();
-    _socketService.clearTruckTrackingIds();
+    _findTruckPollTimer?.cancel();
+    _findTruckRequestSubscription?.cancel();
     _brokerMapController?.dispose();
     _fromController.dispose();
     _toController.dispose();
@@ -3367,69 +3417,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  void _scheduleTruckTrackingSync(List<NearbyTruck> trucks) {
-    final pickup = _pickupLatLng;
-    final shouldTrack =
-        _step == _BookingFlowStep.brokerSelection && pickup != null;
-    final nextKey = shouldTrack
-        ? '${pickup.latitude.toStringAsFixed(5)},'
-              '${pickup.longitude.toStringAsFixed(5)}|'
-              '${trucks.map((truck) => truck.id).join(',')}'
-        : 'off';
-
-    if (_truckTrackingSyncKey == nextKey) {
-      return;
-    }
-    _truckTrackingSyncKey = nextKey;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _truckTrackingSyncKey != nextKey) {
-        return;
-      }
-
-      if (shouldTrack) {
-        unawaited(_syncTruckTrackingRooms(trucks));
-      } else {
-        _clearTruckTrackingRooms();
-      }
-    });
-  }
-
-  Future<void> _syncTruckTrackingRooms(List<NearbyTruck> trucks) async {
-    final currentIds = trucks
-        .map((truck) => truck.id.trim())
-        .where((id) => id.isNotEmpty)
-        .toSet();
-    developer.log(
-      'Client flow syncing truck tracking count=${currentIds.length} ids=${currentIds.join(",")}',
-      name: 'SSK.ClientFlow',
-    );
-    _trackedTruckIds
-      ..clear()
-      ..addAll(currentIds);
-
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) {
-      return;
-    }
-
-    final socketService = ref.read(appSocketServiceProvider);
-    await socketService.ensureConnected(
-      accessToken: session.tokens.accessToken,
-    );
-    socketService.setTruckTrackingIds(currentIds);
-  }
-
-  void _clearTruckTrackingRooms() {
-    ref.read(appSocketServiceProvider).clearTruckTrackingIds();
-    _trackedTruckIds.clear();
-    _liveTruckLocations.clear();
-  }
-
-  void _reloadNearbyTrucks(NearbyTrucksQuery query) {
-    ref.invalidate(clientNearbyTrucksProvider(query));
-  }
-
   Future<void> _loadTruckMarkerIcon() async {
     try {
       final truck = await loadTruckMarkerIcon();
@@ -3617,6 +3604,334 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _selectedTruck = null;
       _step = _BookingFlowStep.brokerSelection;
     });
+    unawaited(_loadEligibleBrokers());
+  }
+
+  Future<void> _pickScheduledDateTime() async {
+    final now = DateTime.now();
+    final current =
+        _draft.scheduledDate != null && _draft.scheduledDate!.isAfter(now)
+        ? _draft.scheduledDate!
+        : now.add(const Duration(hours: 3));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 180)),
+    );
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (time == null || !mounted) return;
+
+    final scheduled = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (!scheduled.isAfter(now)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose a future pickup time.')),
+      );
+      return;
+    }
+    setState(() {
+      _draft = _draft.copyWith(isScheduled: true, scheduledDate: scheduled);
+    });
+  }
+
+  Future<void> _loadEligibleBrokers() async {
+    if (_loadingEligibleBrokers) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() {
+      _loadingEligibleBrokers = true;
+      _eligibleBrokersError = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getEligibleBrokers(
+            accessToken: session.tokens.accessToken,
+            city: _draft.city,
+          );
+      final brokers = _eligibleBrokersFromResponse(response);
+      if (!mounted) return;
+      setState(() {
+        _eligibleBrokers = brokers;
+        _loadingEligibleBrokers = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingEligibleBrokers = false;
+        _eligibleBrokersError = error.toString().replaceFirst(
+          'ApiException: ',
+          '',
+        );
+      });
+    }
+  }
+
+  List<_EligibleBroker> _eligibleBrokersFromResponse(
+    Map<String, dynamic> response,
+  ) {
+    Object? source = response['brokers'];
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      source = data['brokers'] ?? data['items'] ?? data['data'] ?? source;
+    }
+    if (source is! List) return const [];
+    return source
+        .whereType<Map<String, dynamic>>()
+        .map(_EligibleBroker.fromJson)
+        .where((broker) => broker.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  void _selectVehicleForSearchStep(int index) {
+    final vehicles = resolveVehicleOptions(
+      tripType: widget.tripType,
+      pricing: ref.read(clientPricingProvider).valueOrNull,
+      isLoading: ref.read(clientPricingProvider).isLoading,
+    );
+    if (vehicles.isEmpty) return;
+    final safeIndex = index.clamp(0, vehicles.length - 1).toInt();
+    final vehicle = vehicles[safeIndex];
+    setState(() {
+      _vehicleIndex = safeIndex;
+      _vehicle = vehicle;
+      _draft = _draft.copyWith(
+        vehicle: vehicle,
+        truckCategory: _truckCategoryForVehicle(vehicle.label),
+        amount: _priceValue(vehicle.price),
+      );
+      _amountController.text = _priceInputText(vehicle.price);
+      _selectedTruck = null;
+    });
+  }
+
+  void _continueWithSearchMode() {
+    final mode = _draft.searchMode ?? BookingSearchMode.truck;
+    if (mode == BookingSearchMode.broker &&
+        _draft.selectedBrokerId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose a broker to continue.')),
+      );
+      return;
+    }
+    setState(() {
+      _draft = _draft.copyWith(searchMode: mode);
+      _step = _BookingFlowStep.payment;
+    });
+  }
+
+  Future<void> _startFindTruckSearch() async {
+    if (_submitting || _bookingCreated) {
+      return;
+    }
+    if (!_validateScheduledDate()) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to create a booking.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _driverRequest = null;
+      _findTruckRequestCount = 0;
+      _findTruckDeclinedCount = 0;
+      _draft = _draft.copyWith(
+        searchMode: BookingSearchMode.truck,
+        selectedBrokerId: '',
+      );
+    });
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .createBooking(
+            accessToken: session.tokens.accessToken,
+            booking: _bookingPayload(),
+            idempotencyKey: _buildIdempotencyKey(),
+          );
+      final bookingNumber = _extractBookingNumber(response);
+      final bookingId = _extractBookingId(response);
+      final resolvedBookingNumber = bookingNumber.isNotEmpty
+          ? bookingNumber
+          : await _fetchLatestBookingNumber(session.tokens.accessToken);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _submitting = false;
+        _bookingCreated = true;
+        _bookingReference = resolvedBookingNumber;
+        _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
+        _postNegotiationPayment = false;
+        _step = _BookingFlowStep.waiting;
+      });
+
+      await _startFindTruckLiveUpdates(session.tokens.accessToken);
+      await _loadFindTruckDriverRequests(silent: false);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    }
+  }
+
+  Future<void> _startFindTruckLiveUpdates(String accessToken) async {
+    final bookingId = _activeBookingId;
+    if (bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: accessToken);
+
+    await _findTruckRequestSubscription?.cancel();
+    _findTruckRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final payloadMap = _payloadAsMapLoose(payload);
+      if (payloadMap == null) {
+        return;
+      }
+      final payloadBookingId = _readString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      if (payloadBookingId == bookingId || payloadBookingId.isEmpty) {
+        unawaited(_loadFindTruckDriverRequests(silent: true));
+      }
+    });
+
+    _findTruckPollTimer?.cancel();
+    _findTruckPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) {
+        unawaited(_loadFindTruckDriverRequests(silent: true));
+      }
+    });
+  }
+
+  Future<void> _loadFindTruckDriverRequests({required bool silent}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverRequestsForBooking(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+      final requests = _driverRequestsFromResponse(response);
+      final best = _bestFindTruckDriverRequest(requests);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _findTruckRequestCount = requests.length;
+        _findTruckDeclinedCount = requests
+            .where((request) => request.normalizedStatus == 'declined')
+            .length;
+        if (best != null) {
+          _driverRequest = best;
+        }
+      });
+
+      if (best != null && _shouldOpenFindTruckNegotiation(best)) {
+        unawaited(_openFindTruckNegotiation(best));
+      }
+    } catch (error) {
+      if (!mounted || silent) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    }
+  }
+
+  bool _shouldOpenFindTruckNegotiation(ClientBookingOffer request) {
+    if (_findTruckNegotiationOpen) {
+      return false;
+    }
+    if (request.normalizedStatus == 'declined' ||
+        request.normalizedStatus == 'expired') {
+      return false;
+    }
+    return request.isActionableByClient ||
+        request.normalizedStatus == 'accepted';
+  }
+
+  Future<void> _openFindTruckNegotiation(ClientBookingOffer request) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    _findTruckNegotiationOpen = true;
+    final outcome = await showModalBottomSheet<_FindTruckNegotiationResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FindTruckNegotiationSheet(
+        bookingId: bookingId,
+        bookingNumber: _bookingReference,
+        accessToken: session.tokens.accessToken,
+        initialRequest: request,
+        askingPrice: _draft.amount,
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    _findTruckNegotiationOpen = false;
+
+    if (outcome == _FindTruckNegotiationResult.payment) {
+      _findTruckPollTimer?.cancel();
+      await _findTruckRequestSubscription?.cancel();
+      setState(() {
+        _postNegotiationPayment = true;
+        _step = _BookingFlowStep.payment;
+      });
+      return;
+    }
+
+    await _loadFindTruckDriverRequests(silent: true);
   }
 
   Future<void> _next() async {
@@ -3813,6 +4128,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 14),
+              _buildTruckCategoryPicker(context),
               const SizedBox(height: 14),
               Row(
                 children: [
@@ -4171,14 +4488,47 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       final response = await ref
           .read(apiClientProvider)
           .estimatePricing(accessToken: accessToken, payload: payload);
+      if (mounted) {
+        setState(() {
+          _haltingNote = _haltingNoteFromQuote(response);
+        });
+      }
       return _readMoneyValue(response['data'], response);
     } catch (_) {
+      if (mounted) {
+        setState(() {
+          _haltingNote = null;
+        });
+      }
       return null;
     }
   }
 
+  String? _haltingNoteFromQuote(Map<String, dynamic> response) {
+    final data = response['data'];
+    final halting = data is Map<String, dynamic>
+        ? data['halting']
+        : response['halting'];
+    if (halting is! Map<String, dynamic>) {
+      return null;
+    }
+    final graceHours = _readNumberLoose(
+      halting['graceHours'] ?? halting['grace_hours'],
+    );
+    final rate = _readNumberLoose(
+      halting['ratePerHour'] ?? halting['rate_per_hour'],
+    );
+    if (graceHours <= 0 || rate <= 0) {
+      return null;
+    }
+    return 'Free halting: ${graceHours.toStringAsFixed(graceHours % 1 == 0 ? 0 : 1)}h, then ${_formatRupees(rate)}/hr.';
+  }
+
   Future<void> _submitBooking() async {
     if (_submitting || _bookingCreated) {
+      return;
+    }
+    if (!_validateScheduledDate()) {
       return;
     }
 
@@ -4301,6 +4651,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (session == null) {
       throw StateError('Please sign in again to create a booking.');
     }
+    if (!_validateScheduledDate()) {
+      throw StateError('Choose a future pickup time.');
+    }
 
     setState(() {
       _draft = _draft.copyWith(brokerId: truckId, amount: amount);
@@ -4350,8 +4703,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Map<String, dynamic> _bookingPayload() {
-    final scheduled =
-        _draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3));
+    final scheduled = _draft.isScheduled
+        ? (_draft.scheduledDate ?? DateTime.now().add(const Duration(hours: 3)))
+        : DateTime.now();
+    final mode = _draft.searchMode;
     return <String, dynamic>{
       'pickup_location': _draft.from,
       'pickup_lat': _draft.pickupLat ?? 0,
@@ -4372,12 +4727,40 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'weight_unit': _draft.weightUnit,
       'quantity': _draft.quantity,
       'material': _draft.material,
+      if (_draft.additionalNotes.trim().isNotEmpty)
+        'notes': _draft.additionalNotes.trim(),
       'transport_type': _draft.transportType,
       'scheduled_date': scheduled.toUtc().toIso8601String(),
+      if (_draft.isScheduled) 'is_scheduled': true,
+      if (mode == BookingSearchMode.truck) ...{
+        'search_mode': 'truck',
+        'search_radius_km': _draft.searchRadiusKm.clamp(0.5, 200).toDouble(),
+      },
+      if (mode == BookingSearchMode.broker) ...{
+        'search_mode': 'broker',
+        'broker_id': _draft.selectedBrokerId,
+      },
       'distance': _draft.distance,
+      if (_draft.durationMin != null) 'duration_min': _draft.durationMin,
+      if (_draft.durationInTrafficMin != null)
+        'duration_in_traffic_min': _draft.durationInTrafficMin,
       'amount': _draft.amount,
       'payment_status': 'pending',
     };
+  }
+
+  bool _validateScheduledDate() {
+    if (!_draft.isScheduled) {
+      return true;
+    }
+    final scheduled = _draft.scheduledDate;
+    if (scheduled == null || !scheduled.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose a future pickup time.')),
+      );
+      return false;
+    }
+    return true;
   }
 
   String _buildIdempotencyKey() {
@@ -4504,24 +4887,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
     });
 
-    final pickup = _pickupLatLng;
-    final nearbyTrucksQuery =
-        _step == _BookingFlowStep.brokerSelection && pickup != null
-        ? (
-            pickupLat: pickup.latitude,
-            pickupLng: pickup.longitude,
-            radiusKm: 25.0,
-            page: 1,
-            limit: 20,
-          )
-        : null;
-    final nearbyTrucksAsync =
-        _step == _BookingFlowStep.brokerSelection && pickup != null
-        ? ref.watch(clientNearbyTrucksProvider(nearbyTrucksQuery!))
-        : const AsyncValue<List<NearbyTruck>>.data(<NearbyTruck>[]);
-    final nearbyTrucks = nearbyTrucksAsync.valueOrNull ?? const <NearbyTruck>[];
-    _scheduleTruckTrackingSync(nearbyTrucks);
-
     final hideInitialAutoLocationFrame =
         widget.autoOpenLocationFlow &&
         !_autoLocationFlowStarted &&
@@ -4541,12 +4906,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _BookingFlowStep.brokerSelection => false,
       _BookingFlowStep.itemDetails => false,
     };
-    final bodyPadding = EdgeInsets.fromLTRB(
-      18,
-      12,
-      18,
-      _step == _BookingFlowStep.itemDetails ? 154 : 18,
-    );
+    final bodyPadding = _step == _BookingFlowStep.brokerSelection
+        ? EdgeInsets.zero
+        : EdgeInsets.fromLTRB(
+            18,
+            12,
+            18,
+            _step == _BookingFlowStep.itemDetails ? 154 : 18,
+          );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -4578,188 +4945,195 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 ),
               ),
             ),
-      body: SafeArea(
-        child: _step == _BookingFlowStep.itemDetails
-            ? Stack(
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: bodyPadding,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      if (_step == _BookingFlowStep.location ||
-                                          (_step ==
+      body: _step == _BookingFlowStep.brokerSelection
+          ? _buildBrokerSelectionMapSheetStep(context)
+          : SafeArea(
+              child: _step == _BookingFlowStep.itemDetails
+                  ? Stack(
+                      children: [
+                        Column(
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                padding: bodyPadding,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            if (_step ==
+                                                    _BookingFlowStep.location ||
+                                                (_step ==
+                                                        _BookingFlowStep
+                                                            .itemDetails &&
+                                                    widget.skipLocationStep)) {
+                                              Navigator.of(context).pop();
+                                              return;
+                                            }
+                                            setState(() {
+                                              _step = switch (_step) {
+                                                _BookingFlowStep.location =>
+                                                  _BookingFlowStep.location,
+                                                _BookingFlowStep.itemDetails =>
+                                                  _BookingFlowStep.location,
+                                                _BookingFlowStep
+                                                    .brokerSelection =>
+                                                  _BookingFlowStep.itemDetails,
+                                                _BookingFlowStep.payment =>
                                                   _BookingFlowStep
-                                                      .itemDetails &&
-                                              widget.skipLocationStep)) {
-                                        Navigator.of(context).pop();
-                                        return;
-                                      }
-                                      setState(() {
-                                        _step = switch (_step) {
-                                          _BookingFlowStep.location =>
-                                            _BookingFlowStep.location,
-                                          _BookingFlowStep.itemDetails =>
-                                            _BookingFlowStep.location,
-                                          _BookingFlowStep.brokerSelection =>
-                                            _BookingFlowStep.itemDetails,
-                                          _BookingFlowStep.payment =>
-                                            _BookingFlowStep.brokerSelection,
-                                          _BookingFlowStep.waiting =>
-                                            _BookingFlowStep.payment,
-                                        };
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(999),
-                                    child: const SizedBox(
-                                      width: 28,
-                                      height: 28,
-                                      child: Icon(
-                                        Icons.arrow_back_rounded,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    switch (_step) {
-                                      _BookingFlowStep.location => 'Location',
-                                      _BookingFlowStep.itemDetails => 'Weight',
-                                      _BookingFlowStep.brokerSelection =>
-                                        'Choose trucks',
-                                      _BookingFlowStep.payment => 'Payment',
-                                      _BookingFlowStep.waiting => 'Waiting',
-                                    },
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(
-                                          color: const Color(0xFF667085),
-                                          fontWeight: FontWeight.w700,
+                                                      .brokerSelection,
+                                                _BookingFlowStep.waiting =>
+                                                  _BookingFlowStep.payment,
+                                              };
+                                            });
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                          child: const SizedBox(
+                                            width: 28,
+                                            height: 28,
+                                            child: Icon(
+                                              Icons.arrow_back_rounded,
+                                              size: 18,
+                                            ),
+                                          ),
                                         ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              _buildCurrentStep(
-                                context,
-                                nearbyTrucks,
-                                nearbyTrucksAsync.isLoading,
-                                nearbyTrucksQuery,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 44,
-                    child: _buildWeightBottomActions(context),
-                  ),
-                ],
-              )
-            : Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: bodyPadding,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () {
-                                  if (_step == _BookingFlowStep.location ||
-                                      (_step == _BookingFlowStep.itemDetails &&
-                                          widget.skipLocationStep)) {
-                                    Navigator.of(context).pop();
-                                    return;
-                                  }
-                                  setState(() {
-                                    _step = switch (_step) {
-                                      _BookingFlowStep.location =>
-                                        _BookingFlowStep.location,
-                                      _BookingFlowStep.itemDetails =>
-                                        _BookingFlowStep.location,
-                                      _BookingFlowStep.brokerSelection =>
-                                        _BookingFlowStep.itemDetails,
-                                      _BookingFlowStep.payment =>
-                                        _BookingFlowStep.brokerSelection,
-                                      _BookingFlowStep.waiting =>
-                                        _BookingFlowStep.payment,
-                                    };
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(999),
-                                child: const SizedBox(
-                                  width: 28,
-                                  height: 28,
-                                  child: Icon(
-                                    Icons.arrow_back_rounded,
-                                    size: 18,
-                                  ),
+                                        const Spacer(),
+                                        Text(
+                                          switch (_step) {
+                                            _BookingFlowStep.location =>
+                                              'Location',
+                                            _BookingFlowStep.itemDetails =>
+                                              'Weight',
+                                            _BookingFlowStep.brokerSelection =>
+                                              'Choose trucks',
+                                            _BookingFlowStep.payment =>
+                                              'Payment',
+                                            _BookingFlowStep.waiting =>
+                                              'Waiting',
+                                          },
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.copyWith(
+                                                color: const Color(0xFF667085),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildCurrentStep(context),
+                                  ],
                                 ),
                               ),
-                              const Spacer(),
-                              Text(
-                                switch (_step) {
-                                  _BookingFlowStep.location => 'Location',
-                                  _BookingFlowStep.itemDetails => 'Weight',
-                                  _BookingFlowStep.brokerSelection =>
-                                    'Choose trucks',
-                                  _BookingFlowStep.payment => 'Payment',
-                                  _BookingFlowStep.waiting => 'Waiting',
-                                },
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 44,
+                          child: _buildWeightBottomActions(context),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: bodyPadding,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_step !=
+                                    _BookingFlowStep.brokerSelection) ...[
+                                  Row(
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          if (_step ==
+                                                  _BookingFlowStep.location ||
+                                              (_step ==
+                                                      _BookingFlowStep
+                                                          .itemDetails &&
+                                                  widget.skipLocationStep)) {
+                                            Navigator.of(context).pop();
+                                            return;
+                                          }
+                                          setState(() {
+                                            _step = switch (_step) {
+                                              _BookingFlowStep.location =>
+                                                _BookingFlowStep.location,
+                                              _BookingFlowStep.itemDetails =>
+                                                _BookingFlowStep.location,
+                                              _BookingFlowStep
+                                                  .brokerSelection =>
+                                                _BookingFlowStep.itemDetails,
+                                              _BookingFlowStep.payment =>
+                                                _BookingFlowStep
+                                                    .brokerSelection,
+                                              _BookingFlowStep.waiting =>
+                                                _BookingFlowStep.payment,
+                                            };
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        child: const SizedBox(
+                                          width: 28,
+                                          height: 28,
+                                          child: Icon(
+                                            Icons.arrow_back_rounded,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        switch (_step) {
+                                          _BookingFlowStep.location =>
+                                            'Location',
+                                          _BookingFlowStep.itemDetails =>
+                                            'Weight',
+                                          _BookingFlowStep.brokerSelection =>
+                                            'Choose trucks',
+                                          _BookingFlowStep.payment => 'Payment',
+                                          _BookingFlowStep.waiting => 'Waiting',
+                                        },
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              color: const Color(0xFF667085),
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                _buildCurrentStep(context),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          _buildCurrentStep(
-                            context,
-                            nearbyTrucks,
-                            nearbyTrucksAsync.isLoading,
-                            nearbyTrucksQuery,
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-      ),
+            ),
     );
   }
 
-  Widget _buildCurrentStep(
-    BuildContext context,
-    List<NearbyTruck> nearbyTrucks,
-    bool nearbyTrucksLoading,
-    NearbyTrucksQuery? nearbyTrucksQuery,
-  ) {
+  Widget _buildCurrentStep(BuildContext context) {
     return switch (_step) {
       _BookingFlowStep.location => _buildLocationStep(context),
       _BookingFlowStep.itemDetails => _buildItemDetailsStep(context),
-      _BookingFlowStep.brokerSelection => _buildBrokerSelectionStep(
+      _BookingFlowStep.brokerSelection => _buildBrokerSelectionMapSheetStep(
         context,
-        nearbyTrucks,
-        nearbyTrucksLoading,
-        nearbyTrucksQuery,
       ),
       _BookingFlowStep.payment =>
         _bookingCreated && !_postNegotiationPayment
@@ -4769,120 +5143,393 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     };
   }
 
-  Widget _buildBrokerSelectionStep(
-    BuildContext context,
-    List<NearbyTruck> nearbyTrucks,
-    bool nearbyTrucksLoading,
-    NearbyTrucksQuery? nearbyTrucksQuery,
-  ) {
-    final height = MediaQuery.sizeOf(context).height * 0.72;
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewPadding.bottom + 12,
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Tap a truck on the map to continue or negotiate.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF8F2),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFBFE7CC)),
-                    ),
-                    child: Text(
-                      _draft.tripType == TripType.interCity
-                          ? 'This is an inter-city booking'
-                          : 'This is an intra-city booking',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: const Color(0xFF2FA56E),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: nearbyTrucksQuery == null
-                        ? null
-                        : () => _reloadNearbyTrucks(nearbyTrucksQuery),
-                    icon: nearbyTrucksLoading
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh_rounded, size: 16),
-                    label: const Text('Reload'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF1F88C9),
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: height,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Stack(
-                    children: [
-                      _buildBrokerMap(context, nearbyTrucks),
-                      if (nearbyTrucksLoading)
-                        const Positioned.fill(
-                          child: IgnorePointer(
-                            child: ColoredBox(color: Color(0x0AFFFFFF)),
-                          ),
-                        ),
-                      Positioned(
-                        top: 16,
-                        left: 16,
-                        child: _MapHintPill(
-                          icon: Icons.local_shipping_rounded,
-                          label: 'Live trucks',
-                        ),
-                      ),
-                      if (_selectedTruck != null)
-                        Positioned(
-                          right: 16,
-                          bottom: 16,
-                          child: _MapHintPill(
-                            icon: Icons.touch_app_rounded,
-                            label: _selectedTruck!.displayTitle,
-                            accent: const Color(0xFF2FA56E),
-                          ),
-                        ),
-                    ],
+  Widget _buildBrokerSelectionMapSheetStep(BuildContext context) {
+    final mode = _draft.searchMode ?? BookingSearchMode.truck;
+    final openSheetSize = mode == BookingSearchMode.broker ? 0.62 : 0.46;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildBrokerMap(context, const <NearbyTruck>[]),
+        Positioned(
+          left: 16,
+          top: 0,
+          child: SafeArea(
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              elevation: 5,
+              shadowColor: Colors.black.withValues(alpha: 0.18),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => setState(() {
+                  _step = _BookingFlowStep.itemDetails;
+                }),
+                child: const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF0B1F3A),
+                    size: 23,
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
+        DraggableScrollableSheet(
+          initialChildSize: openSheetSize,
+          minChildSize: 0.15,
+          maxChildSize: openSheetSize,
+          snap: true,
+          snapSizes: [0.15, openSheetSize],
+          builder: (context, scrollController) {
+            return _SearchMethodSheet(
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.fromLTRB(
+                  14,
+                  0,
+                  14,
+                  MediaQuery.of(context).viewPadding.bottom + 10,
+                ),
+                children: [
+                  const _SheetDragHandle(),
+                  Text(
+                    'Choose Trucks',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: const Color(0xFF0B1F3A),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildTruckCategoryPicker(context),
+                  const SizedBox(height: 10),
+                  if (mode == BookingSearchMode.truck) ...[
+                    _buildFindTruckOptions(context),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                    const SizedBox(height: 10),
+                  ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SearchModeCard(
+                          selected: mode == BookingSearchMode.truck,
+                          icon: Icons.local_shipping_rounded,
+                          title: 'Find Truck',
+                          onTap: () {
+                            setState(() {
+                              _draft = _draft.copyWith(
+                                searchMode: BookingSearchMode.truck,
+                                selectedBrokerId: '',
+                              );
+                            });
+                            unawaited(_startFindTruckSearch());
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _SearchModeCard(
+                          selected: mode == BookingSearchMode.broker,
+                          icon: Icons.person_rounded,
+                          title: 'Search Broker',
+                          onTap: () {
+                            setState(() {
+                              _draft = _draft.copyWith(
+                                searchMode: BookingSearchMode.broker,
+                              );
+                            });
+                            unawaited(_loadEligibleBrokers());
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (mode == BookingSearchMode.broker) ...[
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                    const SizedBox(height: 10),
+                    _buildBrokerListOptions(context),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
+  // ignore: unused_element
+  Widget _buildBrokerSelectionStep(BuildContext context) {
+    final mode = _draft.searchMode ?? BookingSearchMode.truck;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sheetWidth = min(constraints.maxWidth, 680.0);
+        return Center(
+          child: SizedBox(
+            width: sheetWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(0),
+                        child: _buildBrokerMap(context, const <NearbyTruck>[]),
+                      ),
+                      Container(
+                        color: const Color(0xFF0B2545).withValues(alpha: 0.18),
+                      ),
+                    ],
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -22),
+                  child: _SearchMethodSheet(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 54,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD2DCEA),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Choose Trucks',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: const Color(0xFF0B1F3A),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0,
+                              ),
+                        ),
+                        const SizedBox(height: 14),
+                        _buildTruckCategoryPicker(context),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SearchModeCard(
+                                selected: mode == BookingSearchMode.truck,
+                                icon: Icons.local_shipping_rounded,
+                                title: 'Find Truck',
+                                onTap: () {
+                                  setState(() {
+                                    _draft = _draft.copyWith(
+                                      searchMode: BookingSearchMode.truck,
+                                      selectedBrokerId: '',
+                                    );
+                                  });
+                                  _continueWithSearchMode();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _SearchModeCard(
+                                selected: mode == BookingSearchMode.broker,
+                                icon: Icons.person_rounded,
+                                title: 'Search Broker',
+                                onTap: () {
+                                  setState(() {
+                                    _draft = _draft.copyWith(
+                                      searchMode: BookingSearchMode.broker,
+                                    );
+                                  });
+                                  unawaited(_loadEligibleBrokers());
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                        const SizedBox(height: 14),
+                        if (mode == BookingSearchMode.truck)
+                          _buildFindTruckOptions(context)
+                        else
+                          _buildBrokerListOptions(context),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFindTruckOptions(BuildContext context) {
+    final radius = _draft.searchRadiusKm.clamp(0.5, 200).toDouble();
+    final radiusText = radius.toStringAsFixed(radius % 1 == 0 ? 0 : 1);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.my_location_rounded,
+              color: Color(0xFF0B1F3A),
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Search Radius',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF0B1F3A),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF7EF),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$radiusText km',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: const Color(0xFF2FA56E),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: const Color(0xFF2FA56E),
+            inactiveTrackColor: const Color(0xFFE2E8F2),
+            thumbColor: const Color(0xFF2FA56E),
+            overlayColor: const Color(0xFF2FA56E).withValues(alpha: 0.12),
+            trackHeight: 4,
+          ),
+          child: Slider(
+            value: radius,
+            min: 0.5,
+            max: 200,
+            divisions: 399,
+            label: '$radiusText km',
+            onChanged: (value) {
+              setState(() {
+                _draft = _draft.copyWith(searchRadiusKm: value);
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTruckCategoryPicker(BuildContext context) {
+    final pricingState = ref.watch(clientPricingProvider);
+    final vehicles = resolveVehicleOptions(
+      tripType: widget.tripType,
+      pricing: pricingState.valueOrNull,
+      isLoading: pricingState.isLoading,
+    );
+    final selectedIndex = vehicles.isEmpty
+        ? 0
+        : _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 132,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = min(250.0, constraints.maxWidth * 0.66);
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                itemCount: vehicles.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final vehicle = vehicles[index];
+                  return SizedBox(
+                    width: cardWidth,
+                    child: _ChooseTruckCard(
+                      vehicle: vehicle,
+                      selected: selectedIndex == index,
+                      onTap: () => _selectVehicleForSearchStep(index),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrokerListOptions(BuildContext context) {
+    if (_loadingEligibleBrokers) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 28),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_eligibleBrokersError != null) {
+      return _InlineRetryCard(
+        message: _eligibleBrokersError!,
+        onRetry: _loadEligibleBrokers,
+      );
+    }
+    if (_eligibleBrokers.isEmpty) {
+      return _InlineRetryCard(
+        message: 'No eligible brokers found for this route yet.',
+        onRetry: _loadEligibleBrokers,
+      );
+    }
+    return Column(
+      children: _eligibleBrokers
+          .map(
+            (broker) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _EligibleBrokerTile(
+                broker: broker,
+                selected: _draft.selectedBrokerId == broker.id,
+                onTap: () {
+                  setState(() {
+                    _draft = _draft.copyWith(
+                      searchMode: BookingSearchMode.broker,
+                      selectedBrokerId: broker.id,
+                    );
+                  });
+                },
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  // ignore: unused_element
   Widget _buildBrokerMap(BuildContext context, List<NearbyTruck> trucks) {
     final cameraTarget = _brokerMapCenter();
     final markers = _buildBrokerMarkers(trucks);
@@ -4895,7 +5542,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return GoogleMap(
       initialCameraPosition: CameraPosition(
         target: cameraTarget,
-        zoom: pickup != null && drop != null ? 9.6 : 11.6,
+        zoom: pickup != null && drop != null ? 8.4 : 10.2,
       ),
       mapType: MapType.normal,
       markers: markers,
@@ -4923,9 +5570,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final markers = <Marker>{};
 
     for (final truck in trucks) {
-      final live = _liveTruckLocations[truck.id];
-      final latitude = live?.latitude ?? truck.currentLat;
-      final longitude = live?.longitude ?? truck.currentLng;
+      final latitude = truck.currentLat;
+      final longitude = truck.currentLng;
       if (latitude == 0 && longitude == 0) {
         continue;
       }
@@ -5011,7 +5657,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     try {
-      await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 56));
+      await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 34));
     } catch (_) {
       // The map can briefly reject bounds updates while the surface is still
       // settling. The next rebuild or route refresh will retry automatically.
@@ -5372,7 +6018,104 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               )
               .toList(growable: false),
         ),
+        const SizedBox(height: 18),
+        _buildScheduleSection(context),
       ],
+    );
+  }
+
+  Widget _buildScheduleSection(BuildContext context) {
+    final scheduled = _draft.scheduledDate;
+    final isLater = _draft.isScheduled;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE4EAF1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pickup time',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.flash_on_rounded, size: 16),
+                label: Text('Book Now'),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.schedule_rounded, size: 16),
+                label: Text('Book Later'),
+              ),
+            ],
+            selected: {isLater},
+            onSelectionChanged: (selection) {
+              final later = selection.first;
+              setState(() {
+                _draft = _draft.copyWith(
+                  isScheduled: later,
+                  scheduledDate: later
+                      ? (scheduled != null && scheduled.isAfter(DateTime.now())
+                            ? scheduled
+                            : DateTime.now().add(const Duration(hours: 3)))
+                      : scheduled,
+                );
+              });
+            },
+          ),
+          if (isLater) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _pickScheduledDateTime,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE4EAF1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_month_rounded,
+                      size: 18,
+                      color: Color(0xFF2FA56E),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        scheduled == null
+                            ? 'Choose date and time'
+                            : _formatDateTime(scheduled),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.edit_rounded, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -5424,19 +6167,32 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildPaymentStep(BuildContext context) {
-    return _CheckoutChoiceCard(
-      selectedMethod: _selectedPaymentMethod,
-      requiresAdvance: false,
-      advanceAmount: 0,
-      onSelect: (method) {
-        setState(() => _selectedPaymentMethod = method);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_haltingNote != null) ...[
+          _HaltingInfoCard(message: _haltingNote!),
+          const SizedBox(height: 12),
+        ],
+        _CheckoutChoiceCard(
+          selectedMethod: _selectedPaymentMethod,
+          requiresAdvance: false,
+          advanceAmount: 0,
+          onSelect: (method) {
+            setState(() => _selectedPaymentMethod = method);
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildSuccessStep(BuildContext context) {
     return _BookingSuccessCard(
       bookingReference: _bookingReference,
+      title: _draft.isScheduled ? 'Booking scheduled' : 'Booking confirmed',
+      message: _draft.isScheduled
+          ? 'We will notify drivers or brokers closer to your pickup time.'
+          : 'Your booking has been successfully placed.',
       onTrack: () => context.go('/client/tracking'),
       onHome: _goToClientHome,
     );
@@ -5446,6 +6202,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return _BookingWaitingCard(
       bookingReference: _bookingReference,
       driverRequest: _driverRequest,
+      requestCount: _findTruckRequestCount,
+      declinedCount: _findTruckDeclinedCount,
+      searchRadiusKm: _draft.searchRadiusKm,
       onTrack: () => context.go('/client/tracking'),
       onHome: _goToClientHome,
     );
@@ -5453,7 +6212,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   void _goToClientHome() {
     _bottomNavVisibleController.state = true;
-    _socketService.clearTruckTrackingIds();
     final router = GoRouter.of(context);
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
@@ -6587,10 +7345,12 @@ class _NegotiationActionButtons extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MapHintPill extends StatelessWidget {
   const _MapHintPill({
     required this.icon,
     required this.label,
+    // ignore: unused_element_parameter
     this.accent = const Color(0xFF101828),
   });
 
@@ -7055,11 +7815,15 @@ class _BookingSuccessCard extends StatelessWidget {
     required this.bookingReference,
     required this.onTrack,
     required this.onHome,
+    this.title = 'Booking confirmed',
+    this.message = 'Your booking has been successfully placed.',
   });
 
   final String? bookingReference;
   final VoidCallback onTrack;
   final VoidCallback onHome;
+  final String title;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
@@ -7097,7 +7861,7 @@ class _BookingSuccessCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            'Booking confirmed',
+            title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               color: const Color(0xFF101828),
@@ -7106,7 +7870,7 @@ class _BookingSuccessCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Your booking has been successfully placed.',
+            message,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
@@ -7648,6 +8412,447 @@ class _BookingSummaryCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchModeCard extends StatelessWidget {
+  const _SearchModeCard({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? Colors.white : const Color(0xFF0B1F3A);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(17),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2FA56E) : Colors.white,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFD4DEEC),
+            width: 1.4,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: foreground, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChooseTruckCard extends StatelessWidget {
+  const _ChooseTruckCard({
+    required this.vehicle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final VehicleOption vehicle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFD8E1ED),
+            width: selected ? 2 : 1.4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF36506F).withValues(alpha: 0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -6,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5F8ED),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF12B76A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Available',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF079455),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: SizedBox(
+                    height: 48,
+                    child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  vehicle.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF0B1F3A),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 4,
+                  children: [
+                    _TruckSpec(
+                      icon: Icons.scale_rounded,
+                      label: vehicle.capacity,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TruckSpec extends StatelessWidget {
+  const _TruckSpec({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: const Color(0xFF7D8AA0)),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: const Color(0xFF6A7890),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchMethodSheet extends StatelessWidget {
+  const _SearchMethodSheet({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 18,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SheetDragHandle extends StatelessWidget {
+  const _SheetDragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: Center(
+        child: Container(
+          width: 86,
+          height: 7,
+          decoration: BoxDecoration(
+            color: const Color(0xFFC8D3E1),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EligibleBrokerTile extends StatelessWidget {
+  const _EligibleBrokerTile({
+    required this.broker,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _EligibleBroker broker;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = broker.isOnline
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFF98A2B3);
+    final detailParts = <String>[
+      if (broker.phone.isNotEmpty) broker.phone,
+      if (broker.serviceCity.isNotEmpty) broker.serviceCity,
+    ];
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFEFF8F2) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE4EAF1),
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: selected
+                  ? const Color(0xFF2FA56E)
+                  : const Color(0xFFF1F5F9),
+              child: Icon(
+                Icons.business_center_rounded,
+                size: 19,
+                color: selected ? Colors.white : const Color(0xFF667085),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          broker.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF101828),
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          broker.isOnline ? 'Online' : 'Offline',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: statusColor,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detailParts.isEmpty
+                        ? 'Eligible broker'
+                        : detailParts.join('  |  '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${broker.truckCount} truck${broker.truckCount == 1 ? '' : 's'} available',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected
+                  ? const Color(0xFF2FA56E)
+                  : const Color(0xFF98A2B3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineRetryCard extends StatelessWidget {
+  const _InlineRetryCard({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4EAF1)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: Color(0xFF667085)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
+}
+
+class _HaltingInfoCard extends StatelessWidget {
+  const _HaltingInfoCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF2D58A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.timer_outlined, size: 20, color: Color(0xFFB88900)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF6F5200),
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
             ),
           ),
         ],

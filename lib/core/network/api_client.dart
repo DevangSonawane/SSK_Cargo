@@ -793,6 +793,22 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getDriverRequestsForBooking({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log(
+      'GET /api/bookings/$bookingId/driver-requests',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/driver-requests',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getBrokerSettlements({
     required String accessToken,
     int page = 1,
@@ -1034,6 +1050,23 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/bookings/$bookingId/offers',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getEligibleBrokers({
+    required String accessToken,
+    String? city,
+  }) async {
+    developer.log(
+      'GET /api/bookings/eligible-brokers city=$city',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/eligible-brokers',
+        queryParameters: {if (city != null && city.isNotEmpty) 'city': city},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
