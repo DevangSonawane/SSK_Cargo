@@ -112,6 +112,32 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> getBrokerProfile({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/broker/profile', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/broker/profile',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> updateBrokerServiceCity({
+    required String accessToken,
+    required String city,
+  }) async {
+    developer.log('PATCH /api/broker/service-city city=$city', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/broker/service-city',
+        data: {'service_city': city},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getTrackingDevices({
     required String accessToken,
   }) async {
@@ -1742,9 +1768,10 @@ class SskApiClient {
     required String email,
     String? phone,
     String? profileImage,
+    String? address,
   }) async {
     developer.log(
-      'PATCH /api/users/profile name=$name email=$email phoneSet=${phone != null && phone.isNotEmpty} profileImageSet=${profileImage != null && profileImage.isNotEmpty}',
+      'PATCH /api/users/profile name=$name email=$email phoneSet=${phone != null && phone.isNotEmpty} profileImageSet=${profileImage != null && profileImage.isNotEmpty} addressSet=${address != null && address.isNotEmpty}',
       name: 'SSK.API',
     );
     return _request(
@@ -1756,6 +1783,9 @@ class SskApiClient {
           if (phone != null && phone.isNotEmpty) 'phone': phone,
           if (profileImage != null && profileImage.isNotEmpty)
             'profile_image': profileImage,
+          ...address == null
+              ? const <String, dynamic>{}
+              : <String, dynamic>{'address': address},
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),

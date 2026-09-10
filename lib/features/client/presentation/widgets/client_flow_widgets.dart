@@ -3784,7 +3784,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingReference = resolvedBookingNumber;
         _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
         _postNegotiationPayment = false;
-        _step = _BookingFlowStep.waiting;
+        _step = _BookingFlowStep.brokerSelection;
       });
 
       await _startFindTruckLiveUpdates(session.tokens.accessToken);
@@ -5145,38 +5145,47 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildBrokerSelectionMapSheetStep(BuildContext context) {
     final mode = _draft.searchMode ?? BookingSearchMode.truck;
-    final openSheetSize = mode == BookingSearchMode.broker ? 0.62 : 0.46;
+    final isFindTruckSearching =
+        _bookingCreated &&
+        !_postNegotiationPayment &&
+        mode == BookingSearchMode.truck;
+    final openSheetSize = isFindTruckSearching
+        ? 0.42
+        : mode == BookingSearchMode.broker
+        ? 0.62
+        : 0.46;
     return Stack(
       fit: StackFit.expand,
       children: [
         _buildBrokerMap(context, const <NearbyTruck>[]),
-        Positioned(
-          left: 16,
-          top: 0,
-          child: SafeArea(
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 5,
-              shadowColor: Colors.black.withValues(alpha: 0.18),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () => setState(() {
-                  _step = _BookingFlowStep.itemDetails;
-                }),
-                child: const SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: Color(0xFF0B1F3A),
-                    size: 23,
+        if (!isFindTruckSearching)
+          Positioned(
+            left: 16,
+            top: 0,
+            child: SafeArea(
+              child: Material(
+                color: Colors.white,
+                shape: const CircleBorder(),
+                elevation: 5,
+                shadowColor: Colors.black.withValues(alpha: 0.18),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => setState(() {
+                    _step = _BookingFlowStep.itemDetails;
+                  }),
+                  child: const SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF0B1F3A),
+                      size: 23,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
         DraggableScrollableSheet(
           initialChildSize: openSheetSize,
           minChildSize: 0.15,
@@ -5193,68 +5202,83 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   14,
                   MediaQuery.of(context).viewPadding.bottom + 10,
                 ),
-                children: [
-                  const _SheetDragHandle(),
-                  Text(
-                    'Choose Trucks',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF0B1F3A),
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTruckCategoryPicker(context),
-                  const SizedBox(height: 10),
-                  if (mode == BookingSearchMode.truck) ...[
-                    _buildFindTruckOptions(context),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                    const SizedBox(height: 10),
-                  ],
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SearchModeCard(
-                          selected: mode == BookingSearchMode.truck,
-                          icon: Icons.local_shipping_rounded,
-                          title: 'Find Truck',
-                          onTap: () {
-                            setState(() {
-                              _draft = _draft.copyWith(
-                                searchMode: BookingSearchMode.truck,
-                                selectedBrokerId: '',
-                              );
-                            });
-                            unawaited(_startFindTruckSearch());
-                          },
+                children: isFindTruckSearching
+                    ? [
+                        const _SheetDragHandle(),
+                        _BookingWaitingCard(
+                          bookingReference: _bookingReference,
+                          driverRequest: _driverRequest,
+                          requestCount: _findTruckRequestCount,
+                          declinedCount: _findTruckDeclinedCount,
+                          searchRadiusKm: _draft.searchRadiusKm,
+                          showActions: false,
+                          onTrack: () => context.go('/client/tracking'),
+                          onHome: _goToClientHome,
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: _SearchModeCard(
-                          selected: mode == BookingSearchMode.broker,
-                          icon: Icons.person_rounded,
-                          title: 'Search Broker',
-                          onTap: () {
-                            setState(() {
-                              _draft = _draft.copyWith(
-                                searchMode: BookingSearchMode.broker,
-                              );
-                            });
-                            unawaited(_loadEligibleBrokers());
-                          },
+                      ]
+                    : [
+                        const _SheetDragHandle(),
+                        Text(
+                          'Choose Trucks',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: const Color(0xFF0B1F3A),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0,
+                              ),
                         ),
-                      ),
-                    ],
-                  ),
-                  if (mode == BookingSearchMode.broker) ...[
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                    const SizedBox(height: 10),
-                    _buildBrokerListOptions(context),
-                  ],
-                ],
+                        const SizedBox(height: 10),
+                        _buildTruckCategoryPicker(context),
+                        const SizedBox(height: 10),
+                        if (mode == BookingSearchMode.truck) ...[
+                          _buildFindTruckOptions(context),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                          const SizedBox(height: 10),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SearchModeCard(
+                                selected: mode == BookingSearchMode.truck,
+                                icon: Icons.local_shipping_rounded,
+                                title: 'Find Truck',
+                                onTap: () {
+                                  setState(() {
+                                    _draft = _draft.copyWith(
+                                      searchMode: BookingSearchMode.truck,
+                                      selectedBrokerId: '',
+                                    );
+                                  });
+                                  unawaited(_startFindTruckSearch());
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _SearchModeCard(
+                                selected: mode == BookingSearchMode.broker,
+                                icon: Icons.person_rounded,
+                                title: 'Search Broker',
+                                onTap: () {
+                                  setState(() {
+                                    _draft = _draft.copyWith(
+                                      searchMode: BookingSearchMode.broker,
+                                    );
+                                  });
+                                  unawaited(_loadEligibleBrokers());
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (mode == BookingSearchMode.broker) ...[
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                          const SizedBox(height: 10),
+                          _buildBrokerListOptions(context),
+                        ],
+                      ],
               ),
             );
           },
@@ -6349,6 +6373,8 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
 
 enum _DirectNegotiationStage { compose, waiting, payment, confirmed }
 
+enum _FindTruckNegotiationResult { dismissed, payment }
+
 class _DirectNegotiationOutcome {
   const _DirectNegotiationOutcome._(
     this.accepted,
@@ -7148,6 +7174,527 @@ class _BrokerNegotiationSheetState
   }
 }
 
+class _FindTruckNegotiationSheet extends ConsumerStatefulWidget {
+  const _FindTruckNegotiationSheet({
+    required this.bookingId,
+    required this.bookingNumber,
+    required this.accessToken,
+    required this.initialRequest,
+    required this.askingPrice,
+  });
+
+  final String bookingId;
+  final String? bookingNumber;
+  final String accessToken;
+  final ClientBookingOffer initialRequest;
+  final double askingPrice;
+
+  @override
+  ConsumerState<_FindTruckNegotiationSheet> createState() =>
+      _FindTruckNegotiationSheetState();
+}
+
+class _FindTruckNegotiationSheetState
+    extends ConsumerState<_FindTruckNegotiationSheet> {
+  static const Duration _refreshInterval = Duration(seconds: 4);
+
+  late ClientBookingOffer _request;
+  bool _busy = false;
+  bool _loading = false;
+  String? _errorMessage;
+  Timer? _pollTimer;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _request = widget.initialRequest;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (_request.normalizedStatus == 'accepted') {
+          Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+          return;
+        }
+        unawaited(_startLiveUpdates());
+        unawaited(_loadRequest(silent: true));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _driverRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: widget.accessToken);
+
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen((
+      payload,
+    ) {
+      final payloadMap = _payloadAsMapLoose(payload);
+      if (payloadMap == null) {
+        return;
+      }
+
+      final payloadBookingId = _readString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      final payloadRequestId = _readString(payloadMap, const [
+        'id',
+        'request_id',
+        'driver_request_id',
+      ]);
+      if (payloadBookingId == widget.bookingId ||
+          payloadRequestId == _request.id) {
+        unawaited(_loadRequest(silent: true));
+      }
+    });
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        unawaited(_loadRequest(silent: true));
+      }
+    });
+  }
+
+  Future<void> _loadRequest({required bool silent}) async {
+    if (_request.id.isEmpty) {
+      return;
+    }
+
+    try {
+      if (!silent) {
+        setState(() {
+          _loading = true;
+          _errorMessage = null;
+        });
+      }
+
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverRequestById(
+            accessToken: widget.accessToken,
+            id: _request.id,
+          );
+      final request = _extractDriverRequest(response);
+      if (!mounted || request == null) {
+        return;
+      }
+      setState(() {
+        _request = request;
+      });
+      if (request.normalizedStatus == 'accepted') {
+        Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+      }
+    } catch (_) {
+      if (!mounted || silent) {
+        return;
+      }
+      setState(() {
+        _errorMessage = 'Could not refresh the live driver offer.';
+      });
+    } finally {
+      if (mounted && !silent) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _acceptRequest() async {
+    if (_busy || _request.id.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .acceptDriverRequest(
+            accessToken: widget.accessToken,
+            id: _request.id,
+          );
+      if (!mounted) {
+        return;
+      }
+
+      final request = _extractDriverRequest(response);
+      if (request != null) {
+        _request = request;
+      }
+
+      final data = _payloadAsMapLoose(response['data']);
+      final booking = _payloadAsMapLoose(data?['booking']);
+      final accepted =
+          booking != null || _request.normalizedStatus == 'accepted';
+      if (accepted) {
+        Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+        return;
+      }
+
+      await _loadRequest(silent: false);
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _rejectRequest() async {
+    if (_busy || _request.id.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref
+          .read(apiClientProvider)
+          .rejectDriverRequest(
+            accessToken: widget.accessToken,
+            id: _request.id,
+          );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(_FindTruckNegotiationResult.dismissed);
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _counterRequest() async {
+    if (_busy || _request.id.isEmpty) {
+      return;
+    }
+
+    final initialText = _request.amountText.isNotEmpty
+        ? _request.amountText
+        : widget.askingPrice.toStringAsFixed(0);
+    final amountController = TextEditingController(text: initialText);
+    try {
+      final shouldSend = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Counter offer'),
+          content: TextField(
+            controller: amountController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Amount'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Send'),
+            ),
+          ],
+        ),
+      );
+      if (shouldSend != true) {
+        return;
+      }
+
+      final amount = _parsePrice(amountController.text);
+      if (amount <= 0) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+        return;
+      }
+
+      setState(() {
+        _busy = true;
+        _errorMessage = null;
+      });
+      await ref
+          .read(apiClientProvider)
+          .counterDriverRequest(
+            accessToken: widget.accessToken,
+            id: _request.id,
+            amount: amount,
+          );
+      if (mounted) {
+        await _loadRequest(silent: false);
+      }
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      amountController.dispose();
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final request = _request;
+    final driverName = request.brokerName.isNotEmpty
+        ? request.brokerName
+        : 'Driver';
+    final amountText = request.amountText.isNotEmpty
+        ? request.amountText
+        : _formatRupees(widget.askingPrice);
+    final title = request.normalizedStatus == 'accepted'
+        ? 'Driver accepted the request'
+        : request.isClientTurnToConfirm
+        ? 'Driver accepted - confirm now'
+        : request.isWaitingForCounterpartyConfirmation
+        ? 'Waiting for driver confirmation'
+        : request.isCountered
+        ? 'Counter offer received'
+        : 'Driver response received';
+    final body = request.isClientTurnToConfirm
+        ? 'The driver has committed to this booking. Confirm or decline to finish.'
+        : request.isWaitingForCounterpartyConfirmation
+        ? 'You accepted this offer. We are waiting for the driver to complete the handshake.'
+        : request.isCountered
+        ? 'Review the live counter offer and respond.'
+        : 'This request is updating live from the driver side.';
+    final canAct = request.isActionableByClient;
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.52,
+      minChildSize: 0.38,
+      maxChildSize: 0.78,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD0D5DD),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: const Color(0xFF101828),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            body,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF667085),
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(_FindTruckNegotiationResult.dismissed),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                if (widget.bookingNumber?.isNotEmpty == true) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Booking #${widget.bookingNumber}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEAF8F1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.local_shipping_rounded,
+                          color: Color(0xFF2FA56E),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              driverName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF101828),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Current offer: $amountText',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: const Color(0xFF667085)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_loading) ...[
+                  const SizedBox(height: 12),
+                  const LinearProgressIndicator(minHeight: 3),
+                ],
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFFB42318),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (canAct)
+                  _NegotiationActionButtons(
+                    acceptLabel: request.isClientTurnToConfirm
+                        ? 'Confirm'
+                        : 'Accept',
+                    canCounter: request.isCountered,
+                    isBusy: _busy,
+                    onAccept: _acceptRequest,
+                    onCounter: _counterRequest,
+                    onReject: _rejectRequest,
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Waiting for the next driver update...',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF667085),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _NegotiationSliderStep extends StatelessWidget {
   const _NegotiationSliderStep({
     required this.truck,
@@ -7915,27 +8462,37 @@ class _BookingWaitingCard extends StatelessWidget {
   const _BookingWaitingCard({
     required this.bookingReference,
     required this.driverRequest,
+    required this.requestCount,
+    required this.declinedCount,
+    required this.searchRadiusKm,
+    this.showActions = true,
     required this.onTrack,
     required this.onHome,
   });
 
   final String? bookingReference;
   final ClientBookingOffer? driverRequest;
+  final int requestCount;
+  final int declinedCount;
+  final double searchRadiusKm;
+  final bool showActions;
   final VoidCallback onTrack;
   final VoidCallback onHome;
 
   @override
   Widget build(BuildContext context) {
     final request = driverRequest;
-    final awaitingConfirmation = request?.isAwaitingConfirmation == true;
-    final yourTurn = request?.isClientTurnToConfirm == true;
+    final actionable = request?.isActionableByClient == true;
+    final waitingForDriverConfirmation =
+        request?.isWaitingForCounterpartyConfirmation == true;
+    final activeCount = (requestCount - declinedCount).clamp(0, requestCount);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
+        color: const Color(0xFFF7FBF9),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: const Color(0xFFE0EFE7)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -7945,29 +8502,42 @@ class _BookingWaitingCard extends StatelessWidget {
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FF),
+              color: const Color(0xFFEAF8F1),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1A73E8).withValues(alpha: 0.16),
+                  color: const Color(0xFF2FA56E).withValues(alpha: 0.16),
                   blurRadius: 18,
                   offset: const Offset(0, 10),
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.hourglass_top_rounded,
-              color: Color(0xFF1A73E8),
-              size: 52,
+            child: Stack(
+              alignment: Alignment.center,
+              children: const [
+                SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: Color(0xFF2FA56E),
+                  ),
+                ),
+                Icon(
+                  Icons.local_shipping_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 34,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 18),
           Text(
-            awaitingConfirmation
-                ? (yourTurn
-                      ? 'The broker accepted - confirm or decline'
-                      : 'Waiting for broker confirmation')
-                : 'Waiting for driver response',
+            actionable
+                ? 'Driver offer received'
+                : waitingForDriverConfirmation
+                ? 'Confirming with driver'
+                : 'Finding nearby trucks',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               color: const Color(0xFF101828),
@@ -7976,13 +8546,13 @@ class _BookingWaitingCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            request == null
-                ? 'Your booking request has been sent. We will update you as soon as the truck responds.'
-                : awaitingConfirmation
-                ? (yourTurn
-                      ? 'The broker already committed. Respond now to finish the booking.'
-                      : 'You already committed. Waiting for the broker to confirm.')
-                : 'Request sent to ${request.brokerName.isNotEmpty ? request.brokerName : 'the selected truck'}. Open tracking to review the live negotiation.',
+            actionable
+                ? 'Opening the live offer popup so you can accept, reject, or counter.'
+                : waitingForDriverConfirmation
+                ? 'You accepted the offer. We are waiting for the driver to complete the handshake.'
+                : requestCount > 0
+                ? 'Drivers inside ${searchRadiusKm.round()} km have been notified. We will show the offer popup when one responds.'
+                : 'Your booking is live. We are notifying drivers inside ${searchRadiusKm.round()} km.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
@@ -8015,7 +8585,7 @@ class _BookingWaitingCard extends StatelessWidget {
                   Text(
                     request.brokerName.isNotEmpty
                         ? request.brokerName
-                        : 'Selected truck',
+                        : 'Driver response',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF101828),
@@ -8023,15 +8593,13 @@ class _BookingWaitingCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    awaitingConfirmation
-                        ? (yourTurn
-                              ? 'The broker accepted. Confirm or decline to finish.'
-                              : 'Waiting for the broker to confirm your earlier acceptance.')
+                    waitingForDriverConfirmation
+                        ? 'Waiting for the driver to confirm your acceptance.'
                         : request.isCountered
-                        ? 'Driver countered. Tracking will show the next action.'
+                        ? 'Driver sent a counter offer.'
                         : request.driverTimedOut
-                        ? 'Driver timed out. The broker can take over now.'
-                        : 'Waiting on the driver to respond.',
+                        ? 'Driver response timed out.'
+                        : 'Latest amount: ${request.amountText}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF667085),
                     ),
@@ -8040,24 +8608,65 @@ class _BookingWaitingCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: onTrack,
-                  child: const Text('Open tracking'),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE0EFE7)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.radar_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 20,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onHome,
-                  child: const Text('Go to home'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    requestCount == 0
+                        ? 'Searching live'
+                        : '$activeCount active request${activeCount == 1 ? '' : 's'} nearby',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF344054),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                if (declinedCount > 0)
+                  Text(
+                    '$declinedCount declined',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
           ),
+          if (showActions) ...[
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onTrack,
+                    child: const Text('Open tracking'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onHome,
+                    child: const Text('Go to home'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -8178,6 +8787,22 @@ double? _readBookingCoordinate(Map<String, dynamic> raw, List<String> keys) {
 String _extractBookingNumber(Map<String, dynamic> json) {
   final data = json['data'];
   if (data is Map<String, dynamic>) {
+    final booking = data['booking'];
+    if (booking is Map<String, dynamic>) {
+      for (final key in [
+        'booking_number',
+        'bookingNumber',
+        'booking_no',
+        'bookingNo',
+        'booking_ref',
+        'booking_reference',
+        'reference',
+        'tracking_number',
+      ]) {
+        final value = booking[key]?.toString().trim();
+        if (value != null && value.isNotEmpty) return value;
+      }
+    }
     for (final key in [
       'booking_number',
       'bookingNumber',
@@ -8258,6 +8883,94 @@ ClientBookingOffer? _extractDriverRequest(Map<String, dynamic> json) {
   }
 
   return null;
+}
+
+Map<String, dynamic>? _payloadAsMapLoose(Object? payload) {
+  if (payload is Map<String, dynamic>) {
+    return payload;
+  }
+  if (payload is Map) {
+    return payload.cast<String, dynamic>();
+  }
+  return null;
+}
+
+List<ClientBookingOffer> _driverRequestsFromResponse(
+  Map<String, dynamic> response,
+) {
+  final data = _payloadAsMapLoose(response['data']);
+  final roots = <Object?>[
+    data?['requests'],
+    data?['driverRequests'],
+    data?['driver_requests'],
+    data?['items'],
+    data?['results'],
+    data,
+    response['requests'],
+    response['driverRequests'],
+    response['driver_requests'],
+    response,
+  ];
+
+  for (final root in roots) {
+    if (root is List) {
+      return root
+          .whereType<Object>()
+          .map(_payloadAsMapLoose)
+          .whereType<Map<String, dynamic>>()
+          .where((item) => item.containsKey('id') || item.containsKey('status'))
+          .map(ClientBookingOffer.fromJson)
+          .toList();
+    }
+  }
+
+  final single = _extractDriverRequest(response);
+  return single == null ? const [] : [single];
+}
+
+ClientBookingOffer? _bestFindTruckDriverRequest(
+  List<ClientBookingOffer> requests,
+) {
+  final active =
+      requests
+          .where(
+            (request) =>
+                request.normalizedStatus != 'declined' &&
+                request.normalizedStatus != 'expired',
+          )
+          .toList()
+        ..sort((a, b) {
+          final rankCompare = _findTruckRequestRank(
+            b,
+          ).compareTo(_findTruckRequestRank(a));
+          if (rankCompare != 0) {
+            return rankCompare;
+          }
+          final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+
+  if (active.isEmpty) {
+    return null;
+  }
+  final best = active.first;
+  return _findTruckRequestRank(best) >= 2 ? best : null;
+}
+
+int _findTruckRequestRank(ClientBookingOffer request) {
+  switch (request.normalizedStatus) {
+    case 'accepted':
+      return 4;
+    case 'awaiting_confirmation':
+      return 3;
+    case 'countered':
+      return 2;
+    case 'pending':
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 class _BookingSummaryCard extends StatelessWidget {

@@ -130,25 +130,39 @@ class AppSocketService {
         );
       }
     });
-    socket.on('driver-request-updated', (payload) {
+    void handleDriverRequestEvent(String eventName, Object? payload) {
       developer.log(
-        'Shared websocket driver-request-updated payload: $payload',
+        'Shared websocket $eventName payload: $payload',
         name: 'SSK.Socket',
       );
       final event = _parseDriverRequestPayload(payload);
       if (event != null && !_driverRequestController.isClosed) {
         _driverRequestController.add(event);
       }
-    });
-    socket.on('job-request-updated', (payload) {
+    }
+
+    void handleJobRequestEvent(String eventName, Object? payload) {
       developer.log(
-        'Shared websocket job-request-updated payload: $payload',
+        'Shared websocket $eventName payload: $payload',
         name: 'SSK.Socket',
       );
       final event = _parseDriverRequestPayload(payload);
       if (event != null && !_jobRequestController.isClosed) {
         _jobRequestController.add(event);
       }
+    }
+
+    socket.on('driver-request-created', (payload) {
+      handleDriverRequestEvent('driver-request-created', payload);
+    });
+    socket.on('driver-request-updated', (payload) {
+      handleDriverRequestEvent('driver-request-updated', payload);
+    });
+    socket.on('job-request-created', (payload) {
+      handleJobRequestEvent('job-request-created', payload);
+    });
+    socket.on('job-request-updated', (payload) {
+      handleJobRequestEvent('job-request-updated', payload);
     });
     socket.on('booking-payment-updated', (payload) {
       developer.log(

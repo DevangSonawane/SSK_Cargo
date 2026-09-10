@@ -24,6 +24,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _serviceCityController = TextEditingController();
   final _picker = ImagePicker();
 
   bool _loading = true;
@@ -33,6 +35,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   String _originalName = '';
   String _originalEmail = '';
   String _originalPhone = '';
+  String _originalAddress = '';
+  String _originalServiceCity = '';
   String? _originalProfileImage;
   Uint8List? _pickedAvatarBytes;
   String? _pickedAvatarDataUrl;
@@ -48,6 +52,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
+    _serviceCityController.dispose();
     super.dispose();
   }
 
@@ -55,8 +61,17 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     final nameChanged = _nameController.text.trim() != _originalName.trim();
     final emailChanged = _emailController.text.trim() != _originalEmail.trim();
     final phoneChanged = _phoneController.text.trim() != _originalPhone.trim();
+    final addressChanged =
+        _addressController.text.trim() != _originalAddress.trim();
+    final serviceCityChanged =
+        _serviceCityController.text.trim() != _originalServiceCity.trim();
     final imageChanged = _pickedAvatarBytes != null;
-    return nameChanged || emailChanged || phoneChanged || imageChanged;
+    return nameChanged ||
+        emailChanged ||
+        phoneChanged ||
+        addressChanged ||
+        serviceCityChanged ||
+        imageChanged;
   }
 
   String _mimeTypeForName(String name) {
@@ -80,16 +95,45 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       _originalName = user.displayName;
       _originalEmail = user.email ?? '';
       _originalPhone = user.phone;
+      _originalAddress = user.address;
       _originalProfileImage = user.profileImage;
       _nameController.text = _originalName;
       _emailController.text = _originalEmail;
       _phoneController.text = _originalPhone;
+      _addressController.text = _originalAddress;
+      if (user.role.toLowerCase() == 'broker') {
+        await _loadBrokerProfile(session.tokens.accessToken);
+      }
     } catch (error) {
       _errorMessage = error.toString();
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
+    }
+  }
+
+  Future<void> _loadBrokerProfile(String accessToken) async {
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBrokerProfile(accessToken: accessToken);
+      final data = _asMap(response['data']);
+      final profile = _asMap(data['profile']).isNotEmpty
+          ? _asMap(data['profile'])
+          : data;
+      final serviceCity = _readString(profile, const [
+        'serviceCity',
+        'service_city',
+        'city',
+      ]);
+      _originalServiceCity = serviceCity;
+      _serviceCityController.text = serviceCity;
+    } catch (error) {
+      developer.log(
+        'Broker profile extras unavailable: $error',
+        name: 'SSK.Auth',
+      );
     }
   }
 
@@ -135,7 +179,17 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                 ? null
                 : _phoneController.text.trim(),
             profileImage: _pickedAvatarDataUrl ?? _originalProfileImage,
+            address: _addressController.text.trim(),
           );
+      if (saved.user.role.toLowerCase() == 'broker') {
+        final city = _serviceCityController.text.trim();
+        await ref
+            .read(apiClientProvider)
+            .updateBrokerServiceCity(
+              accessToken: saved.tokens.accessToken,
+              city: city,
+            );
+      }
 
       if (!mounted) return;
 
@@ -143,10 +197,13 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         _originalName = saved.user.displayName;
         _originalEmail = saved.user.email ?? '';
         _originalPhone = saved.user.phone;
+        _originalAddress = saved.user.address;
+        _originalServiceCity = _serviceCityController.text.trim();
         _originalProfileImage = saved.user.profileImage;
         _nameController.text = _originalName;
         _emailController.text = _originalEmail;
         _phoneController.text = _originalPhone;
+        _addressController.text = _originalAddress;
         _pickedAvatarBytes = null;
         _pickedAvatarDataUrl = null;
       });
@@ -184,6 +241,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
+    final isBroker = user?.role.toLowerCase() == 'broker';
     final profileImage = _pickedAvatarBytes != null
         ? null
         : (_originalProfileImage ?? user?.profileImage);
@@ -328,6 +386,34 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                     icon: Icons.phone_rounded,
                                   ).copyWith(helperText: 'Optional'),
                                 ),
+                                if (isBroker) ...[
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _addressController,
+                                    minLines: 2,
+                                    maxLines: 4,
+                                    decoration: _accountFieldDecoration(
+                                      labelText: 'Business address',
+                                      icon: Icons.location_on_rounded,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _serviceCityController,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    decoration: _accountFieldDecoration(
+                                      labelText: 'Service city',
+                                      icon: Icons.location_city_rounded,
+                                    ),
+                                    validator: (value) {
+                                      if ((value ?? '').trim().isEmpty) {
+                                        return 'Enter the city you serve';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -546,4 +632,24 @@ class _DetailRow extends StatelessWidget {
       ),
     );
   }
+}
+
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.cast<String, dynamic>();
+  }
+  return <String, dynamic>{};
+}
+
+String _readString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
 }

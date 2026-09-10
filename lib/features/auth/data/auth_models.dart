@@ -9,6 +9,7 @@ class SskUser {
     required this.isPhoneVerified,
     required this.isEmailVerified,
     required this.profileImage,
+    required this.address,
     required this.lastLoginAt,
     required this.createdAt,
     required this.updatedAt,
@@ -25,6 +26,7 @@ class SskUser {
       isPhoneVerified: json['is_phone_verified'] == true,
       isEmailVerified: json['is_email_verified'] == true,
       profileImage: json['profile_image']?.toString(),
+      address: json['address']?.toString() ?? '',
       lastLoginAt: _parseDateTime(json['last_login_at']),
       createdAt: _parseDateTime(json['created_at']),
       updatedAt: _parseDateTime(json['updated_at']),
@@ -40,6 +42,7 @@ class SskUser {
   final bool isPhoneVerified;
   final bool isEmailVerified;
   final String? profileImage;
+  final String address;
   final DateTime? lastLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;

@@ -159,6 +159,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String email,
     String? phone,
     String? profileImage,
+    String? address,
   }) async {
     final currentSession = session;
     if (currentSession == null) {
@@ -171,6 +172,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       email: email,
       phone: phone,
       profileImage: profileImage,
+      address: address,
     );
     final updated = AuthSession.fromProfileResponse(
       profile: response,
