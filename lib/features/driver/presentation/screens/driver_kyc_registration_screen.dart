@@ -613,7 +613,7 @@ class _DriverKycRegistrationScreenState
               Positioned(
                 left: lineInset,
                 right: lineInset,
-                    top: 22,
+                top: 22,
                 child: Row(
                   children: [
                     for (var i = 0; i < _stepLabels.length - 1; i++) ...[
@@ -2036,46 +2036,6 @@ class _ReviewDocumentRow extends StatelessWidget {
           _MiniIconButton(icon: Icons.swap_horiz_rounded, onPressed: onReplace),
         ],
       ),
-    );
-  }
-}
-
-class _StatusInfoRow extends StatelessWidget {
-  const _StatusInfoRow({
-    required this.label,
-    required this.value,
-    required this.valueColor,
-  });
-
-  final String label;
-  final String value;
-  final Color valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: valueColor,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -184,17 +184,6 @@ class _BrokerRequestDetailScreenState
     );
   }
 
-  String get _driverRequestCountdownValue {
-    final remaining = _driverRequestRemainingWindow;
-    if (_driverRequest == null || remaining == null) {
-      return '—';
-    }
-    if (remaining <= Duration.zero) {
-      return 'Any moment now';
-    }
-    return formatCountdown(remaining);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -1141,8 +1130,11 @@ class _BrokerRequestDetailScreenState
     );
     final trucksAsync = ref.watch(brokerVehiclesProvider);
     final requestVisual = _detailRequestStatusVisual(_normalizedStatus);
-    final isDeclined = const {'declined', 'rejected', 'expired'}
-        .contains(_normalizedStatus);
+    final isDeclined = const {
+      'declined',
+      'rejected',
+      'expired',
+    }.contains(_normalizedStatus);
     final topAmount = _isDriverNegotiation ? _valueText : _request.value;
 
     return Scaffold(
@@ -1164,10 +1156,7 @@ class _BrokerRequestDetailScreenState
                 value: 'refresh',
                 child: Text('Refresh'),
               ),
-              const PopupMenuItem<String>(
-                value: 'close',
-                child: Text('Close'),
-              ),
+              const PopupMenuItem<String>(value: 'close', child: Text('Close')),
             ],
           ),
         ],
@@ -1208,9 +1197,8 @@ class _BrokerRequestDetailScreenState
                         const SizedBox(height: 4),
                         Text(
                           _requestNumberText,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF667085),
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: const Color(0xFF667085)),
                         ),
                       ],
                     ),
@@ -1244,8 +1232,8 @@ class _BrokerRequestDetailScreenState
                   ? 'Declined - no longer available'
                   : _isDriverNegotiation
                   ? (_driverRequest!.driverTimedOut
-                      ? 'Broker handoff active'
-                      : _driverRequestCountdownText)
+                        ? 'Broker handoff active'
+                        : _driverRequestCountdownText)
                   : 'Request still in progress',
             ),
             const SizedBox(height: 14),
@@ -1285,7 +1273,7 @@ class _BrokerRequestDetailScreenState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            '${_weightText} • ${_vehicleText}',
+                            '$_weightText • $_vehicleText',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: const Color(0xFF0F172A),
@@ -1317,11 +1305,11 @@ class _BrokerRequestDetailScreenState
                     label: 'Requested By',
                     value: _isDriverNegotiation
                         ? (_driverRequest!.clientName.isEmpty
-                            ? 'Customer'
-                            : _driverRequest!.clientName)
+                              ? 'Customer'
+                              : _driverRequest!.clientName)
                         : (_request.clientName.isEmpty
-                            ? 'Customer'
-                            : _request.clientName),
+                              ? 'Customer'
+                              : _request.clientName),
                   ),
                   const SizedBox(height: 18),
                   _OverviewRow(
@@ -1329,11 +1317,11 @@ class _BrokerRequestDetailScreenState
                     label: 'Load Type',
                     value: _isDriverNegotiation
                         ? (_driverRequest!.truckCategory.isEmpty
-                            ? 'General'
-                            : _driverRequest!.truckCategory)
+                              ? 'General'
+                              : _driverRequest!.truckCategory)
                         : (_request.productName.isEmpty
-                            ? 'General'
-                            : _request.productName),
+                              ? 'General'
+                              : _request.productName),
                   ),
                   const SizedBox(height: 18),
                   _OverviewRow(
@@ -1375,9 +1363,7 @@ class _BrokerRequestDetailScreenState
               ),
             ),
             const SizedBox(height: 14),
-            _HelpCard(
-              onPressed: () => context.push('/broker/notifications'),
-            ),
+            _HelpCard(onPressed: () => context.push('/broker/notifications')),
             const SizedBox(height: 14),
             if (_isDriverNegotiation)
               _buildDriverNegotiationCard(context)
@@ -1450,265 +1436,6 @@ class _BrokerRequestDetailScreenState
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Request review'),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _titleText,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF101828),
-                              ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _isDriverNegotiation
-                              ? const Color(0xFFFFF4E5)
-                              : const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          _valueText,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: _isDriverNegotiation
-                                    ? const Color(0xFFB54708)
-                                    : const Color(0xFF1F88C9),
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _requestNumberText,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  if (_isDriverNegotiation) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _driverRequest!.driverTimedOut
-                            ? const Color(0xFFFFF7ED)
-                            : const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: _driverRequest!.driverTimedOut
-                              ? const Color(0xFFFECF9E)
-                              : const Color(0xFFB7D7F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _driverRequest!.driverTimedOut
-                                ? Icons.schedule_rounded
-                                : Icons.timer_outlined,
-                            color: _driverRequest!.driverTimedOut
-                                ? const Color(0xFFB54708)
-                                : const Color(0xFF1F88C9),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _driverRequest!.driverTimedOut
-                                      ? 'Broker handoff active'
-                                      : 'Driver response window',
-                                  style: Theme.of(context).textTheme.titleSmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: _driverRequest!.driverTimedOut
-                                            ? const Color(0xFFB54708)
-                                            : const Color(0xFF101828),
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _driverRequestCountdownText,
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: _driverRequest!.driverTimedOut
-                                            ? const Color(0xFF9A5B13)
-                                            : const Color(0xFF406B8F),
-                                        height: 1.35,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            _driverRequestCountdownValue,
-                            style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: _driverRequest!.driverTimedOut
-                                      ? const Color(0xFF9A5B13)
-                                      : const Color(0xFF1F88C9),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _driverRequest!.driverTimedOut
-                            ? const Color(0xFFFFF7ED)
-                            : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: _driverRequest!.driverTimedOut
-                              ? const Color(0xFFFECF9E)
-                              : const Color(0xFFE8EDF2),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _statusText,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: _driverRequest!.driverTimedOut
-                                      ? const Color(0xFFB54708)
-                                      : const Color(0xFF101828),
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Driver: ${_driverRequest!.driverName.isEmpty ? 'Unavailable' : _driverRequest!.driverName}',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF344054)),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Truck: ${_driverRequest!.truckType.isEmpty ? 'Truck' : _driverRequest!.truckType}${_driverRequest!.truckReg.isEmpty ? '' : ' • ${_driverRequest!.truckReg}'}',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF344054)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  _SummaryRow(label: 'Pickup', value: _pickupText),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Drop-off', value: _dropText),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Vehicle', value: _vehicleText),
-                  const SizedBox(height: 10),
-                  _SummaryRow(label: 'Weight', value: _weightText),
-                  if (_isDriverNegotiation) ...[
-                    const SizedBox(height: 10),
-                    _SummaryRow(
-                      label: 'Broker',
-                      value: _driverRequest!.brokerName.isNotEmpty
-                          ? _driverRequest!.brokerName
-                          : 'Broker handoff active',
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (_isDriverNegotiation)
-              _buildDriverNegotiationCard(context)
-            else if (_isWaitingForClientConfirmation)
-              _buildJobAwaitingConfirmationCard(context)
-            else if (_isPendingJobRequest)
-              driversAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 18),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (error, _) => Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFE8EDF2)),
-                  ),
-                  child: Text(
-                    error.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(color: Color(0xFFE23A4B)),
-                  ),
-                ),
-                data: (drivers) {
-                  return trucksAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 18),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                    error: (error, _) => Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE8EDF2)),
-                      ),
-                      child: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
-                        style: const TextStyle(color: Color(0xFFE23A4B)),
-                      ),
-                    ),
-                    data: (trucks) =>
-                        _buildJobAssignmentCard(context, drivers, trucks),
-                  );
-                },
-              )
-            else
-              _buildFinalStateCard(context),
           ],
         ),
       ),
@@ -1789,11 +1516,7 @@ class _StatusBanner extends StatelessWidget {
               color: visual.textColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              visual.icon,
-              color: Colors.white,
-              size: 26,
-            ),
+            child: Icon(visual.icon, color: Colors.white, size: 26),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1905,9 +1628,9 @@ class _OverviewRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
           ),
         ),
         const SizedBox(width: 12),
@@ -1936,16 +1659,19 @@ class _TimelineStack extends StatelessWidget {
     if (entries.isEmpty) {
       return Text(
         'No timeline items available.',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: const Color(0xFF667085),
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
       );
     }
 
     return Column(
       children: [
         for (var index = 0; index < entries.length; index++) ...[
-          _TimelineEntryRow(entry: entries[index], isLast: index == entries.length - 1),
+          _TimelineEntryRow(
+            entry: entries[index],
+            isLast: index == entries.length - 1,
+          ),
           if (index != entries.length - 1) const SizedBox(height: 12),
         ],
       ],
@@ -1970,10 +1696,7 @@ class _TimelineEntry {
 }
 
 class _TimelineEntryRow extends StatelessWidget {
-  const _TimelineEntryRow({
-    required this.entry,
-    required this.isLast,
-  });
+  const _TimelineEntryRow({required this.entry, required this.isLast});
 
   final _TimelineEntry entry;
   final bool isLast;

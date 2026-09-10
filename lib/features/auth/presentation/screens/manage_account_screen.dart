@@ -127,6 +127,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         'service_city',
         'city',
       ]);
+      if (!mounted) {
+        return;
+      }
       _originalServiceCity = serviceCity;
       _serviceCityController.text = serviceCity;
     } catch (error) {
@@ -197,7 +200,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         _originalName = saved.user.displayName;
         _originalEmail = saved.user.email ?? '';
         _originalPhone = saved.user.phone;
-        _originalAddress = saved.user.address;
+        _originalAddress = _addressController.text.trim();
         _originalServiceCity = _serviceCityController.text.trim();
         _originalProfileImage = saved.user.profileImage;
         _nameController.text = _originalName;

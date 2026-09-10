@@ -3099,6 +3099,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   int _findTruckRequestCount = 0;
   int _findTruckDeclinedCount = 0;
   bool _findTruckNegotiationOpen = false;
+  bool _cancellingFindTruckSearch = false;
   bool _postNegotiationPayment = false;
   bool _loadingEligibleBrokers = false;
   String? _eligibleBrokersError;
@@ -3761,11 +3762,34 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
 
     try {
+      final hasCoordinates = await _ensureFindTruckCoordinates();
+      if (!hasCoordinates) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _submitting = false;
+        });
+        return;
+      }
+
+      final bookingPayload = _bookingPayload();
+      debugPrint(
+        'SSK.ClientBooking FindTruck payload '
+        'search_mode=${bookingPayload['search_mode']} '
+        'broker_id=${bookingPayload['broker_id']} '
+        'search_radius_km=${bookingPayload['search_radius_km']} '
+        'pickup_lat=${bookingPayload['pickup_lat']} '
+        'pickup_lng=${bookingPayload['pickup_lng']} '
+        'drop_lat=${bookingPayload['drop_lat']} '
+        'drop_lng=${bookingPayload['drop_lng']}',
+      );
+
       final response = await ref
           .read(apiClientProvider)
           .createBooking(
             accessToken: session.tokens.accessToken,
-            booking: _bookingPayload(),
+            booking: bookingPayload,
             idempotencyKey: _buildIdempotencyKey(),
           );
       final bookingNumber = _extractBookingNumber(response);
@@ -3802,6 +3826,45 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ),
       );
     }
+  }
+
+  Future<bool> _ensureFindTruckCoordinates() async {
+    final hasPickup = _draft.pickupLat != null && _draft.pickupLng != null;
+    final hasDrop = _draft.dropLat != null && _draft.dropLng != null;
+    if (hasPickup && hasDrop) {
+      return true;
+    }
+
+    final pickup = _fromController.text.trim();
+    final drop = _toController.text.trim();
+    if (pickup.isEmpty || drop.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select pickup and drop locations on the map.'),
+        ),
+      );
+      return false;
+    }
+
+    await _resolveTypedCoordinates(pickup: pickup, drop: drop);
+    if (!mounted) {
+      return false;
+    }
+
+    final resolvedPickup = _draft.pickupLat != null && _draft.pickupLng != null;
+    final resolvedDrop = _draft.dropLat != null && _draft.dropLng != null;
+    if (resolvedPickup && resolvedDrop) {
+      return true;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Could not resolve exact pickup/drop coordinates. Please choose them from suggestions or the map.',
+        ),
+      ),
+    );
+    return false;
   }
 
   Future<void> _startFindTruckLiveUpdates(String accessToken) async {
@@ -3879,6 +3942,77 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelFindTruckSearch() async {
+    if (_cancellingFindTruckSearch) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+
+    setState(() {
+      _cancellingFindTruckSearch = true;
+    });
+
+    try {
+      _findTruckPollTimer?.cancel();
+      await _findTruckRequestSubscription?.cancel();
+      _findTruckRequestSubscription = null;
+
+      if (session != null && bookingId != null && bookingId.isNotEmpty) {
+        await ref
+            .read(apiClientProvider)
+            .cancelBooking(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+              reason: 'Client cancelled find truck search',
+            );
+      }
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bookingCreated = false;
+        _bookingReference = null;
+        _activeBookingId = null;
+        _driverRequest = null;
+        _findTruckRequestCount = 0;
+        _findTruckDeclinedCount = 0;
+        _findTruckNegotiationOpen = false;
+        _postNegotiationPayment = false;
+        _cancellingFindTruckSearch = false;
+        _draft = _draft.copyWith(
+          searchMode: BookingSearchMode.truck,
+          selectedBrokerId: '',
+        );
+        _step = _BookingFlowStep.brokerSelection;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _cancellingFindTruckSearch = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _cancellingFindTruckSearch = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
     }
@@ -5158,6 +5292,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       fit: StackFit.expand,
       children: [
         _buildBrokerMap(context, const <NearbyTruck>[]),
+        if (isFindTruckSearching)
+          Positioned.fill(
+            bottom: MediaQuery.of(context).size.height * openSheetSize,
+            child: _FindTruckScreenLoader(
+              bookingReference: _bookingReference,
+              requestCount: _findTruckRequestCount,
+              declinedCount: _findTruckDeclinedCount,
+              searchRadiusKm: _draft.searchRadiusKm,
+              isCancelling: _cancellingFindTruckSearch,
+              onCancel: _cancelFindTruckSearch,
+            ),
+          ),
         if (!isFindTruckSearching)
           Positioned(
             left: 16,
@@ -5188,97 +5334,88 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ),
         DraggableScrollableSheet(
           initialChildSize: openSheetSize,
-          minChildSize: 0.15,
+          minChildSize: isFindTruckSearching ? openSheetSize : 0.15,
           maxChildSize: openSheetSize,
-          snap: true,
-          snapSizes: [0.15, openSheetSize],
+          snap: !isFindTruckSearching,
+          snapSizes: isFindTruckSearching ? null : [0.15, openSheetSize],
           builder: (context, scrollController) {
             return _SearchMethodSheet(
-              child: ListView(
-                controller: scrollController,
-                padding: EdgeInsets.fromLTRB(
-                  14,
-                  0,
-                  14,
-                  MediaQuery.of(context).viewPadding.bottom + 10,
-                ),
-                children: isFindTruckSearching
-                    ? [
-                        const _SheetDragHandle(),
-                        _BookingWaitingCard(
-                          bookingReference: _bookingReference,
-                          driverRequest: _driverRequest,
-                          requestCount: _findTruckRequestCount,
-                          declinedCount: _findTruckDeclinedCount,
-                          searchRadiusKm: _draft.searchRadiusKm,
-                          showActions: false,
-                          onTrack: () => context.go('/client/tracking'),
-                          onHome: _goToClientHome,
+              child: AbsorbPointer(
+                absorbing: isFindTruckSearching,
+                child: Opacity(
+                  opacity: isFindTruckSearching ? 0.58 : 1,
+                  child: ListView(
+                    controller: scrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      14,
+                      0,
+                      14,
+                      MediaQuery.of(context).viewPadding.bottom + 10,
+                    ),
+                    children: [
+                      const _SheetDragHandle(),
+                      Text(
+                        'Choose Trucks',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF0B1F3A),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
                         ),
-                      ]
-                    : [
-                        const _SheetDragHandle(),
-                        Text(
-                          'Choose Trucks',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: const Color(0xFF0B1F3A),
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0,
-                              ),
-                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTruckCategoryPicker(context),
+                      const SizedBox(height: 10),
+                      if (mode == BookingSearchMode.truck) ...[
+                        _buildFindTruckOptions(context),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
                         const SizedBox(height: 10),
-                        _buildTruckCategoryPicker(context),
-                        const SizedBox(height: 10),
-                        if (mode == BookingSearchMode.truck) ...[
-                          _buildFindTruckOptions(context),
-                          const SizedBox(height: 12),
-                          const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                          const SizedBox(height: 10),
-                        ],
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SearchModeCard(
-                                selected: mode == BookingSearchMode.truck,
-                                icon: Icons.local_shipping_rounded,
-                                title: 'Find Truck',
-                                onTap: () {
-                                  setState(() {
-                                    _draft = _draft.copyWith(
-                                      searchMode: BookingSearchMode.truck,
-                                      selectedBrokerId: '',
-                                    );
-                                  });
-                                  unawaited(_startFindTruckSearch());
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: _SearchModeCard(
-                                selected: mode == BookingSearchMode.broker,
-                                icon: Icons.person_rounded,
-                                title: 'Search Broker',
-                                onTap: () {
-                                  setState(() {
-                                    _draft = _draft.copyWith(
-                                      searchMode: BookingSearchMode.broker,
-                                    );
-                                  });
-                                  unawaited(_loadEligibleBrokers());
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (mode == BookingSearchMode.broker) ...[
-                          const SizedBox(height: 12),
-                          const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                          const SizedBox(height: 10),
-                          _buildBrokerListOptions(context),
-                        ],
                       ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SearchModeCard(
+                              selected: mode == BookingSearchMode.truck,
+                              icon: Icons.local_shipping_rounded,
+                              title: 'Find Truck',
+                              onTap: () {
+                                setState(() {
+                                  _draft = _draft.copyWith(
+                                    searchMode: BookingSearchMode.truck,
+                                    selectedBrokerId: '',
+                                  );
+                                });
+                                unawaited(_startFindTruckSearch());
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _SearchModeCard(
+                              selected: mode == BookingSearchMode.broker,
+                              icon: Icons.person_rounded,
+                              title: 'Search Broker',
+                              onTap: () {
+                                setState(() {
+                                  _draft = _draft.copyWith(
+                                    searchMode: BookingSearchMode.broker,
+                                  );
+                                });
+                                unawaited(_loadEligibleBrokers());
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (mode == BookingSearchMode.broker) ...[
+                        const SizedBox(height: 12),
+                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                        const SizedBox(height: 10),
+                        _buildBrokerListOptions(context),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             );
           },
@@ -6229,6 +6366,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       requestCount: _findTruckRequestCount,
       declinedCount: _findTruckDeclinedCount,
       searchRadiusKm: _draft.searchRadiusKm,
+      showActions: true,
       onTrack: () => context.go('/client/tracking'),
       onHome: _goToClientHome,
     );
@@ -6364,6 +6502,128 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FindTruckScreenLoader extends StatelessWidget {
+  const _FindTruckScreenLoader({
+    required this.bookingReference,
+    required this.requestCount,
+    required this.declinedCount,
+    required this.searchRadiusKm,
+    required this.isCancelling,
+    required this.onCancel,
+  });
+
+  final String? bookingReference;
+  final int requestCount;
+  final int declinedCount;
+  final double searchRadiusKm;
+  final bool isCancelling;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeCount = (requestCount - declinedCount).clamp(0, requestCount);
+    return SafeArea(
+      child: Center(
+        child: Container(
+          width: min(MediaQuery.of(context).size.width - 40, 340),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFE0EFE7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -6,
+                top: -6,
+                child: IconButton(
+                  tooltip: 'Cancel search',
+                  onPressed: isCancelling ? null : onCancel,
+                  icon: isCancelling
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.close_rounded, size: 20),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 66,
+                    height: 66,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: const [
+                        SizedBox(
+                          width: 66,
+                          height: 66,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 4,
+                            color: Color(0xFF2FA56E),
+                          ),
+                        ),
+                        Icon(
+                          Icons.radar_rounded,
+                          color: Color(0xFF2FA56E),
+                          size: 30,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    requestCount > 0
+                        ? 'Notified $requestCount driver${requestCount == 1 ? '' : 's'}'
+                        : 'Finding nearby drivers',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF101828),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    requestCount > 0
+                        ? '$activeCount active inside ${searchRadiusKm.round()} km. Waiting for the first response.'
+                        : 'Searching inside ${searchRadiusKm.round()} km. The offer popup opens when a driver responds.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                      height: 1.35,
+                    ),
+                  ),
+                  if (bookingReference?.isNotEmpty == true) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Booking #$bookingReference',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: const Color(0xFF2FA56E),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
         ),
       ),
