@@ -1057,7 +1057,10 @@ class _DriverDeliveryDetailsScreenState
       );
       if (!mounted) return;
       ref.invalidate(driverDashboardProvider);
-      final requiresPayment = _paymentStatus != 'paid';
+      final requiresPayment = const {
+        'pending',
+        'partial',
+      }.contains(_paymentStatus.trim().toLowerCase());
       developer.log(
         'Navigating to delivery proof. tripId=$_tripId requiresPayment=$requiresPayment totalElapsedMs=${stopwatch.elapsedMilliseconds}',
         name: 'driver.deliveryDetails',

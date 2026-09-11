@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "ssk/google_maps_launcher"
+    private val shareChannelName = "plugins.flutter.io/share"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -36,6 +37,32 @@ class MainActivity : FlutterActivity() {
                             result.success(true)
                         } catch (error: Exception) {
                             result.success(false)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shareChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "share" -> {
+                        try {
+                            val text = call.argument<String>("text")
+                            val subject = call.argument<String>("subject") ?: "Share"
+                            if (text.isNullOrBlank()) {
+                                result.success(null)
+                                return@setMethodCallHandler
+                            }
+
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, subject)
+                                putExtra(Intent.EXTRA_TEXT, text)
+                            }
+                            startActivity(Intent.createChooser(intent, subject))
+                            result.success(null)
+                        } catch (error: Exception) {
+                            result.notImplemented()
                         }
                     }
                     else -> result.notImplemented()

@@ -28,6 +28,11 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   bool _finalizingTrip = false;
   double? _amountToCollect;
   String? _driverQrUrl;
+  String? _driverUpiId;
+  String? _driverName;
+  String? _companyUpiId;
+  String? _companyUpiName;
+  String _qrSource = 'personal';
   String? _bookingId;
   String _paymentStatus = 'pending';
   StreamSubscription<Map<String, dynamic>>? _paymentSubscription;
@@ -108,6 +113,20 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         'driverQrUrl',
         'driver_qr_url',
       ]);
+      final driverUpiId = _readString(trip, const [
+        'driverUpiId',
+        'driver_upi_id',
+        'upiId',
+        'upi_id',
+      ]);
+      final companyUpiId = _readString(trip, const [
+        'companyUpiId',
+        'company_upi_id',
+      ]);
+      final companyUpiName = _readString(trip, const [
+        'companyUpiName',
+        'company_upi_name',
+      ]);
 
       if (!mounted) return;
       setState(() {
@@ -125,6 +144,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             ? amountToCollect.toDouble()
             : double.tryParse(amountToCollect?.toString() ?? '');
         _driverQrUrl = driverQrUrl.isNotEmpty ? driverQrUrl : null;
+        _driverUpiId = driverUpiId.isNotEmpty ? driverUpiId : null;
+        _driverName = _readString(trip, const ['driverName', 'driver_name']);
+        _companyUpiId = companyUpiId.isNotEmpty ? companyUpiId : null;
+        _companyUpiName = companyUpiName.isNotEmpty ? companyUpiName : null;
+        if (_driverUpiId == null && _companyUpiId != null) {
+          _qrSource = 'company';
+        }
         _loadingTrip = false;
       });
       _setTripSession(
@@ -238,6 +264,35 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
 
   String _formatCurrency(double amount) {
     return '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
+  }
+
+  String _buildUpiIntent({
+    required String upiId,
+    required String payeeName,
+    required double amount,
+    required String note,
+  }) {
+    final query =
+        <String, String>{
+              'pa': upiId,
+              'pn': payeeName,
+              'am': amount.toStringAsFixed(2),
+              'cu': 'INR',
+              'tn': note,
+            }.entries
+            .map((entry) {
+              return '${entry.key}=${Uri.encodeQueryComponent(entry.value)}';
+            })
+            .join('&');
+    return 'upi://pay?$query';
+  }
+
+  String _buildQrImageUrl(String value) {
+    return Uri.https('chart.googleapis.com', '/chart', {
+      'cht': 'qr',
+      'chs': '220x220',
+      'chl': value,
+    }).toString();
   }
 
   Future<void> _uploadQrCode() async {
@@ -407,6 +462,34 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     final amountToCollect = _amountToCollect == null
         ? '₹0'
         : _formatCurrency(_amountToCollect!);
+    final hasPersonalUpi = _driverUpiId?.trim().isNotEmpty == true;
+    final hasCompanyUpi = _companyUpiId?.trim().isNotEmpty == true;
+    final activeQrSource = hasPersonalUpi && hasCompanyUpi
+        ? _qrSource
+        : hasCompanyUpi
+        ? 'company'
+        : 'personal';
+    final activeUpiId = activeQrSource == 'company'
+        ? _companyUpiId
+        : _driverUpiId;
+    final activePayeeName = activeQrSource == 'company'
+        ? (_companyUpiName?.trim().isNotEmpty == true
+              ? _companyUpiName!.trim()
+              : 'GadiDost Logistics')
+        : (_driverName?.trim().isNotEmpty == true
+              ? _driverName!.trim()
+              : 'Driver');
+    final generatedQrUrl =
+        activeUpiId?.trim().isNotEmpty == true && (_amountToCollect ?? 0) > 0
+        ? _buildQrImageUrl(
+            _buildUpiIntent(
+              upiId: activeUpiId!.trim(),
+              payeeName: activePayeeName,
+              amount: _amountToCollect!,
+              note: 'Payment for ${_bookingId ?? widget.tripId}',
+            ),
+          )
+        : null;
     final hasAdvance = _paymentStatus == 'partial';
     final paymentStatusLabel = _paymentStatus == 'paid'
         ? 'Paid'
@@ -553,7 +636,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
               child: Column(
                 children: [
                   Text(
-                    'Your QR here',
+                    activeQrSource == 'company' ? 'Company QR' : 'Your QR here',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -567,13 +650,43 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (hasPersonalUpi && hasCompanyUpi) ...[
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment<String>(
+                          value: 'personal',
+                          icon: Icon(Icons.person_rounded),
+                          label: Text('Personal'),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'company',
+                          icon: Icon(Icons.apartment_rounded),
+                          label: Text('Company'),
+                        ),
+                      ],
+                      selected: {_qrSource},
+                      style: SegmentedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        selectedForegroundColor: const Color(0xFF101828),
+                        selectedBackgroundColor: Colors.white,
+                      ),
+                      onSelectionChanged: (selection) {
+                        setState(() => _qrSource = selection.first);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _QrPlaceholder(
-                    qrUrl: _driverQrUrl,
+                    qrUrl: generatedQrUrl ?? _driverQrUrl,
                     accessToken: ref
                         .read(authSessionProvider)
                         .valueOrNull
                         ?.tokens
                         .accessToken,
+                    requiresAuth: generatedQrUrl == null,
+                    centerIcon: activeQrSource == 'company'
+                        ? Icons.apartment_rounded
+                        : Icons.person_rounded,
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -746,10 +859,17 @@ class _PaymentRow extends StatelessWidget {
 }
 
 class _QrPlaceholder extends StatelessWidget {
-  const _QrPlaceholder({this.qrUrl, this.accessToken});
+  const _QrPlaceholder({
+    this.qrUrl,
+    this.accessToken,
+    this.requiresAuth = true,
+    this.centerIcon = Icons.person_rounded,
+  });
 
   final String? qrUrl;
   final String? accessToken;
+  final bool requiresAuth;
+  final IconData centerIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -764,14 +884,16 @@ class _QrPlaceholder extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (qrUrl != null && accessToken != null)
+          if (qrUrl != null && (!requiresAuth || accessToken != null))
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
                 child: Image.network(
                   qrUrl!,
                   fit: BoxFit.cover,
-                  headers: {'Authorization': 'Bearer $accessToken'},
+                  headers: requiresAuth
+                      ? {'Authorization': 'Bearer $accessToken'}
+                      : null,
                   errorBuilder: (context, error, stackTrace) {
                     return const _QrPattern();
                   },
@@ -788,11 +910,7 @@ class _QrPlaceholder extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFF2D28B), width: 3),
             ),
-            child: const Icon(
-              Icons.person_rounded,
-              color: Color(0xFFCA8A04),
-              size: 28,
-            ),
+            child: Icon(centerIcon, color: Color(0xFFCA8A04), size: 28),
           ),
         ],
       ),

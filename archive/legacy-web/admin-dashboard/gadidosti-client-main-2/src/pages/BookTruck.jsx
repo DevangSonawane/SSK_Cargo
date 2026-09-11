@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import StepIndicator from "../components/StepIndicator";
 import PlacesAutocompleteInput from "../components/PlacesAutocompleteInput";
+import DatePicker from "../components/DatePicker";
+import TimePicker from "../components/TimePicker";
 import MapView from "../components/MapView";
 import ChooseBroker from "./ChooseBroker";
 import FindTruckSearch from "./FindTruckSearch";
@@ -811,6 +813,16 @@ export default function BookTruck() {
     (step === 3 && !!form.truckType && !!form.searchMode && (form.searchMode !== "broker" || !!form.selectedBrokerId)) ||
     (step === 4 && !!priceBreakdown?.total && !loadingQuote);
 
+  // A disabled Continue button with no explanation just looks broken — this fills in exactly
+  // what's still missing on Step 3, where there are three independent things to pick (truck
+  // category, search mode, and — only in broker mode — a specific broker) and it's easy to do
+  // two of the three and not notice the third is still unset.
+  const step3MissingHint = step === 3 && !canContinue
+    ? (!form.truckType ? "Select a truck category to continue"
+      : !form.searchMode ? "Choose Find Truck or Search for Broker to continue"
+      : "Select a broker to continue")
+    : null;
+
   // No success screen here anymore — creating the booking just moves on to Choose Broker.
   // "Booking Confirmed" now shows at the end of that screen, after a broker is locked in
   // and payment (if any) is recorded — see ChooseBroker.jsx.
@@ -1059,23 +1071,42 @@ export default function BookTruck() {
                     </button>
                   </div>
 
-                  {form.bookingMode === "later" && (
-                    <div className="mb-4">
-                      <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">
-                        Pickup Date &amp; Time
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={form.scheduledDateTime}
-                        min={minScheduleValue}
-                        onChange={(e) => updateForm("scheduledDateTime", e.target.value)}
-                        className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-700 outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(22,101,52,0.1)] transition-all"
-                      />
-                      <p className="text-[11px] text-neutral-400 mt-1.5">
-                        We'll notify nearby drivers/brokers about 2 hours before this time — you won't hear anything before then.
-                      </p>
-                    </div>
-                  )}
+                  {form.bookingMode === "later" && (() => {
+                    // Split into two plain native inputs (date, time) instead of one combined
+                    // datetime-local field — that single-input browser widget bundles a full
+                    // calendar grid with a separate scrollable hour/minute column in one popover
+                    // (see the screenshot that prompted this), which reads as confusing/broken to
+                    // a lot of users tapping between the two halves. Two ordinary inputs are a
+                    // more familiar, predictable interaction, and still fully native (no picker
+                    // library needed) — recombined into the same "YYYY-MM-DDTHH:mm" string
+                    // scheduledDateTime always held, so nothing downstream (validation, the
+                    // scheduled_date sent to POST /api/bookings) needs to change.
+                    const [datePart, timePart] = form.scheduledDateTime ? form.scheduledDateTime.split("T") : ["", ""];
+                    const minDate = minScheduleValue.split("T")[0];
+                    return (
+                      <div className="mb-4">
+                        <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">
+                          Pickup Date &amp; Time
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <DatePicker
+                            value={datePart}
+                            min={minDate}
+                            onChange={(v) => updateForm("scheduledDateTime", v ? `${v}T${timePart || "09:00"}` : "")}
+                            placeholder="Select date"
+                          />
+                          <TimePicker
+                            value={timePart}
+                            onChange={(v) => updateForm("scheduledDateTime", v ? `${datePart || minDate}T${v}` : "")}
+                            placeholder="Select time"
+                          />
+                        </div>
+                        <p className="text-[11px] text-neutral-400 mt-1.5">
+                          We'll notify nearby drivers/brokers about 2 hours before this time — you won't hear anything before then.
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
@@ -1883,7 +1914,9 @@ export default function BookTruck() {
               {/* Navigation Buttons — pinned as the card's own footer, not the page's, so
                   Back/Next stay put without scrolling even while the step content above
                   scrolls internally. */}
-              <div className="flex gap-3 justify-end px-5 md:px-8 py-4 border-t border-neutral-100 flex-shrink-0">
+              <div className="flex items-center gap-3 justify-between px-5 md:px-8 py-4 border-t border-neutral-100 flex-shrink-0">
+                <p className="text-xs text-neutral-400">{step3MissingHint}</p>
+                <div className="flex gap-3">
                 {step > 1 && (
                   <button
                     onClick={() => setStep(step - 1)}
@@ -1915,6 +1948,7 @@ export default function BookTruck() {
                     : "Continue"}
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
+                </div>
               </div>
             </div>
           </div>

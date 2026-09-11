@@ -17,6 +17,22 @@ import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.cast<String, dynamic>();
+  return <String, dynamic>{};
+}
+
+String _readText(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+      return value;
+    }
+  }
+  return '';
+}
+
 class TrackingDetailsScreen extends ConsumerStatefulWidget {
   const TrackingDetailsScreen({super.key, required this.shipment});
 
@@ -29,10 +45,14 @@ class TrackingDetailsScreen extends ConsumerStatefulWidget {
 
 class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   static const Duration _refreshInterval = Duration(seconds: 6);
+  static const MethodChannel _shareChannel = MethodChannel(
+    'plugins.flutter.io/share',
+  );
 
   TrackingDemoShipment? _resolvedShipment;
   bool _isLiveTracking = false;
   bool _isCancelling = false;
+  bool _isSharingTracking = false;
   bool _isBookingCancelled = false;
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
@@ -438,6 +458,82 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
+    }
+  }
+
+  Future<void> _shareTracking() async {
+    final bookingId = _shipment.bookingId;
+    if (bookingId == null || bookingId.isEmpty || _isSharingTracking) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to share tracking.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSharingTracking = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .createBookingTrackingShareLink(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      final data = _asMap(response['data']);
+      final shareUrl = _readText(data, const ['shareUrl', 'share_url', 'url']);
+      if (shareUrl.isEmpty) {
+        throw const ApiException('Tracking link is unavailable.');
+      }
+
+      final text =
+          'Track ${_shipment.trackingId} (${_shipment.fromLocation} to ${_shipment.toLocation})\n$shareUrl';
+      var shared = false;
+      try {
+        await _shareChannel.invokeMethod<void>('share', <String, dynamic>{
+          'text': text,
+          'subject': 'Track your shipment',
+        });
+        shared = true;
+      } catch (_) {
+        shared = false;
+      }
+
+      if (!shared) {
+        await Clipboard.setData(ClipboardData(text: shareUrl));
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            shared
+                ? 'Tracking link is ready to share.'
+                : 'Tracking link copied to clipboard.',
+          ),
+          backgroundColor: const Color(0xFF2FA56E),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSharingTracking = false);
+      }
     }
   }
 
@@ -908,6 +1004,43 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         ),
                                       ),
                                     ),
+                                    if (shipment.bookingId != null) ...[
+                                      const SizedBox(height: 10),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: OutlinedButton.icon(
+                                          onPressed: _isSharingTracking
+                                              ? null
+                                              : _shareTracking,
+                                          icon: _isSharingTracking
+                                              ? const SizedBox(
+                                                  width: 18,
+                                                  height: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.ios_share_rounded,
+                                                ),
+                                          label: const Text('Share Tracking'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFF2FA56E,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFCDEFD9),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                     const SizedBox(height: 10),
                                     if (_isPayable)
                                       SizedBox(

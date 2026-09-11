@@ -55,6 +55,7 @@ import '../../features/client/presentation/screens/client_saved_addresses_screen
 import '../../features/client/presentation/screens/client_settings_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
+import '../../features/client/presentation/screens/public_tracking_screen.dart';
 import '../../features/client/presentation/screens/tracking_details_screen.dart';
 import '../../features/client/presentation/widgets/client_flow_widgets.dart';
 import '../../features/chat/data/chat_models.dart';
@@ -128,6 +129,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/gps/wallet-billing',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: GpsWalletBillingScreen()),
+      ),
+      GoRoute(
+        path: '/t/:token',
+        pageBuilder: (context, state) {
+          final token = state.pathParameters['token'] ?? '';
+          return NoTransitionPage(child: PublicTrackingScreen(token: token));
+        },
+      ),
+      GoRoute(
+        path: '/track/:token',
+        pageBuilder: (context, state) {
+          final token = state.pathParameters['token'] ?? '';
+          return NoTransitionPage(child: PublicTrackingScreen(token: token));
+        },
       ),
       GoRoute(
         path: '/driver/profile',

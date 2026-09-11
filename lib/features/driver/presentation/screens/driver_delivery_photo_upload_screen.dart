@@ -105,7 +105,7 @@ class _DriverDeliveryPhotoUploadScreenState
       if (_remotePodPhotos.isNotEmpty && !_resumingFromRemoteState) {
         _resumingFromRemoteState = true;
         if (!mounted) return;
-        if (paymentStatus == 'paid') {
+        if (!const {'pending', 'partial'}.contains(paymentStatus)) {
           context.go('/driver/thank-you/${widget.tripId}');
         } else {
           context.go('/driver/payment/${widget.tripId}');

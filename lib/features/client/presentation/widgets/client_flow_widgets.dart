@@ -1268,10 +1268,8 @@ enum PaymentMethod {
   emi,
   payLater,
   advance,
+  toBeBilled,
 }
-
-const double _advancePaymentThreshold = 5000.0;
-const double _advancePaymentPct = 0.2;
 
 extension PaymentMethodLabel on PaymentMethod {
   String get label {
@@ -1284,8 +1282,9 @@ extension PaymentMethodLabel on PaymentMethod {
       PaymentMethod.cashOnDelivery => 'Cash On Delivery',
       PaymentMethod.netBanking => 'Net Banking',
       PaymentMethod.emi => 'EMI',
-      PaymentMethod.payLater => 'Pay later',
-      PaymentMethod.advance => 'Pay 20% Advance',
+      PaymentMethod.payLater => 'To Pay',
+      PaymentMethod.advance => 'Advance',
+      PaymentMethod.toBeBilled => 'To Be Billed',
     };
   }
 }
@@ -3069,6 +3068,19 @@ double _readNumberLoose(Object? value) {
   return double.tryParse(value?.toString().trim() ?? '') ?? 0;
 }
 
+double? _readOptionalNumberLoose(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString().trim() ?? '');
+}
+
+double? _extractAdvanceAmount(Map<String, dynamic> response) {
+  final data = _payloadAsMapLoose(response['data']);
+  return _readOptionalNumberLoose(data?['advanceAmount']) ??
+      _readOptionalNumberLoose(data?['advance_amount']) ??
+      _readOptionalNumberLoose(response['advanceAmount']) ??
+      _readOptionalNumberLoose(response['advance_amount']);
+}
+
 class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   static const LatLng _fallbackMapCenter = LatLng(19.0760, 72.8777);
 
@@ -3101,6 +3113,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
   bool _postNegotiationPayment = false;
+  bool _loadingAdvanceAmount = false;
+  double? _advanceAmount;
   bool _loadingEligibleBrokers = false;
   String? _eligibleBrokersError;
   List<_EligibleBroker> _eligibleBrokers = const [];
@@ -4062,6 +4076,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _postNegotiationPayment = true;
         _step = _BookingFlowStep.payment;
       });
+      unawaited(_loadAdvanceAmount());
       return;
     }
 
@@ -4735,6 +4750,27 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
       return;
     }
+    if (selectedMethod == PaymentMethod.toBeBilled) {
+      try {
+        await ref
+            .read(apiClientProvider)
+            .markBookingToBeBilled(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+            );
+        if (!mounted) return;
+        setState(() {
+          _postNegotiationPayment = false;
+          _bookingCreated = true;
+        });
+      } on ApiException catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return;
+    }
 
     final payType = selectedMethod == PaymentMethod.advance
         ? 'advance'
@@ -4751,7 +4787,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         contact: session.user.phone,
         email: session.user.email,
         description: selectedMethod == PaymentMethod.advance
-            ? '20% advance payment'
+            ? 'Advance payment'
             : 'Booking payment',
         context: context,
       );
@@ -6337,14 +6373,45 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ],
         _CheckoutChoiceCard(
           selectedMethod: _selectedPaymentMethod,
-          requiresAdvance: false,
-          advanceAmount: 0,
+          advanceAmount: _advanceAmount,
+          loadingAdvanceAmount: _loadingAdvanceAmount,
+          allowToBeBilled:
+              _postNegotiationPayment && _activeBookingId?.isNotEmpty == true,
           onSelect: (method) {
             setState(() => _selectedPaymentMethod = method);
           },
         ),
       ],
     );
+  }
+
+  Future<void> _loadAdvanceAmount() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) return;
+
+    setState(() => _loadingAdvanceAmount = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBookingAdvanceAmount(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      if (!mounted) return;
+      setState(() {
+        _advanceAmount = _extractAdvanceAmount(response);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _advanceAmount = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _loadingAdvanceAmount = false);
+      }
+    }
   }
 
   Widget _buildSuccessStep(BuildContext context) {
@@ -6700,26 +6767,13 @@ class _BrokerNegotiationSheetState
   bool _submitting = false;
   bool _paymentSubmitting = false;
   bool _loading = false;
+  bool _loadingAdvanceAmount = false;
   String? _errorMessage;
+  double? _advanceAmount;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.googlePay;
   Timer? _pollTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
-
-  double get _finalNegotiationAmount {
-    final request = _request;
-    final source = request?.amountText.isNotEmpty == true
-        ? request!.amountText
-        : widget.initialPrice.toString();
-    final parsed = double.tryParse(source.replaceAll(RegExp(r'[^0-9.]'), ''));
-    return parsed ?? widget.initialPrice;
-  }
-
-  bool get _requiresAdvancePayment =>
-      _finalNegotiationAmount > _advancePaymentThreshold;
-
-  double get _advancePaymentAmount =>
-      (_finalNegotiationAmount * _advancePaymentPct * 100).round() / 100;
 
   @override
   void initState() {
@@ -6886,6 +6940,7 @@ class _BrokerNegotiationSheetState
           _request = request;
           _stage = _DirectNegotiationStage.payment;
         });
+        unawaited(_loadAdvanceAmount());
         return;
       }
 
@@ -6944,6 +6999,7 @@ class _BrokerNegotiationSheetState
           _stage = _DirectNegotiationStage.payment;
         });
         await _loadCurrentRequest(silent: true);
+        unawaited(_loadAdvanceAmount());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -7109,6 +7165,32 @@ class _BrokerNegotiationSheetState
       });
       return;
     }
+    if (selectedMethod == PaymentMethod.toBeBilled) {
+      try {
+        await ref
+            .read(apiClientProvider)
+            .markBookingToBeBilled(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+            );
+        if (!mounted) return;
+        setState(() {
+          _stage = _DirectNegotiationStage.confirmed;
+        });
+      } on ApiException catch (error) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = error.message;
+        });
+      } finally {
+        if (mounted) {
+          setState(() {
+            _paymentSubmitting = false;
+          });
+        }
+      }
+      return;
+    }
 
     final payType = selectedMethod == PaymentMethod.advance
         ? 'advance'
@@ -7125,7 +7207,7 @@ class _BrokerNegotiationSheetState
         contact: session.user.phone,
         email: session.user.email,
         description: selectedMethod == PaymentMethod.advance
-            ? '20% advance payment'
+            ? 'Advance payment'
             : 'Booking payment',
         context: context,
       );
@@ -7312,13 +7394,11 @@ class _BrokerNegotiationSheetState
   }
 
   Widget _buildPaymentView() {
-    final requiresAdvance = _requiresAdvancePayment;
-    final advanceAmount = _advancePaymentAmount;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          requiresAdvance ? 'Choose payment' : 'Complete payment',
+          'Choose payment',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: const Color(0xFF101828),
             fontWeight: FontWeight.w800,
@@ -7326,24 +7406,12 @@ class _BrokerNegotiationSheetState
         ),
         const SizedBox(height: 6),
         Text(
-          requiresAdvance
-              ? 'Bookings over ₹${_advancePaymentThreshold.toStringAsFixed(0)} need a 20% advance to confirm. You can still pay the full amount now.'
-              : 'The booking is confirmed. Continue to secure checkout to complete payment.',
+          'Pick how this freight booking should be settled. Advance uses the latest admin-configured amount.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF667085),
             height: 1.45,
           ),
         ),
-        if (requiresAdvance) ...[
-          const SizedBox(height: 10),
-          Text(
-            '20% advance: ${_formatRupees(advanceAmount)}',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: const Color(0xFF2FA56E),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
         const SizedBox(height: 10),
         Text(
           'Razorpay checkout will show the available payment methods before you pay.',
@@ -7354,8 +7422,9 @@ class _BrokerNegotiationSheetState
         const SizedBox(height: 16),
         _CheckoutChoiceCard(
           selectedMethod: _selectedPaymentMethod,
-          requiresAdvance: requiresAdvance,
-          advanceAmount: advanceAmount,
+          advanceAmount: _advanceAmount,
+          loadingAdvanceAmount: _loadingAdvanceAmount,
+          allowToBeBilled: _bookingId?.isNotEmpty == true,
           onSelect: (method) {
             setState(() => _selectedPaymentMethod = method);
           },
@@ -7374,11 +7443,45 @@ class _BrokerNegotiationSheetState
                       color: Colors.white,
                     ),
                   )
-                : const Text('Continue to secure checkout'),
+                : Text(
+                    _selectedPaymentMethod == PaymentMethod.toBeBilled ||
+                            _selectedPaymentMethod == PaymentMethod.payLater
+                        ? 'Confirm payment stage'
+                        : 'Continue to secure checkout',
+                  ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _loadAdvanceAmount() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _bookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) return;
+
+    setState(() => _loadingAdvanceAmount = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBookingAdvanceAmount(
+            accessToken: session.tokens.accessToken,
+            id: bookingId,
+          );
+      if (!mounted) return;
+      setState(() {
+        _advanceAmount = _extractAdvanceAmount(response);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _advanceAmount = null;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _loadingAdvanceAmount = false);
+      }
+    }
   }
 
   Widget _buildConfirmedView() {
@@ -8202,21 +8305,27 @@ class _MapHintPill extends StatelessWidget {
 class _CheckoutChoiceCard extends StatelessWidget {
   const _CheckoutChoiceCard({
     required this.selectedMethod,
-    required this.requiresAdvance,
     required this.advanceAmount,
+    required this.loadingAdvanceAmount,
+    required this.allowToBeBilled,
     required this.onSelect,
   });
 
   final PaymentMethod selectedMethod;
-  final bool requiresAdvance;
-  final double advanceAmount;
+  final double? advanceAmount;
+  final bool loadingAdvanceAmount;
+  final bool allowToBeBilled;
   final ValueChanged<PaymentMethod> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final fullSelected =
         selectedMethod != PaymentMethod.advance &&
-        selectedMethod != PaymentMethod.payLater;
+        selectedMethod != PaymentMethod.payLater &&
+        selectedMethod != PaymentMethod.toBeBilled;
+    final advanceSubtitle = advanceAmount == null
+        ? 'Fetching configured advance amount'
+        : '${_formatRupees(advanceAmount!)} now, balance on delivery';
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -8234,29 +8343,39 @@ class _CheckoutChoiceCard extends StatelessWidget {
       child: Column(
         children: [
           _CheckoutChoiceTile(
-            title: 'Pay securely now',
-            subtitle: 'Choose UPI, card, bank, or wallet in checkout',
+            title: 'Pay Now',
+            subtitle: 'Full amount now through secure checkout',
             icon: Icons.lock_outline_rounded,
             selected: fullSelected,
             onTap: () => onSelect(PaymentMethod.googlePay),
           ),
-          if (requiresAdvance)
-            _CheckoutChoiceTile(
-              title: 'Pay 20% advance',
-              subtitle:
-                  '${_formatRupees(advanceAmount)} now, balance on delivery',
-              icon: Icons.payments_outlined,
-              selected: selectedMethod == PaymentMethod.advance,
-              onTap: () => onSelect(PaymentMethod.advance),
-            )
-          else
-            _CheckoutChoiceTile(
-              title: 'Pay later',
-              subtitle: 'Confirm now and settle after delivery',
-              icon: Icons.schedule_send_rounded,
-              selected: selectedMethod == PaymentMethod.payLater,
-              onTap: () => onSelect(PaymentMethod.payLater),
-            ),
+          _CheckoutChoiceTile(
+            title: 'Advance',
+            subtitle: advanceSubtitle,
+            icon: loadingAdvanceAmount
+                ? Icons.hourglass_top_rounded
+                : Icons.payments_outlined,
+            selected: selectedMethod == PaymentMethod.advance,
+            enabled: advanceAmount != null && !loadingAdvanceAmount,
+            onTap: () => onSelect(PaymentMethod.advance),
+          ),
+          _CheckoutChoiceTile(
+            title: 'To Pay',
+            subtitle: 'Full amount collected by the driver on delivery',
+            icon: Icons.local_shipping_outlined,
+            selected: selectedMethod == PaymentMethod.payLater,
+            onTap: () => onSelect(PaymentMethod.payLater),
+          ),
+          _CheckoutChoiceTile(
+            title: 'To Be Billed',
+            subtitle: allowToBeBilled
+                ? 'Nothing collected now or on delivery'
+                : 'Available after a driver is confirmed',
+            icon: Icons.receipt_long_outlined,
+            selected: selectedMethod == PaymentMethod.toBeBilled,
+            enabled: allowToBeBilled,
+            onTap: () => onSelect(PaymentMethod.toBeBilled),
+          ),
         ],
       ),
     );
@@ -8270,6 +8389,7 @@ class _CheckoutChoiceTile extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.enabled = true,
   });
 
   final String title;
@@ -8277,19 +8397,36 @@ class _CheckoutChoiceTile extends StatelessWidget {
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
     return ListTile(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      leading: Icon(icon, color: selected ? accent : const Color(0xFF667085)),
-      title: Text(title),
+      leading: Icon(
+        icon,
+        color: enabled
+            ? selected
+                  ? accent
+                  : const Color(0xFF667085)
+            : const Color(0xFFB8C0CC),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: enabled ? const Color(0xFF101828) : const Color(0xFF98A2B3),
+        ),
+      ),
       subtitle: Text(subtitle),
       trailing: Icon(
         selected ? Icons.radio_button_checked : Icons.radio_button_off,
-        color: selected ? accent : const Color(0xFF98A2B3),
+        color: enabled
+            ? selected
+                  ? accent
+                  : const Color(0xFF98A2B3)
+            : const Color(0xFFD0D5DD),
       ),
     );
   }

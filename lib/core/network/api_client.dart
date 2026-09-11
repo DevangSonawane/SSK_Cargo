@@ -202,6 +202,44 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createBookingTrackingShareLink({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('POST /api/bookings/$id/track/share-link', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/bookings/$id/track/share-link',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getPublicTracking({
+    required String token,
+  }) async {
+    developer.log('GET /api/track/$token', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/track/${Uri.encodeComponent(token)}',
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBookingAdvanceAmount({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('GET /api/bookings/$id/advance-amount', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/$id/advance-amount',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> validateBookingLocation({
     required String accessToken,
     required String pickupLocation,
@@ -335,6 +373,20 @@ class SskApiClient {
       () => _dio.patch<Map<String, dynamic>>(
         '/api/bookings/$id/pay',
         data: {'pay_type': payType},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> markBookingToBeBilled({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('PATCH /api/bookings/$id/mark-to-be-billed', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/bookings/$id/mark-to-be-billed',
+        data: const <String, dynamic>{},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
