@@ -22,6 +22,7 @@ class ChatThreadSummary {
     required this.lastSenderId,
     required this.lastSenderRole,
     required this.unreadCount,
+    required this.isDirect,
   });
 
   final Map<String, dynamic> raw;
@@ -44,6 +45,7 @@ class ChatThreadSummary {
   final String lastSenderId;
   final String lastSenderRole;
   final int unreadCount;
+  final bool isDirect;
 
   factory ChatThreadSummary.fromJson(Map<String, dynamic> json) {
     return ChatThreadSummary(
@@ -82,17 +84,26 @@ class ChatThreadSummary {
         'last_sender_role',
       ]).toLowerCase(),
       unreadCount: chatReadInt(json, const ['unreadCount', 'unread_count']),
+      isDirect: chatReadBool(json, const ['isDirect', 'is_direct']),
     );
   }
 
-  String get bookingLabel =>
-      bookingNumber.isNotEmpty ? bookingNumber : bookingId;
+  String get bookingLabel {
+    if (isDirect || bookingId.isEmpty) return 'Direct chat';
+    return bookingNumber.isNotEmpty ? bookingNumber : bookingId;
+  }
 
   String get clientDisplayName => clientName.isNotEmpty ? clientName : 'Client';
 
   String get staffDisplayName => clientName.isNotEmpty ? clientName : 'Client';
 
   String displayNameFor(ChatAudience audience) {
+    if (isDirect) {
+      if (audience == ChatAudience.driver) {
+        return brokerName.isNotEmpty ? brokerName : 'Broker';
+      }
+      return driverName.isNotEmpty ? driverName : 'Driver';
+    }
     if (audience == ChatAudience.client) {
       final candidate = driverName.isNotEmpty
           ? driverName

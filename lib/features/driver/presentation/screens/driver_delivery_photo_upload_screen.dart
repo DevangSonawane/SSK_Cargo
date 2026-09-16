@@ -30,15 +30,19 @@ class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
 
 class _DriverDeliveryPhotoUploadScreenState
     extends ConsumerState<DriverDeliveryPhotoUploadScreen> {
-  static const int _maxPhotos = 6;
+  static const int _minMedia = 2;
+  static const int _maxMedia = 6;
 
   final _picker = ImagePicker();
-  final List<_CapturedPhoto> _photos = [];
+  final List<_CapturedMedia> _media = [];
   bool _uploading = false;
   bool _loadingTrip = true;
   bool _resumingFromRemoteState = false;
   String? _tripPaymentStatus;
-  List<dynamic> _remotePodPhotos = const [];
+  List<dynamic> _remotePodMedia = const [];
+
+  int get _remoteMediaCount => _remotePodMedia.length;
+  int get _totalMediaCount => _remoteMediaCount + _media.length;
 
   void _setTripSession({required String tripId, String? paymentStatus}) {
     final resolvedTripId = tripId.trim();
@@ -92,17 +96,22 @@ class _DriverDeliveryPhotoUploadScreenState
           ?.toString()
           .trim()
           .toLowerCase();
+      final podMedia = trip['podMedia'];
       final podPhotos = trip['podPhotos'];
 
       if (!mounted) return;
       setState(() {
         _tripPaymentStatus = paymentStatus;
-        _remotePodPhotos = podPhotos is List ? podPhotos : const [];
+        _remotePodMedia = podMedia is List
+            ? podMedia
+            : podPhotos is List
+            ? podPhotos
+            : const [];
         _loadingTrip = false;
       });
       _setTripSession(tripId: widget.tripId, paymentStatus: paymentStatus);
 
-      if (_remotePodPhotos.isNotEmpty && !_resumingFromRemoteState) {
+      if (_remoteMediaCount >= _minMedia && !_resumingFromRemoteState) {
         _resumingFromRemoteState = true;
         if (!mounted) return;
         if (!const {'pending', 'partial'}.contains(paymentStatus)) {
@@ -121,9 +130,11 @@ class _DriverDeliveryPhotoUploadScreenState
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (_photos.length >= _maxPhotos) {
+    if (_totalMediaCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can add up to 6 delivery photos.')),
+        const SnackBar(
+          content: Text('You can add up to 6 proof-of-delivery items.'),
+        ),
       );
       return;
     }
@@ -141,7 +152,13 @@ class _DriverDeliveryPhotoUploadScreenState
       if (!mounted) return;
 
       setState(() {
-        _photos.add(_CapturedPhoto(bytes: bytes, fileName: picked.name));
+        _media.add(
+          _CapturedMedia(
+            bytes: bytes,
+            fileName: picked.name,
+            type: _PodMediaType.image,
+          ),
+        );
       });
     } catch (error) {
       if (!mounted) return;
@@ -154,14 +171,61 @@ class _DriverDeliveryPhotoUploadScreenState
     }
   }
 
-  Future<void> _submitPhotos() async {
-    if (_photos.isEmpty) return;
+  Future<void> _pickVideo() async {
+    if (_totalMediaCount >= _maxMedia) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You can add up to 6 proof-of-delivery items.'),
+        ),
+      );
+      return;
+    }
 
-    setState(() => _uploading = true);
+    try {
+      final picked = await _picker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(minutes: 2),
+      );
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+
+      setState(() {
+        _media.add(
+          _CapturedMedia(
+            bytes: bytes,
+            fileName: picked.name,
+            type: _PodMediaType.video,
+          ),
+        );
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open video camera: $error'),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    }
+  }
+
+  Future<void> _submitPhotos() async {
+    if (_totalMediaCount < _minMedia) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Add at least ${_minMedia - _totalMediaCount} more proof-of-delivery item(s).',
+          ),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return;
+    }
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       if (!mounted) return;
-      setState(() => _uploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please sign in again to upload delivery photos.'),
@@ -169,12 +233,29 @@ class _DriverDeliveryPhotoUploadScreenState
       );
       return;
     }
+    if (_media.isEmpty) {
+      if (_tripPaymentStatus == 'paid') {
+        await ref
+            .read(apiClientProvider)
+            .completeTrip(
+              accessToken: session.tokens.accessToken,
+              tripId: widget.tripId,
+            );
+        if (!mounted) return;
+        context.go('/driver/thank-you/${widget.tripId}');
+      } else {
+        context.go('/driver/payment/${widget.tripId}');
+      }
+      return;
+    }
+
+    setState(() => _uploading = true);
 
     try {
-      final files = _photos
+      final files = _media
           .map(
-            (photo) =>
-                MultipartFile.fromBytes(photo.bytes, filename: photo.fileName),
+            (item) =>
+                MultipartFile.fromBytes(item.bytes, filename: item.fileName),
           )
           .toList(growable: false);
 
@@ -190,7 +271,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${_photos.length} delivery photo(s) uploaded successfully.',
+            '${_media.length} proof-of-delivery item(s) uploaded successfully.',
           ),
           backgroundColor: const Color(0xFF2FA56E),
         ),
@@ -236,14 +317,14 @@ class _DriverDeliveryPhotoUploadScreenState
 
   @override
   Widget build(BuildContext context) {
-    final hasPhotos = _photos.isNotEmpty;
+    final canSubmit = _totalMediaCount >= _minMedia && !_uploading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F7FB),
         elevation: 0,
-        title: const Text('Upload picture'),
+        title: const Text('Upload proof'),
       ),
       body: SafeArea(
         child: ListView(
@@ -331,31 +412,42 @@ class _DriverDeliveryPhotoUploadScreenState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _PhotoGrid(
-                    photos: _photos,
-                    maxPhotos: _maxPhotos,
+                    media: _media,
+                    remoteCount: _remoteMediaCount,
+                    maxMedia: _maxMedia,
                     onAddFromGallery: _uploading
                         ? null
                         : () => _pickImage(ImageSource.gallery),
                     onAddFromCamera: _uploading
                         ? null
                         : () => _pickImage(ImageSource.camera),
+                    onAddVideo: _uploading ? null : _pickVideo,
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    '${_photos.length} of $_maxPhotos photos added',
+                    '$_totalMediaCount of $_maxMedia photos/videos added',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF667085),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (_totalMediaCount < _minMedia) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Add at least ${_minMedia - _totalMediaCount} more to continue.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFFB54708),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: hasPhotos && !_uploading
-                          ? _submitPhotos
-                          : null,
+                      onPressed: canSubmit ? _submitPhotos : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1F88C9),
                         shape: RoundedRectangleBorder(
@@ -376,7 +468,7 @@ class _DriverDeliveryPhotoUploadScreenState
                               )
                             : const Text(
                                 key: ValueKey('submit'),
-                                'Submit photos',
+                                'Submit proof',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -397,28 +489,43 @@ class _DriverDeliveryPhotoUploadScreenState
 
 class _PhotoGrid extends StatelessWidget {
   const _PhotoGrid({
-    required this.photos,
-    required this.maxPhotos,
+    required this.media,
+    required this.remoteCount,
+    required this.maxMedia,
     required this.onAddFromGallery,
     required this.onAddFromCamera,
+    required this.onAddVideo,
   });
 
-  final List<_CapturedPhoto> photos;
-  final int maxPhotos;
+  final List<_CapturedMedia> media;
+  final int remoteCount;
+  final int maxMedia;
   final VoidCallback? onAddFromGallery;
   final VoidCallback? onAddFromCamera;
+  final VoidCallback? onAddVideo;
 
   @override
   Widget build(BuildContext context) {
-    final canAddMore = photos.length < maxPhotos;
+    final canAddMore = remoteCount + media.length < maxMedia;
     final tiles = <Widget>[
-      for (final photo in photos)
-        _PhotoTile(photo: photo, onTap: onAddFromGallery),
-      if (canAddMore) _AddPhotoTile(onCameraTap: onAddFromCamera),
+      for (var i = 0; i < remoteCount; i++) const _RemoteMediaTile(),
+      for (final item in media)
+        _PhotoTile(media: item, onTap: onAddFromGallery),
+      if (canAddMore)
+        _AddPhotoTile(
+          onGalleryTap: onAddFromGallery,
+          onCameraTap: onAddFromCamera,
+          onVideoTap: onAddVideo,
+        ),
     ];
 
     if (tiles.isEmpty) {
-      return _AddPhotoTile(onCameraTap: onAddFromCamera, isEmptyState: true);
+      return _AddPhotoTile(
+        onGalleryTap: onAddFromGallery,
+        onCameraTap: onAddFromCamera,
+        onVideoTap: onAddVideo,
+        isEmptyState: true,
+      );
     }
 
     return Wrap(spacing: 12, runSpacing: 12, children: tiles);
@@ -426,9 +533,9 @@ class _PhotoGrid extends StatelessWidget {
 }
 
 class _PhotoTile extends StatelessWidget {
-  const _PhotoTile({required this.photo, this.onTap});
+  const _PhotoTile({required this.media, this.onTap});
 
-  final _CapturedPhoto photo;
+  final _CapturedMedia media;
   final VoidCallback? onTap;
 
   @override
@@ -444,7 +551,19 @@ class _PhotoTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.memory(photo.bytes, fit: BoxFit.cover),
+              if (media.type == _PodMediaType.image)
+                Image.memory(media.bytes, fit: BoxFit.cover)
+              else
+                Container(
+                  color: const Color(0xFF101828),
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_circle_fill_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                ),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -462,7 +581,7 @@ class _PhotoTile extends StatelessWidget {
                 right: 10,
                 bottom: 10,
                 child: Text(
-                  photo.fileName,
+                  media.fileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -488,18 +607,74 @@ class _PhotoTile extends StatelessWidget {
 }
 
 class _AddPhotoTile extends StatelessWidget {
-  const _AddPhotoTile({required this.onCameraTap, this.isEmptyState = false});
+  const _AddPhotoTile({
+    required this.onGalleryTap,
+    required this.onCameraTap,
+    required this.onVideoTap,
+    this.isEmptyState = false,
+  });
 
+  final VoidCallback? onGalleryTap;
   final VoidCallback? onCameraTap;
+  final VoidCallback? onVideoTap;
   final bool isEmptyState;
+
+  void _showSourceSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_rounded),
+                  title: const Text('Take photo'),
+                  onTap: onCameraTap == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onCameraTap!();
+                        },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.videocam_rounded),
+                  title: const Text('Record video'),
+                  onTap: onVideoTap == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onVideoTap!();
+                        },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_rounded),
+                  title: const Text('Choose photo'),
+                  onTap: onGalleryTap == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          onGalleryTap!();
+                        },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onCameraTap,
+      onTap: isEmptyState ? null : () => _showSourceSheet(context),
       borderRadius: BorderRadius.circular(22),
       child: SizedBox(
-        width: 104,
+        width: isEmptyState ? 220 : 104,
         height: 104,
         child: Stack(
           children: [
@@ -515,32 +690,119 @@ class _AddPhotoTile extends StatelessWidget {
               ),
             ),
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF2FB),
-                      borderRadius: BorderRadius.circular(999),
+              child: isEmptyState
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MediaPickButton(
+                          icon: Icons.photo_camera_rounded,
+                          label: 'Photo',
+                          onTap: onCameraTap,
+                        ),
+                        const SizedBox(width: 10),
+                        _MediaPickButton(
+                          icon: Icons.videocam_rounded,
+                          label: 'Video',
+                          onTap: onVideoTap,
+                        ),
+                        const SizedBox(width: 10),
+                        _MediaPickButton(
+                          icon: Icons.photo_library_rounded,
+                          label: 'Gallery',
+                          onTap: onGalleryTap,
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF2FB),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: Color(0xFF1F88C9),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'More',
+                          style: TextStyle(
+                            color: Color(0xFF1F88C9),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: Color(0xFF1F88C9),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    isEmptyState ? 'Add photo' : 'More',
-                    style: const TextStyle(
-                      color: Color(0xFF1F88C9),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RemoteMediaTile extends StatelessWidget {
+  const _RemoteMediaTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 104,
+      height: 104,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF7F0),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFCDEFD9)),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF2FA56E),
+            size: 34,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaPickButton extends StatelessWidget {
+  const _MediaPickButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF1F88C9), size: 22),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF1F88C9),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -603,9 +865,16 @@ class _DashedRoundedRectPainter extends CustomPainter {
   }
 }
 
-class _CapturedPhoto {
-  const _CapturedPhoto({required this.bytes, required this.fileName});
+enum _PodMediaType { image, video }
+
+class _CapturedMedia {
+  const _CapturedMedia({
+    required this.bytes,
+    required this.fileName,
+    required this.type,
+  });
 
   final Uint8List bytes;
   final String fileName;
+  final _PodMediaType type;
 }

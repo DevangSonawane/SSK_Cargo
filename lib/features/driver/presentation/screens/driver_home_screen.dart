@@ -569,7 +569,8 @@ class _DeliveryOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final amount = request.amount > 0 ? request.amount : 0;
-    final canOpen = request.canNegotiate;
+    final brokerAssigned = request.isBrokerAssigned;
+    final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(request);
 
     return Container(
@@ -663,7 +664,11 @@ class _DeliveryOrderCard extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           Text(
-            canOpen ? 'Slide to open negotiation' : statusLabel,
+            brokerAssigned
+                ? 'Slide to review assigned trip'
+                : canOpen
+                ? 'Slide to open negotiation'
+                : statusLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: const Color(0xFF98A2B3),
               fontWeight: FontWeight.w600,
@@ -744,7 +749,8 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
   Widget build(BuildContext context) {
     final request = widget.request;
     final amount = request.amount > 0 ? request.amount : 0;
-    final canOpen = request.canNegotiate;
+    final brokerAssigned = request.isBrokerAssigned;
+    final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(request);
 
     return Container(
@@ -860,7 +866,11 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           ],
           const SizedBox(height: 14),
           Text(
-            canOpen ? 'Swipe to open negotiation' : statusLabel,
+            brokerAssigned
+                ? 'Swipe to review assigned trip'
+                : canOpen
+                ? 'Swipe to open negotiation'
+                : statusLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: const Color(0xFF98A2B3),
               fontWeight: FontWeight.w600,
@@ -917,8 +927,8 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Open negotiation',
+              child: Text(
+                brokerAssigned ? 'Review assigned trip' : 'Open negotiation',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),

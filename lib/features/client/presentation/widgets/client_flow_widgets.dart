@@ -1131,6 +1131,12 @@ class BookingData {
     this.selectedBrokerId = '',
     this.paymentMode = PaymentMode.payLater,
     this.selectedPaymentLabel = '',
+    this.isExpress = false,
+    this.expressSurcharge = 0,
+    this.expectedDeliveryHours,
+    this.estimatedDeliveryDate,
+    this.estimatedDeliveryDays,
+    this.expressInsuranceIncluded = false,
   });
 
   final String from;
@@ -1161,6 +1167,12 @@ class BookingData {
   final String selectedBrokerId;
   final PaymentMode paymentMode;
   final String selectedPaymentLabel;
+  final bool isExpress;
+  final double expressSurcharge;
+  final double? expectedDeliveryHours;
+  final DateTime? estimatedDeliveryDate;
+  final int? estimatedDeliveryDays;
+  final bool expressInsuranceIncluded;
 
   String get transportType =>
       tripType == TripType.interCity ? 'inter' : 'intra';
@@ -1201,6 +1213,12 @@ class BookingData {
     String? selectedBrokerId,
     PaymentMode? paymentMode,
     String? selectedPaymentLabel,
+    bool? isExpress,
+    double? expressSurcharge,
+    double? expectedDeliveryHours,
+    DateTime? estimatedDeliveryDate,
+    int? estimatedDeliveryDays,
+    bool? expressInsuranceIncluded,
   }) {
     return BookingData(
       from: from ?? this.from,
@@ -1231,6 +1249,16 @@ class BookingData {
       selectedBrokerId: selectedBrokerId ?? this.selectedBrokerId,
       paymentMode: paymentMode ?? this.paymentMode,
       selectedPaymentLabel: selectedPaymentLabel ?? this.selectedPaymentLabel,
+      isExpress: isExpress ?? this.isExpress,
+      expressSurcharge: expressSurcharge ?? this.expressSurcharge,
+      expectedDeliveryHours:
+          expectedDeliveryHours ?? this.expectedDeliveryHours,
+      estimatedDeliveryDate:
+          estimatedDeliveryDate ?? this.estimatedDeliveryDate,
+      estimatedDeliveryDays:
+          estimatedDeliveryDays ?? this.estimatedDeliveryDays,
+      expressInsuranceIncluded:
+          expressInsuranceIncluded ?? this.expressInsuranceIncluded,
     );
   }
 }
@@ -1415,6 +1443,10 @@ String _formatRupees(double amount) {
   return '₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
 }
 
+String _formatHours(double hours) {
+  return '${hours.toStringAsFixed(hours % 1 == 0 ? 0 : 1)}h';
+}
+
 String _formatDateTime(DateTime value) {
   final hour12 = value.hour == 0
       ? 12
@@ -1424,6 +1456,10 @@ String _formatDateTime(DateTime value) {
   final minute = value.minute.toString().padLeft(2, '0');
   final period = value.hour >= 12 ? 'PM' : 'AM';
   return '${value.day}/${value.month}/${value.year} at $hour12:$minute $period';
+}
+
+String _formatDateOnly(DateTime value) {
+  return '${value.day}/${value.month}/${value.year}';
 }
 
 ClientTruckPricingTier? _intraCityTierForVehicle(
@@ -1468,6 +1504,16 @@ class TrackingDemoShipment {
     this.assignedTruckName,
     this.pickupOtp,
     this.pickupOtpVerified = false,
+    this.isExpress = false,
+    this.expectedDeliveryHours,
+    this.estimatedDeliveryDate,
+    this.estimatedDeliveryDays,
+    this.slaOverageHours = 0,
+    this.slaOverageCharge = 0,
+    this.tripStartedAt,
+    this.haltingGraceHours,
+    this.haltingHours = 0,
+    this.haltingCharge = 0,
   });
 
   TrackingDemoShipment copyWith({
@@ -1498,6 +1544,16 @@ class TrackingDemoShipment {
     int? ratingStars,
     String? pickupOtp,
     bool? pickupOtpVerified,
+    bool? isExpress,
+    double? expectedDeliveryHours,
+    DateTime? estimatedDeliveryDate,
+    int? estimatedDeliveryDays,
+    double? slaOverageHours,
+    double? slaOverageCharge,
+    DateTime? tripStartedAt,
+    double? haltingGraceHours,
+    double? haltingHours,
+    double? haltingCharge,
     bool clearPickupLat = false,
     bool clearPickupLng = false,
     bool clearDropLat = false,
@@ -1530,6 +1586,19 @@ class TrackingDemoShipment {
       assignedTruckName: assignedTruckName ?? this.assignedTruckName,
       pickupOtp: pickupOtp ?? this.pickupOtp,
       pickupOtpVerified: pickupOtpVerified ?? this.pickupOtpVerified,
+      isExpress: isExpress ?? this.isExpress,
+      expectedDeliveryHours:
+          expectedDeliveryHours ?? this.expectedDeliveryHours,
+      estimatedDeliveryDate:
+          estimatedDeliveryDate ?? this.estimatedDeliveryDate,
+      estimatedDeliveryDays:
+          estimatedDeliveryDays ?? this.estimatedDeliveryDays,
+      slaOverageHours: slaOverageHours ?? this.slaOverageHours,
+      slaOverageCharge: slaOverageCharge ?? this.slaOverageCharge,
+      tripStartedAt: tripStartedAt ?? this.tripStartedAt,
+      haltingGraceHours: haltingGraceHours ?? this.haltingGraceHours,
+      haltingHours: haltingHours ?? this.haltingHours,
+      haltingCharge: haltingCharge ?? this.haltingCharge,
       amount: amount ?? this.amount,
       amountPaid: amountPaid ?? this.amountPaid,
       paymentStatus: paymentStatus ?? this.paymentStatus,
@@ -1563,6 +1632,16 @@ class TrackingDemoShipment {
   final String? assignedTruckName;
   final String? pickupOtp;
   final bool pickupOtpVerified;
+  final bool isExpress;
+  final double? expectedDeliveryHours;
+  final DateTime? estimatedDeliveryDate;
+  final int? estimatedDeliveryDays;
+  final double slaOverageHours;
+  final double slaOverageCharge;
+  final DateTime? tripStartedAt;
+  final double? haltingGraceHours;
+  final double haltingHours;
+  final double haltingCharge;
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {
@@ -1763,6 +1842,16 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     ]),
     pickupOtp: booking.pickupOtp,
     pickupOtpVerified: booking.pickupOtpVerified,
+    isExpress: booking.isExpress,
+    expectedDeliveryHours: booking.expectedDeliveryHours,
+    estimatedDeliveryDate: booking.estimatedDeliveryDate,
+    estimatedDeliveryDays: booking.estimatedDeliveryDays,
+    slaOverageHours: booking.slaOverageHours ?? 0,
+    slaOverageCharge: booking.slaOverageCharge ?? 0,
+    tripStartedAt: booking.tripStartedAt,
+    haltingGraceHours: booking.haltingGraceHours,
+    haltingHours: booking.haltingHours,
+    haltingCharge: booking.haltingCharge,
     amount: _readMoneyValue(raw, raw),
     amountPaid:
         _readDoubleValue(raw, raw, const [
@@ -3114,6 +3203,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _cancellingFindTruckSearch = false;
   bool _postNegotiationPayment = false;
   bool _loadingAdvanceAmount = false;
+  bool _loadingExpressQuote = false;
   double? _advanceAmount;
   bool _loadingEligibleBrokers = false;
   String? _eligibleBrokersError;
@@ -3725,6 +3815,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         vehicle: vehicle,
         truckCategory: _truckCategoryForVehicle(vehicle.label),
         amount: _priceValue(vehicle.price),
+        expressSurcharge: 0,
+        expressInsuranceIncluded: false,
       );
       _amountController.text = _priceInputText(vehicle.price);
       _selectedTruck = null;
@@ -4441,6 +4533,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           tripType: resolvedTripType,
           vehicle: _vehicle,
           truckCategory: _truckCategoryForVehicle(_vehicle.label),
+          isExpress: resolvedTripType == TripType.intraCity
+              ? _draft.isExpress
+              : false,
+          expressSurcharge: resolvedTripType == TripType.intraCity
+              ? _draft.expressSurcharge
+              : 0,
+          expressInsuranceIncluded: resolvedTripType == TripType.intraCity
+              ? _draft.expressInsuranceIncluded
+              : false,
           distance: distance,
           durationMin: durationMin,
           durationInTrafficMin: durationInTrafficMin,
@@ -4625,6 +4726,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         'truck_category': _truckCategoryForVehicle(_vehicle.label),
         'transport_type': _draft.transportType,
         'truck_type': _vehicle.label,
+        'is_express': _draft.transportType == 'intra'
+            ? _draft.isExpress
+            : false,
         if (_draft.pickupLat != null) 'pickup_lat': _draft.pickupLat,
         if (_draft.pickupLng != null) 'pickup_lng': _draft.pickupLng,
       };
@@ -4638,8 +4742,39 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           .read(apiClientProvider)
           .estimatePricing(accessToken: accessToken, payload: payload);
       if (mounted) {
+        final data = response['data'];
+        final amount = _readMoneyValue(data, response);
         setState(() {
           _haltingNote = _haltingNoteFromQuote(response);
+          _draft = _draft.copyWith(
+            amount: amount > 0 ? amount : _draft.amount,
+            isExpress: _draft.transportType == 'intra' && _draft.isExpress,
+            expressSurcharge:
+                _readDoubleValue(data, response, const [
+                  'expressSurcharge',
+                  'express_surcharge',
+                ]) ??
+                0,
+            expectedDeliveryHours: _readDoubleValue(data, response, const [
+              'expectedDeliveryHours',
+              'expected_delivery_hours',
+            ]),
+            estimatedDeliveryDate: _readDateTimeValue(data, response, const [
+              'estimatedDeliveryDate',
+              'estimated_delivery_date',
+            ]),
+            estimatedDeliveryDays: _readIntValue(data, response, const [
+              'estimatedDeliveryDays',
+              'estimated_delivery_days',
+            ]),
+            expressInsuranceIncluded: _readBool(
+              data is Map<String, dynamic>
+                  ? (data['expressInsuranceIncluded'] ??
+                        data['express_insurance_included'])
+                  : (response['expressInsuranceIncluded'] ??
+                        response['express_insurance_included']),
+            ),
+          );
         });
       }
       return _readMoneyValue(response['data'], response);
@@ -4671,6 +4806,54 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return null;
     }
     return 'Free halting: ${graceHours.toStringAsFixed(graceHours % 1 == 0 ? 0 : 1)}h, then ${_formatRupees(rate)}/hr.';
+  }
+
+  Future<void> _setExpressDelivery(bool enabled) async {
+    if (_draft.transportType != 'intra') {
+      setState(() {
+        _draft = _draft.copyWith(
+          isExpress: false,
+          expressSurcharge: 0,
+          expressInsuranceIncluded: false,
+        );
+      });
+      return;
+    }
+
+    setState(() {
+      _loadingExpressQuote = true;
+      _draft = _draft.copyWith(
+        isExpress: enabled,
+        expressSurcharge: enabled ? _draft.expressSurcharge : 0,
+        expressInsuranceIncluded: enabled
+            ? _draft.expressInsuranceIncluded
+            : false,
+      );
+    });
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _draft.distance <= 0) {
+      if (mounted) {
+        setState(() {
+          _loadingExpressQuote = false;
+        });
+      }
+      return;
+    }
+
+    final estimatedAmount = await _estimateBookingAmount(
+      accessToken: session.tokens.accessToken,
+      distance: _draft.distance,
+      durationMin: _draft.durationMin,
+      durationInTrafficMin: _draft.durationInTrafficMin,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingExpressQuote = false;
+      if (estimatedAmount != null && estimatedAmount > 0) {
+        _amountController.text = _priceInputText(estimatedAmount.toString());
+      }
+    });
   }
 
   Future<void> _submitBooking() async {
@@ -4914,6 +5097,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (_draft.durationMin != null) 'duration_min': _draft.durationMin,
       if (_draft.durationInTrafficMin != null)
         'duration_in_traffic_min': _draft.durationInTrafficMin,
+      'is_express': _draft.transportType == 'intra' ? _draft.isExpress : false,
       'amount': _draft.amount,
       'payment_status': 'pending',
     };
@@ -6216,6 +6400,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               .toList(growable: false),
         ),
         const SizedBox(height: 18),
+        if (_draft.transportType == 'intra') ...[
+          _ExpressDeliveryOptionCard(
+            selected: _draft.isExpress,
+            loading: _loadingExpressQuote,
+            surcharge: _draft.expressSurcharge,
+            expectedDeliveryHours: _draft.expectedDeliveryHours,
+            insuranceIncluded: _draft.expressInsuranceIncluded,
+            onChanged: (value) => unawaited(_setExpressDelivery(value)),
+          ),
+          const SizedBox(height: 14),
+        ],
         _buildScheduleSection(context),
       ],
     );
@@ -6367,6 +6562,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_draft.estimatedDeliveryDate != null ||
+            _draft.expectedDeliveryHours != null) ...[
+          _DeliveryEstimateCard(
+            estimatedDeliveryDate: _draft.estimatedDeliveryDate,
+            estimatedDeliveryDays: _draft.estimatedDeliveryDays,
+            expectedDeliveryHours: _draft.expectedDeliveryHours,
+            isExpress: _draft.isExpress,
+          ),
+          const SizedBox(height: 12),
+        ],
         if (_haltingNote != null) ...[
           _HaltingInfoCard(message: _haltingNote!),
           const SizedBox(height: 12),
@@ -9166,6 +9371,29 @@ int? _readIntValue(
   return null;
 }
 
+DateTime? _readDateTimeValue(
+  Object? data,
+  Map<String, dynamic> fallback,
+  List<String> keys,
+) {
+  final candidates = <Object?>[];
+  if (data is Map<String, dynamic>) {
+    for (final key in keys) {
+      candidates.add(data[key]);
+    }
+  }
+  for (final key in keys) {
+    candidates.add(fallback[key]);
+  }
+
+  for (final candidate in candidates) {
+    if (candidate is DateTime) return candidate;
+    final parsed = DateTime.tryParse(candidate?.toString().trim() ?? '');
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
 String _displayPriceLabel(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? 'Loading...' : trimmed;
@@ -9964,6 +10192,202 @@ class _HaltingInfoCard extends StatelessWidget {
                 height: 1.35,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeliveryEstimateCard extends StatelessWidget {
+  const _DeliveryEstimateCard({
+    required this.estimatedDeliveryDate,
+    required this.estimatedDeliveryDays,
+    required this.expectedDeliveryHours,
+    required this.isExpress,
+  });
+
+  final DateTime? estimatedDeliveryDate;
+  final int? estimatedDeliveryDays;
+  final double? expectedDeliveryHours;
+  final bool isExpress;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = estimatedDeliveryDate;
+    final days = estimatedDeliveryDays;
+    final hours = expectedDeliveryHours;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4EAF1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.calendar_month_rounded,
+            color: Color(0xFF1F88C9),
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (date != null)
+                  Text(
+                    'Estimated delivery by ${_formatDateOnly(date)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF344054),
+                      fontWeight: FontWeight.w800,
+                      height: 1.35,
+                    ),
+                  ),
+                if (hours != null) ...[
+                  if (date != null) const SizedBox(height: 3),
+                  Text(
+                    'SLA window: ~${_formatHours(hours)}${isExpress ? ' (Express)' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF667085),
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+                if (days != null && days > 0) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    '$days day${days == 1 ? '' : 's'} estimated from pickup.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpressDeliveryOptionCard extends StatelessWidget {
+  const _ExpressDeliveryOptionCard({
+    required this.selected,
+    required this.loading,
+    required this.surcharge,
+    required this.expectedDeliveryHours,
+    required this.insuranceIncluded,
+    required this.onChanged,
+  });
+
+  final bool selected;
+  final bool loading;
+  final double surcharge;
+  final double? expectedDeliveryHours;
+  final bool insuranceIncluded;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final showQuote =
+        selected &&
+        !loading &&
+        (surcharge > 0 || expectedDeliveryHours != null);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFFFF7ED) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: selected ? const Color(0xFFFFC89A) : const Color(0xFFE4EAF1),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: selected
+                  ? const Color(0xFFEA580C)
+                  : const Color(0xFFF2F4F7),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.bolt_rounded,
+              color: selected ? Colors.white : const Color(0xFF98A2B3),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Express Delivery',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Faster deadline for intra-city bookings.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (selected) ...[
+                  const SizedBox(height: 6),
+                  if (loading)
+                    Text(
+                      'Calculating surcharge...',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFFEA580C),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else if (showQuote)
+                    Text(
+                      [
+                        if (surcharge > 0)
+                          '+${_formatRupees(surcharge)} surcharge',
+                        if (expectedDeliveryHours != null)
+                          'expected in ~${_formatHours(expectedDeliveryHours!)}',
+                      ].join(' · '),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFFEA580C),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  if (insuranceIncluded) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      'Includes transit insurance',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: selected,
+            onChanged: loading ? null : onChanged,
           ),
         ],
       ),

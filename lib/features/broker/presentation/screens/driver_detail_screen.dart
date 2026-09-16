@@ -1,23 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
 
-class DriverDetailScreen extends StatefulWidget {
-  const DriverDetailScreen({
-    super.key,
-    required this.driver,
-  });
+class DriverDetailScreen extends ConsumerStatefulWidget {
+  const DriverDetailScreen({super.key, required this.driver});
 
   final BrokerDriver driver;
 
   @override
-  State<DriverDetailScreen> createState() => _DriverDetailScreenState();
+  ConsumerState<DriverDetailScreen> createState() => _DriverDetailScreenState();
 }
 
-class _DriverDetailScreenState extends State<DriverDetailScreen> {
+class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
   bool _isLiveView = true;
+  bool _openingChat = false;
+
+  Future<void> _openDirectChat() async {
+    if (_openingChat) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _openingChat = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getDirectDriverChatThread(
+            accessToken: session.tokens.accessToken,
+            driverId: widget.driver.id,
+          );
+      final data = response['data'];
+      final thread = data is Map<String, dynamic>
+          ? (data['thread'] is Map
+                ? (data['thread'] as Map).cast<String, dynamic>()
+                : data)
+          : response['thread'] is Map
+          ? (response['thread'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+      final threadId = thread['id']?.toString().trim().isNotEmpty == true
+          ? thread['id'].toString().trim()
+          : thread['threadId']?.toString().trim() ?? '';
+      if (!mounted) return;
+      if (threadId.isEmpty) throw StateError('Chat thread unavailable.');
+      context.push('/broker/chats/direct/$threadId');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +76,20 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                   child: Column(
                     children: [
-                      _DriverSummaryCard(driver: widget.driver),
+                      _DriverSummaryCard(
+                        driver: widget.driver,
+                        openingChat: _openingChat,
+                        onChatTap: _openDirectChat,
+                      ),
                       const SizedBox(height: 8),
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(28),
                           child: Stack(
                             children: [
-                              const Positioned.fill(child: _BrokerTrackingMapBackdrop()),
+                              const Positioned.fill(
+                                child: _BrokerTrackingMapBackdrop(),
+                              ),
                               Positioned.fill(
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -61,7 +107,12 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                                 ),
                               ),
                               SingleChildScrollView(
-                                padding: const EdgeInsets.fromLTRB(18, 18, 18, 86),
+                                padding: const EdgeInsets.fromLTRB(
+                                  18,
+                                  18,
+                                  18,
+                                  86,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -97,16 +148,22 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                                   width: double.infinity,
                                   height: 48,
                                   child: FilledButton(
-                                    onPressed: () => setState(() => _isLiveView = true),
+                                    onPressed: () =>
+                                        setState(() => _isLiveView = true),
                                     style: FilledButton.styleFrom(
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(999),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                       ),
                                       backgroundColor: const Color(0xFF1F88C9),
                                     ),
                                     child: const Text(
                                       'Live tracking',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -138,7 +195,8 @@ class _DriverLiveView extends StatefulWidget {
   State<_DriverLiveView> createState() => _DriverLiveViewState();
 }
 
-class _DriverLiveViewState extends State<_DriverLiveView> with SingleTickerProviderStateMixin {
+class _DriverLiveViewState extends State<_DriverLiveView>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
@@ -192,10 +250,10 @@ class _DriverLiveViewState extends State<_DriverLiveView> with SingleTickerProvi
                     'Live Tracking',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF101828),
-                        ),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF101828),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 42),
@@ -220,9 +278,15 @@ class _DriverLiveViewState extends State<_DriverLiveView> with SingleTickerProvi
 }
 
 class _DriverSummaryCard extends StatelessWidget {
-  const _DriverSummaryCard({required this.driver});
+  const _DriverSummaryCard({
+    required this.driver,
+    required this.openingChat,
+    required this.onChatTap,
+  });
 
   final BrokerDriver driver;
+  final bool openingChat;
+  final VoidCallback onChatTap;
 
   @override
   Widget build(BuildContext context) {
@@ -247,9 +311,9 @@ class _DriverSummaryCard extends StatelessWidget {
             child: Text(
               _driverInitials(driver.name),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: driverAvatarTextColor(driver.status),
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: driverAvatarTextColor(driver.status),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -260,17 +324,17 @@ class _DriverSummaryCard extends StatelessWidget {
                 Text(
                   driver.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF101828),
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   driver.assignedVehicle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 StatusPill(
@@ -280,6 +344,18 @@ class _DriverSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 10),
+          IconButton.filledTonal(
+            onPressed: openingChat ? null : onChatTap,
+            icon: openingChat
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.chat_bubble_outline_rounded),
+            tooltip: 'Chat with driver',
           ),
         ],
       ),
@@ -291,14 +367,12 @@ String _driverInitials(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return '${parts.first.substring(0, 1)}${parts[1].substring(0, 1)}'.toUpperCase();
+  return '${parts.first.substring(0, 1)}${parts[1].substring(0, 1)}'
+      .toUpperCase();
 }
 
 class _InfoBlock extends StatelessWidget {
-  const _InfoBlock({
-    required this.title,
-    required this.value,
-  });
+  const _InfoBlock({required this.title, required this.value});
 
   final String title;
   final String value;
@@ -317,17 +391,17 @@ class _InfoBlock extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF98A2B3),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFF101828),
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -382,8 +456,18 @@ class _BrokerMapPainter extends CustomPainter {
 
     final route = Path()
       ..moveTo(size.width * 0.16, size.height * 0.76)
-      ..quadraticBezierTo(size.width * 0.32, size.height * 0.58, size.width * 0.48, size.height * 0.62)
-      ..quadraticBezierTo(size.width * 0.66, size.height * 0.67, size.width * 0.83, size.height * 0.40);
+      ..quadraticBezierTo(
+        size.width * 0.32,
+        size.height * 0.58,
+        size.width * 0.48,
+        size.height * 0.62,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.66,
+        size.height * 0.67,
+        size.width * 0.83,
+        size.height * 0.40,
+      );
     canvas.drawPath(route, routePaint);
 
     final start = Paint()..color = const Color(0xFF2FA56E);
@@ -391,9 +475,18 @@ class _BrokerMapPainter extends CustomPainter {
     canvas.drawCircle(Offset(size.width * 0.16, size.height * 0.76), 10, start);
     canvas.drawCircle(Offset(size.width * 0.83, size.height * 0.40), 10, end);
 
-    final accentPaint = Paint()..color = const Color(0xFF1F88C9).withValues(alpha: 0.08);
-    canvas.drawCircle(Offset(size.width * 0.72, size.height * 0.28), 58, accentPaint);
-    canvas.drawCircle(Offset(size.width * 0.33, size.height * 0.22), 42, accentPaint);
+    final accentPaint = Paint()
+      ..color = const Color(0xFF1F88C9).withValues(alpha: 0.08);
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.28),
+      58,
+      accentPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.33, size.height * 0.22),
+      42,
+      accentPaint,
+    );
   }
 
   @override

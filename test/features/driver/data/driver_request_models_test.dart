@@ -74,5 +74,18 @@ void main() {
       expect(request.driverTimedOut, isFalse);
       expect(request.canNegotiate, isTrue);
     });
+
+    test('broker-assigned requests are visible but not negotiable', () {
+      final request = DriverRequestItem.fromMap({
+        'id': 'request-id',
+        'status': 'pending',
+        'jobRequestId': 'job-request-id',
+        'driverTimedOut': false,
+      });
+
+      expect(request.isBrokerAssigned, isTrue);
+      expect(request.isVisibleInNewTravel, isTrue);
+      expect(request.canNegotiate, isFalse);
+    });
   });
 }

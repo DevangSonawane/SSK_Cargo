@@ -335,6 +335,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/broker/chats/direct/:threadId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: '',
+            threadId: state.pathParameters['threadId'] ?? '',
+            audience: ChatAudience.broker,
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/driver/chats',
         pageBuilder: (context, state) => const NoTransitionPage(
           child: ChatListScreen(audience: ChatAudience.driver),
@@ -345,6 +355,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => NoTransitionPage(
           child: ChatDetailScreen(
             bookingId: state.pathParameters['bookingId'] ?? '',
+            audience: ChatAudience.driver,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/driver/chats/direct/:threadId',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ChatDetailScreen(
+            bookingId: '',
+            threadId: state.pathParameters['threadId'] ?? '',
             audience: ChatAudience.driver,
           ),
         ),

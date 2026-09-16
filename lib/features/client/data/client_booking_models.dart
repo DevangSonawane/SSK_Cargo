@@ -165,6 +165,16 @@ class ClientBooking {
     required this.requestedAt,
     required this.pickupOtp,
     required this.pickupOtpVerified,
+    required this.isExpress,
+    required this.expectedDeliveryHours,
+    required this.estimatedDeliveryDate,
+    required this.estimatedDeliveryDays,
+    required this.slaOverageHours,
+    required this.slaOverageCharge,
+    required this.tripStartedAt,
+    required this.haltingGraceHours,
+    required this.haltingHours,
+    required this.haltingCharge,
     required this.raw,
   });
 
@@ -260,6 +270,45 @@ class ClientBooking {
       pickupOtpVerified:
           _readBool(json, const ['pickupOtpVerified', 'pickup_otp_verified']) ||
           _readString(json, const ['pickup_otp_verified_at']).isNotEmpty,
+      isExpress: _readBool(json, const ['isExpress', 'is_express']),
+      expectedDeliveryHours: _readOptionalDouble(json, const [
+        'expectedDeliveryHours',
+        'expected_delivery_hours',
+      ]),
+      estimatedDeliveryDate: _parseDateTime(
+        json['estimatedDeliveryDate'] ?? json['estimated_delivery_date'],
+      ),
+      estimatedDeliveryDays: _readOptionalInt(json, const [
+        'estimatedDeliveryDays',
+        'estimated_delivery_days',
+      ]),
+      slaOverageHours: _readOptionalDouble(json, const [
+        'slaOverageHours',
+        'sla_overage_hours',
+      ]),
+      slaOverageCharge: _readOptionalDouble(json, const [
+        'slaOverageCharge',
+        'sla_overage_charge',
+      ]),
+      tripStartedAt: _parseDateTime(
+        json['tripStartedAt'] ??
+            json['trip_started_at'] ??
+            json['startedAt'] ??
+            json['started_at'],
+      ),
+      haltingGraceHours: _readOptionalDouble(json, const [
+        'haltingGraceHours',
+        'halting_grace_hours',
+      ]),
+      haltingHours:
+          _readOptionalDouble(json, const ['haltingHours', 'halting_hours']) ??
+          0,
+      haltingCharge:
+          _readOptionalDouble(json, const [
+            'haltingCharge',
+            'halting_charge',
+          ]) ??
+          0,
       raw: json,
     );
   }
@@ -279,6 +328,16 @@ class ClientBooking {
   final DateTime? requestedAt;
   final String? pickupOtp;
   final bool pickupOtpVerified;
+  final bool isExpress;
+  final double? expectedDeliveryHours;
+  final DateTime? estimatedDeliveryDate;
+  final int? estimatedDeliveryDays;
+  final double? slaOverageHours;
+  final double? slaOverageCharge;
+  final DateTime? tripStartedAt;
+  final double? haltingGraceHours;
+  final double haltingHours;
+  final double haltingCharge;
   final Map<String, dynamic> raw;
 
   String get displayTitle => material.isNotEmpty
@@ -693,6 +752,29 @@ bool _readBool(Map<String, dynamic> json, List<String> keys) {
     return normalized == 'true' || normalized == '1' || normalized == 'yes';
   }
   return false;
+}
+
+double? _readOptionalDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+int? _readOptionalInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is int) return value;
+    if (value is num) return value.round();
+    final parsed = int.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+  return null;
 }
 
 List<dynamic> _extractItems(

@@ -272,6 +272,7 @@ class SskApiClient {
     required double distance,
     int? durationMin,
     int? durationInTrafficMin,
+    bool isExpress = false,
   }) async {
     developer.log(
       'POST /api/bookings/quote truckCategory=$truckCategory transportType=$transportType distance=$distance',
@@ -284,6 +285,7 @@ class SskApiClient {
           'truck_category': truckCategory,
           'transport_type': transportType,
           'distance': distance,
+          'is_express': transportType == 'intra' ? isExpress : false,
           ...?(durationMin == null
               ? null
               : <String, dynamic>{'duration_min': durationMin}),
@@ -561,6 +563,31 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/chat/bookings/$bookingId/thread',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDirectDriverChatThread({
+    required String accessToken,
+    required String driverId,
+  }) async {
+    developer.log('GET /api/chat/drivers/$driverId/thread', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/drivers/$driverId/thread',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBrokerDirectChatThread({
+    required String accessToken,
+  }) async {
+    developer.log('GET /api/chat/broker/thread', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/chat/broker/thread',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -1457,6 +1484,7 @@ class SskApiClient {
     required String id,
     required String driverId,
     required String truckId,
+    String? reason,
   }) async {
     developer.log(
       'POST /api/jobs/$id/assign-driver driverId=$driverId truckId=$truckId',
@@ -1465,7 +1493,27 @@ class SskApiClient {
     return _request(
       () => _dio.post<Map<String, dynamic>>(
         '/api/jobs/$id/assign-driver',
-        data: {'driverId': driverId, 'truckId': truckId},
+        data: {
+          'driverId': driverId,
+          'truckId': truckId,
+          if (reason?.trim().isNotEmpty ?? false) 'reason': reason!.trim(),
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getBookingReassignmentHistory({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log(
+      'GET /api/bookings/$bookingId/reassignment-history',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/reassignment-history',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

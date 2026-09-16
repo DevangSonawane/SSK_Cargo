@@ -991,6 +991,178 @@ class _DriverOrderAcceptedScreenState
         serverTimedOut ||
         _waitingOnClient ||
         _awaitingDriverConfirmation;
+    final brokerAssigned = request.jobRequestId.isNotEmpty;
+
+    if (brokerAssigned) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF5F7FB),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => context.go('/driver/home'),
+          ),
+          title: const Text('Assigned request'),
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF7EF),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            Icons.assignment_turned_in_rounded,
+                            color: Color(0xFF2FA56E),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Broker-assigned trip',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFF101828),
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Already agreed with the broker - accept or decline, no counter-offers.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    _SummaryPill(label: 'Request', value: request.displayRef),
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Pickup',
+                      value: request.pickup.isNotEmpty ? request.pickup : '-',
+                    ),
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Drop',
+                      value: request.drop.isNotEmpty ? request.drop : '-',
+                    ),
+                    const SizedBox(height: 10),
+                    _SummaryPill(
+                      label: 'Agreed amount',
+                      value: '₹${baseAmount.toStringAsFixed(0)}',
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting || serverTimedOut
+                                ? null
+                                : () => _runAction(
+                                    (token) => ref
+                                        .read(apiClientProvider)
+                                        .rejectDriverRequestAsDriver(
+                                          accessToken: token,
+                                          id: request.id,
+                                        ),
+                                  ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFE23A4B),
+                              side: const BorderSide(
+                                color: Color(0xFFF3B4B4),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Decline',
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _submitting || serverTimedOut
+                                ? null
+                                : () => _runAction(
+                                    (token) => ref
+                                        .read(apiClientProvider)
+                                        .acceptDriverRequestAsDriver(
+                                          accessToken: token,
+                                          id: request.id,
+                                        ),
+                                    resolveTripOnSuccess: true,
+                                  ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF2FA56E),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _submitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Accept',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),

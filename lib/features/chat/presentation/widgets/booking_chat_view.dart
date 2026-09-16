@@ -13,6 +13,7 @@ class BookingChatView extends ConsumerStatefulWidget {
     required this.bookingId,
     required this.accessToken,
     required this.currentUserId,
+    this.threadId,
     this.allowBotActions = true,
     this.readOnly = false,
   });
@@ -20,6 +21,7 @@ class BookingChatView extends ConsumerStatefulWidget {
   final String bookingId;
   final String accessToken;
   final String currentUserId;
+  final String? threadId;
   final bool allowBotActions;
   final bool readOnly;
 
@@ -86,11 +88,17 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
 
     try {
       final api = ref.read(apiClientProvider);
-      final threadResponse = await api.getChatThread(
-        accessToken: widget.accessToken,
-        bookingId: widget.bookingId,
-      );
-      final thread = chatThreadFromResponse(threadResponse);
+      final directThreadId = widget.threadId?.trim() ?? '';
+      final Map<String, dynamic>? thread;
+      if (directThreadId.isNotEmpty) {
+        thread = <String, dynamic>{'id': directThreadId, 'isDirect': true};
+      } else {
+        final threadResponse = await api.getChatThread(
+          accessToken: widget.accessToken,
+          bookingId: widget.bookingId,
+        );
+        thread = chatThreadFromResponse(threadResponse);
+      }
       final threadId = chatReadString(thread, const [
         'id',
         'thread_id',

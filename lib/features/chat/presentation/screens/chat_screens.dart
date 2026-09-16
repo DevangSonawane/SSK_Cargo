@@ -86,16 +86,27 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final thread = threads[index];
+                final directPath = widget.audience == ChatAudience.broker
+                    ? '/broker/chats/direct/${thread.threadId}'
+                    : '/driver/chats/direct/${thread.threadId}';
                 return _ChatThreadTile(
                   thread: thread,
                   displayName: thread.displayNameFor(widget.audience),
-                  onTap: () => context.push(
-                    isClient
-                        ? '/chats/${thread.bookingId}'
-                        : widget.audience == ChatAudience.broker
-                        ? '/broker/chats/${thread.bookingId}'
-                        : '/driver/chats/${thread.bookingId}',
-                  ),
+                  onTap: () {
+                    if (thread.isDirect || thread.bookingId.isEmpty) {
+                      if (!isClient && thread.threadId.isNotEmpty) {
+                        context.push(directPath);
+                      }
+                      return;
+                    }
+                    context.push(
+                      isClient
+                          ? '/chats/${thread.bookingId}'
+                          : widget.audience == ChatAudience.broker
+                          ? '/broker/chats/${thread.bookingId}'
+                          : '/driver/chats/${thread.bookingId}',
+                    );
+                  },
                 );
               },
             ),
@@ -111,10 +122,12 @@ class ChatDetailScreen extends ConsumerWidget {
     super.key,
     required this.bookingId,
     required this.audience,
+    this.threadId,
   });
 
   final String bookingId;
   final ChatAudience audience;
+  final String? threadId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -123,10 +136,15 @@ class ChatDetailScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final isClient = audience == ChatAudience.client;
+    final isDirect = (threadId ?? '').trim().isNotEmpty;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(isClient ? 'Booking chat' : 'Client chat'),
+        title: Text(
+          isDirect
+              ? 'Direct chat'
+              : (isClient ? 'Booking chat' : 'Client chat'),
+        ),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
@@ -136,6 +154,7 @@ class ChatDetailScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: BookingChatView(
             bookingId: bookingId,
+            threadId: threadId,
             accessToken: session.tokens.accessToken,
             currentUserId: session.user.id,
             allowBotActions: isClient,
@@ -201,7 +220,11 @@ class _ChatThreadTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${thread.bookingLabel}  •  ${thread.lastMessage.isEmpty ? 'No messages yet' : thread.lastMessage}',
+                      thread.isDirect
+                          ? (thread.lastMessage.isEmpty
+                                ? 'No messages yet'
+                                : thread.lastMessage)
+                          : '${thread.bookingLabel}  •  ${thread.lastMessage.isEmpty ? 'No messages yet' : thread.lastMessage}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

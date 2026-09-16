@@ -423,6 +423,10 @@ class ClientBookingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              if (booking.isExpress) ...[
+                const _ExpressBadge(),
+                const SizedBox(width: 6),
+              ],
               _StatusBadge(
                 label: booking.displayStatusLabel,
                 color: statusColor,
@@ -629,6 +633,36 @@ class ClientBookingCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: card,
+    );
+  }
+}
+
+class _ExpressBadge extends StatelessWidget {
+  const _ExpressBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
+          const SizedBox(width: 3),
+          Text(
+            'Express',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: const Color(0xFFC2410C),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -14,6 +14,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
@@ -47,6 +48,7 @@ class _DriverDeliveryDetailsScreenState
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
   TrackingDemoShipment? _shipment;
+  Map<String, dynamic> _tripRaw = const <String, dynamic>{};
   String? _resolvedBookingId;
   Timer? _tripRefreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
@@ -279,6 +281,7 @@ class _DriverDeliveryDetailsScreenState
 
       setState(() {
         _shipment = _shipmentFromTrip(trip);
+        _tripRaw = trip;
         _tripStatus = _normalizeTripStatus(
           _readString(trip, const ['status', 'rawStatus']),
         );
@@ -917,6 +920,14 @@ class _DriverDeliveryDetailsScreenState
                           ),
                           const SizedBox(height: 10),
                           _DetailRow(label: 'Address', value: _dropLocation),
+                          if (_readDouble(_tripRaw, const [
+                                'haltingGraceHours',
+                                'halting_grace_hours',
+                              ]) !=
+                              null) ...[
+                            const SizedBox(height: 14),
+                            _buildHaltingTimer(),
+                          ],
                           const SizedBox(height: 14),
                           SizedBox(
                             width: double.infinity,
@@ -1147,6 +1158,25 @@ class _DriverDeliveryDetailsScreenState
     return null;
   }
 
+  DateTime? _readDateTime(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return null;
+    for (final key in keys) {
+      final value = json[key];
+      if (value is DateTime) {
+        return value.toLocal();
+      }
+      final text = value?.toString().trim();
+      if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+        continue;
+      }
+      final parsed = DateTime.tryParse(text);
+      if (parsed != null) {
+        return parsed.toLocal();
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> _readMap(Map<String, dynamic>? json, List<String> keys) {
     if (json == null) return const <String, dynamic>{};
     for (final key in keys) {
@@ -1255,6 +1285,32 @@ class _DriverDeliveryDetailsScreenState
       return '';
     }
     return normalized.replaceAll(RegExp(r'[\s-]+'), '_');
+  }
+
+  Widget _buildHaltingTimer() {
+    return HaltingTimerCard(
+      status: _tripStatus,
+      startedAt: _readDateTime(_tripRaw, const [
+        'startedAt',
+        'started_at',
+        'tripStartedAt',
+        'trip_started_at',
+      ]),
+      haltingGraceHours: _readDouble(_tripRaw, const [
+        'haltingGraceHours',
+        'halting_grace_hours',
+      ]),
+      haltingRatePerHour: _readDouble(_tripRaw, const [
+        'haltingRatePerHour',
+        'halting_rate_per_hour',
+      ]),
+      haltingHours:
+          _readDouble(_tripRaw, const ['haltingHours', 'halting_hours']) ?? 0,
+      haltingCharge:
+          _readDouble(_tripRaw, const ['haltingCharge', 'halting_charge']) ?? 0,
+      showNotStarted: true,
+      showLiveChargeEstimate: true,
+    );
   }
 
   String _titleCase(String value) {

@@ -214,6 +214,7 @@ class BrokerDriverRequest {
   const BrokerDriverRequest({
     required this.id,
     required this.bookingId,
+    required this.jobRequestId,
     required this.bookingNumber,
     required this.pendingConfirmationBy,
     required this.clientName,
@@ -239,6 +240,7 @@ class BrokerDriverRequest {
 
   final String id;
   final String bookingId;
+  final String jobRequestId;
   final String bookingNumber;
   final String pendingConfirmationBy;
   final String clientName;
@@ -313,6 +315,10 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
   return BrokerDriverRequest(
     id: requestId.isNotEmpty ? requestId : bookingId,
     bookingId: bookingId,
+    jobRequestId: _firstNonEmpty([
+      _readString(payload, const ['jobRequestId', 'job_request_id']),
+      _readString(source, const ['jobRequestId', 'job_request_id']),
+    ]),
     bookingNumber: bookingNumber,
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: _firstNonEmpty([
@@ -907,6 +913,7 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
       'uuid',
     ]),
     bookingId: _readString(json, const ['bookingId', 'booking_id']),
+    jobRequestId: _readString(json, const ['jobRequestId', 'job_request_id']),
     bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: _firstNonEmpty([

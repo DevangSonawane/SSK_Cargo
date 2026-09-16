@@ -500,6 +500,7 @@ class _BrokerRequestDetailScreenState
     return BrokerDriverRequest(
       id: current.id,
       bookingId: current.bookingId,
+      jobRequestId: current.jobRequestId,
       bookingNumber: current.bookingNumber,
       pendingConfirmationBy: pendingConfirmationBy.isEmpty
           ? current.pendingConfirmationBy

@@ -16,6 +16,7 @@ import '../../data/client_booking_models.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
+import '../../../shared/presentation/widgets/halting_timer_card.dart';
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
@@ -31,6 +32,14 @@ String _readText(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return '';
+}
+
+String _formatTrackingHours(double hours) {
+  return '${hours.toStringAsFixed(hours % 1 == 0 ? 0 : 1)}h';
+}
+
+String _formatTrackingDate(DateTime value) {
+  return '${value.day}/${value.month}/${value.year}';
 }
 
 class TrackingDetailsScreen extends ConsumerStatefulWidget {
@@ -57,6 +66,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
+  List<_ReassignmentHistoryEntry> _reassignmentHistory = const [];
 
   void _setBottomNavVisible(bool visible) {
     ref.read(bottomNavVisibleProvider.notifier).state = visible;
@@ -101,8 +111,40 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _startLiveShipmentUpdates();
+        unawaited(_loadReassignmentHistory());
       }
     });
+  }
+
+  Future<void> _loadReassignmentHistory() async {
+    final bookingId = _shipment.bookingId?.trim() ?? '';
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (bookingId.isEmpty || session == null) return;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBookingReassignmentHistory(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+      final data = _asMap(response['data']);
+      final rawHistory = data['history'] ?? response['history'];
+      final history = rawHistory is Iterable
+          ? rawHistory
+                .map(
+                  (item) => item is Map ? item.cast<String, dynamic>() : null,
+                )
+                .whereType<Map<String, dynamic>>()
+                .map(_ReassignmentHistoryEntry.fromJson)
+                .toList(growable: false)
+          : const <_ReassignmentHistoryEntry>[];
+      if (!mounted) return;
+      setState(() {
+        _reassignmentHistory = history;
+      });
+    } catch (_) {
+      // Optional parity data: tracking should still load without it.
+    }
   }
 
   double? _toDouble(Object? value) {
@@ -946,7 +988,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _CompactSummaryCard(shipment: shipment),
+                      _CompactSummaryCard(
+                        shipment: shipment,
+                        reassignmentHistory: _reassignmentHistory,
+                      ),
                       const SizedBox(height: 8),
                       Expanded(
                         child: SingleChildScrollView(
@@ -1679,9 +1724,13 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
 }
 
 class _CompactSummaryCard extends StatelessWidget {
-  const _CompactSummaryCard({required this.shipment});
+  const _CompactSummaryCard({
+    required this.shipment,
+    required this.reassignmentHistory,
+  });
 
   final TrackingDemoShipment shipment;
+  final List<_ReassignmentHistoryEntry> reassignmentHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -1753,15 +1802,26 @@ class _CompactSummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      shipment.packageName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF101828),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            shipment.packageName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF101828),
+                                ),
+                          ),
+                        ),
+                        if (shipment.isExpress) ...[
+                          const SizedBox(width: 8),
+                          const _ExpressBadge(),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Row(
@@ -1819,6 +1879,47 @@ class _CompactSummaryCard extends StatelessWidget {
                   rightLabel: 'Weight',
                   rightValue: shipment.weight,
                 ),
+                if (shipment.expectedDeliveryHours != null ||
+                    shipment.estimatedDeliveryDate != null ||
+                    shipment.slaOverageCharge > 0) ...[
+                  const SizedBox(height: 10),
+                  _InfoGrid(
+                    leftLabel: shipment.estimatedDeliveryDate == null
+                        ? 'Expected'
+                        : 'Estimated',
+                    leftValue: shipment.estimatedDeliveryDate != null
+                        ? _formatTrackingDate(shipment.estimatedDeliveryDate!)
+                        : shipment.expectedDeliveryHours == null
+                        ? '-'
+                        : '${_formatTrackingHours(shipment.expectedDeliveryHours!)}${shipment.isExpress ? ' (Express)' : ''}',
+                    rightLabel: shipment.expectedDeliveryHours == null
+                        ? 'Delay charge'
+                        : 'SLA',
+                    rightValue: shipment.expectedDeliveryHours != null
+                        ? '${_formatTrackingHours(shipment.expectedDeliveryHours!)}${shipment.isExpress ? ' (Express)' : ''}'
+                        : shipment.slaOverageCharge <= 0
+                        ? '-'
+                        : '₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
+                  ),
+                ],
+                if (reassignmentHistory.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _ReassignmentHistoryPanel(history: reassignmentHistory),
+                ],
+                if (shipment.haltingGraceHours != null &&
+                    (shipment.tripStartedAt != null ||
+                        shipment.haltingCharge > 0)) ...[
+                  const SizedBox(height: 10),
+                  HaltingTimerCard(
+                    status: shipment.bookingStatus ?? shipment.status,
+                    startedAt: shipment.tripStartedAt,
+                    haltingGraceHours: shipment.haltingGraceHours,
+                    haltingHours: shipment.haltingHours,
+                    haltingCharge: shipment.haltingCharge,
+                    showNotStarted: false,
+                    tickInterval: const Duration(seconds: 60),
+                  ),
+                ],
                 if ((shipment.assignedDriverName ?? '').isNotEmpty ||
                     (shipment.assignedTruckName ?? '').isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -1883,6 +1984,159 @@ class _CompactSummaryCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpressBadge extends StatelessWidget {
+  const _ExpressBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
+          const SizedBox(width: 3),
+          Text(
+            'Express',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: const Color(0xFFC2410C),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReassignmentHistoryEntry {
+  const _ReassignmentHistoryEntry({
+    required this.fromDriverName,
+    required this.toDriverName,
+    required this.reason,
+    required this.reassignedByName,
+    required this.createdAt,
+  });
+
+  factory _ReassignmentHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return _ReassignmentHistoryEntry(
+      fromDriverName: _readText(json, const [
+        'fromDriverName',
+        'from_driver_name',
+      ]),
+      toDriverName: _readText(json, const ['toDriverName', 'to_driver_name']),
+      reason: _readText(json, const ['reason']),
+      reassignedByName: _readText(json, const [
+        'reassignedByName',
+        'reassigned_by_name',
+      ]),
+      createdAt: DateTime.tryParse(
+        _readText(json, const ['createdAt', 'created_at']),
+      ),
+    );
+  }
+
+  final String fromDriverName;
+  final String toDriverName;
+  final String reason;
+  final String reassignedByName;
+  final DateTime? createdAt;
+}
+
+class _ReassignmentHistoryPanel extends StatelessWidget {
+  const _ReassignmentHistoryPanel({required this.history});
+
+  final List<_ReassignmentHistoryEntry> history;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...history]
+      ..sort((a, b) {
+        final left = a.createdAt;
+        final right = b.createdAt;
+        if (left == null && right == null) return 0;
+        if (left == null) return 1;
+        if (right == null) return -1;
+        return right.compareTo(left);
+      });
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        leading: const Icon(
+          Icons.sync_alt_rounded,
+          color: Color(0xFF1F88C9),
+          size: 18,
+        ),
+        title: Text(
+          'Driver changed (${history.length})',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1C2430),
+          ),
+        ),
+        children: [
+          for (final entry in sorted)
+            Padding(
+              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${entry.fromDriverName.isEmpty ? 'Unassigned' : entry.fromDriverName} -> ${entry.toDriverName.isEmpty ? 'Unknown' : entry.toDriverName}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF344054),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (entry.reason.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        entry.reason,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF667085),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                        if (entry.reassignedByName.isNotEmpty)
+                          'By ${entry.reassignedByName}',
+                        if (entry.createdAt != null)
+                          _formatTrackingDate(entry.createdAt!),
+                      ].join(' - '),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF98A2B3),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

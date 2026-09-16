@@ -12,6 +12,7 @@ class DriverRequestItem {
   const DriverRequestItem({
     required this.id,
     required this.bookingId,
+    required this.jobRequestId,
     required this.bookingNumber,
     required this.driverId,
     required this.pendingConfirmationBy,
@@ -39,6 +40,7 @@ class DriverRequestItem {
 
   final String id;
   final String bookingId;
+  final String jobRequestId;
   final String bookingNumber;
   final String driverId;
   final String pendingConfirmationBy;
@@ -65,11 +67,14 @@ class DriverRequestItem {
 
   bool get canNegotiate =>
       !driverTimedOut &&
+      jobRequestId.isEmpty &&
       (status.toLowerCase().isEmpty ||
           status.toLowerCase() == 'requested' ||
           status.toLowerCase() == 'pending' ||
           (status.toLowerCase() == 'awaiting_confirmation' &&
               pendingConfirmationBy.toLowerCase() == 'client'));
+
+  bool get isBrokerAssigned => jobRequestId.isNotEmpty;
 
   bool get isVisibleInNewTravel {
     final normalized = status.trim().toLowerCase();
@@ -116,6 +121,7 @@ class DriverRequestItem {
         'uuid',
       ]),
       bookingId: _readString(json, const ['bookingId', 'booking_id']),
+      jobRequestId: _readString(json, const ['jobRequestId', 'job_request_id']),
       bookingNumber: _readString(json, const [
         'bookingNumber',
         'booking_number',
@@ -229,6 +235,7 @@ class DriverRequestItem {
     return const DriverRequestItem(
       id: '',
       bookingId: '',
+      jobRequestId: '',
       bookingNumber: '',
       driverId: '',
       pendingConfirmationBy: '',

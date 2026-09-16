@@ -258,12 +258,14 @@ class _BrokerRequestTile extends StatelessWidget {
     final waitingOnClient =
         awaitingConfirmation && pendingConfirmationBy == 'broker';
     final yourTurn = awaitingConfirmation && pendingConfirmationBy == 'client';
+    final brokerAssigned = request.jobRequestId.isNotEmpty;
     final canAct =
         !busy &&
         (status.isEmpty ||
             status == 'requested' ||
             status == 'pending' ||
             awaitingConfirmation);
+    final canCounter = canAct && !brokerAssigned;
 
     return Container(
       width: double.infinity,
@@ -309,26 +311,35 @@ class _BrokerRequestTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: request.driverTimedOut
-                      ? const Color(0xFFFDF4E8)
-                      : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  request.driverTimedOut ? 'Timed out' : 'Live',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: request.driverTimedOut
-                        ? const Color(0xFFB54708)
-                        : const Color(0xFF1F88C9),
-                    fontWeight: FontWeight.w800,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (brokerAssigned) ...[
+                    const _BrokerAssignedBadge(),
+                    const SizedBox(height: 6),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: request.driverTimedOut
+                          ? const Color(0xFFFDF4E8)
+                          : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      request.driverTimedOut ? 'Timed out' : 'Live',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: request.driverTimedOut
+                            ? const Color(0xFFB54708)
+                            : const Color(0xFF1F88C9),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -429,6 +440,39 @@ class _BrokerRequestTile extends StatelessWidget {
                 ),
               ],
             ),
+          ] else if (brokerAssigned) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Accept',
+                    icon: Icons.check_circle_rounded,
+                    color: const Color(0xFF2FA56E),
+                    backgroundColor: const Color(0xFFEAF8EF),
+                    onPressed: canAct ? onAccept : null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Decline',
+                    icon: Icons.cancel_rounded,
+                    color: const Color(0xFFE23A4B),
+                    backgroundColor: const Color(0xFFFDECEC),
+                    onPressed: canAct ? onDecline : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Already agreed with the broker - accept or decline, no negotiation.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ] else ...[
             Row(
               children: [
@@ -448,7 +492,7 @@ class _BrokerRequestTile extends StatelessWidget {
                     icon: Icons.payments_rounded,
                     color: const Color(0xFF1F88C9),
                     backgroundColor: const Color(0xFFEFF6FF),
-                    onPressed: canAct ? onCounter : null,
+                    onPressed: canCounter ? onCounter : null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -500,6 +544,29 @@ class _WaitingBadge extends StatelessWidget {
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: const Color(0xFF1F88C9),
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerAssignedBadge extends StatelessWidget {
+  const _BrokerAssignedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7EF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFCDEFD9)),
+      ),
+      child: Text(
+        'Broker-assigned',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF2FA56E),
+          fontWeight: FontWeight.w900,
         ),
       ),
     );

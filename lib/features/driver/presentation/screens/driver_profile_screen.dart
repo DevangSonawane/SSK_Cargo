@@ -17,6 +17,7 @@ class DriverProfileScreen extends ConsumerStatefulWidget {
 class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   bool _kycApproved = false;
   bool _loadingKyc = true;
+  bool _openingBrokerChat = false;
   String? _activeUserId;
   bool _sessionSyncQueued = false;
 
@@ -27,6 +28,46 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadKycStatus();
     });
+  }
+
+  Future<void> _openBrokerChat() async {
+    if (_openingBrokerChat) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _openingBrokerChat = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBrokerDirectChatThread(accessToken: session.tokens.accessToken);
+      final data = response['data'];
+      final thread = data is Map<String, dynamic>
+          ? (data['thread'] is Map
+                ? (data['thread'] as Map).cast<String, dynamic>()
+                : data)
+          : response['thread'] is Map
+          ? (response['thread'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+      final threadId = thread['id']?.toString().trim().isNotEmpty == true
+          ? thread['id'].toString().trim()
+          : thread['threadId']?.toString().trim() ?? '';
+      if (!mounted) return;
+      if (threadId.isEmpty) {
+        throw StateError('Chat thread unavailable.');
+      }
+      context.push('/driver/chats/direct/$threadId');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _openingBrokerChat = false);
+      }
+    }
   }
 
   bool _isApprovedStatus(String status) {
@@ -177,8 +218,21 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 22),
               _ProfileMenuTile(
-                title: 'Chats',
+                title: _openingBrokerChat
+                    ? 'Opening chat...'
+                    : 'Chat with broker',
                 icon: Icons.chat_bubble_outline_rounded,
+                onTap: _openingBrokerChat
+                    ? null
+                    : () {
+                        _openBrokerChat();
+                      },
+                iconColor: const Color(0xFF1F88C9),
+              ),
+              const SizedBox(height: 10),
+              _ProfileMenuTile(
+                title: 'All chats',
+                icon: Icons.forum_outlined,
                 onTap: () => context.push('/driver/chats'),
                 iconColor: const Color(0xFF1F88C9),
               ),
@@ -235,7 +289,7 @@ class _ProfileActionCard extends StatelessWidget {
   final IconData icon;
   final Color backgroundColor;
   final Color iconColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +335,7 @@ class _ProfileMenuTile extends StatelessWidget {
 
   final String title;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color titleColor;
   final Color iconColor;
   final bool completed;
