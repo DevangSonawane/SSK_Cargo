@@ -416,28 +416,61 @@ class DriverRequestFeedController
   }
 
   void _handleSocketPayload(Map<String, dynamic> payload) {
-    final incoming = DriverRequestItem.fromMap(_requestPayloadMap(payload));
+    final requestPayload = _requestPayloadMap(payload);
+    final incoming = DriverRequestItem.fromMap(requestPayload);
     if (incoming.id.isEmpty || !mounted) {
       return;
     }
 
     final current = state.valueOrNull ?? const <DriverRequestItem>[];
-    final next = _mergeRequest(current, incoming);
+    final next = _mergeRequest(current, incoming, requestPayload);
     state = AsyncData<List<DriverRequestItem>>(next);
   }
 
   List<DriverRequestItem> _mergeRequest(
     List<DriverRequestItem> requests,
     DriverRequestItem incoming,
+    Map<String, dynamic> incomingPayload,
   ) {
     final next = List<DriverRequestItem>.from(requests);
     final index = next.indexWhere((request) => request.id == incoming.id);
     if (index == -1) {
       next.insert(0, incoming);
     } else {
-      next[index] = incoming;
+      next[index] = _mergeSocketUpdate(
+        existing: next[index],
+        incoming: incoming,
+        incomingPayload: incomingPayload,
+      );
     }
     return next;
+  }
+
+  DriverRequestItem _mergeSocketUpdate({
+    required DriverRequestItem existing,
+    required DriverRequestItem incoming,
+    required Map<String, dynamic> incomingPayload,
+  }) {
+    final mergedPayload = <String, dynamic>{
+      ...existing.raw,
+      ...incomingPayload,
+    };
+    final incomingStatus = incoming.status.trim().toLowerCase();
+    final existingPending = existing.pendingConfirmationBy.trim().toLowerCase();
+    final incomingHasPending = incoming.pendingConfirmationBy.trim().isNotEmpty;
+    final incomingIsNewer =
+        incoming.updatedAt == null ||
+        existing.updatedAt == null ||
+        incoming.updatedAt!.isAfter(existing.updatedAt!);
+
+    if (incomingStatus == 'awaiting_confirmation' &&
+        !incomingHasPending &&
+        existingPending == 'respondent' &&
+        incomingIsNewer) {
+      mergedPayload['pendingConfirmationBy'] = 'client';
+    }
+
+    return DriverRequestItem.fromMap(mergedPayload);
   }
 
   Future<void> _disposeLiveHandles() async {

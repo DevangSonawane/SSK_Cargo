@@ -37,6 +37,7 @@ class _DriverOrderAcceptedScreenState
   late double _counterAmount;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   Timer? _countdownTimer;
+  Timer? _requestRefreshTimer;
   Timer? _handoffPollTimer;
   OverlayEntry? _clientConfirmationDialogEntry;
   String _latestStatus = '';
@@ -62,10 +63,19 @@ class _DriverOrderAcceptedScreenState
       _latestStatus == 'awaiting_confirmation' &&
       _currentPendingConfirmationBy == 'respondent';
 
+  bool get _shouldRefreshNegotiationState {
+    final status = _latestStatus.trim().toLowerCase();
+    return status == 'pending' ||
+        status == 'countered' ||
+        status == 'awaiting_confirmation';
+  }
+
   String get _currentPendingConfirmationBy =>
       _latestPendingConfirmationBy.isNotEmpty
       ? _latestPendingConfirmationBy
       : _request.pendingConfirmationBy.trim().toLowerCase();
+
+  bool _refreshingRequestState = false;
 
   @override
   void initState() {
@@ -93,6 +103,7 @@ class _DriverOrderAcceptedScreenState
     _dismissClientConfirmationDialog();
     _driverRequestSubscription?.cancel();
     _countdownTimer?.cancel();
+    _requestRefreshTimer?.cancel();
     _handoffPollTimer?.cancel();
     super.dispose();
   }
@@ -243,6 +254,13 @@ class _DriverOrderAcceptedScreenState
     }
 
     _syncClientConfirmationDialogVisibility();
+  }
+
+  bool _hasPendingConfirmationParty(Map<String, dynamic> payload) {
+    return _readPayloadString(payload, const [
+      'pendingConfirmationBy',
+      'pending_confirmation_by',
+    ]).trim().isNotEmpty;
   }
 
   void _stopTripHandoff() {
@@ -550,6 +568,48 @@ class _DriverOrderAcceptedScreenState
         setState(() {});
       }
     });
+
+    _requestRefreshTimer?.cancel();
+    _requestRefreshTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (_shouldRefreshNegotiationState) {
+        unawaited(_refreshRequestStateFromServer());
+      }
+    });
+  }
+
+  Future<void> _refreshRequestStateFromServer() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final requestId = _request.id.trim();
+    if (!mounted ||
+        session == null ||
+        requestId.isEmpty ||
+        _refreshingRequestState ||
+        !_shouldRefreshNegotiationState) {
+      return;
+    }
+
+    _refreshingRequestState = true;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverRequestById(
+            accessToken: session.tokens.accessToken,
+            id: requestId,
+          );
+      if (!mounted) {
+        return;
+      }
+      await _handleLivePayload(response);
+    } catch (error, stackTrace) {
+      developer.log(
+        'Driver request refresh failed while waiting for client response.',
+        name: 'driver.orderAccepted',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _refreshingRequestState = false;
+    }
   }
 
   Future<void> _goBackToHome() async {
@@ -558,6 +618,8 @@ class _DriverOrderAcceptedScreenState
     _driverRequestSubscription = null;
     _countdownTimer?.cancel();
     _countdownTimer = null;
+    _requestRefreshTimer?.cancel();
+    _requestRefreshTimer = null;
     _handoffPollTimer?.cancel();
     _handoffPollTimer = null;
     if (!mounted) return;
@@ -621,6 +683,10 @@ class _DriverOrderAcceptedScreenState
       return;
     }
     _forceDismissClientConfirmationDialog();
+    _requestRefreshTimer?.cancel();
+    _requestRefreshTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
     ref.invalidate(driverDashboardProvider);
     context.go('/driver/active');
   }
@@ -774,7 +840,9 @@ class _DriverOrderAcceptedScreenState
   }
 
   Future<void> _handleLivePayload(Map<String, dynamic> payload) async {
-    final normalizedPayload = _extractPayload(payload);
+    final normalizedPayload = Map<String, dynamic>.from(
+      _extractPayload(payload),
+    );
     final status = _readPayloadString(normalizedPayload, const [
       'status',
       'requestStatus',
@@ -791,6 +859,16 @@ class _DriverOrderAcceptedScreenState
       'Handling live payload on negotiation screen. status=$status tripId=$effectiveTripId',
       name: 'driver.orderAccepted',
     );
+
+    if (status == 'awaiting_confirmation' &&
+        !_hasPendingConfirmationParty(normalizedPayload) &&
+        _currentPendingConfirmationBy == 'respondent') {
+      normalizedPayload['pendingConfirmationBy'] = 'client';
+      developer.log(
+        'Inferred client confirmation from partial live payload.',
+        name: 'driver.orderAccepted',
+      );
+    }
 
     _syncLiveRequestState(normalizedPayload);
 
@@ -826,6 +904,8 @@ class _DriverOrderAcceptedScreenState
       );
       _dismissClientConfirmationDialog();
       if (!mounted) return;
+      _requestRefreshTimer?.cancel();
+      _requestRefreshTimer = null;
       ref.invalidate(driverRequestsProvider);
       context.go('/driver/home');
       return;
