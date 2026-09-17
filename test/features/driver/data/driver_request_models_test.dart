@@ -88,6 +88,22 @@ void main() {
       expect(request.isVisibleInNewTravel, isTrue);
       expect(request.canNegotiate, isFalse);
     });
+
+    test(
+      'broker-assigned notification prefers driver request id for actions',
+      () {
+        final request = DriverRequestItem.fromMap({
+          'request_id': 'job-request-id',
+          'driver_request_id': 'driver-request-id',
+          'status': 'pending',
+          'job_request_id': 'job-request-id',
+        });
+
+        expect(request.id, 'driver-request-id');
+        expect(request.jobRequestId, 'job-request-id');
+        expect(request.isBrokerAssigned, isTrue);
+      },
+    );
   });
 
   group('driver request socket payload matching', () {

@@ -115,9 +115,10 @@ class DriverRequestItem {
 
     return DriverRequestItem(
       id: _readString(json, const [
+        'driverRequestId',
+        'driver_request_id',
         'id',
         'request_id',
-        'driver_request_id',
         'uuid',
       ]),
       bookingId: _readString(json, const ['bookingId', 'booking_id']),
