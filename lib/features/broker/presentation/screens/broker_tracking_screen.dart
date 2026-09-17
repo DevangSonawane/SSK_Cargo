@@ -11,6 +11,8 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
+import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerTrackingScreen extends ConsumerStatefulWidget {
@@ -37,7 +39,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   }
 
   Future<void> _refreshTrackingData() async {
-    ref.invalidate(brokerDriversApiProvider((status: null, page: 1, limit: 100)));
+    ref.invalidate(
+      brokerDriversApiProvider((status: null, page: 1, limit: 100)),
+    );
     await Future.wait([
       ref.refresh(brokerDriverRequestsProvider(_query).future),
       ref.refresh(brokerVehiclesProvider.future),
@@ -247,7 +251,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  for (var index = 0; index < timedOutRequests.length; index++) ...[
+                  for (
+                    var index = 0;
+                    index < timedOutRequests.length;
+                    index++
+                  ) ...[
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -265,9 +273,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                   timedOutRequests[index].bookingNumber.isEmpty
                                       ? timedOutRequests[index].bookingId
                                       : timedOutRequests[index].bookingNumber,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
+                                  style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: const Color(0xFF101828),
@@ -283,17 +289,17 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           const SizedBox(height: 6),
                           Text(
                             '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF7C2D12),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: const Color(0xFF7C2D12)),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${timedOutRequests[index].truckType} • ₹${timedOutRequests[index].amount.toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF101828),
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF101828),
+                                ),
                           ),
                           const SizedBox(height: 10),
                           SizedBox(
@@ -345,9 +351,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             negotiationNotifications[index].title.isEmpty
                                 ? 'Timed-out negotiation'
                                 : negotiationNotifications[index].title,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF101828),
@@ -358,9 +362,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             negotiationNotifications[index].message.isEmpty
                                 ? 'Open to continue negotiation.'
                                 : negotiationNotifications[index].message,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF406B8F),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: const Color(0xFF406B8F)),
                           ),
                           const SizedBox(height: 10),
                           SizedBox(
@@ -448,17 +451,17 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           children: [
                             Text(
                               'No drivers yet',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF101828),
+                                  ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Create a driver from the + button to start tracking.',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF667085),
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: const Color(0xFF667085)),
                             ),
                           ],
                         ),
@@ -468,7 +471,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        for (var index = 0; index < mergedDrivers.length; index++) ...[
+                        for (
+                          var index = 0;
+                          index < mergedDrivers.length;
+                          index++
+                        ) ...[
                           DriverListTile(
                             driver: mergedDrivers[index],
                             onTap: () => context.push(
@@ -505,8 +512,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     child: Text(
                       error.toString().replaceFirst('Exception: ', ''),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFFB42318),
-                          ),
+                        color: const Color(0xFFB42318),
+                      ),
                     ),
                   ),
                 ),
@@ -725,9 +732,7 @@ class _TrackingPageHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.26),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.26)),
               ),
               clipBehavior: Clip.antiAlias,
               child: Image.asset('assets/user.png', fit: BoxFit.cover),
@@ -764,9 +769,7 @@ class _TrackingHeaderIcon extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.26),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.26)),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
@@ -1002,6 +1005,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                           const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final request = requests[index];
+                        final brokerAssigned = request.jobRequestId.isNotEmpty;
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -1038,6 +1042,10 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                   ),
                                 ],
                               ),
+                              if (brokerAssigned) ...[
+                                const SizedBox(height: 8),
+                                const _BrokerAssignedInlineBadge(),
+                              ],
                               const SizedBox(height: 6),
                               Text(
                                 '${request.clientName} • ${request.pickup} → ${request.drop}',
@@ -1080,110 +1088,113 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                       child: const Text('Decline'),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: FilledButton(
-                                      onPressed: _countering
-                                          ? null
-                                          : () async {
-                                              final controller =
-                                                  TextEditingController(
-                                                    text: request.amount
-                                                        .toStringAsFixed(0),
-                                                  );
-                                              final noteController =
-                                                  TextEditingController();
-                                              final counter = await showDialog<double?>(
-                                                context: context,
-                                                builder: (dialogContext) {
-                                                  return AlertDialog(
-                                                    title: const Text(
-                                                      'Counter request',
-                                                    ),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        TextField(
-                                                          controller:
-                                                              controller,
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                labelText:
-                                                                    'Amount',
-                                                              ),
+                                  if (!brokerAssigned) ...[
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: _countering
+                                            ? null
+                                            : () async {
+                                                final controller =
+                                                    TextEditingController(
+                                                      text: request.amount
+                                                          .toStringAsFixed(0),
+                                                    );
+                                                final noteController =
+                                                    TextEditingController();
+                                                final counter = await showDialog<double?>(
+                                                  context: context,
+                                                  builder: (dialogContext) {
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                        'Counter request',
+                                                      ),
+                                                      content: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          TextField(
+                                                            controller:
+                                                                controller,
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            decoration:
+                                                                const InputDecoration(
+                                                                  labelText:
+                                                                      'Amount',
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          TextField(
+                                                            controller:
+                                                                noteController,
+                                                            decoration:
+                                                                const InputDecoration(
+                                                                  labelText:
+                                                                      'Note',
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.of(
+                                                                dialogContext,
+                                                              ).pop(),
+                                                          child: const Text(
+                                                            'Cancel',
+                                                          ),
                                                         ),
-                                                        const SizedBox(
-                                                          height: 10,
-                                                        ),
-                                                        TextField(
-                                                          controller:
-                                                              noteController,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                labelText:
-                                                                    'Note',
-                                                              ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
+                                                        FilledButton(
+                                                          onPressed: () {
+                                                            final amount =
+                                                                double.tryParse(
+                                                                  controller
+                                                                      .text
+                                                                      .trim(),
+                                                                );
                                                             Navigator.of(
                                                               dialogContext,
-                                                            ).pop(),
-                                                        child: const Text(
-                                                          'Cancel',
+                                                            ).pop(amount);
+                                                          },
+                                                          child: const Text(
+                                                            'Send',
+                                                          ),
                                                         ),
-                                                      ),
-                                                      FilledButton(
-                                                        onPressed: () {
-                                                          final amount =
-                                                              double.tryParse(
-                                                                controller.text
-                                                                    .trim(),
-                                                              );
-                                                          Navigator.of(
-                                                            dialogContext,
-                                                          ).pop(amount);
-                                                        },
-                                                        child: const Text(
-                                                          'Send',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                              if (counter == null) return;
-                                              setState(
-                                                () => _countering = true,
-                                              );
-                                              try {
-                                                await _runAction(
-                                                  request: request,
-                                                  action: (api, token) =>
-                                                      api.counterDriverRequest(
-                                                        accessToken: token,
-                                                        id: request.id,
-                                                        amount: counter,
-                                                      ),
+                                                      ],
+                                                    );
+                                                  },
                                                 );
-                                              } finally {
-                                                if (mounted) {
-                                                  setState(
-                                                    () => _countering = false,
+                                                if (counter == null) return;
+                                                setState(
+                                                  () => _countering = true,
+                                                );
+                                                try {
+                                                  await _runAction(
+                                                    request: request,
+                                                    action: (api, token) => api
+                                                        .counterDriverRequest(
+                                                          accessToken: token,
+                                                          id: request.id,
+                                                          amount: counter,
+                                                        ),
                                                   );
+                                                } finally {
+                                                  if (mounted) {
+                                                    setState(
+                                                      () => _countering = false,
+                                                    );
+                                                  }
                                                 }
-                                              }
-                                            },
-                                      child: const Text('Counter'),
+                                              },
+                                        child: const Text('Counter'),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ],
@@ -1196,6 +1207,29 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerAssignedInlineBadge extends StatelessWidget {
+  const _BrokerAssignedInlineBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7EF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFCDEFD9)),
+      ),
+      child: Text(
+        'Broker-assigned - no counter',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: const Color(0xFF2FA56E),
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -1310,6 +1344,29 @@ class _BrokerDriverTripSheetState
           'payment_status',
           'paymentStatus',
         ]),
+        startedAt: _tripDateTime(tripPayload, const [
+          'startedAt',
+          'started_at',
+          'tripStartedAt',
+          'trip_started_at',
+        ]),
+        haltingGraceHours: _tripDouble(tripPayload, const [
+          'haltingGraceHours',
+          'halting_grace_hours',
+        ]),
+        haltingRatePerHour: _tripDouble(tripPayload, const [
+          'haltingRatePerHour',
+          'halting_rate_per_hour',
+        ]),
+        haltingHours:
+            _tripDouble(tripPayload, const ['haltingHours', 'halting_hours']) ??
+            0,
+        haltingCharge:
+            _tripDouble(tripPayload, const [
+              'haltingCharge',
+              'halting_charge',
+            ]) ??
+            0,
       );
     } catch (_) {
       return _BrokerDriverTripSnapshot.fromDriver(
@@ -1702,6 +1759,10 @@ class _BrokerDriverTripSheetState
                         color: const Color(0xFF667085),
                       ),
                     ),
+                    if (data.shipment.isExpress) ...[
+                      const SizedBox(height: 10),
+                      const ExpressBadge(),
+                    ],
                     const SizedBox(height: 14),
                     TrackingRouteMapView(
                       shipment: data.shipment,
@@ -1730,6 +1791,19 @@ class _BrokerDriverTripSheetState
                         ),
                       ],
                     ),
+                    if (data.haltingGraceHours != null) ...[
+                      const SizedBox(height: 14),
+                      HaltingTimerCard(
+                        status: data.statusLabel,
+                        startedAt: data.startedAt,
+                        haltingGraceHours: data.haltingGraceHours,
+                        haltingRatePerHour: data.haltingRatePerHour,
+                        haltingHours: data.haltingHours,
+                        haltingCharge: data.haltingCharge,
+                        showNotStarted: true,
+                        showLiveChargeEstimate: true,
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       'Trip progress',
@@ -1838,6 +1912,11 @@ class _BrokerDriverTripSnapshot {
     required this.statusLabel,
     required this.tripAmount,
     required this.paymentStatus,
+    this.startedAt,
+    this.haltingGraceHours,
+    this.haltingRatePerHour,
+    this.haltingHours = 0,
+    this.haltingCharge = 0,
   });
 
   factory _BrokerDriverTripSnapshot.fromDriver({
@@ -1885,6 +1964,11 @@ class _BrokerDriverTripSnapshot {
   final String statusLabel;
   final double tripAmount;
   final String paymentStatus;
+  final DateTime? startedAt;
+  final double? haltingGraceHours;
+  final double? haltingRatePerHour;
+  final double haltingHours;
+  final double haltingCharge;
 }
 
 class _BrokerTripIncident {
@@ -2323,6 +2407,28 @@ TrackingDemoShipment _shipmentFromTripData({
     dropLng: dropLng,
     liveLat: currentLat ?? driver.currentLatitude,
     liveLng: currentLng ?? driver.currentLongitude,
+    isExpress: _tripBool(tripData, const ['isExpress', 'is_express']),
+    expectedDeliveryHours: _tripDouble(tripData, const [
+      'expectedDeliveryHours',
+      'expected_delivery_hours',
+    ]),
+    estimatedDeliveryDate: _tripDateTime(tripData, const [
+      'estimatedDeliveryDate',
+      'estimated_delivery_date',
+    ]),
+    estimatedDeliveryDays: _tripInt(tripData, const [
+      'estimatedDeliveryDays',
+      'estimated_delivery_days',
+    ]),
+    slaOverageHours:
+        _tripDouble(tripData, const ['slaOverageHours', 'sla_overage_hours']) ??
+        0,
+    slaOverageCharge:
+        _tripDouble(tripData, const [
+          'slaOverageCharge',
+          'sla_overage_charge',
+        ]) ??
+        0,
     timeline: _driverTimelineFromStatus(
       status.isEmpty ? driver.tripStatus : status,
       driver,
@@ -2388,6 +2494,45 @@ double? _tripDouble(Map<String, dynamic> json, List<String> keys) {
     if (value == null) continue;
     final parsed = double.tryParse(value.toString());
     if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+int? _tripInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is int) return value;
+    if (value is num) return value.round();
+    final parsed = int.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+bool _tripBool(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = value.toString().trim().toLowerCase();
+    if (normalized.isEmpty || normalized == 'null') continue;
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+  return false;
+}
+
+DateTime? _tripDateTime(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is DateTime) return value.toLocal();
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+      continue;
+    }
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed.toLocal();
   }
   return null;
 }

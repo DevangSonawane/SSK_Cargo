@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ssk/features/driver/data/driver_request_models.dart';
+import 'package:ssk/features/driver/data/driver_trip_handoff_utils.dart';
 
 void main() {
   group('DriverRequestPage', () {
@@ -86,6 +87,32 @@ void main() {
       expect(request.isBrokerAssigned, isTrue);
       expect(request.isVisibleInNewTravel, isTrue);
       expect(request.canNegotiate, isFalse);
+    });
+  });
+
+  group('driver request socket payload matching', () {
+    test('unwraps nested driverRequest payloads from live updates', () {
+      final payload = {
+        'data': {
+          'driverRequest': {
+            'id': 'driver-request-id',
+            'bookingId': 'booking-id',
+            'status': 'awaiting_confirmation',
+            'pendingConfirmationBy': 'client',
+            'trip': {'id': 'trip-id'},
+          },
+        },
+      };
+
+      expect(
+        responseMatchesAnyReference(payload, const ['driver-request-id']),
+        isTrue,
+      );
+      expect(
+        responseMatchesAnyReference(payload, const ['booking-id']),
+        isTrue,
+      );
+      expect(extractTripId(payload), 'trip-id');
     });
   });
 }

@@ -12,6 +12,7 @@ import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../driver/data/driver_trip_handoff_utils.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
 
 class BrokerRequestDetailScreen extends ConsumerStatefulWidget {
   const BrokerRequestDetailScreen({super.key, this.initialRequest});
@@ -65,6 +66,11 @@ class _BrokerRequestDetailScreenState
           : null);
 
   bool get _isDriverNegotiation => _driverRequest != null;
+
+  bool get _isBrokerAssignedDriverRequest =>
+      _driverRequest?.jobRequestId.isNotEmpty == true;
+
+  bool get _isExpressRequest => _driverRequest?.isExpress ?? _request.isExpress;
 
   String get _counterSeedText {
     final driverRequest = _driverRequest;
@@ -479,6 +485,7 @@ class _BrokerRequestDetailScreenState
       assignedDriverName: current.assignedDriverName,
       assignedTruckName: current.assignedTruckName,
       expiresInMinutes: current.expiresInMinutes,
+      isExpress: current.isExpress,
     );
   }
 
@@ -521,6 +528,7 @@ class _BrokerRequestDetailScreenState
       status: status.isEmpty ? current.status : status,
       driverTimedOut: driverTimedOut || current.driverTimedOut,
       offerCount: current.offerCount,
+      isExpress: current.isExpress,
       requestedAt: current.requestedAt,
       updatedAt: updatedAt ?? current.updatedAt,
       raw: current.raw,
@@ -572,7 +580,7 @@ class _BrokerRequestDetailScreenState
   }
 
   Future<void> _counter() async {
-    if (!_canTakeAction) return;
+    if (!_canTakeAction || _isBrokerAssignedDriverRequest) return;
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
 
@@ -913,6 +921,86 @@ class _BrokerRequestDetailScreenState
       );
     }
 
+    if (_isBrokerAssignedDriverRequest) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE8EDF2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF7EF),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFCDEFD9)),
+                  ),
+                  child: Text(
+                    'Broker-assigned',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF2FA56E),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Assigned driver request',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'This price was already agreed with the broker. Accept or decline only - no counter-offers.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _reject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE23A4B),
+                      side: const BorderSide(color: Color(0xFFF5B7BF)),
+                    ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _submitting
+                        ? null
+                        : _acceptTimedOutDriverRequest,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F88C9),
+                    ),
+                    child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1201,6 +1289,10 @@ class _BrokerRequestDetailScreenState
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: const Color(0xFF667085)),
                         ),
+                        if (_isExpressRequest) ...[
+                          const SizedBox(height: 8),
+                          const ExpressBadge(compact: true),
+                        ],
                       ],
                     ),
                   ),

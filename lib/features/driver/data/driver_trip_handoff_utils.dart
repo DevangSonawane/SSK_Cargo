@@ -14,10 +14,11 @@ bool responseMatchesAnyReference(
   }
 
   final values = <String>{
-    readString(
-      normalizedPayload,
-      const ['id', 'request_id', 'driver_request_id'],
-    ),
+    readString(normalizedPayload, const [
+      'id',
+      'request_id',
+      'driver_request_id',
+    ]),
     readString(normalizedPayload, const ['bookingId', 'booking_id']),
     readString(normalizedPayload, const ['bookingNumber', 'booking_number']),
     readString(normalizedPayload, const ['tripId', 'trip_id']),
@@ -115,12 +116,22 @@ Map<String, dynamic> _asMap(Object? value) {
 
 Map<String, dynamic> _unwrapRequestPayload(Map<String, dynamic> payload) {
   final data = _asMap(payload['data']);
-  final request = data['request'];
-  if (request is Map<String, dynamic>) {
-    return request;
-  }
-  if (request is Map) {
-    return request.cast<String, dynamic>();
+  for (final source in <Map<String, dynamic>>[data, payload]) {
+    for (final key in const [
+      'request',
+      'driverRequest',
+      'driver_request',
+      'jobRequest',
+      'job_request',
+    ]) {
+      final request = source[key];
+      if (request is Map<String, dynamic>) {
+        return request;
+      }
+      if (request is Map) {
+        return request.cast<String, dynamic>();
+      }
+    }
   }
   return payload;
 }

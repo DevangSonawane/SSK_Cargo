@@ -198,6 +198,27 @@ TrackingDemoShipment _shipmentFromTrip(Map<String, dynamic> trip) {
     dropLng: _doubleFrom(drop, const ['lng', 'longitude']),
     liveLat: _doubleFrom(currentLocation, const ['lat', 'latitude']),
     liveLng: _doubleFrom(currentLocation, const ['lng', 'longitude']),
+    isExpress: _boolFrom(trip, const ['isExpress', 'is_express']),
+    expectedDeliveryHours: _optionalDoubleFrom(trip, const [
+      'expectedDeliveryHours',
+      'expected_delivery_hours',
+    ]),
+    estimatedDeliveryDate: _dateTimeFrom(trip, const [
+      'estimatedDeliveryDate',
+      'estimated_delivery_date',
+    ]),
+    estimatedDeliveryDays: _optionalIntFrom(trip, const [
+      'estimatedDeliveryDays',
+      'estimated_delivery_days',
+    ]),
+    slaOverageHours: _doubleFrom(trip, const [
+      'slaOverageHours',
+      'sla_overage_hours',
+    ]),
+    slaOverageCharge: _doubleFrom(trip, const [
+      'slaOverageCharge',
+      'sla_overage_charge',
+    ]),
     tripId: id,
     bookingId: _stringFrom(trip, const ['bookingId', 'booking_id']),
     bookingStatus: status,
@@ -297,6 +318,50 @@ double _doubleFrom(Map<String, dynamic> value, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return 0;
+}
+
+double? _optionalDoubleFrom(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final raw = value[key];
+    if (raw is num) return raw.toDouble();
+    final parsed = double.tryParse(raw?.toString() ?? '');
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+int? _optionalIntFrom(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final raw = value[key];
+    if (raw is int) return raw;
+    if (raw is num) return raw.round();
+    final parsed = int.tryParse(raw?.toString().trim() ?? '');
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+bool _boolFrom(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final raw = value[key];
+    if (raw == null) continue;
+    if (raw is bool) return raw;
+    if (raw is num) return raw != 0;
+    final normalized = raw.toString().trim().toLowerCase();
+    if (normalized.isEmpty || normalized == 'null') continue;
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+  return false;
+}
+
+DateTime? _dateTimeFrom(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final raw = value[key];
+    if (raw is DateTime) return raw.toLocal();
+    final parsed = DateTime.tryParse(raw?.toString().trim() ?? '');
+    if (parsed != null) return parsed.toLocal();
+  }
+  return null;
 }
 
 bool _looksLikePlaceholderTrip(Map<String, dynamic> trip) {

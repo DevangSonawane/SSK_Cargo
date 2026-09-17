@@ -139,8 +139,8 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
       icon: Icons.warning_amber_rounded,
       title: 'Halting time exceeded',
       message: estimatedCharge == null
-          ? '${_formatDuration(overage)} over the free window.'
-          : '${_formatDuration(overage)} over - ~${_formatMoney(estimatedCharge)} and counting.',
+          ? '${_formatDuration(overage)} over the free window - a charge will be added on delivery.'
+          : '${_formatDuration(overage)} over - ~${_formatMoney(estimatedCharge)} and counting (estimate, finalized at delivery).',
       backgroundColor: const Color(0xFFFFF7ED),
       borderColor: const Color(0xFFFED7AA),
       accentColor: const Color(0xFFC2410C),

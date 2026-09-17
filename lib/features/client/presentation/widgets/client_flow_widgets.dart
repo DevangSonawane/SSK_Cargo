@@ -17,6 +17,7 @@ import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
 
@@ -2565,6 +2566,10 @@ class PackageTrackingCard extends StatelessWidget {
                         color: const Color(0xFF121826),
                       ),
                     ),
+                    if (shipment.isExpress) ...[
+                      const SizedBox(height: 5),
+                      const ExpressBadge(compact: true),
+                    ],
                     const SizedBox(height: 3),
                     Text(
                       '#Tracking ID: ${shipment.trackingId}',
@@ -3821,6 +3826,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _amountController.text = _priceInputText(vehicle.price);
       _selectedTruck = null;
     });
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session != null && _draft.distance > 0) {
+      unawaited(
+        _estimateBookingAmount(
+          accessToken: session.tokens.accessToken,
+          distance: _draft.distance,
+          durationMin: _draft.durationMin,
+          durationInTrafficMin: _draft.durationInTrafficMin,
+        ).then((amount) {
+          if (!mounted || amount == null || amount <= 0) return;
+          _amountController.text = _priceInputText(amount.toString());
+        }),
+      );
+    }
   }
 
   void _continueWithSearchMode() {
@@ -5585,6 +5604,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       const SizedBox(height: 10),
                       _buildTruckCategoryPicker(context),
                       const SizedBox(height: 10),
+                      if (_draft.transportType == 'intra') ...[
+                        _ExpressDeliveryOptionCard(
+                          selected: _draft.isExpress,
+                          loading: _loadingExpressQuote,
+                          surcharge: _draft.expressSurcharge,
+                          expectedDeliveryHours: _draft.expectedDeliveryHours,
+                          insuranceIncluded: _draft.expressInsuranceIncluded,
+                          onChanged: (value) =>
+                              unawaited(_setExpressDelivery(value)),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       if (mode == BookingSearchMode.truck) ...[
                         _buildFindTruckOptions(context),
                         const SizedBox(height: 12),
@@ -6562,6 +6593,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_draft.isExpress) ...[
+          _ExpressBookingSummaryCard(
+            surcharge: _draft.expressSurcharge,
+            expectedDeliveryHours: _draft.expectedDeliveryHours,
+            insuranceIncluded: _draft.expressInsuranceIncluded,
+          ),
+          const SizedBox(height: 12),
+        ],
         if (_draft.estimatedDeliveryDate != null ||
             _draft.expectedDeliveryHours != null) ...[
           _DeliveryEstimateCard(
@@ -10268,6 +10307,79 @@ class _DeliveryEstimateCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpressBookingSummaryCard extends StatelessWidget {
+  const _ExpressBookingSummaryCard({
+    required this.surcharge,
+    required this.expectedDeliveryHours,
+    required this.insuranceIncluded,
+  });
+
+  final double surcharge;
+  final double? expectedDeliveryHours;
+  final bool insuranceIncluded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEA580C),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.bolt_rounded,
+              color: Colors.white,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Express Delivery selected',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    if (surcharge > 0)
+                      '+${_formatRupees(surcharge)} Express surcharge',
+                    if (expectedDeliveryHours != null)
+                      'expected in ~${_formatHours(expectedDeliveryHours!)}',
+                    if (insuranceIncluded) 'transit insurance included',
+                  ].join(' · '),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFFC2410C),
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
               ],
             ),
           ),

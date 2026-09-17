@@ -14,6 +14,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
@@ -763,6 +764,10 @@ class _DriverDeliveryDetailsScreenState
                           fontWeight: FontWeight.w900,
                         ),
                       ),
+                      if (_shipment?.isExpress == true) ...[
+                        const SizedBox(height: 8),
+                        const ExpressBadge(),
+                      ],
                     ],
                   ),
                 ),
@@ -1158,6 +1163,38 @@ class _DriverDeliveryDetailsScreenState
     return null;
   }
 
+  int? _readInt(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return null;
+    for (final key in keys) {
+      final value = json[key];
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.round();
+      }
+      final parsed = int.tryParse(value?.toString().trim() ?? '');
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+    return null;
+  }
+
+  bool _readBool(Map<String, dynamic>? json, List<String> keys) {
+    if (json == null) return false;
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) continue;
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final normalized = value.toString().trim().toLowerCase();
+      if (normalized.isEmpty || normalized == 'null') continue;
+      return normalized == 'true' || normalized == '1' || normalized == 'yes';
+    }
+    return false;
+  }
+
   DateTime? _readDateTime(Map<String, dynamic>? json, List<String> keys) {
     if (json == null) return null;
     for (final key in keys) {
@@ -1273,6 +1310,25 @@ class _DriverDeliveryDetailsScreenState
       liveLng:
           _readDouble(currentLocation, const ['lng', 'longitude']) ??
           _readDouble(trip, const ['currentLng', 'current_lng']),
+      isExpress: _readBool(trip, const ['isExpress', 'is_express']),
+      expectedDeliveryHours: _readDouble(trip, const [
+        'expectedDeliveryHours',
+        'expected_delivery_hours',
+      ]),
+      estimatedDeliveryDate: _readDateTime(trip, const [
+        'estimatedDeliveryDate',
+        'estimated_delivery_date',
+      ]),
+      estimatedDeliveryDays: _readInt(trip, const [
+        'estimatedDeliveryDays',
+        'estimated_delivery_days',
+      ]),
+      slaOverageHours:
+          _readDouble(trip, const ['slaOverageHours', 'sla_overage_hours']) ??
+          0,
+      slaOverageCharge:
+          _readDouble(trip, const ['slaOverageCharge', 'sla_overage_charge']) ??
+          0,
       tripId: id.isNotEmpty ? id : null,
       bookingId: bookingId.isNotEmpty ? bookingId : null,
       bookingStatus: status,

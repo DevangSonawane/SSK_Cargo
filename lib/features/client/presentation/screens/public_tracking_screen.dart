@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
+import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 
@@ -126,6 +128,20 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
                     ],
                     const SizedBox(height: 14),
                     _RouteCard(shipment: shipment),
+                    if (shipment.haltingGraceHours != null &&
+                        (shipment.tripStartedAt != null ||
+                            shipment.haltingCharge > 0)) ...[
+                      const SizedBox(height: 14),
+                      HaltingTimerCard(
+                        status: shipment.bookingStatus ?? shipment.status,
+                        startedAt: shipment.tripStartedAt,
+                        haltingGraceHours: shipment.haltingGraceHours,
+                        haltingHours: shipment.haltingHours,
+                        haltingCharge: shipment.haltingCharge,
+                        showNotStarted: false,
+                        tickInterval: const Duration(seconds: 60),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     _DriverCard(shipment: shipment),
                   ],
@@ -167,6 +183,10 @@ class _PublicHeader extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
+          if (shipment.isExpress) ...[
+            const SizedBox(height: 10),
+            const ExpressBadge(),
+          ],
         ],
       ),
     );
@@ -374,6 +394,43 @@ TrackingDemoShipment _shipmentFromPublicTracking(Map<String, dynamic> data) {
     dropLng: _readPublicDouble(data, const ['dropLng', 'drop_lng']),
     liveLat: _readPublicDouble(data, const ['driverLat', 'driver_lat']),
     liveLng: _readPublicDouble(data, const ['driverLng', 'driver_lng']),
+    isExpress: _readPublicBool(data, const ['isExpress', 'is_express']),
+    expectedDeliveryHours: _readPublicDouble(data, const [
+      'expectedDeliveryHours',
+      'expected_delivery_hours',
+    ]),
+    estimatedDeliveryDate: _readPublicDateTime(data, const [
+      'estimatedDeliveryDate',
+      'estimated_delivery_date',
+    ]),
+    estimatedDeliveryDays: _readPublicInt(data, const [
+      'estimatedDeliveryDays',
+      'estimated_delivery_days',
+    ]),
+    slaOverageHours:
+        _readPublicDouble(data, const [
+          'slaOverageHours',
+          'sla_overage_hours',
+        ]) ??
+        0,
+    slaOverageCharge:
+        _readPublicDouble(data, const [
+          'slaOverageCharge',
+          'sla_overage_charge',
+        ]) ??
+        0,
+    tripStartedAt: _readPublicDateTime(data, const [
+      'tripStartedAt',
+      'trip_started_at',
+    ]),
+    haltingGraceHours: _readPublicDouble(data, const [
+      'haltingGraceHours',
+      'halting_grace_hours',
+    ]),
+    haltingHours:
+        _readPublicDouble(data, const ['haltingHours', 'halting_hours']) ?? 0,
+    haltingCharge:
+        _readPublicDouble(data, const ['haltingCharge', 'halting_charge']) ?? 0,
     bookingStatus: status,
     assignedDriverName: _readPublicString(data, const [
       'driverName',
@@ -450,6 +507,45 @@ double? _readPublicDouble(Map<String, dynamic> json, List<String> keys) {
     if (value is num) return value.toDouble();
     final parsed = double.tryParse(value?.toString() ?? '');
     if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+int? _readPublicInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is int) return value;
+    if (value is num) return value.round();
+    final parsed = int.tryParse(value.toString().trim());
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+bool _readPublicBool(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = value.toString().trim().toLowerCase();
+    if (normalized.isEmpty || normalized == 'null') continue;
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+  return false;
+}
+
+DateTime? _readPublicDateTime(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is DateTime) return value.toLocal();
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+      continue;
+    }
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) return parsed.toLocal();
   }
   return null;
 }

@@ -10,6 +10,8 @@ import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
+import '../../../shared/presentation/widgets/halting_timer_card.dart';
 
 class DriverDeliveryHistoryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryHistoryDetailsScreen({
@@ -399,21 +401,26 @@ class _DriverDeliveryHistoryDetailsScreenState
                                 _HeaderBar(
                                   bookingRef: _displayBookingRef,
                                   status: _statusLabel,
+                                  isExpress: shipment?.isExpress == true,
                                   onBack: () => context.pop(),
                                 ),
                                 const SizedBox(height: 16),
                                 _RouteSummaryCard(
-                                  pickup: shipment?.fromLocation ??
+                                  pickup:
+                                      shipment?.fromLocation ??
                                       'Pickup unavailable',
-                                  drop: shipment?.toLocation ??
+                                  drop:
+                                      shipment?.toLocation ??
                                       'Drop unavailable',
                                   status: _statusLabel,
-                                  truckImage: 'assets/driver/active_truck_driver.png',
+                                  truckImage:
+                                      'assets/driver/active_truck_driver.png',
                                 ),
                                 const SizedBox(height: 16),
                                 _ActionRow(
-                                  onDownload:
-                                      _downloading ? null : _downloadInvoice,
+                                  onDownload: _downloading
+                                      ? null
+                                      : _downloadInvoice,
                                   onEmail: _emailing ? null : _emailInvoice,
                                   onShare: _sharing ? null : _shareViaWhatsApp,
                                   onNotify: _notifying ? null : _notifyClient,
@@ -435,6 +442,23 @@ class _DriverDeliveryHistoryDetailsScreenState
                                     distanceTravelled: _distanceTravelledValue,
                                   ),
                                 ),
+                                if (shipment?.haltingGraceHours != null &&
+                                    (shipment?.tripStartedAt != null ||
+                                        (shipment?.haltingCharge ?? 0) >
+                                            0)) ...[
+                                  const SizedBox(height: 16),
+                                  HaltingTimerCard(
+                                    status:
+                                        shipment?.bookingStatus ?? _statusLabel,
+                                    startedAt: shipment?.tripStartedAt,
+                                    haltingGraceHours:
+                                        shipment?.haltingGraceHours,
+                                    haltingHours: shipment?.haltingHours ?? 0,
+                                    haltingCharge: shipment?.haltingCharge ?? 0,
+                                    showNotStarted: false,
+                                    tickInterval: const Duration(seconds: 60),
+                                  ),
+                                ],
                                 const SizedBox(height: 16),
                                 _SectionCard(
                                   title: 'Earnings',
@@ -474,7 +498,9 @@ class _DriverDeliveryHistoryDetailsScreenState
     final booking = _booking?.raw ?? const <String, dynamic>{};
     final etaText = _readFirstNonEmpty([
       _readString(booking, const ['eta_text', 'eta', 'eta_minutes']),
-      _shipment?.status.isNotEmpty == true ? _activeStatusLabel(_shipment!.status) : '',
+      _shipment?.status.isNotEmpty == true
+          ? _activeStatusLabel(_shipment!.status)
+          : '',
     ]);
     return etaText == '—' ? '—' : etaText;
   }
@@ -608,10 +634,7 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Send'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Send')),
       ],
     );
   }
@@ -621,11 +644,13 @@ class _HeaderBar extends StatelessWidget {
   const _HeaderBar({
     required this.bookingRef,
     required this.status,
+    required this.isExpress,
     required this.onBack,
   });
 
   final String bookingRef;
   final String status;
+  final bool isExpress;
   final VoidCallback onBack;
 
   @override
@@ -691,6 +716,10 @@ class _HeaderBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          if (isExpress) ...[
+            const ExpressBadge(compact: true),
+            const SizedBox(width: 8),
+          ],
           _StatusPill(status: status),
         ],
       ),
@@ -735,10 +764,7 @@ class _RouteSummaryCard extends StatelessWidget {
               ? constraints.maxWidth * 0.22
               : constraints.maxWidth * 0.28;
 
-          final routeWidget = _PickupDropColumn(
-            pickup: pickup,
-            drop: drop,
-          );
+          final routeWidget = _PickupDropColumn(pickup: pickup, drop: drop);
 
           if (narrow) {
             return Column(
@@ -828,17 +854,25 @@ class _ActionRow extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: SizedBox(width: cellWidth, child: buttons[0])),
+                Expanded(
+                  child: SizedBox(width: cellWidth, child: buttons[0]),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: SizedBox(width: cellWidth, child: buttons[1])),
+                Expanded(
+                  child: SizedBox(width: cellWidth, child: buttons[1]),
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(child: SizedBox(width: cellWidth, child: buttons[2])),
+                Expanded(
+                  child: SizedBox(width: cellWidth, child: buttons[2]),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: SizedBox(width: cellWidth, child: buttons[3])),
+                Expanded(
+                  child: SizedBox(width: cellWidth, child: buttons[3]),
+                ),
               ],
             ),
           ],
@@ -879,21 +913,22 @@ class _ActionButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.22),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.22),
           ),
           foregroundColor: Theme.of(context).colorScheme.primary,
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (leading != null) ...[
-              leading,
-              const SizedBox(width: 8),
-            ],
+            if (leading != null) ...[leading, const SizedBox(width: 8)],
             Flexible(
               child: Text(
                 label,
@@ -962,7 +997,10 @@ class _MapPanel extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF101828),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -1273,10 +1311,7 @@ class _DetailStatTile extends StatelessWidget {
 }
 
 class _EarningsPanel extends StatelessWidget {
-  const _EarningsPanel({
-    required this.earningsValue,
-    required this.isPaid,
-  });
+  const _EarningsPanel({required this.earningsValue, required this.isPaid});
 
   final String earningsValue;
   final bool isPaid;
@@ -1531,7 +1566,6 @@ const String _notifySvg = '''
   <path fill="currentColor" d="M10 18a2 2 0 0 0 4 0z"/>
 </svg>
 ''';
-
 
 double _readDouble(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {

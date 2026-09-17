@@ -222,6 +222,13 @@ class _DriverOrderAcceptedScreenState
       if (pendingConfirmationBy.isNotEmpty) {
         _latestPendingConfirmationBy = pendingConfirmationBy;
       }
+      if (status == 'awaiting_confirmation' &&
+          pendingConfirmationBy == 'client') {
+        _counterLocked = false;
+      }
+      if (_isAcceptedStatus(status) || _isRejectedStatus(status)) {
+        _counterLocked = false;
+      }
       if (driverTimedOut) {
         _latestDriverTimedOut = true;
       }
@@ -873,6 +880,14 @@ class _DriverOrderAcceptedScreenState
                 .trim()
                 .toLowerCase();
           }
+          if (_latestStatus == 'awaiting_confirmation' &&
+              _latestPendingConfirmationBy == 'client') {
+            _counterLocked = false;
+          }
+          if (_isAcceptedStatus(_latestStatus) ||
+              _isRejectedStatus(_latestStatus)) {
+            _counterLocked = false;
+          }
           if (request.driverTimedOut) {
             _latestDriverTimedOut = true;
           }
@@ -1101,9 +1116,7 @@ class _DriverOrderAcceptedScreenState
                                   ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFFE23A4B),
-                              side: const BorderSide(
-                                color: Color(0xFFF3B4B4),
-                              ),
+                              side: const BorderSide(color: Color(0xFFF3B4B4)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -1533,34 +1546,125 @@ class _DriverOrderAcceptedScreenState
                           ],
                         ),
                       ),
-                    ] else if (_waitingOnClient) ...[
+                    ] else if (_awaitingDriverConfirmation) ...[
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFD),
+                          color: const Color(0xFFEAF7EF),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                          border: Border.all(color: const Color(0xFFBFE7CE)),
                         ),
                         child: Column(
                           children: [
-                            const SizedBox(
-                              width: 26,
-                              height: 26,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: Color(0xFF1F88C9),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.handshake_rounded,
+                                color: Color(0xFF2FA56E),
                               ),
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Accepted - waiting for the client to confirm.',
+                              'The client accepted at ₹${baseAmount.toStringAsFixed(0)}',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                   ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Confirm to finalize the booking.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF667085),
+                                    height: 1.35,
+                                  ),
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .rejectDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: request.id,
+                                                ),
+                                          ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFFE23A4B),
+                                      side: const BorderSide(
+                                        color: Color(0xFFF3B4B4),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Decline',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: FilledButton(
+                                    onPressed: _submitting
+                                        ? null
+                                        : () => _runAction(
+                                            (token) => ref
+                                                .read(apiClientProvider)
+                                                .acceptDriverRequestAsDriver(
+                                                  accessToken: token,
+                                                  id: request.id,
+                                                ),
+                                            resolveTripOnSuccess: true,
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFF2FA56E),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: _submitting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.4,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Confirm',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1586,7 +1690,7 @@ class _DriverOrderAcceptedScreenState
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Accepted - waiting for the other side to confirm.',
+                              'Accepted - waiting for the client to confirm.',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
@@ -1734,17 +1838,32 @@ class _SummaryPill extends StatelessWidget {
 Map<String, dynamic> _extractPayload(Map<String, dynamic> response) {
   final data = response['data'];
   if (data is Map<String, dynamic>) {
-    final nestedRequest = data['request'];
-    if (nestedRequest is Map<String, dynamic>) {
-      return nestedRequest;
-    }
+    final nestedRequest = _nestedRequestPayload(data);
+    if (nestedRequest != null) return nestedRequest;
     return data;
   }
 
-  final request = response['request'];
-  if (request is Map<String, dynamic>) {
-    return request;
-  }
+  final request = _nestedRequestPayload(response);
+  if (request != null) return request;
 
   return response;
+}
+
+Map<String, dynamic>? _nestedRequestPayload(Map<String, dynamic> source) {
+  for (final key in const [
+    'request',
+    'driverRequest',
+    'driver_request',
+    'jobRequest',
+    'job_request',
+  ]) {
+    final request = source[key];
+    if (request is Map<String, dynamic>) {
+      return request;
+    }
+    if (request is Map) {
+      return request.cast<String, dynamic>();
+    }
+  }
+  return null;
 }

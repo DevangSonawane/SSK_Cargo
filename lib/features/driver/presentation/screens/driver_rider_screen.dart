@@ -10,6 +10,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart'
     show TrackingDemoShipment;
+import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_dashboard_models.dart';
 
@@ -1210,6 +1211,10 @@ class _ActiveTripCard extends StatelessWidget {
                           label: statusLabel,
                           isDelivered: isDelivered,
                         ),
+                        if (shipment.isExpress) ...[
+                          const SizedBox(height: 8),
+                          const ExpressBadge(compact: true),
+                        ],
                         const SizedBox(height: 10),
                         Text(
                           shipment.trackingId,

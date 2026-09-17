@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
@@ -462,6 +463,10 @@ class _BookingRequestCard extends StatelessWidget {
             Row(
               children: [
                 _StatusBadge(visual: visual),
+                if (request.isExpress) ...[
+                  const SizedBox(width: 8),
+                  const ExpressBadge(compact: true),
+                ],
                 const Spacer(),
                 Text(
                   request.value,

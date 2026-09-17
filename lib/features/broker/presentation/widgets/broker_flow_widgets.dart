@@ -187,6 +187,7 @@ class BookingRequest {
     this.assignedDriverName = '',
     this.assignedTruckName = '',
     this.expiresInMinutes = 0,
+    this.isExpress = false,
   });
 
   final String id;
@@ -208,6 +209,7 @@ class BookingRequest {
   final String assignedDriverName;
   final String assignedTruckName;
   final int expiresInMinutes;
+  final bool isExpress;
 }
 
 class BrokerDriverRequest {
@@ -233,6 +235,7 @@ class BrokerDriverRequest {
     required this.status,
     required this.driverTimedOut,
     required this.offerCount,
+    required this.isExpress,
     required this.requestedAt,
     required this.updatedAt,
     required this.raw,
@@ -259,6 +262,7 @@ class BrokerDriverRequest {
   final String status;
   final bool driverTimedOut;
   final int offerCount;
+  final bool isExpress;
   final DateTime? requestedAt;
   final DateTime? updatedAt;
   final Map<String, dynamic> raw;
@@ -402,6 +406,9 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     status: status,
     driverTimedOut: true,
     offerCount: 0,
+    isExpress:
+        _readBool(payload, const ['isExpress', 'is_express']) ||
+        _readBool(source, const ['isExpress', 'is_express']),
     requestedAt: _parseDateTimeObject(
       payload['createdAt'] ?? payload['created_at'] ?? payload['requested_at'],
     ),
@@ -889,6 +896,10 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     assignedDriverName: assignedDriverName,
     assignedTruckName: assignedTruckName,
     expiresInMinutes: expiresIn,
+    isExpress:
+        _readBool(json, const ['isExpress', 'is_express']) ||
+        _readBool(source, const ['isExpress', 'is_express']) ||
+        _readBool(booking, const ['isExpress', 'is_express']),
   );
 }
 
@@ -979,6 +990,9 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
         : _readString(json, const ['status']),
     driverTimedOut: driverTimedOut,
     offerCount: offerHistory.length,
+    isExpress:
+        _readBool(json, const ['isExpress', 'is_express']) ||
+        _readBool(_asMap(json['booking']), const ['isExpress', 'is_express']),
     requestedAt: _parseDateTimeObject(
       json['createdAt'] ?? json['created_at'] ?? json['requested_at'],
     ),
@@ -1197,6 +1211,19 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return '';
+}
+
+bool _readBool(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = value.toString().trim().toLowerCase();
+    if (normalized.isEmpty || normalized == 'null') continue;
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+  return false;
 }
 
 double? _readCoordinate(Map<String, dynamic> json, List<String> keys) {
@@ -1491,6 +1518,7 @@ TrackingDemoShipment bookingRequestToShipment(
     status: status,
     customerName: request.clientName,
     weight: request.weight,
+    isExpress: request.isExpress,
     assignedDriverName: assignedDriverName,
     assignedTruckName: assignedTruckName,
     timeline: [
@@ -1569,6 +1597,7 @@ TrackingDemoShipment brokerDriverRequestToShipment(
     paymentStatus: request.driverTimedOut ? 'pending' : 'confirmed',
     bookingId: request.bookingId,
     bookingStatus: status,
+    isExpress: request.isExpress,
     assignedDriverName: request.driverName.isNotEmpty
         ? request.driverName
         : request.brokerName,

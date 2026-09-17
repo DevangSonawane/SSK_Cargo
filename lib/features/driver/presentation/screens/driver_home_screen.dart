@@ -662,6 +662,10 @@ class _DeliveryOrderCard extends StatelessWidget {
               ),
             ),
           ],
+          if (brokerAssigned) ...[
+            const SizedBox(height: 12),
+            const _BrokerAssignedNotice(),
+          ],
           const SizedBox(height: 14),
           Text(
             brokerAssigned
@@ -864,6 +868,10 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
               ),
             ),
           ],
+          if (brokerAssigned) ...[
+            const SizedBox(height: 12),
+            const _BrokerAssignedNotice(),
+          ],
           const SizedBox(height: 14),
           Text(
             brokerAssigned
@@ -930,6 +938,43 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
               child: Text(
                 brokerAssigned ? 'Review assigned trip' : 'Open negotiation',
                 style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerAssignedNotice extends StatelessWidget {
+  const _BrokerAssignedNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7EF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCDEFD9)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.handshake_rounded,
+            size: 18,
+            color: Color(0xFF2FA56E),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Broker-assigned - accept or decline, no negotiation.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF2FA56E),
+                fontWeight: FontWeight.w800,
+                height: 1.35,
               ),
             ),
           ),
