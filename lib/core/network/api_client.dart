@@ -701,6 +701,9 @@ class SskApiClient {
     double? latitude,
     double? longitude,
     String? city,
+    String? addressType,
+    String? contactName,
+    String? contactPhone,
   }) async {
     developer.log('POST /api/addresses label=$label', name: 'SSK.API');
     final data = <String, dynamic>{'label': label, 'address': address};
@@ -715,6 +718,15 @@ class SskApiClient {
     }
     if (city != null && city.isNotEmpty) {
       data['city'] = city;
+    }
+    if (addressType != null && addressType.isNotEmpty) {
+      data['address_type'] = addressType;
+    }
+    if (contactName != null && contactName.isNotEmpty) {
+      data['contact_name'] = contactName;
+    }
+    if (contactPhone != null && contactPhone.isNotEmpty) {
+      data['contact_phone'] = contactPhone;
     }
     return _request(
       () => _dio.post<Map<String, dynamic>>(
@@ -734,6 +746,9 @@ class SskApiClient {
     double? latitude,
     double? longitude,
     String? city,
+    String? addressType,
+    String? contactName,
+    String? contactPhone,
   }) async {
     developer.log('PATCH /api/addresses/$id', name: 'SSK.API');
     final data = <String, dynamic>{};
@@ -754,6 +769,15 @@ class SskApiClient {
     }
     if (city != null) {
       data['city'] = city;
+    }
+    if (addressType != null) {
+      data['address_type'] = addressType;
+    }
+    if (contactName != null) {
+      data['contact_name'] = contactName;
+    }
+    if (contactPhone != null) {
+      data['contact_phone'] = contactPhone;
     }
     return _request(
       () => _dio.patch<Map<String, dynamic>>(

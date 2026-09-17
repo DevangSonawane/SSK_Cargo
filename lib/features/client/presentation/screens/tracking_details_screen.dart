@@ -42,6 +42,42 @@ String _formatTrackingDate(DateTime value) {
   return '${value.day}/${value.month}/${value.year}';
 }
 
+String _formatTrackingMoney(double value) {
+  if (value <= 0) return '-';
+  return '₹${value.toStringAsFixed(value % 1 == 0 ? 0 : 2)}';
+}
+
+String _formatTrackingStatusLabel(String value) {
+  final cleaned = value.trim().replaceAll(RegExp(r'[_-]+'), ' ');
+  if (cleaned.isEmpty) return 'In transit';
+  return cleaned
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .map(
+        (word) => '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
+      .join(' ');
+}
+
+bool _isCancelledTrackingStatus(String value) {
+  final normalized = value.trim().toLowerCase().replaceAll('-', '_');
+  return normalized.contains('cancel');
+}
+
+String _cleanTrackingLocation(String value, String fallback) {
+  final cleaned = value.trim();
+  final normalized = cleaned.toLowerCase().replaceAll('-', ' ');
+  if (cleaned.isEmpty ||
+      normalized == 'pickup location not provided' ||
+      normalized == 'drop off location not provided' ||
+      normalized == 'dropoff location not provided' ||
+      normalized == 'pickup pending' ||
+      normalized == 'drop pending') {
+    return fallback;
+  }
+  return cleaned;
+}
+
 class TrackingDetailsScreen extends ConsumerStatefulWidget {
   const TrackingDetailsScreen({super.key, required this.shipment});
 
@@ -78,7 +114,6 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   void _closeLiveTracking() {
-    _setBottomNavVisible(true);
     setState(() => _isLiveTracking = false);
   }
 
@@ -110,6 +145,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     _refreshShipment();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _setBottomNavVisible(false);
         _startLiveShipmentUpdates();
         unawaited(_loadReassignmentHistory());
       }
@@ -171,7 +207,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       );
       final bookingData = bookingResponse['data'];
       final bookingJson = bookingData is Map<String, dynamic>
-          ? bookingData['booking']
+          ? (bookingData['booking'] is Map<String, dynamic>
+                ? bookingData['booking']
+                : bookingData)
           : null;
       if (bookingJson is! Map<String, dynamic>) {
         return;
@@ -179,6 +217,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
 
       final booking = ClientBooking.fromJson(bookingJson);
       var nextShipment = trackingShipmentFromBooking(booking);
+      nextShipment = _shipmentWithResolvedLocations(nextShipment, bookingJson);
 
       try {
         final trackResponse = await client.getBookingTrack(
@@ -190,6 +229,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
           nextShipment = nextShipment.copyWith(
             liveLat: _toDouble(trackData['driverLat']),
             liveLng: _toDouble(trackData['driverLng']),
+          );
+          nextShipment = _shipmentWithResolvedLocations(
+            nextShipment,
+            trackData,
           );
         }
       } catch (_) {
@@ -204,6 +247,64 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     } catch (_) {
       // Keep the originally supplied shipment if the live refresh fails.
     }
+  }
+
+  TrackingDemoShipment _shipmentWithResolvedLocations(
+    TrackingDemoShipment shipment,
+    Map<String, dynamic> data,
+  ) {
+    final pickup = _readPayloadString(data, const [
+      'pickup',
+      'pickupLocation',
+      'pickup_location',
+      'pickupAddress',
+      'pickup_address',
+      'from',
+      'origin',
+      'source',
+      'sourceLocation',
+      'source_location',
+    ]);
+    final drop = _readPayloadString(data, const [
+      'drop',
+      'dropLocation',
+      'drop_location',
+      'dropoff',
+      'dropoffLocation',
+      'dropoff_location',
+      'dropOffLocation',
+      'drop_off_location',
+      'dropAddress',
+      'drop_address',
+      'dropoffAddress',
+      'dropoff_address',
+      'to',
+      'destination',
+      'destinationLocation',
+      'destination_location',
+      'targetLocation',
+      'target_location',
+    ]);
+
+    final fromLocation =
+        pickup.isNotEmpty &&
+            _cleanTrackingLocation(shipment.fromLocation, '').isEmpty
+        ? pickup
+        : shipment.fromLocation;
+    final toLocation =
+        drop.isNotEmpty &&
+            _cleanTrackingLocation(shipment.toLocation, '').isEmpty
+        ? drop
+        : shipment.toLocation;
+
+    if (fromLocation == shipment.fromLocation &&
+        toLocation == shipment.toLocation) {
+      return shipment;
+    }
+    return shipment.copyWith(
+      fromLocation: fromLocation,
+      toLocation: toLocation,
+    );
   }
 
   String _readPayloadString(Map<String, dynamic> map, List<String> keys) {
@@ -985,208 +1086,150 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 key: const ValueKey('details'),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _CompactSummaryCard(
-                        shipment: shipment,
-                        reassignmentHistory: _reassignmentHistory,
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(top: 6),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
+                          _ReactStylePickupOtpBanner(
+                            pickupOtp: shipment.pickupOtp,
+                            pickupOtpVerified: shipment.pickupOtpVerified,
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        _CompactSummaryCard(
+                          shipment: shipment,
+                          reassignmentHistory: _reassignmentHistory,
+                          isSharingTracking: _isSharingTracking,
+                          onShareTracking: shipment.bookingId == null
+                              ? null
+                              : _shareTracking,
+                          onCallDriver: () =>
+                              _callDriver(shipment.assignedDriverPhone),
+                        ),
+                        const SizedBox(height: 14),
+                        _ShipmentTimelineCard(shipment: shipment),
+                        const SizedBox(height: 14),
+                        _QuickStatsRow(shipment: shipment),
+                        const SizedBox(height: 14),
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom,
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                'Tracking timeline',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF101828),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: FilledButton(
+                                  onPressed: _openLiveTracking,
+                                  style: FilledButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
                                     ),
+                                    backgroundColor: const Color(0xFF2FA56E),
+                                  ),
+                                  child: const Text(
+                                    'Live Tracking',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              ...shipment.timeline.asMap().entries.map((entry) {
-                                final isLast =
-                                    entry.key == shipment.timeline.length - 1;
-                                return _TimelineStepItem(
-                                  step: entry.value,
-                                  showConnector: !isLast,
-                                );
-                              }),
                               const SizedBox(height: 10),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: MediaQuery.of(context).padding.bottom,
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 48,
-                                      child: FilledButton(
-                                        onPressed: _openLiveTracking,
-                                        style: FilledButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          backgroundColor: const Color(
-                                            0xFF2FA56E,
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Live Tracking',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                              if (_isPayable)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: FilledButton.icon(
+                                    onPressed: _payBooking,
+                                    icon: const Icon(Icons.payments_outlined),
+                                    label: Text(
+                                      shipment.paymentStatus.toLowerCase() ==
+                                              'partial'
+                                          ? 'Pay remaining'
+                                          : 'Pay now',
+                                    ),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1976D2),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
                                         ),
                                       ),
                                     ),
-                                    if (shipment.bookingId != null) ...[
-                                      const SizedBox(height: 10),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: OutlinedButton.icon(
-                                          onPressed: _isSharingTracking
-                                              ? null
-                                              : _shareTracking,
-                                          icon: _isSharingTracking
-                                              ? const SizedBox(
-                                                  width: 18,
-                                                  height: 18,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                      ),
-                                                )
-                                              : const Icon(
-                                                  Icons.ios_share_rounded,
-                                                ),
-                                          label: const Text('Share Tracking'),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(
-                                              0xFF2FA56E,
-                                            ),
-                                            side: const BorderSide(
-                                              color: Color(0xFFCDEFD9),
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 10),
-                                    if (_isPayable)
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: FilledButton.icon(
-                                          onPressed: _payBooking,
-                                          icon: const Icon(
-                                            Icons.payments_outlined,
-                                          ),
-                                          label: Text(
-                                            shipment.paymentStatus
-                                                        .toLowerCase() ==
-                                                    'partial'
-                                                ? 'Pay remaining'
-                                                : 'Pay now',
-                                          ),
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF1976D2,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    if (_isPayable && _isRatable)
-                                      const SizedBox(height: 10),
-                                    if (_isRatable)
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: OutlinedButton.icon(
-                                          onPressed: _rateBooking,
-                                          icon: const Icon(
-                                            Icons.star_outline_rounded,
-                                          ),
-                                          label: const Text('Rate delivery'),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(
-                                              0xFFB88900,
-                                            ),
-                                            side: const BorderSide(
-                                              color: Color(0xFFF3DC8C),
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    if ((_isPayable || _isRatable) &&
-                                        shipment.bookingId != null)
-                                      const SizedBox(height: 10),
-                                    if (shipment.bookingId != null)
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: _canCancelBooking
-                                            ? OutlinedButton(
-                                                onPressed: _isCancelling
-                                                    ? null
-                                                    : _confirmCancelBooking,
-                                                style: OutlinedButton.styleFrom(
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          999,
-                                                        ),
-                                                  ),
-                                                  side: const BorderSide(
-                                                    color: Color(0xFFE23A4B),
-                                                  ),
-                                                  foregroundColor: const Color(
-                                                    0xFFE23A4B,
-                                                  ),
-                                                  backgroundColor: Colors.white,
-                                                ),
-                                                child: Text(
-                                                  _isCancelling
-                                                      ? 'Cancelling...'
-                                                      : 'Cancel booking',
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              )
-                                            : const SizedBox.shrink(),
-                                      ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              if (_isPayable && _isRatable)
+                                const SizedBox(height: 10),
+                              if (_isRatable)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _rateBooking,
+                                    icon: const Icon(
+                                      Icons.star_outline_rounded,
+                                    ),
+                                    label: const Text('Rate delivery'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color(0xFFB88900),
+                                      side: const BorderSide(
+                                        color: Color(0xFFF3DC8C),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if ((_isPayable || _isRatable) &&
+                                  shipment.bookingId != null)
+                                const SizedBox(height: 10),
+                              if (shipment.bookingId != null)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: _canCancelBooking
+                                      ? OutlinedButton(
+                                          onPressed: _isCancelling
+                                              ? null
+                                              : _confirmCancelBooking,
+                                          style: OutlinedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFE23A4B),
+                                            ),
+                                            foregroundColor: const Color(
+                                              0xFFE23A4B,
+                                            ),
+                                            backgroundColor: Colors.white,
+                                          ),
+                                          child: Text(
+                                            _isCancelling
+                                                ? 'Cancelling...'
+                                                : 'Cancel booking',
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1727,25 +1770,34 @@ class _CompactSummaryCard extends StatelessWidget {
   const _CompactSummaryCard({
     required this.shipment,
     required this.reassignmentHistory,
+    required this.isSharingTracking,
+    required this.onShareTracking,
+    required this.onCallDriver,
   });
 
   final TrackingDemoShipment shipment;
   final List<_ReassignmentHistoryEntry> reassignmentHistory;
+  final bool isSharingTracking;
+  final VoidCallback? onShareTracking;
+  final VoidCallback onCallDriver;
 
   @override
   Widget build(BuildContext context) {
+    final driverName = shipment.assignedDriverName?.trim() ?? '';
+    final truckName = shipment.assignedTruckName?.trim() ?? '';
+    final statusLabel = (shipment.bookingStatus ?? shipment.status).trim();
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF0F3F7)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF101828).withValues(alpha: 0.07),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -1755,231 +1807,1069 @@ class _CompactSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              Flexible(
+                child: Text(
+                  shipment.trackingId,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF98A2B3),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (onShareTracking != null) ...[
+                _CircleIconButton(
+                  icon: isSharingTracking
+                      ? Icons.more_horiz_rounded
+                      : Icons.link_rounded,
+                  onTap: isSharingTracking ? null : onShareTracking,
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (shipment.isExpress) ...[
+                const _ExpressIconChip(),
+                const SizedBox(width: 8),
+              ],
+              _PremiumStatusPill(label: statusLabel),
+              const SizedBox(width: 8),
+              _CircleIconButton(
+                icon: Icons.close_rounded,
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _ReactRouteRail(
+            fromLocation: shipment.fromLocation,
+            toLocation: shipment.toLocation,
+          ),
+          if (truckName.isNotEmpty) ...[
+            const Divider(height: 26, color: Color(0xFFF2F4F7)),
+            _ReactInfoRow(
+              leading: const _ReactSquareIcon(
+                icon: Icons.local_shipping_outlined,
+              ),
+              title: truckName,
+              trailing: shipment.weight.isEmpty
+                  ? null
+                  : _SoftTextPill(label: shipment.weight),
+            ),
+          ],
+          if (driverName.isNotEmpty) ...[
+            const Divider(height: 26, color: Color(0xFFF2F4F7)),
+            _ReactInfoRow(
+              leading: _DriverInitialsAvatar(name: driverName),
+              title: driverName,
+              subtitle: shipment.assignedDriverPhone,
+              trailing: _CallDriverButton(onTap: onCallDriver),
+            ),
+          ],
+          if (shipment.haltingGraceHours != null &&
+              (shipment.tripStartedAt != null ||
+                  shipment.haltingCharge > 0)) ...[
+            const SizedBox(height: 14),
+            HaltingTimerCard(
+              status: shipment.bookingStatus ?? shipment.status,
+              startedAt: shipment.tripStartedAt,
+              haltingGraceHours: shipment.haltingGraceHours,
+              haltingHours: shipment.haltingHours,
+              haltingCharge: shipment.haltingCharge,
+              showNotStarted: false,
+              tickInterval: const Duration(seconds: 60),
+            ),
+          ],
+          if (reassignmentHistory.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _ReassignmentHistoryPanel(history: reassignmentHistory),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumStatusPill extends StatelessWidget {
+  const _PremiumStatusPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayLabel = _formatTrackingStatusLabel(label);
+    final isCancelled = _isCancelledTrackingStatus(label);
+    final backgroundColor = isCancelled
+        ? const Color(0xFFFFEBEE)
+        : const Color(0xFFEAF6EF);
+    final borderColor = isCancelled
+        ? const Color(0xFFFFCDD2)
+        : const Color(0xFFCFECDC);
+    final dotColor = isCancelled
+        ? const Color(0xFFE23A4B)
+        : const Color(0xFF2FA56E);
+    final textColor = isCancelled
+        ? const Color(0xFFC62828)
+        : const Color(0xFF1C2430);
+
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                displayLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: textColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactStylePickupOtpBanner extends StatelessWidget {
+  const _ReactStylePickupOtpBanner({
+    required this.pickupOtp,
+    required this.pickupOtpVerified,
+  });
+
+  final String? pickupOtp;
+  final bool pickupOtpVerified;
+
+  @override
+  Widget build(BuildContext context) {
+    final otp = pickupOtp?.trim() ?? '';
+    if (otp.isEmpty) return const SizedBox.shrink();
+
+    if (pickupOtpVerified) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF7EF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFCDEFD9)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              size: 18,
+              color: Color(0xFF2FA56E),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Pickup verified with your code.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF6EF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCFECDC)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pickup Code',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF247B52),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Share this with your driver when they arrive to confirm pickup.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontSize: 12,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            otp,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: const Color(0xFF2FA56E),
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 16, color: const Color(0xFF667085)),
+      ),
+    );
+  }
+}
+
+class _ExpressIconChip extends StatelessWidget {
+  const _ExpressIconChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: const BoxDecoration(
+        color: Color(0xFFEAF6EF),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFF2FA56E)),
+    );
+  }
+}
+
+class _ReactRouteRail extends StatelessWidget {
+  const _ReactRouteRail({required this.fromLocation, required this.toLocation});
+
+  final String fromLocation;
+  final String toLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = _cleanTrackingLocation(fromLocation, 'Pickup pending');
+    final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
+
+    return Container(
+      padding: const EdgeInsets.only(bottom: 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF2F4F7))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _RouteRailStop(
+            marker: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2FA56E),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2FA56E).withValues(alpha: 0.18),
+                    spreadRadius: 3,
+                  ),
+                ],
+              ),
+            ),
+            value: pickup,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Container(
+              width: 2,
+              height: 30,
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE4E7EC),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          _RouteRailStop(
+            marker: const Icon(
+              Icons.location_on_rounded,
+              color: Color(0xFF2FA56E),
+              size: 18,
+            ),
+            value: drop,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteRailStop extends StatelessWidget {
+  const _RouteRailStop({required this.marker, required this.value});
+
+  final Widget marker;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 18,
+          height: 22,
+          child: Align(alignment: Alignment.topCenter, child: marker),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontSize: 14,
+              height: 1.3,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReactInfoRow extends StatelessWidget {
+  const _ReactInfoRow({
+    required this.leading,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+  });
+
+  final Widget leading;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        leading,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF344054),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if ((subtitle ?? '').isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF98A2B3),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+      ],
+    );
+  }
+}
+
+class _ReactSquareIcon extends StatelessWidget {
+  const _ReactSquareIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF6EF),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, size: 18, color: const Color(0xFF2FA56E)),
+    );
+  }
+}
+
+class _SoftTextPill extends StatelessWidget {
+  const _SoftTextPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF6EF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF2FA56E),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _DriverInitialsAvatar extends StatelessWidget {
+  const _DriverInitialsAvatar({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: const BoxDecoration(
+        color: Color(0xFFEAF6EF),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials.isEmpty ? 'D' : initials,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: const Color(0xFF2FA56E),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _CallDriverButton extends StatelessWidget {
+  const _CallDriverButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: const BoxDecoration(
+          color: Color(0xFF2FA56E),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+      ),
+    );
+  }
+}
+
+class _ShipmentTimelineCard extends StatelessWidget {
+  const _ShipmentTimelineCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    var currentIndex = shipment.timeline.indexWhere((step) => !step.completed);
+    if (currentIndex == -1) currentIndex = shipment.timeline.length - 1;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.07),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Shipment Timeline',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < shipment.timeline.length; i++)
+                  _HorizontalTimelineStep(
+                    step: shipment.timeline[i],
+                    isCurrent: i == currentIndex,
+                    showConnector: i != shipment.timeline.length - 1,
+                  ),
+              ],
+            ),
+          ),
+          if (shipment.timeline.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Current Status: ${shipment.timeline[currentIndex].title}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF98A2B3),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HorizontalTimelineStep extends StatelessWidget {
+  const _HorizontalTimelineStep({
+    required this.step,
+    required this.isCurrent,
+    required this.showConnector,
+  });
+
+  final TrackingTimelineStep step;
+  final bool isCurrent;
+  final bool showConnector;
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompleted = step.completed && !isCurrent;
+    final dotColor = isCompleted || isCurrent
+        ? const Color(0xFF2FA56E)
+        : Colors.white;
+    final borderColor = isCompleted || isCurrent
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFE4E7EC);
+    final textColor = isCompleted
+        ? const Color(0xFF2FA56E)
+        : isCurrent
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFD0D5DD);
+
+    return SizedBox(
+      width: showConnector ? 96 : 70,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: borderColor, width: 2),
+                  boxShadow: isCurrent
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.16),
+                            spreadRadius: 4,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: isCompleted
+                    ? const Icon(
+                        Icons.check_rounded,
+                        size: 15,
+                        color: Colors.white,
+                      )
+                    : isCurrent
+                    ? Center(
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 7),
+              SizedBox(
+                width: 64,
+                child: Text(
+                  step.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: textColor,
+                    fontSize: 10,
+                    height: 1.15,
+                    fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (showConnector)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.only(top: 12, left: 4, right: 4),
+                color: isCompleted
+                    ? const Color(0xFF2FA56E)
+                    : const Color(0xFFF2F4F7),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickStatsRow extends StatelessWidget {
+  const _QuickStatsRow({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickStatCard(label: 'Weight', value: shipment.weight),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickStatCard(
+            label: 'Amount',
+            value: _formatTrackingMoney(shipment.amount),
+            highlight: true,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickStatCard extends StatelessWidget {
+  const _QuickStatCard({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.07),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF98A2B3),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value.isEmpty ? '-' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: highlight
+                  ? const Color(0xFF2FA56E)
+                  : const Color(0xFF101828),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumRouteLine extends StatelessWidget {
+  const _PremiumRouteLine({
+    required this.fromLocation,
+    required this.toLocation,
+  });
+
+  final String fromLocation;
+  final String toLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = _cleanTrackingLocation(fromLocation, 'Pickup pending');
+    final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
+
+    return Column(
+      children: [
+        _RouteStop(
+          icon: Icons.radio_button_checked_rounded,
+          iconColor: const Color(0xFF2FA56E),
+          label: 'Pickup',
+          value: pickup,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 11),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 2,
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD9E2EC),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ),
+        _RouteStop(
+          icon: Icons.location_on_rounded,
+          iconColor: const Color(0xFFE23A4B),
+          label: 'Drop',
+          value: drop,
+        ),
+      ],
+    );
+  }
+}
+
+class _CompactPickupOtpChip extends StatelessWidget {
+  const _CompactPickupOtpChip({
+    required this.pickupOtp,
+    required this.pickupOtpVerified,
+  });
+
+  final String? pickupOtp;
+  final bool pickupOtpVerified;
+
+  @override
+  Widget build(BuildContext context) {
+    final otp = pickupOtp?.trim() ?? '';
+    if (otp.isEmpty) return const SizedBox.shrink();
+
+    final accentColor = pickupOtpVerified
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFB88900);
+    final backgroundColor = pickupOtpVerified
+        ? const Color(0xFFEAF7EF)
+        : const Color(0xFFFFF8E6);
+    final borderColor = pickupOtpVerified
+        ? const Color(0xFFCDEFD9)
+        : const Color(0xFFF3DC8C);
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              pickupOtpVerified ? Icons.verified_rounded : Icons.key_rounded,
+              size: 15,
+              color: accentColor,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              otp,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: const Color(0xFF101828),
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RouteStop extends StatelessWidget {
+  const _RouteStop({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: iconColor, size: 24),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF98A2B3),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF101828),
+                  fontSize: 13,
+                  height: 1.25,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PremiumFactTile extends StatelessWidget {
+  const _PremiumFactTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 74),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECEFF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 15, color: const Color(0xFF667085)),
+              const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  'Tracking Details',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF98A2B3),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            value.isEmpty ? '-' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumCrewCard extends StatelessWidget {
+  const _PremiumCrewCard({required this.driverName, required this.truckName});
+
+  final String driverName;
+  final String truckName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECEFF3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF6EF),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.local_shipping_outlined,
+              size: 19,
+              color: Color(0xFF247B52),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  driverName.isEmpty ? 'Driver pending' : driverName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                     color: const Color(0xFF101828),
                   ),
                 ),
-              ),
-              InkWell(
-                onTap: () => Navigator.of(context).maybePop(),
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F8FA),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFF0F3F7)),
+                const SizedBox(height: 2),
+                Text(
+                  truckName.isEmpty ? 'Truck not assigned' : truckName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF667085),
                   ),
-                  child: const Icon(Icons.close_rounded, size: 16),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFF3D9),
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(7),
-                  child: Image.asset('assets/package.png', fit: BoxFit.contain),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            shipment.packageName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF101828),
-                                ),
-                          ),
-                        ),
-                        if (shipment.isExpress) ...[
-                          const SizedBox(width: 8),
-                          const _ExpressBadge(),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '#Tracking ID: ${shipment.trackingId}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.black54, fontSize: 11),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.copy_rounded,
-                          size: 16,
-                          color: Color(0xFF2FA56E),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
-            const SizedBox(height: 10),
-            PickupOtpBanner(
-              pickupOtp: shipment.pickupOtp,
-              pickupOtpVerified: shipment.pickupOtpVerified,
-            ),
-          ],
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFBFD),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFECEFF3)),
-            ),
-            child: Column(
-              children: [
-                _InfoGrid(
-                  leftLabel: 'From',
-                  leftValue: shipment.fromLocation,
-                  rightLabel: 'Destination',
-                  rightValue: shipment.toLocation,
-                ),
-                const SizedBox(height: 10),
-                _InfoGrid(
-                  leftLabel: 'Customer',
-                  leftValue: shipment.customerName,
-                  rightLabel: 'Weight',
-                  rightValue: shipment.weight,
-                ),
-                if (shipment.expectedDeliveryHours != null ||
-                    shipment.estimatedDeliveryDate != null ||
-                    shipment.slaOverageCharge > 0) ...[
-                  const SizedBox(height: 10),
-                  _InfoGrid(
-                    leftLabel: shipment.estimatedDeliveryDate == null
-                        ? 'Expected'
-                        : 'Estimated',
-                    leftValue: shipment.estimatedDeliveryDate != null
-                        ? _formatTrackingDate(shipment.estimatedDeliveryDate!)
-                        : shipment.expectedDeliveryHours == null
-                        ? '-'
-                        : '${_formatTrackingHours(shipment.expectedDeliveryHours!)}${shipment.isExpress ? ' (Express)' : ''}',
-                    rightLabel: shipment.expectedDeliveryHours == null
-                        ? 'Delay charge'
-                        : 'SLA',
-                    rightValue: shipment.expectedDeliveryHours != null
-                        ? '${_formatTrackingHours(shipment.expectedDeliveryHours!)}${shipment.isExpress ? ' (Express)' : ''}'
-                        : shipment.slaOverageCharge <= 0
-                        ? '-'
-                        : '₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
-                  ),
-                ],
-                if (reassignmentHistory.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _ReassignmentHistoryPanel(history: reassignmentHistory),
-                ],
-                if (shipment.haltingGraceHours != null &&
-                    (shipment.tripStartedAt != null ||
-                        shipment.haltingCharge > 0)) ...[
-                  const SizedBox(height: 10),
-                  HaltingTimerCard(
-                    status: shipment.bookingStatus ?? shipment.status,
-                    startedAt: shipment.tripStartedAt,
-                    haltingGraceHours: shipment.haltingGraceHours,
-                    haltingHours: shipment.haltingHours,
-                    haltingCharge: shipment.haltingCharge,
-                    showNotStarted: false,
-                    tickInterval: const Duration(seconds: 60),
-                  ),
-                ],
-                if ((shipment.assignedDriverName ?? '').isNotEmpty ||
-                    (shipment.assignedTruckName ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _InfoGrid(
-                    leftLabel: 'Driver',
-                    leftValue: (shipment.assignedDriverName ?? '').isEmpty
-                        ? 'Not assigned'
-                        : shipment.assignedDriverName!,
-                    rightLabel: 'Truck',
-                    rightValue: (shipment.assignedTruckName ?? '').isEmpty
-                        ? 'Not assigned'
-                        : shipment.assignedTruckName!,
-                  ),
-                ],
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(
-                      'Status:',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1C2430),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F4E8),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2FA56E),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'In Transit',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: const Color(0xFF1C2430),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

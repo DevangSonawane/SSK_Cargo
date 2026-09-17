@@ -250,7 +250,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         : (_originalProfileImage ?? user?.profileImage);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F8FF),
+      backgroundColor: const Color(0xFFF6FAF8),
       body: _loading
           ? const SafeArea(child: Center(child: CircularProgressIndicator()))
           : SingleChildScrollView(
@@ -265,11 +265,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFDCEAFF)),
+                        border: Border.all(color: const Color(0xFFE4EFE8)),
                         boxShadow: [
                           BoxShadow(
                             color: const Color(
-                              0xFF1769D1,
+                              0xFF101828,
                             ).withValues(alpha: 0.08),
                             blurRadius: 24,
                             offset: const Offset(0, 10),
@@ -296,14 +296,14 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                       imageUrl: profileImage,
                                       imageBytes: _pickedAvatarBytes,
                                       size: 132,
-                                      borderColor: const Color(0xFF1769D1),
+                                      borderColor: const Color(0xFF2FA56E),
                                       onTap: _pickAvatar,
                                     ),
                                     Positioned(
                                       right: -2,
                                       bottom: 0,
                                       child: Material(
-                                        color: const Color(0xFF1769D1),
+                                        color: const Color(0xFF2FA56E),
                                         shape: const CircleBorder(),
                                         child: InkWell(
                                           onTap: _pickAvatar,
@@ -326,7 +326,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                   'Tap to choose from gallery',
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
-                                        color: const Color(0xFF10245B),
+                                        color: const Color(0xFF101828),
                                         fontWeight: FontWeight.w900,
                                       ),
                                 ),
@@ -334,7 +334,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                 const Text(
                                   'JPG, PNG up to 5MB',
                                   style: TextStyle(
-                                    color: Color(0xFF5B6B91),
+                                    color: Color(0xFF667085),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -422,17 +422,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                           ),
                           const SizedBox(height: 18),
                           if (user != null) ...[
-                            const Text(
-                              'Optional',
-                              style: TextStyle(
-                                color: Color(0xFF60708D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _DetailRow(label: 'Role', value: user.role),
-                            _DetailRow(label: 'Status', value: user.status),
+                            _ActiveStatusToggle(status: user.status),
                           ],
                           if (_hasChanges) ...[
                             const SizedBox(height: 12),
@@ -442,7 +432,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                               child: ElevatedButton(
                                 onPressed: _saving ? null : _save,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1769D1),
+                                  backgroundColor: const Color(0xFF2FA56E),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(18),
                                   ),
@@ -498,20 +488,20 @@ class _ManageAccountHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 18,
-        20,
-        24,
+        16,
+        MediaQuery.of(context).padding.top + 10,
+        16,
+        14,
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF075FC7), Color(0xFF147FE5)],
+          colors: [Color(0xFF247B52), Color(0xFF2FA56E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
         ),
       ),
       child: Row(
@@ -523,7 +513,7 @@ class _ManageAccountHeader extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
+                color: Colors.white.withValues(alpha: 0.16),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -533,12 +523,12 @@ class _ManageAccountHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           const Text(
             'Manage account',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 19,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -556,38 +546,38 @@ InputDecoration _accountFieldDecoration({
     labelText: labelText,
     filled: true,
     fillColor: Colors.white,
-    prefixIcon: Icon(icon, color: const Color(0xFF1769D1)),
+    prefixIcon: Icon(icon, color: const Color(0xFF2FA56E)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(18),
-      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
+      borderSide: const BorderSide(color: Color(0xFFDCEBE2)),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(18),
-      borderSide: const BorderSide(color: Color(0xFFD6E6FA)),
+      borderSide: const BorderSide(color: Color(0xFFDCEBE2)),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(18),
-      borderSide: const BorderSide(color: Color(0xFF1769D1), width: 1.4),
+      borderSide: const BorderSide(color: Color(0xFF2FA56E), width: 1.4),
     ),
   );
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
+class _ActiveStatusToggle extends StatelessWidget {
+  const _ActiveStatusToggle({required this.status});
 
-  final String label;
-  final String value;
+  final String status;
 
   @override
   Widget build(BuildContext context) {
+    final isActive = status.trim().toLowerCase() == 'active';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F8FF),
+        color: const Color(0xFFF6FAF8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCEAFF)),
+        border: Border.all(color: const Color(0xFFDCEBE2)),
       ),
       child: Row(
         children: [
@@ -595,14 +585,12 @@ class _DetailRow extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: const BoxDecoration(
-              color: Color(0xFFE3F0FF),
+              color: Color(0xFFEAF6EF),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              label == 'Role'
-                  ? Icons.work_rounded
-                  : Icons.verified_user_rounded,
-              color: const Color(0xFF1769D1),
+            child: const Icon(
+              Icons.verified_user_rounded,
+              color: Color(0xFF2FA56E),
               size: 18,
             ),
           ),
@@ -611,18 +599,15 @@ class _DetailRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFF5B6B91),
-                    fontSize: 12,
-                  ),
+                const Text(
+                  'Active',
+                  style: TextStyle(color: Color(0xFF667085), fontSize: 12),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  value,
+                  isActive ? 'Account is active' : 'Account is inactive',
                   style: const TextStyle(
-                    color: Color(0xFF10245B),
+                    color: Color(0xFF101828),
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -630,7 +615,16 @@ class _DetailRow extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.edit_rounded, color: Color(0xFF1769D1), size: 20),
+          IgnorePointer(
+            child: Switch(
+              value: isActive,
+              onChanged: (_) {},
+              activeThumbColor: const Color(0xFF2FA56E),
+              activeTrackColor: const Color(0xFFCDEFD9),
+              inactiveThumbColor: const Color(0xFF98A2B3),
+              inactiveTrackColor: const Color(0xFFE4E7EC),
+            ),
+          ),
         ],
       ),
     );
