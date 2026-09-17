@@ -4828,7 +4828,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _setExpressDelivery(bool enabled) async {
-    if (_draft.transportType != 'intra') {
+    if (!enabled) {
       setState(() {
         _draft = _draft.copyWith(
           isExpress: false,
@@ -4839,19 +4839,39 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+
+    final canUseExpress = await _ensureExpressEligible(
+      accessToken: session.tokens.accessToken,
+    );
+    if (!canUseExpress) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Express delivery is available for intra-city bookings.',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _loadingExpressQuote = true;
       _draft = _draft.copyWith(
         isExpress: enabled,
-        expressSurcharge: enabled ? _draft.expressSurcharge : 0,
-        expressInsuranceIncluded: enabled
-            ? _draft.expressInsuranceIncluded
-            : false,
+        expressSurcharge: _draft.expressSurcharge,
+        expressInsuranceIncluded: _draft.expressInsuranceIncluded,
       );
     });
 
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || _draft.distance <= 0) {
+    if (_draft.distance <= 0) {
       if (mounted) {
         setState(() {
           _loadingExpressQuote = false;
@@ -4873,6 +4893,49 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _amountController.text = _priceInputText(estimatedAmount.toString());
       }
     });
+  }
+
+  Future<bool> _ensureExpressEligible({required String accessToken}) async {
+    if (_draft.transportType == 'intra') {
+      return true;
+    }
+
+    final pickup = _draft.from.isNotEmpty
+        ? _draft.from
+        : _fromController.text.trim();
+    final drop = _draft.to.isNotEmpty ? _draft.to : _toController.text.trim();
+    if (pickup.isEmpty || drop.isEmpty) {
+      return false;
+    }
+
+    final city = _draft.city.isNotEmpty
+        ? _draft.city
+        : _deriveCityFromLocation(pickup, drop);
+    try {
+      final validation = await ref
+          .read(apiClientProvider)
+          .validateBookingLocation(
+            accessToken: accessToken,
+            pickupLocation: pickup,
+            dropLocation: drop,
+            transportType: 'intra',
+            city: city.isNotEmpty ? city : null,
+          );
+      if (validation['success'] == false) {
+        return false;
+      }
+      if (mounted) {
+        setState(() {
+          _draft = _draft.copyWith(
+            tripType: TripType.intraCity,
+            city: city.isNotEmpty ? city : _draft.city,
+          );
+        });
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _submitBooking() async {
@@ -6338,6 +6401,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ],
         ),
         const SizedBox(height: 16),
+        _ExpressDeliveryOptionCard(
+          selected: _draft.transportType == 'intra' && _draft.isExpress,
+          loading: _loadingExpressQuote,
+          surcharge: _draft.expressSurcharge,
+          expectedDeliveryHours: _draft.expectedDeliveryHours,
+          insuranceIncluded: _draft.expressInsuranceIncluded,
+          onChanged: (value) => unawaited(_setExpressDelivery(value)),
+        ),
+        const SizedBox(height: 16),
         Text(
           'Select the weight of your goods',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -6431,17 +6503,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               .toList(growable: false),
         ),
         const SizedBox(height: 18),
-        if (_draft.transportType == 'intra') ...[
-          _ExpressDeliveryOptionCard(
-            selected: _draft.isExpress,
-            loading: _loadingExpressQuote,
-            surcharge: _draft.expressSurcharge,
-            expectedDeliveryHours: _draft.expectedDeliveryHours,
-            insuranceIncluded: _draft.expressInsuranceIncluded,
-            onChanged: (value) => unawaited(_setExpressDelivery(value)),
-          ),
-          const SizedBox(height: 14),
-        ],
         _buildScheduleSection(context),
       ],
     );
