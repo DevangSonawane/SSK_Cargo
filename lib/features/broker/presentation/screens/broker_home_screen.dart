@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
@@ -22,6 +23,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
 
   bool _sortNewestFirst = true;
+  final Set<String> _busyRequestIds = <String>{};
 
   @override
   void initState() {
@@ -86,6 +88,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     }).toList();
 
     filtered.sort((a, b) {
+      final aPending = isPendingBookingRequest(a);
+      final bPending = isPendingBookingRequest(b);
+      if (aPending != bPending) {
+        return aPending ? -1 : 1;
+      }
       final aTime = _parseDate(a.requestedAt);
       final bTime = _parseDate(b.requestedAt);
       final comparison = aTime.compareTo(bTime);
@@ -107,6 +114,175 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     return requests.where(predicate).length;
   }
 
+  Future<void> _runRequestAction(
+    BookingRequest request,
+    Future<void> Function(String accessToken) action, {
+    required String successMessage,
+  }) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _busyRequestIds.contains(request.id)) {
+      return;
+    }
+
+    setState(() => _busyRequestIds.add(request.id));
+    try {
+      await action(session.tokens.accessToken);
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successMessage),
+          backgroundColor: const Color(0xFF2FA56E),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busyRequestIds.remove(request.id));
+      }
+    }
+  }
+
+  Future<void> _acceptRequest(BookingRequest request) {
+    return _runRequestAction(
+      request,
+      (token) => ref
+          .read(apiClientProvider)
+          .acceptJobRequest(accessToken: token, id: request.id)
+          .then((_) {}),
+      successMessage: 'Request accepted.',
+    );
+  }
+
+  Future<void> _declineRequest(BookingRequest request) {
+    return _runRequestAction(
+      request,
+      (token) => ref
+          .read(apiClientProvider)
+          .declineJobRequest(accessToken: token, id: request.id)
+          .then((_) {}),
+      successMessage: 'Request declined.',
+    );
+  }
+
+  Future<void> _counterRequest(BookingRequest request) async {
+    final amount = await _showCounterAmountSheet(request);
+    if (amount == null || amount <= 0) {
+      return;
+    }
+    await _runRequestAction(
+      request,
+      (token) => ref
+          .read(apiClientProvider)
+          .counterJobRequest(accessToken: token, id: request.id, amount: amount)
+          .then((_) {}),
+      successMessage: 'Counter sent.',
+    );
+  }
+
+  Future<double?> _showCounterAmountSheet(BookingRequest request) {
+    final initialAmount = _amountFromText(request.value);
+    final controller = TextEditingController(
+      text: initialAmount > 0 ? initialAmount.toStringAsFixed(0) : '',
+    );
+    return showModalBottomSheet<double>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Send counter-offer',
+                    style: Theme.of(sheetContext).textTheme.titleLarge
+                        ?.copyWith(
+                          color: const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Booking #${request.id} - propose a different amount.',
+                    style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.currency_rupee_rounded),
+                      hintText: 'Enter amount',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () {
+                            final amount = _amountFromText(controller.text);
+                            Navigator.of(sheetContext).pop(amount);
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2152D0),
+                          ),
+                          child: const Text('Send counter'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ).whenComplete(controller.dispose);
+  }
+
+  double _amountFromText(String value) {
+    final normalized = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(normalized) ?? 0;
+  }
+
   String _greetingName() {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName.trim() ?? '';
@@ -121,7 +297,10 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
     final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
     final visibleRequests = _visibleRequests(requests);
-    final pendingCount = _countMatching(requests, isPendingBookingRequest);
+    final pendingCount = _countMatching(
+      requests,
+      isBrokerJobRequestAttentionCount,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FF),
@@ -179,8 +358,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                   if (visibleRequests.isEmpty) {
                     return _EmptyBookingsState(
                       title: 'No bookings found',
-                      subtitle:
-                          'Try clearing the search field to see more requests.',
+                      subtitle: pendingCount > 0
+                          ? 'There are $pendingCount request(s), but none match the current search.'
+                          : 'Try clearing the search field to see more requests.',
                     );
                   }
 
@@ -193,10 +373,24 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       ) ...[
                         _BookingRequestCard(
                           request: visibleRequests[index],
-                          onTap: () => context.push(
-                            '/broker/request',
-                            extra: visibleRequests[index],
+                          busy: _busyRequestIds.contains(
+                            visibleRequests[index].id,
                           ),
+                          onTap: () async {
+                            final changed = await context.push<bool>(
+                              '/broker/request',
+                              extra: visibleRequests[index],
+                            );
+                            if (changed == true && mounted) {
+                              await _refresh();
+                            }
+                          },
+                          onAccept: () =>
+                              _acceptRequest(visibleRequests[index]),
+                          onCounter: () =>
+                              _counterRequest(visibleRequests[index]),
+                          onDecline: () =>
+                              _declineRequest(visibleRequests[index]),
                         ),
                         if (index != visibleRequests.length - 1)
                           const SizedBox(height: 14),
@@ -425,10 +619,21 @@ class _SearchField extends StatelessWidget {
 }
 
 class _BookingRequestCard extends StatelessWidget {
-  const _BookingRequestCard({required this.request, required this.onTap});
+  const _BookingRequestCard({
+    required this.request,
+    required this.busy,
+    required this.onTap,
+    required this.onAccept,
+    required this.onCounter,
+    required this.onDecline,
+  });
 
   final BookingRequest request;
+  final bool busy;
   final VoidCallback onTap;
+  final VoidCallback onAccept;
+  final VoidCallback onCounter;
+  final VoidCallback onDecline;
 
   @override
   Widget build(BuildContext context) {
@@ -438,6 +643,32 @@ class _BookingRequestCard extends StatelessWidget {
       'Pickup location unavailable',
     );
     final dropText = _locationText(request.to, 'Drop-off location unavailable');
+    final status = _normalizeStatus(request.status);
+    final showPrimaryActions = const {
+      '',
+      'unknown',
+      'pending',
+      'requested',
+      'new',
+      'open',
+      'open_request',
+      'review',
+      'review_request',
+      'awaiting',
+      'awaiting_action',
+      'waiting',
+    }.contains(status);
+    final showConfirmActions =
+        status == 'awaiting_confirmation' &&
+        const {
+          'client',
+          '',
+        }.contains(request.pendingConfirmationBy.trim().toLowerCase());
+    final showAssignAction = const {
+      'accepted',
+      'confirmed',
+      'assigned',
+    }.contains(status);
 
     return InkWell(
       onTap: onTap,
@@ -584,8 +815,130 @@ class _BookingRequestCard extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 14),
+            if (showPrimaryActions || showConfirmActions) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: busy ? null : onDecline,
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: const Text('Decline'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE23A4B),
+                        side: const BorderSide(color: Color(0xFFF5B7BF)),
+                      ),
+                    ),
+                  ),
+                  if (showPrimaryActions) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: busy ? null : onCounter,
+                        icon: const Icon(Icons.currency_rupee, size: 15),
+                        label: const Text('Counter'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF2152D0),
+                          side: const BorderSide(color: Color(0xFFC7D7FE)),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: busy ? null : onAccept,
+                      icon: busy
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.check_rounded, size: 17),
+                      label: Text(showConfirmActions ? 'Confirm' : 'Accept'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF2FA56E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (showAssignAction) ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: busy ? null : onTap,
+                  icon: const Icon(Icons.local_shipping_rounded, size: 17),
+                  label: const Text('Assign Driver & Truck'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF2152D0),
+                  ),
+                ),
+              ),
+            ] else if (status == 'countered') ...[
+              _InlineStatusNote(
+                icon: Icons.schedule_rounded,
+                text: 'Waiting for the client to respond to your counter.',
+              ),
+            ] else if (status == 'awaiting_confirmation') ...[
+              _InlineStatusNote(
+                icon: Icons.schedule_rounded,
+                text: 'Accepted - waiting for the client to confirm.',
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onTap,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Review request'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2152D0),
+                    side: const BorderSide(color: Color(0xFFC7D7FE)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InlineStatusNote extends StatelessWidget {
+  const _InlineStatusNote({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF64748B),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -880,9 +1233,11 @@ _BookingVisual _bookingRequestVisual(String status) {
     case 'declined':
     case 'rejected':
     case 'expired':
+    case 'cancelled':
+    case 'canceled':
       return const _BookingVisual(
-        label: 'Declined',
-        description: 'Declined - no longer available',
+        label: 'Cancelled',
+        description: 'Cancelled - no longer available',
         backgroundColor: Color(0xFFFDECEC),
         borderColor: Color(0xFFF8B4B4),
         textColor: Color(0xFFB42318),

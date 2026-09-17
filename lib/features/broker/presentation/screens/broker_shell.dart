@@ -17,7 +17,10 @@ class BrokerShell extends ConsumerWidget {
       brokerJobRequestsProvider((page: 1, limit: 100)),
     );
     final pendingCount =
-        requestsAsync.valueOrNull?.where(isPendingBookingRequest).length ?? 0;
+        requestsAsync.valueOrNull
+            ?.where(isBrokerJobRequestAttentionCount)
+            .length ??
+        0;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final location = GoRouterState.of(context).uri.path;

@@ -8,9 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/utils/negotiation_timer.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
-import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../driver/data/driver_trip_handoff_utils.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 
@@ -129,14 +127,22 @@ class _BrokerRequestDetailScreenState
           .replaceAll('-', '_')
           .replaceAll(' ', '_');
 
-  bool get _isTerminalStatus => const {
-    'accepted',
-    'declined',
-    'rejected',
-    'expired',
-    'cancelled',
-    'completed',
-  }.contains(_normalizedStatus);
+  bool get _isTerminalStatus {
+    if (_normalizedStatus == 'accepted') {
+      return _isDriverNegotiation;
+    }
+    return const {
+      'declined',
+      'rejected',
+      'expired',
+      'cancelled',
+      'canceled',
+      'completed',
+    }.contains(_normalizedStatus);
+  }
+
+  bool get _isAcceptedJobReadyForAssignment =>
+      !_isDriverNegotiation && _normalizedStatus == 'accepted';
 
   bool get _isWaitingOnBroker =>
       _isDriverNegotiation &&
@@ -148,19 +154,31 @@ class _BrokerRequestDetailScreenState
       _normalizedStatus == 'awaiting_confirmation' &&
       _driverRequest!.pendingConfirmationBy == 'client';
 
+  String get _jobRequestPendingParty =>
+      _request.pendingConfirmationBy.trim().toLowerCase();
+
+  bool get _isJobRequestAwaitingConfirmation =>
+      !_isDriverNegotiation && _normalizedStatus == 'awaiting_confirmation';
+
+  bool get _isJobRequestBrokerTurn =>
+      _isJobRequestAwaitingConfirmation && _jobRequestPendingParty == 'client';
+
   bool get _isPendingJobRequest =>
       !_isDriverNegotiation &&
       !_isTerminalStatus &&
+      !_isJobRequestAwaitingConfirmation &&
       !_jobRequestAwaitingConfirmation;
 
   bool get _isWaitingForClientConfirmation =>
-      !_isDriverNegotiation && _jobRequestAwaitingConfirmation;
+      !_isDriverNegotiation &&
+      (_jobRequestAwaitingConfirmation ||
+          (_isJobRequestAwaitingConfirmation && !_isJobRequestBrokerTurn));
 
   bool get _canTakeAction =>
       !_submitting &&
       !_isTerminalStatus &&
       !_isWaitingOnBroker &&
-      !_jobRequestAwaitingConfirmation;
+      !_isWaitingForClientConfirmation;
 
   DateTime? get _driverRequestCountdownAnchor =>
       _driverRequest?.updatedAt ?? _driverRequest?.requestedAt;
@@ -285,35 +303,55 @@ class _BrokerRequestDetailScreenState
     final explicitId = _request.driverId.trim();
     if (explicitId.isNotEmpty) {
       for (final driver in drivers) {
-        if (driver.id == explicitId) {
+        if (driver.id == explicitId && _isAssignableDriver(driver)) {
           return driver.id;
         }
       }
     }
     for (final driver in drivers) {
-      if (driver.vehicleType.toLowerCase() ==
-          _request.vehicleType.toLowerCase()) {
+      if (_isAssignableDriver(driver) &&
+          driver.vehicleType.toLowerCase() ==
+              _request.vehicleType.toLowerCase()) {
         return driver.id;
       }
     }
-    return drivers.isNotEmpty ? drivers.first.id : null;
+    for (final driver in drivers) {
+      if (_isAssignableDriver(driver)) {
+        return driver.id;
+      }
+    }
+    return null;
   }
 
   String? _defaultTruckId(List<BrokerVehicle> trucks) {
     final explicitId = _request.truckId.trim();
     if (explicitId.isNotEmpty) {
       for (final truck in trucks) {
-        if (truck.id == explicitId) {
+        if (truck.id == explicitId && _isAssignableTruck(truck)) {
           return truck.id;
         }
       }
     }
     for (final truck in trucks) {
-      if (truck.label.toLowerCase() == _request.vehicleType.toLowerCase()) {
+      if (_isAssignableTruck(truck) &&
+          truck.label.toLowerCase() == _request.vehicleType.toLowerCase()) {
         return truck.id;
       }
     }
-    return trucks.isNotEmpty ? trucks.first.id : null;
+    for (final truck in trucks) {
+      if (_isAssignableTruck(truck)) {
+        return truck.id;
+      }
+    }
+    return null;
+  }
+
+  bool _isAssignableDriver(BrokerDriver driver) {
+    return driver.status == BrokerDriverStatus.idle;
+  }
+
+  bool _isAssignableTruck(BrokerVehicle truck) {
+    return truck.status == BrokerVehicleStatus.idle;
   }
 
   Future<void> _startLiveUpdates() async {
@@ -455,17 +493,27 @@ class _BrokerRequestDetailScreenState
 
   BookingRequest _updatedBookingRequest(Map<String, dynamic> payload) {
     final current = _request;
+    final booking =
+        _detailAsMap(payload['booking']) ?? const <String, dynamic>{};
     final status = _readString(payload, const [
       'status',
       'requestStatus',
     ]).toLowerCase();
+    final bookingStatus = _readString(booking, const [
+      'status',
+      'booking_status',
+      'bookingStatus',
+    ]).toLowerCase();
+    final effectiveStatus = _isCancelledDetailStatus(bookingStatus)
+        ? bookingStatus
+        : status;
     final pendingConfirmationBy = _readString(payload, const [
       'pendingConfirmationBy',
       'pending_confirmation_by',
     ]).toLowerCase();
     return BookingRequest(
       id: current.id,
-      status: status.isEmpty ? current.status : status,
+      status: effectiveStatus.isEmpty ? current.status : effectiveStatus,
       pendingConfirmationBy: pendingConfirmationBy.isEmpty
           ? current.pendingConfirmationBy
           : pendingConfirmationBy,
@@ -565,7 +613,7 @@ class _BrokerRequestDetailScreenState
           backgroundColor: Color(0xFF2FA56E),
         ),
       );
-      if (context.canPop()) context.pop();
+      if (context.canPop()) context.pop(true);
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -580,7 +628,11 @@ class _BrokerRequestDetailScreenState
   }
 
   Future<void> _counter() async {
-    if (!_canTakeAction || _isBrokerAssignedDriverRequest) return;
+    if (!_canTakeAction ||
+        _isBrokerAssignedDriverRequest ||
+        _normalizedStatus == 'awaiting_confirmation') {
+      return;
+    }
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
 
@@ -638,60 +690,51 @@ class _BrokerRequestDetailScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
 
-    final driverId = _defaultDriverId(drivers);
-    final truckId = _defaultTruckId(trucks);
-    final selectedDriver =
-        drivers.where((driver) => driver.id == driverId).isNotEmpty
-        ? drivers.firstWhere((driver) => driver.id == driverId)
-        : null;
-    final selectedTruck =
-        trucks.where((truck) => truck.id == truckId).isNotEmpty
-        ? trucks.firstWhere((truck) => truck.id == truckId)
-        : null;
-
-    if (selectedDriver == null || selectedTruck == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not resolve a driver or truck for this booking.',
-          ),
-        ),
-      );
+    final selection = await _showAssignmentSheet(
+      drivers: drivers,
+      trucks: trucks,
+    );
+    if (selection == null) {
       return;
     }
+    final selectedDriver = selection.driver;
+    final selectedTruck = selection.truck;
 
     setState(() => _submitting = true);
     try {
-      final response = await ref
-          .read(apiClientProvider)
-          .acceptJobRequest(
-            accessToken: session.tokens.accessToken,
-            id: _request.id,
-          );
-      final responseData = _detailAsMap(response['data']);
-      final booking = _detailAsMap(responseData?['booking']);
-      final requestData = _detailAsMap(responseData?['request']);
-      final status = _detailString(responseData, const ['status']).isNotEmpty
-          ? _detailString(responseData, const ['status']).toLowerCase()
-          : _detailString(requestData, const ['status']).toLowerCase();
+      if (!_isAcceptedJobReadyForAssignment) {
+        final response = await ref
+            .read(apiClientProvider)
+            .acceptJobRequest(
+              accessToken: session.tokens.accessToken,
+              id: _request.id,
+            );
+        final responseData = _detailAsMap(response['data']);
+        final booking = _detailAsMap(responseData?['booking']);
+        final requestData = _detailAsMap(responseData?['request']);
+        final status = _detailString(responseData, const ['status']).isNotEmpty
+            ? _detailString(responseData, const ['status']).toLowerCase()
+            : _detailString(requestData, const ['status']).toLowerCase();
 
-      if ((booking == null || booking.isEmpty) &&
-          status == 'awaiting_confirmation') {
-        if (!mounted) return;
-        setState(() {
-          _jobRequestAwaitingConfirmation = true;
-        });
-        ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Accepted - waiting for the client to confirm.'),
-            backgroundColor: Color(0xFF1F88C9),
-          ),
-        );
-        return;
+        if ((booking == null || booking.isEmpty) &&
+            status == 'awaiting_confirmation') {
+          if (!mounted) return;
+          setState(() {
+            _jobRequestAwaitingConfirmation = true;
+          });
+          ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Accepted - waiting for the client to confirm.'),
+              backgroundColor: Color(0xFF1F88C9),
+            ),
+          );
+          if (context.canPop()) context.pop(true);
+          return;
+        }
       }
 
-      final assignResponse = await ref
+      await ref
           .read(apiClientProvider)
           .assignDriverToJob(
             accessToken: session.tokens.accessToken,
@@ -701,23 +744,14 @@ class _BrokerRequestDetailScreenState
           );
       ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
 
-      final bookingShipment = _bookingShipmentFromAssignResponse(
-        assignResponse,
-        fallbackDriver: selectedDriver,
-        fallbackTruck: selectedTruck,
-      );
-      final shipment =
-          bookingShipment ??
-          bookingRequestToShipment(
-            _request,
-            status: 'Assigned',
-            assignedDriverName: selectedDriver.name,
-            assignedTruckName:
-                '${selectedTruck.label} • ${selectedTruck.plateNumber}',
-          );
-
       if (!mounted) return;
-      context.go('/broker/tracking/details', extra: shipment);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offer sent to the driver - waiting for response.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+      if (context.canPop()) context.pop(true);
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -729,6 +763,269 @@ class _BrokerRequestDetailScreenState
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Future<_BrokerAssignmentSelection?> _showAssignmentSheet({
+    required List<BrokerDriver> drivers,
+    required List<BrokerVehicle> trucks,
+  }) {
+    final defaultDriverId = _defaultDriverId(drivers);
+    final defaultTruckId = _defaultTruckId(trucks);
+    return showModalBottomSheet<_BrokerAssignmentSelection>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        String? selectedDriverId = defaultDriverId;
+        String? selectedTruckId = defaultTruckId;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final selectedDriver = selectedDriverId == null
+                ? null
+                : _findDriverById(drivers, selectedDriverId!);
+            final selectedTruck = selectedTruckId == null
+                ? null
+                : _findTruckById(trucks, selectedTruckId!);
+            final canConfirm =
+                selectedDriver != null &&
+                selectedTruck != null &&
+                _isAssignableDriver(selectedDriver) &&
+                _isAssignableTruck(selectedTruck);
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+              ),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF4FF),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.local_shipping_rounded,
+                                color: Color(0xFF2152D0),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Assign Driver & Truck',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFF0F172A),
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Booking #${_request.id} - pick an available driver and truck.',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        _AssignmentPickerField(
+                          label: 'Driver',
+                          icon: Icons.person_rounded,
+                          value: selectedDriver == null
+                              ? 'Select driver'
+                              : selectedDriver.name.isNotEmpty
+                              ? selectedDriver.name
+                              : selectedDriver.id,
+                          selected: selectedDriver != null,
+                          onTap: () async {
+                            final id = await _showDriverChoiceSheet(
+                              drivers: drivers,
+                              selectedDriverId: selectedDriverId,
+                            );
+                            if (id == null) return;
+                            final driver = _findDriverById(drivers, id);
+                            setSheetState(() {
+                              selectedDriverId = id;
+                              final linkedTruck = _truckForDriver(
+                                trucks,
+                                driver,
+                              );
+                              if (linkedTruck != null) {
+                                selectedTruckId = linkedTruck.id;
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _AssignmentPickerField(
+                          label: 'Truck',
+                          icon: Icons.fire_truck_rounded,
+                          value: selectedTruck == null
+                              ? 'Select truck'
+                              : '${selectedTruck.label} - ${selectedTruck.plateNumber.isNotEmpty ? selectedTruck.plateNumber : selectedTruck.id}',
+                          selected: selectedTruck != null,
+                          onTap: () async {
+                            final id = await _showTruckChoiceSheet(
+                              trucks: trucks,
+                              selectedTruckId: selectedTruckId,
+                            );
+                            if (id == null) return;
+                            setSheetState(() => selectedTruckId = id);
+                          },
+                        ),
+                        if (!canConfirm) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            'Select one idle driver and one idle truck to continue.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: const Color(0xFFE23A4B)),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () =>
+                                    Navigator.of(sheetContext).pop(),
+                                child: const Text('Cancel'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: canConfirm
+                                    ? () => Navigator.of(sheetContext).pop(
+                                        _BrokerAssignmentSelection(
+                                          driver: selectedDriver,
+                                          truck: selectedTruck,
+                                        ),
+                                      )
+                                    : null,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2152D0),
+                                ),
+                                child: const Text('Confirm Assignment'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<String?> _showDriverChoiceSheet({
+    required List<BrokerDriver> drivers,
+    required String? selectedDriverId,
+  }) {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AssignmentChoiceSheet<BrokerDriver>(
+        title: 'Select driver',
+        emptyText: 'No drivers found',
+        items: drivers,
+        selectedId: selectedDriverId,
+        idOf: (driver) => driver.id,
+        enabledOf: _isAssignableDriver,
+        titleOf: (driver) => driver.name.isNotEmpty ? driver.name : driver.id,
+        subtitleOf: (driver) => [
+          if (driver.phone.isNotEmpty) driver.phone,
+          driverStatusLabel(driver.status),
+        ].join(' - '),
+      ),
+    );
+  }
+
+  Future<String?> _showTruckChoiceSheet({
+    required List<BrokerVehicle> trucks,
+    required String? selectedTruckId,
+  }) {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AssignmentChoiceSheet<BrokerVehicle>(
+        title: 'Select truck',
+        emptyText: 'No trucks found',
+        items: trucks,
+        selectedId: selectedTruckId,
+        idOf: (truck) => truck.id,
+        enabledOf: _isAssignableTruck,
+        titleOf: (truck) {
+          final plate = truck.plateNumber.isNotEmpty
+              ? truck.plateNumber
+              : truck.id;
+          return '${truck.label} - $plate';
+        },
+        subtitleOf: (truck) => [
+          if (truck.capacity.isNotEmpty) truck.capacity,
+          vehicleStatusLabel(truck.status),
+        ].join(' - '),
+      ),
+    );
+  }
+
+  BrokerDriver? _findDriverById(List<BrokerDriver> drivers, String id) {
+    for (final driver in drivers) {
+      if (driver.id == id) return driver;
+    }
+    return null;
+  }
+
+  BrokerVehicle? _findTruckById(List<BrokerVehicle> trucks, String id) {
+    for (final truck in trucks) {
+      if (truck.id == id) return truck;
+    }
+    return null;
+  }
+
+  BrokerVehicle? _truckForDriver(
+    List<BrokerVehicle> trucks,
+    BrokerDriver? driver,
+  ) {
+    if (driver == null) return null;
+    final assigned = driver.assignedVehicle.trim().toLowerCase();
+    if (assigned.isEmpty) return null;
+    for (final truck in trucks) {
+      final plate = truck.plateNumber.trim().toLowerCase();
+      if (plate.isNotEmpty && plate == assigned) {
+        return truck;
+      }
+    }
+    return null;
   }
 
   Future<void> _acceptTimedOutDriverRequest() async {
@@ -1093,6 +1390,9 @@ class _BrokerRequestDetailScreenState
     final selectedTruckName = _selectedTruckName(trucks);
     final selectedDriverId = _defaultDriverId(drivers);
     final selectedTruckId = _defaultTruckId(trucks);
+    final isConfirmationTurn = _isJobRequestBrokerTurn;
+    final isAcceptedAssignment = _isAcceptedJobReadyForAssignment;
+    final negotiationLocked = isConfirmationTurn || isAcceptedAssignment;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1105,7 +1405,11 @@ class _BrokerRequestDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Assignment',
+            isConfirmationTurn
+                ? 'Confirm booking'
+                : isAcceptedAssignment
+                ? 'Assign Driver & Truck'
+                : 'Assignment',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: const Color(0xFF101828),
@@ -1113,7 +1417,11 @@ class _BrokerRequestDetailScreenState
           ),
           const SizedBox(height: 4),
           Text(
-            'Driver and truck are auto-selected from the booking details.',
+            isConfirmationTurn
+                ? 'The client accepted this offer. Confirm to finalize, then assign the driver and truck.'
+                : isAcceptedAssignment
+                ? 'This request is accepted. Pick the assigned driver and truck to create the trip.'
+                : 'Driver and truck are auto-selected from the booking details.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
@@ -1144,47 +1452,53 @@ class _BrokerRequestDetailScreenState
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          _CounterAmountSlider(
-            label: 'Counter amount',
-            amount: _counterAmount,
-            minAmount: (_readAmount(_request.value) * 0.75)
-                .clamp(1, double.infinity)
-                .toDouble(),
-            maxAmount: (_readAmount(_request.value) * 1.25)
-                .clamp(2, double.infinity)
-                .toDouble(),
-            onChanged: _submitting
-                ? null
-                : (value) => setState(() => _counterAmount = value),
-          ),
+          if (!negotiationLocked) ...[
+            const SizedBox(height: 14),
+            _CounterAmountSlider(
+              label: 'Counter amount',
+              amount: _counterAmount,
+              minAmount: (_readAmount(_request.value) * 0.75)
+                  .clamp(1, double.infinity)
+                  .toDouble(),
+              maxAmount: (_readAmount(_request.value) * 1.25)
+                  .clamp(2, double.infinity)
+                  .toDouble(),
+              onChanged: _submitting
+                  ? null
+                  : (value) => setState(() => _counterAmount = value),
+            ),
+          ],
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submitting ? null : _reject,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFE23A4B),
-                    side: const BorderSide(color: Color(0xFFF5B7BF)),
+          if (!isAcceptedAssignment) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : _reject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE23A4B),
+                      side: const BorderSide(color: Color(0xFFF5B7BF)),
+                    ),
+                    child: const Text('Reject'),
                   ),
-                  child: const Text('Reject'),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submitting ? null : _counter,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1F88C9),
-                    side: const BorderSide(color: Color(0xFF1F88C9)),
+                if (!isConfirmationTurn) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _submitting ? null : _counter,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1F88C9),
+                        side: const BorderSide(color: Color(0xFF1F88C9)),
+                      ),
+                      child: const Text('Counter'),
+                    ),
                   ),
-                  child: const Text('Counter'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -1195,7 +1509,15 @@ class _BrokerRequestDetailScreenState
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1F88C9),
               ),
-              child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+              child: Text(
+                _submitting
+                    ? 'Saving...'
+                    : isConfirmationTurn
+                    ? 'Confirm & assign'
+                    : isAcceptedAssignment
+                    ? 'Assign Driver & Truck'
+                    : 'Accept & assign',
+              ),
             ),
           ),
           if (selectedDriverId == null || selectedTruckId == null) ...[
@@ -1223,6 +1545,8 @@ class _BrokerRequestDetailScreenState
       'declined',
       'rejected',
       'expired',
+      'cancelled',
+      'canceled',
     }.contains(_normalizedStatus);
     final topAmount = _isDriverNegotiation ? _valueText : _request.value;
 
@@ -1460,6 +1784,47 @@ class _BrokerRequestDetailScreenState
             const SizedBox(height: 14),
             if (_isDriverNegotiation)
               _buildDriverNegotiationCard(context)
+            else if (_isJobRequestBrokerTurn)
+              driversAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) => Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Text(
+                    error.toString().replaceFirst('Exception: ', ''),
+                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                  ),
+                ),
+                data: (drivers) {
+                  return trucksAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, _) => Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                      ),
+                      child: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                        style: const TextStyle(color: Color(0xFFE23A4B)),
+                      ),
+                    ),
+                    data: (trucks) =>
+                        _buildJobAssignmentCard(context, drivers, trucks),
+                  );
+                },
+              )
             else if (_isWaitingForClientConfirmation)
               _buildJobAwaitingConfirmationCard(context)
             else if (_isPendingJobRequest)
@@ -1977,7 +2342,7 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
       return const _DetailRequestStatusVisual(
         label: 'Accepted',
         description:
-            'This request has been accepted. No assignment card is shown here.',
+            'This request has been accepted. Assign a driver and truck.',
         backgroundColor: Color(0xFFEAF8EF),
         textColor: Color(0xFF136F3E),
         icon: Icons.check_circle_rounded,
@@ -1993,10 +2358,12 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
     case 'declined':
     case 'rejected':
     case 'expired':
+    case 'cancelled':
+    case 'canceled':
       return const _DetailRequestStatusVisual(
-        label: 'Declined',
+        label: 'Cancelled',
         description:
-            'This request has been declined. No further broker actions are available.',
+            'This booking has been cancelled. No further broker actions are available.',
         backgroundColor: Color(0xFFFDECEC),
         textColor: Color(0xFFB42318),
         icon: Icons.cancel_rounded,
@@ -2195,40 +2562,253 @@ class _CounterAmountSlider extends StatelessWidget {
   }
 }
 
-TrackingDemoShipment? _bookingShipmentFromAssignResponse(
-  Map<String, dynamic> response, {
-  required BrokerDriver fallbackDriver,
-  required BrokerVehicle fallbackTruck,
-}) {
-  final data = response['data'];
-  final payload = data is Map<String, dynamic> ? data : response;
-  final booking = payload['booking'];
-  if (booking is! Map<String, dynamic>) {
-    return null;
-  }
+class _BrokerAssignmentSelection {
+  const _BrokerAssignmentSelection({required this.driver, required this.truck});
 
-  final bookingModel = ClientBooking.fromJson(booking);
-  final base = trackingShipmentFromBooking(bookingModel);
-  return base.copyWith(
-    status: _shipmentStatusFromBooking(bookingModel.status),
-    assignedDriverName: fallbackDriver.name,
-    assignedTruckName: '${fallbackTruck.label} • ${fallbackTruck.plateNumber}',
-  );
+  final BrokerDriver driver;
+  final BrokerVehicle truck;
 }
 
-String _shipmentStatusFromBooking(String status) {
-  final normalized = status.trim().toLowerCase();
-  return switch (normalized) {
-    'confirmed' => 'Confirmed',
-    'assigned' => 'Assigned',
-    'en_route_pickup' => 'En Route',
-    'picked_up' => 'Picked Up',
-    'in_transit' => 'In Transit',
-    'delivered' => 'Delivered',
-    'completed' => 'Completed',
-    'cancelled' => 'Cancelled',
-    _ => status.isEmpty ? 'Assigned' : status,
-  };
+class _AssignmentPickerField extends StatelessWidget {
+  const _AssignmentPickerField({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final String value;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF64748B), size: 21),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: selected
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF94A3B8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AssignmentChoiceSheet<T> extends StatelessWidget {
+  const _AssignmentChoiceSheet({
+    required this.title,
+    required this.emptyText,
+    required this.items,
+    required this.selectedId,
+    required this.idOf,
+    required this.enabledOf,
+    required this.titleOf,
+    required this.subtitleOf,
+  });
+
+  final String title;
+  final String emptyText;
+  final List<T> items;
+  final String? selectedId;
+  final String Function(T item) idOf;
+  final bool Function(T item) enabledOf;
+  final String Function(T item) titleOf;
+  final String Function(T item) subtitleOf;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        child: SafeArea(
+          top: false,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 6, 18, 18),
+                    child: Text(
+                      emptyText,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 2),
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final id = idOf(item);
+                        final enabled = enabledOf(item);
+                        final selected = id == selectedId;
+                        return InkWell(
+                          onTap: enabled
+                              ? () => Navigator.of(context).pop(id)
+                              : null,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? const Color(0xFFEFF4FF)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _AssignmentOptionLabel(
+                                    title: titleOf(item),
+                                    subtitle: subtitleOf(item),
+                                    enabled: enabled,
+                                  ),
+                                ),
+                                if (selected)
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    color: Color(0xFF2152D0),
+                                    size: 18,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AssignmentOptionLabel extends StatelessWidget {
+  const _AssignmentOptionLabel({
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleColor = enabled
+        ? const Color(0xFF0F172A)
+        : const Color(0xFF94A3B8);
+    final subtitleColor = enabled
+        ? const Color(0xFF64748B)
+        : const Color(0xFFCBD5E1);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: titleColor,
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: subtitleColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+bool _isCancelledDetailStatus(String status) {
+  final normalized = status.trim().toLowerCase().replaceAll('-', '_');
+  return normalized == 'cancelled' || normalized == 'canceled';
 }
 
 class _SummaryRow extends StatelessWidget {

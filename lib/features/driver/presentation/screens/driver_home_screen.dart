@@ -24,6 +24,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _launchingActiveTrip = false;
   bool _reconcilingActiveTrip = false;
   String _reconcilingTripId = '';
+  final Set<String> _answeringRequestIds = <String>{};
   Timer? _activeTripReconcileTimer;
   late final WidgetsBindingObserver _lifecycleObserver;
 
@@ -161,6 +162,58 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       }
     } finally {
       _reconcilingActiveTrip = false;
+    }
+  }
+
+  Future<void> _answerBrokerAssignedRequest(
+    DriverRequestItem request, {
+    required bool accept,
+  }) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _answeringRequestIds.contains(request.id)) {
+      return;
+    }
+
+    setState(() => _answeringRequestIds.add(request.id));
+    try {
+      final api = ref.read(apiClientProvider);
+      if (accept) {
+        await api.acceptDriverRequestAsDriver(
+          accessToken: session.tokens.accessToken,
+          id: request.id,
+        );
+      } else {
+        await api.rejectDriverRequestAsDriver(
+          accessToken: session.tokens.accessToken,
+          id: request.id,
+        );
+      }
+      ref.read(driverRequestFeedProvider.notifier).refresh();
+      ref.invalidate(driverDashboardProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(accept ? 'Trip accepted.' : 'Trip declined.'),
+          backgroundColor: accept
+              ? const Color(0xFF2FA56E)
+              : const Color(0xFFE23A4B),
+        ),
+      );
+      if (accept) {
+        unawaited(_goToActiveTrip());
+      }
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _answeringRequestIds.remove(request.id));
+      }
     }
   }
 
@@ -423,6 +476,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       _DeliveryOrderCard(
                         request: newRequests.first,
                         acceptSlide: _acceptSlide,
+                        busy: _answeringRequestIds.contains(
+                          newRequests.first.id,
+                        ),
+                        onAcceptBrokerAssigned: () =>
+                            _answerBrokerAssignedRequest(
+                              newRequests.first,
+                              accept: true,
+                            ),
+                        onDeclineBrokerAssigned: () =>
+                            _answerBrokerAssignedRequest(
+                              newRequests.first,
+                              accept: false,
+                            ),
                         onSlideChanged: (value) {
                           if (_launchingRequest) return;
                           setState(() => _acceptSlide = value);
@@ -463,6 +529,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                         for (var i = 1; i < newRequests.length; i++) ...[
                           _DriverRequestCard(
                             request: newRequests[i],
+                            busy: _answeringRequestIds.contains(
+                              newRequests[i].id,
+                            ),
+                            onAcceptBrokerAssigned: () =>
+                                _answerBrokerAssignedRequest(
+                                  newRequests[i],
+                                  accept: true,
+                                ),
+                            onDeclineBrokerAssigned: () =>
+                                _answerBrokerAssignedRequest(
+                                  newRequests[i],
+                                  accept: false,
+                                ),
                             onOpenNegotiation: (request) {
                               context.push(
                                 '/driver/request',
@@ -557,14 +636,20 @@ class _DeliveryOrderCard extends StatelessWidget {
   const _DeliveryOrderCard({
     required this.request,
     required this.acceptSlide,
+    required this.busy,
     required this.onSlideChanged,
     required this.onOpenNegotiation,
+    required this.onAcceptBrokerAssigned,
+    required this.onDeclineBrokerAssigned,
   });
 
   final DriverRequestItem request;
   final double acceptSlide;
+  final bool busy;
   final ValueChanged<double> onSlideChanged;
   final VoidCallback onOpenNegotiation;
+  final VoidCallback onAcceptBrokerAssigned;
+  final VoidCallback onDeclineBrokerAssigned;
 
   @override
   Widget build(BuildContext context) {
@@ -667,19 +752,23 @@ class _DeliveryOrderCard extends StatelessWidget {
             const _BrokerAssignedNotice(),
           ],
           const SizedBox(height: 14),
-          Text(
-            brokerAssigned
-                ? 'Slide to review assigned trip'
-                : canOpen
-                ? 'Slide to open negotiation'
-                : statusLabel,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w600,
+          if (brokerAssigned) ...[
+            _BrokerAssignedActions(
+              busy: busy,
+              onAccept: onAcceptBrokerAssigned,
+              onDecline: onDeclineBrokerAssigned,
             ),
-          ),
-          const SizedBox(height: 8),
-          if (canOpen)
+          ] else ...[
+            Text(
+              canOpen ? 'Slide to open negotiation' : statusLabel,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF98A2B3),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (canOpen && !brokerAssigned)
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 48,
@@ -735,11 +824,17 @@ String _driverRequestStatusLabel(DriverRequestItem request) {
 class _DriverRequestCard extends StatefulWidget {
   const _DriverRequestCard({
     required this.request,
+    required this.busy,
     required this.onOpenNegotiation,
+    required this.onAcceptBrokerAssigned,
+    required this.onDeclineBrokerAssigned,
   });
 
   final DriverRequestItem request;
+  final bool busy;
   final ValueChanged<DriverRequestItem> onOpenNegotiation;
+  final VoidCallback onAcceptBrokerAssigned;
+  final VoidCallback onDeclineBrokerAssigned;
 
   @override
   State<_DriverRequestCard> createState() => _DriverRequestCardState();
@@ -873,76 +968,153 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             const _BrokerAssignedNotice(),
           ],
           const SizedBox(height: 14),
-          Text(
-            brokerAssigned
-                ? 'Swipe to review assigned trip'
-                : canOpen
-                ? 'Swipe to open negotiation'
-                : statusLabel,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w600,
+          if (brokerAssigned) ...[
+            _BrokerAssignedActions(
+              busy: widget.busy,
+              onAccept: widget.onAcceptBrokerAssigned,
+              onDecline: widget.onDeclineBrokerAssigned,
             ),
-          ),
-          const SizedBox(height: 8),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 48,
-              trackShape: const RoundedRectSliderTrackShape(),
-              thumbShape: const _RequestThumbShape(),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-              activeTrackColor: const Color(0xFFE5E7EB),
-              inactiveTrackColor: const Color(0xFFE5E7EB),
-              thumbColor: Colors.white,
-              overlayColor: Colors.transparent,
+          ] else ...[
+            Text(
+              canOpen ? 'Swipe to open negotiation' : statusLabel,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF98A2B3),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            child: Slider(
-              value: canOpen ? _slideValue : 0,
-              min: 0,
-              max: 1,
-              divisions: 100,
-              onChanged: canOpen
-                  ? (value) {
-                      setState(() {
-                        _slideValue = value;
-                      });
-                      if (!_opening && value >= 0.98) {
-                        _opening = true;
-                        Future.delayed(const Duration(milliseconds: 250), () {
-                          if (!mounted) return;
-                          widget.onOpenNegotiation(request);
-                          setState(() => _slideValue = 0);
-                          _opening = false;
+            const SizedBox(height: 8),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 48,
+                trackShape: const RoundedRectSliderTrackShape(),
+                thumbShape: const _RequestThumbShape(),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                activeTrackColor: const Color(0xFFE5E7EB),
+                inactiveTrackColor: const Color(0xFFE5E7EB),
+                thumbColor: Colors.white,
+                overlayColor: Colors.transparent,
+              ),
+              child: Slider(
+                value: canOpen ? _slideValue : 0,
+                min: 0,
+                max: 1,
+                divisions: 100,
+                onChanged: canOpen
+                    ? (value) {
+                        setState(() {
+                          _slideValue = value;
                         });
+                        if (!_opening && value >= 0.98) {
+                          _opening = true;
+                          Future.delayed(const Duration(milliseconds: 250), () {
+                            if (!mounted) return;
+                            widget.onOpenNegotiation(request);
+                            setState(() => _slideValue = 0);
+                            _opening = false;
+                          });
+                        }
                       }
-                    }
-                  : null,
+                    : null,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: canOpen
-                  ? () => widget.onOpenNegotiation(request)
-                  : null,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2FA56E),
-                disabledBackgroundColor: const Color(0xFFE5E7EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: canOpen
+                    ? () => widget.onOpenNegotiation(request)
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2FA56E),
+                  disabledBackgroundColor: const Color(0xFFE5E7EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Open negotiation',
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
-              child: Text(
-                brokerAssigned ? 'Review assigned trip' : 'Open negotiation',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
             ),
-          ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _BrokerAssignedActions extends StatelessWidget {
+  const _BrokerAssignedActions({
+    required this.busy,
+    required this.onAccept,
+    required this.onDecline,
+  });
+
+  final bool busy;
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Already agreed with the broker - accept or decline.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: const Color(0xFF98A2B3),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: busy ? null : onDecline,
+                icon: const Icon(Icons.close_rounded, size: 17),
+                label: const Text('Decline'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFE23A4B),
+                  side: const BorderSide(color: Color(0xFFF3B4B4)),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: busy ? null : onAccept,
+                icon: busy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 17),
+                label: Text(busy ? 'Saving...' : 'Accept'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2FA56E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

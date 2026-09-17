@@ -29,7 +29,7 @@ final brokerPendingRequestsProvider = FutureProvider.autoDispose<int>((
 
   return _BrokerJobRequestPage.fromJson(
     response,
-  ).requests.where(isPendingBookingRequest).length;
+  ).requests.where(isBrokerJobRequestAttentionCount).length;
 });
 
 final brokerHistoryProvider =
@@ -142,7 +142,7 @@ final brokerVehiclesProvider = FutureProvider.autoDispose<List<BrokerVehicle>>((
 
   final response = await ref
       .watch(apiClientProvider)
-      .getTrucks(accessToken: session.tokens.accessToken, page: 1, limit: 50);
+      .getTrucks(accessToken: session.tokens.accessToken, page: 1, limit: 100);
 
   return _BrokerTruckPage.fromJson(response).vehicles;
 });
@@ -157,7 +157,7 @@ final brokerDriversProvider = FutureProvider.autoDispose<List<BrokerDriver>>((
 
   final response = await ref
       .watch(apiClientProvider)
-      .getDrivers(accessToken: session.tokens.accessToken, page: 1, limit: 50);
+      .getDrivers(accessToken: session.tokens.accessToken, page: 1, limit: 100);
 
   return _BrokerDriverPage.fromJson(response).drivers;
 });
@@ -472,7 +472,7 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       : json;
   final sourceRoute = _asMap(source['route']);
   final sourceLoad = _asMap(source['load']);
-  final status = _firstNonEmpty([
+  final requestStatus = _firstNonEmpty([
     _readString(json, const [
       'status',
       'job_status',
@@ -514,6 +514,18 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'state',
     ]),
   ]).toLowerCase();
+  final bookingStatus = _firstNonEmpty([
+    _readString(booking, const [
+      'status',
+      'booking_status',
+      'bookingStatus',
+      'state',
+    ]),
+    _readString(json, const ['booking_status', 'bookingStatus']),
+  ]).toLowerCase();
+  final status = _isCancelledRequestStatus(bookingStatus)
+      ? bookingStatus
+      : requestStatus;
   final pendingConfirmationBy = _firstNonEmpty([
     _readString(json, const [
       'pendingConfirmationBy',
@@ -869,8 +881,27 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     _readNestedName(truck, const ['name', 'full_name', 'display_name']),
   ]);
 
+  final requestId = _firstNonEmpty([
+    _readString(json, const [
+      'id',
+      'requestId',
+      'request_id',
+      'jobRequestId',
+      'job_request_id',
+      'uuid',
+    ]),
+    _readString(request, const [
+      'id',
+      'requestId',
+      'request_id',
+      'jobRequestId',
+      'job_request_id',
+      'uuid',
+    ]),
+  ]);
+
   return BookingRequest(
-    id: _readString(json, const ['id', 'request_id', 'job_request_id', 'uuid']),
+    id: requestId,
     status: status.isEmpty ? 'unknown' : status,
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: clientName,
@@ -1133,15 +1164,25 @@ BrokerVehicleStatus _vehicleStatusFromApi(String status) {
 }
 
 BrokerDriverStatus _driverStatusFromApi(String status) {
-  switch (status.toLowerCase()) {
+  switch (status.trim().toLowerCase().replaceAll('-', '_')) {
     case 'on_trip':
     case 'in_transit':
     case 'assigned':
+    case 'busy':
       return BrokerDriverStatus.onTrip;
+    case '':
     case 'available':
     case 'idle':
+    case 'active':
+    case 'online':
+    case 'verified':
+    case 'approved':
+    case 'ready':
+    case 'free':
       return BrokerDriverStatus.idle;
     case 'offline':
+    case 'inactive':
+    case 'suspended':
     default:
       return BrokerDriverStatus.offline;
   }
@@ -1153,13 +1194,21 @@ List<dynamic> _extractItems(
 ) {
   for (final candidate in [
     data['requests'],
+    data['jobRequests'],
+    data['job_requests'],
+    data['drivers'],
     data['trucks'],
+    data['vehicles'],
     data['items'],
     data['results'],
     data['rows'],
     data['data'],
     root['requests'],
+    root['jobRequests'],
+    root['job_requests'],
+    root['drivers'],
     root['trucks'],
+    root['vehicles'],
     root['items'],
     root['results'],
     root['rows'],
@@ -1167,6 +1216,10 @@ List<dynamic> _extractItems(
   ]) {
     if (candidate is List) {
       return candidate;
+    }
+    final nestedItems = _extractNestedList(candidate);
+    if (nestedItems.isNotEmpty) {
+      return nestedItems;
     }
   }
 
@@ -1182,6 +1235,32 @@ List<dynamic> _extractItems(
     return nested;
   }
 
+  return const <dynamic>[];
+}
+
+List<dynamic> _extractNestedList(Object? value) {
+  if (value is! Map) {
+    return const <dynamic>[];
+  }
+
+  final map = value.cast<String, dynamic>();
+  for (final key in const [
+    'requests',
+    'jobRequests',
+    'job_requests',
+    'drivers',
+    'items',
+    'trucks',
+    'vehicles',
+    'results',
+    'rows',
+    'data',
+  ]) {
+    final candidate = map[key];
+    if (candidate is List) {
+      return candidate;
+    }
+  }
   return const <dynamic>[];
 }
 
@@ -1480,7 +1559,22 @@ BrokerDriver _brokerDriverFromJson(Map<String, dynamic> json) {
     'shipment_status',
     'booking_status',
   ]);
-  final status = _driverStatusFromApi(_readString(json, const ['status']));
+  final status = _driverStatusFromApi(
+    _firstNonEmpty([
+      _readString(json, const [
+        'status',
+        'availability_status',
+        'availabilityStatus',
+        'driver_status',
+        'driverStatus',
+      ]),
+      _readString(user, const [
+        'status',
+        'availability_status',
+        'availabilityStatus',
+      ]),
+    ]),
+  );
 
   return BrokerDriver(
     id: _readString(json, const ['id', 'driver_id', 'user_id', 'uuid']),
@@ -1650,9 +1744,17 @@ bool isPendingBookingRequest(BookingRequest request) {
     'awaiting',
     'awaiting_action',
     'waiting',
+    'accepted',
+    'awaiting_confirmation',
+    'countered',
   };
 
   return pendingStatuses.contains(status);
+}
+
+bool isBrokerJobRequestAttentionCount(BookingRequest request) {
+  final status = _normalizeRequestStatus(request.status);
+  return status == 'requested' || status == 'pending' || status == 'accepted';
 }
 
 bool isCompletedBookingRequest(BookingRequest request) {
@@ -1662,6 +1764,7 @@ bool isCompletedBookingRequest(BookingRequest request) {
 bool isCancelledBookingRequest(BookingRequest request) {
   final status = _normalizeRequestStatus(request.status);
   return status == 'cancelled' ||
+      status == 'canceled' ||
       status == 'declined' ||
       status == 'rejected' ||
       status == 'expired';
@@ -1674,7 +1777,11 @@ bool isAcceptedBookingRequest(BookingRequest request) {
 
 bool isDeclinedBookingRequest(BookingRequest request) {
   final status = _normalizeRequestStatus(request.status);
-  return status == 'declined' || status == 'rejected' || status == 'expired';
+  return status == 'declined' ||
+      status == 'rejected' ||
+      status == 'expired' ||
+      status == 'cancelled' ||
+      status == 'canceled';
 }
 
 bool isActiveBrokerDriverRequest(BrokerDriverRequest request) {
@@ -1688,6 +1795,11 @@ bool isActiveBrokerDriverRequest(BrokerDriverRequest request) {
 
 String _normalizeRequestStatus(String status) {
   return status.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+}
+
+bool _isCancelledRequestStatus(String status) {
+  final normalized = _normalizeRequestStatus(status);
+  return normalized == 'cancelled' || normalized == 'canceled';
 }
 
 class BrokerHeader extends StatelessWidget {
