@@ -142,6 +142,11 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
                         tickInterval: const Duration(seconds: 60),
                       ),
                     ],
+                    if (shipment.expectedDeliveryHours != null ||
+                        shipment.slaOverageCharge > 0) ...[
+                      const SizedBox(height: 14),
+                      _DeliverySlaCard(shipment: shipment),
+                    ],
                     const SizedBox(height: 14),
                     _DriverCard(shipment: shipment),
                   ],
@@ -244,6 +249,55 @@ class _DriverCard extends StatelessWidget {
             const SizedBox(height: 12),
             _InfoLine(label: 'Truck', value: truck!),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DeliverySlaCard extends StatelessWidget {
+  const _DeliverySlaCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCharge = shipment.slaOverageCharge > 0;
+    final expected = shipment.expectedDeliveryHours;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: hasCharge ? const Color(0xFFFFF7ED) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: hasCharge ? const Color(0xFFFED7AA) : const Color(0xFFE8EDF2),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            color: hasCharge
+                ? const Color(0xFFC2410C)
+                : const Color(0xFF475569),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              hasCharge
+                  ? 'Delay charge ₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)} for ${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h over SLA.'
+                  : 'Expected delivery within ~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: hasCharge
+                    ? const Color(0xFF9A5B13)
+                    : const Color(0xFF667085),
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+          ),
         ],
       ),
     );

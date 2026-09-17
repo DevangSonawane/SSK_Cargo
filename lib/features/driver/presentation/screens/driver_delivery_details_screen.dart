@@ -933,6 +933,37 @@ class _DriverDeliveryDetailsScreenState
                             const SizedBox(height: 14),
                             _buildHaltingTimer(),
                           ],
+                          if (_readDouble(_tripRaw, const [
+                                    'expectedDeliveryHours',
+                                    'expected_delivery_hours',
+                                  ]) !=
+                                  null ||
+                              (_readDouble(_tripRaw, const [
+                                        'slaOverageCharge',
+                                        'sla_overage_charge',
+                                      ]) ??
+                                      0) >
+                                  0) ...[
+                            const SizedBox(height: 10),
+                            _DeliverySlaCard(
+                              expectedHours: _readDouble(_tripRaw, const [
+                                'expectedDeliveryHours',
+                                'expected_delivery_hours',
+                              ]),
+                              overageHours:
+                                  _readDouble(_tripRaw, const [
+                                    'slaOverageHours',
+                                    'sla_overage_hours',
+                                  ]) ??
+                                  0,
+                              overageCharge:
+                                  _readDouble(_tripRaw, const [
+                                    'slaOverageCharge',
+                                    'sla_overage_charge',
+                                  ]) ??
+                                  0,
+                            ),
+                          ],
                           const SizedBox(height: 14),
                           SizedBox(
                             width: double.infinity,
@@ -1931,6 +1962,72 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeliverySlaCard extends StatelessWidget {
+  const _DeliverySlaCard({
+    required this.expectedHours,
+    required this.overageHours,
+    required this.overageCharge,
+  });
+
+  final double? expectedHours;
+  final double overageHours;
+  final double overageCharge;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCharge = overageCharge > 0;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: hasCharge ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasCharge ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            color: hasCharge
+                ? const Color(0xFFC2410C)
+                : const Color(0xFF475569),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasCharge ? 'Delivery delay charge' : 'Delivery SLA',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasCharge
+                      ? '₹${overageCharge.toStringAsFixed(overageCharge % 1 == 0 ? 0 : 2)} for ${overageHours.toStringAsFixed(overageHours % 1 == 0 ? 0 : 1)}h over the expected delivery time.'
+                      : 'Expected delivery within ~${expectedHours!.toStringAsFixed(expectedHours! % 1 == 0 ? 0 : 1)}h.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: hasCharge
+                        ? const Color(0xFF9A5B13)
+                        : const Color(0xFF667085),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

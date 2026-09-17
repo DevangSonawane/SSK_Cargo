@@ -137,6 +137,9 @@ class ChatDetailScreen extends ConsumerWidget {
     }
     final isClient = audience == ChatAudience.client;
     final isDirect = (threadId ?? '').trim().isNotEmpty;
+    final summaryFuture = isDirect
+        ? _loadThreadSummary(ref, session.tokens.accessToken, threadId!.trim())
+        : Future<ChatThreadSummary?>.value(null);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -152,14 +155,123 @@ class ChatDetailScreen extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: BookingChatView(
-            bookingId: bookingId,
-            threadId: threadId,
-            accessToken: session.tokens.accessToken,
-            currentUserId: session.user.id,
-            allowBotActions: isClient,
+          child: Column(
+            children: [
+              if (isDirect)
+                FutureBuilder<ChatThreadSummary?>(
+                  future: summaryFuture,
+                  builder: (context, snapshot) {
+                    final summary = snapshot.data;
+                    final displayName = summary == null
+                        ? 'Direct message'
+                        : summary.displayNameFor(audience);
+                    return _DirectChatHeader(
+                      displayName: displayName,
+                      isLocked: summary?.isLocked ?? false,
+                      stage: summary?.stage ?? '',
+                    );
+                  },
+                ),
+              Expanded(
+                child: BookingChatView(
+                  bookingId: bookingId,
+                  threadId: threadId,
+                  accessToken: session.tokens.accessToken,
+                  currentUserId: session.user.id,
+                  allowBotActions: isClient,
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+Future<ChatThreadSummary?> _loadThreadSummary(
+  WidgetRef ref,
+  String accessToken,
+  String threadId,
+) async {
+  final response = await ref
+      .read(apiClientProvider)
+      .getChatThreads(accessToken: accessToken);
+  final data = chatAsMap(response['data']);
+  final rawThreads = data?['threads'] ?? response['threads'];
+  if (rawThreads is! Iterable) return null;
+  for (final raw in rawThreads) {
+    final map = chatAsMap(raw);
+    if (map == null) continue;
+    final summary = ChatThreadSummary.fromJson(map);
+    if (summary.threadId == threadId) {
+      return summary;
+    }
+  }
+  return null;
+}
+
+class _DirectChatHeader extends StatelessWidget {
+  const _DirectChatHeader({
+    required this.displayName,
+    required this.isLocked,
+    required this.stage,
+  });
+
+  final String displayName;
+  final bool isLocked;
+  final String stage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: const Color(0xFFEAF7F0),
+            foregroundColor: const Color(0xFF2FA56E),
+            child: Text(chatInitials(displayName)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF101828),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    const _StatusChip(label: 'Direct message'),
+                    if (isLocked) const _StatusChip(label: 'Closed'),
+                    if (stage == 'bot')
+                      const _StatusChip(
+                        label: 'Not yet connected',
+                        amber: true,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

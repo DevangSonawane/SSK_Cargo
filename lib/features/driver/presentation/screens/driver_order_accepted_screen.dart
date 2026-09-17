@@ -1007,6 +1007,11 @@ class _DriverOrderAcceptedScreenState
         _waitingOnClient ||
         _awaitingDriverConfirmation;
     final brokerAssigned = request.jobRequestId.isNotEmpty;
+    final showCounterControls =
+        !_handoffInProgress &&
+        !_awaitingDriverConfirmation &&
+        !_waitingOnClient &&
+        !_counterLocked;
 
     if (brokerAssigned) {
       return Scaffold(
@@ -1358,86 +1363,94 @@ class _DriverOrderAcceptedScreenState
                       label: 'Base offer',
                       value: '₹${baseAmount.toStringAsFixed(0)}',
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Counter amount',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
+                    if (showCounterControls) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Counter amount',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF101828),
+                            ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Slide to set your counter amount before you confirm the request.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Slide to set your counter amount before you confirm the request.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF667085),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(22),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Offer price',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  '₹${selectedAmount.toStringAsFixed(0)}',
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: const Color(0xFF2FA56E),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Slider(
+                              value: selectedAmount.clamp(minOffer, maxOffer),
+                              min: minOffer,
+                              max: maxOffer,
+                              divisions: 24,
+                              activeColor: const Color(0xFF2FA56E),
+                              inactiveColor: const Color(0xFFE4E7EC),
+                              label: '₹${selectedAmount.toStringAsFixed(0)}',
+                              onChanged: actionLocked
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _counterAmount = value;
+                                      });
+                                    },
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '₹${minOffer.toStringAsFixed(0)}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF98A2B3),
+                                      ),
+                                ),
+                                Text(
+                                  '₹${maxOffer.toStringAsFixed(0)}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF98A2B3),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Offer price',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              Text(
-                                '₹${selectedAmount.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      color: const Color(0xFF2FA56E),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          Slider(
-                            value: selectedAmount.clamp(minOffer, maxOffer),
-                            min: minOffer,
-                            max: maxOffer,
-                            divisions: 24,
-                            activeColor: const Color(0xFF2FA56E),
-                            inactiveColor: const Color(0xFFE4E7EC),
-                            label: '₹${selectedAmount.toStringAsFixed(0)}',
-                            onChanged: actionLocked
-                                ? null
-                                : (value) {
-                                    setState(() {
-                                      _counterAmount = value;
-                                    });
-                                  },
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '₹${minOffer.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: const Color(0xFF98A2B3)),
-                              ),
-                              Text(
-                                '₹${maxOffer.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: const Color(0xFF98A2B3)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ] else
+                      const SizedBox(height: 16),
                     if (_handoffInProgress) ...[
                       Container(
                         width: double.infinity,

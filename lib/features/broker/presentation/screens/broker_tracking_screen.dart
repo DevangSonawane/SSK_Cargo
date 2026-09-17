@@ -1250,6 +1250,7 @@ class _BrokerDriverTripSheetState
     extends ConsumerState<_BrokerDriverTripSheet> {
   late Future<_BrokerDriverTripSnapshot> _snapshotFuture;
   bool _refreshing = false;
+  bool _reassigning = false;
 
   @override
   void initState() {
@@ -1344,6 +1345,18 @@ class _BrokerDriverTripSheetState
           'payment_status',
           'paymentStatus',
         ]),
+        jobRequestId: _tripString(tripPayload, const [
+          'jobRequestId',
+          'job_request_id',
+          'jobId',
+          'job_id',
+        ]),
+        truckId: _tripString(tripPayload, const [
+          'truckId',
+          'truck_id',
+          'assignedTruckId',
+          'assigned_truck_id',
+        ]),
         startedAt: _tripDateTime(tripPayload, const [
           'startedAt',
           'started_at',
@@ -1392,6 +1405,73 @@ class _BrokerDriverTripSheetState
     } finally {
       if (mounted) {
         setState(() => _refreshing = false);
+      }
+    }
+  }
+
+  Future<void> _reassignDriver(_BrokerDriverTripSnapshot snapshot) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final jobRequestId = snapshot.jobRequestId.trim();
+    if (session == null || jobRequestId.isEmpty || _reassigning) {
+      return;
+    }
+
+    setState(() => _reassigning = true);
+    try {
+      final drivers = await ref.read(
+        brokerDriversApiProvider((status: null, page: 1, limit: 100)).future,
+      );
+      final trucks = await ref.read(brokerVehiclesProvider.future);
+      if (!mounted) return;
+
+      final draft = await showDialog<_ReassignDriverDraft>(
+        context: context,
+        builder: (dialogContext) => _ReassignDriverDialog(
+          currentDriverId: snapshot.driver.id,
+          currentDriverName: snapshot.driver.name,
+          initialTruckId: snapshot.truckId,
+          drivers: drivers,
+          trucks: trucks,
+        ),
+      );
+      if (draft == null) {
+        return;
+      }
+
+      await ref
+          .read(apiClientProvider)
+          .assignDriverToJob(
+            accessToken: session.tokens.accessToken,
+            id: jobRequestId,
+            driverId: draft.driverId,
+            truckId: draft.truckId,
+            reason: draft.reason,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Driver reassigned.')));
+      ref.invalidate(
+        brokerDriversApiProvider((status: null, page: 1, limit: 100)),
+      );
+      setState(() {
+        _snapshotFuture = _loadSnapshot();
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _reassigning = false);
       }
     }
   }
@@ -1789,6 +1869,18 @@ class _BrokerDriverTripSheetState
                           icon: Icons.report_problem_rounded,
                           label: '${data.incidents.length} incidents',
                         ),
+                        if (data.shipment.expectedDeliveryHours != null)
+                          _TripInfoChip(
+                            icon: Icons.schedule_rounded,
+                            label:
+                                'SLA ~${_formatTripHours(data.shipment.expectedDeliveryHours!)}',
+                          ),
+                        if (data.shipment.slaOverageCharge > 0)
+                          _TripInfoChip(
+                            icon: Icons.warning_amber_rounded,
+                            label:
+                                'Delay +₹${data.shipment.slaOverageCharge.toStringAsFixed(data.shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
+                          ),
                       ],
                     ),
                     if (data.haltingGraceHours != null) ...[
@@ -1852,6 +1944,29 @@ class _BrokerDriverTripSheetState
                         ),
                       ],
                     ),
+                    if (data.jobRequestId.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _reassigning
+                              ? null
+                              : () => _reassignDriver(data),
+                          icon: _reassigning
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.swap_horiz_rounded),
+                          label: Text(
+                            _reassigning ? 'Reassigning...' : 'Reassign driver',
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       'Incidents',
@@ -1912,6 +2027,8 @@ class _BrokerDriverTripSnapshot {
     required this.statusLabel,
     required this.tripAmount,
     required this.paymentStatus,
+    this.jobRequestId = '',
+    this.truckId = '',
     this.startedAt,
     this.haltingGraceHours,
     this.haltingRatePerHour,
@@ -1954,6 +2071,8 @@ class _BrokerDriverTripSnapshot {
       statusLabel: statusLabel,
       tripAmount: 0,
       paymentStatus: '',
+      jobRequestId: '',
+      truckId: '',
     );
   }
 
@@ -1964,6 +2083,8 @@ class _BrokerDriverTripSnapshot {
   final String statusLabel;
   final double tripAmount;
   final String paymentStatus;
+  final String jobRequestId;
+  final String truckId;
   final DateTime? startedAt;
   final double? haltingGraceHours;
   final double? haltingRatePerHour;
@@ -2014,6 +2135,150 @@ class _IncidentReportPayload {
 
   final String reason;
   final String notes;
+}
+
+class _ReassignDriverDraft {
+  const _ReassignDriverDraft({
+    required this.driverId,
+    required this.truckId,
+    required this.reason,
+  });
+
+  final String driverId;
+  final String truckId;
+  final String reason;
+}
+
+class _ReassignDriverDialog extends StatefulWidget {
+  const _ReassignDriverDialog({
+    required this.currentDriverId,
+    required this.currentDriverName,
+    required this.initialTruckId,
+    required this.drivers,
+    required this.trucks,
+  });
+
+  final String currentDriverId;
+  final String currentDriverName;
+  final String initialTruckId;
+  final List<BrokerDriver> drivers;
+  final List<BrokerVehicle> trucks;
+
+  @override
+  State<_ReassignDriverDialog> createState() => _ReassignDriverDialogState();
+}
+
+class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
+  late String _driverId;
+  late String _truckId;
+  final _reasonController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final candidates = widget.drivers
+        .where((driver) => driver.id != widget.currentDriverId)
+        .toList();
+    _driverId = candidates.isEmpty ? '' : candidates.first.id;
+    _truckId = widget.initialTruckId.isNotEmpty
+        ? widget.initialTruckId
+        : (widget.trucks.isEmpty ? '' : widget.trucks.first.id);
+  }
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final driverOptions = widget.drivers
+        .where((driver) => driver.id != widget.currentDriverId)
+        .toList();
+    final truckOptions = widget.trucks;
+
+    return AlertDialog(
+      title: const Text('Reassign driver'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Currently assigned: ${widget.currentDriverName.isEmpty ? 'Driver' : widget.currentDriverName}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF667085),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            initialValue: _driverId.isEmpty ? null : _driverId,
+            decoration: const InputDecoration(labelText: 'Reassign to'),
+            items: [
+              for (final driver in driverOptions)
+                DropdownMenuItem(
+                  value: driver.id,
+                  child: Text(driver.name.isEmpty ? 'Driver' : driver.name),
+                ),
+            ],
+            onChanged: (value) => setState(() => _driverId = value ?? ''),
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            initialValue: _truckId.isEmpty ? null : _truckId,
+            decoration: const InputDecoration(labelText: 'Truck'),
+            items: [
+              for (final truck in truckOptions)
+                DropdownMenuItem(
+                  value: truck.id,
+                  child: Text(
+                    [
+                          if (truck.label.isNotEmpty) truck.label,
+                          if (truck.plateNumber.isNotEmpty) truck.plateNumber,
+                        ].join(' • ').isEmpty
+                        ? 'Truck'
+                        : [
+                            if (truck.label.isNotEmpty) truck.label,
+                            if (truck.plateNumber.isNotEmpty) truck.plateNumber,
+                          ].join(' • '),
+                  ),
+                ),
+            ],
+            onChanged: (value) => setState(() => _truckId = value ?? ''),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _reasonController,
+            decoration: const InputDecoration(
+              labelText: 'Reason (optional)',
+              hintText: 'Driver unavailable, breakdown, better route fit...',
+            ),
+            minLines: 2,
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _driverId.isEmpty || _truckId.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(
+                  _ReassignDriverDraft(
+                    driverId: _driverId,
+                    truckId: _truckId,
+                    reason: _reasonController.text.trim(),
+                  ),
+                ),
+          child: const Text('Reassign'),
+        ),
+      ],
+    );
+  }
 }
 
 class _TripInfoChip extends StatelessWidget {
@@ -2448,6 +2713,10 @@ Map<String, dynamic> _tripMapOf(Object? value) {
     return value.map((key, value) => MapEntry(key.toString(), value));
   }
   return <String, dynamic>{};
+}
+
+String _formatTripHours(double value) {
+  return '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}h';
 }
 
 List<Map<String, dynamic>> _tripListOfMaps(Object? value) {

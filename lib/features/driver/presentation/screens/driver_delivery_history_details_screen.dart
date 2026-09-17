@@ -38,6 +38,7 @@ class _DriverDeliveryHistoryDetailsScreenState
   bool _sharing = false;
   bool _notifying = false;
   String? _error;
+  List<_ReassignmentHistoryEntry> _reassignmentHistory = const [];
 
   @override
   void initState() {
@@ -138,10 +139,35 @@ class _DriverDeliveryHistoryDetailsScreenState
           // Keep the booking details even if the live-track lookup fails.
         }
 
+        var reassignmentHistory = const <_ReassignmentHistoryEntry>[];
+        try {
+          final historyResponse = await client.getBookingReassignmentHistory(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+          final historyData = historyResponse['data'];
+          final rawHistory = historyData is Map<String, dynamic>
+              ? historyData['history']
+              : historyResponse['history'];
+          if (rawHistory is Iterable) {
+            reassignmentHistory = rawHistory
+                .whereType<Map>()
+                .map(
+                  (item) => _ReassignmentHistoryEntry.fromJson(
+                    item.cast<String, dynamic>(),
+                  ),
+                )
+                .toList();
+          }
+        } catch (_) {
+          reassignmentHistory = const <_ReassignmentHistoryEntry>[];
+        }
+
         if (mounted) {
           setState(() {
             _booking = booking;
             _shipment = shipment;
+            _reassignmentHistory = reassignmentHistory;
             _loading = false;
           });
         }
@@ -457,6 +483,18 @@ class _DriverDeliveryHistoryDetailsScreenState
                                     haltingCharge: shipment?.haltingCharge ?? 0,
                                     showNotStarted: false,
                                     tickInterval: const Duration(seconds: 60),
+                                  ),
+                                ],
+                                if (shipment != null &&
+                                    (shipment.expectedDeliveryHours != null ||
+                                        shipment.slaOverageCharge > 0)) ...[
+                                  const SizedBox(height: 16),
+                                  _DeliverySlaPanel(shipment: shipment),
+                                ],
+                                if (_reassignmentHistory.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  _ReassignmentHistoryPanel(
+                                    history: _reassignmentHistory,
                                   ),
                                 ],
                                 const SizedBox(height: 16),
@@ -878,6 +916,143 @@ class _ActionRow extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ReassignmentHistoryEntry {
+  const _ReassignmentHistoryEntry({
+    required this.fromDriverName,
+    required this.toDriverName,
+    required this.reason,
+    required this.reassignedByName,
+    required this.createdAt,
+  });
+
+  factory _ReassignmentHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return _ReassignmentHistoryEntry(
+      fromDriverName: _readString(json, const [
+        'fromDriverName',
+        'from_driver_name',
+      ]),
+      toDriverName: _readString(json, const ['toDriverName', 'to_driver_name']),
+      reason: _readString(json, const ['reason']),
+      reassignedByName: _readString(json, const [
+        'reassignedByName',
+        'reassigned_by_name',
+      ]),
+      createdAt: _readDateTime(json, const ['createdAt', 'created_at']),
+    );
+  }
+
+  final String fromDriverName;
+  final String toDriverName;
+  final String reason;
+  final String reassignedByName;
+  final DateTime? createdAt;
+}
+
+class _DeliverySlaPanel extends StatelessWidget {
+  const _DeliverySlaPanel({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCharge = shipment.slaOverageCharge > 0;
+    final expected = shipment.expectedDeliveryHours;
+    return _SectionCard(
+      title: hasCharge ? 'Delivery Delay' : 'Delivery SLA',
+      accentColor: hasCharge
+          ? const Color(0xFFC2410C)
+          : const Color(0xFF1F88C9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            color: hasCharge
+                ? const Color(0xFFC2410C)
+                : const Color(0xFF1F88C9),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              hasCharge
+                  ? 'Delay charge ₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)} for ${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h over the expected delivery time.'
+                  : 'Expected delivery within ~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReassignmentHistoryPanel extends StatelessWidget {
+  const _ReassignmentHistoryPanel({required this.history});
+
+  final List<_ReassignmentHistoryEntry> history;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...history]
+      ..sort((a, b) {
+        final left = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final right = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return right.compareTo(left);
+      });
+
+    return _SectionCard(
+      title: 'Driver Changed (${history.length})',
+      accentColor: const Color(0xFF1F88C9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < sorted.length; index++) ...[
+            if (index > 0)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: Color(0xFFE8EDF2)),
+              ),
+            Text(
+              '${sorted[index].fromDriverName.isEmpty ? 'Previous driver' : sorted[index].fromDriverName} -> ${sorted[index].toDriverName.isEmpty ? 'New driver' : sorted[index].toDriverName}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF101828),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (sorted[index].reason.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                sorted[index].reason,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF667085),
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              [
+                if (sorted[index].reassignedByName.isNotEmpty)
+                  'By ${sorted[index].reassignedByName}',
+                if (sorted[index].createdAt != null)
+                  _formatFullDateTime(sorted[index].createdAt!),
+              ].join(' • '),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF98A2B3),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
