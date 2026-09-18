@@ -108,10 +108,18 @@ class _LocationDetailsScreen extends ConsumerStatefulWidget {
   const _LocationDetailsScreen({
     required this.kind,
     required this.initialValue,
+    this.title,
+    this.subtitle,
+    this.mapButtonLabel = 'Select on map',
+    this.showCurrentLocation,
   });
 
   final _LocationFieldKind kind;
   final String initialValue;
+  final String? title;
+  final String? subtitle;
+  final String mapButtonLabel;
+  final bool? showCurrentLocation;
 
   @override
   ConsumerState<_LocationDetailsScreen> createState() =>
@@ -354,6 +362,18 @@ class _LocationDetailsScreenState
       ? 'Enter your loading address'
       : 'Enter your unloading address';
 
+  String get _title =>
+      widget.title ??
+      (widget.kind == _LocationFieldKind.pickup
+          ? 'Loading location'
+          : 'Unloading location');
+
+  String get _subtitle =>
+      widget.subtitle ??
+      (widget.kind == _LocationFieldKind.pickup
+          ? 'Search, use current location, or select the pickup point on map.'
+          : 'Search or select the drop point on map.');
+
   String get _useCurrentLocationLabel =>
       widget.kind == _LocationFieldKind.pickup
       ? 'Use your current location'
@@ -367,8 +387,11 @@ class _LocationDetailsScreenState
       ? const Color(0xFF38B47A)
       : const Color(0xFFF05252);
 
+  bool get _showCurrentLocation =>
+      widget.showCurrentLocation ?? widget.kind == _LocationFieldKind.pickup;
+
   Future<void> _useCurrentLocation() async {
-    if (widget.kind != _LocationFieldKind.pickup || _resolvingCurrentLocation) {
+    if (!_showCurrentLocation || _resolvingCurrentLocation) {
       return;
     }
 
@@ -475,7 +498,7 @@ class _LocationDetailsScreenState
                   OutlinedButton.icon(
                     onPressed: _openMapPicker,
                     icon: const Icon(Icons.map_outlined, size: 17),
-                    label: const Text('Select on map'),
+                    label: Text(widget.mapButtonLabel),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF1F88C9),
                       side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -491,7 +514,27 @@ class _LocationDetailsScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
+              Text(
+                _title,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: const Color(0xFF0B1F3A),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667085),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 18),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -598,7 +641,7 @@ class _LocationDetailsScreenState
                   ),
                 ],
               ),
-              if (widget.kind == _LocationFieldKind.pickup) ...[
+              if (_showCurrentLocation) ...[
                 const SizedBox(height: 18),
                 InkWell(
                   onTap: _resolvingCurrentLocation ? null : _useCurrentLocation,
@@ -733,6 +776,26 @@ class _LocationDetailsScreenState
       ..text = selection.formattedAddress
       ..selection = TextSelection.collapsed(offset: _controller.text.length);
     Navigator.of(context).pop(selection);
+  }
+}
+
+class _IntermediateStopDetailsScreen extends StatelessWidget {
+  const _IntermediateStopDetailsScreen({required this.loading});
+
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return _LocationDetailsScreen(
+      kind: loading ? _LocationFieldKind.pickup : _LocationFieldKind.drop,
+      initialValue: '',
+      title: loading ? 'Add loading point' : 'Add unloading point',
+      subtitle: loading
+          ? 'Add another pickup stop before the main route continues.'
+          : 'Add another drop stop before the final delivery.',
+      mapButtonLabel: loading ? 'Pin loading point' : 'Pin unloading point',
+      showCurrentLocation: loading,
+    );
   }
 }
 
@@ -2486,24 +2549,26 @@ Future<void> showTripTypeSheet(
         );
     if (tripType == null || !context.mounted) return;
 
-    final bookingData = await Navigator.of(context).push<BookingData>(
-      MaterialPageRoute(
-        builder: (context) => BookingLocationScreen(
-          tripType: tripType,
-          initialVehicleIndex: initialVehicleIndex ?? 0,
-        ),
-      ),
-    );
+    final bookingData = await Navigator.of(context, rootNavigator: true)
+        .push<BookingData>(
+          MaterialPageRoute(
+            builder: (context) => BookingLocationScreen(
+              tripType: tripType,
+              initialVehicleIndex: initialVehicleIndex ?? 0,
+            ),
+          ),
+        );
     if (bookingData == null || !context.mounted) return;
 
-    final vehicle = await Navigator.of(context).push<VehicleOption>(
-      MaterialPageRoute(
-        builder: (context) => SelectVehicleScreen(
-          bookingData: bookingData,
-          initialIndex: initialVehicleIndex ?? 0,
-        ),
-      ),
-    );
+    final vehicle = await Navigator.of(context, rootNavigator: true)
+        .push<VehicleOption>(
+          MaterialPageRoute(
+            builder: (context) => SelectVehicleScreen(
+              bookingData: bookingData,
+              initialIndex: initialVehicleIndex ?? 0,
+            ),
+          ),
+        );
     if (vehicle == null || !context.mounted) return;
   } finally {
     onClose?.call();
@@ -2519,26 +2584,28 @@ Future<void> showQuickBookingFlow(
 }) async {
   onOpen?.call();
   try {
-    final pickup = await Navigator.of(context).push<GooglePlaceSelection>(
-      MaterialPageRoute(
-        builder: (context) => _LocationDetailsScreen(
-          kind: _LocationFieldKind.pickup,
-          initialValue: '',
-        ),
-      ),
-    );
+    final pickup = await Navigator.of(context, rootNavigator: true)
+        .push<GooglePlaceSelection>(
+          MaterialPageRoute(
+            builder: (context) => _LocationDetailsScreen(
+              kind: _LocationFieldKind.pickup,
+              initialValue: '',
+            ),
+          ),
+        );
     if (pickup == null || !context.mounted) {
       return;
     }
 
-    final drop = await Navigator.of(context).push<GooglePlaceSelection>(
-      MaterialPageRoute(
-        builder: (context) => _LocationDetailsScreen(
-          kind: _LocationFieldKind.drop,
-          initialValue: '',
-        ),
-      ),
-    );
+    final drop = await Navigator.of(context, rootNavigator: true)
+        .push<GooglePlaceSelection>(
+          MaterialPageRoute(
+            builder: (context) => _LocationDetailsScreen(
+              kind: _LocationFieldKind.drop,
+              initialValue: '',
+            ),
+          ),
+        );
     if (drop == null || !context.mounted) {
       return;
     }
@@ -2559,7 +2626,7 @@ Future<void> showQuickBookingFlow(
       return;
     }
 
-    await Navigator.of(context).push(
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => BookingLocationScreen(
           tripType: tripType,
@@ -3812,8 +3879,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _addIntermediateStop({required bool loading}) async {
-    final selection = await _openLocationDetailsScreen(
-      loading ? _LocationFieldKind.pickup : _LocationFieldKind.drop,
+    final selection = await Navigator.of(context).push<GooglePlaceSelection>(
+      MaterialPageRoute(
+        builder: (context) => _IntermediateStopDetailsScreen(loading: loading),
+      ),
     );
     if (selection == null || !mounted) {
       return;
@@ -3952,27 +4021,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _draft.scheduledDate != null && _draft.scheduledDate!.isAfter(now)
         ? _draft.scheduledDate!
         : now.add(const Duration(hours: 3));
-    final date = await showDatePicker(
+    final scheduled = await showModalBottomSheet<DateTime>(
       context: context,
-      initialDate: current,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 180)),
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _SchedulePickerSheet(
+        initialDateTime: current,
+        firstDateTime: now,
+        lastDateTime: now.add(const Duration(days: 180)),
+      ),
     );
-    if (date == null || !mounted) return;
+    if (scheduled == null || !mounted) return;
 
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(current),
-    );
-    if (time == null || !mounted) return;
-
-    final scheduled = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
     if (!scheduled.isAfter(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Choose a future pickup time.')),
@@ -5541,6 +5603,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_bottomNavVisibleController.state) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _bottomNavVisibleController.state = false;
+        }
+      });
+    }
+
     ref.listen(clientPricingProvider, (previous, next) {
       final pricing = next.valueOrNull;
       if (pricing == null || !mounted) {
@@ -5680,27 +5750,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                           ),
                                         ),
                                         const Spacer(),
-                                        Text(
-                                          switch (_step) {
-                                            _BookingFlowStep.location =>
-                                              'Location',
-                                            _BookingFlowStep.itemDetails =>
-                                              'Weight',
-                                            _BookingFlowStep.brokerSelection =>
-                                              'Choose trucks',
-                                            _BookingFlowStep.payment =>
-                                              'Payment',
-                                            _BookingFlowStep.waiting =>
-                                              'Waiting',
-                                          },
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge
-                                              ?.copyWith(
-                                                color: const Color(0xFF667085),
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
+                                        _buildScheduleHeaderActions(context),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
@@ -5714,7 +5764,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         Positioned(
                           left: 0,
                           right: 0,
-                          bottom: 44,
+                          bottom: 0,
                           child: _buildWeightBottomActions(context),
                         ),
                       ],
@@ -5827,156 +5877,159 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingCreated &&
         !_postNegotiationPayment &&
         mode == BookingSearchMode.truck;
-    final openSheetSize = isFindTruckSearching
-        ? 0.42
-        : mode == BookingSearchMode.broker
-        ? 0.62
-        : 0.46;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        _buildBrokerMap(context, const <NearbyTruck>[]),
-        if (isFindTruckSearching)
-          Positioned.fill(
-            bottom: MediaQuery.of(context).size.height * openSheetSize,
-            child: _FindTruckScreenLoader(
-              bookingReference: _bookingReference,
-              requestCount: _findTruckRequestCount,
-              declinedCount: _findTruckDeclinedCount,
-              searchRadiusKm: _draft.searchRadiusKm,
-              isCancelling: _cancellingFindTruckSearch,
-              onCancel: _cancelFindTruckSearch,
-            ),
-          ),
-        if (!isFindTruckSearching)
-          Positioned(
-            left: 16,
-            top: 0,
-            child: SafeArea(
-              child: Material(
-                color: Colors.white,
-                shape: const CircleBorder(),
-                elevation: 5,
-                shadowColor: Colors.black.withValues(alpha: 0.18),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => setState(() {
-                    _step = _BookingFlowStep.itemDetails;
-                  }),
-                  child: const SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Icon(
-                      Icons.arrow_back_rounded,
-                      color: Color(0xFF0B1F3A),
-                      size: 23,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final panelHeight = min(
+          constraints.maxHeight * 0.48,
+          mode == BookingSearchMode.broker ? 390.0 : 340.0,
+        );
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBrokerMap(context, const <NearbyTruck>[]),
+            if (isFindTruckSearching)
+              Positioned.fill(
+                bottom: panelHeight,
+                child: _FindTruckScreenLoader(
+                  bookingReference: _bookingReference,
+                  requestCount: _findTruckRequestCount,
+                  declinedCount: _findTruckDeclinedCount,
+                  searchRadiusKm: _draft.searchRadiusKm,
+                  isCancelling: _cancellingFindTruckSearch,
+                  onCancel: _cancelFindTruckSearch,
+                ),
+              ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SizedBox(
+                height: panelHeight,
+                child: _SearchMethodSheet(
+                  child: AbsorbPointer(
+                    absorbing: isFindTruckSearching,
+                    child: Opacity(
+                      opacity: isFindTruckSearching ? 0.58 : 1,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          12,
+                          12,
+                          12,
+                          MediaQuery.of(context).viewPadding.bottom + 10,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Choose Trucks',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: const Color(0xFF0B1F3A),
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildTruckCategoryPicker(context),
+                            const SizedBox(height: 8),
+                            if (mode == BookingSearchMode.truck) ...[
+                              _buildFindTruckOptions(context),
+                              const SizedBox(height: 8),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFE1E8F2),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _SearchModeCard(
+                                    selected: mode == BookingSearchMode.truck,
+                                    icon: Icons.local_shipping_rounded,
+                                    title: 'Find Truck',
+                                    onTap: () {
+                                      setState(() {
+                                        _draft = _draft.copyWith(
+                                          searchMode: BookingSearchMode.truck,
+                                          selectedBrokerId: '',
+                                        );
+                                      });
+                                      unawaited(_startFindTruckSearch());
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _SearchModeCard(
+                                    selected: mode == BookingSearchMode.broker,
+                                    icon: Icons.person_rounded,
+                                    title: 'Search Broker',
+                                    onTap: () {
+                                      setState(() {
+                                        _draft = _draft.copyWith(
+                                          searchMode: BookingSearchMode.broker,
+                                        );
+                                      });
+                                      unawaited(_loadEligibleBrokers());
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (mode == BookingSearchMode.broker) ...[
+                              const SizedBox(height: 10),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFE1E8F2),
+                              ),
+                              const SizedBox(height: 10),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child: _buildBrokerListOptions(context),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        DraggableScrollableSheet(
-          initialChildSize: openSheetSize,
-          minChildSize: isFindTruckSearching ? openSheetSize : 0.15,
-          maxChildSize: openSheetSize,
-          snap: !isFindTruckSearching,
-          snapSizes: isFindTruckSearching ? null : [0.15, openSheetSize],
-          builder: (context, scrollController) {
-            return _SearchMethodSheet(
-              child: AbsorbPointer(
-                absorbing: isFindTruckSearching,
-                child: Opacity(
-                  opacity: isFindTruckSearching ? 0.58 : 1,
-                  child: ListView(
-                    controller: scrollController,
-                    padding: EdgeInsets.fromLTRB(
-                      14,
-                      0,
-                      14,
-                      MediaQuery.of(context).viewPadding.bottom + 10,
+            if (!isFindTruckSearching)
+              Positioned(
+                left: 16,
+                top: 0,
+                child: SafeArea(
+                  child: Material(
+                    color: Colors.white,
+                    shape: const CircleBorder(),
+                    elevation: 5,
+                    shadowColor: Colors.black.withValues(alpha: 0.18),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => setState(() {
+                        _step = _BookingFlowStep.itemDetails;
+                      }),
+                      child: const SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          color: Color(0xFF0B1F3A),
+                          size: 23,
+                        ),
+                      ),
                     ),
-                    children: [
-                      const _SheetDragHandle(),
-                      Text(
-                        'Choose Trucks',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF0B1F3A),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTruckCategoryPicker(context),
-                      const SizedBox(height: 10),
-                      if (_draft.transportType == 'intra') ...[
-                        _ExpressDeliveryOptionCard(
-                          selected: _draft.isExpress,
-                          loading: _loadingExpressQuote,
-                          surcharge: _draft.expressSurcharge,
-                          expectedDeliveryHours: _draft.expectedDeliveryHours,
-                          insuranceIncluded: _draft.expressInsuranceIncluded,
-                          onChanged: (value) =>
-                              unawaited(_setExpressDelivery(value)),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (mode == BookingSearchMode.truck) ...[
-                        _buildFindTruckOptions(context),
-                        const SizedBox(height: 12),
-                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                        const SizedBox(height: 10),
-                      ],
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SearchModeCard(
-                              selected: mode == BookingSearchMode.truck,
-                              icon: Icons.local_shipping_rounded,
-                              title: 'Find Truck',
-                              onTap: () {
-                                setState(() {
-                                  _draft = _draft.copyWith(
-                                    searchMode: BookingSearchMode.truck,
-                                    selectedBrokerId: '',
-                                  );
-                                });
-                                unawaited(_startFindTruckSearch());
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: _SearchModeCard(
-                              selected: mode == BookingSearchMode.broker,
-                              icon: Icons.person_rounded,
-                              title: 'Search Broker',
-                              onTap: () {
-                                setState(() {
-                                  _draft = _draft.copyWith(
-                                    searchMode: BookingSearchMode.broker,
-                                  );
-                                });
-                                unawaited(_loadEligibleBrokers());
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (mode == BookingSearchMode.broker) ...[
-                        const SizedBox(height: 12),
-                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
-                        const SizedBox(height: 10),
-                        _buildBrokerListOptions(context),
-                      ],
-                    ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -6170,35 +6223,31 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ? 0
         : _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
 
-    return Column(
-      children: [
-        SizedBox(
-          height: 132,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final cardWidth = min(250.0, constraints.maxWidth * 0.66);
-              return ListView.separated(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                itemCount: vehicles.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final vehicle = vehicles[index];
-                  return SizedBox(
-                    width: cardWidth,
-                    child: _ChooseTruckCard(
-                      vehicle: vehicle,
-                      selected: selectedIndex == index,
-                      onTap: () => _selectVehicleForSearchStep(index),
-                    ),
-                  );
-                },
+    return SizedBox(
+      height: 68,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cardWidth = min(190.0, constraints.maxWidth * 0.58);
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(horizontal: 1),
+            itemCount: vehicles.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: cardWidth,
+                child: _ChooseTruckCard(
+                  vehicle: vehicles[index],
+                  selected: selectedIndex == index,
+                  onTap: () => _selectVehicleForSearchStep(index),
+                ),
               );
             },
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 
@@ -6550,11 +6599,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildItemDetailsStep(BuildContext context) {
     final weight = double.tryParse(_weightController.text.trim()) ?? 0;
+    final quickWeights = [1.0, 4.5, 7.0, 12.0, 15.0, 18.0, 25.0];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
         _WeightStepRouteSummary(
           pickupAddress: _draft.from,
           dropAddress: _draft.to,
@@ -6580,46 +6629,22 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: _WeightStepActionChip(
+                label: 'Loading point',
+                icon: Icons.add_location_alt_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: true);
                 },
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add loading point'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1F88C9),
-                  side: const BorderSide(color: Color(0xFFD7E7F4)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: OutlinedButton.icon(
+              child: _WeightStepActionChip(
+                label: 'Unloading point',
+                icon: Icons.add_road_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: false);
                 },
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add unloading point'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1F88C9),
-                  side: const BorderSide(color: Color(0xFFD7E7F4)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
               ),
             ),
           ],
@@ -6636,236 +6661,227 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 _removeIntermediateStop(loading: false, index: index),
           ),
         ],
-        const SizedBox(height: 16),
-        _ExpressDeliveryOptionCard(
-          selected: _draft.transportType == 'intra' && _draft.isExpress,
-          loading: _loadingExpressQuote,
-          surcharge: _draft.expressSurcharge,
-          expectedDeliveryHours: _draft.expectedDeliveryHours,
-          insuranceIncluded: _draft.expressInsuranceIncluded,
-          onChanged: (value) => unawaited(_setExpressDelivery(value)),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Select the weight of your goods',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF111111),
-            height: 1.1,
+        if (_draft.transportType == 'intra') ...[
+          const SizedBox(height: 12),
+          _ExpressDeliveryOptionCard(
+            selected: _draft.isExpress,
+            loading: _loadingExpressQuote,
+            surcharge: _draft.expressSurcharge,
+            expectedDeliveryHours: _draft.expectedDeliveryHours,
+            insuranceIncluded: _draft.expressInsuranceIncluded,
+            onChanged: (value) => unawaited(_setExpressDelivery(value)),
           ),
-        ),
-        const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 18),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFFF8FBF9),
+            borderRadius: BorderRadius.circular(26),
             border: Border.all(
               color: _weightError != null
                   ? const Color(0xFFE23A4B)
-                  : const Color(0xFFD7DCE3),
+                  : const Color(0xFFE4EFE8),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0B1F3A).withValues(alpha: 0.06),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+              ),
+            ],
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _weightController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.scale_rounded,
+                      color: Color(0xFF2FA56E),
+                      size: 21,
+                    ),
                   ),
-                  onSubmitted: (_) {
-                    FocusScope.of(context).unfocus();
-                  },
-                  onChanged: (_) {
-                    if (_weightUnknown || _weightError != null) {
-                      setState(() {
-                        _weightUnknown = false;
-                        _weightError = null;
-                      });
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    hintText: 'Enter tonnage',
-                    isDense: true,
-                    border: InputBorder.none,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Material weight',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF0B1F3A),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 7, 14, 7),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE1E8F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _weightController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: const Color(0xFF0B1F3A),
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                            ),
+                        onSubmitted: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
+                        onChanged: (_) {
+                          if (_weightUnknown || _weightError != null) {
+                            setState(() {
+                              _weightUnknown = false;
+                              _weightError = null;
+                            });
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          hintText: '0.0',
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        'ton',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: const Color(0xFF667085),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'ton',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF111111),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              if (_weightError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _weightError!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFFE23A4B),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
+              ],
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: quickWeights
+                    .map(
+                      (value) => _WeightChip(
+                        label:
+                            '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}t',
+                        selected:
+                            !_weightUnknown && (weight - value).abs() < 0.001,
+                        onTap: () {
+                          setState(() {
+                            _weightUnknown = false;
+                            _weightError = null;
+                            _weightController.text = value.toStringAsFixed(
+                              value % 1 == 0 ? 0 : 1,
+                            );
+                          });
+                        },
+                      ),
+                    )
+                    .toList(growable: false),
               ),
             ],
           ),
         ),
-        if (_weightError != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            _weightError!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFFE23A4B),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [1.0, 4.5, 7.0, 12.0, 15.0, 18.0, 25.0]
-              .map(
-                (value) => _WeightChip(
-                  label: '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)} ton',
-                  selected: !_weightUnknown && (weight - value).abs() < 0.001,
-                  onTap: () {
-                    setState(() {
-                      _weightUnknown = false;
-                      _weightError = null;
-                      _weightController.text = value.toStringAsFixed(
-                        value % 1 == 0 ? 0 : 1,
-                      );
-                    });
-                  },
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 18),
-        _buildScheduleSection(context),
       ],
     );
   }
 
-  Widget _buildScheduleSection(BuildContext context) {
-    final scheduled = _draft.scheduledDate;
-    final isLater = _draft.isScheduled;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4EAF1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Pickup time',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                value: false,
-                icon: Icon(Icons.flash_on_rounded, size: 16),
-                label: Text('Book Now'),
-              ),
-              ButtonSegment(
-                value: true,
-                icon: Icon(Icons.schedule_rounded, size: 16),
-                label: Text('Book Later'),
-              ),
-            ],
-            selected: {isLater},
-            onSelectionChanged: (selection) {
-              final later = selection.first;
-              setState(() {
-                _draft = _draft.copyWith(
-                  isScheduled: later,
-                  scheduledDate: later
-                      ? (scheduled != null && scheduled.isAfter(DateTime.now())
-                            ? scheduled
-                            : DateTime.now().add(const Duration(hours: 3)))
-                      : scheduled,
-                );
-              });
-            },
-          ),
-          if (isLater) ...[
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: _pickScheduledDateTime,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE4EAF1)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_rounded,
-                      size: 18,
-                      color: Color(0xFF2FA56E),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        scheduled == null
-                            ? 'Choose date and time'
-                            : _formatDateTime(scheduled),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const Icon(Icons.edit_rounded, size: 16),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+  Widget _buildScheduleHeaderActions(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _HeaderScheduleIconButton(
+          icon: Icons.flash_on_rounded,
+          tooltip: 'Book now',
+          selected: !_draft.isScheduled,
+          onTap: () {
+            setState(() {
+              _draft = _draft.copyWith(isScheduled: false);
+            });
+          },
+        ),
+        const SizedBox(width: 8),
+        _HeaderScheduleIconButton(
+          icon: Icons.event_available_rounded,
+          tooltip: _draft.scheduledDate == null
+              ? 'Book later'
+              : 'Book later: ${_formatDateTime(_draft.scheduledDate!)}',
+          selected: _draft.isScheduled,
+          onTap: _pickScheduledDateTime,
+        ),
+      ],
     );
   }
 
   Widget _buildWeightBottomActions(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 0, 18, 2),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(18, 12, 18, bottomInset + 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE7EDF3))),
+      ),
+      child: Row(
         children: [
-          SizedBox(
-            width: double.infinity,
+          Expanded(
             child: FilledButton(
               onPressed: _submitting
                   ? null
                   : () => _advanceFromWeightStep(unknown: true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE9ECF2),
-                foregroundColor: const Color(0xFF111111),
+                foregroundColor: const Color(0xFF475467),
                 minimumSize: const Size.fromHeight(54),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
-              child: const Text(
-                "I don't know my material weight",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              ),
+              child: const Text("Don't know"),
             ),
           ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
             child: FilledButton(
               onPressed: _submitting
                   ? null
@@ -6874,10 +6890,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 backgroundColor: const Color(0xFF2FA56E),
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
               child: const Text(
                 'Submit',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -9147,11 +9166,11 @@ class _WeightStepRouteSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6FD),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1F1F7)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE7EDF3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -9162,8 +9181,8 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF38B47A),
-                  borderRadius: BorderRadius.circular(7),
+                  color: const Color(0xFF2FA56E),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.arrow_upward_rounded,
@@ -9176,7 +9195,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 height: 22,
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
+                  color: const Color(0xFFD8E7DE),
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -9185,7 +9204,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 height: 22,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF05252),
-                  borderRadius: BorderRadius.circular(7),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.arrow_downward_rounded,
@@ -9252,16 +9271,507 @@ class _WeightStepRouteSummary extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: const BoxDecoration(
-                color: Color(0xFFE9EBF2),
+                color: Color(0xFFF2F6F4),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.edit_rounded, size: 15),
+              child: const Icon(
+                Icons.edit_rounded,
+                size: 15,
+                color: Color(0xFF2FA56E),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _WeightStepActionChip extends StatelessWidget {
+  const _WeightStepActionChip({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF2FA56E),
+        side: const BorderSide(color: Color(0xFFDCEBE2)),
+        backgroundColor: const Color(0xFFFAFCFB),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+}
+
+class _HeaderScheduleIconButton extends StatelessWidget {
+  const _HeaderScheduleIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFF5F7FA),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFF2FA56E)
+                  : const Color(0xFFE4EAF1),
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: selected ? Colors.white : const Color(0xFF667085),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SchedulePickerSheet extends StatefulWidget {
+  const _SchedulePickerSheet({
+    required this.initialDateTime,
+    required this.firstDateTime,
+    required this.lastDateTime,
+  });
+
+  final DateTime initialDateTime;
+  final DateTime firstDateTime;
+  final DateTime lastDateTime;
+
+  @override
+  State<_SchedulePickerSheet> createState() => _SchedulePickerSheetState();
+}
+
+class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
+  late DateTime _selectedDate;
+  late int _hour;
+  late int _minute;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = DateUtils.dateOnly(widget.initialDateTime);
+    _hour = widget.initialDateTime.hour;
+    _minute = _roundedMinute(widget.initialDateTime.minute);
+    if (_minute == 60) {
+      _minute = 0;
+      _hour = (_hour + 1) % 24;
+    }
+  }
+
+  DateTime get _selectedDateTime => DateTime(
+    _selectedDate.year,
+    _selectedDate.month,
+    _selectedDate.day,
+    _hour,
+    _minute,
+  );
+
+  int get _displayHour {
+    final hour = _hour % 12;
+    return hour == 0 ? 12 : hour;
+  }
+
+  bool get _isPm => _hour >= 12;
+
+  bool get _isValid => _selectedDateTime.isAfter(widget.firstDateTime);
+
+  static int _roundedMinute(int minute) {
+    final rounded = ((minute + 14) ~/ 15) * 15;
+    return rounded;
+  }
+
+  void _changeHour(int delta) {
+    setState(() {
+      _hour = (_hour + delta) % 24;
+      if (_hour < 0) _hour += 24;
+    });
+  }
+
+  void _changeMinute(int delta) {
+    setState(() {
+      final next = _minute + delta;
+      if (next >= 60) {
+        _minute = 0;
+        _hour = (_hour + 1) % 24;
+      } else if (next < 0) {
+        _minute = 45;
+        _hour = (_hour - 1) % 24;
+        if (_hour < 0) _hour += 24;
+      } else {
+        _minute = next;
+      }
+    });
+  }
+
+  void _setMeridiem(bool pm) {
+    setState(() {
+      if (pm && _hour < 12) {
+        _hour += 12;
+      } else if (!pm && _hour >= 12) {
+        _hour -= 12;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final firstDate = DateUtils.dateOnly(widget.firstDateTime);
+    final lastDate = DateUtils.dateOnly(widget.lastDateTime);
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12, 0, 12, bottomInset + 12),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 34,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Book later',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: const Color(0xFF0B1F3A),
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF2F4F7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Color(0xFF475467),
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatSchedulePreview(_selectedDateTime),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                      primary: const Color(0xFF2FA56E),
+                      onPrimary: Colors.white,
+                      surface: Colors.white,
+                      onSurface: const Color(0xFF0B1F3A),
+                    ),
+                  ),
+                  child: CalendarDatePicker(
+                    initialDate: _selectedDate,
+                    firstDate: firstDate,
+                    lastDate: lastDate,
+                    currentDate: DateTime.now(),
+                    onDateChanged: (date) {
+                      setState(() {
+                        _selectedDate = DateUtils.dateOnly(date);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FBF9),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE4EFE8)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _TimeStepper(
+                          label: 'Hour',
+                          value: _displayHour.toString().padLeft(2, '0'),
+                          onDecrease: () => _changeHour(-1),
+                          onIncrease: () => _changeHour(1),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _TimeStepper(
+                          label: 'Minute',
+                          value: _minute.toString().padLeft(2, '0'),
+                          onDecrease: () => _changeMinute(-15),
+                          onIncrease: () => _changeMinute(15),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _MeridiemToggle(isPm: _isPm, onChanged: _setMeridiem),
+                    ],
+                  ),
+                ),
+                if (!_isValid) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose a future pickup time.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFFE23A4B),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _isValid
+                        ? () => Navigator.of(context).pop(_selectedDateTime)
+                        : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2FA56E),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                    ),
+                    child: const Text('Set Time'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimeStepper extends StatelessWidget {
+  const _TimeStepper({
+    required this.label,
+    required this.value,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: const Color(0xFF667085),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _RoundIconButton(icon: Icons.remove_rounded, onTap: onDecrease),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 30,
+              child: Text(
+                value,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: const Color(0xFF0B1F3A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            _RoundIconButton(icon: Icons.add_rounded, onTap: onIncrease),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  const _RoundIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 17, color: const Color(0xFF2FA56E)),
+      ),
+    );
+  }
+}
+
+class _MeridiemToggle extends StatelessWidget {
+  const _MeridiemToggle({required this.isPm, required this.onChanged});
+
+  final bool isPm;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Column(
+        children: [
+          _MeridiemButton(
+            label: 'AM',
+            selected: !isPm,
+            onTap: () => onChanged(false),
+          ),
+          const SizedBox(height: 4),
+          _MeridiemButton(
+            label: 'PM',
+            selected: isPm,
+            onTap: () => onChanged(true),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MeridiemButton extends StatelessWidget {
+  const _MeridiemButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2FA56E) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: selected ? Colors.white : const Color(0xFF667085),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _formatSchedulePreview(DateTime value) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+  final minute = value.minute.toString().padLeft(2, '0');
+  final suffix = value.hour >= 12 ? 'PM' : 'AM';
+  return '${value.day} ${months[value.month - 1]}, $hour:$minute $suffix';
 }
 
 class _WeightChip extends StatelessWidget {
@@ -9282,15 +9792,17 @@ class _WeightChip extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onTap(),
       labelStyle: TextStyle(
-        color: selected ? Colors.white : const Color(0xFF111111),
-        fontWeight: FontWeight.w600,
+        color: selected ? Colors.white : const Color(0xFF475467),
+        fontWeight: FontWeight.w800,
         fontSize: 12,
       ),
-      selectedColor: const Color(0xFF111111),
+      selectedColor: const Color(0xFF2FA56E),
       backgroundColor: Colors.white,
-      side: const BorderSide(color: Color(0xFFE0E4EA)),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      side: BorderSide(
+        color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE0E7EF),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
     );
   }
 }
@@ -10174,89 +10686,69 @@ class _ChooseTruckCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        height: 58,
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected ? const Color(0xFF2FA56E) : const Color(0xFFD8E1ED),
-            width: selected ? 2 : 1.4,
+            width: selected ? 1.7 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF36506F).withValues(alpha: 0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: const Color(0xFF36506F).withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Stack(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Positioned(
-              right: -6,
-              top: -2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5F8ED),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF12B76A),
-                        shape: BoxShape.circle,
-                      ),
+            SizedBox(
+              width: 52,
+              height: 36,
+              child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    vehicle.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: const Color(0xFF0B1F3A),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Available',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF079455),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 2),
+                  _TruckSpec(
+                    icon: Icons.scale_rounded,
+                    label: vehicle.capacity,
+                  ),
+                ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: SizedBox(
-                    height: 48,
-                    child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
-                  ),
+            if (selected)
+              Container(
+                width: 16,
+                height: 16,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2FA56E),
+                  shape: BoxShape.circle,
                 ),
-                const Spacer(),
-                Text(
-                  vehicle.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF0B1F3A),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 12,
                 ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 4,
-                  children: [
-                    _TruckSpec(
-                      icon: Icons.scale_rounded,
-                      label: vehicle.capacity,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
@@ -10276,14 +10768,17 @@ class _TruckSpec extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: const Color(0xFF7D8AA0)),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF6A7890),
-            fontWeight: FontWeight.w700,
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF6A7890),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -10312,27 +10807,6 @@ class _SearchMethodSheet extends StatelessWidget {
         ],
       ),
       child: child,
-    );
-  }
-}
-
-class _SheetDragHandle extends StatelessWidget {
-  const _SheetDragHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: Center(
-        child: Container(
-          width: 86,
-          height: 7,
-          decoration: BoxDecoration(
-            color: const Color(0xFFC8D3E1),
-            borderRadius: BorderRadius.circular(999),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -11051,52 +11525,94 @@ class ClientBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x16000000),
-                blurRadius: 24,
-                offset: Offset(0, -6),
+    final items = <_ClientNavItem>[
+      const _ClientNavItem(label: 'Home', icon: LucideIcons.house),
+      const _ClientNavItem(label: 'Activity', icon: LucideIcons.map),
+      const _ClientNavItem(label: 'Profile', icon: LucideIcons.user),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(72, 0, 72, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.16),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: NavItem(
-                  label: 'Home',
-                  icon: LucideIcons.house,
-                  selected: currentIndex == 0,
-                  onTap: () => onTap(0),
+              child: SizedBox(
+                height: 58,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = constraints.maxWidth / items.length;
+                    const indicatorSize = 50.0;
+                    final selectedIndex = currentIndex.clamp(
+                      0,
+                      items.length - 1,
+                    );
+                    final left =
+                        (itemWidth * selectedIndex) +
+                        ((itemWidth - indicatorSize) / 2);
+
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 360),
+                          curve: Curves.easeOutCubic,
+                          left: left,
+                          top: 4,
+                          width: indicatorSize,
+                          height: indicatorSize,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2FA56E),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF2FA56E,
+                                  ).withValues(alpha: 0.34),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            for (var index = 0; index < items.length; index++)
+                              Expanded(
+                                child: _ClientBottomBarItem(
+                                  item: items[index],
+                                  selected: selectedIndex == index,
+                                  onTap: () => onTap(index),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: NavItem(
-                  label: 'Activity',
-                  icon: LucideIcons.map,
-                  selected: currentIndex == 1,
-                  onTap: () => onTap(1),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: NavItem(
-                  label: 'Profile',
-                  icon: LucideIcons.user,
-                  selected: currentIndex == 2,
-                  onTap: () => onTap(2),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -11104,48 +11620,44 @@ class ClientBottomBar extends StatelessWidget {
   }
 }
 
-class NavItem extends StatelessWidget {
-  const NavItem({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    this.icon,
-  });
+class _ClientNavItem {
+  const _ClientNavItem({required this.label, required this.icon});
 
   final String label;
-  final IconData? icon;
+  final IconData icon;
+}
+
+class _ClientBottomBarItem extends StatelessWidget {
+  const _ClientBottomBarItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _ClientNavItem item;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.primary : Colors.black45;
+    final iconColor = selected ? Colors.white : const Color(0xFF64748B);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 2, bottom: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: Center(child: Icon(icon, size: 20, color: color)),
+    return Tooltip(
+      message: item.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onTap,
+        child: Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: AnimatedScale(
+              scale: selected ? 1.14 : 1,
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutBack,
+              child: Icon(item.icon, size: 22, color: iconColor),
             ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

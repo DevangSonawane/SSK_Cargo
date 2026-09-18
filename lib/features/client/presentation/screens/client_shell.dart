@@ -17,22 +17,31 @@ class ClientShell extends ConsumerWidget {
 
     return Scaffold(
       extendBody: true,
-      body: navigationShell,
-      bottomNavigationBar: isBottomNavVisible
-          ? ClientBottomBar(
-              currentIndex: currentIndex,
-              onTap: (index) {
-                final branchIndex = _branchIndexForVisibleTab(index);
-                if (branchIndex == navigationShell.currentIndex) {
-                  return;
-                }
-                navigationShell.goBranch(
-                  branchIndex,
-                  initialLocation: branchIndex == navigationShell.currentIndex,
-                );
-              },
-            )
-          : const SizedBox.shrink(),
+      body: Stack(
+        children: [
+          Positioned.fill(child: navigationShell),
+          if (isBottomNavVisible)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: ClientBottomBar(
+                currentIndex: currentIndex,
+                onTap: (index) {
+                  final branchIndex = _branchIndexForVisibleTab(index);
+                  if (branchIndex == navigationShell.currentIndex) {
+                    return;
+                  }
+                  navigationShell.goBranch(
+                    branchIndex,
+                    initialLocation:
+                        branchIndex == navigationShell.currentIndex,
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
