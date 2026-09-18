@@ -389,15 +389,15 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 onNotificationsTap: () => context.push('/broker/notifications'),
                 onProfileTap: () => context.push('/broker/profile'),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               _NewBookingsHero(pendingCount: pendingCount),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               _SearchField(
                 controller: _searchController,
                 hintText: 'Search booking ID, location...',
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -424,7 +424,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               requestsAsync.when(
                 data: (_) {
                   if (visibleRequests.isEmpty) {
@@ -440,13 +440,13 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     builder: (context, constraints) {
                       final useGrid = constraints.maxWidth >= 760;
                       return Wrap(
-                        spacing: 14,
-                        runSpacing: 14,
+                        spacing: 12,
+                        runSpacing: 12,
                         children: [
                           for (final request in visibleRequests)
                             SizedBox(
                               width: useGrid
-                                  ? (constraints.maxWidth - 14) / 2
+                                  ? (constraints.maxWidth - 12) / 2
                                   : constraints.maxWidth,
                               child: _BookingRequestCard(
                                 request: request,
@@ -558,90 +558,73 @@ class _NewBookingsHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF5F83FF), Color(0xFFB5CCFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5F83FF).withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
         children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.inventory_2_outlined,
+              color: Color(0xFF2152D0),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'New bookings',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'waiting for you',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.88),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  color: Colors.white.withValues(alpha: 0.24),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  pendingCount.toString(),
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                  pendingCount == 1
+                      ? '1 request needs attention'
+                      : '$pendingCount requests need attention',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 110,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.local_shipping_outlined,
-                      size: 50,
-                      color: Colors.white.withValues(alpha: 0.92),
-                    ),
-                    const SizedBox(height: 8),
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 34,
-                      color: Colors.white.withValues(alpha: 0.78),
-                    ),
-                  ],
-                ),
-              ],
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              pendingCount.toString(),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -737,19 +720,19 @@ class _BookingRequestCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEFF2F6)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -782,7 +765,7 @@ class _BookingRequestCard extends StatelessWidget {
                             const ExpressBadge(compact: true),
                         ],
                       ),
-                      const SizedBox(height: 7),
+                      const SizedBox(height: 6),
                       Text(
                         '${_locationLead(pickupText)} to ${_locationLead(dropText)}',
                         maxLines: 2,
@@ -790,7 +773,7 @@ class _BookingRequestCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: const Color(0xFF0F172A),
-                              fontSize: 15,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w900,
                               height: 1.25,
                             ),
@@ -804,7 +787,7 @@ class _BookingRequestCard extends StatelessWidget {
                   children: [
                     Text(
                       amountText,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: const Color(0xFF0F172A),
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w900,
@@ -836,7 +819,7 @@ class _BookingRequestCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Column(
               children: [
                 _JobLocationRow(
@@ -844,7 +827,7 @@ class _BookingRequestCard extends StatelessWidget {
                   value: pickupText,
                   iconColor: const Color(0xFF10B981),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _JobLocationRow(
                   label: 'Drop',
                   value: dropText,
@@ -852,7 +835,7 @@ class _BookingRequestCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -878,10 +861,10 @@ class _BookingRequestCard extends StatelessWidget {
               ],
             ),
             if (request.offerHistory.length > 1) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               _NegotiationHistory(entries: request.offerHistory),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             if (showAssignAction) ...[
               SizedBox(
                 width: double.infinity,
@@ -891,7 +874,7 @@ class _BookingRequestCard extends StatelessWidget {
                   label: const Text('Assign Driver & Truck'),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2152D0),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -940,7 +923,7 @@ class _BookingRequestCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               _ActionHint(
                 text:
                     'The client accepted at $amountText - confirm to finalize the booking.',
@@ -982,7 +965,7 @@ class _BookingRequestCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               _ActionHint(
                 text: counterLimitReached
                     ? 'You have used your counter-offers - accept or decline instead.'
@@ -998,6 +981,7 @@ class _BookingRequestCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2152D0),
                     side: const BorderSide(color: Color(0xFFC7D7FE)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1005,7 +989,7 @@ class _BookingRequestCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: [
                 const Icon(
@@ -1551,8 +1535,11 @@ class _JobLocationRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.location_on_outlined, size: 15, color: iconColor),
-        const SizedBox(width: 8),
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(Icons.location_on_outlined, size: 14, color: iconColor),
+        ),
+        const SizedBox(width: 7),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1568,7 +1555,7 @@ class _JobLocationRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF334155),
@@ -1593,11 +1580,11 @@ class _JobMetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      constraints: const BoxConstraints(minHeight: 50),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1612,7 +1599,7 @@ class _JobMetricTile extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             value,
             maxLines: 1,
@@ -1725,7 +1712,7 @@ class _JobActionButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: borderColor),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
