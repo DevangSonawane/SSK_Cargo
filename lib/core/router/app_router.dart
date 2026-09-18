@@ -16,6 +16,7 @@ import '../../features/gps_tracking/presentation/screens/gps_wallet_billing_scre
 import '../../features/gps_tracking/presentation/screens/gps_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
+import '../../features/broker/presentation/screens/broker_active_jobs_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
@@ -520,6 +521,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/broker/profile',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BrokerProfileScreen()),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/broker/active-jobs',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerActiveJobsScreen()),
               ),
             ],
           ),

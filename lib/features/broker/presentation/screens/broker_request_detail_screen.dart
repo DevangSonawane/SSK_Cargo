@@ -41,6 +41,7 @@ class _BrokerRequestDetailScreenState
           status: 'pending',
           pendingConfirmationBy: '',
           clientName: 'Customer',
+          clientPhone: '',
           clientInitials: 'C',
           productName: 'Booking request',
           from: 'Pickup location not provided',
@@ -495,6 +496,9 @@ class _BrokerRequestDetailScreenState
     final current = _request;
     final booking =
         _detailAsMap(payload['booking']) ?? const <String, dynamic>{};
+    final route = _detailAsMap(payload['route']) ?? const <String, dynamic>{};
+    final bookingRoute =
+        _detailAsMap(booking['route']) ?? const <String, dynamic>{};
     final status = _readString(payload, const [
       'status',
       'requestStatus',
@@ -518,10 +522,23 @@ class _BrokerRequestDetailScreenState
           ? current.pendingConfirmationBy
           : pendingConfirmationBy,
       clientName: current.clientName,
+      clientPhone: current.clientPhone,
       clientInitials: current.clientInitials,
       productName: current.productName,
-      from: current.from,
-      to: current.to,
+      from: _detailFirstNonEmpty([
+        _detailLocationString(payload, _detailPickupKeys),
+        _detailLocationString(booking, _detailPickupKeys),
+        _detailLocationString(route, _detailRoutePickupKeys),
+        _detailLocationString(bookingRoute, _detailRoutePickupKeys),
+        current.from,
+      ]),
+      to: _detailFirstNonEmpty([
+        _detailLocationString(payload, _detailDropKeys),
+        _detailLocationString(booking, _detailDropKeys),
+        _detailLocationString(route, _detailRouteDropKeys),
+        _detailLocationString(bookingRoute, _detailRouteDropKeys),
+        current.to,
+      ]),
       weight: current.weight,
       vehicleType: current.vehicleType,
       value: current.value,
@@ -2313,6 +2330,142 @@ String _detailString(Map<String, dynamic>? json, List<String> keys) {
     final value = json[key]?.toString().trim();
     if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
       return value;
+    }
+  }
+  return '';
+}
+
+const _detailPickupKeys = [
+  'pickup',
+  'from',
+  'pickup_location',
+  'pickup_address',
+  'pickupLocation',
+  'pickupAddress',
+  'pickup_location_name',
+  'pickupLocationName',
+  'origin',
+  'origin_address',
+  'originAddress',
+  'source',
+  'pickup_details',
+  'pickupDetails',
+];
+
+const _detailRoutePickupKeys = [
+  'from',
+  'pickup',
+  'pickup_location',
+  'pickup_address',
+  'pickupLocation',
+  'pickupAddress',
+  'pickup_location_name',
+  'pickupLocationName',
+  'origin',
+  'origin_address',
+  'originAddress',
+  'source',
+];
+
+const _detailDropKeys = [
+  'drop',
+  'dropoff',
+  'drop_off',
+  'to',
+  'dropoff_location',
+  'drop_off_location',
+  'drop_location',
+  'dropoffLocation',
+  'dropOffLocation',
+  'dropoffAddress',
+  'dropAddress',
+  'drop_address',
+  'drop_location_name',
+  'dropLocationName',
+  'destination',
+  'destination_address',
+  'destinationAddress',
+  'target',
+  'drop_details',
+  'dropDetails',
+  'dropoff_details',
+  'dropoffDetails',
+];
+
+const _detailRouteDropKeys = [
+  'to',
+  'drop',
+  'dropoff',
+  'dropoff_location',
+  'drop_location',
+  'dropoffLocation',
+  'dropOffLocation',
+  'dropoffAddress',
+  'dropAddress',
+  'drop_address',
+  'drop_location_name',
+  'dropLocationName',
+  'destination',
+  'destination_address',
+  'destinationAddress',
+  'target',
+];
+
+String _detailFirstNonEmpty(List<String> values) {
+  for (final value in values) {
+    final text = value.trim();
+    if (text.isNotEmpty) {
+      return text;
+    }
+  }
+  return '';
+}
+
+String _detailLocationString(Map<String, dynamic> json, List<String> keys) {
+  const nestedKeys = [
+    'formattedAddress',
+    'formatted_address',
+    'fullAddress',
+    'full_address',
+    'address',
+    'addressLine',
+    'address_line',
+    'name',
+    'label',
+    'description',
+    'place',
+    'city',
+  ];
+
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    if (value is Map<String, dynamic>) {
+      final nested = _detailFirstNonEmpty([
+        _detailString(value, nestedKeys),
+        [
+          _detailString(value, const ['name', 'label', 'place']),
+          _detailString(value, const [
+            'address',
+            'formattedAddress',
+            'formatted_address',
+          ]),
+        ].where((part) => part.isNotEmpty).join(', '),
+      ]);
+      if (nested.isNotEmpty) return nested;
+      continue;
+    }
+    if (value is Map) {
+      final nested = _detailLocationString(
+        value.cast<String, dynamic>(),
+        nestedKeys,
+      );
+      if (nested.isNotEmpty) return nested;
+      continue;
+    }
+    final text = value.toString().trim();
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
     }
   }
   return '';

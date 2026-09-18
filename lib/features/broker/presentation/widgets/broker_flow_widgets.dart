@@ -32,6 +32,29 @@ final brokerPendingRequestsProvider = FutureProvider.autoDispose<int>((
   ).requests.where(isBrokerJobRequestAttentionCount).length;
 });
 
+final brokerActiveJobsCountProvider = FutureProvider.autoDispose<int>((
+  ref,
+) async {
+  final session = ref.watch(authSessionProvider).valueOrNull;
+  if (session == null) {
+    throw StateError('No active session');
+  }
+
+  final response = await ref
+      .watch(apiClientProvider)
+      .getBookings(
+        accessToken: session.tokens.accessToken,
+        status: 'confirmed,en_route_pickup,picked_up,in_transit',
+        page: 1,
+        limit: 1,
+      );
+
+  final data = _asMap(response['data']);
+  return _readInt(response, const ['total', 'count']) ??
+      _readInt(data, const ['total', 'count']) ??
+      _extractItems(data, response).length;
+});
+
 final brokerHistoryProvider =
     FutureProvider.autoDispose<List<TrackingDemoShipment>>((ref) async {
       final session = ref.watch(authSessionProvider).valueOrNull;
@@ -172,6 +195,7 @@ class BookingRequest {
     required this.status,
     required this.pendingConfirmationBy,
     required this.clientName,
+    required this.clientPhone,
     required this.clientInitials,
     required this.productName,
     required this.from,
@@ -188,12 +212,16 @@ class BookingRequest {
     this.assignedTruckName = '',
     this.expiresInMinutes = 0,
     this.isExpress = false,
+    this.respondentCountersUsed = 0,
+    this.maxCountersPerSide = 0,
+    this.offerHistory = const <BookingOfferHistoryEntry>[],
   });
 
   final String id;
   final String status;
   final String pendingConfirmationBy;
   final String clientName;
+  final String clientPhone;
   final String clientInitials;
   final String productName;
   final String from;
@@ -210,6 +238,16 @@ class BookingRequest {
   final String assignedTruckName;
   final int expiresInMinutes;
   final bool isExpress;
+  final int respondentCountersUsed;
+  final int maxCountersPerSide;
+  final List<BookingOfferHistoryEntry> offerHistory;
+}
+
+class BookingOfferHistoryEntry {
+  const BookingOfferHistoryEntry({required this.by, required this.amount});
+
+  final String by;
+  final double amount;
 }
 
 class BrokerDriverRequest {
@@ -456,6 +494,21 @@ class _BrokerDriverRequestPage {
 }
 
 BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
+  final offerHistory = _asList(json['offerHistory'] ?? json['offer_history'])
+      .whereType<Map<String, dynamic>>()
+      .map(
+        (entry) => BookingOfferHistoryEntry(
+          by: _readString(entry, const [
+            'by',
+            'actor',
+            'side',
+            'role',
+          ]).toLowerCase(),
+          amount: _readDouble(entry, const ['amount', 'price', 'value']),
+        ),
+      )
+      .where((entry) => entry.amount > 0)
+      .toList(growable: false);
   final customer = _asMap(json['customer']);
   final client = _asMap(json['client']);
   final load = _asMap(json['load']);
@@ -472,6 +525,7 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       : json;
   final sourceRoute = _asMap(source['route']);
   final sourceLoad = _asMap(source['load']);
+  final bookingRoute = _asMap(booking['route']);
   final requestStatus = _firstNonEmpty([
     _readString(json, const [
       'status',
@@ -571,7 +625,8 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     'Booking request',
   ]);
   final fromLocation = _firstNonEmpty([
-    _readString(json, const [
+    _readLocationString(json, const [
+      'pickup',
       'from',
       'pickup_location',
       'pickup_address',
@@ -583,8 +638,11 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'origin_address',
       'originAddress',
       'source',
+      'pickup_details',
+      'pickupDetails',
     ]),
-    _readString(source, const [
+    _readLocationString(source, const [
+      'pickup',
       'from',
       'pickup_location',
       'pickup_address',
@@ -596,8 +654,42 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'origin_address',
       'originAddress',
       'source',
+      'pickup_details',
+      'pickupDetails',
     ]),
-    _readString(route, const [
+    _readLocationString(request, const [
+      'pickup',
+      'from',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+      'pickup_details',
+      'pickupDetails',
+    ]),
+    _readLocationString(booking, const [
+      'pickup',
+      'from',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+      'pickup_details',
+      'pickupDetails',
+    ]),
+    _readLocationString(route, const [
       'from',
       'pickup',
       'pickup_location',
@@ -612,13 +704,27 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'originAddress',
       'source',
     ]),
-    _readString(sourceRoute, const [
+    _readLocationString(sourceRoute, const [
       'from',
       'pickup',
       'pickup_location',
       'pickup_address',
       'pickupLocation',
       'pickup_address',
+      'pickupAddress',
+      'pickup_location_name',
+      'pickupLocationName',
+      'origin',
+      'origin_address',
+      'originAddress',
+      'source',
+    ]),
+    _readLocationString(bookingRoute, const [
+      'from',
+      'pickup',
+      'pickup_location',
+      'pickup_address',
+      'pickupLocation',
       'pickupAddress',
       'pickup_location_name',
       'pickupLocationName',
@@ -630,7 +736,10 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     'Pickup location not provided',
   ]);
   final toLocation = _firstNonEmpty([
-    _readString(json, const [
+    _readLocationString(json, const [
+      'drop',
+      'dropoff',
+      'drop_off',
       'to',
       'dropoff_location',
       'drop_off_location',
@@ -646,8 +755,15 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'destination_address',
       'destinationAddress',
       'target',
+      'drop_details',
+      'dropDetails',
+      'dropoff_details',
+      'dropoffDetails',
     ]),
-    _readString(source, const [
+    _readLocationString(source, const [
+      'drop',
+      'dropoff',
+      'drop_off',
       'to',
       'dropoff_location',
       'drop_off_location',
@@ -663,9 +779,62 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'destination_address',
       'destinationAddress',
       'target',
+      'drop_details',
+      'dropDetails',
+      'dropoff_details',
+      'dropoffDetails',
     ]),
-    _readString(route, const [
+    _readLocationString(request, const [
+      'drop',
+      'dropoff',
+      'drop_off',
       'to',
+      'dropoff_location',
+      'drop_off_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+      'drop_details',
+      'dropDetails',
+      'dropoff_details',
+      'dropoffDetails',
+    ]),
+    _readLocationString(booking, const [
+      'drop',
+      'dropoff',
+      'drop_off',
+      'to',
+      'dropoff_location',
+      'drop_off_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+      'drop_details',
+      'dropDetails',
+      'dropoff_details',
+      'dropoffDetails',
+    ]),
+    _readLocationString(route, const [
+      'to',
+      'drop',
       'dropoff',
       'dropoff_location',
       'drop_location',
@@ -681,8 +850,27 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       'destinationAddress',
       'target',
     ]),
-    _readString(sourceRoute, const [
+    _readLocationString(sourceRoute, const [
       'to',
+      'drop',
+      'dropoff',
+      'dropoff_location',
+      'drop_location',
+      'dropoffLocation',
+      'dropOffLocation',
+      'dropoffAddress',
+      'dropAddress',
+      'drop_address',
+      'drop_location_name',
+      'dropLocationName',
+      'destination',
+      'destination_address',
+      'destinationAddress',
+      'target',
+    ]),
+    _readLocationString(bookingRoute, const [
+      'to',
+      'drop',
       'dropoff',
       'dropoff_location',
       'drop_location',
@@ -806,6 +994,16 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     _readString(customer, const ['name', 'full_name', 'display_name']),
     'Customer',
   ]);
+  final clientPhone = _firstNonEmpty([
+    _readString(json, const ['clientPhone', 'client_phone', 'customer_phone']),
+    _readString(source, const [
+      'clientPhone',
+      'client_phone',
+      'customer_phone',
+    ]),
+    _readString(client, const ['phone', 'mobile', 'phone_number']),
+    _readString(customer, const ['phone', 'mobile', 'phone_number']),
+  ]);
   final driverId = _firstNonEmpty([
     _readString(json, const ['driver_id', 'driverId', 'assigned_driver_id']),
     _readString(source, const ['driver_id', 'driverId', 'assigned_driver_id']),
@@ -905,6 +1103,7 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     status: status.isEmpty ? 'unknown' : status,
     pendingConfirmationBy: pendingConfirmationBy,
     clientName: clientName,
+    clientPhone: clientPhone,
     clientInitials: _initials(clientName),
     productName: productName,
     from: fromLocation,
@@ -931,6 +1130,24 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
         _readBool(json, const ['isExpress', 'is_express']) ||
         _readBool(source, const ['isExpress', 'is_express']) ||
         _readBool(booking, const ['isExpress', 'is_express']),
+    respondentCountersUsed:
+        _readInt(json, const [
+          'respondentCountersUsed',
+          'respondent_counters_used',
+        ]) ??
+        _readInt(source, const [
+          'respondentCountersUsed',
+          'respondent_counters_used',
+        ]) ??
+        0,
+    maxCountersPerSide:
+        _readInt(json, const ['maxCountersPerSide', 'max_counters_per_side']) ??
+        _readInt(source, const [
+          'maxCountersPerSide',
+          'max_counters_per_side',
+        ]) ??
+        0,
+    offerHistory: offerHistory,
   );
 }
 
@@ -1292,6 +1509,67 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
   return '';
 }
 
+String _readLocationString(Map<String, dynamic> json, List<String> keys) {
+  const locationKeys = [
+    'formattedAddress',
+    'formatted_address',
+    'fullAddress',
+    'full_address',
+    'address',
+    'addressLine',
+    'address_line',
+    'location',
+    'name',
+    'label',
+    'description',
+    'place',
+    'city',
+  ];
+
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+
+    if (value is Map<String, dynamic>) {
+      final nested = _firstNonEmpty([
+        _readString(value, locationKeys),
+        [
+          _readString(value, const ['name', 'label', 'place']),
+          _readString(value, const [
+            'address',
+            'formattedAddress',
+            'formatted_address',
+          ]),
+        ].where((part) => part.isNotEmpty).join(', '),
+      ]);
+      if (nested.isNotEmpty) {
+        return nested;
+      }
+      continue;
+    }
+
+    if (value is Map) {
+      final nestedMap = value.map(
+        (nestedKey, nestedValue) => MapEntry(nestedKey.toString(), nestedValue),
+      );
+      final nested = _readLocationString(nestedMap, locationKeys);
+      if (nested.isNotEmpty) {
+        return nested;
+      }
+      continue;
+    }
+
+    final text = value.toString().trim();
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+
+  return '';
+}
+
 bool _readBool(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
@@ -1339,6 +1617,26 @@ double _readDouble(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return 0;
+}
+
+int? _readInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    final parsed = int.tryParse(value.toString().trim());
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 DateTime? _parseDateTimeObject(Object? value) {
@@ -1996,11 +2294,13 @@ class BrokerBottomBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     required this.pendingRequestsCount,
+    this.activeJobsCount = 0,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final int pendingRequestsCount;
+  final int activeJobsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -2009,6 +2309,11 @@ class BrokerBottomBar extends StatelessWidget {
         icon: Icons.inbox_rounded,
         label: 'New Booking',
         showDot: pendingRequestsCount > 0,
+      ),
+      _BrokerNavItem(
+        icon: Icons.assignment_turned_in_rounded,
+        label: 'Active',
+        showDot: activeJobsCount > 0,
       ),
       const _BrokerNavItem(
         icon: Icons.local_shipping_rounded,

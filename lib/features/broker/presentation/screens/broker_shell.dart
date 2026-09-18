@@ -16,6 +16,8 @@ class BrokerShell extends ConsumerWidget {
     final requestsAsync = ref.watch(
       brokerJobRequestsProvider((page: 1, limit: 100)),
     );
+    final activeJobsCount =
+        ref.watch(brokerActiveJobsCountProvider).valueOrNull ?? 0;
     final pendingCount =
         requestsAsync.valueOrNull
             ?.where(isBrokerJobRequestAttentionCount)
@@ -27,6 +29,7 @@ class BrokerShell extends ConsumerWidget {
     final showHeader =
         location != '/broker/profile' &&
         location != '/broker/home' &&
+        location != '/broker/active-jobs' &&
         location != '/broker/vehicles' &&
         location != '/broker/tracking' &&
         location != '/broker/history';
@@ -37,16 +40,18 @@ class BrokerShell extends ConsumerWidget {
         displayName == null
             ? 'Good morning, Aman'
             : 'Good morning, ${displayName.split(' ').first}',
-      1 => 'Vehicles',
-      2 => 'Tracking',
-      3 => 'History',
+      1 => 'Active Jobs',
+      2 => 'Vehicles',
+      3 => 'Tracking',
+      4 => 'History',
       _ => 'Broker',
     };
     final headerSubtitle = switch (currentTab) {
       0 => 'New bookings waiting for you',
-      1 => 'Manage your fleet at a glance',
-      2 => 'Monitor driver movement',
-      3 => 'Review recent bookings',
+      1 => 'Jobs currently in progress',
+      2 => 'Manage your fleet at a glance',
+      3 => 'Monitor driver movement',
+      4 => 'Review recent bookings',
       _ => null,
     };
 
@@ -74,12 +79,14 @@ class BrokerShell extends ConsumerWidget {
           ? BrokerBottomBar(
               currentIndex: navigationShell.currentIndex,
               pendingRequestsCount: pendingCount,
+              activeJobsCount: activeJobsCount,
               onTap: (index) {
                 final route = switch (index) {
                   0 => '/broker/home',
-                  1 => '/broker/vehicles',
-                  2 => '/broker/tracking',
-                  3 => '/broker/history',
+                  1 => '/broker/active-jobs',
+                  2 => '/broker/vehicles',
+                  3 => '/broker/tracking',
+                  4 => '/broker/history',
                   _ => '/broker/home',
                 };
                 context.go(route);

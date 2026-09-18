@@ -19,6 +19,16 @@ class BrokerHomeScreen extends ConsumerStatefulWidget {
 
 class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   static const _requestsQuery = (page: 1, limit: 100);
+  static const BrokerDriversQuery _driversQuery = (
+    status: null,
+    page: 1,
+    limit: 100,
+  );
+  static const BrokerTrucksQuery _trucksQuery = (
+    status: null,
+    page: 1,
+    limit: 100,
+  );
   final TextEditingController _searchController = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
 
@@ -184,6 +194,68 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           .counterJobRequest(accessToken: token, id: request.id, amount: amount)
           .then((_) {}),
       successMessage: 'Counter sent.',
+    );
+  }
+
+  Future<bool> _assignRequest(
+    BookingRequest request, {
+    required String driverId,
+    required String truckId,
+  }) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _busyRequestIds.contains(request.id)) {
+      return false;
+    }
+
+    setState(() => _busyRequestIds.add(request.id));
+    try {
+      await ref
+          .read(apiClientProvider)
+          .assignDriverToJob(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+            driverId: driverId,
+            truckId: truckId,
+          );
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+      ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
+      ref.invalidate(brokerDriversApiProvider(_driversQuery));
+      ref.invalidate(brokerTrucksProvider(_trucksQuery));
+
+      if (!mounted) return true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offer sent to the driver - waiting for response.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+      return true;
+    } on ApiException catch (error) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => _busyRequestIds.remove(request.id));
+      }
+    }
+  }
+
+  Future<void> _showAssignmentSheet(BookingRequest request) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _HomeAssignmentSheet(
+        request: request,
+        onAssign: (driverId, truckId) =>
+            _assignRequest(request, driverId: driverId, truckId: truckId),
+      ),
     );
   }
 
@@ -364,38 +436,39 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     );
                   }
 
-                  return Column(
-                    children: [
-                      for (
-                        var index = 0;
-                        index < visibleRequests.length;
-                        index++
-                      ) ...[
-                        _BookingRequestCard(
-                          request: visibleRequests[index],
-                          busy: _busyRequestIds.contains(
-                            visibleRequests[index].id,
-                          ),
-                          onTap: () async {
-                            final changed = await context.push<bool>(
-                              '/broker/request',
-                              extra: visibleRequests[index],
-                            );
-                            if (changed == true && mounted) {
-                              await _refresh();
-                            }
-                          },
-                          onAccept: () =>
-                              _acceptRequest(visibleRequests[index]),
-                          onCounter: () =>
-                              _counterRequest(visibleRequests[index]),
-                          onDecline: () =>
-                              _declineRequest(visibleRequests[index]),
-                        ),
-                        if (index != visibleRequests.length - 1)
-                          const SizedBox(height: 14),
-                      ],
-                    ],
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final useGrid = constraints.maxWidth >= 760;
+                      return Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: [
+                          for (final request in visibleRequests)
+                            SizedBox(
+                              width: useGrid
+                                  ? (constraints.maxWidth - 14) / 2
+                                  : constraints.maxWidth,
+                              child: _BookingRequestCard(
+                                request: request,
+                                busy: _busyRequestIds.contains(request.id),
+                                onTap: () async {
+                                  final changed = await context.push<bool>(
+                                    '/broker/request',
+                                    extra: request,
+                                  );
+                                  if (changed == true && mounted) {
+                                    await _refresh();
+                                  }
+                                },
+                                onAccept: () => _acceptRequest(request),
+                                onCounter: () => _counterRequest(request),
+                                onDecline: () => _declineRequest(request),
+                                onAssign: () => _showAssignmentSheet(request),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   );
                 },
                 loading: () => const Padding(
@@ -626,6 +699,7 @@ class _BookingRequestCard extends StatelessWidget {
     required this.onAccept,
     required this.onCounter,
     required this.onDecline,
+    required this.onAssign,
   });
 
   final BookingRequest request;
@@ -634,30 +708,21 @@ class _BookingRequestCard extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onCounter;
   final VoidCallback onDecline;
+  final VoidCallback onAssign;
 
   @override
   Widget build(BuildContext context) {
-    final visual = _bookingRequestVisual(request.status);
     final pickupText = _locationText(
       request.from,
       'Pickup location unavailable',
     );
     final dropText = _locationText(request.to, 'Drop-off location unavailable');
     final status = _normalizeStatus(request.status);
-    final showPrimaryActions = const {
-      '',
-      'unknown',
-      'pending',
-      'requested',
-      'new',
-      'open',
-      'open_request',
-      'review',
-      'review_request',
-      'awaiting',
-      'awaiting_action',
-      'waiting',
-    }.contains(status);
+    final amountText = _formatRequestAmount(request.value);
+    final counterLimitReached =
+        request.maxCountersPerSide > 0 &&
+        request.respondentCountersUsed >= request.maxCountersPerSide;
+    final showPrimaryActions = _isOpenRequestStatus(status);
     final showConfirmActions =
         status == 'awaiting_confirmation' &&
         const {
@@ -672,19 +737,19 @@ class _BookingRequestCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE7EDF5)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEFF2F6)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -692,201 +757,236 @@ class _BookingRequestCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                _StatusBadge(visual: visual),
-                if (request.isExpress) ...[
-                  const SizedBox(width: 8),
-                  const ExpressBadge(compact: true),
-                ],
-                const Spacer(),
-                Text(
-                  request.value,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF2152D0),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Icon(Icons.more_vert_rounded, color: Color(0xFF334155)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Load ID',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF94A3B8),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '#${request.id.toUpperCase()}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF0F172A),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              request.requestedAt.isEmpty
-                  ? 'Requested just now'
-                  : request.requestedAt,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
-            ),
-            const SizedBox(height: 16),
-            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(width: 36, child: _RouteLine()),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _RoutePoint(
-                        label: 'Pickup',
-                        icon: Icons.location_on_rounded,
-                        place: pickupText,
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 5,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            _bookingRef(request),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: const Color(0xFF94A3B8),
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          _TruckTypeBadge(label: request.vehicleType),
+                          if (request.isExpress)
+                            const ExpressBadge(compact: true),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _RoutePoint(
-                        label: 'Drop-off',
-                        icon: Icons.send_rounded,
-                        place: dropText,
+                      const SizedBox(height: 7),
+                      Text(
+                        '${_locationLead(pickupText)} to ${_locationLead(dropText)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: const Color(0xFF0F172A),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              height: 1.25,
+                            ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      amountText,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF0F172A),
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.schedule_rounded,
+                          size: 12,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          request.requestedAt.isEmpty
+                              ? 'Just now'
+                              : request.requestedAt,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F8FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_shipping_rounded,
-                    color: Color(0xFF2152D0),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '${request.weight} • ${request.vehicleType}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF0F172A),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            Column(
+              children: [
+                _JobLocationRow(
+                  label: 'Pickup',
+                  value: pickupText,
+                  iconColor: const Color(0xFF10B981),
+                ),
+                const SizedBox(height: 10),
+                _JobLocationRow(
+                  label: 'Drop',
+                  value: dropText,
+                  iconColor: const Color(0xFFEF4444),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: visual.backgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: visual.borderColor),
-              ),
-              child: Row(
-                children: [
-                  Icon(visual.icon, size: 16, color: visual.textColor),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      visual.description,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: visual.textColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: _JobMetricTile(
+                    label: 'Distance',
+                    value: _distanceText(request.distance),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _JobMetricTile(
+                    label: 'Weight',
+                    value: request.weight.trim().isEmpty ? '-' : request.weight,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _JobMetricTile(
+                    label: 'Client',
+                    value: request.clientName,
+                  ),
+                ),
+              ],
             ),
+            if (request.offerHistory.length > 1) ...[
+              const SizedBox(height: 14),
+              _NegotiationHistory(entries: request.offerHistory),
+            ],
             const SizedBox(height: 14),
-            if (showPrimaryActions || showConfirmActions) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: busy ? null : onDecline,
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      label: const Text('Decline'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFE23A4B),
-                        side: const BorderSide(color: Color(0xFFF5B7BF)),
-                      ),
-                    ),
-                  ),
-                  if (showPrimaryActions) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: busy ? null : onCounter,
-                        icon: const Icon(Icons.currency_rupee, size: 15),
-                        label: const Text('Counter'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF2152D0),
-                          side: const BorderSide(color: Color(0xFFC7D7FE)),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: busy ? null : onAccept,
-                      icon: busy
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.check_rounded, size: 17),
-                      label: Text(showConfirmActions ? 'Confirm' : 'Accept'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF2FA56E),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ] else if (showAssignAction) ...[
+            if (showAssignAction) ...[
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: busy ? null : onTap,
+                  onPressed: busy ? null : onAssign,
                   icon: const Icon(Icons.local_shipping_rounded, size: 17),
                   label: const Text('Assign Driver & Truck'),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2152D0),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
             ] else if (status == 'countered') ...[
               _InlineStatusNote(
                 icon: Icons.schedule_rounded,
-                text: 'Waiting for the client to respond to your counter.',
+                text: 'Waiting for client response to your $amountText offer',
+                color: const Color(0xFFD97706),
+                backgroundColor: const Color(0xFFFFFBEB),
+                borderColor: const Color(0xFFFDE68A),
               ),
-            ] else if (status == 'awaiting_confirmation') ...[
+            ] else if (status == 'awaiting_confirmation' &&
+                !showConfirmActions) ...[
               _InlineStatusNote(
                 icon: Icons.schedule_rounded,
-                text: 'Accepted - waiting for the client to confirm.',
+                text: 'You accepted - waiting for the client to confirm',
+                color: const Color(0xFF0F766E),
+                backgroundColor: const Color(0xFFF0FDFA),
+                borderColor: const Color(0xFF99F6E4),
+              ),
+            ] else if (showConfirmActions) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _JobActionButton(
+                      label: 'Confirm',
+                      icon: Icons.check_circle_outline_rounded,
+                      color: const Color(0xFF047857),
+                      borderColor: const Color(0xFFA7F3D0),
+                      onPressed: busy ? null : onAccept,
+                      loading: busy,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _JobActionButton(
+                      label: 'Decline',
+                      icon: Icons.cancel_outlined,
+                      color: const Color(0xFF64748B),
+                      borderColor: const Color(0xFFE2E8F0),
+                      onPressed: busy ? null : onDecline,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _ActionHint(
+                text:
+                    'The client accepted at $amountText - confirm to finalize the booking.',
+              ),
+            ] else if (showPrimaryActions) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _JobActionButton(
+                      label: 'Accept',
+                      icon: Icons.check_circle_outline_rounded,
+                      color: const Color(0xFF047857),
+                      borderColor: const Color(0xFFA7F3D0),
+                      onPressed: busy ? null : onAccept,
+                      loading: busy,
+                    ),
+                  ),
+                  if (!counterLimitReached) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _JobActionButton(
+                        label: 'Counter',
+                        icon: Icons.currency_rupee_rounded,
+                        color: const Color(0xFF2152D0),
+                        borderColor: const Color(0xFFC7D7FE),
+                        onPressed: busy ? null : onCounter,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _JobActionButton(
+                      label: 'Decline',
+                      icon: Icons.cancel_outlined,
+                      color: const Color(0xFF64748B),
+                      borderColor: const Color(0xFFE2E8F0),
+                      onPressed: busy ? null : onDecline,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _ActionHint(
+                text: counterLimitReached
+                    ? 'You have used your counter-offers - accept or decline instead.'
+                    : 'Your offer of $amountText is live - accept to lock it in, or counter/decline.',
               ),
             ] else ...[
               SizedBox(
@@ -898,10 +998,39 @@ class _BookingRequestCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2152D0),
                     side: const BorderSide(color: Color(0xFFC7D7FE)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(
+                  Icons.phone_outlined,
+                  size: 13,
+                  color: Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    [
+                      request.clientName,
+                      if (request.clientPhone.isNotEmpty) request.clientPhone,
+                      if (request.requestedAt.isNotEmpty) request.requestedAt,
+                    ].join(' - '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -909,33 +1038,588 @@ class _BookingRequestCard extends StatelessWidget {
   }
 }
 
-class _InlineStatusNote extends StatelessWidget {
-  const _InlineStatusNote({required this.icon, required this.text});
+class _HomeAssignmentSheet extends ConsumerStatefulWidget {
+  const _HomeAssignmentSheet({required this.request, required this.onAssign});
 
+  final BookingRequest request;
+  final Future<bool> Function(String driverId, String truckId) onAssign;
+
+  @override
+  ConsumerState<_HomeAssignmentSheet> createState() =>
+      _HomeAssignmentSheetState();
+}
+
+class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
+  String? _driverId;
+  String? _truckId;
+  bool _defaultsApplied = false;
+  bool _submitting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final driversAsync = ref.watch(
+      brokerDriversApiProvider(_BrokerHomeScreenState._driversQuery),
+    );
+    final trucksAsync = ref.watch(
+      brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: driversAsync.when(
+              loading: () => const _AssignmentLoadingState(),
+              error: (error, _) => _AssignmentErrorState(
+                message: error.toString().replaceFirst('Exception: ', ''),
+                onRetry: () {
+                  ref.invalidate(
+                    brokerDriversApiProvider(
+                      _BrokerHomeScreenState._driversQuery,
+                    ),
+                  );
+                },
+              ),
+              data: (drivers) => trucksAsync.when(
+                loading: () => const _AssignmentLoadingState(),
+                error: (error, _) => _AssignmentErrorState(
+                  message: error.toString().replaceFirst('Exception: ', ''),
+                  onRetry: () {
+                    ref.invalidate(
+                      brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),
+                    );
+                  },
+                ),
+                data: (trucks) => _buildContent(drivers, trucks),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(List<BrokerDriver> drivers, List<BrokerVehicle> trucks) {
+    _applyDefaults(drivers, trucks);
+    final selectedDriver = _findDriverById(drivers, _driverId);
+    final selectedTruck = _findTruckById(trucks, _truckId);
+    final canConfirm =
+        selectedDriver != null &&
+        selectedTruck != null &&
+        _isAssignableDriver(selectedDriver) &&
+        _isAssignableTruck(selectedTruck) &&
+        !_submitting;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF4FF),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.local_shipping_rounded,
+                color: Color(0xFF2152D0),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Assign Driver & Truck',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${_bookingRef(widget.request)} - choose an idle driver and truck.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _AssignmentDropdown<BrokerDriver>(
+          label: 'Driver',
+          icon: Icons.person_rounded,
+          value: selectedDriver?.id,
+          items: drivers,
+          idOf: (driver) => driver.id,
+          enabledOf: _isAssignableDriver,
+          titleOf: (driver) => driver.name.isNotEmpty ? driver.name : driver.id,
+          subtitleOf: (driver) => [
+            if (driver.phone.isNotEmpty) driver.phone,
+            driverStatusLabel(driver.status),
+          ].join(' - '),
+          onChanged: (value) {
+            if (value == null) return;
+            final driver = _findDriverById(drivers, value);
+            setState(() {
+              _driverId = value;
+              final linkedTruck = _truckForDriver(trucks, driver);
+              if (linkedTruck != null) {
+                _truckId = linkedTruck.id;
+              }
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        _AssignmentDropdown<BrokerVehicle>(
+          label: 'Truck',
+          icon: Icons.fire_truck_rounded,
+          value: selectedTruck?.id,
+          items: trucks,
+          idOf: (truck) => truck.id,
+          enabledOf: _isAssignableTruck,
+          titleOf: _truckTitle,
+          subtitleOf: (truck) => [
+            if (truck.capacity.isNotEmpty) truck.capacity,
+            vehicleStatusLabel(truck.status),
+          ].join(' - '),
+          onChanged: (value) => setState(() => _truckId = value),
+        ),
+        if (!canConfirm) ...[
+          const SizedBox(height: 10),
+          Text(
+            'Select one idle driver and one idle truck to continue.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFFE23A4B)),
+          ),
+        ],
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _submitting
+                    ? null
+                    : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton(
+                onPressed: canConfirm
+                    ? () async {
+                        setState(() => _submitting = true);
+                        final saved = await widget.onAssign(
+                          selectedDriver.id,
+                          selectedTruck.id,
+                        );
+                        if (!mounted) return;
+                        if (saved) {
+                          Navigator.of(context).pop();
+                        } else {
+                          setState(() => _submitting = false);
+                        }
+                      }
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2152D0),
+                ),
+                child: Text(_submitting ? 'Sending...' : 'Send Assignment'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _applyDefaults(List<BrokerDriver> drivers, List<BrokerVehicle> trucks) {
+    if (_defaultsApplied) return;
+    _driverId = _defaultDriverId(drivers);
+    _truckId = _defaultTruckId(trucks);
+    final driver = _findDriverById(drivers, _driverId);
+    final linkedTruck = _truckForDriver(trucks, driver);
+    if (linkedTruck != null) {
+      _truckId = linkedTruck.id;
+    }
+    _defaultsApplied = true;
+  }
+
+  String? _defaultDriverId(List<BrokerDriver> drivers) {
+    final explicitId = widget.request.driverId.trim();
+    if (explicitId.isNotEmpty) {
+      for (final driver in drivers) {
+        if (driver.id == explicitId && _isAssignableDriver(driver)) {
+          return driver.id;
+        }
+      }
+    }
+    for (final driver in drivers) {
+      if (_isAssignableDriver(driver)) return driver.id;
+    }
+    return null;
+  }
+
+  String? _defaultTruckId(List<BrokerVehicle> trucks) {
+    final explicitId = widget.request.truckId.trim();
+    if (explicitId.isNotEmpty) {
+      for (final truck in trucks) {
+        if (truck.id == explicitId && _isAssignableTruck(truck)) {
+          return truck.id;
+        }
+      }
+    }
+    for (final truck in trucks) {
+      if (_isAssignableTruck(truck) &&
+          truck.label.toLowerCase() ==
+              widget.request.vehicleType.trim().toLowerCase()) {
+        return truck.id;
+      }
+    }
+    for (final truck in trucks) {
+      if (_isAssignableTruck(truck)) return truck.id;
+    }
+    return null;
+  }
+
+  BrokerDriver? _findDriverById(List<BrokerDriver> drivers, String? id) {
+    if (id == null) return null;
+    for (final driver in drivers) {
+      if (driver.id == id) return driver;
+    }
+    return null;
+  }
+
+  BrokerVehicle? _findTruckById(List<BrokerVehicle> trucks, String? id) {
+    if (id == null) return null;
+    for (final truck in trucks) {
+      if (truck.id == id) return truck;
+    }
+    return null;
+  }
+
+  BrokerVehicle? _truckForDriver(
+    List<BrokerVehicle> trucks,
+    BrokerDriver? driver,
+  ) {
+    if (driver == null) return null;
+    final assigned = driver.assignedVehicle.trim().toLowerCase();
+    if (assigned.isEmpty) return null;
+    for (final truck in trucks) {
+      final plate = truck.plateNumber.trim().toLowerCase();
+      final id = truck.id.trim().toLowerCase();
+      if (_isAssignableTruck(truck) && (assigned == plate || assigned == id)) {
+        return truck;
+      }
+    }
+    return null;
+  }
+
+  bool _isAssignableDriver(BrokerDriver driver) {
+    return driver.status == BrokerDriverStatus.idle;
+  }
+
+  bool _isAssignableTruck(BrokerVehicle truck) {
+    return truck.status == BrokerVehicleStatus.idle;
+  }
+
+  String _truckTitle(BrokerVehicle truck) {
+    final plate = truck.plateNumber.isNotEmpty ? truck.plateNumber : truck.id;
+    return '${truck.label} - $plate';
+  }
+}
+
+class _AssignmentDropdown<T> extends StatelessWidget {
+  const _AssignmentDropdown({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.items,
+    required this.idOf,
+    required this.enabledOf,
+    required this.titleOf,
+    required this.subtitleOf,
+    required this.onChanged,
+  });
+
+  final String label;
   final IconData icon;
-  final String text;
+  final String? value;
+  final List<T> items;
+  final String Function(T item) idOf;
+  final bool Function(T item) enabledOf;
+  final String Function(T item) titleOf;
+  final String Function(T item) subtitleOf;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedExists = items.any((item) => idOf(item) == value);
+    return DropdownButtonFormField<String>(
+      initialValue: selectedExists ? value : null,
+      isExpanded: true,
+      itemHeight: 64,
+      menuMaxHeight: 320,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF2152D0)),
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+      ),
+      hint: Text('Select ${label.toLowerCase()}'),
+      selectedItemBuilder: (context) => [
+        for (final item in items)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              titleOf(item),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+      ],
+      items: [
+        for (final item in items)
+          DropdownMenuItem<String>(
+            value: idOf(item),
+            enabled: enabledOf(item),
+            child: SizedBox(
+              height: 56,
+              child: Opacity(
+                opacity: enabledOf(item) ? 1 : 0.48,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titleOf(item),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitleOf(item),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _AssignmentLoadingState extends StatelessWidget {
+  const _AssignmentLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 180,
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _AssignmentErrorState extends StatelessWidget {
+  const _AssignmentErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Could not load assignment options',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: const Color(0xFF0F172A),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          message,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2152D0),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TruckTypeBadge extends StatelessWidget {
+  const _TruckTypeBadge({required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF4FF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label.trim().isEmpty ? 'Truck' : label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF2152D0),
+          fontWeight: FontWeight.w900,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
+}
+
+class _JobLocationRow extends StatelessWidget {
+  const _JobLocationRow({
+    required this.label,
+    required this.value,
+    required this.iconColor,
+  });
+
+  final String label;
+  final String value;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.location_on_outlined, size: 15, color: iconColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 10,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF334155),
+                  fontWeight: FontWeight.w700,
+                  height: 1.32,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _JobMetricTile extends StatelessWidget {
+  const _JobMetricTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF64748B)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF64748B),
-                fontWeight: FontWeight.w700,
-              ),
+          Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: const Color(0xFF94A3B8),
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF1E293B),
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -944,119 +1628,170 @@ class _InlineStatusNote extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.visual});
+class _NegotiationHistory extends StatelessWidget {
+  const _NegotiationHistory({required this.entries});
 
-  final _BookingVisual visual;
+  final List<BookingOfferHistoryEntry> entries;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      width: double.infinity,
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: visual.backgroundColor,
-        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        visual.label,
-        style: TextStyle(
-          color: visual.textColor,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _RoutePoint extends StatelessWidget {
-  const _RoutePoint({
-    required this.label,
-    required this.icon,
-    required this.place,
-  });
-
-  final String label;
-  final IconData icon;
-  final String place;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF4FF),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: const Color(0xFF2152D0), size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                label.toUpperCase(),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
-                ),
+              const Icon(
+                Icons.history_rounded,
+                size: 12,
+                color: Color(0xFF94A3B8),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(width: 5),
               Text(
-                place,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF0F172A),
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
+                'NEGOTIATION HISTORY',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 7),
+          for (final entry in entries) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    entry.by == 'broker' ? 'You offered' : 'Client offered',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  _formatRupees(entry.amount),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF334155),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            if (entry != entries.last) const SizedBox(height: 4),
+          ],
+        ],
+      ),
     );
   }
 }
 
-class _RouteLine extends StatelessWidget {
-  const _RouteLine();
+class _JobActionButton extends StatelessWidget {
+  const _JobActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.borderColor,
+    required this.onPressed,
+    this.loading = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Color borderColor;
+  final VoidCallback? onPressed;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: const BoxDecoration(
-            color: Color(0xFF2152D0),
-            shape: BoxShape.circle,
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: loading
+          ? SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Icon(icon, size: 15),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: borderColor),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class _ActionHint extends StatelessWidget {
+  const _ActionHint({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: const Color(0xFF94A3B8),
+        fontWeight: FontWeight.w700,
+        height: 1.3,
+      ),
+    );
+  }
+}
+
+class _InlineStatusNote extends StatelessWidget {
+  const _InlineStatusNote({
+    required this.icon,
+    required this.text,
+    this.color = const Color(0xFF64748B),
+    this.backgroundColor = const Color(0xFFF8FAFC),
+    this.borderColor = const Color(0xFFE2E8F0),
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+  final Color backgroundColor;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-        ),
-        Container(
-          width: 2,
-          height: 56,
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFCBD5E1),
-            borderRadius: BorderRadius.circular(99),
-          ),
-        ),
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2152D0).withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1187,89 +1922,77 @@ class _NotificationButton extends StatelessWidget {
   }
 }
 
-class _BookingVisual {
-  const _BookingVisual({
-    required this.label,
-    required this.description,
-    required this.backgroundColor,
-    required this.borderColor,
-    required this.textColor,
-    required this.icon,
-  });
-
-  final String label;
-  final String description;
-  final Color backgroundColor;
-  final Color borderColor;
-  final Color textColor;
-  final IconData icon;
-}
-
-_BookingVisual _bookingRequestVisual(String status) {
-  final normalized = _normalizeStatus(status);
-  switch (normalized) {
-    case 'pending':
-    case 'requested':
-    case 'new':
-      return const _BookingVisual(
-        label: 'Pending',
-        description: 'Waiting for your review',
-        backgroundColor: Color(0xFFEFF4FF),
-        borderColor: Color(0xFFC7D7FE),
-        textColor: Color(0xFF2152D0),
-        icon: Icons.schedule_rounded,
-      );
-    case 'accepted':
-    case 'confirmed':
-    case 'assigned':
-      return const _BookingVisual(
-        label: 'Accepted',
-        description: 'Request accepted',
-        backgroundColor: Color(0xFFEAF8EF),
-        borderColor: Color(0xFFB7E4C7),
-        textColor: Color(0xFF136F3E),
-        icon: Icons.check_circle_rounded,
-      );
-    case 'declined':
-    case 'rejected':
-    case 'expired':
-    case 'cancelled':
-    case 'canceled':
-      return const _BookingVisual(
-        label: 'Cancelled',
-        description: 'Cancelled - no longer available',
-        backgroundColor: Color(0xFFFDECEC),
-        borderColor: Color(0xFFF8B4B4),
-        textColor: Color(0xFFB42318),
-        icon: Icons.cancel_rounded,
-      );
-    default:
-      return _BookingVisual(
-        label: status.isEmpty ? 'Pending' : _titleCase(status),
-        description: status.isEmpty
-            ? 'Waiting for your review'
-            : _titleCase(status),
-        backgroundColor: const Color(0xFFEFF4FF),
-        borderColor: const Color(0xFFC7D7FE),
-        textColor: const Color(0xFF2152D0),
-        icon: Icons.inbox_rounded,
-      );
-  }
-}
-
 String _normalizeStatus(String status) {
   return status.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
 }
 
-String _titleCase(String value) {
-  return value
-      .split(RegExp(r'[_\s]+'))
-      .where((part) => part.isNotEmpty)
-      .map((part) => part[0].toUpperCase() + part.substring(1))
-      .join(' ');
+bool _isOpenRequestStatus(String status) {
+  return const {
+    '',
+    'unknown',
+    'pending',
+    'requested',
+    'new',
+    'open',
+    'open_request',
+    'review',
+    'review_request',
+    'awaiting',
+    'awaiting_action',
+    'waiting',
+  }.contains(status);
 }
 
 String _locationText(String value, String fallback) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? fallback : trimmed;
+}
+
+String _locationLead(String value) {
+  final trimmed = _locationText(value, 'Location unavailable');
+  final index = trimmed.indexOf(',');
+  if (index <= 0) {
+    return trimmed;
+  }
+  return trimmed.substring(0, index).trim();
+}
+
+String _bookingRef(BookingRequest request) {
+  final id = request.id.trim();
+  if (id.isEmpty) return '#REQUEST';
+  final normalized = id.startsWith('#') ? id.substring(1) : id;
+  return '#${normalized.toUpperCase()}';
+}
+
+String _formatRequestAmount(String raw) {
+  final numeric = double.tryParse(raw.replaceAll(RegExp(r'[^0-9.]'), ''));
+  if (numeric == null || numeric <= 0) {
+    return raw.trim().isEmpty ? '₹0' : raw.trim();
+  }
+  return _formatRupees(numeric);
+}
+
+String _formatRupees(double amount) {
+  final fixed = amount.round().toString();
+  if (fixed.length <= 3) {
+    return '₹$fixed';
+  }
+  final suffix = fixed.substring(fixed.length - 3);
+  var prefix = fixed.substring(0, fixed.length - 3);
+  final groups = <String>[];
+  while (prefix.length > 2) {
+    groups.insert(0, prefix.substring(prefix.length - 2));
+    prefix = prefix.substring(0, prefix.length - 2);
+  }
+  if (prefix.isNotEmpty) {
+    groups.insert(0, prefix);
+  }
+  return '₹${groups.join(',')},$suffix';
+}
+
+String _distanceText(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty || trimmed == '0') return '-';
+  if (trimmed.toLowerCase().contains('km')) return trimmed;
+  return '$trimmed km';
 }
