@@ -1090,6 +1090,19 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF101828),
+                            shadowColor: const Color(
+                              0xFF101828,
+                            ).withValues(alpha: 0.10),
+                            elevation: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
                           _ReactStylePickupOtpBanner(
                             pickupOtp: shipment.pickupOtp,
@@ -1108,7 +1121,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                               _callDriver(shipment.assignedDriverPhone),
                         ),
                         const SizedBox(height: 14),
-                        _ShipmentTimelineCard(shipment: shipment),
+                        _ShipmentTimelineCard(
+                          shipment: shipment,
+                          onLiveTracking: _openLiveTracking,
+                        ),
                         const SizedBox(height: 14),
                         _QuickStatsRow(shipment: shipment),
                         const SizedBox(height: 14),
@@ -1119,49 +1135,74 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: FilledButton(
-                                  onPressed: _openLiveTracking,
-                                  style: FilledButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    backgroundColor: const Color(0xFF2FA56E),
-                                  ),
-                                  child: const Text(
-                                    'Live Tracking',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
                               if (_isPayable)
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: FilledButton.icon(
-                                    onPressed: _payBooking,
-                                    icon: const Icon(Icons.payments_outlined),
-                                    label: Text(
-                                      shipment.paymentStatus.toLowerCase() ==
-                                              'partial'
-                                          ? 'Pay remaining'
-                                          : 'Pay now',
-                                    ),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1976D2),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          999,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 48,
+                                        child: FilledButton.icon(
+                                          onPressed: _payBooking,
+                                          icon: const Icon(
+                                            Icons.payments_outlined,
+                                            size: 18,
+                                          ),
+                                          label: Text(
+                                            shipment.paymentStatus
+                                                        .toLowerCase() ==
+                                                    'partial'
+                                                ? 'Pay remaining'
+                                                : 'Pay now',
+                                          ),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF1976D2,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                                    if (shipment.bookingId != null &&
+                                        _canCancelBooking) ...[
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 48,
+                                          child: OutlinedButton(
+                                            onPressed: _isCancelling
+                                                ? null
+                                                : _confirmCancelBooking,
+                                            style: OutlinedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              side: const BorderSide(
+                                                color: Color(0xFFE23A4B),
+                                              ),
+                                              foregroundColor: const Color(
+                                                0xFFE23A4B,
+                                              ),
+                                              backgroundColor: Colors.white,
+                                            ),
+                                            child: Text(
+                                              _isCancelling
+                                                  ? 'Cancelling...'
+                                                  : 'Cancel',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               if (_isPayable && _isRatable)
                                 const SizedBox(height: 10),
@@ -1188,42 +1229,43 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                     ),
                                   ),
                                 ),
-                              if ((_isPayable || _isRatable) &&
-                                  shipment.bookingId != null)
+                              if (_isRatable &&
+                                  !_isPayable &&
+                                  shipment.bookingId != null &&
+                                  _canCancelBooking)
                                 const SizedBox(height: 10),
-                              if (shipment.bookingId != null)
+                              if (shipment.bookingId != null &&
+                                  !_isPayable &&
+                                  _canCancelBooking)
                                 SizedBox(
                                   width: double.infinity,
                                   height: 48,
-                                  child: _canCancelBooking
-                                      ? OutlinedButton(
-                                          onPressed: _isCancelling
-                                              ? null
-                                              : _confirmCancelBooking,
-                                          style: OutlinedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            side: const BorderSide(
-                                              color: Color(0xFFE23A4B),
-                                            ),
-                                            foregroundColor: const Color(
-                                              0xFFE23A4B,
-                                            ),
-                                            backgroundColor: Colors.white,
-                                          ),
-                                          child: Text(
-                                            _isCancelling
-                                                ? 'Cancelling...'
-                                                : 'Cancel booking',
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
+                                  child: OutlinedButton(
+                                    onPressed: _isCancelling
+                                        ? null
+                                        : _confirmCancelBooking,
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      side: const BorderSide(
+                                        color: Color(0xFFE23A4B),
+                                      ),
+                                      foregroundColor: const Color(0xFFE23A4B),
+                                      backgroundColor: Colors.white,
+                                    ),
+                                    child: Text(
+                                      _isCancelling
+                                          ? 'Cancelling...'
+                                          : 'Cancel booking',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
@@ -1790,17 +1832,7 @@ class _CompactSummaryCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF101828).withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: _premiumDetailBlockDecoration(radius: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1834,11 +1866,6 @@ class _CompactSummaryCard extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               _PremiumStatusPill(label: statusLabel),
-              const SizedBox(width: 8),
-              _CircleIconButton(
-                icon: Icons.close_rounded,
-                onTap: () => Navigator.of(context).maybePop(),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1847,7 +1874,7 @@ class _CompactSummaryCard extends StatelessWidget {
             toLocation: shipment.toLocation,
           ),
           if (truckName.isNotEmpty) ...[
-            const Divider(height: 26, color: Color(0xFFF2F4F7)),
+            const SizedBox(height: 14),
             _ReactInfoRow(
               leading: const _ReactSquareIcon(
                 icon: Icons.local_shipping_outlined,
@@ -1859,7 +1886,7 @@ class _CompactSummaryCard extends StatelessWidget {
             ),
           ],
           if (driverName.isNotEmpty) ...[
-            const Divider(height: 26, color: Color(0xFFF2F4F7)),
+            const SizedBox(height: 14),
             _ReactInfoRow(
               leading: _DriverInitialsAvatar(name: driverName),
               title: driverName,
@@ -1889,6 +1916,24 @@ class _CompactSummaryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+BoxDecoration _premiumDetailBlockDecoration({
+  double radius = 18,
+  Color color = Colors.white,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: const Color(0xFFE8EDF3)),
+    boxShadow: [
+      BoxShadow(
+        color: const Color(0xFF101828).withValues(alpha: 0.055),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+    ],
+  );
 }
 
 class _PremiumStatusPill extends StatelessWidget {
@@ -2102,9 +2147,10 @@ class _ReactRouteRail extends StatelessWidget {
     final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
 
     return Container(
-      padding: const EdgeInsets.only(bottom: 16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF2F4F7))),
+      padding: const EdgeInsets.all(14),
+      decoration: _premiumDetailBlockDecoration(
+        radius: 16,
+        color: const Color(0xFFFCFDFE),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2346,9 +2392,13 @@ class _CallDriverButton extends StatelessWidget {
 }
 
 class _ShipmentTimelineCard extends StatelessWidget {
-  const _ShipmentTimelineCard({required this.shipment});
+  const _ShipmentTimelineCard({
+    required this.shipment,
+    required this.onLiveTracking,
+  });
 
   final TrackingDemoShipment shipment;
+  final VoidCallback onLiveTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -2358,27 +2408,45 @@ class _ShipmentTimelineCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF101828).withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: _premiumDetailBlockDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Shipment Timeline',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Shipment Timeline',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                onPressed: onLiveTracking,
+                icon: const Icon(Icons.navigation_rounded, size: 15),
+                label: const Text('Live'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2FA56E),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 34),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           SingleChildScrollView(
@@ -2556,17 +2624,7 @@ class _QuickStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF101828).withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: _premiumDetailBlockDecoration(radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

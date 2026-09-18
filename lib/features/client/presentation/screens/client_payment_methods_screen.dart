@@ -50,9 +50,9 @@ class _ClientPaymentMethodsScreenState
     }
 
     try {
-      final response = await ref.read(apiClientProvider).getSavedPaymentMethods(
-            accessToken: session.tokens.accessToken,
-          );
+      final response = await ref
+          .read(apiClientProvider)
+          .getSavedPaymentMethods(accessToken: session.tokens.accessToken);
       if (!mounted) return;
       setState(() {
         _methods
@@ -64,9 +64,9 @@ class _ClientPaymentMethodsScreenState
       setState(() {
         _error = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -118,9 +118,9 @@ class _ClientPaymentMethodsScreenState
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -139,7 +139,9 @@ class _ClientPaymentMethodsScreenState
     });
 
     try {
-      await ref.read(apiClientProvider).deleteSavedPaymentMethod(
+      await ref
+          .read(apiClientProvider)
+          .deleteSavedPaymentMethod(
             accessToken: session.tokens.accessToken,
             id: method.id,
           );
@@ -147,14 +149,14 @@ class _ClientPaymentMethodsScreenState
       setState(() {
         _methods.removeWhere((item) => item.id == method.id);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment method removed.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Payment method removed.')));
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -184,15 +186,8 @@ class _ClientPaymentMethodsScreenState
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           children: [
-            Text(
-              'Manage your saved cards and payment options for billing.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
-                  ),
-            ),
-            const SizedBox(height: 18),
             if (session == null)
               const _EmptyState(
                 icon: Icons.lock_outline_rounded,
@@ -260,8 +255,8 @@ class _MethodsGrid extends StatelessWidget {
         final crossAxisCount = width >= 1000
             ? 3
             : width >= 650
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         final mainAxisExtent = crossAxisCount == 1 ? 150.0 : 144.0;
 
         return GridView.builder(
@@ -283,7 +278,9 @@ class _MethodsGrid extends StatelessWidget {
               method: method,
               isDefaulting: defaultingId == method.id,
               isDeleting: deletingId == method.id,
-              onSetDefault: method.isDefault ? null : () => onSetDefault(method),
+              onSetDefault: method.isDefault
+                  ? null
+                  : () => onSetDefault(method),
               onDelete: () => onDelete(method),
             );
           },
@@ -370,7 +367,10 @@ class _PaymentMethodCard extends StatelessWidget {
                                     method.label,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 15,
                                           color: const Color(0xFF101828),
@@ -380,14 +380,20 @@ class _PaymentMethodCard extends StatelessWidget {
                                 if (method.isDefault)
                                   Container(
                                     margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: theme.defaultBadgeBackground,
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
                                       'DEFAULT',
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
                                             color: theme.defaultBadgeForeground,
                                             fontWeight: FontWeight.w800,
                                             letterSpacing: 0.25,
@@ -428,7 +434,8 @@ class _PaymentMethodCard extends StatelessWidget {
                           ),
                       if (method.methodType == 'upi')
                         _MethodChip(
-                          label: _readDetail(method.details, 'upi_id').isNotEmpty
+                          label:
+                              _readDetail(method.details, 'upi_id').isNotEmpty
                               ? _readDetail(method.details, 'upi_id')
                               : 'UPI ID',
                           backgroundColor: const Color(0xFFEAF1FF),
@@ -436,7 +443,8 @@ class _PaymentMethodCard extends StatelessWidget {
                         ),
                       if (method.methodType == 'wallet')
                         _MethodChip(
-                          label: _readDetail(method.details, 'wallet').isNotEmpty
+                          label:
+                              _readDetail(method.details, 'wallet').isNotEmpty
                               ? _readDetail(method.details, 'wallet')
                               : 'Wallet',
                           backgroundColor: const Color(0xFFF2E8FF),
@@ -451,9 +459,9 @@ class _PaymentMethodCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF98A2B3),
-                            fontSize: 11.5,
-                          ),
+                        color: const Color(0xFF98A2B3),
+                        fontSize: 11.5,
+                      ),
                     ),
                   ],
                   const Spacer(),
@@ -466,7 +474,9 @@ class _PaymentMethodCard extends StatelessWidget {
                               ? const SizedBox(
                                   width: 11,
                                   height: 11,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : Icon(
                                   Icons.star_outline_rounded,
@@ -475,7 +485,8 @@ class _PaymentMethodCard extends StatelessWidget {
                                 ),
                           label: Text(
                             'Set default',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
                                   color: theme.accent,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
@@ -489,14 +500,22 @@ class _PaymentMethodCard extends StatelessWidget {
                             ? const SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : const Icon(Icons.delete_outline_rounded, size: 18),
+                            : const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 18,
+                              ),
                         color: const Color(0xFF98A2B3),
                         tooltip: 'Delete',
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                        constraints: const BoxConstraints(
+                          minWidth: 30,
+                          minHeight: 30,
+                        ),
                       ),
                     ],
                   ),
@@ -524,10 +543,7 @@ class _AddTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: const Color(0xFFB8DCC7),
-            width: 1.5,
-          ),
+          border: Border.all(color: const Color(0xFFB8DCC7), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -546,27 +562,24 @@ class _AddTile extends StatelessWidget {
                 color: const Color(0xFFE0F4E8),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: Color(0xFF2FA56E),
-              ),
+              child: const Icon(Icons.add_rounded, color: Color(0xFF2FA56E)),
             ),
             const SizedBox(height: 10),
             Text(
               'Add Payment Method',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
-                    color: const Color(0xFF101828),
-                  ),
+                fontWeight: FontWeight.w800,
+                fontSize: 14.5,
+                color: const Color(0xFF101828),
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               'Credit, Debit, or Bank Transfer',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
-                    fontSize: 12,
-                  ),
+                color: const Color(0xFF667085),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -599,10 +612,10 @@ class _MethodChip extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: foregroundColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 10.5,
-            ),
+          color: foregroundColor,
+          fontWeight: FontWeight.w700,
+          fontSize: 10.5,
+        ),
       ),
     );
   }
@@ -745,18 +758,18 @@ class _EmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF101828),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
-                  height: 1.4,
-                ),
+              color: const Color(0xFF667085),
+              height: 1.4,
+            ),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 16),
@@ -788,8 +801,8 @@ class _LoadingGrid extends StatelessWidget {
         final crossAxisCount = width >= 1000
             ? 3
             : width >= 650
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         final mainAxisExtent = crossAxisCount == 1 ? 164.0 : 156.0;
 
         return GridView.builder(

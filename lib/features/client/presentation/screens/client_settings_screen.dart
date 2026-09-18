@@ -15,7 +15,7 @@ class ClientSettingsScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

@@ -250,17 +250,18 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         : (_originalProfileImage ?? user?.profileImage);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FAF8),
-      body: _loading
-          ? const SafeArea(child: Center(child: CircularProgressIndicator()))
-          : SingleChildScrollView(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _ManageAccountHeader(onBack: () => context.pop()),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                    child: Container(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ManageAccountTitle(onBack: () => context.pop()),
+                    const SizedBox(height: 14),
+                    Container(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -470,70 +471,40 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
 
-class _ManageAccountHeader extends StatelessWidget {
-  const _ManageAccountHeader({required this.onBack});
+class _ManageAccountTitle extends StatelessWidget {
+  const _ManageAccountTitle({required this.onBack});
 
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.of(context).padding.top + 10,
-        16,
-        14,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF247B52), Color(0xFF2FA56E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: onBack,
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: onBack,
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Edit Profile',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: const Color(0xFF101828),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            'Manage account',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

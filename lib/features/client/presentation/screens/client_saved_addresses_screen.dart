@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,86 +110,15 @@ class _ClientSavedAddressesScreenState
   }
 
   Future<void> _openEditor({_SavedAddress? address}) async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) return;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return _SavedAddressEditorSheet(
-          initialAddress: address,
-          onSave: (draft) async {
-            final api = ref.read(apiClientProvider);
-            if (address == null) {
-              final response = await api.createSavedAddress(
-                accessToken: session.tokens.accessToken,
-                label: draft.label,
-                address: draft.address,
-                floor: draft.floor,
-                latitude: draft.latitude,
-                longitude: draft.longitude,
-                city: draft.city,
-                addressType: draft.addressType,
-                contactName: draft.contactName,
-                contactPhone: draft.contactPhone,
-              );
-              final saved = _SavedAddress.fromJson(
-                _pickItem(response, 'address'),
-              );
-              if (saved.id.isNotEmpty) {
-                if (mounted) {
-                  setState(() {
-                    _addresses.insert(0, saved);
-                  });
-                }
-              } else {
-                await _load();
-              }
-            } else {
-              final response = await api.updateSavedAddress(
-                accessToken: session.tokens.accessToken,
-                id: address.id,
-                label: draft.label,
-                address: draft.address,
-                floor: draft.floor,
-                latitude: draft.latitude,
-                longitude: draft.longitude,
-                city: draft.city,
-                addressType: draft.addressType,
-                contactName: draft.contactName,
-                contactPhone: draft.contactPhone,
-              );
-              final updated = _SavedAddress.fromJson(
-                _pickItem(response, 'address'),
-              );
-              if (updated.id.isNotEmpty && mounted) {
-                setState(() {
-                  final index = _addresses.indexWhere(
-                    (item) => item.id == address.id,
-                  );
-                  if (index != -1) {
-                    _addresses[index] = updated;
-                  }
-                });
-              } else {
-                await _load();
-              }
-            }
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    address == null ? 'Address saved.' : 'Address updated.',
-                  ),
-                ),
-              );
-            }
-          },
-        );
-      },
+    final saved = await context.push<bool>(
+      address == null
+          ? '/client/saved-addresses/new'
+          : '/client/saved-addresses/${address.id}/edit',
+      extra: address,
     );
+    if (saved == true && mounted) {
+      await _load();
+    }
   }
 
   Future<void> _setDefault(_SavedAddress address) async {
@@ -274,186 +204,75 @@ class _ClientSavedAddressesScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: const Color(0xFF2FA56E),
-          onRefresh: _load,
-          child: session == null
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: const [
-                    _EmptyState(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Sign in to manage addresses',
-                      subtitle:
-                          'We need an active client session before we can load your saved locations.',
-                    ),
-                  ],
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F7FB),
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+        title: const Text('Saved Addresses'),
+      ),
+      body: RefreshIndicator(
+        color: const Color(0xFF2FA56E),
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+          children: [
+            if (session == null)
+              const _EmptyState(
+                icon: Icons.lock_outline_rounded,
+                title: 'Sign in to manage addresses',
+                subtitle:
+                    'We need an active client session before we can load your saved locations.',
+              )
+            else if (_loading)
+              const Center(child: CircularProgressIndicator())
+            else if (_error)
+              _EmptyState(
+                icon: Icons.error_outline_rounded,
+                title: 'Could not load saved addresses',
+                subtitle: 'Pull to refresh or try again in a moment.',
+                actionLabel: 'Retry',
+                onAction: _load,
+              )
+            else if (_addresses.isEmpty)
+              _EmptyState(
+                icon: Icons.location_on_outlined,
+                title: 'No saved addresses yet',
+                subtitle:
+                    'Save your frequent pickup and drop-off locations to check out faster next time.',
+                actionLabel: 'Add Address',
+                onAction: _openEditor,
+              )
+            else ...[
+              _SavedAddressSearchField(
+                controller: _searchController,
+                query: _query,
+                onQueryChanged: (value) => setState(() => _query = value),
+              ),
+              const SizedBox(height: 12),
+              if (filtered.isEmpty)
+                const _EmptyState(
+                  icon: Icons.search_off_rounded,
+                  title: 'No addresses match your search',
+                  subtitle: 'Try another name, address, or contact.',
                 )
-              : _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _error
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    _SavedAddressesHeader(
-                      onBack: () => context.pop(),
-                      onAdd: _openEditor,
-                    ),
-                    const SizedBox(height: 18),
-                    _EmptyState(
-                      icon: Icons.error_outline_rounded,
-                      title: 'Could not load saved addresses',
-                      subtitle: 'Pull to refresh or try again in a moment.',
-                      actionLabel: 'Retry',
-                      onAction: _load,
-                    ),
-                  ],
-                )
-              : _addresses.isEmpty
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    _SavedAddressesHeader(
-                      onBack: () => context.pop(),
-                      onAdd: _openEditor,
-                    ),
-                    const SizedBox(height: 18),
-                    _EmptyState(
-                      icon: Icons.location_on_outlined,
-                      title: 'No saved addresses yet',
-                      subtitle:
-                          'Save your frequent pickup and drop-off locations to check out faster next time.',
-                      actionLabel: 'Add Address',
-                      onAction: _openEditor,
-                    ),
-                  ],
-                )
-              : ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    _SavedAddressesHeader(
-                      onBack: () => context.pop(),
-                      onAdd: _openEditor,
-                    ),
-                    const SizedBox(height: 14),
-                    _SavedAddressSearchField(
-                      controller: _searchController,
-                      query: _query,
-                      onQueryChanged: (value) => setState(() => _query = value),
-                    ),
-                    const SizedBox(height: 12),
-                    if (filtered.isEmpty)
-                      const _EmptyState(
-                        icon: Icons.search_off_rounded,
-                        title: 'No addresses match your search',
-                        subtitle: 'Try another name, address, or contact.',
-                      )
-                    else
-                      _AddressList(
-                        addresses: filtered,
-                        defaultingId: _defaultingId,
-                        deletingId: _deletingId,
-                        onEdit: (address) => _openEditor(address: address),
-                        onSetDefault: _setDefault,
-                        onDelete: _deleteAddress,
-                      ),
-                  ],
+              else
+                _AddressList(
+                  addresses: filtered,
+                  defaultingId: _defaultingId,
+                  deletingId: _deletingId,
+                  onAdd: _openEditor,
+                  onEdit: (address) => _openEditor(address: address),
+                  onSetDefault: _setDefault,
+                  onDelete: _deleteAddress,
                 ),
+            ],
+          ],
         ),
       ),
-    );
-  }
-}
-
-class _SavedAddressesHeader extends StatelessWidget {
-  const _SavedAddressesHeader({required this.onBack, required this.onAdd});
-
-  final VoidCallback onBack;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 430;
-        final title = Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconButton(
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-              color: const Color(0xFF98A2B3),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Saved Addresses',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Manage your frequent pickup and drop-off locations.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-        final button = FilledButton.icon(
-          onPressed: onAdd,
-          icon: const Icon(Icons.location_on_outlined, size: 17),
-          label: const Text('Add New Address'),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF2FA56E),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        if (narrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              title,
-              const SizedBox(height: 12),
-              Align(alignment: Alignment.centerLeft, child: button),
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: title),
-            const SizedBox(width: 10),
-            button,
-          ],
-        );
-      },
     );
   }
 }
@@ -511,6 +330,7 @@ class _AddressList extends StatelessWidget {
     required this.addresses,
     required this.defaultingId,
     required this.deletingId,
+    required this.onAdd,
     required this.onEdit,
     required this.onSetDefault,
     required this.onDelete,
@@ -519,58 +339,151 @@ class _AddressList extends StatelessWidget {
   final List<_SavedAddress> addresses;
   final String? defaultingId;
   final String? deletingId;
+  final VoidCallback onAdd;
   final ValueChanged<_SavedAddress> onEdit;
   final ValueChanged<_SavedAddress> onSetDefault;
   final ValueChanged<_SavedAddress> onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var i = 0; i < addresses.length; i++) ...[
-          _AddressListTile(
-            address: addresses[i],
-            isDefaulting: defaultingId == addresses[i].id,
-            isDeleting: deletingId == addresses[i].id,
-            onEdit: () => onEdit(addresses[i]),
-            onSetDefault: addresses[i].isDefault
-                ? null
-                : () => onSetDefault(addresses[i]),
-            onDelete: () => onDelete(addresses[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1000
+            ? 3
+            : width >= 650
+            ? 2
+            : 1;
+        final mainAxisExtent = crossAxisCount == 1 ? 150.0 : 144.0;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: mainAxisExtent,
           ),
-          if (i != addresses.length - 1) const SizedBox(height: 10),
-        ],
-      ],
+          itemCount: addresses.length + 1,
+          itemBuilder: (context, index) {
+            if (index == addresses.length) {
+              return _AddAddressTile(onTap: onAdd);
+            }
+            final address = addresses[index];
+            return _AddressListTile(
+              address: address,
+              isDefaulting: defaultingId == address.id,
+              isDeleting: deletingId == address.id,
+              onEdit: () => onEdit(address),
+              onSetDefault: address.isDefault
+                  ? null
+                  : () => onSetDefault(address),
+              onDelete: () => onDelete(address),
+            );
+          },
+        );
+      },
     );
   }
 }
 
-class _SavedAddressEditorSheet extends ConsumerStatefulWidget {
-  const _SavedAddressEditorSheet({required this.onSave, this.initialAddress});
+class _AddAddressTile extends StatelessWidget {
+  const _AddAddressTile({required this.onTap});
 
-  final _SavedAddress? initialAddress;
-  final Future<void> Function(_AddressDraft draft) onSave;
+  final VoidCallback onTap;
 
   @override
-  ConsumerState<_SavedAddressEditorSheet> createState() =>
-      _SavedAddressEditorSheetState();
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFB8DCC7), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F4E8),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Icon(Icons.add_rounded, color: Color(0xFF2FA56E)),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Add New Address',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                fontSize: 14.5,
+                color: const Color(0xFF101828),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Pickup or Drop-off Location',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _SavedAddressEditorSheetState
-    extends ConsumerState<_SavedAddressEditorSheet> {
+class ClientSavedAddressEditorScreen extends ConsumerStatefulWidget {
+  const ClientSavedAddressEditorScreen({
+    super.key,
+    this.addressId,
+    this.initialAddress,
+  });
+
+  final String? addressId;
+  final Object? initialAddress;
+
+  @override
+  ConsumerState<ClientSavedAddressEditorScreen> createState() =>
+      _ClientSavedAddressEditorScreenState();
+}
+
+class _ClientSavedAddressEditorScreenState
+    extends ConsumerState<ClientSavedAddressEditorScreen> {
   late final TextEditingController _labelController;
   late final TextEditingController _addressController;
   late final TextEditingController _floorController;
   late final TextEditingController _contactNameController;
   late final TextEditingController _contactPhoneController;
   _AddressDraft _draft = const _AddressDraft();
+  bool _loading = false;
+  bool _loadError = false;
   bool _saving = false;
+  bool _locating = false;
   String? _errorMessage;
+
+  bool get _isEditing => widget.addressId?.isNotEmpty == true;
 
   @override
   void initState() {
     super.initState();
-    final initial = widget.initialAddress;
+    final initial = widget.initialAddress is _SavedAddress
+        ? widget.initialAddress as _SavedAddress
+        : null;
     _draft = _AddressDraft(
       label: initial?.label ?? '',
       address: initial?.address ?? '',
@@ -587,6 +500,11 @@ class _SavedAddressEditorSheetState
     _floorController = TextEditingController(text: _draft.floor);
     _contactNameController = TextEditingController(text: _draft.contactName);
     _contactPhoneController = TextEditingController(text: _draft.contactPhone);
+    if (_isEditing && initial == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadInitialAddress();
+      });
+    }
   }
 
   @override
@@ -597,6 +515,71 @@ class _SavedAddressEditorSheetState
     _contactNameController.dispose();
     _contactPhoneController.dispose();
     super.dispose();
+  }
+
+  void _applyAddress(_SavedAddress address) {
+    _draft = _AddressDraft(
+      label: address.label,
+      address: address.address,
+      floor: address.floor,
+      latitude: address.latitude,
+      longitude: address.longitude,
+      city: address.city,
+      addressType: address.addressType,
+      contactName: address.contactName,
+      contactPhone: address.contactPhone,
+    );
+    _labelController.text = _draft.label;
+    _addressController.text = _draft.address;
+    _floorController.text = _draft.floor;
+    _contactNameController.text = _draft.contactName;
+    _contactPhoneController.text = _draft.contactPhone;
+  }
+
+  Future<void> _loadInitialAddress() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final id = widget.addressId;
+    if (session == null || id == null || id.isEmpty || !mounted) return;
+
+    setState(() {
+      _loading = true;
+      _loadError = false;
+    });
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getSavedAddresses(accessToken: session.tokens.accessToken);
+      _SavedAddress? found;
+      for (final address in _parseAddresses(response)) {
+        if (address.id == id) {
+          found = address;
+          break;
+        }
+      }
+      if (!mounted) return;
+      if (found == null) {
+        setState(() {
+          _loadError = true;
+        });
+      } else {
+        final loadedAddress = found;
+        setState(() {
+          _applyAddress(loadedAddress);
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -625,17 +608,53 @@ class _SavedAddressEditorSheetState
     });
 
     try {
-      await widget.onSave(
-        _draft.copyWith(
-          label: label,
-          address: address,
-          floor: floor,
-          contactName: contactName,
-          contactPhone: contactPhone,
+      final session = ref.read(authSessionProvider).valueOrNull;
+      if (session == null) {
+        throw const ApiException('Please sign in again to save this address.');
+      }
+      final draft = _draft.copyWith(
+        label: label,
+        address: address,
+        floor: floor,
+        contactName: contactName,
+        contactPhone: contactPhone,
+      );
+      final api = ref.read(apiClientProvider);
+      if (_isEditing) {
+        await api.updateSavedAddress(
+          accessToken: session.tokens.accessToken,
+          id: widget.addressId!,
+          label: draft.label,
+          address: draft.address,
+          floor: draft.floor,
+          latitude: draft.latitude,
+          longitude: draft.longitude,
+          city: draft.city,
+          addressType: draft.addressType,
+          contactName: draft.contactName,
+          contactPhone: draft.contactPhone,
+        );
+      } else {
+        await api.createSavedAddress(
+          accessToken: session.tokens.accessToken,
+          label: draft.label,
+          address: draft.address,
+          floor: draft.floor,
+          latitude: draft.latitude,
+          longitude: draft.longitude,
+          city: draft.city,
+          addressType: draft.addressType,
+          contactName: draft.contactName,
+          contactPhone: draft.contactPhone,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isEditing ? 'Address updated.' : 'Address saved.'),
         ),
       );
-      if (!mounted) return;
-      Navigator.of(context).pop();
+      context.pop(true);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -692,305 +711,537 @@ class _SavedAddressEditorSheetState
     });
   }
 
+  Future<void> _applyPoint(LatLng point) async {
+    setState(() {
+      _draft = _draft.copyWith(
+        latitude: point.latitude,
+        longitude: point.longitude,
+      );
+      _locating = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final resolved = await ref
+          .read(googlePlacesServiceProvider)
+          .reverseGeocode(latitude: point.latitude, longitude: point.longitude);
+      if (!mounted) return;
+      final fallback =
+          'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+      final address = resolved.isNotEmpty ? resolved : fallback;
+      setState(() {
+        _addressController.text = address;
+        _draft = _draft.copyWith(address: address);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      final fallback =
+          'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+      setState(() {
+        _addressController.text = fallback;
+        _draft = _draft.copyWith(address: fallback);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not resolve this map point.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _locating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _useCurrentLocation() async {
+    if (_locating) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    setState(() {
+      _locating = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw const ApiException('Location services are turned off.');
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw const ApiException('Location permission is required.');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _locating = false;
+      });
+      await _applyPoint(LatLng(position.latitude, position.longitude));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _locating = false;
+        _errorMessage = error is ApiException
+            ? error.message
+            : 'Could not get your current location.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final hasCoordinates = _draft.latitude != null && _draft.longitude != null;
+    final title = _isEditing ? 'Edit Address' : 'Add Address';
 
-    return Padding(
-      padding: EdgeInsets.only(left: 12, right: 12, bottom: bottomInset + 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF5F7FB),
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(false),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+          title: Text(title),
         ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 54,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE1E5EB),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                widget.initialAddress == null ? 'Add Address' : 'Edit Address',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _FieldLabel(text: 'Address Type'),
-              const SizedBox(height: 8),
-              _AddressTypeSelector(
-                value: _draft.addressType,
-                onChanged: (value) => setState(
-                  () => _draft = _draft.copyWith(addressType: value),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _FieldLabel(text: 'Name'),
-              const SizedBox(height: 8),
-              _CardField(
-                child: TextField(
-                  controller: _labelController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    hintText: 'Home, Office, Warehouse 2',
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _FieldLabel(text: 'Address'),
-              const SizedBox(height: 8),
-              _CardField(
-                child: GooglePlacesAutocompleteField(
-                  controller: _addressController,
-                  label: '',
-                  hintText: 'Search on Google Maps...',
-                  showLabel: false,
-                  onSelected: (selection) {
-                    setState(() {
-                      _draft = _draft.copyWith(
-                        address: selection.formattedAddress,
-                        latitude: selection.latitude,
-                        longitude: selection.longitude,
-                        city: selection.city,
-                      );
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Search or tap the map to pin this address.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF98A2B3)),
-              ),
-              const SizedBox(height: 12),
-              _AddressMapPreview(
-                hasCoordinates: hasCoordinates,
-                position: hasCoordinates
-                    ? LatLng(_draft.latitude!, _draft.longitude!)
-                    : null,
-                onTap: _openMapPicker,
-              ),
-              if (_draft.city.isNotEmpty) ...[
-                const SizedBox(height: 10),
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFF2FA56E)),
+                const SizedBox(height: 12),
                 Text(
-                  'City: ${_draft.city}',
+                  'Loading address...',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
-              const SizedBox(height: 14),
-              _FieldLabel(text: 'Floor / Unit', trailing: '(optional)'),
-              const SizedBox(height: 8),
-              _CardField(
-                child: TextField(
-                  controller: _floorController,
-                  textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    hintText: '3rd Floor, Flat 402, Gate 2',
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _FieldLabel(text: 'On-site Contact', trailing: '(optional)'),
-              const SizedBox(height: 8),
-              _CardField(
-                child: TextField(
-                  controller: _contactNameController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    hintText: 'Contact person name',
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _CardField(
-                child: TextField(
-                  controller: _contactPhoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    hintText: 'Contact phone',
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 14),
-                _InlineError(message: _errorMessage!),
-              ],
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _saving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2FA56E),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          widget.initialAddress == null
-                              ? 'Save Address'
-                              : 'Save Changes',
-                        ),
-                ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_loadError) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF5F7FB),
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(false),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+          title: Text(title),
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+            children: [
+              _EmptyState(
+                icon: Icons.error_outline_rounded,
+                title: 'Could not load this address',
+                subtitle:
+                    'Go back to saved addresses and try editing it again.',
+                actionLabel: 'Back to Saved Addresses',
+                onAction: () => context.pop(false),
               ),
             ],
           ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F7FB),
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => context.pop(false),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+        title: Text(title),
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 840;
+            final mapPosition = hasCoordinates
+                ? LatLng(_draft.latitude!, _draft.longitude!)
+                : const LatLng(19.0760, 72.8777);
+
+            final form = _AddressFormSurface(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _FieldLabel(text: 'Type'),
+                  const SizedBox(height: 8),
+                  _AddressTypeSelector(
+                    value: _draft.addressType,
+                    onChanged: (value) => setState(
+                      () => _draft = _draft.copyWith(addressType: value),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _FieldLabel(text: 'Name'),
+                  const SizedBox(height: 8),
+                  _CardField(
+                    leading: Icons.business_outlined,
+                    child: TextField(
+                      controller: _labelController,
+                      maxLength: 60,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        hintText: 'Home, Office, Warehouse 2',
+                        counterText: '',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const _FieldLabel(text: 'Address'),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: _locating ? null : _useCurrentLocation,
+                        icon: _locating
+                            ? const SizedBox(
+                                width: 13,
+                                height: 13,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.my_location_rounded, size: 15),
+                        label: const Text('Use current'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF2FA56E),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _CardField(
+                    leading: Icons.location_on_outlined,
+                    child: GooglePlacesAutocompleteField(
+                      controller: _addressController,
+                      label: '',
+                      hintText: 'Search, or tap the map...',
+                      showLabel: false,
+                      onSelected: (selection) {
+                        setState(() {
+                          _draft = _draft.copyWith(
+                            address: selection.formattedAddress,
+                            latitude: selection.latitude,
+                            longitude: selection.longitude,
+                            city: selection.city,
+                          );
+                          _errorMessage = null;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    'Search, tap the map, or drag the pin once it is placed.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF98A2B3),
+                      height: 1.3,
+                    ),
+                  ),
+                  if (_draft.city.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'City: ${_draft.city}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  _FieldLabel(text: 'Floor / Unit', trailing: '(optional)'),
+                  const SizedBox(height: 8),
+                  _CardField(
+                    child: TextField(
+                      controller: _floorController,
+                      maxLength: 100,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        hintText: '3rd Floor, Flat 402, Gate 2',
+                        counterText: '',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _FieldLabel(text: 'On-site Contact', trailing: '(optional)'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CardField(
+                          child: TextField(
+                            controller: _contactNameController,
+                            maxLength: 60,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              hintText: 'Contact name',
+                              counterText: '',
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _CardField(
+                          leading: Icons.phone_outlined,
+                          child: TextField(
+                            controller: _contactPhoneController,
+                            keyboardType: TextInputType.phone,
+                            maxLength: 20,
+                            textInputAction: TextInputAction.done,
+                            decoration: const InputDecoration(
+                              hintText: '+91',
+                              counterText: '',
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 14),
+                    _InlineError(message: _errorMessage!),
+                  ],
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _saving ? null : _save,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF2FA56E),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Text(_isEditing ? 'Save Changes' : 'Save Address'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            final map = _EditorMapPanel(
+              hasCoordinates: hasCoordinates,
+              position: mapPosition,
+              address: _addressController.text.trim(),
+              resolving: _locating,
+              onTapPoint: _applyPoint,
+              onDragEnd: _applyPoint,
+              onFullscreen: _openMapPicker,
+            );
+
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              children: [
+                if (wide)
+                  SizedBox(
+                    height: constraints.maxHeight - 24,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: SingleChildScrollView(child: form)),
+                        const SizedBox(width: 16),
+                        Expanded(child: map),
+                      ],
+                    ),
+                  )
+                else ...[
+                  form,
+                  const SizedBox(height: 14),
+                  SizedBox(height: 360, child: map),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _AddressMapPreview extends StatelessWidget {
-  const _AddressMapPreview({
-    required this.hasCoordinates,
-    required this.position,
-    required this.onTap,
-  });
+class _AddressFormSurface extends StatelessWidget {
+  const _AddressFormSurface({required this.child});
 
-  final bool hasCoordinates;
-  final LatLng? position;
-  final VoidCallback onTap;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: SizedBox(
-          height: 132,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (hasCoordinates && position != null)
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: position!,
-                    zoom: 15,
-                  ),
-                  markers: {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _savedCardDecoration(radius: 22),
+      child: child,
+    );
+  }
+}
+
+class _EditorMapPanel extends StatelessWidget {
+  const _EditorMapPanel({
+    required this.hasCoordinates,
+    required this.position,
+    required this.address,
+    required this.resolving,
+    required this.onTapPoint,
+    required this.onDragEnd,
+    required this.onFullscreen,
+  });
+
+  final bool hasCoordinates;
+  final LatLng position;
+  final String address;
+  final bool resolving;
+  final ValueChanged<LatLng> onTapPoint;
+  final ValueChanged<LatLng> onDragEnd;
+  final VoidCallback onFullscreen;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          GoogleMap(
+            key: ValueKey(
+              '${position.latitude.toStringAsFixed(6)}:${position.longitude.toStringAsFixed(6)}:$hasCoordinates',
+            ),
+            initialCameraPosition: CameraPosition(target: position, zoom: 15),
+            markers: hasCoordinates
+                ? {
                     Marker(
-                      markerId: const MarkerId('saved-address-preview'),
-                      position: position!,
+                      markerId: const MarkerId('saved-address-editor'),
+                      position: position,
+                      draggable: true,
+                      onDragEnd: onDragEnd,
                     ),
-                  },
-                  zoomControlsEnabled: false,
-                  mapToolbarEnabled: false,
-                  scrollGesturesEnabled: false,
-                  rotateGesturesEnabled: false,
-                  tiltGesturesEnabled: false,
-                  myLocationButtonEnabled: false,
-                  compassEnabled: false,
-                )
-              else
-                Container(
-                  color: const Color(0xFFEFF4F8),
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.map_outlined,
-                          color: Color(0xFF2FA56E),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Select location on map',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF344054),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF101828).withValues(alpha: 0.12),
-                        blurRadius: 12,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.edit_location_alt_outlined,
-                        color: Color(0xFF2FA56E),
-                        size: 15,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        hasCoordinates ? 'Change' : 'Pick',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF2FA56E),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
+                  }
+                : const <Marker>{},
+            onTap: onTapPoint,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            myLocationButtonEnabled: false,
+          ),
+          Positioned(
+            left: 12,
+            top: 12,
+            child: IconButton(
+              onPressed: onFullscreen,
+              tooltip: 'Open map picker',
+              icon: const Icon(Icons.open_in_full_rounded, size: 18),
+              color: const Color(0xFF344054),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Container(
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF101828).withValues(alpha: 0.16),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF6EF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: resolving
+                        ? const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(
+                            Icons.location_on_outlined,
+                            color: Color(0xFF2FA56E),
+                          ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      address.isEmpty
+                          ? 'Tap the map to choose an exact spot'
+                          : address,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF344054),
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1595,9 +1846,10 @@ class _FieldLabel extends StatelessWidget {
 }
 
 class _CardField extends StatelessWidget {
-  const _CardField({required this.child});
+  const _CardField({required this.child, this.leading});
 
   final Widget child;
+  final IconData? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -1608,7 +1860,15 @@ class _CardField extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE8EDF2)),
       ),
-      child: child,
+      child: Row(
+        children: [
+          if (leading != null) ...[
+            Icon(leading, size: 18, color: const Color(0xFFD0D5DD)),
+            const SizedBox(width: 10),
+          ],
+          Expanded(child: child),
+        ],
+      ),
     );
   }
 }

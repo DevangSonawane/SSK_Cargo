@@ -302,6 +302,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             const NoTransitionPage(child: ClientSavedAddressesScreen()),
       ),
       GoRoute(
+        path: '/client/saved-addresses/new',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ClientSavedAddressEditorScreen(initialAddress: state.extra),
+        ),
+      ),
+      GoRoute(
+        path: '/client/saved-addresses/:id/edit',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: ClientSavedAddressEditorScreen(
+            addressId: state.pathParameters['id'],
+            initialAddress: state.extra,
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/client/payment-methods',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientPaymentMethodsScreen()),

@@ -118,125 +118,40 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F8FF),
+      backgroundColor: const Color(0xFFF5F7FB),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F7FB),
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
+        title: const Text('Change Password'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _roundIconButton(
-                    icon: Icons.arrow_back_rounded,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Change Password',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              color: const Color(0xFF0F1D43),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 20,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Keep your account secure',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF5E6E91),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 54,
-                    height: 76,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF2FF),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: const Icon(
-                      Icons.shield_rounded,
-                      color: Color(0xFF1764E8),
-                      size: 40,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
               Container(
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8EDF2)),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF416DAA).withValues(alpha: 0.08),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEFF4FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.lock_outline_rounded,
-                            color: Color(0xFF1764E8),
-                            size: 30,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Update your password',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: const Color(0xFF101B43),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Enter your current password and choose a new one.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF667391),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
                     _passwordField(
                       label: 'Current password',
                       hint: 'Enter your current password',
@@ -269,31 +184,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                           setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                     const SizedBox(height: 22),
-                    Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF12B978), Color(0xFF1098B5)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF13A78C,
-                            ).withValues(alpha: 0.22),
-                            blurRadius: 14,
-                            offset: const Offset(0, 7),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
                         onPressed: _isSubmitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          disabledBackgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF2FA56E),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
                         child: _isSubmitting
@@ -305,26 +204,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Change password',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 18),
-                                  const Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                ],
-                              ),
+                            : const Text('Change Password'),
                       ),
                     ),
                   ],
@@ -333,31 +213,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _roundIconButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      width: 58,
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF45638F).withValues(alpha: 0.09),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, color: const Color(0xFF0F1D43), size: 24),
       ),
     );
   }

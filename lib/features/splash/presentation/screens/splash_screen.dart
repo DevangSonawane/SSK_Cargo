@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _driveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _driveCurve = CurvedAnimation(
@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _idleController.repeat(reverse: true);
 
-    _timer = Timer(const Duration(seconds: 3), () {
+    _timer = Timer(const Duration(milliseconds: 900), () {
       if (!mounted) return;
       context.go('/login');
     });

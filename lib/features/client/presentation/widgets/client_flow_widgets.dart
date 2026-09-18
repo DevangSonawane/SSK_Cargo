@@ -139,6 +139,8 @@ class _LocationDetailsScreenState
   List<GooglePlaceSuggestion> _suggestions = const [];
   List<_SavedLocationShortcut> _savedAddresses = const [];
   bool _resolvingCurrentLocation = false;
+  bool _applyingLocationSelection = false;
+  GooglePlaceSelection? _pendingLocationSelection;
 
   @override
   void initState() {
@@ -150,7 +152,22 @@ class _LocationDetailsScreenState
     _focusNode.addListener(_onFocusChanged);
     unawaited(_loadSavedAddresses());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (!mounted) {
+        return;
+      }
+      final shouldAutofillCurrentLocation =
+          _showCurrentLocation &&
+          widget.kind == _LocationFieldKind.pickup &&
+          _controller.text.trim().isEmpty;
+      if (shouldAutofillCurrentLocation) {
+        unawaited(
+          Future<void>.delayed(const Duration(milliseconds: 350), () {
+            if (mounted && _controller.text.trim().isEmpty) {
+              return _useCurrentLocation();
+            }
+          }),
+        );
+      } else {
         _focusNode.requestFocus();
       }
     });
@@ -242,9 +259,13 @@ class _LocationDetailsScreenState
   }
 
   void _onTextChanged() {
+    if (_applyingLocationSelection) {
+      return;
+    }
     if (_selectingSuggestion) {
       return;
     }
+    _pendingLocationSelection = null;
     if (!_focusNode.hasFocus) {
       return;
     }
@@ -259,6 +280,40 @@ class _LocationDetailsScreenState
     }
     _scheduleSearch();
     setState(() {});
+  }
+
+  void _applyLocationSelection(GooglePlaceSelection selection) {
+    _applyingLocationSelection = true;
+    _controller
+      ..text = selection.formattedAddress
+      ..selection = TextSelection.collapsed(offset: _controller.text.length);
+    _applyingLocationSelection = false;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _pendingLocationSelection = selection;
+      _suggestions = const [];
+      _errorMessage = null;
+      _sessionToken = _newSessionToken();
+    });
+  }
+
+  void _submitLocation() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+    final pending = _pendingLocationSelection;
+    Navigator.of(context).pop(
+      pending != null && pending.formattedAddress.trim() == text
+          ? pending
+          : GooglePlaceSelection(
+              placeId: '',
+              formattedAddress: text,
+              latitude: null,
+              longitude: null,
+              city: '',
+            ),
+    );
   }
 
   void _scheduleSearch() {
@@ -447,7 +502,7 @@ class _LocationDetailsScreenState
         return;
       }
 
-      Navigator.of(context).pop(
+      _applyLocationSelection(
         GooglePlaceSelection(
           placeId: '',
           formattedAddress: address,
@@ -475,287 +530,343 @@ class _LocationDetailsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(999),
-                    child: const SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Icon(Icons.arrow_back_rounded, size: 24),
-                    ),
-                  ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: _openMapPicker,
-                    icon: const Icon(Icons.map_outlined, size: 17),
-                    label: Text(widget.mapButtonLabel),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1F88C9),
-                      side: const BorderSide(color: Color(0xFFD7E7F4)),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 9,
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0B1F3A),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    margin: const EdgeInsets.only(top: 10),
-                    decoration: BoxDecoration(
-                      color: _fieldIconColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(_fieldIcon, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0xFFE7EEF6)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 12,
-                            offset: const Offset(0, 5),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(999),
+                          child: const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: Icon(Icons.arrow_back_rounded, size: 24),
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              textInputAction: TextInputAction.search,
-                              cursorColor: const Color(0xFF2D8EDB),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 15,
-                                  ),
-                              decoration: InputDecoration(
-                                hintText: _hintText,
-                                hintStyle: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF98A2B3),
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 15,
-                                    ),
-                                filled: false,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
+                        ),
+                        const Spacer(),
+                        OutlinedButton.icon(
+                          onPressed: _openMapPicker,
+                          icon: const Icon(Icons.map_outlined, size: 17),
+                          label: Text(widget.mapButtonLabel),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF1F88C9),
+                            side: const BorderSide(color: Color(0xFFD7E7F4)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 9,
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: Center(
-                              child: _loadingSuggestions
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      _title,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: const Color(0xFF0B1F3A),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _subtitle,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          margin: const EdgeInsets.only(top: 10),
+                          decoration: BoxDecoration(
+                            color: _fieldIconColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            _fieldIcon,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: const Color(0xFFE7EEF6),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _controller,
+                                    focusNode: _focusNode,
+                                    textInputAction: TextInputAction.search,
+                                    cursorColor: const Color(0xFF2D8EDB),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFF101828),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 15,
+                                        ),
+                                    decoration: InputDecoration(
+                                      hintText: _hintText,
+                                      hintStyle: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFF98A2B3),
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 15,
+                                          ),
+                                      filled: false,
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: Center(
+                                    child: _loadingSuggestions
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : (_controller.text.isEmpty
+                                              ? const SizedBox.shrink()
+                                              : InkWell(
+                                                  onTap: () {
+                                                    _controller.clear();
+                                                    _focusNode.requestFocus();
+                                                  },
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        999,
+                                                      ),
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.all(2),
+                                                    child: Icon(
+                                                      Icons.close_rounded,
+                                                      size: 18,
+                                                      color: Color(0xFF667085),
+                                                    ),
+                                                  ),
+                                                )),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_showCurrentLocation) ...[
+                      const SizedBox(height: 18),
+                      InkWell(
+                        onTap: _resolvingCurrentLocation
+                            ? null
+                            : _useCurrentLocation,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 2,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            children: [
+                              _resolvingCurrentLocation
                                   ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
+                                      width: 24,
+                                      height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : (_controller.text.isEmpty
-                                        ? const SizedBox.shrink()
-                                        : InkWell(
-                                            onTap: () {
-                                              _controller.clear();
-                                              _focusNode.requestFocus();
-                                            },
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(2),
-                                              child: Icon(
-                                                Icons.close_rounded,
-                                                size: 18,
-                                                color: Color(0xFF667085),
-                                              ),
-                                            ),
-                                          )),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (_showCurrentLocation) ...[
-                const SizedBox(height: 18),
-                InkWell(
-                  onTap: _resolvingCurrentLocation ? null : _useCurrentLocation,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 2,
-                    ),
-                    child: Row(
-                      children: [
-                        _resolvingCurrentLocation
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                                  : const Icon(
+                                      Icons.my_location_rounded,
+                                      color: Color(0xFF2D8EDB),
+                                      size: 24,
+                                    ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _useCurrentLocationLabel,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFF2D8EDB),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
-                              )
-                            : const Icon(
-                                Icons.my_location_rounded,
-                                color: Color(0xFF2D8EDB),
-                                size: 24,
                               ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _useCurrentLocationLabel,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: const Color(0xFF2D8EDB),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                            ],
                           ),
                         ),
+                      ),
+                      if (_resolvingCurrentLocation) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Fetching your current location...',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
                       ],
+                      const SizedBox(height: 18),
+                      Container(height: 1, color: const Color(0xFFE6EAF0)),
+                    ],
+                    if (_matchingSavedAddresses.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Text(
+                        'Saved addresses',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: const Color(0xFF98A2B3),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final address in _matchingSavedAddresses) ...[
+                              ActionChip(
+                                avatar: Icon(
+                                  widget.kind == _LocationFieldKind.pickup
+                                      ? Icons.upload_rounded
+                                      : Icons.download_rounded,
+                                  size: 16,
+                                  color:
+                                      widget.kind == _LocationFieldKind.pickup
+                                      ? const Color(0xFF2FA56E)
+                                      : const Color(0xFFE05252),
+                                ),
+                                label: Text(address.label),
+                                onPressed: () => _selectSavedAddress(address),
+                                backgroundColor: const Color(0xFFF0F7F3),
+                                side: const BorderSide(
+                                  color: Color(0xFFD7EBDD),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Could not load suggestions',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFFB42318),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    if (_suggestions.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      ..._suggestions.asMap().entries.map(
+                        (entry) => Column(
+                          children: [
+                            _LocationSuggestionTile(
+                              suggestion: entry.value,
+                              onTap: () => _selectSuggestion(entry.value),
+                            ),
+                            if (entry.key != _suggestions.length - 1)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 2),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFE6EAF0),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed:
+                      _controller.text.trim().isEmpty ||
+                          _resolvingCurrentLocation
+                      ? null
+                      : _submitLocation,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF2FA56E),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(58, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
+                  child: const Icon(Icons.arrow_forward_rounded),
                 ),
-                const SizedBox(height: 18),
-                Container(height: 1, color: const Color(0xFFE6EAF0)),
-              ],
-              if (_matchingSavedAddresses.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Text(
-                  'Saved addresses',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF98A2B3),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final address in _matchingSavedAddresses) ...[
-                        ActionChip(
-                          avatar: Icon(
-                            widget.kind == _LocationFieldKind.pickup
-                                ? Icons.upload_rounded
-                                : Icons.download_rounded,
-                            size: 16,
-                            color: widget.kind == _LocationFieldKind.pickup
-                                ? const Color(0xFF2FA56E)
-                                : const Color(0xFFE05252),
-                          ),
-                          label: Text(address.label),
-                          onPressed: () => _selectSavedAddress(address),
-                          backgroundColor: const Color(0xFFF0F7F3),
-                          side: const BorderSide(color: Color(0xFFD7EBDD)),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Could not load suggestions',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFFB42318),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (_suggestions.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                ..._suggestions.asMap().entries.map(
-                  (entry) => Column(
-                    children: [
-                      _LocationSuggestionTile(
-                        suggestion: entry.value,
-                        onTap: () => _selectSuggestion(entry.value),
-                      ),
-                      if (entry.key != _suggestions.length - 1)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 2),
-                          child: Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: Color(0xFFE6EAF0),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -3397,6 +3508,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   late final TextEditingController _amountController;
   late VehicleOption _vehicle;
   GoogleMapController? _brokerMapController;
+  CameraPosition? _brokerMapCameraPosition;
   late final StateController<bool> _bottomNavVisibleController;
   BitmapDescriptor? _truckMarkerIcon;
   BitmapDescriptor? _pickupMarkerIcon;
@@ -3419,6 +3531,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   int _findTruckDeclinedCount = 0;
   bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
+  double _truckSearchSheetExtent = 0.44;
   bool _postNegotiationPayment = false;
   bool _paymentCompletionVisible = false;
   bool _loadingAdvanceAmount = false;
@@ -4315,6 +4428,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _zoomOutForFindTruckSearch({bool initialFit = false}) async {
+    if (_step == _BookingFlowStep.payment) {
+      return;
+    }
     final controller = _brokerMapController;
     if (controller == null) {
       return;
@@ -6017,11 +6133,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final dimFindTruckMap = isFindTruckSearching && _findTruckRequestCount > 0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final panelHeight = min(
-          constraints.maxHeight * 0.52,
-          mode == BookingSearchMode.broker ? 430.0 : 340.0,
-        );
-
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -6051,109 +6162,144 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   onCancel: _cancelFindTruckSearch,
                 ),
               ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 420),
-              curve: Curves.easeInOutCubic,
-              left: 0,
-              right: 0,
-              bottom: hideSearchPanel
-                  ? -(panelHeight + MediaQuery.of(context).viewPadding.bottom)
-                  : 0,
-              child: SizedBox(
-                height: panelHeight,
-                child: _SearchMethodSheet(
-                  child: AbsorbPointer(
-                    absorbing: isFindTruckSearching,
-                    child: Opacity(
-                      opacity: isFindTruckSearching ? 0.58 : 1,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          12,
-                          12,
-                          12,
-                          MediaQuery.of(context).viewPadding.bottom + 10,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Choose Trucks',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    color: const Color(0xFF0B1F3A),
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0,
-                                  ),
+            if (!hideSearchPanel)
+              NotificationListener<DraggableScrollableNotification>(
+                onNotification: (notification) {
+                  final collapsedChanged =
+                      (_truckSearchSheetExtent <= 0.12) !=
+                      (notification.extent <= 0.12);
+                  if (collapsedChanged && mounted) {
+                    setState(() {
+                      _truckSearchSheetExtent = notification.extent;
+                    });
+                  } else {
+                    _truckSearchSheetExtent = notification.extent;
+                  }
+                  return false;
+                },
+                child: DraggableScrollableSheet(
+                  initialChildSize: mode == BookingSearchMode.broker
+                      ? 0.54
+                      : 0.44,
+                  minChildSize: 0.07,
+                  maxChildSize: 0.86,
+                  snap: true,
+                  snapSizes: const [0.07, 0.44, 0.86],
+                  builder: (context, scrollController) {
+                    final isCollapsed = _truckSearchSheetExtent <= 0.12;
+                    return _SearchMethodSheet(
+                      child: AbsorbPointer(
+                        absorbing: isFindTruckSearching,
+                        child: Opacity(
+                          opacity: isFindTruckSearching ? 0.58 : 1,
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            padding: EdgeInsets.fromLTRB(
+                              12,
+                              10,
+                              12,
+                              isCollapsed
+                                  ? 10
+                                  : MediaQuery.of(context).viewPadding.bottom +
+                                        14,
                             ),
-                            const SizedBox(height: 8),
-                            _buildTruckCategoryPicker(context),
-                            const SizedBox(height: 8),
-                            if (mode == BookingSearchMode.truck) ...[
-                              _buildFindTruckOptions(context),
-                              const SizedBox(height: 8),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFE1E8F2),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Expanded(
-                                  child: _SearchModeCard(
-                                    selected: mode == BookingSearchMode.truck,
-                                    icon: Icons.local_shipping_rounded,
-                                    title: 'Find Truck',
-                                    onTap: () {
-                                      setState(() {
-                                        _draft = _draft.copyWith(
-                                          searchMode: BookingSearchMode.truck,
-                                          selectedBrokerId: '',
-                                        );
-                                      });
-                                      unawaited(_startFindTruckSearch());
-                                    },
+                                Center(
+                                  child: Container(
+                                    width: 58,
+                                    height: 5,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD2DCEA),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _SearchModeCard(
-                                    selected: mode == BookingSearchMode.broker,
-                                    icon: Icons.person_rounded,
-                                    title: 'Search Broker',
-                                    onTap: () {
-                                      setState(() {
-                                        _draft = _draft.copyWith(
-                                          searchMode: BookingSearchMode.broker,
-                                        );
-                                      });
-                                      unawaited(_loadEligibleBrokers());
-                                    },
+                                if (!isCollapsed) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Choose Trucks',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: const Color(0xFF0B1F3A),
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0,
+                                        ),
                                   ),
-                                ),
+                                  const SizedBox(height: 8),
+                                  _buildTruckCategoryPicker(context),
+                                  const SizedBox(height: 8),
+                                  if (mode == BookingSearchMode.truck) ...[
+                                    _buildFindTruckOptions(context),
+                                    const SizedBox(height: 8),
+                                    const Divider(
+                                      height: 1,
+                                      color: Color(0xFFE1E8F2),
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _SearchModeCard(
+                                          selected:
+                                              mode == BookingSearchMode.truck,
+                                          icon: Icons.local_shipping_rounded,
+                                          title: 'Find Truck',
+                                          onTap: () {
+                                            setState(() {
+                                              _draft = _draft.copyWith(
+                                                searchMode:
+                                                    BookingSearchMode.truck,
+                                                selectedBrokerId: '',
+                                              );
+                                            });
+                                            unawaited(_startFindTruckSearch());
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _SearchModeCard(
+                                          selected:
+                                              mode == BookingSearchMode.broker,
+                                          icon: Icons.person_rounded,
+                                          title: 'Search Broker',
+                                          onTap: () {
+                                            setState(() {
+                                              _draft = _draft.copyWith(
+                                                searchMode:
+                                                    BookingSearchMode.broker,
+                                              );
+                                            });
+                                            unawaited(_loadEligibleBrokers());
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (mode == BookingSearchMode.broker) ...[
+                                    const SizedBox(height: 10),
+                                    const Divider(
+                                      height: 1,
+                                      color: Color(0xFFE1E8F2),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildBrokerListOptions(context),
+                                  ],
+                                ],
                               ],
                             ),
-                            if (mode == BookingSearchMode.broker) ...[
-                              const SizedBox(height: 10),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFE1E8F2),
-                              ),
-                              const SizedBox(height: 10),
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  child: _buildBrokerListOptions(context),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
-            ),
             if (!isFindTruckSearching)
               Positioned(
                 left: 16,
@@ -6459,14 +6605,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final polylines = _buildBrokerPolylines();
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
+    final shouldAutoFitCamera = _step != _BookingFlowStep.payment;
 
     _scheduleBrokerRouteRefresh();
 
     return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: cameraTarget,
-        zoom: pickup != null && drop != null ? 8.4 : 10.2,
-      ),
+      initialCameraPosition:
+          _brokerMapCameraPosition ??
+          CameraPosition(
+            target: cameraTarget,
+            zoom: pickup != null && drop != null ? 8.4 : 10.2,
+          ),
       mapType: MapType.normal,
       markers: markers,
       polylines: polylines,
@@ -6478,10 +6627,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       scrollGesturesEnabled: true,
       tiltGesturesEnabled: false,
       trafficEnabled: true,
+      onCameraMove: (position) {
+        _brokerMapCameraPosition = position;
+      },
       onMapCreated: (controller) {
         _brokerMapController = controller;
         _scheduleBrokerRouteRefresh();
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
+        if (shouldAutoFitCamera) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _fitBrokerCamera(),
+          );
+        }
       },
     );
   }
@@ -6573,6 +6729,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _fitBrokerCamera() async {
+    if (_step == _BookingFlowStep.payment) {
+      return;
+    }
     final controller = _brokerMapController;
     final bounds = _brokerRouteBounds();
     if (controller == null || bounds == null) {
@@ -6900,9 +7059,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               color: const Color(0xFF0B1F3A),
-                              fontSize: 34,
-                              fontWeight: FontWeight.w900,
-                              height: 1.05,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w500,
+                              height: 1.12,
                             ),
                         onSubmitted: (_) {
                           FocusScope.of(context).unfocus();
@@ -7033,12 +7192,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text("Don't know"),
+              child: const Text('Skip'),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            flex: 2,
             child: FilledButton(
               onPressed: _submitting
                   ? null

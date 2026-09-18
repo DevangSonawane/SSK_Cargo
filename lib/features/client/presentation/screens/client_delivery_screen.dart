@@ -23,7 +23,7 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   static const int _pageSize = 10;
-  int _page = 1;
+  final int _page = 1;
   String? _liveRefreshToken;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
@@ -151,7 +151,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
         onRefresh: _refreshBookings,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
           children: [
             _BookingsHeader(
               onExport: bookingsAsync?.valueOrNull?.bookings.isEmpty == false
@@ -186,7 +186,6 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                 ),
                 data: (page) {
                   final bookings = page.bookings;
-                  final totalPages = page.totalPages;
 
                   if (bookings.isEmpty) {
                     return _EmptyState(
@@ -204,11 +203,6 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                     children: [
                       _BookingsMobileList(
                         bookings: bookings,
-                        page: _page,
-                        totalPages: totalPages,
-                        onPageChanged: (page) {
-                          setState(() => _page = page);
-                        },
                         onOpenBooking: _openBooking,
                       ),
                     ],
@@ -244,7 +238,7 @@ class _BookingsHeader extends StatelessWidget {
                 'My Bookings',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: const Color(0xFF101828),
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -334,16 +328,10 @@ class _HeaderActionButton extends StatelessWidget {
 class _BookingsMobileList extends StatelessWidget {
   const _BookingsMobileList({
     required this.bookings,
-    required this.page,
-    required this.totalPages,
-    required this.onPageChanged,
     required this.onOpenBooking,
   });
 
   final List<ClientBooking> bookings;
-  final int page;
-  final int totalPages;
-  final ValueChanged<int> onPageChanged;
   final ValueChanged<ClientBooking> onOpenBooking;
 
   @override
@@ -357,14 +345,6 @@ class _BookingsMobileList extends StatelessWidget {
           ),
           if (i != bookings.length - 1) const SizedBox(height: 12),
         ],
-        const SizedBox(height: 10),
-        _BookingsPagination(
-          page: page,
-          totalPages: totalPages,
-          rangeLabel: 'Page $page of $totalPages',
-          onPageChanged: onPageChanged,
-          desktop: false,
-        ),
       ],
     );
   }
@@ -553,114 +533,6 @@ class _RouteDot extends StatelessWidget {
   }
 }
 
-class _BookingsPagination extends StatelessWidget {
-  const _BookingsPagination({
-    required this.page,
-    required this.totalPages,
-    required this.rangeLabel,
-    required this.onPageChanged,
-    required this.desktop,
-  });
-
-  final int page;
-  final int totalPages;
-  final String rangeLabel;
-  final ValueChanged<int> onPageChanged;
-  final bool desktop;
-
-  @override
-  Widget build(BuildContext context) {
-    final previous = page > 1;
-    final next = page < totalPages;
-    if (!desktop) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton.icon(
-            onPressed: previous ? () => onPageChanged(page - 1) : null,
-            icon: const Icon(Icons.chevron_left_rounded),
-            label: const Text('Prev'),
-          ),
-          Text(
-            rangeLabel,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          TextButton.icon(
-            onPressed: next ? () => onPageChanged(page + 1) : null,
-            icon: const Text('Next'),
-            label: const Icon(Icons.chevron_right_rounded),
-          ),
-        ],
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF2F4F7))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              rangeLabel,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF98A2B3),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: previous ? () => onPageChanged(page - 1) : null,
-            icon: const Icon(Icons.chevron_left_rounded),
-            color: const Color(0xFF98A2B3),
-          ),
-          for (var i = 1; i <= totalPages; i++)
-            if (totalPages <= 7 ||
-                i == 1 ||
-                i == totalPages ||
-                (i - page).abs() <= 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: InkWell(
-                  onTap: () => onPageChanged(i),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: i == page
-                          ? const Color(0xFF2FA56E)
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$i',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: i == page
-                            ? Colors.white
-                            : const Color(0xFF667085),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          IconButton(
-            onPressed: next ? () => onPageChanged(page + 1) : null,
-            icon: const Icon(Icons.chevron_right_rounded),
-            color: const Color(0xFF98A2B3),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 String _bookingRef(ClientBooking booking) {
   if (booking.bookingNumber.isNotEmpty) return booking.bookingNumber;
   if (booking.bookingRef.isNotEmpty) return booking.bookingRef;
@@ -777,7 +649,7 @@ TextStyle _routeAddressStyle(BuildContext context) {
     color: const Color(0xFF344054),
     fontSize: 13,
     height: 1.18,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w500,
   );
 }
 
@@ -1005,8 +877,8 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF344054),
+                        fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
                     ),
@@ -1027,8 +899,8 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
-                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF344054),
+                        fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
                     ),

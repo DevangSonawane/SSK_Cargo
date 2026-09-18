@@ -81,10 +81,7 @@ class _ClientPaymentMethodAddScreenState
           });
           return null;
         }
-        final details = <String, dynamic>{
-          'brand': brand,
-          'last4': last4,
-        };
+        final details = <String, dynamic>{'brand': brand, 'last4': last4};
         if (note.isNotEmpty) details['note'] = note;
         return PaymentMethodDraft(
           methodType: 'card',
@@ -93,7 +90,10 @@ class _ClientPaymentMethodAddScreenState
         );
       case 'netbanking':
         final bank = _selectedBank.trim();
-        final accountNumber = _accountController.text.replaceAll(RegExp(r'\D'), '');
+        final accountNumber = _accountController.text.replaceAll(
+          RegExp(r'\D'),
+          '',
+        );
         final ifsc = _ifscController.text.trim().toUpperCase();
         if (bank.isEmpty) {
           setState(() {
@@ -170,7 +170,9 @@ class _ClientPaymentMethodAddScreenState
 
     final navigator = Navigator.of(context);
     try {
-      final response = await ref.read(apiClientProvider).createSavedPaymentMethod(
+      final response = await ref
+          .read(apiClientProvider)
+          .createSavedPaymentMethod(
             accessToken: session.tokens.accessToken,
             methodType: draft.methodType,
             label: draft.label,
@@ -227,69 +229,10 @@ class _ClientPaymentMethodAddScreenState
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1976FF), Color(0xFF0D3B85)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0D3B85).withValues(alpha: 0.22),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.all(7),
-                      child: Image.asset(
-                        'assets/Logo.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GadiDost Logistics',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Save cards, UPI IDs, banks, and wallets for faster checkout.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.78),
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -312,9 +255,9 @@ class _ClientPaymentMethodAddScreenState
                       Text(
                         'Type',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF667085),
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: const Color(0xFF667085),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       LayoutBuilder(
@@ -392,9 +335,8 @@ class _ClientPaymentMethodAddScreenState
                         const SizedBox(height: 10),
                         Text(
                           'Only the brand and last 4 digits are stored.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: const Color(0xFF98A2B3),
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: const Color(0xFF98A2B3)),
                         ),
                       ] else if (_methodType == 'netbanking') ...[
                         const _FieldLabel(text: 'Bank'),
@@ -415,8 +357,10 @@ class _ClientPaymentMethodAddScreenState
                           banks: paymentBankOptions
                               .where(
                                 (bank) => bank.name.toLowerCase().contains(
-                                      _bankSearchController.text.trim().toLowerCase(),
-                                    ),
+                                  _bankSearchController.text
+                                      .trim()
+                                      .toLowerCase(),
+                                ),
                               )
                               .toList(growable: false),
                           selectedBank: _selectedBank,
@@ -462,7 +406,8 @@ class _ClientPaymentMethodAddScreenState
                                   _CardField(
                                     child: TextFormField(
                                       controller: _ifscController,
-                                      textCapitalization: TextCapitalization.characters,
+                                      textCapitalization:
+                                          TextCapitalization.characters,
                                       inputFormatters: [
                                         LengthLimitingTextInputFormatter(11),
                                         FilteringTextInputFormatter.allow(
@@ -500,8 +445,10 @@ class _ClientPaymentMethodAddScreenState
                           wallets: paymentWalletOptions
                               .where(
                                 (wallet) => wallet.label.toLowerCase().contains(
-                                      _walletSearchController.text.trim().toLowerCase(),
-                                    ),
+                                  _walletSearchController.text
+                                      .trim()
+                                      .toLowerCase(),
+                                ),
                               )
                               .toList(growable: false),
                           selectedWallet: _selectedWallet,
@@ -512,9 +459,7 @@ class _ClientPaymentMethodAddScreenState
                         ),
                       ],
                       const SizedBox(height: 14),
-                      const _FieldLabel(
-                        text: 'Note',
-                      ),
+                      const _FieldLabel(text: 'Note'),
                       const SizedBox(height: 8),
                       _CardField(
                         child: TextFormField(
@@ -541,9 +486,8 @@ class _ClientPaymentMethodAddScreenState
                         controlAffinity: ListTileControlAffinity.leading,
                         title: Text(
                           'Set as default payment method',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF667085),
-                              ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: const Color(0xFF667085)),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -581,9 +525,9 @@ class _ClientPaymentMethodAddScreenState
                         'We only store display details like your card\'s last 4 digits — never your full number or CVV.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF98A2B3),
-                              height: 1.4,
-                            ),
+                          color: const Color(0xFF98A2B3),
+                          height: 1.4,
+                        ),
                       ),
                     ],
                   ),
@@ -631,10 +575,7 @@ class _BankGrid extends StatelessWidget {
                 label: bank.name,
                 selected: selectedBank == bank.name,
                 onTap: () => onSelect(bank.name),
-                logo: Image.asset(
-                  bank.assetPath,
-                  fit: BoxFit.contain,
-                ),
+                logo: Image.asset(bank.assetPath, fit: BoxFit.contain),
               ),
           ],
         );
@@ -715,11 +656,7 @@ class _SelectableLogoTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: logo,
-            ),
+            SizedBox(width: 24, height: 24, child: logo),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -727,9 +664,11 @@ class _SelectableLogoTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: selected ? const Color(0xFF2FA56E) : const Color(0xFF667085),
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? const Color(0xFF2FA56E)
+                      : const Color(0xFF667085),
+                ),
               ),
             ),
           ],
@@ -771,16 +710,20 @@ class _TypeChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: selected ? const Color(0xFF2FA56E) : const Color(0xFF667085),
+              color: selected
+                  ? const Color(0xFF2FA56E)
+                  : const Color(0xFF667085),
             ),
             const SizedBox(height: 6),
             Text(
               label,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: selected ? const Color(0xFF2FA56E) : const Color(0xFF667085),
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: selected
+                    ? const Color(0xFF2FA56E)
+                    : const Color(0xFF667085),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -799,9 +742,9 @@ class _FieldLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF667085),
-            fontWeight: FontWeight.w700,
-          ),
+        color: const Color(0xFF667085),
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }
@@ -842,9 +785,9 @@ class _InlineError extends StatelessWidget {
       ),
       child: Text(
         message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFFB42318),
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: const Color(0xFFB42318)),
       ),
     );
   }

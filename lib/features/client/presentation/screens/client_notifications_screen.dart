@@ -179,12 +179,13 @@ class _ClientNotificationsScreenState
         ],
       ),
       body: RefreshIndicator(
+        color: const Color(0xFF2FA56E),
         onRefresh: _refresh,
         child: notificationsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
             children: [
               _EmptyState(
                 icon: Icons.notifications_off_outlined,
@@ -197,7 +198,7 @@ class _ClientNotificationsScreenState
             if (notifications.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 children: const [
                   _EmptyState(
                     icon: Icons.notifications_none_rounded,
@@ -211,7 +212,7 @@ class _ClientNotificationsScreenState
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               itemCount: notifications.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {

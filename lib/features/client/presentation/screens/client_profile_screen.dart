@@ -68,7 +68,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
           child: CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 120),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate.fixed([
                     Text(
@@ -76,6 +76,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             color: const Color(0xFF101828),
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
                           ),
                     ),
@@ -102,12 +103,6 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                           icon: Icons.inventory_2_outlined,
                           title: 'My Bookings',
                           onTap: () => context.go('/client/delivery'),
-                        ),
-                        _ProfileMenuTile(
-                          icon: Icons.receipt_long_outlined,
-                          title: 'My Invoices',
-                          subtitle: 'Coming soon',
-                          onTap: () => _showComingSoon(context),
                         ),
                       ],
                     ),
