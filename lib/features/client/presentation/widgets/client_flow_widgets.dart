@@ -4454,10 +4454,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     _findTruckNegotiationOpen = true;
-    final outcome = await showModalBottomSheet<_FindTruckNegotiationResult>(
+    final outcome = await showDialog<_FindTruckNegotiationResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.46),
       builder: (context) => _FindTruckNegotiationSheet(
         bookingId: bookingId,
         bookingNumber: _bookingReference,
@@ -5880,8 +5880,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final panelHeight = min(
-          constraints.maxHeight * 0.48,
-          mode == BookingSearchMode.broker ? 390.0 : 340.0,
+          constraints.maxHeight * 0.52,
+          mode == BookingSearchMode.broker ? 430.0 : 340.0,
         );
 
         return Stack(
@@ -6253,45 +6253,47 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildBrokerListOptions(BuildContext context) {
     if (_loadingEligibleBrokers) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 28),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const _BrokerLoadingCard();
     }
     if (_eligibleBrokersError != null) {
-      return _InlineRetryCard(
+      return _BrokerEmptyCard(
+        icon: Icons.wifi_off_rounded,
+        title: 'Could not load brokers',
         message: _eligibleBrokersError!,
         onRetry: _loadEligibleBrokers,
       );
     }
     if (_eligibleBrokers.isEmpty) {
-      return _InlineRetryCard(
+      return _BrokerEmptyCard(
+        icon: Icons.manage_search_rounded,
+        title: 'No broker nearby',
         message: 'No eligible brokers found for this route yet.',
         onRetry: _loadEligibleBrokers,
       );
     }
     return Column(
-      children: _eligibleBrokers
-          .map(
-            (broker) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _EligibleBrokerTile(
-                broker: broker,
-                selected: _draft.selectedBrokerId == broker.id,
-                onTap: () {
-                  setState(() {
-                    _draft = _draft.copyWith(
-                      searchMode: BookingSearchMode.broker,
-                      selectedBrokerId: broker.id,
-                    );
-                  });
-                },
-              ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BrokerListHeader(count: _eligibleBrokers.length),
+        const SizedBox(height: 10),
+        ..._eligibleBrokers.map(
+          (broker) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _EligibleBrokerTile(
+              broker: broker,
+              selected: _draft.selectedBrokerId == broker.id,
+              onTap: () {
+                setState(() {
+                  _draft = _draft.copyWith(
+                    searchMode: BookingSearchMode.broker,
+                    selectedBrokerId: broker.id,
+                  );
+                });
+              },
             ),
-          )
-          .toList(growable: false),
+          ),
+        ),
+      ],
     );
   }
 
@@ -8407,9 +8409,6 @@ class _FindTruckNegotiationSheetState
     final driverName = request.brokerName.isNotEmpty
         ? request.brokerName
         : 'Driver';
-    final amountText = request.amountText.isNotEmpty
-        ? request.amountText
-        : _formatRupees(widget.askingPrice);
     final title = request.normalizedStatus == 'accepted'
         ? 'Driver accepted the request'
         : request.isClientTurnToConfirm
@@ -8428,34 +8427,28 @@ class _FindTruckNegotiationSheetState
         : 'This request is updating live from the driver side.';
     final canAct = request.isActionableByClient;
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.52,
-      minChildSize: 0.38,
-      maxChildSize: 0.78,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 32,
+                offset: const Offset(0, 16),
+              ),
+            ],
           ),
           child: SingleChildScrollView(
-            controller: scrollController,
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 64,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD0D5DD),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -8490,19 +8483,13 @@ class _FindTruckNegotiationSheetState
                               context,
                             ).pop(_FindTruckNegotiationResult.dismissed),
                       icon: const Icon(Icons.close_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFF2F4F7),
+                        foregroundColor: const Color(0xFF475467),
+                      ),
                     ),
                   ],
                 ),
-                if (widget.bookingNumber?.isNotEmpty == true) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    'Booking #${widget.bookingNumber}',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: const Color(0xFF2FA56E),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
@@ -8540,12 +8527,6 @@ class _FindTruckNegotiationSheetState
                                     color: const Color(0xFF101828),
                                     fontWeight: FontWeight.w800,
                                   ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Current offer: $amountText',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: const Color(0xFF667085)),
                             ),
                           ],
                         ),
@@ -8612,8 +8593,8 @@ class _FindTruckNegotiationSheetState
               ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -8774,12 +8755,54 @@ class _NegotiationActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    );
+
+    if (!canCounter) {
+      return Row(
+        children: [
+          Expanded(
+            child: FilledButton(
+              onPressed: isBusy ? null : onAccept,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2FA56E),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(52),
+                shape: buttonShape,
+              ),
+              child: Text(acceptLabel),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: FilledButton(
+              onPressed: isBusy ? null : onReject,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE23A4B),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(52),
+                shape: buttonShape,
+              ),
+              child: const Text('Reject'),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: isBusy ? null : onAccept,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2FA56E),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(52),
+              shape: buttonShape,
+            ),
             child: Text(acceptLabel),
           ),
         ),
@@ -8788,8 +8811,14 @@ class _NegotiationActionButtons extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: FilledButton(
                   onPressed: isBusy ? null : onReject,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE23A4B),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: buttonShape,
+                  ),
                   child: const Text('Reject'),
                 ),
               ),
@@ -8797,18 +8826,14 @@ class _NegotiationActionButtons extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: isBusy ? null : onCounter,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    shape: buttonShape,
+                  ),
                   child: const Text('Counter'),
                 ),
               ),
             ],
-          )
-        else
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: isBusy ? null : onReject,
-              child: const Text('Reject'),
-            ),
           ),
       ],
     );
@@ -10827,34 +10852,60 @@ class _EligibleBrokerTile extends StatelessWidget {
     final statusColor = broker.isOnline
         ? const Color(0xFF2FA56E)
         : const Color(0xFF98A2B3);
-    final detailParts = <String>[
-      if (broker.phone.isNotEmpty) broker.phone,
-      if (broker.serviceCity.isNotEmpty) broker.serviceCity,
-    ];
+    final initials = broker.name.trim().isEmpty
+        ? 'B'
+        : broker.name
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((part) => part.characters.first.toUpperCase())
+              .join();
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEFF8F2) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: selected ? const Color(0xFFF0FAF4) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE4EAF1),
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE7EDF3),
+            width: selected ? 1.5 : 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0B1F3A).withValues(alpha: 0.045),
+              blurRadius: 14,
+              offset: const Offset(0, 7),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: selected
-                  ? const Color(0xFF2FA56E)
-                  : const Color(0xFFF1F5F9),
-              child: Icon(
-                Icons.business_center_rounded,
-                size: 19,
-                color: selected ? Colors.white : const Color(0xFF667085),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: selected
+                    ? const LinearGradient(
+                        colors: [Color(0xFF2FA56E), Color(0xFF1F8F5F)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: selected ? null : const Color(0xFFF3F6F8),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  initials,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: selected ? Colors.white : const Color(0xFF667085),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -10876,11 +10927,11 @@ class _EligibleBrokerTile extends StatelessWidget {
                               ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 7,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.12),
@@ -10898,37 +10949,53 @@ class _EligibleBrokerTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    detailParts.isEmpty
-                        ? 'Eligible broker'
-                        : detailParts.join('  |  '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${broker.truckCount} truck${broker.truckCount == 1 ? '' : 's'} available',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF2FA56E),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _BrokerMetaPill(
+                        icon: Icons.local_shipping_rounded,
+                        label:
+                            '${broker.truckCount} truck${broker.truckCount == 1 ? '' : 's'}',
+                        highlighted: true,
+                      ),
+                      if (broker.serviceCity.isNotEmpty)
+                        _BrokerMetaPill(
+                          icon: Icons.location_city_rounded,
+                          label: broker.serviceCity,
+                        ),
+                      if (broker.phone.isNotEmpty)
+                        _BrokerMetaPill(
+                          icon: Icons.call_rounded,
+                          label: broker.phone,
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Icon(
-              selected
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              color: selected
-                  ? const Color(0xFF2FA56E)
-                  : const Color(0xFF98A2B3),
+            const SizedBox(width: 8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFF2FA56E) : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected
+                      ? const Color(0xFF2FA56E)
+                      : const Color(0xFFD0D5DD),
+                ),
+              ),
+              child: selected
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    )
+                  : null,
             ),
           ],
         ),
@@ -10937,9 +11004,138 @@ class _EligibleBrokerTile extends StatelessWidget {
   }
 }
 
-class _InlineRetryCard extends StatelessWidget {
-  const _InlineRetryCard({required this.message, required this.onRetry});
+class _BrokerListHeader extends StatelessWidget {
+  const _BrokerListHeader({required this.count});
 
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FBF8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2EFE7)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.verified_user_rounded,
+            color: Color(0xFF2FA56E),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$count verified broker${count == 1 ? '' : 's'} available',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: const Color(0xFF0B1F3A),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerMetaPill extends StatelessWidget {
+  const _BrokerMetaPill({
+    required this.icon,
+    required this.label,
+    this.highlighted = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: highlighted ? const Color(0xFFE8F7EE) : const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 12,
+            color: highlighted
+                ? const Color(0xFF2FA56E)
+                : const Color(0xFF667085),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: highlighted
+                  ? const Color(0xFF167247)
+                  : const Color(0xFF667085),
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerLoadingCard extends StatelessWidget {
+  const _BrokerLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBF9),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE4EFE8)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Finding verified brokers for this route...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF667085),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerEmptyCard extends StatelessWidget {
+  const _BrokerEmptyCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final IconData icon;
+  final String title;
   final String message;
   final VoidCallback onRetry;
 
@@ -10947,23 +11143,44 @@ class _InlineRetryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE4EAF1)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFF667085)),
-          const SizedBox(width: 10),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF4FA),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: const Color(0xFF667085), size: 21),
+          ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF0B1F3A),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text('Retry')),
