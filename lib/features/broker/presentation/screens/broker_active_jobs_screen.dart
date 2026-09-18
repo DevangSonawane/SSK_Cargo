@@ -118,10 +118,7 @@ class _BrokerActiveJobsScreenState
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
             children: [
-              _ActiveJobsHeader(
-                total: jobsAsync.valueOrNull?.length ?? 0,
-                onRefresh: _refresh,
-              ),
+              _ActiveJobsHeader(total: jobsAsync.valueOrNull?.length ?? 0),
               const SizedBox(height: 18),
               jobsAsync.when(
                 loading: () => const Padding(
@@ -458,10 +455,9 @@ class _BrokerActiveJobsScreenState
 }
 
 class _ActiveJobsHeader extends StatelessWidget {
-  const _ActiveJobsHeader({required this.total, required this.onRefresh});
+  const _ActiveJobsHeader({required this.total});
 
   final int total;
-  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -487,14 +483,6 @@ class _ActiveJobsHeader extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-        IconButton.filled(
-          onPressed: onRefresh,
-          icon: const Icon(Icons.refresh_rounded),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF2152D0),
           ),
         ),
       ],

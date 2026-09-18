@@ -22,6 +22,7 @@ import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
 import '../../features/broker/presentation/screens/broker_driver_requests_screen.dart';
+import '../../features/broker/presentation/screens/broker_earnings_screen.dart';
 import '../../features/broker/presentation/screens/broker_request_detail_screen.dart';
 import '../../features/broker/presentation/screens/broker_settings_screen.dart';
 import '../../features/broker/presentation/screens/broker_invoices_screen.dart';
@@ -31,6 +32,9 @@ import '../../features/broker/presentation/screens/broker_profile_screen.dart';
 import '../../features/broker/presentation/screens/broker_kyc_registration_screen.dart';
 import '../../features/broker/presentation/screens/broker_shell.dart';
 import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
+import '../../features/broker/presentation/screens/broker_truck_assign_screen.dart';
+import '../../features/broker/presentation/screens/broker_truck_history_screen.dart';
+import '../../features/broker/presentation/screens/broker_truck_location_screen.dart';
 import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/driver_detail_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
@@ -404,6 +408,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/broker/vehicles/:id/assign',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: BrokerTruckAssignScreen(
+            truckId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/vehicles/:id/location',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: BrokerTruckLocationScreen(
+            truckId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/vehicles/:id/history',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: BrokerTruckHistoryScreen(
+            truckId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/broker/vehicles/:id',
+        redirect: (context, state) => '/broker/vehicles',
+      ),
+      GoRoute(
         path: '/broker/drivers/add',
         pageBuilder: (context, state) {
           final existingDriver = state.extra as BrokerDriver?;
@@ -523,6 +555,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/broker/profile',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BrokerProfileScreen()),
+              ),
+              GoRoute(
+                path: '/broker/earnings',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BrokerEarningsScreen()),
               ),
             ],
           ),

@@ -14,154 +14,58 @@ class _VehiclesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
-        MediaQuery.of(context).padding.top + 12,
+        MediaQuery.of(context).padding.top + 14,
         20,
-        16,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0B68C7), Color(0xFF147BD6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
+        0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Vehicles',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Manage your fleet at a glance',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.84),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _VehicleHeaderIcon(
-                icon: Icons.notifications_none_rounded,
-                showBadge: true,
-                onTap: () => context.push('/broker/notifications'),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () => context.push('/broker/profile'),
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.asset('assets/user.png', fit: BoxFit.cover),
-                ),
-              ),
-            ],
+          Text(
+            'Vehicles',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: const Color(0xFF0F172A),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Manage your fleet and truck availability',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 14),
-          TextField(
-            controller: controller,
-            onChanged: onSearchChanged,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: 'Search vehicles, drivers or location',
-              hintStyle: const TextStyle(
-                color: Color(0xFF98A2B3),
-                fontSize: 11,
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Color(0xFF667085),
-                size: 18,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VehicleHeaderIcon extends StatelessWidget {
-  const _VehicleHeaderIcon({
-    required this.icon,
-    required this.showBadge,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final bool showBadge;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
           Container(
-            width: 34,
-            height: 34,
+            height: 54,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.35),
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: Icon(icon, color: Colors.white, size: 19),
-          ),
-          if (showBadge)
-            Positioned(
-              right: -1,
-              top: -1,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF3B30),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF0B68C7)),
+            child: TextField(
+              controller: controller,
+              onChanged: onSearchChanged,
+              textInputAction: TextInputAction.search,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 15),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFF94A3B8),
+                ),
+                hintText: 'Search vehicles, drivers or location',
+                hintStyle: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -187,9 +91,91 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
     super.dispose();
   }
 
+  Future<void> _deleteTruck(BrokerVehicle vehicle) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove Truck'),
+        content: Text('Remove ${vehicle.plateNumber} from your fleet?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE23A4B),
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+
+    try {
+      await ref
+          .read(apiClientProvider)
+          .deleteTruck(accessToken: session.tokens.accessToken, id: vehicle.id);
+      ref.invalidate(brokerTrucksProvider(BrokerVehiclesScreen._query));
+      ref.invalidate(brokerVehiclesProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Truck removed.')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showTruckActions(BrokerVehicle vehicle) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        backgroundColor: Colors.transparent,
+        child: _TruckActionDialog(
+          vehicle: vehicle,
+          onEdit: () {
+            Navigator.of(dialogContext).pop();
+            context.push('/broker/vehicles/add', extra: vehicle);
+          },
+          onAssign: () {
+            Navigator.of(dialogContext).pop();
+            context.push('/broker/vehicles/${vehicle.id}/assign');
+          },
+          onTrack: () {
+            Navigator.of(dialogContext).pop();
+            context.push('/broker/vehicles/${vehicle.id}/location');
+          },
+          onHistory: () {
+            Navigator.of(dialogContext).pop();
+            context.push('/broker/vehicles/${vehicle.id}/history');
+          },
+          onRemove: () async {
+            Navigator.of(dialogContext).pop();
+            await _deleteTruck(vehicle);
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final trucksAsync = ref.watch(brokerTrucksProvider(BrokerVehiclesScreen._query));
+    final trucksAsync = ref.watch(
+      brokerTrucksProvider(BrokerVehiclesScreen._query),
+    );
 
     Future<void> refreshTrucks() async {
       final refreshed = ref.refresh(
@@ -300,17 +286,16 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                       children: [
                         Text(
                           'Your fleet',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: const Color(0xFF101828),
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: const Color(0xFF101828),
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '(${visibleVehicles.length})',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: const Color(0xFF667085),
                                 fontWeight: FontWeight.w700,
@@ -346,94 +331,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                         (entry) => [
                           VehicleCard(
                             vehicle: entry.value,
-                            onTap: () async {
-                              await showModalBottomSheet<void>(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) {
-                                  return SheetContainer(
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        20,
-                                        14,
-                                        20,
-                                        28,
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          Center(
-                                            child: Container(
-                                              width: 54,
-                                              height: 5,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFE1E5EB),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 18),
-                                          Text(
-                                            entry.value.label,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleLarge
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w800,
-                                                  color: const Color(0xFF101828),
-                                                ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            entry.value.plateNumber,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: const Color(0xFF667085),
-                                                ),
-                                          ),
-                                          const SizedBox(height: 18),
-                                          OptionTile(
-                                            title: 'Edit vehicle',
-                                            subtitle:
-                                                'Update vehicle info and assignment',
-                                            icon: Icons.edit_rounded,
-                                            selected: false,
-                                            onTap: () {
-                                              Navigator.of(context).pop();
-                                              context.push(
-                                                '/broker/vehicles/add',
-                                                extra: entry.value,
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(height: 10),
-                                          OptionTile(
-                                            title: 'Remove vehicle',
-                                            subtitle:
-                                                'Archive this vehicle from the fleet',
-                                            icon: Icons.delete_rounded,
-                                            selected: false,
-                                            onTap: () async {
-                                              Navigator.of(context).pop();
-                                              await _confirmDeleteTruck(
-                                                context,
-                                                ref,
-                                                entry.value,
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
+                            onTap: () => _showTruckActions(entry.value),
                           ),
                           if (entry.key != visibleVehicles.length - 1)
                             const SizedBox(height: 12),
@@ -445,65 +343,6 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-Future<void> _confirmDeleteTruck(
-  BuildContext context,
-  WidgetRef ref,
-  BrokerVehicle vehicle,
-) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: const Text('Remove truck?'),
-        content: Text(
-          'This will delete ${vehicle.plateNumber} from the fleet.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE23A4B),
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (confirmed != true || !context.mounted) return;
-
-  final session = ref.read(authSessionProvider).valueOrNull;
-  if (session == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please sign in again to delete a truck.')),
-    );
-    return;
-  }
-
-  try {
-    await ref
-        .read(apiClientProvider)
-        .deleteTruck(accessToken: session.tokens.accessToken, id: vehicle.id);
-    if (!context.mounted) return;
-    ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Truck removed from fleet.')),
-    );
-  } catch (error) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(error.toString().replaceFirst('ApiException: ', '')),
       ),
     );
   }
@@ -570,4 +409,289 @@ class _FleetEmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TruckActionDialog extends StatelessWidget {
+  const _TruckActionDialog({
+    required this.vehicle,
+    required this.onEdit,
+    required this.onAssign,
+    required this.onTrack,
+    required this.onHistory,
+    required this.onRemove,
+  });
+
+  final BrokerVehicle vehicle;
+  final VoidCallback onEdit;
+  final VoidCallback onAssign;
+  final VoidCallback onTrack;
+  final VoidCallback onHistory;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF2FF),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.local_shipping_rounded,
+                  color: Color(0xFF2152D0),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      vehicle.plateNumber.isEmpty
+                          ? vehicle.label
+                          : vehicle.plateNumber,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF0F172A),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    _VehicleStatusPill(status: vehicle.status),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                _TruckSummaryRow('Type', _vehicleType(vehicle)),
+                _TruckSummaryRow(
+                  'Capacity',
+                  vehicle.capacity.isEmpty ? '-' : vehicle.capacity,
+                ),
+                _TruckSummaryRow(
+                  'Driver',
+                  vehicle.assignedDriverName.isEmpty
+                      ? 'Unassigned'
+                      : vehicle.assignedDriverName,
+                ),
+                _TruckSummaryRow(
+                  'Insurance',
+                  vehicle.insuranceExpiry.isEmpty
+                      ? '-'
+                      : vehicle.insuranceExpiry,
+                  danger: _isInsuranceExpiring(vehicle.insuranceExpiry),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.9,
+            children: [
+              _TruckDialogAction(
+                icon: Icons.edit_rounded,
+                label: 'Edit',
+                onTap: onEdit,
+              ),
+              _TruckDialogAction(
+                icon: Icons.manage_accounts_rounded,
+                label: 'Assign',
+                onTap: onAssign,
+              ),
+              _TruckDialogAction(
+                icon: Icons.location_on_rounded,
+                label: 'Track',
+                onTap: onTrack,
+              ),
+              _TruckDialogAction(
+                icon: Icons.history_rounded,
+                label: 'History',
+                onTap: onHistory,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: const Text('Remove Truck'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFE23A4B),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TruckDialogAction extends StatelessWidget {
+  const _TruckDialogAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: const Color(0xFF2152D0), size: 20),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF475569),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TruckSummaryRow extends StatelessWidget {
+  const _TruckSummaryRow(this.label, this.value, {this.danger = false});
+
+  final String label;
+  final String value;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: danger
+                    ? const Color(0xFFE23A4B)
+                    : const Color(0xFF0F172A),
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VehicleStatusPill extends StatelessWidget {
+  const _VehicleStatusPill({required this.status});
+
+  final BrokerVehicleStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = vehicleStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: vehicleStatusBackground(status),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        vehicleStatusLabel(status),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+String _vehicleType(BrokerVehicle vehicle) {
+  final value = vehicle.category.isNotEmpty
+      ? vehicle.category
+      : vehicle.truckType.isNotEmpty
+      ? vehicle.truckType
+      : vehicle.label;
+  return value.isEmpty ? '-' : value;
+}
+
+bool _isInsuranceExpiring(String value) {
+  final date = DateTime.tryParse(value);
+  if (date == null) return false;
+  return date.difference(DateTime.now()).inDays < 60;
 }

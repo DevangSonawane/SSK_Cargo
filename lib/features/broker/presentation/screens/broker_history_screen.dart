@@ -169,10 +169,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
             children: [
-              _HistoryHeader(
-                count: visibleBookings.length,
-                onRefresh: _refresh,
-              ),
+              _HistoryHeader(count: visibleBookings.length),
               const SizedBox(height: 18),
               _HistorySearchField(
                 controller: _searchController,
@@ -241,10 +238,9 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
 }
 
 class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader({required this.count, required this.onRefresh});
+  const _HistoryHeader({required this.count});
 
   final int count;
-  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -270,14 +266,6 @@ class _HistoryHeader extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-        IconButton.filled(
-          onPressed: onRefresh,
-          icon: const Icon(Icons.refresh_rounded),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF2152D0),
           ),
         ),
       ],
@@ -337,35 +325,135 @@ class _HistoryTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      (_HistoryTab.all, 'All'),
-      (_HistoryTab.completed, 'Completed ($completedCount)'),
-      (_HistoryTab.cancelled, 'Cancelled ($cancelledCount)'),
+      (_HistoryTab.all, 'All', completedCount + cancelledCount),
+      (_HistoryTab.completed, 'Completed', completedCount),
+      (_HistoryTab.cancelled, 'Cancelled', cancelledCount),
     ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          for (final tab in tabs) ...[
-            ChoiceChip(
-              label: Text(tab.$2),
-              selected: selected == tab.$1,
-              onSelected: (_) => onChanged(tab.$1),
-              selectedColor: const Color(0xFF2152D0),
-              labelStyle: TextStyle(
-                color: selected == tab.$1
-                    ? Colors.white
-                    : const Color(0xFF64748B),
-                fontWeight: FontWeight.w800,
-              ),
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          for (final tab in tabs)
+            Expanded(
+              child: _HistoryTabButton(
+                label: tab.$2,
+                count: tab.$3,
+                selected: selected == tab.$1,
+                onTap: () => onChanged(tab.$1),
               ),
             ),
-            const SizedBox(width: 8),
-          ],
         ],
+      ),
+    );
+  }
+}
+
+class _HistoryTabButton extends StatelessWidget {
+  const _HistoryTabButton({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? Colors.white : const Color(0xFF475569);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      height: 40,
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFF2152D0) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF2152D0).withValues(alpha: 0.22),
+                  blurRadius: 14,
+                  offset: const Offset(0, 7),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: Colors.transparent,
+          highlightColor: selected
+              ? Colors.white.withValues(alpha: 0.06)
+              : const Color(0xFF2152D0).withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 5),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  constraints: const BoxConstraints(minWidth: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.24)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

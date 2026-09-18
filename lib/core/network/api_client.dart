@@ -1131,10 +1131,12 @@ class SskApiClient {
   Future<Map<String, dynamic>> getTrips({
     required String accessToken,
     String? status,
+    String? truckId,
+    String? driverId,
     int limit = 100,
   }) async {
     developer.log(
-      'GET /api/trips status=$status limit=$limit',
+      'GET /api/trips status=$status truckId=$truckId driverId=$driverId limit=$limit',
       name: 'SSK.API',
     );
     return _request(
@@ -1142,6 +1144,8 @@ class SskApiClient {
         '/api/trips',
         queryParameters: {
           if (status != null && status.isNotEmpty) 'status': status,
+          if (truckId != null && truckId.isNotEmpty) 'truckId': truckId,
+          if (driverId != null && driverId.isNotEmpty) 'driverId': driverId,
           'limit': limit,
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
@@ -1463,6 +1467,24 @@ class SskApiClient {
     return _request(
       () => _dio.delete<Map<String, dynamic>>(
         '/api/vehicles/trucks/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> assignDriverToTruck({
+    required String accessToken,
+    required String truckId,
+    required String driverId,
+  }) async {
+    developer.log(
+      'POST /api/vehicles/trucks/$truckId/assign-driver driverId=$driverId',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/vehicles/trucks/$truckId/assign-driver',
+        data: {'driver_id': driverId},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

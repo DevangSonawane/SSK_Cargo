@@ -28,12 +28,14 @@ class BrokerShell extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.path;
     final showHeader =
         location != '/broker/profile' &&
+        location != '/broker/earnings' &&
         location != '/broker/home' &&
         location != '/broker/active-jobs' &&
-        location != '/broker/vehicles' &&
+        !location.startsWith('/broker/vehicles') &&
         !location.startsWith('/broker/tracking') &&
         !location.startsWith('/broker/history');
-    final showBottomNav = location != '/broker/profile';
+    final showBottomNav =
+        location != '/broker/profile' && location != '/broker/earnings';
     final currentTab = navigationShell.currentIndex;
     final headerTitle = switch (currentTab) {
       0 =>

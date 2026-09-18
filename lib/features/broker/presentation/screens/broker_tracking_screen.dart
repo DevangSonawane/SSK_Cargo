@@ -200,12 +200,6 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
             ?.where(isActiveBrokerDriverRequest)
             .toList() ??
         const <BrokerDriverRequest>[];
-    final pendingDriverRequests =
-        driverRequestsAsync.valueOrNull?.where((request) {
-          final status = request.status.toLowerCase();
-          return status == 'requested';
-        }).length ??
-        0;
     final negotiationNotifications =
         notificationsAsync.valueOrNull
             ?.where(
@@ -393,10 +387,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     Expanded(
                       child: Text(
                         'Driver tracking',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: const Color(0xFF0F172A),
+                              fontWeight: FontWeight.w900,
+                            ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -405,16 +400,6 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       runSpacing: 8,
                       alignment: WrapAlignment.end,
                       children: [
-                        _HeaderActionButton(
-                          badgeCount: pendingDriverRequests,
-                          icon: Icons.assignment_rounded,
-                          onTap: () => context.push('/broker/driver-requests'),
-                        ),
-                        _HeaderActionButton(
-                          badgeCount: pendingDriverRequests,
-                          icon: Icons.notifications_none_rounded,
-                          onTap: () => context.push('/broker/notifications'),
-                        ),
                         FilledButton.icon(
                           onPressed: () => context.go('/broker/drivers/add'),
                           icon: const Icon(Icons.add_rounded, size: 18),
@@ -483,14 +468,6 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         ) ...[
                           DriverListTile(
                             driver: mergedDrivers[index],
-                            onTap: () => context.push(
-                              '/broker/drivers/${mergedDrivers[index].id}',
-                              extra: mergedDrivers[index],
-                            ),
-                            onEdit: () => context.push(
-                              '/broker/drivers/${mergedDrivers[index].id}',
-                              extra: mergedDrivers[index],
-                            ),
                             onRemove: () => _confirmDeleteDriver(
                               context,
                               ref,
@@ -658,63 +635,6 @@ Future<void> _confirmDeleteDriver(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(error.toString().replaceFirst('ApiException: ', '')),
-      ),
-    );
-  }
-}
-
-class _HeaderActionButton extends StatelessWidget {
-  const _HeaderActionButton({
-    required this.icon,
-    required this.onTap,
-    this.badgeCount = 0,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final int badgeCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-            ),
-            child: Icon(icon, color: const Color(0xFF1F88C9), size: 20),
-          ),
-          if (badgeCount > 0)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE23A4B),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                constraints: const BoxConstraints(minWidth: 16),
-                child: Text(
-                  badgeCount > 99 ? '99+' : '$badgeCount',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

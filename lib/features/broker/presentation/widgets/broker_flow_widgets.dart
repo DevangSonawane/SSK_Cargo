@@ -1340,6 +1340,10 @@ BrokerVehicle _brokerVehicleFromJson(Map<String, dynamic> json) {
   );
 }
 
+BrokerVehicle brokerVehicleFromJson(Map<String, dynamic> json) {
+  return _brokerVehicleFromJson(json);
+}
+
 String _labelFromCategory(String category) {
   switch (category.toLowerCase()) {
     case 'small':
@@ -3242,14 +3246,10 @@ class DriverListTile extends StatelessWidget {
   const DriverListTile({
     super.key,
     required this.driver,
-    required this.onTap,
-    required this.onEdit,
     required this.onRemove,
   });
 
   final BrokerDriver driver;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
   final VoidCallback onRemove;
 
   @override
@@ -3259,7 +3259,6 @@ class DriverListTile extends StatelessWidget {
     final canCall = driver.phone.trim().isNotEmpty;
 
     return InkWell(
-      onTap: onTap,
       onLongPress: onRemove,
       borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
@@ -3385,30 +3384,11 @@ class DriverListTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFF667085),
-                    size: 28,
-                  ),
                 ],
               );
 
               final footer = Row(
                 children: [
-                  Expanded(
-                    child: _DriverFooterButton(
-                      icon: Icons.visibility_rounded,
-                      label: 'View',
-                      iconColor: const Color(0xFF1F5BD7),
-                      onTap: onEdit,
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 28,
-                    color: const Color(0xFFE8EDF2),
-                  ),
                   Expanded(
                     child: _DriverFooterButton(
                       icon: Icons.call_rounded,
