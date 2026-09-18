@@ -21,6 +21,160 @@ class DriverRiderScreen extends ConsumerStatefulWidget {
   ConsumerState<DriverRiderScreen> createState() => _DriverRiderScreenState();
 }
 
+class DriverAllTripsScreen extends ConsumerWidget {
+  const DriverAllTripsScreen({super.key});
+
+  Future<void> _refresh(WidgetRef ref) {
+    ref.invalidate(driverDashboardProvider);
+    return ref.refresh(driverDashboardProvider.future);
+  }
+
+  void _openTrip(BuildContext context, DriverTripSummary trip) {
+    final bookingId = trip.bookingId.isNotEmpty
+        ? trip.bookingId
+        : trip.bookingNumber;
+    if (bookingId.isEmpty) {
+      return;
+    }
+    context.push('/driver/deliveries/$bookingId', extra: trip.toSettlement());
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardAsync = ref.watch(driverDashboardProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SafeArea(
+        child: dashboardAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => RefreshIndicator(
+            onRefresh: () => _refresh(ref),
+            color: const Color(0xFF2152D0),
+            backgroundColor: Colors.white,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              children: [
+                _AllTripsHeader(onBack: () => context.pop()),
+                const SizedBox(height: 120),
+                Text(
+                  error.toString().replaceFirst('Exception: ', ''),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFE23A4B),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          data: (dashboard) {
+            final trips = dashboard.tripFeed;
+
+            return RefreshIndicator(
+              onRefresh: () => _refresh(ref),
+              color: const Color(0xFF2152D0),
+              backgroundColor: Colors.white,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                children: [
+                  _AllTripsHeader(onBack: () => context.pop()),
+                  const SizedBox(height: 16),
+                  if (trips.isEmpty)
+                    const _EmptyCard(
+                      icon: Icons.route_rounded,
+                      title: 'No trips yet',
+                      subtitle: 'Your full trip history will appear here.',
+                    )
+                  else
+                    ...trips.asMap().entries.expand(
+                      (entry) => [
+                        _TripSummaryCard(
+                          trip: entry.value,
+                          onTap: () => _openTrip(context, entry.value),
+                        ),
+                        if (entry.key != trips.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AllTripsHeader extends StatelessWidget {
+  const _AllTripsHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onBack,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Color(0xFF0F172A),
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'All Trips',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Latest activity and completed deliveries',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   late final _LifecycleRefreshObserver _lifecycleRefreshObserver;
   Timer? _refreshTimer;
@@ -186,8 +340,6 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 _SectionHeader(
                   title: 'Active delivery',
                   subtitle: 'Your live trip appears here first',
-                  actionLabel: 'Refresh',
-                  onActionTap: _refreshDashboard,
                 ),
                 const SizedBox(height: 12),
                 if (currentTrip == null)
@@ -216,7 +368,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                   title: 'Latest trip activity',
                   subtitle: 'Pending deliveries and settlements',
                   actionLabel: 'View all',
-                  onActionTap: () {},
+                  onActionTap: () => context.push('/driver/all-trips'),
                 ),
                 const SizedBox(height: 12),
                 if (pendingHistory.isEmpty)
@@ -249,7 +401,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                   title: 'Deliveries done',
                   subtitle: 'Recently completed deliveries',
                   actionLabel: 'View all',
-                  onActionTap: () {},
+                  onActionTap: () => context.push('/driver/all-trips'),
                 ),
                 const SizedBox(height: 12),
                 if (completedHistory.isEmpty)
@@ -411,8 +563,12 @@ class _TripSummaryCard extends StatelessWidget {
         ? trip.bookingId
         : trip.bookingNumber;
     final status = trip.status.trim().toLowerCase();
+    final statusLabel = _activeStatusLabel(trip.status);
     final isCompleted =
-        status == 'completed' || status == 'paid' || status == 'settled';
+        status == 'completed' ||
+        status == 'delivered' ||
+        status == 'paid' ||
+        status == 'settled';
     final isCancelled =
         status == 'cancelled' ||
         status == 'canceled' ||
@@ -423,127 +579,141 @@ class _TripSummaryCard extends StatelessWidget {
         ? const Color(0xFF2FA56E)
         : isCancelled
         ? const Color(0xFFE23A4B)
-        : const Color(0xFFF59E0B);
-    final leadingBg = isCompleted
-        ? const Color(0xFFE8F7EE)
+        : const Color(0xFF2152D0);
+    final accentColor = isCompleted
+        ? const Color(0xFF34D399)
         : isCancelled
-        ? const Color(0xFFFDE3E6)
-        : const Color(0xFFFDECC8);
-    final leadingIcon = isCompleted
-        ? Icons.check_rounded
-        : isCancelled
-        ? Icons.cancel_rounded
-        : Icons.schedule_rounded;
+        ? const Color(0xFFFCA5A5)
+        : const Color(0xFF2152D0);
     final bookingTime = trip.bookingTime.isNotEmpty ? trip.bookingTime : '—';
     final distance = trip.distanceLabel;
     final route = (trip.fromLocation.isNotEmpty || trip.toLocation.isNotEmpty)
         ? (from: trip.fromLocation, to: trip.toLocation)
         : (from: 'Location unavailable', to: 'Location unavailable');
+    final amountText = isCancelled
+        ? '—'
+        : trip.amount > 0
+        ? '₹${trip.amount.toStringAsFixed(0)}'
+        : '₹0';
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFDFEFF),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE7EDF3)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0E1F3A).withValues(alpha: 0.05),
-                blurRadius: 22,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: leadingBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(leadingIcon, size: 24, color: statusColor),
+        borderRadius: BorderRadius.circular(18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFE8EDF2)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(height: 4, color: accentColor),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 13, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  bookingId.isEmpty
+                                      ? trip.bookingNumber
+                                      : bookingId,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(
+                                        fontFamily: 'monospace',
+                                        color: const Color(0xFF94A3B8),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                _TripStatusBadge(
+                                  label: statusLabel,
+                                  color: statusColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            amountText,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: isCancelled
+                                      ? const Color(0xFFE23A4B)
+                                      : statusColor,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _CompactRouteLine(
+                        color: const Color(0xFF0F172A),
+                        value: _locationLead(route.from),
+                      ),
+                      const SizedBox(height: 8),
+                      _CompactRouteLine(
+                        color: const Color(0xFF2152D0),
+                        value: _locationLead(route.to),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(height: 1, color: const Color(0xFFF1F5F9)),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 6,
+                              children: [
+                                _TripFooterMeta(
+                                  icon: Icons.inventory_2_outlined,
+                                  value: trip.truckReg.isEmpty
+                                      ? 'Cargo'
+                                      : trip.truckReg,
+                                ),
+                                _TripFooterMeta(
+                                  icon: Icons.route_outlined,
+                                  value: distance,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: _TripFooterMeta(
+                              icon: Icons.schedule_rounded,
+                              value: _formatTripTimestamp(bookingTime),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          bookingId.isEmpty ? trip.bookingNumber : bookingId,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF101828),
-                                fontSize: 16,
-                                height: 1.08,
-                              ),
-                        ),
-                        const SizedBox(height: 10),
-                        _TripRouteRow(from: route.from, to: route.to),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: Color(0xFFE8EDF2)),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _TripMetric(
-                      label: 'Booking Time',
-                      value: _formatTripTimestamp(bookingTime),
-                      icon: Icons.event_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 1,
-                    height: 30,
-                    color: const Color(0xFFE8EDF2),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _TripMetric(
-                      label: 'Distance',
-                      value: distance,
-                      icon: Icons.route_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 1,
-                    height: 30,
-                    color: const Color(0xFFE8EDF2),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _TripMetric(
-                      label: 'Status',
-                      value: _activeStatusLabel(trip.status),
-                      icon: Icons.circle,
-                      valueColor: statusColor,
-                      iconColor: statusColor,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -551,93 +721,58 @@ class _TripSummaryCard extends StatelessWidget {
   }
 }
 
-class _TripRouteRow extends StatelessWidget {
-  const _TripRouteRow({required this.from, required this.to});
+class _TripStatusBadge extends StatelessWidget {
+  const _TripStatusBadge({required this.label, required this.color});
 
-  final String from;
-  final String to;
+  final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TripLocationBlock(
-                label: 'Pickup',
-                value: from,
-                color: const Color(0xFF1DBA6B),
-                icon: Icons.arrow_upward_rounded,
-              ),
-              const SizedBox(height: 10),
-              _TripLocationBlock(
-                label: 'Drop',
-                value: to,
-                color: const Color(0xFFF59E0B),
-                icon: Icons.location_on_rounded,
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
         ),
-      ],
+      ),
     );
   }
 }
 
-class _TripLocationBlock extends StatelessWidget {
-  const _TripLocationBlock({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
+class _CompactRouteLine extends StatelessWidget {
+  const _CompactRouteLine({required this.color, required this.value});
 
-  final String label;
-  final String value;
   final Color color;
-  final IconData icon;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 14, color: color),
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 9),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF344054),
-                  fontWeight: FontWeight.w600,
-                  height: 1.25,
-                ),
-              ),
-            ],
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF1F2937),
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],
@@ -645,58 +780,41 @@ class _TripLocationBlock extends StatelessWidget {
   }
 }
 
-class _TripMetric extends StatelessWidget {
-  const _TripMetric({
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.valueColor,
-    this.iconColor,
-  });
+class _TripFooterMeta extends StatelessWidget {
+  const _TripFooterMeta({required this.icon, required this.value});
 
-  final String label;
-  final String value;
   final IconData icon;
-  final Color? valueColor;
-  final Color? iconColor;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    final resolvedIconColor = iconColor ?? const Color(0xFF98A2B3);
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 17, color: resolvedIconColor),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 10,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: valueColor ?? const Color(0xFF101828),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+        Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
+        const SizedBox(width: 5),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: const Color(0xFF64748B),
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
     );
   }
+}
+
+String _locationLead(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return '—';
+  }
+  final parts = trimmed.split(RegExp(r'\s[-|•]\s|,'));
+  final first = parts.first.trim();
+  return first.isEmpty ? trimmed : first;
 }
 
 String _activeStatusLabel(String status) {

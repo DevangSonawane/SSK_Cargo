@@ -593,6 +593,7 @@ class _DriverKycRegistrationScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _buildStepper() {
     final activeIndex = switch (_step) {
       _KycStep.details => 0,
@@ -1133,6 +1134,7 @@ class _DriverKycRegistrationScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _bottomBar(BuildContext context) {
     if (_step == _KycStep.submitted) {
       return const SizedBox.shrink();
@@ -1198,6 +1200,7 @@ class _DriverKycRegistrationScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _stepBody(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 220),
@@ -1210,10 +1213,111 @@ class _DriverKycRegistrationScreenState
     );
   }
 
+  Widget _buildReactStyleContent(BuildContext context) {
+    final status = (_statusLabel ?? 'pending').trim().toLowerCase();
+    final showForm =
+        !_hasSubmission ||
+        _isRejectedStatus(status) ||
+        _step != _KycStep.submitted;
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+      children: [
+        _KycStatusSummaryCard(
+          status: status,
+          rejectionReason: _rejectionReason,
+        ),
+        if (showForm) ...[
+          const SizedBox(height: 16),
+          _CardSection(
+            title: 'Driver Information',
+            child: _buildDetailsStep(context),
+          ),
+          const SizedBox(height: 16),
+          _CardSection(
+            title: 'Upload Documents',
+            child: Column(
+              children: [
+                for (var i = 0; i < _kycDocuments.length; i++) ...[
+                  _KycUploadCard(
+                    document: _kycDocuments[i],
+                    attachment:
+                        _attachments[_kycDocuments[i].key] ??
+                        const _KycAttachment(),
+                    onUpload: () => _showUploadOptions(_kycDocuments[i]),
+                    onCamera: () =>
+                        _pickDocument(_kycDocuments[i], ImageSource.camera),
+                    onGallery: () =>
+                        _pickDocument(_kycDocuments[i], ImageSource.gallery),
+                    onView: () => _showAttachmentPreview(_kycDocuments[i].key),
+                    onReplace: () => _showUploadOptions(_kycDocuments[i]),
+                  ),
+                  if (i != _kycDocuments.length - 1) const SizedBox(height: 12),
+                ],
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 14),
+                  _WarningCard(message: _errorMessage!),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: FilledButton.icon(
+              onPressed: _saving
+                  ? null
+                  : () {
+                      _confirmCheckboxController.value = true;
+                      _submitKyc();
+                    },
+              icon: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.file_upload_outlined, size: 18),
+              label: Text(
+                _isRejectedStatus(status)
+                    ? 'Resubmit for Review'
+                    : 'Submit for Review',
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2152D0),
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(fontWeight: FontWeight.w900),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ] else ...[
+          const SizedBox(height: 16),
+          _SubmittedDocumentsCard(
+            licenseNumber: _licenseController.text.trim(),
+            aadhaarNumber: _aadhaarController.text.trim(),
+            vehicleRegistration: _vehicleRegController.text.trim(),
+            insuranceNumber: _vehicleInsuranceController.text.trim(),
+            documents: _kycDocuments,
+            attachments: _attachments,
+            onEdit: () => setState(() => _step = _KycStep.details),
+            onView: _showAttachmentPreview,
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final body = _stepBody(context);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
       appBar: AppBar(
@@ -1250,40 +1354,20 @@ class _DriverKycRegistrationScreenState
           ),
         ),
         title: Text(
-          'KYC Registration',
+          'Driver KYC',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF101B43),
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF0F172A),
           ),
         ),
       ),
       body: SafeArea(
         child: _initialLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: _buildStepper(),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        20,
-                        16,
-                        20,
-                        _step == _KycStep.submitted ? 24 : 120,
-                      ),
-                      child: body,
-                    ),
-                  ),
-                ],
-              ),
+            : _buildReactStyleContent(context),
       ),
-      bottomNavigationBar: _bottomBar(context),
     );
   }
 }
@@ -1311,6 +1395,430 @@ class _KycIconBadge extends StatelessWidget {
       child: Icon(icon, color: color, size: 26),
     );
   }
+}
+
+class _KycStatusSummaryCard extends StatelessWidget {
+  const _KycStatusSummaryCard({
+    required this.status,
+    required this.rejectionReason,
+  });
+
+  final String status;
+  final String? rejectionReason;
+
+  @override
+  Widget build(BuildContext context) {
+    final visuals = _kycStatusVisuals(status);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: visuals.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(visuals.icon, color: visuals.color, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      visuals.title,
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      visuals.subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: visuals.background,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: visuals.color.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  visuals.badge,
+                  style: TextStyle(
+                    color: visuals.color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (rejectionReason?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 14),
+            _WarningCard(message: rejectionReason!.trim()),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmittedDocumentsCard extends StatelessWidget {
+  const _SubmittedDocumentsCard({
+    required this.licenseNumber,
+    required this.aadhaarNumber,
+    required this.vehicleRegistration,
+    required this.insuranceNumber,
+    required this.documents,
+    required this.attachments,
+    required this.onEdit,
+    required this.onView,
+  });
+
+  final String licenseNumber;
+  final String aadhaarNumber;
+  final String vehicleRegistration;
+  final String insuranceNumber;
+  final List<_KycDocument> documents;
+  final Map<String, _KycAttachment> attachments;
+  final VoidCallback onEdit;
+  final ValueChanged<String> onView;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.fact_check_outlined,
+                    color: Color(0xFF2152D0),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Submitted Documents',
+                    style: TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  label: const Text('Edit'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF2152D0),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: [
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.55,
+                  children: [
+                    _SubmittedFieldTile(
+                      label: 'Driving License',
+                      icon: Icons.credit_card_rounded,
+                      value: licenseNumber,
+                    ),
+                    _SubmittedFieldTile(
+                      label: 'Aadhaar Number',
+                      icon: Icons.fingerprint_rounded,
+                      value: aadhaarNumber,
+                    ),
+                    _SubmittedFieldTile(
+                      label: 'Vehicle Reg.',
+                      icon: Icons.local_shipping_outlined,
+                      value: vehicleRegistration,
+                    ),
+                    _SubmittedFieldTile(
+                      label: 'Insurance',
+                      icon: Icons.shield_outlined,
+                      value: insuranceNumber,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                for (var i = 0; i < documents.length; i++) ...[
+                  _SubmittedDocumentTile(
+                    document: documents[i],
+                    attachment:
+                        attachments[documents[i].key] ?? const _KycAttachment(),
+                    onView: () => onView(documents[i].key),
+                  ),
+                  if (i != documents.length - 1) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmittedFieldTile extends StatelessWidget {
+  const _SubmittedFieldTile({
+    required this.label,
+    required this.icon,
+    required this.value,
+  });
+
+  final String label;
+  final IconData icon;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFF94A3B8), size: 14),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value.isEmpty ? '-' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmittedDocumentTile extends StatelessWidget {
+  const _SubmittedDocumentTile({
+    required this.document,
+    required this.attachment,
+    required this.onView,
+  });
+
+  final _KycDocument document;
+  final _KycAttachment attachment;
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final uploaded = attachment.isUploaded;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            uploaded ? Icons.check_circle_rounded : Icons.pending_outlined,
+            color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF94A3B8),
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${document.title} Photo',
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  uploaded ? 'Uploaded' : 'Not uploaded',
+                  style: TextStyle(
+                    color: uploaded
+                        ? const Color(0xFF1F8F49)
+                        : const Color(0xFF94A3B8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (uploaded)
+            TextButton.icon(
+              onPressed: onView,
+              icon: const Icon(Icons.visibility_outlined, size: 14),
+              label: const Text('View'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF2152D0),
+                textStyle: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KycStatusVisuals {
+  const _KycStatusVisuals({
+    required this.title,
+    required this.subtitle,
+    required this.badge,
+    required this.icon,
+    required this.color,
+    required this.background,
+  });
+
+  final String title;
+  final String subtitle;
+  final String badge;
+  final IconData icon;
+  final Color color;
+  final Color background;
+}
+
+_KycStatusVisuals _kycStatusVisuals(String status) {
+  if (status.contains('verified') ||
+      status.contains('approved') ||
+      status.contains('complete')) {
+    return const _KycStatusVisuals(
+      title: 'KYC Verified',
+      subtitle: 'Your driver account is verified and active.',
+      badge: 'VERIFIED',
+      icon: Icons.verified_rounded,
+      color: Color(0xFF047857),
+      background: Color(0xFFEAF8EF),
+    );
+  }
+  if (status.contains('reject') || status.contains('declin')) {
+    return const _KycStatusVisuals(
+      title: 'KYC Rejected',
+      subtitle: 'Review the reason below and resubmit your documents.',
+      badge: 'REJECTED',
+      icon: Icons.error_outline_rounded,
+      color: Color(0xFFE23A4B),
+      background: Color(0xFFFFEEF0),
+    );
+  }
+  if (status.contains('submit') || status.contains('review')) {
+    return const _KycStatusVisuals(
+      title: 'KYC Under Review',
+      subtitle:
+          'Documents submitted successfully. Review usually takes 24-48 hours.',
+      badge: 'SUBMITTED',
+      icon: Icons.hourglass_top_rounded,
+      color: Color(0xFF2152D0),
+      background: Color(0xFFEFF6FF),
+    );
+  }
+  return const _KycStatusVisuals(
+    title: 'Complete Driver KYC',
+    subtitle: 'Submit your identity and vehicle documents for verification.',
+    badge: 'PENDING',
+    icon: Icons.badge_outlined,
+    color: Color(0xFFD97706),
+    background: Color(0xFFFFF7ED),
+  );
 }
 
 class _KycDocument {

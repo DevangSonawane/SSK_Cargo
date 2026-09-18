@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/driver_dashboard_models.dart';
 
 class DriverProfileScreen extends ConsumerStatefulWidget {
   const DriverProfileScreen({super.key});
@@ -132,6 +134,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
+    final dashboard = ref.watch(driverDashboardProvider).valueOrNull;
     final user = session?.user;
     final currentUserId = user?.id;
     if (currentUserId != _activeUserId && !_sessionSyncQueued) {
@@ -141,184 +144,316 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
         _syncKycStateForSession(currentUserId);
       });
     }
-    final displayName = user?.displayName ?? 'Driver';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName.split(' ').first,
-                        textAlign: TextAlign.left,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF101828),
-                            ),
-                      ),
-                      Text(
-                        displayName.contains(' ')
-                            ? displayName.split(' ').skip(1).join(' ')
-                            : 'Profile',
-                        textAlign: TextAlign.left,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF101828),
-                            ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  SskProfileAvatar(imageUrl: user?.profileImage, size: 62),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                user?.email ?? 'No account connected yet',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => context.go('/driver/home'),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: const Text('Back'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B),
+                  padding: EdgeInsets.zero,
                 ),
               ),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ProfileActionCard(
-                      title: 'Help',
-                      icon: Icons.support_agent_rounded,
-                      backgroundColor: const Color(0xFFF5F7FB),
-                      iconColor: const Color(0xFF2D6EF2),
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ProfileActionCard(
-                      title: 'Safety',
-                      icon: Icons.shield_rounded,
-                      backgroundColor: const Color(0xFFF5F7FB),
-                      iconColor: const Color(0xFF2FA56E),
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              _ProfileMenuTile(
-                title: _openingBrokerChat
-                    ? 'Opening chat...'
-                    : 'Chat with broker',
-                icon: Icons.chat_bubble_outline_rounded,
-                onTap: _openingBrokerChat
-                    ? null
-                    : () {
-                        _openBrokerChat();
-                      },
-                iconColor: const Color(0xFF1F88C9),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'All chats',
-                icon: Icons.forum_outlined,
-                onTap: () => context.push('/driver/chats'),
-                iconColor: const Color(0xFF1F88C9),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'Change password',
-                icon: Icons.password_rounded,
-                onTap: () => context.push('/change-password'),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'Manage account',
-                icon: Icons.manage_accounts_rounded,
-                onTap: () => context.push('/manage-account'),
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'KYC registration',
-                icon: Icons.verified_user_rounded,
-                onTap: () => context.push('/driver/kyc-registration'),
-                completed: !_loadingKyc && _kycApproved,
-              ),
-              const SizedBox(height: 10),
-              _ProfileMenuTile(
-                title: 'Logout',
-                icon: Icons.logout_rounded,
-                onTap: () async {
-                  await ref.read(authSessionProvider.notifier).logout();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                },
-                titleColor: const Color(0xFFE23A4B),
-                iconColor: const Color(0xFFE23A4B),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+            _ProfileCard(
+              user: user,
+              kycApproved: !_loadingKyc && _kycApproved,
+              truckType: _truckTypeLabel(dashboard?.assignedTruck),
+            ),
+            const SizedBox(height: 16),
+            _ProfileSection(
+              title: 'Account',
+              children: [
+                _ProfileMenuTile(
+                  title: 'Manage Account',
+                  subtitle: 'Profile details, security, and preferences',
+                  icon: Icons.person_outline_rounded,
+                  onTap: () => context.push('/manage-account'),
+                ),
+                _ProfileMenuTile(
+                  title: 'KYC Registration',
+                  subtitle: _loadingKyc
+                      ? 'Checking verification status'
+                      : _kycApproved
+                      ? 'Verified'
+                      : 'Complete your driver verification',
+                  icon: _kycApproved
+                      ? Icons.verified_rounded
+                      : Icons.verified_user_outlined,
+                  accent: _kycApproved
+                      ? const Color(0xFF2FA56E)
+                      : const Color(0xFF2152D0),
+                  onTap: () => context.push('/driver/kyc-registration'),
+                ),
+                _ProfileMenuTile(
+                  title: 'Earnings',
+                  subtitle: 'Trip payouts and completed delivery earnings',
+                  icon: Icons.trending_up_rounded,
+                  accent: const Color(0xFF2FA56E),
+                  onTap: () => context.go('/driver/earnings'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _ProfileSection(
+              title: 'Communication',
+              children: [
+                _ProfileMenuTile(
+                  title: _openingBrokerChat
+                      ? 'Opening chat...'
+                      : 'Message My Broker',
+                  subtitle: 'Open your direct broker conversation',
+                  icon: Icons.chat_bubble_outline_rounded,
+                  accent: const Color(0xFF2152D0),
+                  onTap: _openingBrokerChat ? null : _openBrokerChat,
+                ),
+                _ProfileMenuTile(
+                  title: 'All Chats',
+                  subtitle: 'View every driver conversation',
+                  icon: Icons.forum_outlined,
+                  accent: const Color(0xFF2152D0),
+                  onTap: () => context.push('/driver/chats'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _ProfileSection(
+              title: 'Security',
+              children: [
+                _ProfileMenuTile(
+                  title: 'Change Password',
+                  subtitle: 'Update your sign-in credentials',
+                  icon: Icons.lock_outline_rounded,
+                  onTap: () => context.push('/change-password'),
+                ),
+                _ProfileMenuTile(
+                  title: 'Logout',
+                  subtitle: 'Sign out from this device',
+                  icon: Icons.logout_rounded,
+                  accent: const Color(0xFFE23A4B),
+                  onTap: () async {
+                    await ref.read(authSessionProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ProfileActionCard extends StatelessWidget {
-  const _ProfileActionCard({
-    required this.title,
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-    required this.onTap,
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({
+    required this.user,
+    required this.kycApproved,
+    required this.truckType,
   });
 
-  final String title;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-  final VoidCallback? onTap;
+  final SskUser? user;
+  final bool kycApproved;
+  final String truckType;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 86,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28, color: iconColor),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
+    final displayName = user?.displayName.trim().isNotEmpty == true
+        ? user!.displayName.trim()
+        : 'Driver account';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F2454),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F2454).withValues(alpha: 0.16),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF2152D0).withValues(alpha: 0.25),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.32),
+                width: 2,
               ),
             ),
-          ],
-        ),
+            child: SskProfileAvatar(imageUrl: user?.profileImage, size: 72),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            user?.phone.trim().isNotEmpty == true
+                ? user!.phone
+                : user?.email ?? 'No account connected',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.64),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ProfileChip(
+                icon: kycApproved
+                    ? Icons.verified_rounded
+                    : Icons.hourglass_top_rounded,
+                label: kycApproved ? 'Verified' : 'KYC Pending',
+              ),
+              const _ProfileChip(
+                icon: Icons.local_shipping_outlined,
+                label: 'Driver',
+              ),
+              if (truckType.isNotEmpty)
+                _ProfileChip(icon: Icons.fire_truck_outlined, label: truckType),
+            ],
+          ),
+        ],
       ),
+    );
+  }
+}
+
+String _truckTypeLabel(Map<String, dynamic>? truck) {
+  if (truck == null || truck.isEmpty) {
+    return '';
+  }
+  return _firstTruckValue(truck, const [
+    'category',
+    'type',
+    'vehicleType',
+    'vehicle_type',
+    'truckType',
+    'truck_type',
+    'model',
+    'registration',
+    'registrationNumber',
+    'registration_number',
+  ]);
+}
+
+String _firstTruckValue(Map<String, dynamic> value, List<String> keys) {
+  for (final key in keys) {
+    final raw = value[key]?.toString().trim();
+    if (raw != null && raw.isNotEmpty && raw.toLowerCase() != 'null') {
+      return raw;
+    }
+  }
+  return '';
+}
+
+class _ProfileChip extends StatelessWidget {
+  const _ProfileChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileSection extends StatelessWidget {
+  const _ProfileSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: const Color(0xFF0F172A),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: [
+              for (var index = 0; index < children.length; index++) ...[
+                children[index],
+                if (index != children.length - 1)
+                  const Divider(
+                    height: 1,
+                    thickness: 1,
+                    indent: 62,
+                    color: Color(0xFFE2E8F0),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -326,66 +461,68 @@ class _ProfileActionCard extends StatelessWidget {
 class _ProfileMenuTile extends StatelessWidget {
   const _ProfileMenuTile({
     required this.title,
+    required this.subtitle,
     required this.icon,
     required this.onTap,
-    this.titleColor = const Color(0xFF101828),
-    this.iconColor = const Color(0xFF1C2430),
-    this.completed = false,
+    this.accent = const Color(0xFF2152D0),
   });
 
   final String title;
+  final String subtitle;
   final IconData icon;
   final VoidCallback? onTap;
-  final Color titleColor;
-  final Color iconColor;
-  final bool completed;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: completed ? const Color(0xFF2FA56E) : iconColor,
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFFCBD5E1),
               size: 22,
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: completed ? const Color(0xFF1F7A52) : titleColor,
-                ),
-              ),
-            ),
-            if (completed) ...[
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF2FA56E),
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-            ],
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
           ],
         ),
       ),

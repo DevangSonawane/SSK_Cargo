@@ -13,101 +13,113 @@ class DriverBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = <_DriverNavItem>[
+      const _DriverNavItem(label: 'New travel', icon: LucideIcons.truck),
+      const _DriverNavItem(label: 'Active', icon: LucideIcons.book_open_text),
+      const _DriverNavItem(label: 'Earnings', icon: LucideIcons.wallet),
+    ];
+
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x16000000),
-              blurRadius: 24,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _DriverBottomBarItem(
-                label: 'New travel',
-                icon: LucideIcons.truck,
-                selected: currentIndex == 0,
-                onTap: () => onTap(0),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _DriverBottomBarItem(
-                label: 'Active',
-                icon: LucideIcons.book_open_text,
-                selected: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _DriverBottomBarItem(
-                label: 'Earnings',
-                icon: LucideIcons.wallet,
-                selected: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-            ),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(72, 0, 72, 12),
+        child: SizedBox(
+          height: 58,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = constraints.maxWidth / items.length;
+              const indicatorSize = 50.0;
+              final selectedIndex = currentIndex.clamp(0, items.length - 1);
+              final left =
+                  (itemWidth * selectedIndex) +
+                  ((itemWidth - indicatorSize) / 2);
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 360),
+                    curve: Curves.easeOutCubic,
+                    left: left,
+                    top: 4,
+                    width: indicatorSize,
+                    height: indicatorSize,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2152D0),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF2152D0,
+                            ).withValues(alpha: 0.34),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      for (var index = 0; index < items.length; index++)
+                        Expanded(
+                          child: _DriverBottomBarItem(
+                            item: items[index],
+                            selected: selectedIndex == index,
+                            onTap: () => onTap(index),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-class _DriverBottomBarItem extends StatelessWidget {
-  const _DriverBottomBarItem({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.icon,
-  });
+class _DriverNavItem {
+  const _DriverNavItem({required this.label, required this.icon});
 
   final String label;
   final IconData icon;
+}
+
+class _DriverBottomBarItem extends StatelessWidget {
+  const _DriverBottomBarItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _DriverNavItem item;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor = const Color(0xFF1F88C9);
-    final iconColor = selected ? selectedColor : const Color(0xFF98A2B3);
+    final iconColor = selected ? Colors.white : const Color(0xFF64748B);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 2, bottom: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: Center(
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
+    return Tooltip(
+      message: item.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onTap,
+        child: Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: AnimatedScale(
+              scale: selected ? 1.14 : 1,
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutBack,
+              child: Icon(item.icon, size: 22, color: iconColor),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: iconColor,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

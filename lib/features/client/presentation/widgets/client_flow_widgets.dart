@@ -27,6 +27,26 @@ enum _LocationFieldKind { pickup, drop }
 
 enum _MapPinTarget { pickup, drop }
 
+class BookingStop {
+  const BookingStop({
+    required this.location,
+    required this.lat,
+    required this.lng,
+  });
+
+  final String location;
+  final double lat;
+  final double lng;
+
+  LatLng get latLng => LatLng(lat, lng);
+
+  Map<String, dynamic> toPayload() => <String, dynamic>{
+    'location': location,
+    'lat': lat,
+    'lng': lng,
+  };
+}
+
 class _SavedLocationShortcut {
   const _SavedLocationShortcut({
     required this.id,
@@ -1113,6 +1133,8 @@ class BookingData {
     this.pickupLng,
     this.dropLat,
     this.dropLng,
+    this.loadingStops = const [],
+    this.unloadingStops = const [],
     this.material = '',
     this.additionalNotes = '',
     this.weight = 0,
@@ -1149,6 +1171,8 @@ class BookingData {
   final double? pickupLng;
   final double? dropLat;
   final double? dropLng;
+  final List<BookingStop> loadingStops;
+  final List<BookingStop> unloadingStops;
   final String material;
   final String additionalNotes;
   final double weight;
@@ -1195,6 +1219,8 @@ class BookingData {
     double? pickupLng,
     double? dropLat,
     double? dropLng,
+    List<BookingStop>? loadingStops,
+    List<BookingStop>? unloadingStops,
     String? material,
     String? additionalNotes,
     double? weight,
@@ -1231,6 +1257,8 @@ class BookingData {
       pickupLng: pickupLng ?? this.pickupLng,
       dropLat: dropLat ?? this.dropLat,
       dropLng: dropLng ?? this.dropLng,
+      loadingStops: loadingStops ?? this.loadingStops,
+      unloadingStops: unloadingStops ?? this.unloadingStops,
       material: material ?? this.material,
       additionalNotes: additionalNotes ?? this.additionalNotes,
       weight: weight ?? this.weight,
@@ -1282,6 +1310,124 @@ double? _routeDistanceKm(Iterable<LatLng> points) {
     );
   }
   return meters / 1000;
+}
+
+class _IntermediateStopsList extends StatelessWidget {
+  const _IntermediateStopsList({
+    required this.loadingStops,
+    required this.unloadingStops,
+    required this.onRemoveLoading,
+    required this.onRemoveUnloading,
+  });
+
+  final List<BookingStop> loadingStops;
+  final List<BookingStop> unloadingStops;
+  final ValueChanged<int> onRemoveLoading;
+  final ValueChanged<int> onRemoveUnloading;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[
+      for (var index = 0; index < loadingStops.length; index++)
+        _IntermediateStopTile(
+          label: 'Loading point ${index + 1}',
+          location: loadingStops[index].location,
+          icon: Icons.inventory_2_outlined,
+          color: const Color(0xFFB7791F),
+          onRemove: () => onRemoveLoading(index),
+        ),
+      for (var index = 0; index < unloadingStops.length; index++)
+        _IntermediateStopTile(
+          label: 'Unloading point ${index + 1}',
+          location: unloadingStops[index].location,
+          icon: Icons.inventory_2_rounded,
+          color: const Color(0xFFE35A62),
+          onRemove: () => onRemoveUnloading(index),
+        ),
+    ];
+
+    return Column(
+      children: [
+        for (var index = 0; index < children.length; index++) ...[
+          if (index > 0) const SizedBox(height: 8),
+          children[index],
+        ],
+      ],
+    );
+  }
+}
+
+class _IntermediateStopTile extends StatelessWidget {
+  const _IntermediateStopTile({
+    required this.label,
+    required this.location,
+    required this.icon,
+    required this.color,
+    required this.onRemove,
+  });
+
+  final String label;
+  final String location;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4EAF1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  location,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            icon: const Icon(Icons.close_rounded, size: 18),
+            tooltip: 'Remove stop',
+            color: const Color(0xFF667085),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 enum PaymentMode { payNow, payLater }
@@ -3434,6 +3580,32 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ),
       );
     }
+    for (var index = 0; index < _draft.loadingStops.length; index++) {
+      final stop = _draft.loadingStops[index];
+      markers.add(
+        Marker(
+          markerId: MarkerId('booking-loading-$index'),
+          position: stop.latLng,
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueYellow,
+          ),
+          infoWindow: InfoWindow(title: 'Loading point ${index + 1}'),
+        ),
+      );
+    }
+    for (var index = 0; index < _draft.unloadingStops.length; index++) {
+      final stop = _draft.unloadingStops[index];
+      markers.add(
+        Marker(
+          markerId: MarkerId('booking-unloading-$index'),
+          position: stop.latLng,
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange,
+          ),
+          infoWindow: InfoWindow(title: 'Unloading point ${index + 1}'),
+        ),
+      );
+    }
     if (drop != null) {
       markers.add(
         Marker(
@@ -3470,7 +3642,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         (current == null
             ? _fallbackMapCenter
             : LatLng(current.latitude, current.longitude));
-    final distance = _routeDistanceKm([?pickup, ?drop]);
+    final distance = _routeDistanceKm(_bookingRoutePoints());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3566,6 +3738,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
       return;
     }
+    if (_draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _brokerRoutePoints = const [];
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
+      }
+      return;
+    }
 
     try {
       final service = ref.read(googlePlacesServiceProvider);
@@ -3600,8 +3781,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
-    final routeKey =
-        '${pickup.latitude},${pickup.longitude}|${drop.latitude},${drop.longitude}';
+    final routeKey = _bookingRoutePoints()
+        .map((point) => '${point.latitude},${point.longitude}')
+        .join('|');
     if (_brokerRouteKey == routeKey) {
       return;
     }
@@ -3627,6 +3809,53 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             _LocationDetailsScreen(kind: kind, initialValue: initialValue),
       ),
     );
+  }
+
+  Future<void> _addIntermediateStop({required bool loading}) async {
+    final selection = await _openLocationDetailsScreen(
+      loading ? _LocationFieldKind.pickup : _LocationFieldKind.drop,
+    );
+    if (selection == null || !mounted) {
+      return;
+    }
+    final lat = selection.latitude;
+    final lng = selection.longitude;
+    if (lat == null || lng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            loading
+                ? 'Choose a loading point from suggestions so we can pin it.'
+                : 'Choose an unloading point from suggestions so we can pin it.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final stop = BookingStop(
+      location: selection.formattedAddress,
+      lat: lat,
+      lng: lng,
+    );
+    setState(() {
+      _draft = loading
+          ? _draft.copyWith(loadingStops: [..._draft.loadingStops, stop])
+          : _draft.copyWith(unloadingStops: [..._draft.unloadingStops, stop]);
+    });
+    _scheduleBrokerRouteRefresh();
+  }
+
+  void _removeIntermediateStop({required bool loading, required int index}) {
+    setState(() {
+      final updated = [
+        ...(loading ? _draft.loadingStops : _draft.unloadingStops),
+      ]..removeAt(index);
+      _draft = loading
+          ? _draft.copyWith(loadingStops: updated)
+          : _draft.copyWith(unloadingStops: updated);
+    });
+    _scheduleBrokerRouteRefresh();
   }
 
   Future<void> _runAutoLocationFlow() async {
@@ -4524,7 +4753,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             drop: drop,
           );
       final data = response['data'];
-      final distance = _readDistanceValue(data, response);
+      final directDistance = _readDistanceValue(data, response);
+      final stopChainDistance = _routeDistanceKm(_bookingRoutePoints());
+      final distance =
+          (_draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty)
+          ? (stopChainDistance ?? directDistance)
+          : directDistance;
       final durationMin = _readIntValue(data, response, const [
         'durationMin',
         'duration_min',
@@ -5149,6 +5383,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       'drop_location': _draft.to,
       'drop_lat': _draft.dropLat ?? 0,
       'drop_lng': _draft.dropLng ?? 0,
+      if (_draft.loadingStops.isNotEmpty)
+        'add_loading_location': _draft.loadingStops
+            .map((stop) => stop.toPayload())
+            .toList(growable: false),
+      if (_draft.unloadingStops.isNotEmpty)
+        'add_unloading_location': _draft.unloadingStops
+            .map((stop) => stop.toPayload())
+            .toList(growable: false),
       'truck_type': _draft.truckType,
       'truck_category': _draft.truckCategory.isEmpty
           ? _truckCategoryForVehicle(_vehicle.label)
@@ -6157,6 +6399,17 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return LatLng(lat, lng);
   }
 
+  List<LatLng> _bookingRoutePoints() {
+    final pickup = _pickupLatLng;
+    final drop = _dropLatLng;
+    return [
+      ?pickup,
+      ..._draft.loadingStops.map((stop) => stop.latLng),
+      ..._draft.unloadingStops.map((stop) => stop.latLng),
+      ?drop,
+    ];
+  }
+
   LatLng _brokerMapCenter() {
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
@@ -6173,7 +6426,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_brokerRoutePoints.length >= 2) {
       return _brokerRoutePoints;
     }
-    return const [];
+    return _bookingRoutePoints();
   }
 
   LatLngBounds? _brokerRouteBounds() {
@@ -6329,26 +6582,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  final selection = await _openLocationDetailsScreen(
-                    _LocationFieldKind.pickup,
-                  );
-                  if (selection == null || !mounted) {
-                    return;
-                  }
-                  setState(() {
-                    _draft = _draft.copyWith(
-                      from: selection.formattedAddress,
-                      pickupLat: selection.latitude,
-                      pickupLng: selection.longitude,
-                      city: selection.city.isNotEmpty
-                          ? selection.city
-                          : _draft.city,
-                    );
-                    _fromController.text = selection.formattedAddress;
-                  });
+                  await _addIntermediateStop(loading: true);
                 },
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add loading'),
+                label: const Text('Add loading point'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1F88C9),
                   side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -6367,23 +6604,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  final selection = await _openLocationDetailsScreen(
-                    _LocationFieldKind.drop,
-                  );
-                  if (selection == null || !mounted) {
-                    return;
-                  }
-                  setState(() {
-                    _draft = _draft.copyWith(
-                      to: selection.formattedAddress,
-                      dropLat: selection.latitude,
-                      dropLng: selection.longitude,
-                    );
-                    _toController.text = selection.formattedAddress;
-                  });
+                  await _addIntermediateStop(loading: false);
                 },
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add unloading'),
+                label: const Text('Add unloading point'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1F88C9),
                   side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -6400,6 +6624,18 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             ),
           ],
         ),
+        if (_draft.loadingStops.isNotEmpty ||
+            _draft.unloadingStops.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _IntermediateStopsList(
+            loadingStops: _draft.loadingStops,
+            unloadingStops: _draft.unloadingStops,
+            onRemoveLoading: (index) =>
+                _removeIntermediateStop(loading: true, index: index),
+            onRemoveUnloading: (index) =>
+                _removeIntermediateStop(loading: false, index: index),
+          ),
+        ],
         const SizedBox(height: 16),
         _ExpressDeliveryOptionCard(
           selected: _draft.transportType == 'intra' && _draft.isExpress,

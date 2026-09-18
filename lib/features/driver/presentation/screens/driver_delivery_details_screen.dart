@@ -20,6 +20,151 @@ import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 
+class _TripStop {
+  const _TripStop({
+    required this.index,
+    required this.type,
+    required this.location,
+    required this.status,
+  });
+
+  final int index;
+  final String type;
+  final String location;
+  final String status;
+
+  bool get done => status == 'done' || status == 'completed';
+  bool get loading => type == 'loading';
+  String get label => loading ? 'Loading Point' : 'Unloading Point';
+  String get actionLabel => loading ? 'Mark Loaded' : 'Mark Unloaded';
+
+  factory _TripStop.fromJson({
+    required int index,
+    required Map<String, dynamic> json,
+  }) {
+    String read(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key]?.toString().trim();
+        if (value != null &&
+            value.isNotEmpty &&
+            value.toLowerCase() != 'null') {
+          return value;
+        }
+      }
+      return '';
+    }
+
+    return _TripStop(
+      index: index,
+      type: read(const ['type']).toLowerCase(),
+      location: read(const ['location', 'address']),
+      status: read(const ['status']).toLowerCase(),
+    );
+  }
+}
+
+class _TripStopTile extends StatelessWidget {
+  const _TripStopTile({
+    required this.stop,
+    required this.actionableIndex,
+    required this.completing,
+    required this.onComplete,
+  });
+
+  final _TripStop stop;
+  final int actionableIndex;
+  final bool completing;
+  final VoidCallback onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final actionable = stop.index == actionableIndex;
+    final color = stop.loading
+        ? const Color(0xFFB7791F)
+        : const Color(0xFFE35A62);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: stop.done ? const Color(0xFFEAF7EF) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: stop.done ? const Color(0xFFCDEEDD) : const Color(0xFFE4EAF1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            stop.done
+                ? Icons.check_circle_rounded
+                : stop.loading
+                ? Icons.inventory_2_outlined
+                : Icons.inventory_2_rounded,
+            color: stop.done ? const Color(0xFF2FA56E) : color,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stop.label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  stop.location.isEmpty ? '—' : stop.location,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!stop.done) ...[
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: actionable && !completing ? onComplete : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F88C9),
+                disabledBackgroundColor: const Color(0xFFD0D5DD),
+                minimumSize: const Size(0, 38),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: completing
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      stop.actionLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
   const DriverDeliveryDetailsScreen({
     super.key,
@@ -43,6 +188,7 @@ class _DriverDeliveryDetailsScreenState
   bool _detailsPanelExpanded = true;
   bool _loadingTrip = true;
   bool _confirmingArrival = false;
+  int? _completingStopIndex;
   String _tripStatus = 'confirmed';
   String _paymentStatus = 'pending';
   String _customerName = 'Customer';
@@ -448,6 +594,8 @@ class _DriverDeliveryDetailsScreenState
       }
 
       setState(() {
+        _tripRaw = trip;
+        _shipment = _shipmentFromTrip(trip);
         _tripStatus = resolvedStatus;
         _loadingTrip = false;
         if (resolvedStatus == 'en_route_pickup') {
@@ -495,6 +643,99 @@ class _DriverDeliveryDetailsScreenState
         'Primary trip action failed after ${stopwatch.elapsedMilliseconds}ms: $error',
         name: 'driver.deliveryDetails',
       );
+    }
+  }
+
+  Future<void> _completeStop(int index) async {
+    if (_completingStopIndex != null) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+    if (_tripId.isEmpty) {
+      await _loadTrip();
+      if (!mounted || _tripId.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Trip is still syncing. Please try again.'),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _completingStopIndex = index);
+    try {
+      final locationError = await ref
+          .read(driverLocationTrackerProvider)
+          .refreshCurrentLocation();
+      if (locationError != null) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(locationError),
+            backgroundColor: const Color(0xFFE23A4B),
+          ),
+        );
+        return;
+      }
+      final response = await ref
+          .read(apiClientProvider)
+          .completeTripStop(
+            accessToken: session.tokens.accessToken,
+            tripId: _tripId,
+            index: index,
+          );
+      final data = response['data'];
+      final trip = data is Map<String, dynamic>
+          ? (data['trip'] is Map<String, dynamic>
+                ? data['trip'] as Map<String, dynamic>
+                : data)
+          : response;
+      if (!mounted) return;
+      setState(() {
+        _tripRaw = trip;
+        _shipment = _shipmentFromTrip(trip);
+        final updatedStatus = _normalizeTripStatus(
+          _readString(trip, const ['status', 'rawStatus']),
+        );
+        if (updatedStatus.isNotEmpty) {
+          _tripStatus = updatedStatus;
+        }
+      });
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Stop marked complete.'),
+          backgroundColor: Color(0xFF2FA56E),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: const Color(0xFFE23A4B),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _completingStopIndex = null);
+      }
     }
   }
 
@@ -601,6 +842,8 @@ class _DriverDeliveryDetailsScreenState
       }
 
       setState(() {
+        _tripRaw = trip;
+        _shipment = _shipmentFromTrip(trip);
         _tripStatus = resolvedStatus;
         _loadingTrip = false;
         _detailsPanelExpanded = true;
@@ -714,13 +957,102 @@ class _DriverDeliveryDetailsScreenState
     }
   }
 
+  List<_TripStop> get _extraStops {
+    final rawStops = _tripRaw['stops'];
+    if (rawStops is! List) {
+      return const [];
+    }
+    return [
+          for (var index = 0; index < rawStops.length; index++)
+            if (rawStops[index] is Map)
+              _TripStop.fromJson(
+                index: index,
+                json: (rawStops[index] as Map).cast<String, dynamic>(),
+              ),
+        ]
+        .where((stop) => stop.type == 'loading' || stop.type == 'unloading')
+        .toList(growable: false);
+  }
+
+  int _pendingStopCount(String type) =>
+      _extraStops.where((stop) => stop.type == type && !stop.done).length;
+
+  int _nextActionableStopIndex(String type) {
+    final rawStops = _tripRaw['stops'];
+    if (rawStops is! List) {
+      return -1;
+    }
+    for (var index = 0; index < rawStops.length; index++) {
+      final item = rawStops[index];
+      if (item is! Map) continue;
+      final stop = _TripStop.fromJson(
+        index: index,
+        json: item.cast<String, dynamic>(),
+      );
+      if (stop.type == type && !stop.done) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  String? _statusBlockedByStopsReason() {
+    if (_tripStatus == 'picked_up') {
+      final count = _pendingStopCount('loading');
+      if (count > 0) {
+        return 'Complete $count loading stop${count == 1 ? '' : 's'} first';
+      }
+    }
+    if (_tripStatus == 'in_transit') {
+      final count = _pendingStopCount('unloading');
+      if (count > 0) {
+        return 'Complete $count unloading stop${count == 1 ? '' : 's'} first';
+      }
+    }
+    return null;
+  }
+
+  Widget _buildStopsChecklist(BuildContext context) {
+    final stops = _extraStops;
+    if (stops.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 14),
+        const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+        const SizedBox(height: 14),
+        Text(
+          'Loading & Unloading Stops',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: const Color(0xFF101828),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        for (final stop in stops) ...[
+          _TripStopTile(
+            stop: stop,
+            actionableIndex: _nextActionableStopIndex(stop.type),
+            completing: _completingStopIndex == stop.index,
+            onComplete: () => unawaited(_completeStop(stop.index)),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
   Widget _buildTripPanel(BuildContext context) {
     final isArrivalFlow = _arrivalFlowActive || _showArrivalSwipe;
     final panelTitle = isArrivalFlow ? 'Arrived' : 'On route';
     final panelBadge = isArrivalFlow ? 'Ready' : 'Active';
+    final stopBlockReason = _statusBlockedByStopsReason();
     final panelSubtitle = isArrivalFlow
         ? 'Confirm when you have reached the drop point.'
-        : 'Use the action below to advance the trip.';
+        : stopBlockReason ?? 'Use the action below to advance the trip.';
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 280),
@@ -964,6 +1296,7 @@ class _DriverDeliveryDetailsScreenState
                                   0,
                             ),
                           ],
+                          _buildStopsChecklist(context),
                           const SizedBox(height: 14),
                           SizedBox(
                             width: double.infinity,
@@ -972,7 +1305,8 @@ class _DriverDeliveryDetailsScreenState
                               onPressed:
                                   _loadingTrip ||
                                       _confirmingArrival ||
-                                      _tripId.isEmpty
+                                      _tripId.isEmpty ||
+                                      stopBlockReason != null
                                   ? null
                                   : () {
                                       developer.log(

@@ -375,24 +375,6 @@ class SskApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> payBooking({
-    required String accessToken,
-    required String id,
-    String payType = 'full',
-  }) async {
-    developer.log(
-      'PATCH /api/bookings/$id/pay payType=$payType',
-      name: 'SSK.API',
-    );
-    return _request(
-      () => _dio.patch<Map<String, dynamic>>(
-        '/api/bookings/$id/pay',
-        data: {'pay_type': payType},
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
-      ),
-    );
-  }
-
   Future<Map<String, dynamic>> markBookingToBeBilled({
     required String accessToken,
     required String id,
@@ -1862,6 +1844,24 @@ class SskApiClient {
               ? {'pickup_otp': pickupOtp}
               : const <String, dynamic>{}),
         },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> completeTripStop({
+    required String accessToken,
+    required String tripId,
+    required int index,
+  }) async {
+    developer.log(
+      'PATCH /api/trips/$tripId/stops/$index/complete',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/trips/$tripId/stops/$index/complete',
+        data: const <String, dynamic>{},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

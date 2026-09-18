@@ -79,6 +79,13 @@ class BookingPaymentGateway {
 
     Future<void> handleSuccess(PaymentSuccessResponse response) async {
       try {
+        final paymentId = response.paymentId?.trim() ?? '';
+        final signature = response.signature?.trim() ?? '';
+        if (paymentId.isEmpty || signature.isEmpty) {
+          throw const ApiException(
+            'Payment gateway did not return verification details.',
+          );
+        }
         final verifyResponse = await _apiClient.verifyPayment(
           accessToken: accessToken,
           bookingId: bookingId,
@@ -86,8 +93,8 @@ class BookingPaymentGateway {
           payType: payType,
           paymentMode: 'razorpay',
           gatewayPayload: {
-            'razorpay_payment_id': response.paymentId,
-            'razorpay_signature': response.signature,
+            'razorpay_payment_id': paymentId,
+            'razorpay_signature': signature,
           },
         );
         if (!completer.isCompleted) {
@@ -128,6 +135,7 @@ class BookingPaymentGateway {
         'order_id': orderId,
         'name': merchantName,
         'description': description,
+        'theme': {'color': '#1976FF'},
         if (contact != null && contact.trim().isNotEmpty)
           'prefill': {
             'contact': contact.trim(),

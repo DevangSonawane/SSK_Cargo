@@ -236,6 +236,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             const NoTransitionPage(child: DriverAllEarningsScreen()),
       ),
       GoRoute(
+        path: '/driver/all-trips',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: DriverAllTripsScreen()),
+      ),
+      GoRoute(
         path: '/signup',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: SignupScreen()),
