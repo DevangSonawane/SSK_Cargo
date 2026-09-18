@@ -31,8 +31,8 @@ class BrokerShell extends ConsumerWidget {
         location != '/broker/home' &&
         location != '/broker/active-jobs' &&
         location != '/broker/vehicles' &&
-        location != '/broker/tracking' &&
-        location != '/broker/history';
+        !location.startsWith('/broker/tracking') &&
+        !location.startsWith('/broker/history');
     final showBottomNav = location != '/broker/profile';
     final currentTab = navigationShell.currentIndex;
     final headerTitle = switch (currentTab) {

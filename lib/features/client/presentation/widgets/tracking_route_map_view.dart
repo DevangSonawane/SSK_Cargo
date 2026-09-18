@@ -2,6 +2,8 @@
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -304,6 +306,9 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
       compassEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: true,
+      gestureRecognizers: {
+        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+      },
       onCameraMoveStarted: () {
         debugPrint('[TrackingMap] camera move started');
       },
@@ -604,6 +609,9 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
       compassEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: true,
+      gestureRecognizers: {
+        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+      },
       onMapCreated: (controller) {
         _controller = controller;
         WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());

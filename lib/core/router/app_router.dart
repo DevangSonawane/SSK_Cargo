@@ -17,6 +17,7 @@ import '../../features/gps_tracking/presentation/screens/gps_vehicles_screen.dar
 import '../../features/broker/presentation/screens/add_driver_screen.dart';
 import '../../features/broker/presentation/screens/add_truck_screen.dart';
 import '../../features/broker/presentation/screens/broker_active_jobs_screen.dart';
+import '../../features/broker/presentation/screens/broker_history_detail_screen.dart';
 import '../../features/broker/presentation/screens/broker_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_notifications_screen.dart';
 import '../../features/broker/presentation/screens/broker_home_screen.dart';
@@ -33,6 +34,7 @@ import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
 import '../../features/broker/presentation/screens/broker_vehicles_screen.dart';
 import '../../features/broker/presentation/screens/driver_detail_screen.dart';
 import '../../features/broker/presentation/widgets/broker_flow_widgets.dart';
+import '../../features/client/data/client_booking_models.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_earnings_screen.dart';
 import '../../features/driver/presentation/screens/driver_all_earnings_screen.dart';
@@ -557,6 +559,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/broker/history',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BrokerHistoryScreen()),
+              ),
+              GoRoute(
+                path: '/broker/history/:id',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: BrokerHistoryDetailScreen(
+                    bookingId: state.pathParameters['id'] ?? '',
+                    initialBooking: state.extra is ClientBooking
+                        ? state.extra! as ClientBooking
+                        : null,
+                  ),
+                ),
               ),
             ],
           ),

@@ -189,6 +189,19 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> deleteBooking({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log('DELETE /api/bookings/$id', name: 'SSK.API');
+    return _request(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/bookings/$id',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getBookingTrack({
     required String accessToken,
     required String id,

@@ -2325,32 +2325,60 @@ class BrokerBottomBar extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x16000000),
-              blurRadius: 24,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            for (var index = 0; index < items.length; index++) ...[
-              Expanded(
-                child: _BrokerBottomBarItem(
-                  item: items[index],
-                  selected: currentIndex == index,
-                  onTap: () => onTap(index),
-                ),
-              ),
-              if (index != items.length - 1) const SizedBox(width: 12),
-            ],
-          ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        child: SizedBox(
+          height: 58,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = constraints.maxWidth / items.length;
+              const indicatorSize = 50.0;
+              final left =
+                  (itemWidth * currentIndex) +
+                  ((itemWidth - indicatorSize) / 2);
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 360),
+                    curve: Curves.easeOutCubic,
+                    left: left,
+                    top: 4,
+                    width: indicatorSize,
+                    height: indicatorSize,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2152D0),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF2152D0,
+                            ).withValues(alpha: 0.34),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      for (var index = 0; index < items.length; index++)
+                        Expanded(
+                          child: _BrokerBottomBarItem(
+                            item: items[index],
+                            selected: currentIndex == index,
+                            onTap: () => onTap(index),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -2382,60 +2410,53 @@ class _BrokerBottomBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor = const Color(0xFF1F88C9);
-    final iconColor = selected ? selectedColor : const Color(0xFF98A2B3);
+    final iconColor = selected ? Colors.white : const Color(0xFF64748B);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 2, bottom: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(child: Icon(item.icon, color: iconColor, size: 20)),
-                  if (item.showDot)
-                    Positioned(
-                      right: -1,
-                      top: -1,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE23A4B),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFFE23A4B,
-                              ).withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
+    return Tooltip(
+      message: item.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onTap,
+        child: Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                AnimatedScale(
+                  scale: selected ? 1.14 : 1,
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutBack,
+                  child: Icon(item.icon, color: iconColor, size: 22),
+                ),
+                if (item.showDot)
+                  Positioned(
+                    right: 7,
+                    top: 7,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE23A4B),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFE23A4B,
+                            ).withValues(alpha: 0.32),
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 3),
-            Text(
-              item.label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: selected ? selectedColor : const Color(0xFF667085),
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -2473,10 +2494,9 @@ class StatusPill extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: textColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
