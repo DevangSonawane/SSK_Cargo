@@ -3420,6 +3420,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
   bool _postNegotiationPayment = false;
+  bool _paymentCompletionVisible = false;
   bool _loadingAdvanceAmount = false;
   bool _loadingExpressQuote = false;
   double? _advanceAmount;
@@ -3436,6 +3437,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Position? _currentPosition;
   StreamSubscription<Position>? _positionSubscription;
   Timer? _findTruckPollTimer;
+  Timer? _findTruckZoomTimer;
   StreamSubscription<Map<String, dynamic>>? _findTruckRequestSubscription;
   bool _locationStreamStarted = false;
 
@@ -3507,8 +3509,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   void dispose() {
+    _bottomNavVisibleController.state = true;
     _positionSubscription?.cancel();
     _findTruckPollTimer?.cancel();
+    _findTruckZoomTimer?.cancel();
     _findTruckRequestSubscription?.cancel();
     _brokerMapController?.dispose();
     _fromController.dispose();
@@ -4149,8 +4153,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Future<void> _startFindTruckSearch() async {
-    if (_submitting || _bookingCreated) {
+    if (_submitting) {
       return;
+    }
+    if (_bookingCreated) {
+      if (!_postNegotiationPayment) {
+        return;
+      }
+      _resetUnpaidPaymentBookingForRetry(searchMode: BookingSearchMode.truck);
     }
     if (!_validateScheduledDate()) {
       return;
@@ -4171,11 +4181,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _driverRequest = null;
       _findTruckRequestCount = 0;
       _findTruckDeclinedCount = 0;
+      _paymentCompletionVisible = false;
       _draft = _draft.copyWith(
         searchMode: BookingSearchMode.truck,
         selectedBrokerId: '',
       );
     });
+    _startFindTruckZoomOutLoop();
 
     try {
       final hasCoordinates = await _ensureFindTruckCoordinates();
@@ -4226,6 +4238,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _postNegotiationPayment = false;
         _step = _BookingFlowStep.brokerSelection;
       });
+      _startFindTruckZoomOutLoop();
 
       await _startFindTruckLiveUpdates(session.tokens.accessToken);
       await _loadFindTruckDriverRequests(silent: false);
@@ -4233,6 +4246,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) {
         return;
       }
+      _stopFindTruckZoomOutLoop();
       setState(() {
         _submitting = false;
       });
@@ -4241,6 +4255,82 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           content: Text(error.toString().replaceFirst('ApiException: ', '')),
         ),
       );
+    }
+  }
+
+  bool get _isFindTruckSearchActive =>
+      _bookingCreated &&
+      !_postNegotiationPayment &&
+      (_draft.searchMode ?? BookingSearchMode.truck) == BookingSearchMode.truck;
+
+  void _resetUnpaidPaymentBookingForRetry({
+    BookingSearchMode? searchMode,
+    _BookingFlowStep? step,
+  }) {
+    _findTruckPollTimer?.cancel();
+    _findTruckPollTimer = null;
+    _stopFindTruckZoomOutLoop();
+    unawaited(_findTruckRequestSubscription?.cancel() ?? Future<void>.value());
+    _findTruckRequestSubscription = null;
+
+    setState(() {
+      _bookingCreated = false;
+      _bookingReference = null;
+      _activeBookingId = null;
+      _driverRequest = null;
+      _findTruckRequestCount = 0;
+      _findTruckDeclinedCount = 0;
+      _findTruckNegotiationOpen = false;
+      _postNegotiationPayment = false;
+      _paymentCompletionVisible = false;
+      _cancellingFindTruckSearch = false;
+      _selectedTruck = null;
+      _draft = _draft.copyWith(
+        searchMode: searchMode ?? _draft.searchMode,
+        selectedBrokerId: searchMode == BookingSearchMode.truck
+            ? ''
+            : _draft.selectedBrokerId,
+      );
+      if (step != null) {
+        _step = step;
+      }
+    });
+  }
+
+  void _startFindTruckZoomOutLoop({bool initialFit = true}) {
+    _findTruckZoomTimer?.cancel();
+    unawaited(_zoomOutForFindTruckSearch(initialFit: initialFit));
+    _findTruckZoomTimer = Timer.periodic(const Duration(milliseconds: 1800), (
+      _,
+    ) {
+      if (mounted) {
+        unawaited(_zoomOutForFindTruckSearch());
+      }
+    });
+  }
+
+  void _stopFindTruckZoomOutLoop() {
+    _findTruckZoomTimer?.cancel();
+    _findTruckZoomTimer = null;
+  }
+
+  Future<void> _zoomOutForFindTruckSearch({bool initialFit = false}) async {
+    final controller = _brokerMapController;
+    if (controller == null) {
+      return;
+    }
+
+    final bounds = _brokerRouteBounds();
+    try {
+      if (initialFit && bounds != null) {
+        await controller.animateCamera(
+          CameraUpdate.newLatLngBounds(bounds, 90),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 220));
+      }
+      await controller.animateCamera(CameraUpdate.zoomBy(-0.28));
+    } catch (_) {
+      // GoogleMap can reject camera updates while the platform view settles.
     }
   }
 
@@ -4349,7 +4439,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       });
 
       if (best != null && _shouldOpenFindTruckNegotiation(best)) {
+        _stopFindTruckZoomOutLoop();
         unawaited(_openFindTruckNegotiation(best));
+      } else if (_isFindTruckSearchActive && _findTruckZoomTimer == null) {
+        _startFindTruckZoomOutLoop(initialFit: false);
       }
     } catch (error) {
       if (!mounted || silent) {
@@ -4377,6 +4470,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     try {
       _findTruckPollTimer?.cancel();
+      _stopFindTruckZoomOutLoop();
       await _findTruckRequestSubscription?.cancel();
       _findTruckRequestSubscription = null;
 
@@ -4482,6 +4576,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    if (_isFindTruckSearchActive) {
+      _startFindTruckZoomOutLoop(initialFit: false);
+    }
     await _loadFindTruckDriverRequests(silent: true);
   }
 
@@ -5278,8 +5375,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingCreated = true;
         _bookingReference = resolvedBookingNumber;
         _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
-        _postNegotiationPayment = false;
       });
+      await _showBookingCompleteAndRedirect();
     } catch (error) {
       if (!mounted) {
         return;
@@ -5303,12 +5400,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     final selectedMethod = _selectedPaymentMethod;
+    setState(() {
+      _submitting = true;
+    });
     if (selectedMethod == PaymentMethod.payLater) {
       if (!mounted) return;
       setState(() {
-        _postNegotiationPayment = false;
+        _submitting = false;
         _bookingCreated = true;
       });
+      await _showBookingCompleteAndRedirect();
       return;
     }
     if (selectedMethod == PaymentMethod.toBeBilled) {
@@ -5321,11 +5422,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             );
         if (!mounted) return;
         setState(() {
-          _postNegotiationPayment = false;
+          _submitting = false;
           _bookingCreated = true;
         });
+        await _showBookingCompleteAndRedirect();
       } on ApiException catch (error) {
         if (!mounted) return;
+        setState(() {
+          _submitting = false;
+        });
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.message)));
@@ -5356,22 +5461,56 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         return;
       }
       setState(() {
-        _postNegotiationPayment = false;
+        _submitting = false;
         _bookingCreated = true;
       });
+      await _showBookingCompleteAndRedirect();
     } on ApiException catch (error) {
       if (!mounted) return;
+      setState(() {
+        _submitting = false;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       if (!mounted) return;
+      setState(() {
+        _submitting = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
     }
+  }
+
+  Future<void> _showBookingCompleteAndRedirect() async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _submitting = false;
+      _paymentCompletionVisible = true;
+    });
+
+    await Future<void>.delayed(const Duration(milliseconds: 1450));
+    if (!mounted) {
+      return;
+    }
+
+    _bottomNavVisibleController.state = true;
+    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.go('/client/delivery');
+      });
+      return;
+    }
+    router.go('/client/delivery');
   }
 
   Future<_DirectRequestSession?> _createDirectTruckRequestSession({
@@ -5603,14 +5742,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_bottomNavVisibleController.state) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _bottomNavVisibleController.state = false;
-        }
-      });
-    }
-
     ref.listen(clientPricingProvider, (previous, next) {
       final pricing = next.valueOrNull;
       if (pricing == null || !mounted) {
@@ -5649,7 +5780,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final showBottomButton = switch (_step) {
-      _BookingFlowStep.location || _BookingFlowStep.payment => true,
+      _BookingFlowStep.location => true,
+      _BookingFlowStep.payment => false,
       _BookingFlowStep.waiting => false,
       _BookingFlowStep.brokerSelection => false,
       _BookingFlowStep.itemDetails => false,
@@ -5695,6 +5827,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             ),
       body: _step == _BookingFlowStep.brokerSelection
           ? _buildBrokerSelectionMapSheetStep(context)
+          : _step == _BookingFlowStep.payment &&
+                (_paymentCompletionVisible ||
+                    !(_bookingCreated && !_postNegotiationPayment))
+          ? _buildPaymentMapSheetStep(context)
           : SafeArea(
               child: _step == _BookingFlowStep.itemDetails
                   ? Stack(
@@ -5877,6 +6013,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingCreated &&
         !_postNegotiationPayment &&
         mode == BookingSearchMode.truck;
+    final hideSearchPanel = _submitting || isFindTruckSearching;
+    final dimFindTruckMap = isFindTruckSearching && _findTruckRequestCount > 0;
     return LayoutBuilder(
       builder: (context, constraints) {
         final panelHeight = min(
@@ -5888,9 +6026,22 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           fit: StackFit.expand,
           children: [
             _buildBrokerMap(context, const <NearbyTruck>[]),
-            if (isFindTruckSearching)
+            if (dimFindTruckMap)
               Positioned.fill(
-                bottom: panelHeight,
+                child: IgnorePointer(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeOutCubic,
+                    color: const Color(0xFF111827).withValues(alpha: 0.34),
+                  ),
+                ),
+              ),
+            if (isFindTruckSearching)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
                 child: _FindTruckScreenLoader(
                   bookingReference: _bookingReference,
                   requestCount: _findTruckRequestCount,
@@ -5900,10 +6051,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   onCancel: _cancelFindTruckSearch,
                 ),
               ),
-            Positioned(
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.easeInOutCubic,
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: hideSearchPanel
+                  ? -(panelHeight + MediaQuery.of(context).viewPadding.bottom)
+                  : 0,
               child: SizedBox(
                 height: panelHeight,
                 child: _SearchMethodSheet(
@@ -6947,6 +7102,290 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
+  Widget _buildPaymentMapSheetStep(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final selectedMethod = _selectedPaymentMethod;
+    final amount = _draft.amount > 0
+        ? _draft.amount
+        : _priceValue(_vehicle.price);
+    final allowToBeBilled =
+        _postNegotiationPayment && _activeBookingId?.isNotEmpty == true;
+    final advanceSubtitle = _loadingAdvanceAmount
+        ? 'Fetching advance'
+        : _advanceAmount == null
+        ? 'Advance unavailable'
+        : '${_formatRupees(_advanceAmount!)} now';
+    final fullSelected =
+        selectedMethod != PaymentMethod.advance &&
+        selectedMethod != PaymentMethod.payLater &&
+        selectedMethod != PaymentMethod.toBeBilled;
+    final ctaLabel = selectedMethod == PaymentMethod.payLater
+        ? 'Confirm To Pay'
+        : selectedMethod == PaymentMethod.toBeBilled
+        ? 'Confirm Billing'
+        : selectedMethod == PaymentMethod.advance
+        ? 'Pay Advance'
+        : 'Pay Securely';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sheetHeight = min(constraints.maxHeight * 0.48, 350.0);
+        final paymentBottomPadding = bottomInset <= 0
+            ? 12.0
+            : bottomInset.clamp(10.0, 18.0).toDouble();
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBrokerMap(context, const <NearbyTruck>[]),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.10),
+                        Colors.black.withValues(alpha: 0.34),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    onPressed: () {
+                      if (_bookingCreated && _postNegotiationPayment) {
+                        _resetUnpaidPaymentBookingForRetry(
+                          step: _BookingFlowStep.brokerSelection,
+                        );
+                        return;
+                      }
+                      setState(() => _step = _BookingFlowStep.brokerSelection);
+                    },
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.94),
+                      foregroundColor: const Color(0xFF101828),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                ignoring: _paymentCompletionVisible,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 420),
+                  curve: Curves.easeInOutCubic,
+                  offset: _paymentCompletionVisible
+                      ? const Offset(0, 1.08)
+                      : Offset.zero,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 240),
+                    opacity: _paymentCompletionVisible ? 0 : 1,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxHeight: sheetHeight + paymentBottomPadding,
+                      ),
+                      padding: EdgeInsets.fromLTRB(
+                        18,
+                        16,
+                        18,
+                        paymentBottomPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(30),
+                        ),
+                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 30,
+                            offset: const Offset(0, -12),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD0D5DD),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Choose payment',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: const Color(0xFF101828),
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      'Map stays live while you finish checkout.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: const Color(0xFF667085),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 9,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEAF8F1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _formatRupees(amount),
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF1E7F55),
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            height: 112,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.zero,
+                              children: [
+                                _CheckoutMethodCard(
+                                  title: 'Pay Now',
+                                  subtitle: 'Secure checkout',
+                                  icon: Icons.lock_outline_rounded,
+                                  selected: fullSelected,
+                                  enabled: true,
+                                  onTap: () => setState(
+                                    () => _selectedPaymentMethod =
+                                        PaymentMethod.googlePay,
+                                  ),
+                                ),
+                                _CheckoutMethodCard(
+                                  title: 'Advance',
+                                  subtitle: advanceSubtitle,
+                                  icon: _loadingAdvanceAmount
+                                      ? Icons.hourglass_top_rounded
+                                      : Icons.payments_outlined,
+                                  selected:
+                                      selectedMethod == PaymentMethod.advance,
+                                  enabled:
+                                      _advanceAmount != null &&
+                                      !_loadingAdvanceAmount,
+                                  onTap: () => setState(
+                                    () => _selectedPaymentMethod =
+                                        PaymentMethod.advance,
+                                  ),
+                                ),
+                                _CheckoutMethodCard(
+                                  title: 'To Pay',
+                                  subtitle: 'Pay on delivery',
+                                  icon: Icons.local_shipping_outlined,
+                                  selected:
+                                      selectedMethod == PaymentMethod.payLater,
+                                  enabled: true,
+                                  onTap: () => setState(
+                                    () => _selectedPaymentMethod =
+                                        PaymentMethod.payLater,
+                                  ),
+                                ),
+                                _CheckoutMethodCard(
+                                  title: 'To Be Billed',
+                                  subtitle: allowToBeBilled
+                                      ? 'No collection now'
+                                      : 'After driver confirm',
+                                  icon: Icons.receipt_long_outlined,
+                                  selected:
+                                      selectedMethod ==
+                                      PaymentMethod.toBeBilled,
+                                  enabled: allowToBeBilled,
+                                  onTap: () => setState(
+                                    () => _selectedPaymentMethod =
+                                        PaymentMethod.toBeBilled,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _submitting ? null : _next,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF2FA56E),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(52),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              child: _submitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(ctaLabel),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_paymentCompletionVisible)
+              const Positioned.fill(child: _BookingCompleteOverlay()),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _loadAdvanceAmount() async {
     final session = ref.read(authSessionProvider).valueOrNull;
     final bookingId = _activeBookingId;
@@ -7158,103 +7597,207 @@ class _FindTruckScreenLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeCount = (requestCount - declinedCount).clamp(0, requestCount);
+    final hasNotifiedDrivers = requestCount > 0;
     return SafeArea(
-      child: Center(
-        child: Container(
-          width: min(MediaQuery.of(context).size.width - 40, 340),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE0EFE7)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.14),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+      child: Align(
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.97),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: const Color(0xFFDDEFE6)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 30,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -6,
-                top: -6,
-                child: IconButton(
-                  tooltip: 'Cancel search',
-                  onPressed: isCancelling ? null : onCancel,
-                  icon: isCancelling
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.close_rounded, size: 20),
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 66,
-                    height: 66,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: const [
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 14, 18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         SizedBox(
-                          width: 66,
-                          height: 66,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 4,
-                            color: Color(0xFF2FA56E),
+                          width: 58,
+                          height: 58,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: const [
+                              SizedBox(
+                                width: 58,
+                                height: 58,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 4,
+                                  color: Color(0xFF2FA56E),
+                                ),
+                              ),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFEAF8F1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: SizedBox(
+                                  width: 42,
+                                  height: 42,
+                                  child: Icon(
+                                    Icons.radar_rounded,
+                                    color: Color(0xFF2FA56E),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Icon(
-                          Icons.radar_rounded,
-                          color: Color(0xFF2FA56E),
-                          size: 30,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hasNotifiedDrivers
+                                    ? 'Notified $requestCount driver${requestCount == 1 ? '' : 's'}'
+                                    : 'Finding nearby drivers',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF101828),
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.12,
+                                    ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hasNotifiedDrivers
+                                    ? 'Waiting for the first live response.'
+                                    : 'Scanning the route for available trucks.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF667085),
+                                      height: 1.35,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Cancel search',
+                          onPressed: isCancelling ? null : onCancel,
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFF2F6F4),
+                            foregroundColor: const Color(0xFF475467),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: isCancelling
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.close_rounded, size: 18),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    requestCount > 0
-                        ? 'Notified $requestCount driver${requestCount == 1 ? '' : 's'}'
-                        : 'Finding nearby drivers',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF101828),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    requestCount > 0
-                        ? '$activeCount active inside ${searchRadiusKm.round()} km. Waiting for the first response.'
-                        : 'Searching inside ${searchRadiusKm.round()} km. The offer popup opens when a driver responds.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
-                      height: 1.35,
-                    ),
-                  ),
-                  if (bookingReference?.isNotEmpty == true) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Booking #$bookingReference',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: const Color(0xFF2FA56E),
-                        fontWeight: FontWeight.w800,
+                    const SizedBox(height: 18),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: const LinearProgressIndicator(
+                        minHeight: 6,
+                        color: Color(0xFF2FA56E),
+                        backgroundColor: Color(0xFFE4E7EC),
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _FindTruckStatusChip(
+                            icon: Icons.local_shipping_rounded,
+                            label: hasNotifiedDrivers
+                                ? '$activeCount active'
+                                : 'Live scan',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _FindTruckStatusChip(
+                            icon: Icons.near_me_rounded,
+                            label: '${searchRadiusKm.round()} km radius',
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (bookingReference?.isNotEmpty == true) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Booking #$bookingReference',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: const Color(0xFF2FA56E),
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FindTruckStatusChip extends StatelessWidget {
+  const _FindTruckStatusChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF2FA56E)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: const Color(0xFF475467),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -7628,39 +8171,16 @@ class _BrokerNegotiationSheetState
       return;
     }
 
-    final amountController = TextEditingController(text: request.amountText);
     try {
-      final shouldSend = await showDialog<bool>(
+      final initialAmount = _parsePrice(request.amountText);
+      final amount = await showDialog<double>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Counter offer'),
-          content: TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Amount'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Send'),
-            ),
-          ],
-        ),
+        barrierColor: Colors.black.withValues(alpha: 0.45),
+        builder: (dialogContext) =>
+            _CounterOfferSliderDialog(initialAmount: initialAmount),
       );
-      if (shouldSend != true) return;
+      if (amount == null) return;
 
-      final amount =
-          double.tryParse(
-            amountController.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-          ) ??
-          0;
       if (amount <= 0) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -7693,7 +8213,6 @@ class _BrokerNegotiationSheetState
         _errorMessage = error.message;
       });
     } finally {
-      amountController.dispose();
       if (mounted) {
         setState(() {
           _paymentSubmitting = false;
@@ -7875,6 +8394,8 @@ class _BrokerNegotiationSheetState
                 Text(
                   request == null
                       ? 'Live updates will appear here.'
+                      : request.isCountered
+                      ? 'Counter offer: ${request.amountText}'
                       : 'Current amount: ${request.amountText}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF667085),
@@ -7897,7 +8418,7 @@ class _BrokerNegotiationSheetState
           const SizedBox(height: 16),
           _NegotiationActionButtons(
             acceptLabel: request!.isClientTurnToConfirm ? 'Confirm' : 'Accept',
-            canCounter: false,
+            canCounter: request.isCountered,
             isBusy: _paymentSubmitting,
             onAccept: _acceptRequest,
             onCounter: _counterRequest,
@@ -8328,40 +8849,20 @@ class _FindTruckNegotiationSheetState
       return;
     }
 
-    final initialText = _request.amountText.isNotEmpty
-        ? _request.amountText
-        : widget.askingPrice.toStringAsFixed(0);
-    final amountController = TextEditingController(text: initialText);
     try {
-      final shouldSend = await showDialog<bool>(
+      final initialAmount = _request.amountText.isNotEmpty
+          ? _parsePrice(_request.amountText)
+          : widget.askingPrice;
+      final amount = await showDialog<double>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Counter offer'),
-          content: TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Amount'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Send'),
-            ),
-          ],
-        ),
+        barrierColor: Colors.black.withValues(alpha: 0.45),
+        builder: (dialogContext) =>
+            _CounterOfferSliderDialog(initialAmount: initialAmount),
       );
-      if (shouldSend != true) {
+      if (amount == null) {
         return;
       }
 
-      final amount = _parsePrice(amountController.text);
       if (amount <= 0) {
         if (!mounted) {
           return;
@@ -8394,7 +8895,6 @@ class _FindTruckNegotiationSheetState
         _errorMessage = error.message;
       });
     } finally {
-      amountController.dispose();
       if (mounted) {
         setState(() {
           _busy = false;
@@ -8409,6 +8909,9 @@ class _FindTruckNegotiationSheetState
     final driverName = request.brokerName.isNotEmpty
         ? request.brokerName
         : 'Driver';
+    final offerAmountText = request.amountText.isNotEmpty
+        ? request.amountText
+        : _formatRupees(widget.askingPrice);
     final title = request.normalizedStatus == 'accepted'
         ? 'Driver accepted the request'
         : request.isClientTurnToConfirm
@@ -8528,6 +9031,17 @@ class _FindTruckNegotiationSheetState
                                     fontWeight: FontWeight.w800,
                                   ),
                             ),
+                            if (request.isCountered) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                'Counter offer: $offerAmountText',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xFF2FA56E),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -8732,6 +9246,224 @@ class _NegotiationSliderStep extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _CounterOfferSliderDialog extends StatefulWidget {
+  const _CounterOfferSliderDialog({required this.initialAmount});
+
+  final double initialAmount;
+
+  @override
+  State<_CounterOfferSliderDialog> createState() =>
+      _CounterOfferSliderDialogState();
+}
+
+class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
+  late final double _minAmount;
+  late final double _maxAmount;
+  late double _amount;
+
+  @override
+  void initState() {
+    super.initState();
+    final baseAmount = widget.initialAmount > 0 ? widget.initialAmount : 1000.0;
+    _minAmount = max(1, baseAmount * 0.75).toDouble();
+    _maxAmount = max(_minAmount + 100, baseAmount * 1.25).toDouble();
+    _amount = baseAmount.clamp(_minAmount, _maxAmount).toDouble();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 390),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 30,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEAF8F1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.swap_horiz_rounded,
+                        color: Color(0xFF2FA56E),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Counter offer',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: const Color(0xFF101828),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Drag to set your price',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF667085),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFF2F4F7),
+                        foregroundColor: const Color(0xFF475467),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _formatRupees(_amount),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 7,
+                          activeTrackColor: const Color(0xFF2FA56E),
+                          inactiveTrackColor: const Color(0xFFE4E7EC),
+                          thumbColor: Colors.white,
+                          overlayColor: const Color(
+                            0xFF2FA56E,
+                          ).withValues(alpha: 0.14),
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 13,
+                            elevation: 4,
+                            pressedElevation: 7,
+                          ),
+                        ),
+                        child: Slider(
+                          value: _amount,
+                          min: _minAmount,
+                          max: _maxAmount,
+                          divisions: 100,
+                          label: _formatRupees(_amount),
+                          onChanged: (value) {
+                            setState(() {
+                              _amount = value;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatRupees(_minAmount),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: const Color(0xFF98A2B3),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.drag_indicator_rounded,
+                              color: Color(0xFF98A2B3),
+                              size: 18,
+                            ),
+                            Text(
+                              _formatRupees(_maxAmount),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: const Color(0xFF98A2B3),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).pop(_amount),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF2FA56E),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('Send counter'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -8962,6 +9694,203 @@ class _CheckoutChoiceCard extends StatelessWidget {
             onTap: () => onSelect(PaymentMethod.toBeBilled),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BookingCompleteOverlay extends StatelessWidget {
+  const _BookingCompleteOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.20)),
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.78, end: 1),
+            duration: const Duration(milliseconds: 520),
+            curve: Curves.elasticOut,
+            builder: (context, scale, child) {
+              return Transform.scale(scale: scale, child: child);
+            },
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 360),
+              curve: Curves.easeOutCubic,
+              builder: (context, opacity, child) {
+                return Opacity(opacity: opacity, child: child);
+              },
+              child: Container(
+                width: 178,
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.20),
+                      blurRadius: 30,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF8F1),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.22),
+                            blurRadius: 22,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: Color(0xFF2FA56E),
+                        size: 58,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Booking confirmed',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF101828),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Opening activity',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckoutMethodCard extends StatelessWidget {
+  const _CheckoutMethodCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = selected
+        ? const Color(0xFF2FA56E)
+        : const Color(0xFFE8EDF2);
+    final iconColor = enabled
+        ? selected
+              ? const Color(0xFF2FA56E)
+              : const Color(0xFF667085)
+        : const Color(0xFFB8C0CC);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 154,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: enabled
+                ? selected
+                      ? const Color(0xFFEAF8F1)
+                      : const Color(0xFFF8FAFC)
+                : const Color(0xFFF2F4F7),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, size: 18, color: iconColor),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 18,
+                    color: enabled
+                        ? selected
+                              ? const Color(0xFF2FA56E)
+                              : const Color(0xFF98A2B3)
+                        : const Color(0xFFD0D5DD),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: enabled
+                      ? const Color(0xFF101828)
+                      : const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: enabled
+                      ? const Color(0xFF667085)
+                      : const Color(0xFF98A2B3),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -10071,7 +11000,7 @@ class _BookingWaitingCard extends StatelessWidget {
                     waitingForDriverConfirmation
                         ? 'Waiting for the driver to confirm your acceptance.'
                         : request.isCountered
-                        ? 'Driver sent a counter offer.'
+                        ? 'Counter offer: ${request.amountText}'
                         : request.driverTimedOut
                         ? 'Driver response timed out.'
                         : 'Latest amount: ${request.amountText}',

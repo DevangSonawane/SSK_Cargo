@@ -180,6 +180,61 @@ class ClientBooking {
 
   factory ClientBooking.fromJson(Map<String, dynamic> json) {
     final status = _readString(json, const ['status', 'booking_status']);
+    final truck = _asMap(json['truck']);
+    final vehicle = _asMap(json['vehicle']);
+    final assignedTruck = _asMap(json['assigned_truck']);
+    final assignedVehicle = _asMap(json['assigned_vehicle']);
+    final vehicleType = _firstNonEmpty([
+      _readString(json, const [
+        'vehicle_type',
+        'vehicleType',
+        'truck_type',
+        'truckType',
+        'required_vehicle',
+        'required_vehicle_type',
+        'assigned_vehicle_type',
+      ]),
+      _readString(truck, const [
+        'label',
+        'name',
+        'type',
+        'truck_type',
+        'truckType',
+        'vehicle_type',
+        'vehicleType',
+        'category',
+      ]),
+      _readString(vehicle, const [
+        'label',
+        'name',
+        'type',
+        'truck_type',
+        'truckType',
+        'vehicle_type',
+        'vehicleType',
+        'category',
+      ]),
+      _readString(assignedTruck, const [
+        'label',
+        'name',
+        'type',
+        'truck_type',
+        'truckType',
+        'vehicle_type',
+        'vehicleType',
+        'category',
+      ]),
+      _readString(assignedVehicle, const [
+        'label',
+        'name',
+        'type',
+        'truck_type',
+        'truckType',
+        'vehicle_type',
+        'vehicleType',
+        'category',
+      ]),
+    ]);
 
     return ClientBooking(
       id: _readString(json, const ['id', 'booking_id', 'uuid']),
@@ -256,12 +311,7 @@ class ClientBooking {
         'load_weight',
         'item_weight',
       ]),
-      vehicleType: _readString(json, const [
-        'vehicle_type',
-        'truck_type',
-        'required_vehicle',
-        'vehicle',
-      ]),
+      vehicleType: vehicleType,
       amountText: _formatAmount(
         json['amount'] ?? json['price'] ?? json['fare'] ?? json['value'],
       ),
@@ -387,12 +437,47 @@ class ClientBookingOffer {
 
   factory ClientBookingOffer.fromJson(Map<String, dynamic> json) {
     final broker = _asMap(json['broker']);
-    final brokerUser = _asMap(json['user']);
+    final driver = _asMap(json['driver']);
+    final driverUser = _asMap(json['driver_user']);
     final amountValue =
+        json['counter_amount'] ??
+        json['counterAmount'] ??
+        json['driver_counter_amount'] ??
+        json['driverCounterAmount'] ??
         json['amount'] ??
         json['price'] ??
-        json['counter_amount'] ??
         json['value'];
+    final driverName = _nonClientName(
+      _readNestedName(json, const [
+        'driver_name',
+        'driverName',
+        'assigned_driver_name',
+        'assignedDriverName',
+        'truck_driver_name',
+        'truckDriverName',
+        'driver',
+        'driver_user',
+        'assigned_driver',
+        'assignedDriver',
+        'truck_driver',
+        'truckDriver',
+        'respondent',
+        'countered_by',
+        'counteredBy',
+      ]),
+    );
+    final nestedDriverName = _nonClientName(
+      _readNestedName(driver, const ['name', 'full_name', 'display_name']),
+    );
+    final nestedDriverUserName = _nonClientName(
+      _readNestedName(driverUser, const ['name', 'full_name', 'display_name']),
+    );
+    final brokerName = _nonClientName(
+      _readNestedName(json, const ['broker_name', 'broker']),
+    );
+    final nestedBrokerName = _nonClientName(
+      _readNestedName(broker, const ['name', 'full_name', 'display_name']),
+    );
 
     return ClientBookingOffer(
       id: _readString(json, const [
@@ -409,32 +494,17 @@ class ClientBookingOffer {
         'pending_confirmation_by',
       ]),
       amountText: _formatAmount(amountValue),
-      brokerName:
-          _readNestedName(json, const [
-            'broker_name',
-            'broker',
-            'created_by',
-            'user',
-            'driver',
-          ]).isNotEmpty
-          ? _readNestedName(json, const [
-              'broker_name',
-              'broker',
-              'created_by',
-              'user',
-              'driver',
-            ])
-          : _readNestedName(broker, const [
-              'name',
-              'full_name',
-              'display_name',
-            ]).isNotEmpty
-          ? _readNestedName(broker, const ['name', 'full_name', 'display_name'])
-          : _readNestedName(brokerUser, const [
-              'name',
-              'full_name',
-              'display_name',
-            ]),
+      brokerName: driverName.isNotEmpty
+          ? driverName
+          : nestedDriverName.isNotEmpty
+          ? nestedDriverName
+          : nestedDriverUserName.isNotEmpty
+          ? nestedDriverUserName
+          : brokerName.isNotEmpty
+          ? brokerName
+          : nestedBrokerName.isNotEmpty
+          ? nestedBrokerName
+          : 'Driver',
       note: _readString(json, const ['note', 'message', 'remarks']),
       driverTimedOut: _readBool(json, const [
         'driverTimedOut',
@@ -879,6 +949,14 @@ String _readNestedName(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return 'Client';
+}
+
+String _nonClientName(String value) {
+  final text = value.trim();
+  if (text.isEmpty || text.toLowerCase() == 'client') {
+    return '';
+  }
+  return text;
 }
 
 String _formatAmount(Object? value) {

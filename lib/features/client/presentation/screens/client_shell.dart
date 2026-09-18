@@ -50,7 +50,7 @@ int _visibleTabIndex(int branchIndex) {
   switch (branchIndex) {
     case 0:
       return 0;
-    case 2:
+    case 1:
       return 1;
     case 3:
       return 2;
@@ -64,7 +64,7 @@ int _branchIndexForVisibleTab(int visibleIndex) {
     case 0:
       return 0;
     case 1:
-      return 2;
+      return 1;
     case 2:
       return 3;
     default:

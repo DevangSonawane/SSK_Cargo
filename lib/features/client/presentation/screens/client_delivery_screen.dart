@@ -23,25 +23,7 @@ class ClientDeliveryScreen extends ConsumerStatefulWidget {
 
 class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   static const int _pageSize = 10;
-  static const List<String> _filterTabs = [
-    'All',
-    'Active',
-    'In Transit',
-    'Delivered',
-    'Cancelled',
-  ];
-  static const Map<String, String> _filterStatuses = {
-    'Active': 'confirmed,assigned,en_route_pickup,picked_up,in_transit',
-    'In Transit': 'in_transit',
-    'Delivered': 'delivered',
-    'Cancelled': 'cancelled',
-  };
-
-  final TextEditingController _trackingController = TextEditingController();
-  String _activeFilter = 'All';
-  String _searchQuery = '';
   int _page = 1;
-  Timer? _searchDebounce;
   String? _liveRefreshToken;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
@@ -61,12 +43,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   }
 
   ClientBookingsQuery get _currentQuery {
-    final isSearching = _searchQuery.isNotEmpty;
-    return (
-      status: _filterStatuses[_activeFilter],
-      page: isSearching ? 1 : _page,
-      limit: isSearching ? 100 : _pageSize,
-    );
+    return (status: null, page: _page, limit: _pageSize);
   }
 
   Future<void> _refreshBookings() async {
@@ -77,25 +54,6 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
 
     final refreshed = ref.refresh(clientBookingsProvider(_currentQuery).future);
     await refreshed;
-  }
-
-  void _changeFilter(String filter) {
-    if (_activeFilter == filter) return;
-    setState(() {
-      _activeFilter = filter;
-      _page = 1;
-    });
-  }
-
-  void _handleSearchChanged(String value) {
-    _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      if (!mounted) return;
-      setState(() {
-        _searchQuery = value.trim().toLowerCase();
-        _page = 1;
-      });
-    });
   }
 
   String _csvCell(Object? value) {
@@ -171,8 +129,6 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   void dispose() {
     _driverRequestSubscription?.cancel();
     _tripStatusSubscription?.cancel();
-    _searchDebounce?.cancel();
-    _trackingController.dispose();
     super.dispose();
   }
 
@@ -200,21 +156,10 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
             _BookingsHeader(
               onExport: bookingsAsync?.valueOrNull?.bookings.isEmpty == false
                   ? () {
-                      final visible = _visibleBookings(
-                        bookingsAsync!.valueOrNull!,
-                      ).bookings;
-                      _exportBookings(visible);
+                      _exportBookings(bookingsAsync!.valueOrNull!.bookings);
                     }
                   : null,
               onNewBooking: () => context.go('/client/home'),
-            ),
-            const SizedBox(height: 18),
-            _BookingsFiltersAndSearch(
-              tabs: _filterTabs,
-              activeFilter: _activeFilter,
-              onFilterChanged: _changeFilter,
-              controller: _trackingController,
-              onSearchChanged: _handleSearchChanged,
             ),
             const SizedBox(height: 16),
             if (session == null)
@@ -240,33 +185,10 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   onAction: _refreshBookings,
                 ),
                 data: (page) {
-                  final visible = _visibleBookings(page);
-                  final bookings = visible.bookings;
-                  final total = visible.total;
-                  final totalPages = visible.totalPages;
-                  final rangeStart = total == 0
-                      ? 0
-                      : (_page - 1) * _pageSize + 1;
-                  final rangeEnd = (_page * _pageSize).clamp(0, total);
+                  final bookings = page.bookings;
+                  final totalPages = page.totalPages;
 
                   if (bookings.isEmpty) {
-                    if (_searchQuery.isNotEmpty && page.bookings.isNotEmpty) {
-                      return _EmptyState(
-                        icon: Icons.search_off_rounded,
-                        title: 'No bookings found',
-                        subtitle:
-                            'No bookings match the selected filter or search.',
-                        actionLabel: 'Clear search',
-                        onAction: () {
-                          _trackingController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _page = 1;
-                          });
-                        },
-                      );
-                    }
-
                     return _EmptyState(
                       icon: Icons.inbox_rounded,
                       title: 'No bookings found',
@@ -280,32 +202,14 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth >= 720) {
-                            return _BookingsTable(
-                              bookings: bookings,
-                              page: _page,
-                              total: total,
-                              totalPages: totalPages,
-                              rangeStart: rangeStart,
-                              rangeEnd: rangeEnd,
-                              onPageChanged: (page) {
-                                setState(() => _page = page);
-                              },
-                              onOpenBooking: _openBooking,
-                            );
-                          }
-                          return _BookingsMobileList(
-                            bookings: bookings,
-                            page: _page,
-                            totalPages: totalPages,
-                            onPageChanged: (page) {
-                              setState(() => _page = page);
-                            },
-                            onOpenBooking: _openBooking,
-                          );
+                      _BookingsMobileList(
+                        bookings: bookings,
+                        page: _page,
+                        totalPages: totalPages,
+                        onPageChanged: (page) {
+                          setState(() => _page = page);
                         },
+                        onOpenBooking: _openBooking,
                       ),
                     ],
                   );
@@ -314,42 +218,6 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  ({List<ClientBooking> bookings, int total, int totalPages}) _visibleBookings(
-    ClientBookingPage page,
-  ) {
-    if (_searchQuery.isEmpty) {
-      return (
-        bookings: page.bookings,
-        total: page.total,
-        totalPages: page.totalPages,
-      );
-    }
-
-    final matches = page.bookings
-        .where((booking) {
-          final searchableText = <String>[
-            booking.id,
-            booking.bookingRef,
-            booking.bookingNumber,
-            booking.displaySubtitle,
-            booking.displayTitle,
-            booking.pickupLocation,
-            booking.dropoffLocation,
-          ].join(' ').toLowerCase();
-          return searchableText.contains(_searchQuery);
-        })
-        .toList(growable: false);
-    final start = (_page - 1) * _pageSize;
-    final end = (_page * _pageSize).clamp(0, matches.length);
-    return (
-      bookings: start >= matches.length
-          ? const <ClientBooking>[]
-          : matches.sublist(start, end),
-      total: matches.length,
-      totalPages: (matches.length / _pageSize).ceil().clamp(1, 9999),
     );
   }
 }
@@ -463,250 +331,6 @@ class _HeaderActionButton extends StatelessWidget {
   }
 }
 
-class _BookingsFiltersAndSearch extends StatelessWidget {
-  const _BookingsFiltersAndSearch({
-    required this.tabs,
-    required this.activeFilter,
-    required this.onFilterChanged,
-    required this.controller,
-    required this.onSearchChanged,
-  });
-
-  final List<String> tabs;
-  final String activeFilter;
-  final ValueChanged<String> onFilterChanged;
-  final TextEditingController controller;
-  final ValueChanged<String> onSearchChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 640;
-        final tabsWidget = SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final tab in tabs) ...[
-                _FilterTab(
-                  label: tab,
-                  selected: activeFilter == tab,
-                  onTap: () => onFilterChanged(tab),
-                ),
-                const SizedBox(width: 18),
-              ],
-            ],
-          ),
-        );
-        final searchWidget = _BookingsSearchField(
-          controller: controller,
-          onChanged: onSearchChanged,
-        );
-        if (narrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [tabsWidget, const SizedBox(height: 12), searchWidget],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: tabsWidget),
-            const SizedBox(width: 16),
-            SizedBox(width: 270, child: searchWidget),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _FilterTab extends StatelessWidget {
-  const _FilterTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.only(bottom: 6),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? const Color(0xFF2FA56E) : Colors.transparent,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFF98A2B3),
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BookingsSearchField extends StatelessWidget {
-  const _BookingsSearchField({
-    required this.controller,
-    required this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE4E7EC)),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 13),
-          const Icon(Icons.search_rounded, color: Color(0xFFD0D5DD), size: 19),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              decoration: const InputDecoration(
-                hintText: 'Filter by ID or route...',
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF344054),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          if (controller.text.isNotEmpty)
-            IconButton(
-              onPressed: () {
-                controller.clear();
-                onChanged('');
-              },
-              icon: const Icon(Icons.close_rounded, size: 18),
-              color: const Color(0xFF98A2B3),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookingsTable extends StatelessWidget {
-  const _BookingsTable({
-    required this.bookings,
-    required this.page,
-    required this.total,
-    required this.totalPages,
-    required this.rangeStart,
-    required this.rangeEnd,
-    required this.onPageChanged,
-    required this.onOpenBooking,
-  });
-
-  final List<ClientBooking> bookings;
-  final int page;
-  final int total;
-  final int totalPages;
-  final int rangeStart;
-  final int rangeEnd;
-  final ValueChanged<int> onPageChanged;
-  final ValueChanged<ClientBooking> onOpenBooking;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: _reactCardDecoration(radius: 18),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowHeight: 48,
-              dataRowMinHeight: 66,
-              dataRowMaxHeight: 74,
-              horizontalMargin: 20,
-              columnSpacing: 28,
-              headingTextStyle: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(
-                    color: const Color(0xFF2FA56E),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
-              columns: const [
-                DataColumn(label: Text('BOOKING ID')),
-                DataColumn(label: Text('DATE & TIME')),
-                DataColumn(label: Text('ROUTE')),
-                DataColumn(label: Text('TRUCK TYPE')),
-                DataColumn(label: Text('STATUS')),
-                DataColumn(label: Text('ACTIONS')),
-              ],
-              rows: [
-                for (final booking in bookings)
-                  DataRow(
-                    onSelectChanged: (_) => onOpenBooking(booking),
-                    cells: [
-                      DataCell(_BookingIdCell(booking: booking)),
-                      DataCell(_DateCell(booking: booking)),
-                      DataCell(_RouteCell(booking: booking)),
-                      DataCell(
-                        Text(
-                          booking.vehicleType.isEmpty
-                              ? '-'
-                              : booking.vehicleType,
-                          style: _tableBodyStyle(context),
-                        ),
-                      ),
-                      DataCell(_BookingStatusWithExpress(booking: booking)),
-                      DataCell(
-                        IconButton(
-                          onPressed: () => onOpenBooking(booking),
-                          icon: const Icon(Icons.visibility_outlined, size: 18),
-                          color: const Color(0xFF98A2B3),
-                          style: IconButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE4E7EC)),
-                            shape: const CircleBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          _BookingsPagination(
-            page: page,
-            totalPages: totalPages,
-            rangeLabel: 'Showing $rangeStart to $rangeEnd of $total results',
-            onPageChanged: onPageChanged,
-            desktop: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _BookingsMobileList extends StatelessWidget {
   const _BookingsMobileList({
     required this.bookings,
@@ -754,78 +378,100 @@ class _MyBookingMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _statusColor(booking.status);
+    final vehicleType = _truckTypeLabel(booking);
+    final amount = booking.amountText.trim().isEmpty ? '-' : booking.amountText;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: _reactCardDecoration(radius: 18),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color(0xFFDDE5EE)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF101828).withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.70),
+              blurRadius: 0,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(13, 10, 13, 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _bookingRef(booking),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
-                          fontSize: 10,
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          vehicleType,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF667085),
+                                fontSize: 14,
+                                height: 1.1,
+                                fontWeight: FontWeight.w900,
+                              ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(width: 10),
                       Text(
-                        '${_locationLabel(booking.pickupLocation, 'Pickup')} → ${_locationLabel(booking.dropoffLocation, 'Drop')}',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF344054),
-                          fontSize: 14,
-                          height: 1.25,
-                          fontWeight: FontWeight.w800,
+                        amount,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF101828),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                _BookingStatusWithExpress(booking: booking),
-              ],
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Text(
+                        booking.displayStatusLabel,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: statusColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                      if (booking.isExpress) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.bolt_rounded,
+                          color: Color(0xFF2FA56E),
+                          size: 16,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            Container(height: 1, color: const Color(0xFFF2F4F7)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    [
-                      if (booking.vehicleType.isNotEmpty) booking.vehicleType,
-                      _bookingDate(booking),
-                    ].join(' • '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  booking.amountText.isEmpty ? '-' : booking.amountText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
+            Container(height: 1, color: const Color(0xFFE8EDF2)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(13, 10, 13, 11),
+              child: _CompactRouteBlock(
+                pickup: _locationLabel(booking.pickupLocation, 'Pickup'),
+                drop: _locationLabel(booking.dropoffLocation, 'Drop'),
+              ),
             ),
           ],
         ),
@@ -834,97 +480,56 @@ class _MyBookingMobileCard extends StatelessWidget {
   }
 }
 
-class _BookingIdCell extends StatelessWidget {
-  const _BookingIdCell({required this.booking});
+class _CompactRouteBlock extends StatelessWidget {
+  const _CompactRouteBlock({required this.pickup, required this.drop});
 
-  final ClientBooking booking;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAF6EF),
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: const Icon(
-            Icons.assignment_outlined,
-            color: Color(0xFF2FA56E),
-            size: 17,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          _bookingRef(booking),
-          style: _tableBodyStyle(
-            context,
-          ).copyWith(fontFamily: 'monospace', fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
-
-class _DateCell extends StatelessWidget {
-  const _DateCell({required this.booking});
-
-  final ClientBooking booking;
+  final String pickup;
+  final String drop;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(_bookingDate(booking), style: _tableBodyStyle(context)),
-        if (booking.requestedAt != null) ...[
-          const SizedBox(height: 3),
-          Text(
-            _bookingTime(booking),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _RouteCell extends StatelessWidget {
-  const _RouteCell({required this.booking});
-
-  final ClientBooking booking;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _RouteCellPoint(
-              label: 'Origin',
-              value: _locationLabel(booking.pickupLocation, 'Pickup'),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              children: [
+                const _RouteDot(color: Color(0xFF2EBD72)),
+                Expanded(
+                  child: Container(
+                    width: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD0D5DD),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const _RouteDot(color: Color(0xFFE8243C)),
+              ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(
-              Icons.route_outlined,
-              size: 16,
-              color: Color(0xFFD0D5DD),
-            ),
-          ),
+          const SizedBox(width: 11),
           Expanded(
-            child: _RouteCellPoint(
-              label: 'Destination',
-              value: _locationLabel(booking.dropoffLocation, 'Drop'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  pickup,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: _routeAddressStyle(context),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  drop,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: _routeAddressStyle(context),
+                ),
+              ],
             ),
           ),
         ],
@@ -933,74 +538,17 @@ class _RouteCell extends StatelessWidget {
   }
 }
 
-class _RouteCellPoint extends StatelessWidget {
-  const _RouteCellPoint({required this.label, required this.value});
+class _RouteDot extends StatelessWidget {
+  const _RouteDot({required this.color});
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFFD0D5DD),
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: _tableBodyStyle(context).copyWith(fontWeight: FontWeight.w800),
-        ),
-      ],
-    );
-  }
-}
-
-class _BookingStatusWithExpress extends StatelessWidget {
-  const _BookingStatusWithExpress({required this.booking});
-
-  final ClientBooking booking;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _StatusBadge(
-          label: booking.displayStatusLabel,
-          color: _statusColor(booking.status),
-        ),
-        if (booking.isExpress) ...[
-          const SizedBox(width: 6),
-          const _ExpressIconOnly(),
-        ],
-      ],
-    );
-  }
-}
-
-class _ExpressIconOnly extends StatelessWidget {
-  const _ExpressIconOnly();
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 22,
-      height: 22,
-      decoration: const BoxDecoration(
-        color: Color(0xFFEAF6EF),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(Icons.bolt_rounded, color: Color(0xFF2FA56E), size: 14),
+      width: 9,
+      height: 9,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -1113,28 +661,6 @@ class _BookingsPagination extends StatelessWidget {
   }
 }
 
-BoxDecoration _reactCardDecoration({required double radius}) {
-  return BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(radius),
-    boxShadow: [
-      BoxShadow(
-        color: const Color(0xFF101828).withValues(alpha: 0.07),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
-      ),
-    ],
-  );
-}
-
-TextStyle _tableBodyStyle(BuildContext context) {
-  return Theme.of(context).textTheme.bodyMedium!.copyWith(
-    color: const Color(0xFF344054),
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-  );
-}
-
 String _bookingRef(ClientBooking booking) {
   if (booking.bookingNumber.isNotEmpty) return booking.bookingNumber;
   if (booking.bookingRef.isNotEmpty) return booking.bookingRef;
@@ -1147,17 +673,112 @@ String _bookingDate(ClientBooking booking) {
   return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 }
 
-String _bookingTime(ClientBooking booking) {
-  final value = booking.requestedAt;
-  if (value == null) return '';
-  final hour = value.hour.toString().padLeft(2, '0');
-  final minute = value.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
-}
-
 String _locationLabel(String value, String fallback) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? fallback : trimmed;
+}
+
+String _truckTypeLabel(ClientBooking booking) {
+  final raw = booking.raw;
+  final truck = _asMap(raw['truck']);
+  final vehicle = _asMap(raw['vehicle']);
+  final assignedTruck = _asMap(raw['assigned_truck']);
+  final assignedVehicle = _asMap(raw['assigned_vehicle']);
+  final candidates = [
+    booking.vehicleType,
+    _readRawString(raw, const [
+      'truckType',
+      'truck_type',
+      'vehicleType',
+      'vehicle_type',
+      'required_vehicle_type',
+      'assigned_vehicle_type',
+    ]),
+    _readRawString(truck, const [
+      'label',
+      'name',
+      'type',
+      'truck_type',
+      'truckType',
+      'vehicle_type',
+      'vehicleType',
+      'category',
+    ]),
+    _readRawString(vehicle, const [
+      'label',
+      'name',
+      'type',
+      'truck_type',
+      'truckType',
+      'vehicle_type',
+      'vehicleType',
+      'category',
+    ]),
+    _readRawString(assignedTruck, const [
+      'label',
+      'name',
+      'type',
+      'truck_type',
+      'truckType',
+      'vehicle_type',
+      'vehicleType',
+      'category',
+    ]),
+    _readRawString(assignedVehicle, const [
+      'label',
+      'name',
+      'type',
+      'truck_type',
+      'truckType',
+      'vehicle_type',
+      'vehicleType',
+      'category',
+    ]),
+    booking.material,
+    booking.packageName,
+    booking.displayTitle,
+  ];
+  for (final value in candidates) {
+    final text = value.trim();
+    final lower = text.toLowerCase();
+    if (text.isNotEmpty &&
+        lower != 'booking' &&
+        lower != 'truck' &&
+        !text.startsWith('{')) {
+      return text;
+    }
+  }
+  return 'Truck';
+}
+
+Map<String, dynamic> _asMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  return const <String, dynamic>{};
+}
+
+String _readRawString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null || value is Map || value is List) {
+      continue;
+    }
+    final text = value.toString().trim();
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
+}
+
+TextStyle _routeAddressStyle(BuildContext context) {
+  return Theme.of(context).textTheme.bodyMedium!.copyWith(
+    color: const Color(0xFF344054),
+    fontSize: 13,
+    height: 1.18,
+    fontWeight: FontWeight.w800,
+  );
 }
 
 class _EmptyState extends StatelessWidget {
