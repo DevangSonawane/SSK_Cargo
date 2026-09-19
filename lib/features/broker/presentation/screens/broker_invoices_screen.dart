@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -92,7 +93,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
     final bookingsAsync = ref.watch(_bookingsProvider(_query));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F8FF),
+      backgroundColor: AppColors.canvas,
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: bookingsAsync.when(
@@ -183,7 +184,7 @@ class _InvoicesHeader extends StatelessWidget {
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF075FC7), Color(0xFF147FE5)],
+          colors: [AppColors.brand, AppColors.brandBright],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -194,30 +195,23 @@ class _InvoicesHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
-            onTap: () => context.pop(),
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                AppIcons.arrow_back_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(
+              AppIcons.arrow_back_rounded,
+              color: Colors.white,
+              size: 24,
             ),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           const Text(
             'Invoices',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -237,11 +231,12 @@ class _InvoiceBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _isCompleted
-        ? const Color(0xFF10A866)
-        : const Color(0xFF1769D1);
+        ? AppColors.brandInk
+        : AppColors.brand;
     final statusBackground = _isCompleted
-        ? const Color(0xFFE8F8F0)
-        : const Color(0xFFEAF3FF);
+        ? AppColors.brandFill
+        : AppColors.brandFill;
+
 
     return InkWell(
       onTap: onTap,
@@ -251,10 +246,10 @@ class _InvoiceBookingCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE0EBFA)),
+          border: Border.all(color: AppColors.line),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1769D1).withValues(alpha: 0.08),
+              color: AppColors.brand.withValues(alpha: 0.08),
               blurRadius: 22,
               offset: const Offset(0, 10),
             ),
@@ -271,7 +266,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                   height: 48,
                   padding: const EdgeInsets.all(7),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE7F1FF),
+                    color: AppColors.brandFill,
                     shape: BoxShape.circle,
                   ),
                   child: Image.asset('assets/package.png', fit: BoxFit.contain),
@@ -288,7 +283,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF10245B),
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
@@ -299,7 +294,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF5B6B91),
+                          color: AppColors.textSecondary,
                           fontSize: 10,
                         ),
                       ),
@@ -309,9 +304,9 @@ class _InvoiceBookingCard extends StatelessWidget {
                 IconButton(
                   onPressed: onTap,
                   icon: const Icon(AppIcons.more_horiz_rounded),
-                  color: const Color(0xFF1769D1),
+                  color: AppColors.brand,
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFEAF3FF),
+                    backgroundColor: AppColors.brandFill,
                   ),
                 ),
               ],
@@ -342,7 +337,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                       const Text(
                         'From:',
                         style: TextStyle(
-                          color: Color(0xFF5B6B91),
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -351,7 +346,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF102044),
+                          color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
@@ -360,7 +355,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                       const Text(
                         'Shipping to:',
                         style: TextStyle(
-                          color: Color(0xFF5B6B91),
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -369,7 +364,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF102044),
+                          color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
@@ -380,7 +375,7 @@ class _InvoiceBookingCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFDCE8F8)),
+            const Divider(height: 1, color: AppColors.line),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -411,7 +406,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                   Text(
                     shipment.status,
                     style: const TextStyle(
-                      color: Color(0xFF102044),
+                      color: AppColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -502,7 +497,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
                 width: 54,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
+                  color: AppColors.line,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -512,7 +507,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
               booking.bookingNumber.isEmpty ? 'Invoice' : booking.bookingNumber,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -522,7 +517,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
                   : booking.packageName,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 18),
             SizedBox(
@@ -534,7 +529,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
                   onDownload();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1F88C9),
+                  backgroundColor: AppColors.accentBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -584,18 +579,18 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF667085), size: 34),
+          Icon(icon, color: AppColors.textSecondary, size: 34),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -604,7 +599,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

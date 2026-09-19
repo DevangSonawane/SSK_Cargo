@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -177,10 +178,10 @@ class _BrokerNotificationsScreenState
     final filtered = _filtered(notifications);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -259,7 +260,7 @@ class _NotificationsHeader extends StatelessWidget {
               Text(
                 'Notifications',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -267,7 +268,7 @@ class _NotificationsHeader extends StatelessWidget {
               Text(
                 'Manage your alerts and system updates.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -280,9 +281,9 @@ class _NotificationsHeader extends StatelessWidget {
             icon: const Icon(AppIcons.done_all_rounded, size: 16),
             label: Text(markingAllRead ? 'Saving...' : 'Mark all read'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF475569),
+              foregroundColor: AppColors.textSecondary,
               backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              side: const BorderSide(color: AppColors.line),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               textStyle: const TextStyle(
                 fontSize: 12,
@@ -311,7 +312,7 @@ class _NotificationTabs extends StatelessWidget {
     ];
     return Container(
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(bottom: BorderSide(color: AppColors.line)),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -352,7 +353,7 @@ class _NotificationTabButton extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: selected ? const Color(0xFF2152D0) : Colors.transparent,
+              color: selected ? AppColors.brand : Colors.transparent,
               width: 2,
             ),
           ),
@@ -360,7 +361,7 @@ class _NotificationTabButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFF2152D0) : const Color(0xFF94A3B8),
+            color: selected ? AppColors.brand : AppColors.textTertiary,
             fontSize: 14,
             fontWeight: FontWeight.w900,
           ),
@@ -394,7 +395,7 @@ class _NotificationCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           clipBehavior: Clip.antiAlias,
           child: IntrinsicHeight(
@@ -466,7 +467,7 @@ class _NotificationCardBody extends StatelessWidget {
                           ? 'Notification'
                           : notification.title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -475,7 +476,7 @@ class _NotificationCardBody extends StatelessWidget {
                   Text(
                     _timeAgo(notification.createdAt),
                     style: const TextStyle(
-                      color: Color(0xFFCBD5E1),
+                      color: AppColors.line,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
@@ -486,7 +487,7 @@ class _NotificationCardBody extends StatelessWidget {
               Text(
                 notification.message,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   height: 1.35,
                 ),
               ),
@@ -498,7 +499,7 @@ class _NotificationCardBody extends StatelessWidget {
                   icon: const Icon(AppIcons.arrow_forward_rounded, size: 14),
                   label: Text(actionLabel!),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2152D0),
+                    backgroundColor: AppColors.brand,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -533,7 +534,7 @@ class _NotificationSkeletonList extends StatelessWidget {
           Container(
             height: 96,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF3F8),
+              color: AppColors.fillSubtle,
               borderRadius: BorderRadius.circular(14),
             ),
           ),
@@ -565,7 +566,7 @@ class _NotificationEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -573,7 +574,7 @@ class _NotificationEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -583,7 +584,7 @@ class _NotificationEmptyState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
             ),
           ],
           if (actionLabel != null && onAction != null) ...[
@@ -644,44 +645,44 @@ _NotificationMeta _metaFor(ClientNotification notification) {
     case 'booking':
       return const _NotificationMeta(
         icon: AppIcons.local_shipping_rounded,
-        color: Color(0xFF2152D0),
-        background: Color(0xFFEAF2FF),
+        color: AppColors.brand,
+        background: AppColors.brandFill,
       );
     case 'incident':
       return const _NotificationMeta(
         icon: AppIcons.build_rounded,
-        color: Color(0xFFB7791F),
-        background: Color(0xFFFFF7E6),
+        color: AppColors.warningText,
+        background: AppColors.warningFill,
       );
     case 'chat':
       return const _NotificationMeta(
         icon: AppIcons.chat_bubble_rounded,
-        color: Color(0xFF2152D0),
-        background: Color(0xFFEAF2FF),
+        color: AppColors.brand,
+        background: AppColors.brandFill,
       );
     case 'payment':
       return const _NotificationMeta(
         icon: AppIcons.receipt_long_rounded,
-        color: Color(0xFF2FA56E),
-        background: Color(0xFFEAF7EF),
+        color: AppColors.brand,
+        background: AppColors.brandFill,
       );
     case 'dispute':
       return const _NotificationMeta(
         icon: AppIcons.gpp_maybe_rounded,
-        color: Color(0xFFE23A4B),
+        color: AppColors.dangerIcon,
         background: Color(0xFFFDECEC),
       );
     case 'kyc':
       return const _NotificationMeta(
         icon: AppIcons.verified_user_rounded,
-        color: Color(0xFF2152D0),
-        background: Color(0xFFEAF2FF),
+        color: AppColors.brand,
+        background: AppColors.brandFill,
       );
     default:
       return const _NotificationMeta(
         icon: AppIcons.notifications_rounded,
-        color: Color(0xFF64748B),
-        background: Color(0xFFF1F5F9),
+        color: AppColors.textSecondary,
+        background: AppColors.fillSubtle,
       );
   }
 }

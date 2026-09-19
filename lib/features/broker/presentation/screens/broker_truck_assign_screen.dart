@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,7 +44,7 @@ class _BrokerTruckAssignScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Driver assigned to truck.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } catch (error) {
@@ -51,7 +52,7 @@ class _BrokerTruckAssignScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('ApiException: ', '')),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -74,30 +75,19 @@ class _BrokerTruckAssignScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => context.go('/broker/vehicles'),
-                icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                label: const Text('Back to Trucks'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ),
+            BrokerBackButton(onTap: () => context.go('/broker/vehicles')),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +95,7 @@ class _BrokerTruckAssignScreenState
                   const Text(
                     'Assign Driver',
                     style: TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                     ),
@@ -115,7 +105,7 @@ class _BrokerTruckAssignScreenState
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.fillSubtle,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -124,7 +114,7 @@ class _BrokerTruckAssignScreenState
                         const Text(
                           'Truck',
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: AppColors.textTertiary,
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
                           ),
@@ -135,7 +125,7 @@ class _BrokerTruckAssignScreenState
                               ? truck!.plateNumber
                               : widget.truckId,
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: AppColors.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
                           ),
@@ -151,7 +141,7 @@ class _BrokerTruckAssignScreenState
                     ),
                     error: (error, _) => Text(
                       error.toString().replaceFirst('Exception: ', ''),
-                      style: const TextStyle(color: Color(0xFFE23A4B)),
+                      style: const TextStyle(color: AppColors.dangerIcon),
                     ),
                     data: (drivers) {
                       final activeDrivers = drivers
@@ -164,29 +154,41 @@ class _BrokerTruckAssignScreenState
                         return const Text(
                           'No active drivers available right now.',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w700,
                           ),
                         );
                       }
                       return DropdownButtonFormField<String>(
                         initialValue: _driverId,
-                        decoration: InputDecoration(
+                        isExpanded: true,
+                        isDense: true,
+                        itemHeight: 56,
+                        dropdownColor: Colors.white,
+                        menuMaxHeight: 320,
+                        borderRadius: BorderRadius.circular(AppRadius.field),
+                        icon: const Icon(
+                          AppIcons.keyboard_arrow_down_rounded,
+                          color: AppColors.textSecondary,
+                        ),
+                        decoration: brokerFieldDecoration(
                           labelText: 'Driver',
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
-                            ),
-                          ),
+                          prefixIcon: AppIcons.person_rounded,
                         ),
                         items: [
                           for (final driver in activeDrivers)
                             DropdownMenuItem(
                               value: driver.id,
-                              child: Text(driver.name),
+                              child: Text(
+                                driver.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
                             ),
                         ],
                         onChanged: (value) => setState(() => _driverId = value),
@@ -211,7 +213,7 @@ class _BrokerTruckAssignScreenState
                               ? null
                               : _assign,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2152D0),
+                            backgroundColor: AppColors.brand,
                           ),
                           child: Text(
                             _submitting ? 'Assigning...' : 'Assign Driver',

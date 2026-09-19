@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -47,7 +48,7 @@ class _BrokerDriverRequestsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(successMessage),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } catch (error) {
@@ -116,9 +117,9 @@ class _BrokerDriverRequestsScreenState
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         title: const Text('Driver requests'),
       ),
@@ -188,7 +189,7 @@ class _BrokerDriverRequestsScreenState
                       child: Text(
                         'Negotiation cards',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -274,7 +275,7 @@ class _BrokerRequestTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -296,7 +297,7 @@ class _BrokerRequestTile extends StatelessWidget {
                     Text(
                       'Booking ID',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.4,
                       ),
@@ -306,7 +307,7 @@ class _BrokerRequestTile extends StatelessWidget {
                       bookingText,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -326,16 +327,16 @@ class _BrokerRequestTile extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: request.driverTimedOut
-                          ? const Color(0xFFFDF4E8)
-                          : const Color(0xFFEFF6FF),
+                          ? AppColors.warningFill
+                          : AppColors.brandFill,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       request.driverTimedOut ? 'Timed out' : 'Live',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: request.driverTimedOut
-                            ? const Color(0xFFB54708)
-                            : const Color(0xFF1F88C9),
+                            ? AppColors.warningText
+                            : AppColors.accentBlue,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -349,23 +350,23 @@ class _BrokerRequestTile extends StatelessWidget {
             label: 'Pickup',
             value: request.pickup.isNotEmpty ? request.pickup : 'Pickup',
             icon: AppIcons.radio_button_checked_rounded,
-            color: const Color(0xFF2FA56E),
+            color: AppColors.brand,
           ),
           const SizedBox(height: 10),
           _RouteRow(
             label: 'Drop',
             value: request.drop.isNotEmpty ? request.drop : 'Drop',
             icon: AppIcons.location_on_rounded,
-            color: const Color(0xFFE23A4B),
+            color: AppColors.dangerIcon,
           ),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppColors.fillSubtle,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+              border: Border.all(color: AppColors.line),
             ),
             child: Row(
               children: [
@@ -373,12 +374,12 @@ class _BrokerRequestTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEFF6FF),
+                    color: AppColors.brandFill,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     AppIcons.local_shipping_rounded,
-                    color: Color(0xFF1F88C9),
+                    color: AppColors.accentBlue,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -392,7 +393,7 @@ class _BrokerRequestTile extends StatelessWidget {
                             : 'Driver',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF101828),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -403,7 +404,7 @@ class _BrokerRequestTile extends StatelessWidget {
                           if (request.weight.isNotEmpty) request.weight,
                         ].join(' • '),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -424,8 +425,8 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Confirm',
                     icon: AppIcons.check_circle_rounded,
-                    color: const Color(0xFF2FA56E),
-                    backgroundColor: const Color(0xFFEAF8EF),
+                    color: AppColors.brand,
+                    backgroundColor: AppColors.brandFill,
                     onPressed: canAct ? onAccept : null,
                   ),
                 ),
@@ -434,7 +435,7 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Decline',
                     icon: AppIcons.cancel_rounded,
-                    color: const Color(0xFFE23A4B),
+                    color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
                     onPressed: canAct ? onDecline : null,
                   ),
@@ -448,8 +449,8 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Accept',
                     icon: AppIcons.check_circle_rounded,
-                    color: const Color(0xFF2FA56E),
-                    backgroundColor: const Color(0xFFEAF8EF),
+                    color: AppColors.brand,
+                    backgroundColor: AppColors.brandFill,
                     onPressed: canAct ? onAccept : null,
                   ),
                 ),
@@ -458,7 +459,7 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Decline',
                     icon: AppIcons.cancel_rounded,
-                    color: const Color(0xFFE23A4B),
+                    color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
                     onPressed: canAct ? onDecline : null,
                   ),
@@ -470,7 +471,7 @@ class _BrokerRequestTile extends StatelessWidget {
               'Already agreed with the broker - accept or decline, no negotiation.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -481,8 +482,8 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Accept',
                     icon: AppIcons.check_circle_rounded,
-                    color: const Color(0xFF2FA56E),
-                    backgroundColor: const Color(0xFFEAF8EF),
+                    color: AppColors.brand,
+                    backgroundColor: AppColors.brandFill,
                     onPressed: canAct ? onAccept : null,
                   ),
                 ),
@@ -491,8 +492,8 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Counter',
                     icon: AppIcons.payments_rounded,
-                    color: const Color(0xFF1F88C9),
-                    backgroundColor: const Color(0xFFEFF6FF),
+                    color: AppColors.accentBlue,
+                    backgroundColor: AppColors.brandFill,
                     onPressed: canCounter ? onCounter : null,
                   ),
                 ),
@@ -501,7 +502,7 @@ class _BrokerRequestTile extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Decline',
                     icon: AppIcons.cancel_rounded,
-                    color: const Color(0xFFE23A4B),
+                    color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
                     onPressed: canAct ? onDecline : null,
                   ),
@@ -514,7 +515,7 @@ class _BrokerRequestTile extends StatelessWidget {
             Text(
               'Driver timed out - broker takeover active.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF9A5B13),
+                color: AppColors.warningText,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -536,14 +537,14 @@ class _WaitingBadge extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.brandFill,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFC7DAFF)),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: const Color(0xFF1F88C9),
+          color: AppColors.accentBlue,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -559,14 +560,14 @@ class _BrokerAssignedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: AppColors.brandFill,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFCDEFD9)),
+        border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
         'Broker-assigned',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF2FA56E),
+          color: AppColors.brand,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -609,7 +610,7 @@ class _RouteRow extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,
                 ),
@@ -618,7 +619,7 @@ class _RouteRow extends StatelessWidget {
               Text(
                 value,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),
@@ -655,8 +656,8 @@ class _ActionButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: color,
-          disabledBackgroundColor: const Color(0xFFF2F4F7),
-          disabledForegroundColor: const Color(0xFF98A2B3),
+          disabledBackgroundColor: AppColors.fillSubtle,
+          disabledForegroundColor: AppColors.textTertiary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -730,7 +731,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 width: 54,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
+                  color: AppColors.line,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -740,7 +741,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
               'Counter offer',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
@@ -749,7 +750,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                   ? widget.request.bookingNumber
                   : widget.request.bookingId,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -758,9 +759,9 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -769,7 +770,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                     'Set counter amount',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -777,7 +778,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                     '₹${clamped.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFF1F88C9),
+                      color: AppColors.accentBlue,
                     ),
                   ),
                   Slider(
@@ -785,7 +786,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                     min: min,
                     max: max,
                     divisions: 100,
-                    activeColor: const Color(0xFF1F88C9),
+                    activeColor: AppColors.accentBlue,
                     onChanged: (value) {
                       setState(() => _value = value);
                     },
@@ -795,14 +796,14 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                       Text(
                         '₹${min.toStringAsFixed(0)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const Spacer(),
                       Text(
                         '₹${max.toStringAsFixed(0)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -848,7 +849,7 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -857,7 +858,7 @@ class _EmptyState extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -865,7 +866,7 @@ class _EmptyState extends StatelessWidget {
             subtitle,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

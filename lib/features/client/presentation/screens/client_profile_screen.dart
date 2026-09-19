@@ -36,14 +36,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
     }
   }
 
-  Future<void> _confirmLogout() async {
-    final shouldLogout = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const _LogoutSheet(),
-    );
-    if (shouldLogout != true || !mounted) return;
-
+  Future<void> _signOut() async {
     await ref.read(authSessionProvider.notifier).logout();
     if (mounted) {
       context.go('/login');
@@ -117,11 +110,6 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                           onTap: () => context.push('/client/saved-addresses'),
                         ),
                         _ProfileMenuTile(
-                          icon: AppIcons.credit_card_outlined,
-                          title: 'Payment Methods',
-                          onTap: () => context.push('/client/payment-methods'),
-                        ),
-                        _ProfileMenuTile(
                           icon: AppIcons.notifications_active_outlined,
                           title: 'Notifications',
                           onTap: () => context.push('/client/notifications'),
@@ -152,7 +140,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _SignOutTile(onTap: _confirmLogout),
+                    _SignOutTile(onTap: _signOut),
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
@@ -735,90 +723,6 @@ class _SignOutTile extends StatelessWidget {
                 color: const Color(0xFFE23A4B),
                 fontWeight: FontWeight.w900,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LogoutSheet extends StatelessWidget {
-  const _LogoutSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        margin: const EdgeInsets.all(14),
-        padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFEDEE),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                AppIcons.logout_rounded,
-                color: Color(0xFFE23A4B),
-                size: 30,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Sign Out',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Are you sure you want to sign out of your account?',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFE23A4B),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text('Sign Out'),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

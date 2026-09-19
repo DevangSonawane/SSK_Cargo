@@ -1,9 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 
@@ -2129,14 +2132,9 @@ class BrokerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = highlighted
-        ? const Color(0xFF1F88C9)
-        : Colors.white;
-    final titleColor = highlighted ? Colors.white : const Color(0xFF101828);
-    final iconAccent = highlighted ? Colors.white : const Color(0xFF1F88C9);
+    final backgroundColor = highlighted ? AppColors.surface : Colors.transparent;
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.zero,
       padding: EdgeInsets.fromLTRB(
         20,
         MediaQuery.of(context).padding.top + 12,
@@ -2145,17 +2143,13 @@ class BrokerHeader extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: highlighted ? 0.10 : 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: highlighted
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.card),
+                bottomRight: Radius.circular(AppRadius.card),
+              )
+            : BorderRadius.zero,
+        boxShadow: highlighted ? AppShadows.card : const [],
       ),
       child: Row(
         children: [
@@ -2166,7 +2160,7 @@ class BrokerHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: titleColor,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -2175,9 +2169,7 @@ class BrokerHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: highlighted
-                          ? Colors.white.withValues(alpha: 0.84)
-                          : const Color(0xFF667085),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2189,7 +2181,7 @@ class BrokerHeader extends StatelessWidget {
           _HeaderIconButton(
             icon: AppIcons.chat_bubble_outline_rounded,
             hasBadge: chatUnreadCount > 0,
-            iconColor: iconAccent,
+            badgeColor: AppColors.brand,
             size: 30,
             badgeOffset: const Offset(5, 2),
             onTap: onChatTap ?? () {},
@@ -2198,7 +2190,7 @@ class BrokerHeader extends StatelessWidget {
           _HeaderIconButton(
             icon: AppIcons.notifications_none_rounded,
             hasBadge: pendingRequestsCount > 0,
-            iconColor: iconAccent,
+            badgeColor: AppColors.brand,
             size: 30,
             badgeOffset: const Offset(5, 2),
             onTap: onNotificationsTap ?? () {},
@@ -2206,21 +2198,14 @@ class BrokerHeader extends StatelessWidget {
           const SizedBox(width: 8),
           InkWell(
             onTap: onAvatarTap,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: Container(
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: highlighted
-                    ? Colors.white.withValues(alpha: 0.16)
-                    : const Color(0xFFF1F4F8),
+                color: AppColors.surface,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: highlighted
-                      ? Colors.white.withValues(alpha: 0.35)
-                      : const Color(0xFFE5EAF0),
-                  width: 1,
-                ),
+                border: Border.all(color: AppColors.line, width: 1),
               ),
               clipBehavior: Clip.antiAlias,
               child: Image.asset('assets/user.png', fit: BoxFit.cover),
@@ -2236,7 +2221,7 @@ class _HeaderIconButton extends StatelessWidget {
   const _HeaderIconButton({
     required this.icon,
     required this.hasBadge,
-    required this.iconColor,
+    required this.badgeColor,
     required this.size,
     required this.badgeOffset,
     required this.onTap,
@@ -2244,7 +2229,7 @@ class _HeaderIconButton extends StatelessWidget {
 
   final IconData icon;
   final bool hasBadge;
-  final Color iconColor;
+  final Color badgeColor;
   final double size;
   final Offset badgeOffset;
   final VoidCallback onTap;
@@ -2253,7 +2238,7 @@ class _HeaderIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -2261,11 +2246,10 @@ class _HeaderIconButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: AppColors.fillSubtle,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
             ),
-            child: Icon(icon, color: iconColor, size: 16),
+            child: Icon(icon, color: AppColors.textSecondary, size: 16),
           ),
           if (hasBadge)
             Positioned(
@@ -2275,11 +2259,11 @@ class _HeaderIconButton extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE23A4B),
+                  color: badgeColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE23A4B).withValues(alpha: 0.3),
+                      color: badgeColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -2331,58 +2315,67 @@ class BrokerBottomBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-        child: SizedBox(
-          height: 58,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = constraints.maxWidth / items.length;
-              const indicatorSize = 50.0;
-              final left =
-                  (itemWidth * currentIndex) +
-                  ((itemWidth - indicatorSize) / 2);
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: AppColors.surface.withValues(alpha: 0.72),
+                  width: 1.2,
+                ),
+                boxShadow: AppShadows.float,
+              ),
+              child: SizedBox(
+                height: 58,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = constraints.maxWidth / items.length;
+                    const indicatorSize = 50.0;
+                    final left =
+                        (itemWidth * currentIndex) +
+                        ((itemWidth - indicatorSize) / 2);
 
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 360),
-                    curve: Curves.easeOutCubic,
-                    left: left,
-                    top: 4,
-                    width: indicatorSize,
-                    height: indicatorSize,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2152D0),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF2152D0,
-                            ).withValues(alpha: 0.34),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      for (var index = 0; index < items.length; index++)
-                        Expanded(
-                          child: _BrokerBottomBarItem(
-                            item: items[index],
-                            selected: currentIndex == index,
-                            onTap: () => onTap(index),
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 360),
+                          curve: Curves.easeOutCubic,
+                          left: left,
+                          top: 4,
+                          width: indicatorSize,
+                          height: indicatorSize,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppColors.brand,
+                              shape: BoxShape.circle,
+                              boxShadow: AppShadows.brandGlow,
+                            ),
                           ),
                         ),
-                    ],
-                  ),
-                ],
-              );
-            },
+                        Row(
+                          children: [
+                            for (var index = 0; index < items.length; index++)
+                              Expanded(
+                                child: _BrokerBottomBarItem(
+                                  item: items[index],
+                                  selected: currentIndex == index,
+                                  onTap: () => onTap(index),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -2444,14 +2437,12 @@ class _BrokerBottomBarItem extends StatelessWidget {
                       width: 7,
                       height: 7,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE23A4B),
+                        color: AppColors.brand,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFFE23A4B,
-                            ).withValues(alpha: 0.32),
+                            color: AppColors.brand.withValues(alpha: 0.32),
                             blurRadius: 7,
                             offset: const Offset(0, 3),
                           ),
@@ -2535,21 +2526,15 @@ class BrokerRequestCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1A365D).withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.line),
+          boxShadow: AppShadows.card,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2564,7 +2549,7 @@ class BrokerRequestCard extends StatelessWidget {
                       Text(
                         'Load ID: #${request.id.toUpperCase()}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: AppColors.textSecondary,
                           fontSize: 11,
                           letterSpacing: 0.2,
                           fontWeight: FontWeight.w600,
@@ -2575,7 +2560,7 @@ class BrokerRequestCard extends StatelessWidget {
                         request.productName,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              color: const Color(0xFF1A365D),
+                              color: AppColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                             ),
@@ -2610,13 +2595,13 @@ class BrokerRequestCard extends StatelessWidget {
                     vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD6E3FF),
+                    color: AppColors.brandTint,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     request.value,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF002045),
+                      color: AppColors.brandInk,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -2636,7 +2621,7 @@ class BrokerRequestCard extends StatelessWidget {
                       _LoadPoint(
                         label: 'Pickup',
                         icon: AppIcons.location_on_rounded,
-                        iconColor: const Color(0xFF1F88C9),
+                        iconColor: AppColors.brandBright,
                         place: pickupText,
                         timeText: request.requestedAt,
                       ),
@@ -2644,7 +2629,7 @@ class BrokerRequestCard extends StatelessWidget {
                       _LoadPoint(
                         label: 'Drop-off',
                         icon: AppIcons.near_me_rounded,
-                        iconColor: const Color(0xFF1F88C9),
+                        iconColor: AppColors.dangerIcon,
                         place: dropText,
                         timeText: '',
                       ),
@@ -2657,7 +2642,7 @@ class BrokerRequestCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF4FF),
+                color: AppColors.brandFill,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -2674,7 +2659,7 @@ class BrokerRequestCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF0B1C30),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -2689,10 +2674,10 @@ class BrokerRequestCard extends StatelessWidget {
                 child: FilledButton(
                   onPressed: onTap,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F88C9),
+                    backgroundColor: AppColors.brand,
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.button),
                     ),
                   ),
                   child: const Text(
@@ -2752,7 +2737,7 @@ class _RouteLine extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: const Color(0xFF1F88C9).withValues(alpha: 0.18),
+            color: AppColors.brand.withValues(alpha: 0.18),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -2760,7 +2745,7 @@ class _RouteLine extends StatelessWidget {
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: Color(0xFF1F88C9),
+                color: AppColors.brand,
                 shape: BoxShape.circle,
               ),
             ),
@@ -2771,7 +2756,7 @@ class _RouteLine extends StatelessWidget {
           height: 54,
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFF74777F).withValues(alpha: 0.30),
+            color: AppColors.textTertiary.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(99),
           ),
         ),
@@ -2779,7 +2764,7 @@ class _RouteLine extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: const Color(0xFF1F88C9).withValues(alpha: 0.20),
+            color: AppColors.brand.withValues(alpha: 0.20),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -2787,7 +2772,7 @@ class _RouteLine extends StatelessWidget {
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: Color(0xFF1F88C9),
+                color: AppColors.brand,
                 shape: BoxShape.circle,
               ),
             ),
@@ -2830,7 +2815,7 @@ class _LoadPoint extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -2839,7 +2824,7 @@ class _LoadPoint extends StatelessWidget {
               Text(
                 place,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF0B1C30),
+                  color: AppColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2849,7 +2834,7 @@ class _LoadPoint extends StatelessWidget {
                 Text(
                   timeText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -2906,9 +2891,9 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
       return const _BookingRequestStatusVisual(
         label: 'Awaiting confirmation',
         description: 'Waiting for the other side to confirm.',
-        backgroundColor: Color(0xFFEFF6FF),
+        backgroundColor: Color(0xFFEAF4FB),
         borderColor: Color(0xFFC7DAFF),
-        textColor: Color(0xFF1F88C9),
+        textColor: AppColors.accentBlue,
         icon: AppIcons.hourglass_top_rounded,
       );
     case 'declined':
@@ -2926,9 +2911,9 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
       return const _BookingRequestStatusVisual(
         label: 'Pending',
         description: 'Review request',
-        backgroundColor: Color(0xFFEFF6FF),
-        borderColor: Color(0xFFC7DAFF),
-        textColor: Color(0xFF1F88C9),
+        backgroundColor: Color(0xFFEAF8EF),
+        borderColor: Color(0xFFB7E4C7),
+        textColor: Color(0xFF136F3E),
         icon: AppIcons.inbox_rounded,
       );
   }
@@ -2967,17 +2952,11 @@ class VehicleCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE7EBF1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
+        boxShadow: AppShadows.card,
+      ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -3013,7 +2992,7 @@ class VehicleCard extends StatelessWidget {
                                     ?.copyWith(
                                       fontSize: 16,
                                       height: 1.05,
-                                      color: const Color(0xFF101828),
+                                      color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w900,
                                     ),
                               ),
@@ -3028,7 +3007,7 @@ class VehicleCard extends StatelessWidget {
                             const Icon(
                               AppIcons.chevron_right_rounded,
                               size: 22,
-                              color: Color(0xFF667085),
+                              color: Color(0xFF98A2B3),
                             ),
                           ],
                         ),
@@ -3074,31 +3053,31 @@ class VehicleCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(height: 1, color: const Color(0xFFE8EDF2)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _VehicleStatBlock(
-                    label: 'Capacity',
-                    value: vehicle.capacity,
-                    icon: AppIcons.shopping_bag_outlined,
-                  ),
+const SizedBox(height: 12),
+          Container(height: 1, color: AppColors.line),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _VehicleStatBlock(
+                  label: 'Capacity',
+                  value: vehicle.capacity,
+                  icon: AppIcons.shopping_bag_outlined,
                 ),
-                const SizedBox(width: 12),
-                Container(width: 1, height: 28, color: const Color(0xFFE8EDF2)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _VehicleStatBlock(
-                    label: 'Location',
-                    value: meta.secondaryValue,
-                    icon: AppIcons.location_on_outlined,
-                    valueColor: meta.secondaryValueColor,
-                  ),
+              ),
+              const SizedBox(width: 12),
+              Container(width: 1, height: 28, color: AppColors.line),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _VehicleStatBlock(
+                  label: 'Location',
+                  value: meta.secondaryValue,
+                  icon: AppIcons.location_on_outlined,
+                  valueColor: meta.secondaryValueColor,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           ],
         ),
       ),
@@ -3146,7 +3125,7 @@ class _VehicleStatBlock extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
-    this.valueColor = const Color(0xFF0B1C30),
+    this.valueColor = AppColors.textPrimary,
   });
 
   final String label;
@@ -3159,7 +3138,7 @@ class _VehicleStatBlock extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF667085)),
+        Icon(icon, size: 16, color: AppColors.textSecondary),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -3168,7 +3147,7 @@ class _VehicleStatBlock extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textTertiary,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.1,
@@ -3215,21 +3194,21 @@ _VehicleCardMeta _vehicleCardMeta(BrokerVehicleStatus status) {
   switch (status) {
     case BrokerVehicleStatus.idle:
       return const _VehicleCardMeta(
-        iconBackground: Color(0xFFEFF6FF),
-        badgeBackground: Color(0xFFE8F4EC),
-        badgeText: Color(0xFF2FA56E),
+        iconBackground: AppColors.brandFill,
+        badgeBackground: AppColors.brandFill,
+        badgeText: AppColors.brand,
         secondaryLabel: 'Location',
         secondaryValue: 'Main Hub A',
-        secondaryValueColor: Color(0xFF0B1C30),
+        secondaryValueColor: AppColors.textPrimary,
       );
     case BrokerVehicleStatus.onTrip:
       return const _VehicleCardMeta(
-        iconBackground: Color(0xFFEFF6FF),
+        iconBackground: AppColors.brandFill,
         badgeBackground: Color(0xFFFFF0DB),
         badgeText: Color(0xFFB45309),
         secondaryLabel: 'Heading To',
         secondaryValue: 'In transit',
-        secondaryValueColor: Color(0xFF0B1C30),
+        secondaryValueColor: AppColors.textPrimary,
       );
     case BrokerVehicleStatus.maintenance:
       return const _VehicleCardMeta(
@@ -3261,22 +3240,16 @@ class DriverListTile extends StatelessWidget {
 
     return InkWell(
       onLongPress: onRemove,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: visuals.backgroundColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: visuals.borderColor),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1A365D).withValues(alpha: 0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          boxShadow: AppShadows.card,
         ),
         child: Opacity(
           opacity: visuals.opacity,
@@ -3328,7 +3301,7 @@ class DriverListTile extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 fontSize: 11,
-                                color: const Color(0xFF667085),
+                                color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
@@ -3362,7 +3335,7 @@ class DriverListTile extends StatelessWidget {
                             const Icon(
                               AppIcons.local_shipping_rounded,
                               size: 16,
-                              color: Color(0xFF1F5BD7),
+                              color: AppColors.brand,
                             ),
                             const SizedBox(width: 6),
                             Expanded(
@@ -3375,7 +3348,7 @@ class DriverListTile extends StatelessWidget {
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       fontSize: 12,
-                                      color: const Color(0xFF344054),
+                                      color: AppColors.textSecondary,
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
@@ -3394,7 +3367,7 @@ class DriverListTile extends StatelessWidget {
                     child: _DriverFooterButton(
                       icon: AppIcons.call_rounded,
                       label: 'Call',
-                      iconColor: const Color(0xFF1F5BD7),
+                      iconColor: AppColors.brand,
                       onTap: canCall
                           ? () async {
                               final uri = Uri.parse('tel:${driver.phone}');
@@ -3418,7 +3391,7 @@ class DriverListTile extends StatelessWidget {
                     const Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFE8EDF2),
+                      color: AppColors.line,
                     ),
                     const SizedBox(height: 6),
                     footer,
@@ -3434,7 +3407,7 @@ class DriverListTile extends StatelessWidget {
                   const Divider(
                     height: 1,
                     thickness: 1,
-                    color: Color(0xFFE8EDF2),
+                    color: AppColors.line,
                   ),
                   const SizedBox(height: 6),
                   footer,
@@ -3513,14 +3486,14 @@ class _DriverCardMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F4F7),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontSize: 10,
-          color: const Color(0xFF344054),
+          color: AppColors.textSecondary,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -3559,7 +3532,7 @@ class _DriverFooterButton extends StatelessWidget {
                 label,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontSize: 13,
-                  color: const Color(0xFF344054),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -3613,20 +3586,20 @@ _DriverCardVisuals _driverCardVisuals(BrokerDriver driver) {
   switch (driver.status) {
     case BrokerDriverStatus.onTrip:
       return const _DriverCardVisuals(
-        backgroundColor: Color(0xFFF8F9FF),
-        borderColor: Color(0xFFC4C6CF),
-        avatarBackgroundColor: Color(0xFFD6E3FF),
-        avatarTextColor: Color(0xFF002045),
+        backgroundColor: Color(0xFFF0FBF4),
+        borderColor: Color(0xFFB7E4C7),
+        avatarBackgroundColor: Color(0xFFD9F6E3),
+        avatarTextColor: Color(0xFF136F3E),
         statusDotColor: Color(0xFF22C55E),
-        statusTextColor: Color(0xFF1A365D),
-        ctaBackgroundColor: Color(0xFF1A365D),
+        statusTextColor: Color(0xFF136F3E),
+        ctaBackgroundColor: Color(0xFF15803D),
         ctaForegroundColor: Colors.white,
         opacity: 1,
       );
     case BrokerDriverStatus.idle:
       return const _DriverCardVisuals(
         backgroundColor: Colors.white,
-        borderColor: Color(0xFFE5E7EB),
+        borderColor: AppColors.line,
         avatarBackgroundColor: Color(0xFFD9F6E3),
         avatarTextColor: Color(0xFF136F3E),
         statusDotColor: Color(0xFF22C55E),
@@ -3637,9 +3610,9 @@ _DriverCardVisuals _driverCardVisuals(BrokerDriver driver) {
       );
     case BrokerDriverStatus.offline:
       return const _DriverCardVisuals(
-        backgroundColor: Color(0xFFEFF4FF),
-        borderColor: Color(0xFFC4C6CF),
-        avatarBackgroundColor: Color(0xFFE5E7EB),
+        backgroundColor: Color(0xFFF9FAFB),
+        borderColor: AppColors.line,
+        avatarBackgroundColor: Color(0xFFF2F4F7),
         avatarTextColor: Color(0xFF667085),
         statusDotColor: Color(0xFF9CA3AF),
         statusTextColor: Color(0xFF667085),
@@ -3753,7 +3726,7 @@ class BrokerProfileActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: AppColors.line),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -3777,7 +3750,7 @@ class BrokerProfileActionCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontSize: 8,
-                  color: const Color(0xFF6B7A98),
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
@@ -3795,8 +3768,8 @@ class BrokerMenuTile extends StatelessWidget {
     this.subtitle,
     required this.icon,
     required this.onTap,
-    this.titleColor = const Color(0xFF101828),
-    this.iconColor = const Color(0xFF1C2430),
+    this.titleColor = AppColors.textPrimary,
+    this.iconColor = AppColors.textPrimary,
     this.completed = false,
   });
 
@@ -3818,7 +3791,7 @@ class BrokerMenuTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: AppColors.line),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -3833,7 +3806,7 @@ class BrokerMenuTile extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: const BoxDecoration(
-                color: Color(0xFFEAF3FF),
+                color: AppColors.brandFill,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -3863,7 +3836,7 @@ class BrokerMenuTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontSize: 8,
-                        color: const Color(0xFF6B7A98),
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],
@@ -3924,7 +3897,7 @@ class OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor = const Color(0xFF1F88C9);
+    final selectedColor = AppColors.brand;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -3934,12 +3907,12 @@ class OptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? selectedColor.withValues(alpha: 0.08)
-              : const Color(0xFFF8FAFC),
+              : AppColors.fillSubtle,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
                 ? selectedColor.withValues(alpha: 0.28)
-                : const Color(0xFFE5E7EB),
+                : AppColors.line,
           ),
         ),
         child: Row(
@@ -3955,7 +3928,7 @@ class OptionTile extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: selected ? selectedColor : const Color(0xFF94A3B8),
+                color: selected ? selectedColor : AppColors.textTertiary,
               ),
             ),
             const SizedBox(width: 12),
@@ -4002,7 +3975,7 @@ class VehicleSelectionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = selected ? const Color(0xFF1769D1) : const Color(0xFFACB9CF);
+    final accent = selected ? AppColors.brand : AppColors.textTertiary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -4010,10 +3983,10 @@ class VehicleSelectionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF1F6FF) : Colors.white,
+          color: selected ? AppColors.brandFill : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF1769D1) : const Color(0xFFE1E7F0),
+            color: selected ? AppColors.brand : AppColors.line,
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -4026,7 +3999,7 @@ class VehicleSelectionTile extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F6FF),
+                    color: AppColors.brandFill,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.all(5),
@@ -4050,7 +4023,7 @@ class VehicleSelectionTile extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF102044),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
@@ -4065,7 +4038,7 @@ class VehicleSelectionTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontSize: 12,
-                      color: const Color(0xFF60708D),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -4150,7 +4123,7 @@ Color driverAvatarColor(BrokerDriverStatus status) {
     case BrokerDriverStatus.onTrip:
       return const Color(0xFFE0F4E8);
     case BrokerDriverStatus.idle:
-      return const Color(0xFFEFF6FF);
+      return AppColors.brandFill;
     case BrokerDriverStatus.offline:
       return const Color(0xFFF3F4F6);
   }
@@ -4159,11 +4132,11 @@ Color driverAvatarColor(BrokerDriverStatus status) {
 Color driverAvatarTextColor(BrokerDriverStatus status) {
   switch (status) {
     case BrokerDriverStatus.onTrip:
-      return const Color(0xFF2FA56E);
+      return AppColors.brandInk;
     case BrokerDriverStatus.idle:
-      return const Color(0xFF1F88C9);
+      return AppColors.brandInk;
     case BrokerDriverStatus.offline:
-      return const Color(0xFF98A2B3);
+      return AppColors.textTertiary;
   }
 }
 
@@ -4198,4 +4171,80 @@ String _maskWord(String word) {
       : '${'*' * (middleLength - 2)}${normalized[normalized.length - 2]}*';
 
   return '${normalized[0]}$maskedMiddle${normalized[normalized.length - 1]}';
+}
+
+InputDecoration brokerFieldDecoration({
+  required String labelText,
+  required IconData prefixIcon,
+  String? hintText,
+  IconData? suffixIcon,
+}) {
+  return InputDecoration(
+    labelText: labelText,
+    hintText: hintText,
+    filled: true,
+    fillColor: Colors.white,
+    prefixIcon: Icon(prefixIcon, color: AppColors.brand),
+    suffixIcon: suffixIcon == null
+        ? null
+        : Icon(suffixIcon, color: AppColors.textSecondary),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    labelStyle: const TextStyle(
+      color: AppColors.textPrimary,
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+    ),
+    floatingLabelStyle: const TextStyle(
+      color: AppColors.brand,
+      fontSize: 12,
+      fontWeight: FontWeight.w800,
+    ),
+    hintStyle: const TextStyle(
+      color: AppColors.textTertiary,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.line),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.line),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.dangerIcon, width: 1.2),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.dangerIcon, width: 1.6),
+    ),
+  );
+}
+
+class BrokerBackButton extends StatelessWidget {
+  const BrokerBackButton({super.key, required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: const Icon(AppIcons.arrow_back_rounded, color: AppColors.textPrimary),
+      iconSize: 24,
+      padding: const EdgeInsets.all(8),
+      alignment: Alignment.centerLeft,
+      color: AppColors.textPrimary,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        minimumSize: const Size(40, 40),
+        shape: const RoundedRectangleBorder(),
+      ),
+    );
+  }
 }

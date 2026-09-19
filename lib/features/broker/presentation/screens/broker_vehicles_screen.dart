@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,7 +29,7 @@ class _VehiclesHeader extends StatelessWidget {
           Text(
             'Vehicles',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -36,7 +37,7 @@ class _VehiclesHeader extends StatelessWidget {
           Text(
             'Manage your fleet and truck availability',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -45,8 +46,8 @@ class _VehiclesHeader extends StatelessWidget {
             height: 54,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(AppRadius.field),
+              border: Border.all(color: AppColors.line),
             ),
             child: TextField(
               controller: controller,
@@ -57,11 +58,11 @@ class _VehiclesHeader extends StatelessWidget {
                 contentPadding: EdgeInsets.symmetric(vertical: 15),
                 prefixIcon: Icon(
                   AppIcons.search_rounded,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                 ),
                 hintText: 'Search vehicles, drivers or location',
                 hintStyle: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -106,7 +107,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE23A4B),
+              backgroundColor: AppColors.dangerIcon,
             ),
             child: const Text('Remove'),
           ),
@@ -133,7 +134,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('ApiException: ', '')),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     }
@@ -186,7 +187,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1F88C9),
+      color: AppColors.brand,
       onRefresh: refreshTrucks,
       child: trucksAsync.when(
         loading: () => ListView(
@@ -220,7 +221,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                       Text(
                         'Your fleet',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -232,7 +233,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                         icon: const Icon(AppIcons.add),
                         label: const Text('Add truck'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
+                          backgroundColor: AppColors.brand,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 12,
@@ -289,7 +290,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                           'Your fleet',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -298,7 +299,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                           '(${visibleVehicles.length})',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -310,7 +311,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                           icon: const Icon(AppIcons.add),
                           label: const Text('Add truck'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1F88C9),
+                            backgroundColor: AppColors.brand,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 12,
@@ -371,8 +372,8 @@ class _FleetEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -380,10 +381,10 @@ class _FleetEmptyState extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: const BoxDecoration(
-              color: Color(0xFFF5F7FB),
+              color: AppColors.brandFill,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF667085), size: 30),
+            child: Icon(icon, color: AppColors.brand, size: 30),
           ),
           const SizedBox(height: 14),
           Text(
@@ -391,7 +392,7 @@ class _FleetEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -400,7 +401,7 @@ class _FleetEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 14),
@@ -437,14 +438,8 @@ class _TruckActionDialog extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 28,
-            offset: const Offset(0, 16),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.float,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -456,12 +451,12 @@ class _TruckActionDialog extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF2FF),
+                  color: AppColors.brandFill,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   AppIcons.local_shipping_rounded,
-                  color: Color(0xFF2152D0),
+                  color: AppColors.brand,
                   size: 26,
                 ),
               ),
@@ -475,7 +470,7 @@ class _TruckActionDialog extends StatelessWidget {
                           ? vehicle.label
                           : vehicle.plateNumber,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -488,7 +483,7 @@ class _TruckActionDialog extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(AppIcons.close_rounded),
                 style: IconButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B),
+                  foregroundColor: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -497,9 +492,9 @@ class _TruckActionDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppColors.fillSubtle,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.line),
             ),
             child: Column(
               children: [
@@ -560,7 +555,7 @@ class _TruckActionDialog extends StatelessWidget {
             icon: const Icon(AppIcons.delete_outline_rounded),
             label: const Text('Remove Truck'),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFE23A4B),
+              foregroundColor: AppColors.dangerIcon,
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
@@ -592,17 +587,17 @@ class _TruckDialogAction extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: const Color(0xFF2152D0), size: 20),
+              Icon(icon, color: AppColors.brand, size: 20),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFF475569),
+                  color: AppColors.textSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                 ),
@@ -631,7 +626,7 @@ class _TruckSummaryRow extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -643,8 +638,8 @@ class _TruckSummaryRow extends StatelessWidget {
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: danger
-                    ? const Color(0xFFE23A4B)
-                    : const Color(0xFF0F172A),
+                    ? AppColors.dangerIcon
+                    : AppColors.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),

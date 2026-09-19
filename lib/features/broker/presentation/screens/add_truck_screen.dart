@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -214,37 +215,15 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
           children: [
             Row(
               children: [
-                InkWell(
+                BrokerBackButton(
                   onTap: () => Navigator.of(context).maybePop(),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE1E7F0)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A102044),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      AppIcons.arrow_back_rounded,
-                      color: Color(0xFF102044),
-                      size: 24,
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -257,14 +236,14 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                             ?.copyWith(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFF102044),
+                              color: AppColors.textPrimary,
                             ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Choose the truck type and fill in the fleet details.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF60708D),
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -282,9 +261,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   Text(
                     'Select truck type',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFF102044),
+                      color: AppColors.textPrimary,
                       fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -318,7 +297,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   TextFormField(
                     controller: _registrationController,
                     textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Registration',
                       prefixIcon: AppIcons.confirmation_number_rounded,
                     ),
@@ -334,7 +313,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   TextFormField(
                     controller: _capacityController,
                     textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Capacity',
                       prefixIcon: AppIcons.scale_rounded,
                     ),
@@ -353,10 +332,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     itemHeight: 56,
                     dropdownColor: Colors.white,
                     menuMaxHeight: 320,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     icon: const Icon(
                       AppIcons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF667085),
+                      color: AppColors.textSecondary,
                     ),
                     selectedItemBuilder: (context) {
                       return drivers
@@ -378,7 +357,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 13,
-                                        color: Color(0xFF101828),
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -388,7 +367,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                           )
                           .toList();
                     },
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Assign driver',
                       prefixIcon: AppIcons.person_rounded,
                     ),
@@ -413,7 +392,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   TextFormField(
                     controller: _makeController,
                     textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Make',
                       prefixIcon: AppIcons.precision_manufacturing_rounded,
                     ),
@@ -430,7 +409,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     textInputAction: TextInputAction.next,
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Year',
                       prefixIcon: AppIcons.event_rounded,
                     ),
@@ -448,7 +427,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     readOnly: true,
                     textInputAction: TextInputAction.done,
                     onTap: _pickInsuranceExpiry,
-                    decoration: _fieldDecoration(
+                    decoration: brokerFieldDecoration(
                       labelText: 'Insurance expiry',
                       hintText: 'Pick a date',
                       prefixIcon: AppIcons.event_available_rounded,
@@ -471,9 +450,9 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                     child: ElevatedButton(
                       onPressed: _submitting ? null : _submitTruck,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1769D1),
+                        backgroundColor: AppColors.brand,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.button),
                         ),
                       ),
                       child: _submitting
@@ -558,36 +537,6 @@ BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
   return null;
 }
 
-InputDecoration _fieldDecoration({
-  required String labelText,
-  required IconData prefixIcon,
-  String? hintText,
-  IconData? suffixIcon,
-}) {
-  return InputDecoration(
-    labelText: labelText,
-    hintText: hintText,
-    filled: true,
-    fillColor: Colors.white,
-    prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
-    suffixIcon: suffixIcon == null
-        ? null
-        : Icon(suffixIcon, color: const Color(0xFF667085)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFF1F88C9), width: 1.4),
-    ),
-  );
-}
 
 String _truckCategoryForVehicle(String label) {
   final text = label.toLowerCase();
@@ -631,7 +580,7 @@ class _DriverDropdownMenuItem extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -653,7 +602,7 @@ class _DriverAvatar extends StatelessWidget {
       height: compact ? 34 : 38,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1F88C9), Color(0xFF63B3ED)],
+          colors: [AppColors.brand, AppColors.brandBright],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

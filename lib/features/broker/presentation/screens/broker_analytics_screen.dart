@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,7 +18,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
     final analyticsAsync = ref.watch(_analyticsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F8FF),
+      backgroundColor: AppColors.canvas,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_analyticsProvider);
@@ -63,7 +64,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                               label: 'This month',
                               value:
                                   '₹${analytics.thisMonth.toStringAsFixed(0)}',
-                              accent: const Color(0xFF1F88C9),
+                              accent: AppColors.accentBlue,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -72,7 +73,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                               label: 'Last month',
                               value:
                                   '₹${analytics.lastMonth.toStringAsFixed(0)}',
-                              accent: const Color(0xFF2FA56E),
+                              accent: AppColors.brand,
                             ),
                           ),
                         ],
@@ -87,7 +88,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                                   ?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 20,
-                                    color: const Color(0xFF10245B),
+                                    color: AppColors.textPrimary,
                                   ),
                             ),
                           ),
@@ -111,14 +112,14 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                               children: [
                                 Icon(
                                   AppIcons.filter_list_rounded,
-                                  color: Color(0xFF1769D1),
+                                  color: AppColors.brand,
                                   size: 18,
                                 ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Filter',
                                   style: TextStyle(
-                                    color: Color(0xFF1769D1),
+                                    color: AppColors.brand,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -172,7 +173,7 @@ class _AnalyticsHeader extends StatelessWidget {
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          colors: [AppColors.brand, AppColors.brandBright],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -183,24 +184,17 @@ class _AnalyticsHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
-            onTap: onBack ?? () => Navigator.of(context).maybePop(),
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                AppIcons.arrow_back_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+          IconButton(
+            onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+            icon: const Icon(
+              AppIcons.arrow_back_rounded,
+              color: Colors.white,
+              size: 24,
             ),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,8 +203,8 @@ class _AnalyticsHeader extends StatelessWidget {
                   'Analytics',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 3),
@@ -327,7 +321,7 @@ class _MetricCard extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFF425A88),
+                  color: AppColors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -344,7 +338,7 @@ class _MetricCard extends StatelessWidget {
               const SizedBox(height: 2),
               const Text(
                 'Total earnings',
-                style: TextStyle(color: Color(0xFF425A88), fontSize: 13),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -411,10 +405,10 @@ class _SettlementMiniCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE0EBFA)),
+        border: Border.all(color: AppColors.line),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1769D1).withValues(alpha: 0.06),
+            color: AppColors.brand.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 7),
           ),
@@ -427,7 +421,7 @@ class _SettlementMiniCard extends StatelessWidget {
             settlement.bookingNumber,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF10245B),
+              color: AppColors.textPrimary,
               fontSize: 16,
             ),
           ),
@@ -435,7 +429,7 @@ class _SettlementMiniCard extends StatelessWidget {
           Text(
             settlement.route,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF5B6B91),
+              color: AppColors.textSecondary,
               fontSize: 12,
               height: 1.4,
             ),
@@ -444,7 +438,7 @@ class _SettlementMiniCard extends StatelessWidget {
           Text(
             'Net earnings: ₹${settlement.netEarnings.toStringAsFixed(0)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2FA56E),
+              color: AppColors.brand,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -477,18 +471,18 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF667085), size: 34),
+          Icon(icon, color: AppColors.textSecondary, size: 34),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -497,7 +491,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

@@ -7348,7 +7348,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 foregroundColor: const Color(0xFF475467),
                 minimumSize: const Size.fromHeight(54),
                 textStyle: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
                 shape: RoundedRectangleBorder(
@@ -7372,9 +7372,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text(
-                'Submit',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              child: const Icon(
+                AppIcons.chevron_right_rounded,
+                size: 22,
               ),
             ),
           ),

@@ -293,9 +293,10 @@ class _SavedAddressSearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 44,
-      decoration: _savedCardDecoration(
-        radius: 12,
-      ).copyWith(border: Border.all(color: const Color(0xFFE4E7EC))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           const SizedBox(width: 13),
@@ -311,8 +312,16 @@ class _SavedAddressSearchField extends StatelessWidget {
               onChanged: onQueryChanged,
               decoration: const InputDecoration(
                 hintText: 'Search saved addresses...',
+                filled: false,
+                fillColor: Colors.transparent,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
                 isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
@@ -903,7 +912,7 @@ class _ClientSavedAddressEditorScreenState
                       () => _draft = _draft.copyWith(addressType: value),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _FieldLabel(text: 'Name'),
                   const SizedBox(height: 8),
                   _CardField(
@@ -912,14 +921,33 @@ class _ClientSavedAddressEditorScreenState
                       controller: _labelController,
                       maxLength: 60,
                       textInputAction: TextInputAction.next,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF101828),
+                      ),
                       decoration: const InputDecoration(
                         hintText: 'Home, Office, Warehouse 2',
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF98A2B3),
+                        ),
+                        filled: false,
+                        fillColor: Colors.transparent,
                         counterText: '',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       const _FieldLabel(text: 'Address'),
@@ -959,6 +987,7 @@ class _ClientSavedAddressEditorScreenState
                       label: '',
                       hintText: 'Search, or tap the map...',
                       showLabel: false,
+                      embedded: true,
                       onSelected: (selection) {
                         setState(() {
                           _draft = _draft.copyWith(
@@ -990,7 +1019,7 @@ class _ClientSavedAddressEditorScreenState
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _FieldLabel(text: 'Floor / Unit', trailing: '(optional)'),
                   const SizedBox(height: 8),
                   _CardField(
@@ -998,14 +1027,33 @@ class _ClientSavedAddressEditorScreenState
                       controller: _floorController,
                       maxLength: 100,
                       textInputAction: TextInputAction.next,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF101828),
+                      ),
                       decoration: const InputDecoration(
                         hintText: '3rd Floor, Flat 402, Gate 2',
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF98A2B3),
+                        ),
+                        filled: false,
+                        fillColor: Colors.transparent,
                         counterText: '',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _FieldLabel(text: 'On-site Contact', trailing: '(optional)'),
                   const SizedBox(height: 8),
                   Row(
@@ -1016,10 +1064,31 @@ class _ClientSavedAddressEditorScreenState
                             controller: _contactNameController,
                             maxLength: 60,
                             textInputAction: TextInputAction.next,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF101828),
+                            ),
                             decoration: const InputDecoration(
                               hintText: 'Contact name',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF98A2B3),
+                              ),
+                              filled: false,
+                              fillColor: Colors.transparent,
                               counterText: '',
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -1033,10 +1102,31 @@ class _ClientSavedAddressEditorScreenState
                             keyboardType: TextInputType.phone,
                             maxLength: 20,
                             textInputAction: TextInputAction.done,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF101828),
+                            ),
                             decoration: const InputDecoration(
                               hintText: '+91',
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF98A2B3),
+                              ),
+                              filled: false,
+                              fillColor: Colors.transparent,
                               counterText: '',
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -1125,8 +1215,8 @@ class _AddressFormSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _savedCardDecoration(radius: 22),
+      padding: const EdgeInsets.all(16),
+      decoration: _savedCardDecoration(radius: 18),
       child: child,
     );
   }
@@ -1777,27 +1867,41 @@ class _AddressTypeOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         decoration: BoxDecoration(
-          color: selected ? meta.background : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(16),
+          color: selected ? meta.background : Colors.white,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? meta.color.withValues(alpha: 0.35)
                 : const Color(0xFFE4E7EC),
           ),
+          boxShadow: selected
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF101828).withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            Icon(meta.icon, color: meta.color, size: 18),
+            Icon(meta.icon, color: meta.color, size: 16),
             const SizedBox(width: 8),
             Text(
               meta.label,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: selected ? meta.color : const Color(0xFF667085),
                 fontWeight: FontWeight.w800,
+                fontSize: 13,
+                height: 1,
               ),
             ),
           ],
@@ -1862,17 +1966,26 @@ class _CardField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      constraints: const BoxConstraints(minHeight: 52),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEAEDF2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (leading != null) ...[
-            Icon(leading, size: 18, color: const Color(0xFFD0D5DD)),
-            const SizedBox(width: 10),
+            Icon(leading, size: 18, color: const Color(0xFF98A2B3)),
+            const SizedBox(width: 12),
           ],
           Expanded(child: child),
         ],

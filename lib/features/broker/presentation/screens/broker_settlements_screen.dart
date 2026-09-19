@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -27,7 +28,7 @@ class _BrokerSettlementsScreenState
     final settlementsAsync = ref.watch(_settlementsProvider(_query));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F8FF),
+      backgroundColor: AppColors.canvas,
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: settlementsAsync.when(
@@ -94,7 +95,7 @@ class _BrokerSettlementsScreenState
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                        border: Border.all(color: AppColors.line),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +108,7 @@ class _BrokerSettlementsScreenState
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF101828),
+                                        color: AppColors.textPrimary,
                                       ),
                                 ),
                               ),
@@ -118,7 +119,7 @@ class _BrokerSettlementsScreenState
                           Text(
                             settlement.route,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF667085)),
+                                ?.copyWith(color: AppColors.textSecondary),
                           ),
                           const SizedBox(height: 10),
                           Row(
@@ -128,7 +129,7 @@ class _BrokerSettlementsScreenState
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF101828),
+                                      color: AppColors.textPrimary,
                                     ),
                               ),
                               const SizedBox(width: 12),
@@ -136,7 +137,7 @@ class _BrokerSettlementsScreenState
                                 'Net: ₹${settlement.netEarnings.toStringAsFixed(0)}',
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF1F88C9),
+                                      color: AppColors.accentBlue,
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
@@ -181,7 +182,7 @@ class _BrokerSettlementsScreenState
                     width: 54,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE1E5EB),
+                      color: AppColors.line,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -191,7 +192,7 @@ class _BrokerSettlementsScreenState
                   settlement.bookingNumber,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -216,7 +217,7 @@ class _BrokerSettlementsScreenState
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
+                      backgroundColor: AppColors.accentBlue,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -248,7 +249,7 @@ class _SettlementsHeader extends StatelessWidget {
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF0B5DCC), Color(0xFF147BDF)],
+          colors: [AppColors.brand, AppColors.brandBright],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -259,24 +260,17 @@ class _SettlementsHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
-            onTap: () => Navigator.of(context).maybePop(),
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                AppIcons.arrow_back_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+          IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(
+              AppIcons.arrow_back_rounded,
+              color: Colors.white,
+              size: 24,
             ),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,8 +279,8 @@ class _SettlementsHeader extends StatelessWidget {
                   'Settlements',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 3),
@@ -401,9 +395,9 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.toLowerCase();
     final color = switch (normalized) {
-      'paid' || 'settled' => const Color(0xFF2FA56E),
-      'pending' => const Color(0xFFF59E0B),
-      _ => const Color(0xFF667085),
+      'paid' || 'settled' => AppColors.brand,
+      'pending' => AppColors.warningText,
+      _ => AppColors.textSecondary,
     };
 
     return Container(
@@ -429,12 +423,12 @@ Widget _detailLine(String label, String value) {
     child: Row(
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(color: Color(0xFF667085))),
+          child: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
         ),
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF101828),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -466,18 +460,18 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF667085), size: 34),
+          Icon(icon, color: AppColors.textSecondary, size: 34),
           const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -486,7 +480,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -64,27 +65,16 @@ class _BrokerTruckLocationScreenState
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.go('/broker/vehicles'),
-                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                  label: const Text('Back'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF64748B),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
+              BrokerBackButton(onTap: () => context.go('/broker/vehicles')),
               const SizedBox(height: 14),
               snapshotAsync.when(
                 loading: () => const Padding(
@@ -122,7 +112,7 @@ class _TruckLocationContent extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: Row(
             children: [
@@ -130,12 +120,12 @@ class _TruckLocationContent extends StatelessWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF2FF),
+                  color: AppColors.brandFill,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   AppIcons.local_shipping_rounded,
-                  color: Color(0xFF2152D0),
+                  color: AppColors.brand,
                 ),
               ),
               const SizedBox(width: 12),
@@ -148,7 +138,7 @@ class _TruckLocationContent extends StatelessWidget {
                           ? snapshot.truck.label
                           : snapshot.truck.plateNumber,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -158,7 +148,7 @@ class _TruckLocationContent extends StatelessWidget {
                           ? 'Unassigned'
                           : 'Driver: ${snapshot.truck.assignedDriverName}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF64748B),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -171,7 +161,7 @@ class _TruckLocationContent extends StatelessWidget {
                     'Updated ${snapshot.lastLocationAt}',
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textTertiary,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
@@ -187,7 +177,7 @@ class _TruckLocationContent extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: hasLocation
               ? LiveLocationMapView(
@@ -223,7 +213,7 @@ class _LocationEmptyState extends StatelessWidget {
         children: [
           const Icon(
             AppIcons.location_off_outlined,
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             size: 34,
           ),
           const SizedBox(height: 12),
@@ -231,7 +221,7 @@ class _LocationEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -241,7 +231,7 @@ class _LocationEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

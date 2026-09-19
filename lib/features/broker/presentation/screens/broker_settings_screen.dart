@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 
 class BrokerSettingsScreen extends StatelessWidget {
@@ -8,9 +9,9 @@ class BrokerSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         title: const Text('Settings'),
       ),
@@ -80,7 +81,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -96,7 +97,7 @@ class _SectionCard extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -104,7 +105,7 @@ class _SectionCard extends StatelessWidget {
             subtitle,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 18),
           ...children,
@@ -135,9 +136,9 @@ class _SettingsTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F7FB),
+          color: AppColors.canvas,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: AppColors.line),
         ),
         child: Row(
           children: [
@@ -145,10 +146,10 @@ class _SettingsTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: AppColors.brandFill,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFF1F88C9)),
+              child: Icon(icon, color: AppColors.accentBlue),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -159,14 +160,14 @@ class _SettingsTile extends StatelessWidget {
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -174,7 +175,7 @@ class _SettingsTile extends StatelessWidget {
             ),
             const Icon(
               AppIcons.chevron_right_rounded,
-              color: Color(0xFF98A2B3),
+              color: AppColors.textTertiary,
             ),
           ],
         ),

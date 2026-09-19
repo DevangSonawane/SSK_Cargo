@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -104,7 +105,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE23A4B),
+              backgroundColor: AppColors.dangerIcon,
             ),
             child: const Text('Remove'),
           ),
@@ -126,7 +127,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Booking removed from your list.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on ApiException catch (error) {
@@ -135,7 +136,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -148,23 +149,16 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
     final bookingsAsync = ref.watch(_brokerHistoryBookingsProvider);
     final bookings = bookingsAsync.valueOrNull ?? const <ClientBooking>[];
     final visibleBookings = _visibleBookings(bookings);
-    final completedCount = bookings
-        .where((booking) => _statusKey(booking.status) == 'completed')
-        .length;
-    final cancelledCount = bookings.where((booking) {
-      final status = _statusKey(booking.status);
-      return status == 'cancelled' || status == 'canceled';
-    }).length;
     final totalNet = visibleBookings.fold<double>(
       0,
       (sum, booking) => sum + (_amount(booking) - _platformFee(booking)),
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -179,8 +173,6 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
               const SizedBox(height: 14),
               _HistoryTabs(
                 selected: _tab,
-                completedCount: completedCount,
-                cancelledCount: cancelledCount,
                 onChanged: (tab) => setState(() => _tab = tab),
               ),
               const SizedBox(height: 14),
@@ -254,7 +246,7 @@ class _HistoryHeader extends StatelessWidget {
               Text(
                 'Job History',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -262,7 +254,7 @@ class _HistoryHeader extends StatelessWidget {
               Text(
                 '$count completed and cancelled bookings',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -289,8 +281,8 @@ class _HistorySearchField extends StatelessWidget {
       height: 54,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(AppRadius.field),
+        border: Border.all(color: AppColors.line),
       ),
       child: TextField(
         controller: controller,
@@ -298,10 +290,10 @@ class _HistorySearchField extends StatelessWidget {
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 15),
-          prefixIcon: Icon(AppIcons.search_rounded, color: Color(0xFF94A3B8)),
+          prefixIcon: Icon(AppIcons.search_rounded, color: AppColors.textTertiary),
           hintText: 'Search bookings, routes, drivers...',
           hintStyle: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -313,36 +305,25 @@ class _HistorySearchField extends StatelessWidget {
 class _HistoryTabs extends StatelessWidget {
   const _HistoryTabs({
     required this.selected,
-    required this.completedCount,
-    required this.cancelledCount,
     required this.onChanged,
   });
 
   final _HistoryTab selected;
-  final int completedCount;
-  final int cancelledCount;
   final ValueChanged<_HistoryTab> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      (_HistoryTab.all, 'All', completedCount + cancelledCount),
-      (_HistoryTab.completed, 'Completed', completedCount),
-      (_HistoryTab.cancelled, 'Cancelled', cancelledCount),
+      (_HistoryTab.all, 'All'),
+      (_HistoryTab.completed, 'Completed'),
+      (_HistoryTab.cancelled, 'Cancelled'),
     ];
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -350,7 +331,6 @@ class _HistoryTabs extends StatelessWidget {
             Expanded(
               child: _HistoryTabButton(
                 label: tab.$2,
-                count: tab.$3,
                 selected: selected == tab.$1,
                 onTap: () => onChanged(tab.$1),
               ),
@@ -364,94 +344,43 @@ class _HistoryTabs extends StatelessWidget {
 class _HistoryTabButton extends StatelessWidget {
   const _HistoryTabButton({
     required this.label,
-    required this.count,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
-  final int count;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : const Color(0xFF475569);
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      height: 40,
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFF2152D0) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF2152D0).withValues(alpha: 0.22),
-                  blurRadius: 14,
-                  offset: const Offset(0, 7),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          splashColor: Colors.transparent,
-          highlightColor: selected
-              ? Colors.white.withValues(alpha: 0.06)
-              : const Color(0xFF2152D0).withValues(alpha: 0.04),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: foreground,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  constraints: const BoxConstraints(minWidth: 20),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: selected
-                          ? Colors.white.withValues(alpha: 0.24)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                  child: Text(
-                    count > 99 ? '99+' : '$count',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: foreground,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
+    final foreground = selected ? Colors.white : AppColors.textSecondary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        splashColor: Colors.transparent,
+        highlightColor: selected
+            ? Colors.white.withValues(alpha: 0.06)
+            : AppColors.brand.withValues(alpha: 0.04),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.brand : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -470,22 +399,22 @@ class _NetEarningsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFCDEFD9)),
+        color: AppColors.brandFill,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.brandBorder),
       ),
       child: Row(
         children: [
           const Icon(
             AppIcons.account_balance_wallet_rounded,
-            color: Color(0xFF047857),
+            color: AppColors.brandInk,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Total Net Earnings (filtered)',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF047857),
+                color: AppColors.brandInk,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -493,7 +422,7 @@ class _NetEarningsCard extends StatelessWidget {
           Text(
             _formatRupees(amount),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF047857),
+              color: AppColors.brandInk,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -520,27 +449,21 @@ class _HistoryBookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = _statusKey(booking.status);
     final statusColor = status == 'completed'
-        ? const Color(0xFF047857)
-        : const Color(0xFFE23A4B);
+        ? AppColors.brandInk
+        : AppColors.dangerIcon;
     final amount = _amount(booking);
     final fee = _platformFee(booking);
 
     return InkWell(
       onTap: onOpen,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEFF2F6)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.line),
+          boxShadow: AppShadows.card,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,7 +479,7 @@ class _HistoryBookingCard extends StatelessWidget {
                       Text(
                         _bookingRef(booking),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF94A3B8),
+                          color: AppColors.textTertiary,
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.w700,
                         ),
@@ -572,7 +495,7 @@ class _HistoryBookingCard extends StatelessWidget {
                 Text(
                   _formatRupees(amount),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.w900,
                   ),
@@ -585,7 +508,7 @@ class _HistoryBookingCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF0F172A),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w900,
                 height: 1.25,
               ),
@@ -596,7 +519,7 @@ class _HistoryBookingCard extends StatelessWidget {
               value: booking.pickupLocation.isEmpty
                   ? 'Pickup location not available'
                   : booking.pickupLocation,
-              color: const Color(0xFF10B981),
+              color: AppColors.brandBright,
             ),
             const SizedBox(height: 8),
             _HistoryRouteLine(
@@ -604,7 +527,7 @@ class _HistoryBookingCard extends StatelessWidget {
               value: booking.dropoffLocation.isEmpty
                   ? 'Drop location not available'
                   : booking.dropoffLocation,
-              color: const Color(0xFFEF4444),
+              color: AppColors.dangerIcon,
             ),
             const SizedBox(height: 12),
             Row(
@@ -641,7 +564,7 @@ class _HistoryBookingCard extends StatelessWidget {
                 IconButton(
                   onPressed: deleting ? null : onOpen,
                   icon: const Icon(AppIcons.visibility_rounded),
-                  color: const Color(0xFF2152D0),
+                  color: AppColors.brand,
                   tooltip: 'View details',
                 ),
                 IconButton(
@@ -653,7 +576,7 @@ class _HistoryBookingCard extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(AppIcons.delete_outline_rounded),
-                  color: const Color(0xFFE23A4B),
+                  color: AppColors.dangerIcon,
                   tooltip: 'Remove',
                 ),
               ],
@@ -690,7 +613,7 @@ class _HistoryRouteLine extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                 ),
@@ -701,7 +624,7 @@ class _HistoryRouteLine extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF334155),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                   height: 1.3,
                 ),
@@ -725,8 +648,8 @@ class _HistoryMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.field - 10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -734,7 +657,7 @@ class _HistoryMetric extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontSize: 10,
               fontWeight: FontWeight.w900,
             ),
@@ -745,7 +668,7 @@ class _HistoryMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF1E293B),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -776,21 +699,21 @@ class _HistoryAmountLine extends StatelessWidget {
         Text(
           'Fee ${_formatRupees(fee)}',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFFE23A4B),
+            color: AppColors.dangerIcon,
             fontWeight: FontWeight.w800,
           ),
         ),
         Text(
           'Net ${_formatRupees(net)}',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFF047857),
+            color: AppColors.brandInk,
             fontWeight: FontWeight.w900,
           ),
         ),
         _HistoryPill(
           label: payment.isEmpty ? 'pending' : payment,
           color: payment == 'paid'
-              ? const Color(0xFF047857)
+              ? AppColors.brandInk
               : const Color(0xFFD97706),
         ),
       ],
@@ -837,14 +760,14 @@ class _HistoryEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
           const Icon(
             AppIcons.history_rounded,
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             size: 36,
           ),
           const SizedBox(height: 12),
@@ -861,7 +784,7 @@ class _HistoryEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

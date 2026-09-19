@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,7 +53,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -157,7 +158,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                           999,
                                         ),
                                       ),
-                                      backgroundColor: const Color(0xFF1F88C9),
+                                      backgroundColor: AppColors.accentBlue,
                                     ),
                                     child: const Text(
                                       'Live tracking',
@@ -253,7 +254,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -297,7 +298,7 @@ class _DriverSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -325,7 +326,7 @@ class _DriverSummaryCard extends StatelessWidget {
                 Text(
                   driver.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -333,7 +334,7 @@ class _DriverSummaryCard extends StatelessWidget {
                 Text(
                   driver.assignedVehicle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -383,7 +384,7 @@ class _InfoBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F4FA),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -392,7 +393,7 @@ class _InfoBlock extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -400,7 +401,7 @@ class _InfoBlock extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -423,9 +424,9 @@ class _BrokerTrackingMapBackdrop extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFFEFF6FF),
-              const Color(0xFFF7FAFC),
-              const Color(0xFFEFF6FF).withValues(alpha: 0.65),
+              AppColors.brandFill,
+              AppColors.fillSubtle,
+              AppColors.brandFill.withValues(alpha: 0.65),
             ],
           ),
         ),
@@ -438,7 +439,7 @@ class _BrokerMapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = const Color(0xFFBFD3E6).withValues(alpha: 0.28)
+      ..color = AppColors.line.withValues(alpha: 0.55)
       ..strokeWidth = 1;
 
     const gridStep = 42.0;
@@ -450,7 +451,7 @@ class _BrokerMapPainter extends CustomPainter {
     }
 
     final routePaint = Paint()
-      ..color = const Color(0xFF1F88C9)
+      ..color = AppColors.accentBlue
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
@@ -471,13 +472,13 @@ class _BrokerMapPainter extends CustomPainter {
       );
     canvas.drawPath(route, routePaint);
 
-    final start = Paint()..color = const Color(0xFF2FA56E);
-    final end = Paint()..color = const Color(0xFFE23A4B);
+    final start = Paint()..color = AppColors.brand;
+    final end = Paint()..color = AppColors.dangerIcon;
     canvas.drawCircle(Offset(size.width * 0.16, size.height * 0.76), 10, start);
     canvas.drawCircle(Offset(size.width * 0.83, size.height * 0.40), 10, end);
 
     final accentPaint = Paint()
-      ..color = const Color(0xFF1F88C9).withValues(alpha: 0.08);
+      ..color = AppColors.accentBlue.withValues(alpha: 0.08);
     canvas.drawCircle(
       Offset(size.width * 0.72, size.height * 0.28),
       58,

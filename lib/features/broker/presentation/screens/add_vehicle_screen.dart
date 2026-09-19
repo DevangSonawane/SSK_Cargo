@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -205,7 +206,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(AppIcons.arrow_back_rounded),
@@ -213,7 +214,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
         ),
         title: Text(isEditing ? 'Edit truck' : 'Add truck'),
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF101828),
+        foregroundColor: AppColors.textPrimary,
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -232,7 +233,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                       ? 'Update the truck details and save the changes.'
                       : 'Choose the truck type and fill in the fleet details.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -303,7 +304,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   borderRadius: BorderRadius.circular(20),
                   icon: const Icon(
                     AppIcons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF667085),
+                    color: AppColors.textSecondary,
                   ),
                   selectedItemBuilder: (context) {
                     return drivers
@@ -325,7 +326,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: Color(0xFF101828),
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -417,9 +418,9 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submitTruck,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1F88C9),
+                      backgroundColor: AppColors.brand,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                     ),
                     child: _submitting
@@ -480,22 +481,22 @@ InputDecoration _fieldDecoration({
     hintText: hintText,
     filled: true,
     fillColor: Colors.white,
-    prefixIcon: Icon(prefixIcon, color: const Color(0xFF667085)),
+    prefixIcon: Icon(prefixIcon, color: AppColors.textSecondary),
     suffixIcon: suffixIcon == null
         ? null
-        : Icon(suffixIcon, color: const Color(0xFF667085)),
+        : Icon(suffixIcon, color: AppColors.textSecondary),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.line),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.line),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Color(0xFF1F88C9), width: 1.4),
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.brand, width: 1.4),
     ),
   );
 }
@@ -540,10 +541,10 @@ class _DriverDropdownMenuItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: Color(0xFF101828),
-            ),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: AppColors.textPrimary,
+                                    ),
           ),
         ),
       ],
@@ -564,7 +565,7 @@ class _DriverAvatar extends StatelessWidget {
       height: compact ? 34 : 38,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1F88C9), Color(0xFF63B3ED)],
+          colors: [AppColors.brand, AppColors.brandBright],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

@@ -141,6 +141,7 @@ class ChatDetailScreen extends ConsumerWidget {
     final summaryFuture = isDirect
         ? _loadThreadSummary(ref, session.tokens.accessToken, threadId!.trim())
         : Future<ChatThreadSummary?>.value(null);
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -154,8 +155,9 @@ class ChatDetailScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: SafeArea(
+        bottom: !keyboardOpen,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, keyboardOpen ? 0 : 12),
           child: Column(
             children: [
               if (isDirect)

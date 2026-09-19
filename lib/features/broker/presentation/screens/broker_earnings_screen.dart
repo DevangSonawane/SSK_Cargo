@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
+import '../widgets/broker_flow_widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,10 +59,10 @@ class BrokerEarningsScreen extends ConsumerWidget {
     final earningsAsync = ref.watch(_brokerEarningsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: () async {
             ref.invalidate(_brokerEarningsProvider);
             await ref.read(_brokerEarningsProvider.future);
@@ -69,23 +71,12 @@ class BrokerEarningsScreen extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.go('/broker/profile'),
-                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                  label: const Text('Back to Profile'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF64748B),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
+              BrokerBackButton(onTap: () => context.go('/broker/profile')),
               const SizedBox(height: 10),
               Text(
                 'Earnings',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -93,7 +84,7 @@ class BrokerEarningsScreen extends ConsumerWidget {
               Text(
                 'Broker revenue and settlement performance.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -150,15 +141,15 @@ class _EarningsContent extends StatelessWidget {
           label: 'Gross Revenue',
           value: _formatCurrency(totalGross),
           icon: AppIcons.currency_rupee_rounded,
-          color: const Color(0xFF2152D0),
-          background: const Color(0xFFEAF2FF),
+          color: AppColors.brand,
+          background: AppColors.brandFill,
         ),
         const SizedBox(height: 12),
         _EarningsStatCard(
           label: 'Platform Fees',
           value: _formatCurrency(totalFees),
           icon: AppIcons.account_balance_wallet_rounded,
-          color: const Color(0xFFE23A4B),
+          color: AppColors.dangerIcon,
           background: const Color(0xFFFDECEC),
         ),
         const SizedBox(height: 12),
@@ -166,8 +157,8 @@ class _EarningsContent extends StatelessWidget {
           label: 'Net Earnings',
           value: _formatCurrency(totalNet),
           icon: AppIcons.trending_up_rounded,
-          color: const Color(0xFF2FA56E),
-          background: const Color(0xFFEAF7EF),
+          color: AppColors.brand,
+          background: AppColors.brandFill,
         ),
         const SizedBox(height: 14),
         Container(
@@ -175,7 +166,7 @@ class _EarningsContent extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +174,7 @@ class _EarningsContent extends StatelessWidget {
               const Text(
                 'Monthly Comparison',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.4,
@@ -196,20 +187,20 @@ class _EarningsContent extends StatelessWidget {
                     child: _MonthValue(
                       label: 'This Month',
                       value: _formatCurrency(bundle.thisMonth),
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   Container(
                     width: 1,
                     height: 42,
-                    color: const Color(0xFFE2E8F0),
+                    color: AppColors.line,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _MonthValue(
                       label: 'Last Month',
                       value: _formatCurrency(bundle.lastMonth),
-                      color: const Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -221,12 +212,12 @@ class _EarningsContent extends StatelessWidget {
               const SizedBox(height: 14),
               _ProgressBar(
                 value: bundle.thisMonth / comparisonMax,
-                color: const Color(0xFF2152D0),
+                color: AppColors.brand,
               ),
               const SizedBox(height: 7),
               _ProgressBar(
                 value: bundle.lastMonth / comparisonMax,
-                color: const Color(0xFFCBD5E1),
+                color: AppColors.line,
               ),
             ],
           ),
@@ -269,7 +260,7 @@ class _EarningsStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -290,7 +281,7 @@ class _EarningsStatCard extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -299,7 +290,7 @@ class _EarningsStatCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                   ),
@@ -332,7 +323,7 @@ class _MonthValue extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -361,10 +352,10 @@ class _TrendPill extends StatelessWidget {
     final positive = change > 0;
     final neutral = change == 0;
     final color = neutral
-        ? const Color(0xFF64748B)
+        ? AppColors.textSecondary
         : positive
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFFE23A4B);
+        ? AppColors.brand
+        : AppColors.dangerIcon;
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
@@ -414,7 +405,7 @@ class _ProgressBar extends StatelessWidget {
       child: LinearProgressIndicator(
         value: value.clamp(0, 1),
         minHeight: 8,
-        backgroundColor: const Color(0xFFE2E8F0),
+        backgroundColor: AppColors.line,
         valueColor: AlwaysStoppedAnimation<Color>(color),
       ),
     );
@@ -433,7 +424,7 @@ class _SettlementRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -444,7 +435,7 @@ class _SettlementRow extends StatelessWidget {
                 Text(
                   settlement.bookingNumber,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -455,7 +446,7 @@ class _SettlementRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -467,7 +458,7 @@ class _SettlementRow extends StatelessWidget {
           Text(
             _formatCurrency(settlement.netEarnings),
             style: const TextStyle(
-              color: Color(0xFF2FA56E),
+              color: AppColors.brand,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -504,7 +495,7 @@ class _EarningsEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -512,7 +503,7 @@ class _EarningsEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondary,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -521,7 +512,7 @@ class _EarningsEmptyState extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+            style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
           ),
         ],
       ),

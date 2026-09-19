@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -110,10 +111,10 @@ class _BrokerActiveJobsScreenState
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -194,14 +195,18 @@ class _BrokerActiveJobsScreenState
     String issueType = issueTypes.first.$1;
     final descriptionController = TextEditingController();
     var submitting = false;
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          return _ActiveSheet(
-            title: 'Report a Problem',
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (sheetContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              return _ActiveSheet(
+                title: 'Report a Problem',
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,13 +214,26 @@ class _BrokerActiveJobsScreenState
                 Text(
                   '${job.pickup} to ${job.drop}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   initialValue: issueType,
-                  decoration: _sheetInputDecoration('Issue Type'),
+                  isExpanded: true,
+                  isDense: true,
+                  itemHeight: 56,
+                  dropdownColor: Colors.white,
+                  menuMaxHeight: 320,
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                  icon: const Icon(
+                    AppIcons.keyboard_arrow_down_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                  decoration: brokerFieldDecoration(
+                    labelText: 'Issue Type',
+                    prefixIcon: AppIcons.report_problem_rounded,
+                  ),
                   items: [
                     for (final issue in issueTypes)
                       DropdownMenuItem(value: issue.$1, child: Text(issue.$2)),
@@ -264,7 +282,7 @@ class _BrokerActiveJobsScreenState
                                 setSheetState(() => submitting = false);
                               },
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE23A4B),
+                          backgroundColor: AppColors.dangerIcon,
                         ),
                         child: Text(submitting ? 'Submitting...' : 'Submit'),
                       ),
@@ -272,9 +290,11 @@ class _BrokerActiveJobsScreenState
                   ],
                 ),
               ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+          ),
+        ),
       ),
     ).whenComplete(descriptionController.dispose);
   }
@@ -299,7 +319,7 @@ class _BrokerActiveJobsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Dispute raised - our team will review it shortly.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
       return true;
@@ -308,7 +328,7 @@ class _BrokerActiveJobsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return false;
@@ -322,14 +342,18 @@ class _BrokerActiveJobsScreenState
     String? driverId;
     final reasonController = TextEditingController();
     var submitting = false;
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          return _ActiveSheet(
-            title: 'Reassign Driver',
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (sheetContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              return _ActiveSheet(
+                title: 'Reassign Driver',
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +369,19 @@ class _BrokerActiveJobsScreenState
                 DropdownButtonFormField<String>(
                   initialValue: driverId,
                   isExpanded: true,
-                  decoration: _sheetInputDecoration('Reassign to'),
+                  isDense: true,
+                  itemHeight: 56,
+                  dropdownColor: Colors.white,
+                  menuMaxHeight: 320,
+                  borderRadius: BorderRadius.circular(AppRadius.field),
+                  icon: const Icon(
+                    AppIcons.keyboard_arrow_down_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                  decoration: brokerFieldDecoration(
+                    labelText: 'Reassign to',
+                    prefixIcon: AppIcons.person_rounded,
+                  ),
                   items: [
                     for (final driver in drivers)
                       DropdownMenuItem(
@@ -389,7 +425,7 @@ class _BrokerActiveJobsScreenState
                             setSheetState(() => submitting = false);
                           },
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2152D0),
+                      backgroundColor: AppColors.brand,
                     ),
                     child: Text(
                       submitting ? 'Reassigning...' : 'Reassign Driver',
@@ -397,9 +433,11 @@ class _BrokerActiveJobsScreenState
                   ),
                 ),
               ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+          ),
+        ),
       ),
     ).whenComplete(reasonController.dispose);
   }
@@ -417,7 +455,7 @@ class _BrokerActiveJobsScreenState
           content: Text(
             "Can't find the original job request for this booking.",
           ),
-          backgroundColor: Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return false;
@@ -438,7 +476,7 @@ class _BrokerActiveJobsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Driver reassigned.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
       return true;
@@ -447,7 +485,7 @@ class _BrokerActiveJobsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return false;
@@ -471,7 +509,7 @@ class _ActiveJobsHeader extends StatelessWidget {
               Text(
                 'Active Jobs',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -479,7 +517,7 @@ class _ActiveJobsHeader extends StatelessWidget {
               Text(
                 '$total jobs currently in progress',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -510,18 +548,12 @@ class _ActiveJobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _statusColor(job.statusKey);
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +570,7 @@ class _ActiveJobCard extends StatelessWidget {
                     Text(
                       '#${job.bookingId.toUpperCase()}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.textSecondary,
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w700,
                       ),
@@ -550,7 +582,7 @@ class _ActiveJobCard extends StatelessWidget {
                         label: job.incident!.reason == 'breakdown'
                             ? 'Breakdown Reported'
                             : 'Issue Reported',
-                        color: const Color(0xFFE23A4B),
+                        color: AppColors.dangerIcon,
                       ),
                   ],
                 ),
@@ -559,7 +591,7 @@ class _ActiveJobCard extends StatelessWidget {
               Text(
                 _formatCurrency(job.amount),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w900,
                 ),
@@ -572,7 +604,7 @@ class _ActiveJobCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
               height: 1.25,
             ),
@@ -583,7 +615,7 @@ class _ActiveJobCard extends StatelessWidget {
                 ? 'Route distance pending'
                 : '${job.distance} km route',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -591,13 +623,13 @@ class _ActiveJobCard extends StatelessWidget {
           _RouteLine(
             label: 'Pickup',
             value: job.pickup,
-            color: const Color(0xFF10B981),
+            color: AppColors.brandBright,
           ),
           const SizedBox(height: 10),
           _RouteLine(
             label: 'Drop',
             value: job.drop,
-            color: const Color(0xFFEF4444),
+            color: AppColors.dangerIcon,
           ),
           const SizedBox(height: 14),
           Row(
@@ -625,7 +657,7 @@ class _ActiveJobCard extends StatelessWidget {
           Text(
             'TRIP PROGRESS',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w900,
               fontSize: 10,
             ),
@@ -644,13 +676,13 @@ class _ActiveJobCard extends StatelessWidget {
                     _TextAction(
                       icon: AppIcons.flag_rounded,
                       label: 'Report a Problem',
-                      color: const Color(0xFFE23A4B),
+                      color: AppColors.dangerIcon,
                       onTap: onDispute,
                     ),
                     _TextAction(
                       icon: AppIcons.navigation_rounded,
                       label: 'Track Live',
-                      color: const Color(0xFF2152D0),
+                      color: AppColors.brand,
                       onTap: onTrack,
                     ),
                   ],
@@ -666,13 +698,13 @@ class _ActiveJobCard extends StatelessWidget {
                     _TextAction(
                       icon: AppIcons.repeat_rounded,
                       label: 'Reassign Driver',
-                      color: const Color(0xFF2152D0),
+                      color: AppColors.brand,
                       onTap: onReassign,
                     ),
                     _TextAction(
                       icon: AppIcons.chat_bubble_outline_rounded,
                       label: 'Chat',
-                      color: const Color(0xFF2152D0),
+                      color: AppColors.brand,
                       onTap: onChat,
                     ),
                   ],
@@ -694,34 +726,38 @@ class _ActiveSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Material(
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxHeight: 560),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.w900,
-                  ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 40,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 14),
-                child,
-              ],
-            ),
+              ),
+              const SizedBox(height: 14),
+              child,
+            ],
           ),
         ),
       ),
@@ -742,14 +778,14 @@ class _ActiveEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
           const Icon(
             AppIcons.assignment_turned_in_rounded,
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             size: 36,
           ),
           const SizedBox(height: 12),
@@ -765,7 +801,7 @@ class _ActiveEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -789,12 +825,12 @@ class _MiniInfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.field),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF2152D0)),
+          Icon(icon, size: 16, color: AppColors.brand),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -803,7 +839,7 @@ class _MiniInfoTile extends StatelessWidget {
                 Text(
                   label.toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.textTertiary,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -814,7 +850,7 @@ class _MiniInfoTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -852,7 +888,7 @@ class _RouteLine extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                 ),
@@ -863,7 +899,7 @@ class _RouteLine extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF334155),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -928,8 +964,8 @@ class _ProgressDots extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     color: i <= activeIndex
-                        ? const Color(0xFF2152D0)
-                        : const Color(0xFFE2E8F0),
+                        ? AppColors.brand
+                        : AppColors.line,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -940,8 +976,8 @@ class _ProgressDots extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: i <= activeIndex
-                        ? const Color(0xFF2152D0)
-                        : const Color(0xFF94A3B8),
+                        ? AppColors.brand
+                        : AppColors.textTertiary,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
                   ),
@@ -954,8 +990,8 @@ class _ProgressDots extends StatelessWidget {
               height: 2,
               width: 12,
               color: i < activeIndex
-                  ? const Color(0xFF2152D0)
-                  : const Color(0xFFE2E8F0),
+                  ? AppColors.brand
+                  : AppColors.line,
             ),
         ],
       ],
@@ -1192,10 +1228,10 @@ InputDecoration _sheetInputDecoration(String label) {
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: const Color(0xFFF8FAFC),
+    fillColor: AppColors.fillSubtle,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      borderSide: const BorderSide(color: AppColors.line),
     ),
   );
 }
@@ -1304,10 +1340,10 @@ String _statusLabel(String status) {
 
 Color _statusColor(String status) {
   return switch (status) {
-    'in_transit' => const Color(0xFF2152D0),
+    'in_transit' => AppColors.brand,
     'picked_up' => const Color(0xFFD97706),
-    'delivered' || 'completed' => const Color(0xFF047857),
-    _ => const Color(0xFF64748B),
+    'delivered' || 'completed' => AppColors.brandDark,
+    _ => AppColors.textSecondary,
   };
 }
 

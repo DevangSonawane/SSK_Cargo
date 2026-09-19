@@ -239,10 +239,28 @@ class _GooglePlacesAutocompleteFieldState
           controller: widget.controller,
           focusNode: _focusNode,
           textInputAction: TextInputAction.search,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF101828),
+          ),
           decoration: InputDecoration(
             hintText: widget.hintText,
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF98A2B3),
+            ),
+            filled: false,
+            fillColor: Colors.transparent,
             border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
             isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
             suffixIcon: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(12),
@@ -252,7 +270,15 @@ class _GooglePlacesAutocompleteFieldState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
-                : const Icon(AppIcons.place_outlined, size: 18),
+                : const Icon(
+                    AppIcons.search_rounded,
+                    size: 16,
+                    color: Color(0xFF98A2B3),
+                  ),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            ),
           ),
         ),
         if (_errorMessage != null) ...[

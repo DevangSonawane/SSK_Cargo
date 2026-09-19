@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
+import '../widgets/broker_flow_widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -92,23 +94,12 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => context.go('/broker/home'),
-                icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                label: const Text('Back'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ),
+            BrokerBackButton(onTap: () => context.go('/broker/home')),
             const SizedBox(height: 10),
             _ProfileCard(user: user),
             const SizedBox(height: 16),
@@ -125,7 +116,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                   title: 'Earnings',
                   subtitle: 'Revenue and settlement performance',
                   icon: AppIcons.trending_up_rounded,
-                  accent: const Color(0xFF2FA56E),
+                  accent: AppColors.brand,
                   onTap: () => context.push('/broker/earnings'),
                 ),
                 _ProfileMenuTile(
@@ -139,8 +130,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                       ? AppIcons.verified_rounded
                       : AppIcons.verified_user_outlined,
                   accent: _kycApproved
-                      ? const Color(0xFF2FA56E)
-                      : const Color(0xFF2152D0),
+                      ? AppColors.brand
+                      : AppColors.brand,
                   onTap: () => context.push('/broker/kyc-registration'),
                 ),
                 _ProfileMenuTile(
@@ -159,14 +150,14 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                   title: 'Help & Support',
                   subtitle: 'Contact support for account or trip issues',
                   icon: AppIcons.support_agent_rounded,
-                  accent: const Color(0xFF2152D0),
+                  accent: AppColors.brand,
                   onTap: () {},
                 ),
                 _ProfileMenuTile(
                   title: 'Logout',
                   subtitle: 'Sign out from this device',
                   icon: AppIcons.logout_rounded,
-                  accent: const Color(0xFFE23A4B),
+                  accent: AppColors.dangerIcon,
                   onTap: () async {
                     await ref.read(authSessionProvider.notifier).logout();
                     if (context.mounted) context.go('/login');
@@ -196,15 +187,13 @@ class _ProfileCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2454),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F2454).withValues(alpha: 0.16),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        gradient: const LinearGradient(
+          colors: [AppColors.brand, AppColors.brandBright],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.brandGlow,
       ),
       child: Column(
         children: [
@@ -213,7 +202,7 @@ class _ProfileCard extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF2152D0).withValues(alpha: 0.25),
+              color: AppColors.brand.withValues(alpha: 0.25),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.32),
                 width: 2,
@@ -291,7 +280,7 @@ class _ProfileSection extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: const Color(0xFF0F172A),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -300,7 +289,7 @@ class _ProfileSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             children: [
@@ -311,7 +300,7 @@ class _ProfileSection extends StatelessWidget {
                     height: 1,
                     thickness: 1,
                     indent: 62,
-                    color: Color(0xFFE2E8F0),
+                    color: AppColors.line,
                   ),
               ],
             ],
@@ -328,7 +317,7 @@ class _ProfileMenuTile extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.onTap,
-    this.accent = const Color(0xFF2152D0),
+    this.accent = AppColors.brand,
   });
 
   final String title;
@@ -362,7 +351,7 @@ class _ProfileMenuTile extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -373,7 +362,7 @@ class _ProfileMenuTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -384,7 +373,7 @@ class _ProfileMenuTile extends StatelessWidget {
             const SizedBox(width: 8),
             const Icon(
               AppIcons.chevron_right_rounded,
-              color: Color(0xFFCBD5E1),
+              color: AppColors.line,
               size: 22,
             ),
           ],

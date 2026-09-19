@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -143,7 +144,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(successMessage),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on ApiException catch (error) {
@@ -151,7 +152,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -227,7 +228,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Offer sent to the driver - waiting for response.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
       return true;
@@ -236,7 +237,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return false;
@@ -248,14 +249,20 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 
   Future<void> _showAssignmentSheet(BookingRequest request) {
-    return showModalBottomSheet<void>(
+    return showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _HomeAssignmentSheet(
-        request: request,
-        onAssign: (driverId, truckId) =>
-            _assignRequest(request, driverId: driverId, truckId: truckId),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: _HomeAssignmentSheet(
+            request: request,
+            onAssign: (driverId, truckId) =>
+                _assignRequest(request, driverId: driverId, truckId: truckId),
+          ),
+        ),
       ),
     );
   }
@@ -289,7 +296,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     'Send counter-offer',
                     style: Theme.of(sheetContext).textTheme.titleLarge
                         ?.copyWith(
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w900,
                         ),
                   ),
@@ -297,7 +304,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                   Text(
                     'Booking #${request.id} - propose a different amount.',
                     style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -308,13 +315,16 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(AppIcons.currency_rupee_rounded),
+                      prefixIcon: const Icon(
+                        AppIcons.currency_rupee_rounded,
+                        color: AppColors.brand,
+                      ),
                       hintText: 'Enter amount',
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: AppColors.fillSubtle,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: AppColors.line),
                       ),
                     ),
                   ),
@@ -335,7 +345,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                             Navigator.of(sheetContext).pop(amount);
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2152D0),
+                            backgroundColor: AppColors.brand,
                           ),
                           child: const Text('Send counter'),
                         ),
@@ -376,10 +386,10 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -405,7 +415,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     child: Text(
                       'Booking Requests',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF111827),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -420,7 +430,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     ),
                     label: const Text('Sort'),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF3256D3),
+                      foregroundColor: AppColors.brand,
                     ),
                   ),
                 ],
@@ -520,13 +530,13 @@ class _BrokerHomeTopBar extends StatelessWidget {
                 TextSpan(
                   text: 'Hello, ',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                   children: [
                     TextSpan(
                       text: '$greetingName 👋',
-                      style: const TextStyle(color: Color(0xFF0F172A)),
+                      style: const TextStyle(color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -535,7 +545,7 @@ class _BrokerHomeTopBar extends StatelessWidget {
               Text(
                 'Good morning',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -559,14 +569,17 @@ class _NewBookingsHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        gradient: const LinearGradient(
+          colors: [AppColors.brand, AppColors.brandBright],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppRadius.cardRadius,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            color: AppColors.brand.withValues(alpha: 0.28),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -578,12 +591,12 @@ class _NewBookingsHero extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               AppIcons.inventory_2_outlined,
-              color: Color(0xFF2152D0),
+              color: Colors.white,
               size: 22,
             ),
           ),
@@ -595,7 +608,7 @@ class _NewBookingsHero extends StatelessWidget {
                 Text(
                   'New bookings',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -605,7 +618,7 @@ class _NewBookingsHero extends StatelessWidget {
                       ? '1 request needs attention'
                       : '$pendingCount requests need attention',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
+                    color: Colors.white.withValues(alpha: 0.88),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -614,10 +627,16 @@ class _NewBookingsHero extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(999),
+              color: Colors.white.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.24),
+                width: 1,
+              ),
             ),
             child: Text(
               pendingCount.toString(),
@@ -652,7 +671,7 @@ class _SearchField extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.line),
       ),
       child: TextField(
         controller: controller,
@@ -662,11 +681,11 @@ class _SearchField extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
           prefixIcon: const Icon(
             AppIcons.search_rounded,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
           ),
           hintText: hintText,
           hintStyle: const TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -721,21 +740,15 @@ class _BookingRequestCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.line),
+          boxShadow: AppShadows.card,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,7 +769,7 @@ class _BookingRequestCard extends StatelessWidget {
                             _bookingRef(request),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
-                                  color: const Color(0xFF94A3B8),
+                                  color: AppColors.textTertiary,
                                   fontFamily: 'monospace',
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -773,7 +786,7 @@ class _BookingRequestCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.textPrimary,
                               fontSize: 14.5,
                               fontWeight: FontWeight.w900,
                               height: 1.25,
@@ -789,7 +802,7 @@ class _BookingRequestCard extends StatelessWidget {
                     Text(
                       amountText,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w900,
                       ),
@@ -801,7 +814,7 @@ class _BookingRequestCard extends StatelessWidget {
                         const Icon(
                           AppIcons.schedule_rounded,
                           size: 12,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textTertiary,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -810,7 +823,7 @@ class _BookingRequestCard extends StatelessWidget {
                               : request.requestedAt,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
-                                color: const Color(0xFF94A3B8),
+                                color: AppColors.textTertiary,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -826,13 +839,13 @@ class _BookingRequestCard extends StatelessWidget {
                 _JobLocationRow(
                   label: 'Pickup',
                   value: pickupText,
-                  iconColor: const Color(0xFF10B981),
+                  iconColor: AppColors.brandBright,
                 ),
                 const SizedBox(height: 8),
                 _JobLocationRow(
                   label: 'Drop',
                   value: dropText,
-                  iconColor: const Color(0xFFEF4444),
+                  iconColor: AppColors.dangerIcon,
                 ),
               ],
             ),
@@ -874,7 +887,7 @@ class _BookingRequestCard extends StatelessWidget {
                   icon: const Icon(AppIcons.local_shipping_rounded, size: 17),
                   label: const Text('Assign Driver & Truck'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2152D0),
+                    backgroundColor: AppColors.brand,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -886,18 +899,18 @@ class _BookingRequestCard extends StatelessWidget {
               _InlineStatusNote(
                 icon: AppIcons.schedule_rounded,
                 text: 'Waiting for client response to your $amountText offer',
-                color: const Color(0xFFD97706),
-                backgroundColor: const Color(0xFFFFFBEB),
-                borderColor: const Color(0xFFFDE68A),
+                color: AppColors.warningText,
+                backgroundColor: AppColors.warningFill,
+                borderColor: AppColors.warningBorder,
               ),
             ] else if (status == 'awaiting_confirmation' &&
                 !showConfirmActions) ...[
               _InlineStatusNote(
                 icon: AppIcons.schedule_rounded,
                 text: 'You accepted - waiting for the client to confirm',
-                color: const Color(0xFF0F766E),
-                backgroundColor: const Color(0xFFF0FDFA),
-                borderColor: const Color(0xFF99F6E4),
+                color: AppColors.accentBlue,
+                backgroundColor: const Color(0xFFEAF4FB),
+                borderColor: AppColors.accentBlueBorder,
               ),
             ] else if (showConfirmActions) ...[
               Row(
@@ -906,8 +919,8 @@ class _BookingRequestCard extends StatelessWidget {
                     child: _JobActionButton(
                       label: 'Confirm',
                       icon: AppIcons.check_circle_outline_rounded,
-                      color: const Color(0xFF047857),
-                      borderColor: const Color(0xFFA7F3D0),
+                      color: AppColors.brand,
+                      borderColor: AppColors.successBorder,
                       onPressed: busy ? null : onAccept,
                       loading: busy,
                     ),
@@ -917,8 +930,8 @@ class _BookingRequestCard extends StatelessWidget {
                     child: _JobActionButton(
                       label: 'Decline',
                       icon: AppIcons.cancel_outlined,
-                      color: const Color(0xFF64748B),
-                      borderColor: const Color(0xFFE2E8F0),
+                      color: AppColors.textSecondary,
+                      borderColor: AppColors.line,
                       onPressed: busy ? null : onDecline,
                     ),
                   ),
@@ -936,8 +949,8 @@ class _BookingRequestCard extends StatelessWidget {
                     child: _JobActionButton(
                       label: 'Accept',
                       icon: AppIcons.check_circle_outline_rounded,
-                      color: const Color(0xFF047857),
-                      borderColor: const Color(0xFFA7F3D0),
+                      color: AppColors.brand,
+                      borderColor: AppColors.successBorder,
                       onPressed: busy ? null : onAccept,
                       loading: busy,
                     ),
@@ -948,8 +961,8 @@ class _BookingRequestCard extends StatelessWidget {
                       child: _JobActionButton(
                         label: 'Counter',
                         icon: AppIcons.currency_rupee_rounded,
-                        color: const Color(0xFF2152D0),
-                        borderColor: const Color(0xFFC7D7FE),
+                        color: AppColors.accentBlue,
+                        borderColor: AppColors.accentBlueBorder,
                         onPressed: busy ? null : onCounter,
                       ),
                     ),
@@ -959,8 +972,8 @@ class _BookingRequestCard extends StatelessWidget {
                     child: _JobActionButton(
                       label: 'Decline',
                       icon: AppIcons.cancel_outlined,
-                      color: const Color(0xFF64748B),
-                      borderColor: const Color(0xFFE2E8F0),
+                      color: AppColors.textSecondary,
+                      borderColor: AppColors.line,
                       onPressed: busy ? null : onDecline,
                     ),
                   ),
@@ -980,8 +993,8 @@ class _BookingRequestCard extends StatelessWidget {
                   icon: const Icon(AppIcons.open_in_new_rounded, size: 16),
                   label: const Text('Review request'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2152D0),
-                    side: const BorderSide(color: Color(0xFFC7D7FE)),
+                    foregroundColor: AppColors.brand,
+                    side: const BorderSide(color: AppColors.brandBorder),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -996,7 +1009,7 @@ class _BookingRequestCard extends StatelessWidget {
                 const Icon(
                   AppIcons.phone_outlined,
                   size: 13,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -1009,7 +1022,7 @@ class _BookingRequestCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF94A3B8),
+                      color: AppColors.textTertiary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1049,20 +1062,25 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
       brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),
     );
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Material(
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxHeight: 560),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: driversAsync.when(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 40,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: driversAsync.when(
               loading: () => const _AssignmentLoadingState(),
               error: (error, _) => _AssignmentErrorState(
                 message: error.toString().replaceFirst('Exception: ', ''),
@@ -1089,8 +1107,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildContent(List<BrokerDriver> drivers, List<BrokerVehicle> trucks) {
@@ -1114,12 +1131,12 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF4FF),
+                color: AppColors.brandFill,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
                 AppIcons.local_shipping_rounded,
-                color: Color(0xFF2152D0),
+                color: AppColors.brand,
               ),
             ),
             const SizedBox(width: 12),
@@ -1130,7 +1147,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                   Text(
                     'Assign Driver & Truck',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1138,7 +1155,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                   Text(
                     '${_bookingRef(widget.request)} - choose an idle driver and truck.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1192,7 +1209,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
             'Select one idle driver and one idle truck to continue.',
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFFE23A4B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.dangerText),
           ),
         ],
         const SizedBox(height: 18),
@@ -1225,7 +1242,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                       }
                     : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2152D0),
+                  backgroundColor: AppColors.brand,
                 ),
                 child: Text(_submitting ? 'Sending...' : 'Send Assignment'),
               ),
@@ -1361,21 +1378,18 @@ class _AssignmentDropdown<T> extends StatelessWidget {
     return DropdownButtonFormField<String>(
       initialValue: selectedExists ? value : null,
       isExpanded: true,
-      itemHeight: 64,
+      isDense: true,
+      itemHeight: 56,
       menuMaxHeight: 320,
-      decoration: InputDecoration(
+      dropdownColor: Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.field),
+      icon: const Icon(
+        AppIcons.keyboard_arrow_down_rounded,
+        color: AppColors.textSecondary,
+      ),
+      decoration: brokerFieldDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xFF2152D0)),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-        ),
+        prefixIcon: icon,
       ),
       hint: Text('Select ${label.toLowerCase()}'),
       selectedItemBuilder: (context) => [
@@ -1387,7 +1401,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Color(0xFF0F172A),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1413,7 +1427,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1423,7 +1437,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1467,7 +1481,7 @@ class _AssignmentErrorState extends StatelessWidget {
         Text(
           'Could not load assignment options',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: const Color(0xFF0F172A),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1476,7 +1490,7 @@ class _AssignmentErrorState extends StatelessWidget {
           message,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 14),
         SizedBox(
@@ -1486,7 +1500,7 @@ class _AssignmentErrorState extends StatelessWidget {
             icon: const Icon(AppIcons.refresh_rounded),
             label: const Text('Retry'),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF2152D0),
+              backgroundColor: AppColors.brand,
             ),
           ),
         ),
@@ -1505,13 +1519,13 @@ class _TruckTypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
+        color: AppColors.brandFill,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label.trim().isEmpty ? 'Truck' : label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brandInk,
           fontWeight: FontWeight.w900,
           fontSize: 10,
         ),
@@ -1552,7 +1566,7 @@ class _JobLocationRow extends StatelessWidget {
               Text(
                 label.toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontWeight: FontWeight.w900,
                   fontSize: 10,
                 ),
@@ -1563,7 +1577,7 @@ class _JobLocationRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF334155),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   height: 1.32,
                 ),
@@ -1588,7 +1602,7 @@ class _JobMetricTile extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 50),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(9),
       ),
       child: Column(
@@ -1599,7 +1613,7 @@ class _JobMetricTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontSize: 10,
               fontWeight: FontWeight.w900,
             ),
@@ -1610,7 +1624,7 @@ class _JobMetricTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF1E293B),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1631,7 +1645,7 @@ class _NegotiationHistory extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -1642,13 +1656,13 @@ class _NegotiationHistory extends StatelessWidget {
               const Icon(
                 AppIcons.history_rounded,
                 size: 12,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textTertiary,
               ),
               const SizedBox(width: 5),
               Text(
                 'NEGOTIATION HISTORY',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1663,7 +1677,7 @@ class _NegotiationHistory extends StatelessWidget {
                   child: Text(
                     entry.by == 'broker' ? 'You offered' : 'Client offered',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1671,7 +1685,7 @@ class _NegotiationHistory extends StatelessWidget {
                 Text(
                   _formatRupees(entry.amount),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF334155),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1736,7 +1750,7 @@ class _ActionHint extends StatelessWidget {
       text,
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: const Color(0xFF94A3B8),
+        color: AppColors.textTertiary,
         fontWeight: FontWeight.w700,
         height: 1.3,
       ),
@@ -1748,9 +1762,9 @@ class _InlineStatusNote extends StatelessWidget {
   const _InlineStatusNote({
     required this.icon,
     required this.text,
-    this.color = const Color(0xFF64748B),
-    this.backgroundColor = const Color(0xFFF8FAFC),
-    this.borderColor = const Color(0xFFE2E8F0),
+    this.color = AppColors.textSecondary,
+    this.backgroundColor = AppColors.fillSubtle,
+    this.borderColor = AppColors.line,
   });
 
   final IconData icon;
@@ -1802,7 +1816,7 @@ class _EmptyBookingsState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7EDF5)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -1810,12 +1824,12 @@ class _EmptyBookingsState extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: const BoxDecoration(
-              color: Color(0xFFEFF4FF),
+              color: AppColors.brandFill,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               AppIcons.inbox_rounded,
-              color: Color(0xFF2152D0),
+              color: AppColors.brand,
               size: 34,
             ),
           ),
@@ -1825,7 +1839,7 @@ class _EmptyBookingsState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -1833,7 +1847,7 @@ class _EmptyBookingsState extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -1859,7 +1873,7 @@ class _AvatarButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: Image.asset('assets/user.png', fit: BoxFit.cover),
@@ -1888,11 +1902,11 @@ class _NotificationButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: AppColors.line),
             ),
             child: const Icon(
               AppIcons.notifications_none_rounded,
-              color: Color(0xFF334155),
+              color: AppColors.textSecondary,
             ),
           ),
           if (count > 0)
@@ -1902,9 +1916,10 @@ class _NotificationButton extends StatelessWidget {
               child: Container(
                 width: 10,
                 height: 10,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
+                decoration: BoxDecoration(
+                  color: AppColors.brand,
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.4),
                 ),
               ),
             ),

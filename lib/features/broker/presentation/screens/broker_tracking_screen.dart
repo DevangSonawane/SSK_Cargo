@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -94,14 +95,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.16),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  boxShadow: AppShadows.float,
                 ),
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -116,7 +111,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF101828),
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                         ),
@@ -132,7 +127,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       'Click here to negotiate this timed-out request.',
                       style: Theme.of(dialogContext).textTheme.bodyMedium
                           ?.copyWith(
-                            color: const Color(0xFF344054),
+                            color: AppColors.textSecondary,
                             height: 1.45,
                           ),
                     ),
@@ -145,7 +140,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           _openNegotiationRequest(targetRequest!);
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F88C9),
+                          backgroundColor: AppColors.brand,
                         ),
                         child: const Text('Negotiate'),
                       ),
@@ -221,7 +216,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
     );
 
     return RefreshIndicator(
-      color: const Color(0xFF1F88C9),
+      color: AppColors.brand,
       onRefresh: _refreshTrackingData,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -241,7 +236,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   Text(
                     'Remaining negotiation',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -254,9 +249,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFFECF9E)),
+                        color: AppColors.warningFill,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: AppColors.warningBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,13 +266,13 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF101828),
+                                        color: AppColors.textPrimary,
                                       ),
                                 ),
                               ),
                               const Icon(
                                 AppIcons.warning_amber_rounded,
-                                color: Color(0xFFB54708),
+                                color: AppColors.warningText,
                               ),
                             ],
                           ),
@@ -285,7 +280,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           Text(
                             '${timedOutRequests[index].pickup} → ${timedOutRequests[index].drop}',
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: const Color(0xFF7C2D12)),
+                                ?.copyWith(color: AppColors.warningText),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -293,7 +288,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF101828),
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                           const SizedBox(height: 10),
@@ -304,7 +299,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                 timedOutRequests[index],
                               ),
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F88C9),
+                                backgroundColor: AppColors.brand,
                               ),
                               child: const Text('Negotiate'),
                             ),
@@ -322,7 +317,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   Text(
                     'Negotiation ready',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -335,9 +330,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFB7D7F0)),
+                        color: Color(0xFFEAF4FB),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: const Color(0xFFC7DAFF)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +344,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF101828),
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                           const SizedBox(height: 6),
@@ -358,7 +353,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                 ? 'Open to continue negotiation.'
                                 : negotiationNotifications[index].message,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: const Color(0xFF406B8F)),
+                                ?.copyWith(color: AppColors.accentBlue),
                           ),
                           const SizedBox(height: 10),
                           SizedBox(
@@ -370,7 +365,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                 ),
                               ),
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F88C9),
+                                backgroundColor: AppColors.brand,
                               ),
                               child: const Text('Negotiate'),
                             ),
@@ -390,7 +385,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         'Driver tracking',
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w900,
                             ),
                       ),
@@ -402,11 +397,11 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       alignment: WrapAlignment.end,
                       children: [
                         FilledButton.icon(
-                          onPressed: () => context.go('/broker/drivers/add'),
+                          onPressed: () => context.push('/broker/drivers/add'),
                           icon: const Icon(AppIcons.add_rounded, size: 18),
                           label: const Text('Add'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1F88C9),
+                            backgroundColor: AppColors.brand,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -434,8 +429,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.line),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,14 +440,14 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF101828),
+                                    color: AppColors.textPrimary,
                                   ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Create a driver from the + button to start tracking.',
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: const Color(0xFF667085)),
+                                  ?.copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -489,13 +484,13 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      border: Border.all(color: AppColors.line),
                     ),
                     child: Text(
                       error.toString().replaceFirst('Exception: ', ''),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFFB42318),
+                        color: AppColors.dangerText,
                       ),
                     ),
                   ),
@@ -601,7 +596,7 @@ Future<void> _confirmDeleteDriver(
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE23A4B),
+              backgroundColor: AppColors.dangerIcon,
             ),
             child: const Text('Delete'),
           ),
@@ -745,7 +740,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                   width: 54,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE1E5EB),
+                    color: AppColors.line,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -757,7 +752,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                     'Driver requests',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
@@ -800,9 +795,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F7FB),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFE8EDF2)),
+                            color: AppColors.fillSubtle,
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            border: Border.all(color: AppColors.line),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -819,7 +814,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                           .titleMedium
                                           ?.copyWith(
                                             fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF101828),
+                                            color: AppColors.textPrimary,
                                           ),
                                     ),
                                   ),
@@ -827,7 +822,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                     request.status,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: const Color(0xFF1F88C9),
+                                          color: AppColors.brand,
                                           fontWeight: FontWeight.w700,
                                         ),
                                   ),
@@ -841,7 +836,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                               Text(
                                 '${request.clientName} • ${request.pickup} → ${request.drop}',
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: const Color(0xFF667085)),
+                                    ?.copyWith(color: AppColors.textSecondary),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -1012,14 +1007,14 @@ class _BrokerAssignedInlineBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: AppColors.brandFill,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFCDEFD9)),
+        border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
         'Broker-assigned - no counter',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: const Color(0xFF2FA56E),
+          color: AppColors.brand,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -1582,7 +1577,7 @@ class _BrokerDriverTripSheetState
                         width: 54,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE1E5EB),
+                          color: AppColors.line,
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -1596,7 +1591,7 @@ class _BrokerDriverTripSheetState
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF101828),
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                         ),
@@ -1627,7 +1622,7 @@ class _BrokerDriverTripSheetState
                           ? 'Driver location and activity overview'
                           : 'Trip ${data.tripId}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     if (data.shipment.isExpress) ...[
@@ -1692,7 +1687,7 @@ class _BrokerDriverTripSheetState
                       'Trip progress',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1763,7 +1758,7 @@ class _BrokerDriverTripSheetState
                       'Incidents',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1772,16 +1767,16 @@ class _BrokerDriverTripSheetState
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F7FB),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
+                          color: AppColors.fillSubtle,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.line),
                         ),
                         child: Text(
                           data.tripId.isEmpty
                               ? 'No active trip incident data for this driver.'
                               : 'No incidents reported yet.',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                       )
                     else
@@ -1998,19 +1993,41 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
           Text(
             'Currently assigned: ${widget.currentDriverName.isEmpty ? 'Driver' : widget.currentDriverName}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: _driverId.isEmpty ? null : _driverId,
-            decoration: const InputDecoration(labelText: 'Reassign to'),
+            isExpanded: true,
+            isDense: true,
+            itemHeight: 56,
+            dropdownColor: Colors.white,
+            menuMaxHeight: 320,
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            icon: const Icon(
+              AppIcons.keyboard_arrow_down_rounded,
+              color: AppColors.textSecondary,
+            ),
+            decoration: brokerFieldDecoration(
+              labelText: 'Reassign to',
+              prefixIcon: AppIcons.person_rounded,
+            ),
             items: [
               for (final driver in driverOptions)
                 DropdownMenuItem(
                   value: driver.id,
-                  child: Text(driver.name.isEmpty ? 'Driver' : driver.name),
+                  child: Text(
+                    driver.name.isEmpty ? 'Driver' : driver.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ),
             ],
             onChanged: (value) => setState(() => _driverId = value ?? ''),
@@ -2018,7 +2035,20 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             initialValue: _truckId.isEmpty ? null : _truckId,
-            decoration: const InputDecoration(labelText: 'Truck'),
+            isExpanded: true,
+            isDense: true,
+            itemHeight: 56,
+            dropdownColor: Colors.white,
+            menuMaxHeight: 320,
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            icon: const Icon(
+              AppIcons.keyboard_arrow_down_rounded,
+              color: AppColors.textSecondary,
+            ),
+            decoration: brokerFieldDecoration(
+              labelText: 'Truck',
+              prefixIcon: AppIcons.local_shipping_rounded,
+            ),
             items: [
               for (final truck in truckOptions)
                 DropdownMenuItem(
@@ -2033,6 +2063,13 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
                             if (truck.label.isNotEmpty) truck.label,
                             if (truck.plateNumber.isNotEmpty) truck.plateNumber,
                           ].join(' • '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
             ],
@@ -2083,19 +2120,19 @@ class _TripInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF1F88C9)),
+          Icon(icon, size: 16, color: AppColors.brand),
           const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF344054),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -2121,7 +2158,7 @@ class _TimelineSection extends StatelessWidget {
               margin: const EdgeInsets.only(left: 10),
               width: 2,
               height: 18,
-              color: const Color(0xFFE8EDF2),
+              color: AppColors.line,
             ),
         ],
       ],
@@ -2137,8 +2174,8 @@ class _TimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = step.completed
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFF98A2B3);
+        ? AppColors.brand
+        : AppColors.textTertiary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2147,8 +2184,8 @@ class _TimelineRow extends StatelessWidget {
           height: 22,
           decoration: BoxDecoration(
             color: step.completed
-                ? const Color(0xFFEAF8EF)
-                : const Color(0xFFF2F4F7),
+                ? AppColors.brandFill
+                : AppColors.fillSubtle,
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -2170,14 +2207,14 @@ class _TimelineRow extends StatelessWidget {
                   step.title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   step.subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -2206,9 +2243,9 @@ class _TripIncidentCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2220,7 +2257,7 @@ class _TripIncidentCard extends StatelessWidget {
                   incident.title.isEmpty ? 'Incident' : incident.title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -2228,7 +2265,7 @@ class _TripIncidentCard extends StatelessWidget {
                 Text(
                   incident.status,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF1F88C9),
+                    color: AppColors.brand,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2240,7 +2277,7 @@ class _TripIncidentCard extends StatelessWidget {
               incident.notes,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           ],
           if (incident.mechanicName.isNotEmpty) ...[
@@ -2248,7 +2285,7 @@ class _TripIncidentCard extends StatelessWidget {
             Text(
               'Mechanic: ${incident.mechanicName}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF344054),
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -2259,7 +2296,7 @@ class _TripIncidentCard extends StatelessWidget {
               incident.createdAt,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF98A2B3)),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
             ),
           ],
           const SizedBox(height: 10),

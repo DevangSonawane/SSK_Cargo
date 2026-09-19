@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +10,7 @@ import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
+import '../widgets/broker_flow_widgets.dart';
 
 final _historyBookingDetailProvider = FutureProvider.autoDispose
     .family<ClientBooking, String>((ref, bookingId) async {
@@ -102,7 +104,7 @@ class _BrokerHistoryDetailScreenState
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE23A4B),
+              backgroundColor: AppColors.dangerIcon,
             ),
             child: const Text('Remove'),
           ),
@@ -123,7 +125,7 @@ class _BrokerHistoryDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Booking removed from your list.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
       context.go('/broker/history');
@@ -132,7 +134,7 @@ class _BrokerHistoryDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -155,7 +157,7 @@ class _BrokerHistoryDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invoice fetched for ${_bookingRef(booking)}.'),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on Object catch (error) {
@@ -163,7 +165,7 @@ class _BrokerHistoryDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -183,10 +185,10 @@ class _BrokerHistoryDetailScreenState
         const <_ReassignmentEntry>[];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -227,8 +229,8 @@ class _BrokerHistoryDetailScreenState
   ) {
     final shipment = trackingShipmentFromBooking(booking);
     final statusColor = _statusKey(booking.status) == 'completed'
-        ? const Color(0xFF047857)
-        : const Color(0xFFE23A4B);
+        ? AppColors.brandInk
+        : AppColors.dangerIcon;
     final amount = _amount(booking);
     final fee = _platformFee(booking);
 
@@ -250,8 +252,8 @@ class _BrokerHistoryDetailScreenState
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFEFF2F6)),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.line),
           ),
           child: TrackingRouteMapView(shipment: shipment, liveMode: true),
         ),
@@ -275,15 +277,7 @@ class _DetailBackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: onBack,
-        icon: const Icon(AppIcons.arrow_back_rounded),
-        label: const Text('Back to Job History'),
-        style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-      ),
-    );
+    return BrokerBackButton(onTap: onBack);
   }
 }
 
@@ -312,8 +306,8 @@ class _DetailTopCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +320,7 @@ class _DetailTopCard extends StatelessWidget {
               Text(
                 _bookingRef(booking),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: AppColors.textTertiary,
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w700,
                 ),
@@ -342,31 +336,37 @@ class _DetailTopCard extends StatelessWidget {
           Text(
             '${_lead(booking.pickupLocation)} to ${_lead(booking.dropoffLocation)}',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
               height: 1.22,
             ),
           ),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          Row(
             children: [
-              _IconAction(
-                icon: AppIcons.chat_bubble_outline_rounded,
-                label: 'Chat',
-                onTap: onChat,
+              Expanded(
+                child: _IconAction(
+                  icon: AppIcons.chat_bubble_outline_rounded,
+                  label: 'Chat',
+                  onTap: onChat,
+                ),
               ),
-              _IconAction(
-                icon: AppIcons.receipt_long_rounded,
-                label: invoiceBusy ? 'Fetching...' : 'Invoice',
-                onTap: invoiceBusy ? null : onInvoice,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IconAction(
+                  icon: AppIcons.receipt_long_rounded,
+                  label: invoiceBusy ? 'Fetching...' : 'Invoice',
+                  onTap: invoiceBusy ? null : onInvoice,
+                ),
               ),
-              _IconAction(
-                icon: AppIcons.delete_outline_rounded,
-                label: deleting ? 'Removing...' : 'Remove',
-                color: const Color(0xFFE23A4B),
-                onTap: deleting ? null : onDelete,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IconAction(
+                  icon: AppIcons.delete_outline_rounded,
+                  label: deleting ? 'Removing...' : 'Remove',
+                  color: AppColors.dangerIcon,
+                  onTap: deleting ? null : onDelete,
+                ),
               ),
             ],
           ),
@@ -440,13 +440,13 @@ class _PaymentCard extends StatelessWidget {
             _MoneyTile(
               label: 'Platform Fee',
               value: _formatRupees(fee),
-              color: const Color(0xFFE23A4B),
+              color: AppColors.dangerIcon,
             ),
             _MoneyTile(
               label: 'Net Earnings',
               value: _formatRupees(amount - fee),
-              color: const Color(0xFF047857),
-              background: const Color(0xFFEAF7EF),
+              color: AppColors.brandInk,
+              background: AppColors.brandFill,
             ),
             _MoneyTile(label: 'Payment', value: _paymentStatus(booking)),
             _MoneyTile(label: 'Time Taken', value: _duration(booking)),
@@ -473,7 +473,7 @@ class _ReassignmentCard extends StatelessWidget {
             children: [
               const Icon(
                 AppIcons.repeat_rounded,
-                color: Color(0xFF2152D0),
+                color: AppColors.brand,
                 size: 17,
               ),
               const SizedBox(width: 10),
@@ -484,7 +484,7 @@ class _ReassignmentCard extends StatelessWidget {
                     Text(
                       '${entry.fromDriverName.isEmpty ? 'Unassigned' : entry.fromDriverName} → ${entry.toDriverName.isEmpty ? 'Unknown' : entry.toDriverName}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -492,13 +492,13 @@ class _ReassignmentCard extends StatelessWidget {
                       Text(
                         entry.reason,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     Text(
                       'By ${entry.reassignedByName.isEmpty ? '-' : entry.reassignedByName} · ${_formatDate(entry.createdAt)}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.textTertiary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -526,8 +526,8 @@ class _DetailSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,7 +535,7 @@ class _DetailSection extends StatelessWidget {
           Text(
             title.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w900,
               fontSize: 10,
             ),
@@ -566,7 +566,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF94A3B8), size: 17),
+          Icon(icon, color: AppColors.textTertiary, size: 17),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -575,7 +575,7 @@ class _DetailRow extends StatelessWidget {
                 Text(
                   label.toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.textTertiary,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -586,7 +586,7 @@ class _DetailRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -603,8 +603,8 @@ class _MoneyTile extends StatelessWidget {
   const _MoneyTile({
     required this.label,
     required this.value,
-    this.color = const Color(0xFF0F172A),
-    this.background = const Color(0xFFF8FAFC),
+    this.color = AppColors.textPrimary,
+    this.background = AppColors.fillSubtle,
   });
 
   final String label;
@@ -619,7 +619,7 @@ class _MoneyTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.button),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,7 +627,7 @@ class _MoneyTile extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textTertiary,
               fontSize: 10,
               fontWeight: FontWeight.w900,
             ),
@@ -651,7 +651,7 @@ class _IconAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.color = const Color(0xFF2152D0),
+    this.color = AppColors.brand,
   });
 
   final IconData icon;
@@ -661,14 +661,39 @@ class _IconAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 15),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: color,
-        side: BorderSide(color: color.withValues(alpha: 0.28)),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+    final accent = color;
+    final canTap = onTap != null;
+    return Material(
+      color: accent.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: InkWell(
+        onTap: canTap ? onTap : null,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            border: Border.all(color: accent.withValues(alpha: 0.20)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 17, color: accent),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -718,8 +743,8 @@ class _DetailEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
@@ -735,7 +760,7 @@ class _DetailEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
           FilledButton(onPressed: onRetry, child: const Text('Retry')),

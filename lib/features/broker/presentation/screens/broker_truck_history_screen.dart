@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -80,27 +81,16 @@ class _BrokerTruckHistoryScreenState
     final historyAsync = ref.watch(_brokerTruckHistoryProvider(widget.truckId));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FF),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF2152D0),
+          color: AppColors.brand,
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => context.go('/broker/vehicles'),
-                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                  label: const Text('Back to Trucks'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF64748B),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
+              BrokerBackButton(onTap: () => context.go('/broker/vehicles')),
               const SizedBox(height: 14),
               historyAsync.when(
                 loading: () => const Padding(
@@ -168,7 +158,7 @@ class _HistoryHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -176,12 +166,12 @@ class _HistoryHeader extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FF),
+              color: AppColors.brandFill,
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               AppIcons.local_shipping_rounded,
-              color: Color(0xFF2152D0),
+              color: AppColors.brand,
             ),
           ),
           const SizedBox(width: 12),
@@ -192,7 +182,7 @@ class _HistoryHeader extends StatelessWidget {
                 Text(
                   truck.plateNumber.isEmpty ? truck.label : truck.plateNumber,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -200,7 +190,7 @@ class _HistoryHeader extends StatelessWidget {
                 Text(
                   '${truck.assignedDriverName} · ${bundle.trips.length} trip${bundle.trips.length == 1 ? '' : 's'}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -229,17 +219,17 @@ class _HistorySearchField extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         decoration: const InputDecoration(
           border: InputBorder.none,
-          prefixIcon: Icon(AppIcons.search_rounded, color: Color(0xFF94A3B8)),
+          prefixIcon: Icon(AppIcons.search_rounded, color: AppColors.textTertiary),
           hintText: 'Search by booking ID, route...',
           hintStyle: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -266,7 +256,7 @@ class _TripHistoryCard extends StatelessWidget {
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +271,7 @@ class _TripHistoryCard extends StatelessWidget {
                                 : trip.bookingId
                           : trip.bookingNumber,
                       style: const TextStyle(
-                        color: Color(0xFF475569),
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                       ),
@@ -294,7 +284,7 @@ class _TripHistoryCard extends StatelessWidget {
               Text(
                 '${trip.pickup.isEmpty ? '-' : trip.pickup} → ${trip.drop.isEmpty ? '-' : trip.drop}',
                 style: const TextStyle(
-                  color: Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -341,18 +331,18 @@ class _TripMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF64748B)),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
           const SizedBox(width: 5),
           Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF475569),
+              color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -374,10 +364,10 @@ class _TripStatusPill extends StatelessWidget {
     final danger = key.contains('cancel');
     final success = key.contains('complete') || key.contains('deliver');
     final color = danger
-        ? const Color(0xFFE23A4B)
+        ? AppColors.dangerIcon
         : success
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFFB7791F);
+        ? AppColors.brand
+        : AppColors.warningText;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -409,13 +399,13 @@ class _HistoryEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
           const Icon(
             AppIcons.navigation_rounded,
-            color: Color(0xFF94A3B8),
+            color: AppColors.textTertiary,
             size: 30,
           ),
           const SizedBox(height: 10),
@@ -423,7 +413,7 @@ class _HistoryEmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -433,7 +423,7 @@ class _HistoryEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
