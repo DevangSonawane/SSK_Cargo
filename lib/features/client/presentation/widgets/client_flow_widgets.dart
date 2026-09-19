@@ -3531,6 +3531,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   int _findTruckDeclinedCount = 0;
   bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
+  final DraggableScrollableController _truckSearchSheetController =
+      DraggableScrollableController();
   double _truckSearchSheetExtent = 0.44;
   bool _postNegotiationPayment = false;
   bool _paymentCompletionVisible = false;
@@ -3628,6 +3630,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _findTruckZoomTimer?.cancel();
     _findTruckRequestSubscription?.cancel();
     _brokerMapController?.dispose();
+    _truckSearchSheetController.dispose();
     _fromController.dispose();
     _toController.dispose();
     _weightController.dispose();
@@ -4248,6 +4251,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         }),
       );
     }
+  }
+
+  void _animateTruckSearchSheetTo(double extent) {
+    if (!_truckSearchSheetController.isAttached) {
+      return;
+    }
+    unawaited(
+      _truckSearchSheetController.animateTo(
+        extent,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   void _continueWithSearchMode() {
@@ -6133,6 +6149,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final dimFindTruckMap = isFindTruckSearching && _findTruckRequestCount > 0;
     return LayoutBuilder(
       builder: (context, constraints) {
+        final brokerMode = mode == BookingSearchMode.broker;
+        final normalSheetExtent = brokerMode ? 0.72 : 0.44;
+        final maxSheetExtent = brokerMode ? 0.78 : 0.54;
+        final snapSizes = brokerMode
+            ? const [0.07, 0.44, 0.72, 0.78]
+            : const [0.07, 0.44, 0.54];
+
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -6178,13 +6201,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   return false;
                 },
                 child: DraggableScrollableSheet(
-                  initialChildSize: mode == BookingSearchMode.broker
-                      ? 0.54
-                      : 0.44,
+                  controller: _truckSearchSheetController,
+                  initialChildSize: normalSheetExtent,
                   minChildSize: 0.07,
-                  maxChildSize: 0.86,
+                  maxChildSize: maxSheetExtent,
                   snap: true,
-                  snapSizes: const [0.07, 0.44, 0.86],
+                  snapSizes: snapSizes,
                   builder: (context, scrollController) {
                     final isCollapsed = _truckSearchSheetExtent <= 0.12;
                     return _SearchMethodSheet(
@@ -6250,6 +6272,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                           icon: Icons.local_shipping_rounded,
                                           title: 'Find Truck',
                                           onTap: () {
+                                            _animateTruckSearchSheetTo(0.44);
                                             setState(() {
                                               _draft = _draft.copyWith(
                                                 searchMode:
@@ -6275,6 +6298,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                                     BookingSearchMode.broker,
                                               );
                                             });
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback((_) {
+                                                  if (mounted) {
+                                                    _animateTruckSearchSheetTo(
+                                                      0.72,
+                                                    );
+                                                  }
+                                                });
                                             unawaited(_loadEligibleBrokers());
                                           },
                                         ),
@@ -9612,7 +9643,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('Send counter'),
+                        child: const Text('Send'),
                       ),
                     ),
                   ],

@@ -99,6 +99,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   bool _isCancelling = false;
   bool _isSharingTracking = false;
   bool _isBookingCancelled = false;
+  bool _autoCancellingDriverDecline = false;
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
@@ -321,6 +322,103 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     return '';
   }
 
+  String _readPayloadBookingId(Map<String, dynamic> payload) {
+    final direct = _readPayloadString(payload, const [
+      'bookingId',
+      'booking_id',
+    ]);
+    if (direct.isNotEmpty) return direct;
+
+    for (final key in const ['booking', 'data', 'request', 'driverRequest']) {
+      final nested = _asMap(payload[key]);
+      if (nested.isEmpty) continue;
+      final value = _readPayloadString(nested, const [
+        'bookingId',
+        'booking_id',
+        'id',
+      ]);
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  String _readPayloadStatus(Map<String, dynamic> payload) {
+    final direct = _readPayloadString(payload, const [
+      'status',
+      'job_status',
+      'requestStatus',
+      'request_status',
+    ]);
+    if (direct.isNotEmpty) return direct;
+
+    for (final key in const [
+      'data',
+      'request',
+      'driverRequest',
+      'jobRequest',
+    ]) {
+      final nested = _asMap(payload[key]);
+      if (nested.isEmpty) continue;
+      final value = _readPayloadString(nested, const [
+        'status',
+        'job_status',
+        'requestStatus',
+        'request_status',
+      ]);
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  bool _isDriverDeclinedStatus(String status) {
+    final normalized = status.trim().toLowerCase().replaceAll('-', '_');
+    return normalized == 'declined' ||
+        normalized == 'rejected' ||
+        normalized == 'driver_declined' ||
+        normalized == 'driver_rejected' ||
+        normalized == 'rejected_by_driver' ||
+        normalized == 'declined_by_driver';
+  }
+
+  Future<void> _cancelAfterDriverDecline() async {
+    final bookingId = _shipment.bookingId;
+    if (bookingId == null ||
+        bookingId.isEmpty ||
+        _autoCancellingDriverDecline ||
+        _isBookingCancelled) {
+      return;
+    }
+
+    setState(() {
+      _autoCancellingDriverDecline = true;
+      _isBookingCancelled = true;
+      _resolvedShipment = _shipment.copyWith(
+        status: 'Cancelled',
+        bookingStatus: 'cancelled',
+      );
+    });
+
+    try {
+      final session = ref.read(authSessionProvider).valueOrNull;
+      if (session != null) {
+        await ref
+            .read(apiClientProvider)
+            .cancelBooking(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+              reason: 'Driver declined trip',
+            );
+      }
+    } catch (_) {
+      // Best effort: the backend may already have cancelled it.
+    } finally {
+      if (mounted) {
+        setState(() => _autoCancellingDriverDecline = false);
+        unawaited(_refreshShipment());
+      }
+    }
+  }
+
   @override
   void dispose() {
     _refreshTimer?.cancel();
@@ -345,22 +443,20 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     _driverRequestSubscription = socketService.driverRequestStream.listen((
       payload,
     ) {
-      final bookingId = _readPayloadString(payload, const [
-        'bookingId',
-        'booking_id',
-      ]);
-      if (bookingId.isNotEmpty && bookingId == widget.shipment.bookingId) {
+      final bookingId = _readPayloadBookingId(payload);
+      if (bookingId.isNotEmpty && bookingId == _shipment.bookingId) {
+        final status = _readPayloadStatus(payload);
+        if (_isDriverDeclinedStatus(status)) {
+          unawaited(_cancelAfterDriverDecline());
+        }
         _refreshShipment();
       }
     });
 
     await _tripStatusSubscription?.cancel();
     _tripStatusSubscription = socketService.tripStatusStream.listen((payload) {
-      final bookingId = _readPayloadString(payload, const [
-        'bookingId',
-        'booking_id',
-      ]);
-      if (bookingId.isNotEmpty && bookingId == widget.shipment.bookingId) {
+      final bookingId = _readPayloadBookingId(payload);
+      if (bookingId.isNotEmpty && bookingId == _shipment.bookingId) {
         _refreshShipment();
       }
     });
@@ -429,12 +525,15 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       if (reason == null) {
         return;
       }
+      final cancellationReason = reason.trim().isEmpty
+          ? 'Cancelled by client'
+          : reason.trim();
       await ref
           .read(apiClientProvider)
           .cancelBooking(
             accessToken: session.tokens.accessToken,
             id: bookingId,
-            reason: reason,
+            reason: cancellationReason,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1103,6 +1202,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
+                        _GoogleMapsTrackingCard(
+                          shipment: shipment,
+                          onTap: _openLiveTracking,
+                        ),
+                        const SizedBox(height: 14),
                         if ((shipment.pickupOtp ?? '').isNotEmpty) ...[
                           _ReactStylePickupOtpBanner(
                             pickupOtp: shipment.pickupOtp,
@@ -1121,10 +1225,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                               _callDriver(shipment.assignedDriverPhone),
                         ),
                         const SizedBox(height: 14),
-                        _ShipmentTimelineCard(
-                          shipment: shipment,
-                          onLiveTracking: _openLiveTracking,
-                        ),
+                        _ShipmentTimelineCard(shipment: shipment),
                         const SizedBox(height: 14),
                         _QuickStatsRow(shipment: shipment),
                         const SizedBox(height: 14),
@@ -1685,7 +1786,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .titleMedium
                                                 ?.copyWith(
-                                                  fontWeight: FontWeight.w700,
+                                                  fontWeight: FontWeight.w500,
                                                   fontSize: 14,
                                                 ),
                                           ),
@@ -1714,7 +1815,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .titleMedium
                                                 ?.copyWith(
-                                                  fontWeight: FontWeight.w700,
+                                                  fontWeight: FontWeight.w500,
                                                   fontSize: 14,
                                                 ),
                                           ),
@@ -1760,7 +1861,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                             .textTheme
                                             .titleMedium
                                             ?.copyWith(
-                                              fontWeight: FontWeight.w700,
+                                              fontWeight: FontWeight.w500,
                                               fontSize: 14,
                                               color: Colors.white,
                                             ),
@@ -1846,7 +1947,7 @@ class _CompactSummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: const Color(0xFF98A2B3),
                   ),
                 ),
@@ -1986,7 +2087,7 @@ class _PremiumStatusPill extends StatelessWidget {
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: textColor,
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -2034,7 +2135,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF667085),
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -2072,7 +2173,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                     color: const Color(0xFF667085),
                     fontSize: 12,
                     height: 1.25,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -2084,7 +2185,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: const Color(0xFF2FA56E),
               fontSize: 30,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
               letterSpacing: 5,
             ),
           ),
@@ -2224,7 +2325,7 @@ class _RouteRailStop extends StatelessWidget {
               color: const Color(0xFF101828),
               fontSize: 14,
               height: 1.3,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -2263,7 +2364,7 @@ class _ReactInfoRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF344054),
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               if ((subtitle ?? '').isNotEmpty) ...[
@@ -2275,7 +2376,7 @@ class _ReactInfoRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF98A2B3),
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -2327,7 +2428,7 @@ class _SoftTextPill extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: const Color(0xFF2FA56E),
           fontSize: 11,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -2361,7 +2462,7 @@ class _DriverInitialsAvatar extends StatelessWidget {
         initials.isEmpty ? 'D' : initials,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: const Color(0xFF2FA56E),
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -2391,14 +2492,81 @@ class _CallDriverButton extends StatelessWidget {
   }
 }
 
-class _ShipmentTimelineCard extends StatelessWidget {
-  const _ShipmentTimelineCard({
-    required this.shipment,
-    required this.onLiveTracking,
-  });
+class _GoogleMapsTrackingCard extends StatelessWidget {
+  const _GoogleMapsTrackingCard({required this.shipment, required this.onTap});
 
   final TrackingDemoShipment shipment;
-  final VoidCallback onLiveTracking;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = _cleanTrackingLocation(shipment.fromLocation, 'Pickup');
+    final drop = _cleanTrackingLocation(shipment.toLocation, 'Drop');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          height: 190,
+          decoration: _premiumDetailBlockDecoration(radius: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                TrackingRouteMapView(shipment: shipment, liveMode: true),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.02),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.34),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Spacer(),
+                      Text(
+                        '$pickup to $drop',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontSize: 12,
+                          height: 1.25,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShipmentTimelineCard extends StatelessWidget {
+  const _ShipmentTimelineCard({required this.shipment});
+
+  final TrackingDemoShipment shipment;
 
   @override
   Widget build(BuildContext context) {
@@ -2412,41 +2580,13 @@ class _ShipmentTimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Shipment Timeline',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF101828),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              FilledButton.icon(
-                onPressed: onLiveTracking,
-                icon: const Icon(Icons.navigation_rounded, size: 15),
-                label: const Text('Live'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2FA56E),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 34),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            'Shipment Timeline',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF101828),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 16),
           SingleChildScrollView(
@@ -2470,7 +2610,7 @@ class _ShipmentTimelineCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF98A2B3),
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -2562,7 +2702,7 @@ class _HorizontalTimelineStep extends StatelessWidget {
                     color: textColor,
                     fontSize: 10,
                     height: 1.15,
-                    fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ),
@@ -2633,7 +2773,7 @@ class _QuickStatCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: const Color(0xFF98A2B3),
               fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
@@ -2646,7 +2786,7 @@ class _QuickStatCard extends StatelessWidget {
                   ? const Color(0xFF2FA56E)
                   : const Color(0xFF101828),
               fontSize: 18,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -2749,7 +2889,7 @@ class _CompactPickupOtpChip extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: const Color(0xFF101828),
                 fontSize: 14,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 1.2,
               ),
             ),
@@ -2801,7 +2941,7 @@ class _RouteStop extends StatelessWidget {
                   color: const Color(0xFF101828),
                   fontSize: 13,
                   height: 1.25,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -2863,7 +3003,7 @@ class _PremiumFactTile extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF101828),
               fontSize: 13,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -2914,7 +3054,7 @@ class _PremiumCrewCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                     color: const Color(0xFF101828),
                   ),
                 ),
@@ -2925,7 +3065,7 @@ class _PremiumCrewCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color: const Color(0xFF667085),
                   ),
                 ),
@@ -3199,8 +3339,8 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
         maxLines: 5,
         textCapitalization: TextCapitalization.sentences,
         decoration: const InputDecoration(
-          labelText: 'Reason',
-          hintText: 'Tell the driver and broker why you are cancelling',
+          labelText: 'Reason (optional)',
+          hintText: 'You can leave this empty',
         ),
         onChanged: (_) {
           if (mounted) {
@@ -3214,9 +3354,7 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
           child: const Text('Keep booking'),
         ),
         FilledButton(
-          onPressed: reason.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(reason),
+          onPressed: () => Navigator.of(context).pop(reason),
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFFE23A4B),
           ),
@@ -4328,7 +4466,11 @@ class _BookingNegotiationSheetState
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Send'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(132, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: const Text('Send', maxLines: 1, softWrap: false),
             ),
           ],
         ),
@@ -4459,7 +4601,11 @@ class _BookingNegotiationSheetState
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Send'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(132, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: const Text('Send', maxLines: 1, softWrap: false),
             ),
           ],
         ),
@@ -4740,16 +4886,16 @@ extension on _BookingNegotiationSheetState {
           child: const Text('Accept'),
         ),
         OutlinedButton(
-          onPressed: _busy ? null : () => _counterOffer(offer),
-          child: const Text('Counter'),
-        ),
-        OutlinedButton(
           onPressed: _busy ? null : () => _rejectOffer(offer),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFFE23A4B),
             side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
           child: const Text('Reject'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _counterOffer(offer),
+          child: const Text('Counter'),
         ),
       ];
     }
@@ -4811,9 +4957,16 @@ class _NegotiationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: const Color(0xFF2FA56E), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2FA56E).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4899,11 +5052,53 @@ class _NegotiationCard extends StatelessWidget {
           ],
           if (actions.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Wrap(spacing: 10, runSpacing: 10, children: actions),
+            _NegotiationActionLayout(actions: actions),
           ],
         ],
       ),
     );
+  }
+}
+
+class _NegotiationActionLayout extends StatelessWidget {
+  const _NegotiationActionLayout({required this.actions});
+
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    if (actions.length == 3) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: actions[0]),
+              const SizedBox(width: 10),
+              Expanded(child: actions[1]),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(width: double.infinity, child: actions[2]),
+        ],
+      );
+    }
+
+    if (actions.length == 2) {
+      return Row(
+        children: [
+          Expanded(child: actions[0]),
+          const SizedBox(width: 10),
+          Expanded(child: actions[1]),
+        ],
+      );
+    }
+
+    if (actions.length == 1) {
+      return SizedBox(width: double.infinity, child: actions.single);
+    }
+
+    return const SizedBox.shrink();
   }
 }
 

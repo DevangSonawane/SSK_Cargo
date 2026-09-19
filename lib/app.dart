@@ -11,6 +11,7 @@ import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
 import 'core/providers/driver_tracking_state_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/adaptive_bottom_layout_wrapper.dart';
 import 'features/auth/data/auth_models.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 
@@ -371,6 +372,11 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       theme: AppTheme.light,
       scaffoldMessengerKey: _messengerKey,
       routerConfig: router,
+      builder: (context, child) {
+        return AdaptiveBottomLayoutWrapper(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
