@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -207,92 +208,98 @@ class _BrokerActiveJobsScreenState
             builder: (context, setSheetState) {
               return _ActiveSheet(
                 title: 'Report a Problem',
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${job.pickup} to ${job.drop}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  initialValue: issueType,
-                  isExpanded: true,
-                  isDense: true,
-                  itemHeight: 56,
-                  dropdownColor: Colors.white,
-                  menuMaxHeight: 320,
-                  borderRadius: BorderRadius.circular(AppRadius.field),
-                  icon: const Icon(
-                    AppIcons.keyboard_arrow_down_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                  decoration: brokerFieldDecoration(
-                    labelText: 'Issue Type',
-                    prefixIcon: AppIcons.report_problem_rounded,
-                  ),
-                  items: [
-                    for (final issue in issueTypes)
-                      DropdownMenuItem(value: issue.$1, child: Text(issue.$2)),
-                  ],
-                  onChanged: (value) =>
-                      setSheetState(() => issueType = value ?? issueType),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  minLines: 3,
-                  maxLines: 4,
-                  maxLength: 2000,
-                  decoration: _sheetInputDecoration(
-                    'Description',
-                  ).copyWith(hintText: 'Describe what went wrong...'),
-                ),
-                const SizedBox(height: 12),
-                Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: submitting
-                            ? null
-                            : () => Navigator.of(sheetContext).pop(),
-                        child: const Text('Cancel'),
+                    Text(
+                      '${job.pickup} to ${job.drop}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: submitting
-                            ? null
-                            : () async {
-                                final description = descriptionController.text
-                                    .trim();
-                                if (description.isEmpty) return;
-                                setSheetState(() => submitting = true);
-                                final ok = await _submitDispute(
-                                  job,
-                                  issueType,
-                                  description,
-                                );
-                                if (!sheetContext.mounted) return;
-                                if (ok) Navigator.of(sheetContext).pop();
-                                setSheetState(() => submitting = false);
-                              },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.dangerIcon,
-                        ),
-                        child: Text(submitting ? 'Submitting...' : 'Submit'),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: issueType,
+                      isExpanded: true,
+                      isDense: true,
+                      itemHeight: 56,
+                      dropdownColor: Colors.white,
+                      menuMaxHeight: 320,
+                      borderRadius: BorderRadius.circular(AppRadius.field),
+                      icon: const Icon(
+                        AppIcons.keyboard_arrow_down_rounded,
+                        color: AppColors.textSecondary,
                       ),
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Issue Type',
+                        prefixIcon: AppIcons.report_problem_rounded,
+                      ),
+                      items: [
+                        for (final issue in issueTypes)
+                          DropdownMenuItem(
+                            value: issue.$1,
+                            child: Text(issue.$2),
+                          ),
+                      ],
+                      onChanged: (value) =>
+                          setSheetState(() => issueType = value ?? issueType),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController,
+                      minLines: 3,
+                      maxLines: 4,
+                      maxLength: 2000,
+                      decoration: _sheetInputDecoration(
+                        'Description',
+                      ).copyWith(hintText: 'Describe what went wrong...'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: submitting
+                                ? null
+                                : () => Navigator.of(sheetContext).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: submitting
+                                ? null
+                                : () async {
+                                    final description = descriptionController
+                                        .text
+                                        .trim();
+                                    if (description.isEmpty) return;
+                                    setSheetState(() => submitting = true);
+                                    final ok = await _submitDispute(
+                                      job,
+                                      issueType,
+                                      description,
+                                    );
+                                    if (!sheetContext.mounted) return;
+                                    if (ok) Navigator.of(sheetContext).pop();
+                                    setSheetState(() => submitting = false);
+                                  },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.dangerIcon,
+                            ),
+                            child: Text(
+                              submitting ? 'Submitting...' : 'Submit',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-              ),
-            );
-          },
+              );
+            },
           ),
         ),
       ),
@@ -354,88 +361,89 @@ class _BrokerActiveJobsScreenState
             builder: (context, setSheetState) {
               return _ActiveSheet(
                 title: 'Reassign Driver',
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _MiniInfoTile(
-                  icon: AppIcons.local_shipping_rounded,
-                  label: 'Currently Assigned',
-                  value: job.driverName.isEmpty
-                      ? 'Not Assigned'
-                      : job.driverName,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: driverId,
-                  isExpanded: true,
-                  isDense: true,
-                  itemHeight: 56,
-                  dropdownColor: Colors.white,
-                  menuMaxHeight: 320,
-                  borderRadius: BorderRadius.circular(AppRadius.field),
-                  icon: const Icon(
-                    AppIcons.keyboard_arrow_down_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                  decoration: brokerFieldDecoration(
-                    labelText: 'Reassign to',
-                    prefixIcon: AppIcons.person_rounded,
-                  ),
-                  items: [
-                    for (final driver in drivers)
-                      DropdownMenuItem(
-                        value: driver.id,
-                        enabled: driver.status == BrokerDriverStatus.idle,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _MiniInfoTile(
+                      icon: AppIcons.local_shipping_rounded,
+                      label: 'Currently Assigned',
+                      value: job.driverName.isEmpty
+                          ? 'Not Assigned'
+                          : job.driverName,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: driverId,
+                      isExpanded: true,
+                      isDense: true,
+                      itemHeight: 56,
+                      dropdownColor: Colors.white,
+                      menuMaxHeight: 320,
+                      borderRadius: BorderRadius.circular(AppRadius.field),
+                      icon: const Icon(
+                        AppIcons.keyboard_arrow_down_rounded,
+                        color: AppColors.textSecondary,
+                      ),
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Reassign to',
+                        prefixIcon: AppIcons.person_rounded,
+                      ),
+                      items: [
+                        for (final driver in drivers)
+                          DropdownMenuItem(
+                            value: driver.id,
+                            enabled: driver.status == BrokerDriverStatus.idle,
+                            child: Text(
+                              [
+                                driver.name.isEmpty ? driver.id : driver.name,
+                                driverStatusLabel(driver.status),
+                              ].join(' - '),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) =>
+                          setSheetState(() => driverId = value),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: reasonController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: _sheetInputDecoration(
+                        'Reason',
+                      ).copyWith(hintText: 'Optional reason for reassignment'),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: submitting || driverId == null
+                            ? null
+                            : () async {
+                                setSheetState(() => submitting = true);
+                                final ok = await _reassignDriver(
+                                  job,
+                                  driverId!,
+                                  reasonController.text.trim(),
+                                );
+                                if (!sheetContext.mounted) return;
+                                if (ok) Navigator.of(sheetContext).pop();
+                                setSheetState(() => submitting = false);
+                              },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                        ),
                         child: Text(
-                          [
-                            driver.name.isEmpty ? driver.id : driver.name,
-                            driverStatusLabel(driver.status),
-                          ].join(' - '),
-                          overflow: TextOverflow.ellipsis,
+                          submitting ? 'Reassigning...' : 'Reassign Driver',
                         ),
                       ),
+                    ),
                   ],
-                  onChanged: (value) => setSheetState(() => driverId = value),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: reasonController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: _sheetInputDecoration(
-                    'Reason',
-                  ).copyWith(hintText: 'Optional reason for reassignment'),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: submitting || driverId == null
-                        ? null
-                        : () async {
-                            setSheetState(() => submitting = true);
-                            final ok = await _reassignDriver(
-                              job,
-                              driverId!,
-                              reasonController.text.trim(),
-                            );
-                            if (!sheetContext.mounted) return;
-                            if (ok) Navigator.of(sheetContext).pop();
-                            setSheetState(() => submitting = false);
-                          },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.brand,
-                    ),
-                    child: Text(
-                      submitting ? 'Reassigning...' : 'Reassign Driver',
-                    ),
-                  ),
-                ),
-              ],
-              ),
-            );
-          },
+              );
+            },
           ),
         ),
       ),
@@ -625,6 +633,17 @@ class _ActiveJobCard extends StatelessWidget {
             value: job.pickup,
             color: AppColors.brandBright,
           ),
+          for (final stop in job.stops.where((stop) => stop.isExtraStop)) ...[
+            const SizedBox(height: 10),
+            _RouteLine(
+              label: stop.label,
+              value: stop.location.isEmpty ? '-' : stop.location,
+              color: stop.isDone
+                  ? AppColors.brandBright
+                  : const Color(0xFFF59E0B),
+              done: stop.isDone,
+            ),
+          ],
           const SizedBox(height: 10),
           _RouteLine(
             label: 'Drop',
@@ -868,18 +887,24 @@ class _RouteLine extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    this.done = false,
   });
 
   final String label;
   final String value;
   final Color color;
+  final bool done;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(AppIcons.location_on_outlined, size: 15, color: color),
+        Icon(
+          done ? AppIcons.check_circle_rounded : AppIcons.location_on_outlined,
+          size: 15,
+          color: color,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -963,9 +988,7 @@ class _ProgressDots extends StatelessWidget {
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: i <= activeIndex
-                        ? AppColors.brand
-                        : AppColors.line,
+                    color: i <= activeIndex ? AppColors.brand : AppColors.line,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -989,9 +1012,7 @@ class _ProgressDots extends StatelessWidget {
             Container(
               height: 2,
               width: 12,
-              color: i < activeIndex
-                  ? AppColors.brand
-                  : AppColors.line,
+              color: i < activeIndex ? AppColors.brand : AppColors.line,
             ),
         ],
       ],
@@ -1056,6 +1077,7 @@ class _ActiveBrokerJob {
     required this.weight,
     required this.isExpress,
     required this.incident,
+    required this.stops,
     this.pickupLat,
     this.pickupLng,
     this.dropLat,
@@ -1144,6 +1166,7 @@ class _ActiveBrokerJob {
       ]),
       isExpress: _readBool(booking, const ['isExpress', 'is_express']),
       incident: incident,
+      stops: tripRouteStopsFromSource({...booking, 'trip': trip}),
       pickupLat: _readDouble(booking, const ['pickupLat', 'pickup_lat']),
       pickupLng: _readDouble(booking, const ['pickupLng', 'pickup_lng']),
       dropLat: _readDouble(booking, const ['dropLat', 'drop_lat']),
@@ -1169,6 +1192,7 @@ class _ActiveBrokerJob {
   final String weight;
   final bool isExpress;
   final _ActiveIncident? incident;
+  final List<TripRouteStop> stops;
   final double? pickupLat;
   final double? pickupLng;
   final double? dropLat;
@@ -1200,6 +1224,7 @@ class _ActiveBrokerJob {
       assignedTruckName: truckReg,
       isExpress: isExpress,
       amount: amount,
+      stops: stops,
     );
   }
 }

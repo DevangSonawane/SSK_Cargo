@@ -244,6 +244,7 @@ class GooglePlacesService {
     required double originLongitude,
     required double destinationLatitude,
     required double destinationLongitude,
+    List<LatLng> waypoints = const [],
   }) async {
     if (googleMapsApiKey.isEmpty) {
       return const [];
@@ -258,6 +259,10 @@ class GooglePlacesService {
         'departure_time': 'now',
         'traffic_model': 'best_guess',
         'alternatives': 'false',
+        if (waypoints.isNotEmpty)
+          'waypoints': waypoints
+              .map((point) => '${point.latitude},${point.longitude}')
+              .join('|'),
         'key': googleMapsApiKey,
       },
     );

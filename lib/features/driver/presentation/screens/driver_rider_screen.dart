@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import '../../../../core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
@@ -45,13 +47,13 @@ class DriverAllTripsScreen extends ConsumerWidget {
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: dashboardAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => RefreshIndicator(
             onRefresh: () => _refresh(ref),
-            color: const Color(0xFF2152D0),
+            color: AppColors.brand,
             backgroundColor: Colors.white,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(
@@ -65,7 +67,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
                   error.toString().replaceFirst('Exception: ', ''),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFFE23A4B),
+                    color: AppColors.dangerText,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -74,10 +76,11 @@ class DriverAllTripsScreen extends ConsumerWidget {
           ),
           data: (dashboard) {
             final trips = dashboard.tripFeed;
+            final grouped = _groupTripsByDay(trips);
 
             return RefreshIndicator(
               onRefresh: () => _refresh(ref),
-              color: const Color(0xFF2152D0),
+              color: AppColors.brand,
               backgroundColor: Colors.white,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(
@@ -86,24 +89,39 @@ class DriverAllTripsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
                 children: [
                   _AllTripsHeader(onBack: () => context.pop()),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   if (trips.isEmpty)
                     const _EmptyCard(
                       icon: AppIcons.route_rounded,
                       title: 'No trips yet',
                       subtitle: 'Your full trip history will appear here.',
                     )
-                  else
-                    ...trips.asMap().entries.expand(
-                      (entry) => [
-                        _TripSummaryCard(
-                          trip: entry.value,
-                          onTap: () => _openTrip(context, entry.value),
+                  else ...[
+                    _TripsStatsStrip(trips: trips),
+                    const SizedBox(height: 24),
+                    ...grouped.asMap().entries.expand((groupEntry) {
+                      final group = groupEntry.value;
+                      return [
+                        _DayGroupHeader(
+                          label: _tripDayLabel(group.key),
+                          count: group.value.length,
                         ),
-                        if (entry.key != trips.length - 1)
-                          const SizedBox(height: 12),
-                      ],
-                    ),
+                        const SizedBox(height: 10),
+                        ...group.value.asMap().entries.expand(
+                          (entry) => [
+                            _TripSummaryCard(
+                              trip: entry.value,
+                              onTap: () => _openTrip(context, entry.value),
+                            ),
+                            if (entry.key != group.value.length - 1)
+                              const SizedBox(height: 12),
+                          ],
+                        ),
+                        if (groupEntry.key != grouped.length - 1)
+                          const SizedBox(height: 22),
+                      ];
+                    }),
+                  ],
                 ],
               ),
             );
@@ -126,7 +144,7 @@ class _AllTripsHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
@@ -137,12 +155,12 @@ class _AllTripsHeader extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Icon(
                 AppIcons.arrow_back_rounded,
-                color: Color(0xFF0F172A),
+                color: AppColors.textPrimary,
                 size: 20,
               ),
             ),
@@ -155,7 +173,7 @@ class _AllTripsHeader extends StatelessWidget {
                 Text(
                   'All Trips',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -163,7 +181,7 @@ class _AllTripsHeader extends StatelessWidget {
                 Text(
                   'Latest activity and completed deliveries',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -264,7 +282,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
       child: dashboardAsync.when(
         loading: () => RefreshIndicator(
           onRefresh: _refreshDashboard,
-          color: const Color(0xFF1F88C9),
+          color: AppColors.brand,
           backgroundColor: Colors.white,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -298,7 +316,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
         ),
         error: (error, _) => RefreshIndicator(
           onRefresh: _refreshDashboard,
-          color: const Color(0xFF1F88C9),
+          color: AppColors.brand,
           backgroundColor: Colors.white,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -312,7 +330,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                   child: Text(
                     error.toString().replaceFirst('Exception: ', ''),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                    style: const TextStyle(color: AppColors.dangerText),
                   ),
                 ),
               ),
@@ -330,7 +348,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
 
           return RefreshIndicator(
             onRefresh: _refreshDashboard,
-            color: const Color(0xFF1F88C9),
+            color: AppColors.brand,
             backgroundColor: Colors.white,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(
@@ -508,7 +526,7 @@ class _SectionHeader extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -516,7 +534,7 @@ class _SectionHeader extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -528,7 +546,7 @@ class _SectionHeader extends StatelessWidget {
           TextButton(
             onPressed: onActionTap,
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF667085),
+              foregroundColor: AppColors.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             ),
             child: Row(
@@ -577,15 +595,15 @@ class _TripSummaryCard extends StatelessWidget {
         status == 'declined' ||
         status == 'expired';
     final statusColor = isCompleted
-        ? const Color(0xFF2FA56E)
+        ? AppColors.brand
         : isCancelled
-        ? const Color(0xFFE23A4B)
-        : const Color(0xFF2152D0);
+        ? AppColors.dangerText
+        : AppColors.brand;
     final accentColor = isCompleted
-        ? const Color(0xFF34D399)
+        ? AppColors.brandBright
         : isCancelled
-        ? const Color(0xFFFCA5A5)
-        : const Color(0xFF2152D0);
+        ? AppColors.dangerBorder
+        : AppColors.brand;
     final bookingTime = trip.bookingTime.isNotEmpty ? trip.bookingTime : '—';
     final distance = trip.distanceLabel;
     final route = (trip.fromLocation.isNotEmpty || trip.toLocation.isNotEmpty)
@@ -608,14 +626,8 @@ class _TripSummaryCard extends StatelessWidget {
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: const Color(0xFFE8EDF2)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              border: Border.all(color: AppColors.divider),
+              boxShadow: AppShadows.card,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,7 +656,7 @@ class _TripSummaryCard extends StatelessWidget {
                                   style: Theme.of(context).textTheme.labelMedium
                                       ?.copyWith(
                                         fontFamily: 'monospace',
-                                        color: const Color(0xFF94A3B8),
+                                        color: AppColors.textTertiary,
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
@@ -661,7 +673,7 @@ class _TripSummaryCard extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   color: isCancelled
-                                      ? const Color(0xFFE23A4B)
+                                      ? AppColors.dangerText
                                       : statusColor,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -670,16 +682,16 @@ class _TripSummaryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _CompactRouteLine(
-                        color: const Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         value: _locationLead(route.from),
                       ),
                       const SizedBox(height: 8),
                       _CompactRouteLine(
-                        color: const Color(0xFF2152D0),
+                        color: AppColors.brand,
                         value: _locationLead(route.to),
                       ),
                       const SizedBox(height: 12),
-                      Container(height: 1, color: const Color(0xFFF1F5F9)),
+                      Container(height: 1, color: AppColors.fillSubtle),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -771,7 +783,7 @@ class _CompactRouteLine extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF1F2937),
+              color: AppColors.textHeading,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -792,14 +804,14 @@ class _TripFooterMeta extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
+        Icon(icon, size: 14, color: AppColors.textTertiary),
         const SizedBox(width: 5),
         Text(
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -891,6 +903,182 @@ String _formatTripTimestamp(String value) {
   return '$dateLabel, $hour:$minute $period';
 }
 
+String _tripDayKey(String value) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) {
+    return value;
+  }
+  final local = parsed.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  final day = local.day.toString().padLeft(2, '0');
+  return '${local.year}-$month-$day';
+}
+
+String _tripDayLabel(String value) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) {
+    return value;
+  }
+  final local = parsed.toLocal();
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(local.year, local.month, local.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) {
+    return 'Today';
+  }
+  if (diff == 1) {
+    return 'Yesterday';
+  }
+  return _formatDisplayDate(local.toIso8601String()).split(',').first;
+}
+
+List<MapEntry<String, List<DriverTripSummary>>> _groupTripsByDay(
+  List<DriverTripSummary> trips,
+) {
+  final grouped = <String, List<DriverTripSummary>>{};
+  for (final trip in trips) {
+    final key = _tripDayKey(trip.bookingTime);
+    grouped.putIfAbsent(key, () => []).add(trip);
+  }
+  final keys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+  return [for (final key in keys) MapEntry(key, grouped[key]!)];
+}
+
+class _TripsStatsStrip extends StatelessWidget {
+  const _TripsStatsStrip({required this.trips});
+
+  final List<DriverTripSummary> trips;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalEarned = trips
+        .where((trip) => trip.amount > 0)
+        .fold<double>(0, (sum, trip) => sum + trip.amount);
+    final completed = trips.where(_isCompletedTrip).length;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF15803D), Color(0xFF2FA56E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.card,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatCell(value: '${trips.length}', label: 'Total trips'),
+          ),
+          const SizedBox(width: 16),
+          Container(width: 1, height: 34, color: Colors.white24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _StatCell(
+              value: '₹${totalEarned.round()}',
+              label: 'Total earned',
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(width: 1, height: 34, color: Colors.white24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _StatCell(value: '$completed', label: 'Completed'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  const _StatCell({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Colors.white70,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DayGroupHeader extends StatelessWidget {
+  const _DayGroupHeader({required this.label, required this.count});
+
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: const BoxDecoration(
+            color: AppColors.brand,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.fillSubtle,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '$count ${count == 1 ? 'trip' : 'trips'}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ignore: unused_element
 class _TripHistoryCard extends StatelessWidget {
   const _TripHistoryCard({required this.settlement, required this.onTap});
@@ -915,7 +1103,7 @@ class _TripHistoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
+            border: Border.all(color: AppColors.divider),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -934,7 +1122,7 @@ class _TripHistoryCard extends StatelessWidget {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF7EF),
+                      color: AppColors.brandTint,
                       shape: BoxShape.circle,
                     ),
                     child: Padding(
@@ -942,7 +1130,7 @@ class _TripHistoryCard extends StatelessWidget {
                       child: SvgPicture.string(
                         _doneTickSvg,
                         colorFilter: const ColorFilter.mode(
-                          Color(0xFF10A64A),
+                          AppColors.brandBright,
                           BlendMode.srcIn,
                         ),
                         fit: BoxFit.contain,
@@ -961,7 +1149,7 @@ class _TripHistoryCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                               ),
                         ),
                       ],
@@ -973,13 +1161,13 @@ class _TripHistoryCard extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7FAFD),
+                      color: AppColors.fillSubtle,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Icon(
                       AppIcons.visibility_rounded,
                       size: 18,
-                      color: Color(0xFF1F88C9),
+                      color: AppColors.brand,
                     ),
                   ),
                 ],
@@ -997,9 +1185,7 @@ class _TripHistoryCard extends StatelessWidget {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.16),
+                            color: AppColors.brand.withValues(alpha: 0.16),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1007,7 +1193,7 @@ class _TripHistoryCard extends StatelessWidget {
                               width: 4,
                               height: 4,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
+                                color: AppColors.brand,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1018,9 +1204,7 @@ class _TripHistoryCard extends StatelessWidget {
                           height: 30,
                           margin: const EdgeInsets.symmetric(vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.14),
+                            color: AppColors.brand.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(99),
                           ),
                         ),
@@ -1028,9 +1212,7 @@ class _TripHistoryCard extends StatelessWidget {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.12),
+                            color: AppColors.brand.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1038,7 +1220,7 @@ class _TripHistoryCard extends StatelessWidget {
                               width: 4,
                               height: 4,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
+                                color: AppColors.brand,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1068,7 +1250,7 @@ class _TripHistoryCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
-                                color: const Color(0xFF1C2430),
+                                color: AppColors.textHeading,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
@@ -1090,7 +1272,7 @@ class _TripHistoryCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
-                                color: const Color(0xFF1C2430),
+                                color: AppColors.textHeading,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
@@ -1101,7 +1283,7 @@ class _TripHistoryCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              const Divider(height: 1, color: Color(0xFFECEFF3)),
+              const Divider(height: 1, color: AppColors.fillSubtle),
               const SizedBox(height: 10),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1111,13 +1293,11 @@ class _TripHistoryCard extends StatelessWidget {
                     width: 7,
                     height: 7,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2FA56E),
+                      color: AppColors.brand,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFF2FA56E,
-                          ).withValues(alpha: 0.25),
+                          color: AppColors.brand.withValues(alpha: 0.25),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -1128,7 +1308,7 @@ class _TripHistoryCard extends StatelessWidget {
                   Text(
                     'Status:',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF1C2430),
+                      color: AppColors.textHeading,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -1138,7 +1318,7 @@ class _TripHistoryCard extends StatelessWidget {
                     child: Text(
                       settlement.status,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
+                        color: AppColors.textHeading,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
@@ -1163,9 +1343,9 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.toLowerCase();
     final color = switch (normalized) {
-      'paid' || 'settled' => const Color(0xFF2FA56E),
-      'pending' => const Color(0xFFF59E0B),
-      _ => const Color(0xFF667085),
+      'paid' || 'settled' => AppColors.brand,
+      'pending' => AppColors.warningText,
+      _ => AppColors.textSecondary,
     };
 
     return Container(
@@ -1224,7 +1404,7 @@ class _EmptyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         children: [
@@ -1232,17 +1412,17 @@ class _EmptyCard extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: const BoxDecoration(
-              color: Color(0xFFF7FAFD),
+              color: AppColors.fillSubtle,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF98A2B3), size: 34),
+            child: Icon(icon, color: AppColors.textTertiary, size: 34),
           ),
           const SizedBox(height: 14),
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -1250,7 +1430,7 @@ class _EmptyCard extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -1272,7 +1452,7 @@ class _InlineEmptyMessage extends StatelessWidget {
       child: Text(
         message,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: const Color(0xFF667085),
+          color: AppColors.textSecondary,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -1288,7 +1468,6 @@ class _ActiveTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route = _splitActiveRoute(shipment.fromLocation, shipment.toLocation);
     final statusLabel = _activeStatusLabel(shipment.status);
     final isDelivered = shipment.status.trim().toLowerCase() == 'delivered';
 
@@ -1342,7 +1521,7 @@ class _ActiveTripCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontSize: 17,
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w900,
                                 height: 1.02,
                               ),
@@ -1365,9 +1544,7 @@ class _ActiveTripCard extends StatelessWidget {
                             width: 46,
                             height: 46,
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF2FA56E,
-                              ).withValues(alpha: 0.08),
+                              color: AppColors.brand.withValues(alpha: 0.08),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1400,9 +1577,7 @@ class _ActiveTripCard extends StatelessWidget {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.16),
+                            color: AppColors.brand.withValues(alpha: 0.16),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1410,7 +1585,7 @@ class _ActiveTripCard extends StatelessWidget {
                               width: 4,
                               height: 4,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
+                                color: AppColors.brand,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1421,9 +1596,7 @@ class _ActiveTripCard extends StatelessWidget {
                           height: 30,
                           margin: const EdgeInsets.symmetric(vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.14),
+                            color: AppColors.brand.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(99),
                           ),
                         ),
@@ -1431,9 +1604,7 @@ class _ActiveTripCard extends StatelessWidget {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF2FA56E,
-                            ).withValues(alpha: 0.12),
+                            color: AppColors.brand.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1441,7 +1612,7 @@ class _ActiveTripCard extends StatelessWidget {
                               width: 4,
                               height: 4,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF2FA56E),
+                                color: AppColors.brand,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -1465,16 +1636,11 @@ class _ActiveTripCard extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: 1),
-                        Text(
-                          route.from,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: const Color(0xFF1C2430),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                        _ResolvedLocation(
+                          label: shipment.fromLocation,
+                          latitude: shipment.pickupLat,
+                          longitude: shipment.pickupLng,
+                          resolvingText: 'Locating pickup…',
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -1487,16 +1653,11 @@ class _ActiveTripCard extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: 1),
-                        Text(
-                          route.to,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: const Color(0xFF1C2430),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                        _ResolvedLocation(
+                          label: shipment.toLocation,
+                          latitude: shipment.dropLat,
+                          longitude: shipment.dropLng,
+                          resolvingText: 'Locating drop-off…',
                         ),
                       ],
                     ),
@@ -1504,7 +1665,7 @@ class _ActiveTripCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              const Divider(height: 1, color: Color(0xFFECEFF3)),
+              const Divider(height: 1, color: AppColors.fillSubtle),
               const SizedBox(height: 10),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -1524,13 +1685,11 @@ class _ActiveTripCard extends StatelessWidget {
                         width: 7,
                         height: 7,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2FA56E),
+                          color: AppColors.brand,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(
-                                0xFF2FA56E,
-                              ).withValues(alpha: 0.25),
+                              color: AppColors.brand.withValues(alpha: 0.25),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -1545,7 +1704,7 @@ class _ActiveTripCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
-                                color: const Color(0xFF1C2430),
+                                color: AppColors.textHeading,
                                 fontWeight: FontWeight.w600,
                                 fontSize: statusFontSize,
                               ),
@@ -1561,7 +1720,7 @@ class _ActiveTripCard extends StatelessWidget {
                             padding: EdgeInsets.symmetric(
                               horizontal: compact ? 8 : 10,
                             ),
-                            backgroundColor: const Color(0xFF1F9D57),
+                            backgroundColor: AppColors.brandDark,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1602,6 +1761,80 @@ class _ActiveTripCard extends StatelessWidget {
   }
 }
 
+class _ResolvedLocation extends ConsumerStatefulWidget {
+  const _ResolvedLocation({
+    required this.label,
+    required this.latitude,
+    required this.longitude,
+    required this.resolvingText,
+  });
+
+  final String label;
+  final double? latitude;
+  final double? longitude;
+  final String resolvingText;
+
+  @override
+  ConsumerState<_ResolvedLocation> createState() => _ResolvedLocationState();
+}
+
+class _ResolvedLocationState extends ConsumerState<_ResolvedLocation> {
+  bool _resolving = false;
+  String _resolved = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final lat = widget.latitude ?? 0;
+    final lng = widget.longitude ?? 0;
+    if (_isPlaceholder(widget.label) && (lat != 0 || lng != 0)) {
+      _resolving = true;
+      _resolve(lat, lng);
+    }
+  }
+
+  bool _isPlaceholder(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ||
+        trimmed == 'Pickup location not provided' ||
+        trimmed == 'Drop-off location not provided';
+  }
+
+  Future<void> _resolve(double lat, double lng) async {
+    String address = '';
+    try {
+      address = await ref
+          .read(googlePlacesServiceProvider)
+          .reverseGeocode(latitude: lat, longitude: lng);
+    } catch (_) {
+      address = '';
+    }
+    if (!mounted) return;
+    setState(() {
+      _resolved = address.trim();
+      _resolving = false;
+    });
+  }
+
+  String get _display => _resolving
+      ? widget.resolvingText
+      : (_resolved.isNotEmpty ? _resolved : widget.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _display,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        color: AppColors.textHeading,
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+      ),
+    );
+  }
+}
+
 class _ActiveStatusPill extends StatelessWidget {
   const _ActiveStatusPill({required this.label, required this.isDelivered});
 
@@ -1611,11 +1844,9 @@ class _ActiveStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = isDelivered
-        ? const Color(0xFFBFE7CE)
-        : const Color(0xFF96DEB0);
-    final textColor = isDelivered
-        ? const Color(0xFF0F7A43)
-        : const Color(0xFF12824A);
+        ? AppColors.brandBorder
+        : AppColors.brandBorder;
+    final textColor = isDelivered ? AppColors.brandDark : AppColors.brandDark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1634,37 +1865,6 @@ class _ActiveStatusPill extends StatelessWidget {
       ),
     );
   }
-}
-
-({String from, String fromSubtitle, String to, String toSubtitle})
-_splitActiveRoute(String from, String to) {
-  return (
-    from: _splitRouteText(from).title,
-    fromSubtitle: _splitRouteText(from).subtitle,
-    to: _splitRouteText(to).title,
-    toSubtitle: _splitRouteText(to).subtitle,
-  );
-}
-
-({String title, String subtitle}) _splitRouteText(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) {
-    return (title: 'Location unavailable', subtitle: '');
-  }
-
-  final separators = ['\n', ' - ', ' | ', ', '];
-  for (final separator in separators) {
-    final index = normalized.indexOf(separator);
-    if (index > 0) {
-      final title = normalized.substring(0, index).trim();
-      final subtitle = normalized.substring(index + separator.length).trim();
-      if (title.isNotEmpty) {
-        return (title: title, subtitle: subtitle);
-      }
-    }
-  }
-
-  return (title: normalized, subtitle: '');
 }
 
 const String _doneTickSvg = '''

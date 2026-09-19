@@ -12,9 +12,12 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_location_tracker_provider.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/services/driver_external_navigation_service.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
@@ -80,16 +83,14 @@ class _TripStopTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actionable = stop.index == actionableIndex;
-    final color = stop.loading
-        ? const Color(0xFFB7791F)
-        : const Color(0xFFE35A62);
+    final color = stop.loading ? AppColors.warningText : AppColors.dangerIcon;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: stop.done ? const Color(0xFFEAF7EF) : const Color(0xFFF8FAFC),
+        color: stop.done ? AppColors.brandTint : AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: stop.done ? const Color(0xFFCDEEDD) : const Color(0xFFE4EAF1),
+          color: stop.done ? AppColors.brandBorder : AppColors.fillSubtle,
         ),
       ),
       child: Row(
@@ -100,7 +101,7 @@ class _TripStopTile extends StatelessWidget {
                 : stop.loading
                 ? AppIcons.inventory_2_outlined
                 : AppIcons.inventory_2_rounded,
-            color: stop.done ? const Color(0xFF2FA56E) : color,
+            color: stop.done ? AppColors.brand : color,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -111,7 +112,7 @@ class _TripStopTile extends StatelessWidget {
                 Text(
                   stop.label,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -121,7 +122,7 @@ class _TripStopTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
                   ),
@@ -134,8 +135,8 @@ class _TripStopTile extends StatelessWidget {
             FilledButton(
               onPressed: actionable && !completing ? onComplete : null,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F88C9),
-                disabledBackgroundColor: const Color(0xFFD0D5DD),
+                backgroundColor: AppColors.brand,
+                disabledBackgroundColor: AppColors.line,
                 minimumSize: const Size(0, 38),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
@@ -182,7 +183,8 @@ class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverDeliveryDetailsScreenState
-    extends ConsumerState<DriverDeliveryDetailsScreen> {
+    extends ConsumerState<DriverDeliveryDetailsScreen>
+    with WidgetsBindingObserver {
   double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
   bool _arrivalFlowActive = false;
@@ -202,6 +204,7 @@ class _DriverDeliveryDetailsScreenState
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
   bool _loadingTripInFlight = false;
   String? _resolvedTripId;
+  bool _awaitingOverlayPermission = false;
 
   String get _tripId => _resolvedTripId?.trim().isNotEmpty == true
       ? _resolvedTripId!.trim()
@@ -247,6 +250,7 @@ class _DriverDeliveryDetailsScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final initialTripId = widget.tripId.trim();
     if (initialTripId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -268,9 +272,39 @@ class _DriverDeliveryDetailsScreenState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tripRefreshTimer?.cancel();
     _tripStatusSubscription?.cancel();
+    unawaited(DriverExternalNavigationService.hideBubble());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // User is back from system Settings after the overlay permission prompt:
+    // continue automatically instead of making them tap the menu again.
+    if (state == AppLifecycleState.resumed && _awaitingOverlayPermission) {
+      _awaitingOverlayPermission = false;
+      unawaited(_continueAfterOverlaySettings());
+    }
+  }
+
+  Future<void> _continueAfterOverlaySettings() async {
+    if (!mounted) return;
+    final granted = await DriverExternalNavigationService.hasBubblePermission();
+    if (!mounted) return;
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Floating button is still off. Opening Maps without it — '
+            'you can enable it later from the menu.',
+          ),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+    await _openMapsDirect();
   }
 
   Future<void> _startLiveUpdates() async {
@@ -467,6 +501,7 @@ class _DriverDeliveryDetailsScreenState
 
       if (_tripStatus == 'completed' || _tripStatus == 'cancelled') {
         _clearTripSession();
+        unawaited(DriverExternalNavigationService.hideBubble());
       }
     } catch (_) {
       if (!mounted) return;
@@ -538,7 +573,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(locationError),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return;
@@ -610,7 +645,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_statusChangeMessageFor(resolvedStatus)),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -624,7 +659,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       developer.log(
@@ -637,7 +672,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       developer.log(
@@ -682,7 +717,7 @@ class _DriverDeliveryDetailsScreenState
         messenger.showSnackBar(
           SnackBar(
             content: Text(locationError),
-            backgroundColor: const Color(0xFFE23A4B),
+            backgroundColor: AppColors.dangerIcon,
           ),
         );
         return;
@@ -714,7 +749,7 @@ class _DriverDeliveryDetailsScreenState
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Stop marked complete.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on ApiException catch (error) {
@@ -722,7 +757,7 @@ class _DriverDeliveryDetailsScreenState
       messenger.showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -730,7 +765,7 @@ class _DriverDeliveryDetailsScreenState
       messenger.showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -854,7 +889,7 @@ class _DriverDeliveryDetailsScreenState
       messenger.showSnackBar(
         SnackBar(
           content: Text(_statusChangeMessageFor(resolvedStatus)),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1023,12 +1058,12 @@ class _DriverDeliveryDetailsScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 14),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+        const Divider(height: 1, thickness: 1, color: AppColors.divider),
         const SizedBox(height: 14),
         Text(
           'Loading & Unloading Stops',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: const Color(0xFF101828),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1044,6 +1079,33 @@ class _DriverDeliveryDetailsScreenState
         ],
       ],
     );
+  }
+
+  bool get _navHeadingToPickup {
+    // Before pickup -> navigate to pickup; after pickup -> navigate to drop.
+    return const {
+      'confirmed',
+      'assigned',
+      'accepted',
+      'active',
+      'live',
+      'ongoing',
+      'started',
+      'on_route',
+      'en_route',
+      'route_to_pickup',
+      'to_pickup',
+      'en_route_pickup',
+    }.contains(_tripStatus);
+  }
+
+  String get _navPickupAddress {
+    final fromShipment = _shipment?.fromLocation.trim() ?? '';
+    if (fromShipment.isNotEmpty &&
+        fromShipment.toLowerCase() != 'pickup location not provided') {
+      return fromShipment;
+    }
+    return _readLocation(_tripRaw, const ['pickup', 'pickupLocation']);
   }
 
   Widget _buildTripPanel(BuildContext context) {
@@ -1064,13 +1126,7 @@ class _DriverDeliveryDetailsScreenState
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: AppShadows.float,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1085,7 +1141,7 @@ class _DriverDeliveryDetailsScreenState
                       Text(
                         'Current status',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
+                          color: AppColors.textTertiary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1093,7 +1149,7 @@ class _DriverDeliveryDetailsScreenState
                       Text(
                         panelTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -1110,13 +1166,13 @@ class _DriverDeliveryDetailsScreenState
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF7EF),
+                    color: AppColors.brandTint,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
                     panelBadge,
                     style: const TextStyle(
-                      color: Color(0xFF2FA56E),
+                      color: AppColors.brand,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1133,7 +1189,7 @@ class _DriverDeliveryDetailsScreenState
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F6FB),
+                      color: AppColors.fillSubtle,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: AnimatedRotation(
@@ -1142,7 +1198,7 @@ class _DriverDeliveryDetailsScreenState
                       curve: Curves.easeInOutCubicEmphasized,
                       child: const Icon(
                         AppIcons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF101828),
+                        color: AppColors.textPrimary,
                         size: 24,
                       ),
                     ),
@@ -1163,7 +1219,7 @@ class _DriverDeliveryDetailsScreenState
                         const Divider(
                           height: 1,
                           thickness: 1,
-                          color: Color(0xFFE8EDF2),
+                          color: AppColors.divider,
                         ),
                         const SizedBox(height: 14),
                         Text(
@@ -1171,7 +1227,7 @@ class _DriverDeliveryDetailsScreenState
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: AppColors.textSecondary,
                                 height: 1.4,
                               ),
                         ),
@@ -1192,8 +1248,8 @@ class _DriverDeliveryDetailsScreenState
                                     overlayShape: const RoundSliderOverlayShape(
                                       overlayRadius: 0,
                                     ),
-                                    activeTrackColor: const Color(0xFFE5E7EB),
-                                    inactiveTrackColor: const Color(0xFFE5E7EB),
+                                    activeTrackColor: AppColors.line,
+                                    inactiveTrackColor: AppColors.line,
                                     thumbColor: Colors.white,
                                     overlayColor: Colors.transparent,
                                     trackGap: 6,
@@ -1236,7 +1292,7 @@ class _DriverDeliveryDetailsScreenState
                                           .textTheme
                                           .titleMedium
                                           ?.copyWith(
-                                            color: const Color(0xFF6B7280),
+                                            color: AppColors.textSecondary,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -1325,10 +1381,8 @@ class _DriverDeliveryDetailsScreenState
                                       unawaited(_advanceTripStatus());
                                     },
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F88C9),
-                                disabledBackgroundColor: const Color(
-                                  0xFFD0D5DD,
-                                ),
+                                backgroundColor: AppColors.brand,
+                                disabledBackgroundColor: AppColors.fillSubtle,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -1413,7 +1467,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(locationError),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return;
@@ -1455,7 +1509,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       developer.log(
@@ -1467,7 +1521,7 @@ class _DriverDeliveryDetailsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       developer.log(
@@ -1698,6 +1752,7 @@ class _DriverDeliveryDetailsScreenState
       tripId: id.isNotEmpty ? id : null,
       bookingId: bookingId.isNotEmpty ? bookingId : null,
       bookingStatus: status,
+      stops: tripRouteStopsFromSource(trip),
     );
   }
 
@@ -1743,6 +1798,114 @@ class _DriverDeliveryDetailsScreenState
         .join(' ');
   }
 
+  Future<void> _openMapsFromMenu() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final granted = await DriverExternalNavigationService.hasBubblePermission();
+    if (!mounted) return;
+
+    if (granted) {
+      await _openMapsDirect();
+      return;
+    }
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text('Allow display over other apps'),
+        content: const Text(
+          'This opens SSK\u2019s page in system Settings.\n\n'
+          '1. Turn ON \u201cAllow display over other apps\u201d.\n'
+          '2. Press back \u2014 Maps opens automatically with the '
+          'floating SSK button.\n\n'
+          '(On Xiaomi/Redmi/Poco the toggle may be called '
+          '\u201cDisplay pop-up windows\u201d.)',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Skip'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (proceed != true) {
+      // Skip -> open Maps without the bubble.
+      await _openMapsDirect();
+      return;
+    }
+    _awaitingOverlayPermission = true;
+    final opened =
+        await DriverExternalNavigationService.requestBubblePermission();
+    if (!mounted) return;
+    if (!opened) {
+      _awaitingOverlayPermission = false;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open Settings. Open it manually: Settings > '
+            'Apps > SSK > Display over other apps.',
+          ),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
+    // Return from Settings -> didChangeAppLifecycleState continues.
+  }
+
+  /// Shows the bubble (when permitted) and launches Google Maps. The bubble
+  /// is shown BEFORE leaving the app because some devices block overlays
+  /// that are added while the app is already in the background.
+  Future<void> _openMapsDirect() async {
+    final messenger = ScaffoldMessenger.of(context);
+    var bubbleShown = false;
+    if (await DriverExternalNavigationService.hasBubblePermission()) {
+      bubbleShown = await DriverExternalNavigationService.showBubble();
+      if (!mounted) return;
+      if (!bubbleShown) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not show the floating button on this device. '
+              'Opening Maps anyway.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+    final error = await DriverExternalNavigationService.openDriverNavigation(
+      pickupLat: _shipment?.pickupLat,
+      pickupLng: _shipment?.pickupLng,
+      pickupAddress: _navPickupAddress,
+      dropLat: _shipment?.dropLat,
+      dropLng: _shipment?.dropLng,
+      dropAddress: _dropLocation,
+      liveLat: _shipment?.liveLat,
+      liveLng: _shipment?.liveLng,
+      headingToPickup: _navHeadingToPickup,
+    );
+    if (!mounted) return;
+    if (error != null) {
+      await DriverExternalNavigationService.hideBubble();
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+    } else if (bubbleShown) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Tap the SSK bubble over Maps to return.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   void _showEmergencyAssistance(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -1777,12 +1940,12 @@ class _DriverDeliveryDetailsScreenState
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDEEEF),
+                          color: AppColors.dangerFill,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
                           AppIcons.shield_outlined,
-                          color: Color(0xFFE35A62),
+                          color: AppColors.dangerIcon,
                           size: 22,
                         ),
                       ),
@@ -1792,7 +1955,7 @@ class _DriverDeliveryDetailsScreenState
                           'Emergency Assistance',
                           style: Theme.of(sheetContext).textTheme.titleLarge
                               ?.copyWith(
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w900,
                               ),
                         ),
@@ -1800,15 +1963,35 @@ class _DriverDeliveryDetailsScreenState
                       IconButton(
                         onPressed: () => Navigator.of(sheetContext).pop(),
                         icon: const Icon(AppIcons.close_rounded),
-                        color: const Color(0xFF98A2B3),
+                        color: AppColors.textTertiary,
                         tooltip: 'Close',
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   _EmergencyAssistanceTile(
-                    backgroundColor: const Color(0xFFFDEEEF),
-                    iconColor: const Color(0xFFE35A62),
+                    backgroundColor: AppColors.brandTint,
+                    iconColor: AppColors.brand,
+                    icon: AppIcons.navigation_rounded,
+                    title: _navHeadingToPickup
+                        ? 'Open pickup in Google Maps'
+                        : 'Open drop in Google Maps',
+                    subtitle: _navHeadingToPickup
+                        ? (_navPickupAddress.isEmpty
+                              ? 'Navigate to pickup'
+                              : _navPickupAddress)
+                        : (_dropLocation.isEmpty
+                              ? 'Navigate to drop'
+                              : _dropLocation),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      unawaited(_openMapsFromMenu());
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _EmergencyAssistanceTile(
+                    backgroundColor: AppColors.dangerFill,
+                    iconColor: AppColors.dangerIcon,
                     icon: AppIcons.local_police_rounded,
                     title: 'Call Police',
                     subtitle: 'Emergency: 112',
@@ -1823,8 +2006,8 @@ class _DriverDeliveryDetailsScreenState
                   ),
                   const SizedBox(height: 10),
                   _EmergencyAssistanceTile(
-                    backgroundColor: const Color(0xFFFDEEEF),
-                    iconColor: const Color(0xFFE35A62),
+                    backgroundColor: AppColors.dangerFill,
+                    iconColor: AppColors.dangerIcon,
                     icon: AppIcons.local_hospital_rounded,
                     title: 'Call Ambulance',
                     subtitle: 'Emergency: 108',
@@ -1839,8 +2022,8 @@ class _DriverDeliveryDetailsScreenState
                   ),
                   const SizedBox(height: 10),
                   _EmergencyAssistanceTile(
-                    backgroundColor: const Color(0xFFEAF2FF),
-                    iconColor: const Color(0xFF3F7DE8),
+                    backgroundColor: AppColors.brandTint,
+                    iconColor: AppColors.brand,
                     icon: AppIcons.call_rounded,
                     title: 'Call Broker',
                     subtitle: '9000000003',
@@ -1853,8 +2036,8 @@ class _DriverDeliveryDetailsScreenState
                   ),
                   const SizedBox(height: 10),
                   _EmergencyAssistanceTile(
-                    backgroundColor: const Color(0xFFFFF7DE),
-                    iconColor: const Color(0xFFC98B17),
+                    backgroundColor: AppColors.warningFill,
+                    iconColor: AppColors.warningText,
                     icon: AppIcons.report_outlined,
                     title: 'Report Incident to Support',
                     subtitle: 'Notify our support team immediately',
@@ -1865,8 +2048,8 @@ class _DriverDeliveryDetailsScreenState
                   ),
                   const SizedBox(height: 10),
                   _EmergencyAssistanceTile(
-                    backgroundColor: const Color(0xFFEAF2FB),
-                    iconColor: const Color(0xFF1F88C9),
+                    backgroundColor: AppColors.brandTint,
+                    iconColor: AppColors.brand,
                     icon: AppIcons.build_circle_outlined,
                     title: 'View Mechanic Status',
                     subtitle: 'See breakdown and repair progress',
@@ -1967,206 +2150,164 @@ class _DriverDeliveryDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
+      backgroundColor: AppColors.canvas,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          _shipment == null
+              ? const _DriverDeliveryMapBackdrop()
+              : TrackingRouteMapView(shipment: _shipment!, liveMode: true),
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.20),
+                    Colors.transparent,
+                    Colors.white.withValues(alpha: 0.66),
                   ],
+                  stops: const [0.0, 0.40, 1.0],
                 ),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        if (context.canPop()) {
-                          context.pop();
-                          return;
-                        }
-                        context.go('/driver/active');
-                      },
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F6FB),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Icon(
-                          AppIcons.arrow_back_rounded,
-                          color: Color(0xFF101828),
-                          size: 20,
-                        ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _FloatingRoundButton(
+                    icon: AppIcons.arrow_back_rounded,
+                    onTap: () {
+                      if (context.canPop()) {
+                        context.pop();
+                        return;
+                      }
+                      context.go('/driver/active');
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Delivery ID',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: const Color(0xFF98A2B3),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11,
-                                ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _tripId.isNotEmpty ? _tripId : _bookingId,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: const Color(0xFF101828),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            AppIcons.receipt_long_rounded,
+                            size: 14,
+                            color: AppColors.brand,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              _tripId.isNotEmpty ? _tripId : _bookingId,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 13,
+                                  ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    InkWell(
-                      onTap: _callCustomer,
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F6FB),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              AppIcons.call_rounded,
-                              size: 18,
-                              color: Color(0xFF1F88C9),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Call',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF1F88C9),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: _openChat,
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F6FB),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Icon(
-                          AppIcons.chat_bubble_outline_rounded,
-                          color: Color(0xFF1F88C9),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => _showEmergencyAssistance(context),
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F6FB),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Icon(
-                          AppIcons.more_vert_rounded,
-                          color: Color(0xFF101828),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: Stack(
-                    children: [
-                      const Positioned.fill(child: SizedBox.shrink()),
-                      Positioned.fill(
-                        child: _shipment == null
-                            ? const _DriverDeliveryMapBackdrop()
-                            : TrackingRouteMapView(
-                                shipment: _shipment!,
-                                liveMode: true,
-                              ),
-                      ),
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.08),
-                                  Colors.white.withValues(alpha: 0.18),
-                                  Colors.white.withValues(alpha: 0.54),
-                                ],
-                                stops: const [0.0, 0.56, 1.0],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        bottom: 16,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          child: _buildTripPanel(context),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  _FloatingRoundButton(
+                    icon: AppIcons.call_rounded,
+                    onTap: _callCustomer,
+                    highlight: true,
+                  ),
+                  const SizedBox(width: 8),
+                  _FloatingRoundButton(
+                    icon: AppIcons.chat_bubble_outline_rounded,
+                    onTap: _openChat,
+                    highlight: true,
+                  ),
+                  const SizedBox(width: 8),
+                  _FloatingRoundButton(
+                    icon: AppIcons.more_vert_rounded,
+                    onTap: () => _showEmergencyAssistance(context),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: 14 + bottomInset,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: _buildTripPanel(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FloatingRoundButton extends StatelessWidget {
+  const _FloatingRoundButton({
+    required this.icon,
+    required this.onTap,
+    this.highlight = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.94),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: highlight ? AppColors.brand : AppColors.textPrimary,
         ),
       ),
     );
@@ -2183,22 +2324,59 @@ class _PickupOtpDialog extends StatefulWidget {
 }
 
 class _PickupOtpDialogState extends State<_PickupOtpDialog> {
-  final _controller = TextEditingController();
+  late final List<TextEditingController> _controllers;
+  late final List<FocusNode> _focusNodes;
   bool _submitting = false;
   String _errorText = '';
 
   @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(4, (_) => TextEditingController());
+    _focusNodes = List.generate(4, (_) => FocusNode());
+  }
+
+  @override
   void dispose() {
-    _controller.dispose();
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
+  String get _code => _controllers.map((c) => c.text).join();
+
+  bool get _isComplete => _code.length == 4;
+
+  void _onDigitChanged(int index, String value) {
+    if (_errorText.isNotEmpty) {
+      setState(() => _errorText = '');
+    }
+    if (value.isEmpty) {
+      return;
+    }
+    if (index < 3) {
+      _focusNodes[index + 1].requestFocus();
+    } else {
+      _focusNodes[index].unfocus();
+      unawaited(_submit());
+    }
+  }
+
+  void _onBackspaceEmpty(int index) {
+    final prev = index - 1;
+    _controllers[prev].clear();
+    _focusNodes[prev].requestFocus();
+  }
+
   Future<void> _submit() async {
-    setState(() {
-      _submitting = true;
-      _errorText = '';
-    });
-    final error = await widget.onSubmit(_controller.text.trim());
+    final code = _code;
+    if (code.length != 4 || _submitting) return;
+    setState(() => _submitting = true);
+    final error = await widget.onSubmit(code);
     if (!mounted) return;
     if (error == null) {
       Navigator.of(context).pop();
@@ -2212,54 +2390,296 @@ class _PickupOtpDialogState extends State<_PickupOtpDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _controller.text.trim().length == 4 && !_submitting;
+    final theme = Theme.of(context);
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: const Text('Enter pickup code'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Ask the customer for their 4-digit pickup code and enter it here to confirm pickup.',
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            maxLength: 4,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(4),
-            ],
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: '0000',
-              errorText: _errorText.isEmpty ? null : _errorText,
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      backgroundColor: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 344),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 4,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.brandBright, AppColors.brand],
+                ),
+              ),
             ),
-            onChanged: (_) => setState(() => _errorText = ''),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.brandBright, AppColors.brand],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.brand.withValues(alpha: 0.30),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          AppIcons.lock_outline_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Enter pickup code',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Ask the customer to share their 4-digit code',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        onTap: _submitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.fillSubtle,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            AppIcons.close_rounded,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var index = 0; index < 4; index++) ...[
+                        if (index > 0) const SizedBox(width: 12),
+                        Expanded(
+                          child: _OtpField(
+                            controller: _controllers[index],
+                            focusNode: _focusNodes[index],
+                            autoFocus: index == 0,
+                            error: _errorText.isNotEmpty,
+                            onChanged: (value) => _onDigitChanged(index, value),
+                            onBackspaceEmpty: () => _onBackspaceEmpty(index),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    child: _errorText.isEmpty
+                        ? const SizedBox(height: 10)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  AppIcons.error_outline_rounded,
+                                  size: 16,
+                                  color: AppColors.dangerText,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    _errorText,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.dangerText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: _isComplete && !_submitting ? _submit : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        disabledBackgroundColor: AppColors.brand.withValues(
+                          alpha: 0.35,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        shadowColor: AppColors.brand,
+                        elevation: 3,
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Confirm pickup',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+    );
+  }
+}
+
+class _OtpField extends StatefulWidget {
+  const _OtpField({
+    required this.controller,
+    required this.focusNode,
+    required this.autoFocus,
+    required this.error,
+    required this.onChanged,
+    required this.onBackspaceEmpty,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool autoFocus;
+  final bool error;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onBackspaceEmpty;
+
+  @override
+  State<_OtpField> createState() => _OtpFieldState();
+}
+
+class _OtpFieldState extends State<_OtpField> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.onKeyEvent = _handleKeyEvent;
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace &&
+        widget.controller.text.isEmpty) {
+      widget.onBackspaceEmpty();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = widget.controller.text.isNotEmpty;
+    final fill = widget.error
+        ? const Color(0xFFFFF4F4)
+        : hasText
+        ? AppColors.brandTint
+        : Colors.white;
+    final borderColor = widget.error
+        ? AppColors.dangerBorder
+        : widget.focusNode.hasFocus
+        ? AppColors.brand
+        : AppColors.line;
+    final borderWidth = widget.focusNode.hasFocus ? 2.0 : 1.2;
+
+    return SizedBox(
+      height: 62,
+      child: TextField(
+        controller: widget.controller,
+        focusNode: widget.focusNode,
+        autofocus: widget.autoFocus,
+        autofillHints: widget.autoFocus
+            ? const [AutofillHints.oneTimeCode]
+            : null,
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.center,
+        textAlignVertical: TextAlignVertical.center,
+        showCursor: true,
+        maxLength: 1,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(1),
+        ],
+        style: const TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+          color: AppColors.brandDark,
+          height: 1,
         ),
-        FilledButton(
-          onPressed: canSubmit ? _submit : null,
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Confirm pickup'),
+        cursorColor: AppColors.brand,
+        cursorWidth: 2,
+        decoration: InputDecoration(
+          counterText: '',
+          filled: true,
+          fillColor: fill,
+          contentPadding: EdgeInsets.zero,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: borderColor, width: borderWidth),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: AppColors.brand, width: 2),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: borderColor, width: borderWidth),
+          ),
         ),
-      ],
+        onChanged: widget.onChanged,
+      ),
     );
   }
 }
@@ -2280,7 +2700,7 @@ class _DetailRow extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -2290,7 +2710,7 @@ class _DetailRow extends StatelessWidget {
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
               height: 1.35,
             ),
@@ -2319,10 +2739,10 @@ class _DeliverySlaCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: hasCharge ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
+        color: hasCharge ? AppColors.warningFill : AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasCharge ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
+          color: hasCharge ? AppColors.warningBorder : AppColors.line,
         ),
       ),
       child: Row(
@@ -2332,9 +2752,7 @@ class _DeliverySlaCard extends StatelessWidget {
             hasCharge
                 ? AppIcons.warning_amber_rounded
                 : AppIcons.schedule_rounded,
-            color: hasCharge
-                ? const Color(0xFFC2410C)
-                : const Color(0xFF475569),
+            color: hasCharge ? AppColors.warningText : AppColors.textSecondary,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2344,7 +2762,7 @@ class _DeliverySlaCard extends StatelessWidget {
                 Text(
                   hasCharge ? 'Delivery delay charge' : 'Delivery SLA',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -2355,8 +2773,8 @@ class _DeliverySlaCard extends StatelessWidget {
                       : 'Expected delivery within ~${expectedHours!.toStringAsFixed(expectedHours! % 1 == 0 ? 0 : 1)}h.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: hasCharge
-                        ? const Color(0xFF9A5B13)
-                        : const Color(0xFF667085),
+                        ? AppColors.warningText
+                        : AppColors.textSecondary,
                     height: 1.35,
                   ),
                 ),
@@ -2399,7 +2817,7 @@ class _ArrivalThumbShape extends SliderComponentShape {
       ..color = Colors.white
       ..isAntiAlias = true;
     final borderPaint = Paint()
-      ..color = const Color(0xFFE5E7EB)
+      ..color = AppColors.line
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
@@ -2425,7 +2843,7 @@ class _ArrivalThumbShape extends SliderComponentShape {
       text: TextSpan(
         text: String.fromCharCode(AppIcons.chevron_right_rounded.codePoint),
         style: TextStyle(
-          color: const Color(0xFF2FA56E),
+          color: AppColors.brand,
           fontSize: 28,
           fontWeight: FontWeight.w800,
           fontFamily: AppIcons.chevron_right_rounded.fontFamily,
@@ -2466,32 +2884,32 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
     _IncidentTypeOption(
       label: 'Accident',
       icon: AppIcons.warning_amber_rounded,
-      accent: Color(0xFFE08A1E),
-      background: Color(0xFFFFF7EA),
+      accent: AppColors.warningText,
+      background: AppColors.warningFill,
     ),
     _IncidentTypeOption(
       label: 'Breakdown',
       icon: AppIcons.build_rounded,
-      accent: Color(0xFF7B8DA6),
-      background: Color(0xFFF5F7FA),
+      accent: AppColors.textTertiary,
+      background: AppColors.fillSubtle,
     ),
     _IncidentTypeOption(
       label: 'Traffic Block',
       icon: AppIcons.traffic_rounded,
-      accent: Color(0xFF7A5AF8),
-      background: Color(0xFFF3EEFF),
+      accent: AppColors.brand,
+      background: AppColors.brandTint,
     ),
     _IncidentTypeOption(
       label: 'Medical',
       icon: AppIcons.favorite_border_rounded,
-      accent: Color(0xFFE35A62),
-      background: Color(0xFFFFF1F2),
+      accent: AppColors.dangerIcon,
+      background: AppColors.dangerFill,
     ),
     _IncidentTypeOption(
       label: 'Other',
       icon: AppIcons.chat_bubble_outline_rounded,
-      accent: Color(0xFF7B8DA6),
-      background: Color(0xFFF5F7FA),
+      accent: AppColors.textTertiary,
+      background: AppColors.fillSubtle,
     ),
   ];
 
@@ -2540,7 +2958,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('$_selectedType report submitted to support.'),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on ApiException catch (error) {
@@ -2548,7 +2966,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -2556,7 +2974,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -2597,12 +3015,12 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF4D9),
+                        color: AppColors.warningFill,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         AppIcons.report_gmailerrorred_outlined,
-                        color: Color(0xFFE2A22F),
+                        color: AppColors.warningText,
                         size: 22,
                       ),
                     ),
@@ -2611,7 +3029,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                       child: Text(
                         'Report Incident',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -2619,7 +3037,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(AppIcons.close_rounded),
-                      color: const Color(0xFF98A2B3),
+                      color: AppColors.textTertiary,
                       tooltip: 'Close',
                     ),
                   ],
@@ -2628,7 +3046,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                 Text(
                   'What\'s going on? Your broker and the client will be notified right away.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -2655,23 +3073,23 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                   decoration: InputDecoration(
                     hintText: 'Add any details (optional)',
                     hintStyle: const TextStyle(
-                      color: Color(0xFFB0B7C3),
+                      color: AppColors.textTertiary,
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(color: Color(0xFFE6EBF2)),
+                      borderSide: const BorderSide(color: AppColors.line),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(color: Color(0xFFE6EBF2)),
+                      borderSide: const BorderSide(color: AppColors.line),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
                       borderSide: const BorderSide(
-                        color: Color(0xFFE2A22F),
+                        color: AppColors.warningText,
                         width: 1.4,
                       ),
                     ),
@@ -2684,7 +3102,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitReport,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF5C86E),
+                      backgroundColor: AppColors.warningText,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -2753,7 +3171,7 @@ class _DriverBookingChatSheet extends StatelessWidget {
                 width: 54,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
+                  color: AppColors.fillSubtle,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -2766,7 +3184,7 @@ class _DriverBookingChatSheet extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -2885,12 +3303,12 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF2FB),
+                      color: AppColors.brandTint,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       AppIcons.build_circle_outlined,
-                      color: Color(0xFF1F88C9),
+                      color: AppColors.brand,
                       size: 22,
                     ),
                   ),
@@ -2899,7 +3317,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                     child: Text(
                       'Mechanic Status',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -2907,7 +3325,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(AppIcons.close_rounded),
-                    color: const Color(0xFF98A2B3),
+                    color: AppColors.textTertiary,
                     tooltip: 'Close',
                   ),
                 ],
@@ -2916,7 +3334,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
               Text(
                 'Live incident updates for this trip.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   height: 1.4,
                 ),
               ),
@@ -2929,9 +3347,9 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
               else if (_error != null)
                 Text(
                   _error!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFB42318),
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.dangerText),
                 )
               else if (_incidents.isEmpty)
                 const Padding(
@@ -2989,9 +3407,9 @@ class _MechanicIncidentCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3000,7 +3418,7 @@ class _MechanicIncidentCard extends StatelessWidget {
             reason.isEmpty ? 'Incident' : reason,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           if (notes.isNotEmpty) ...[
@@ -3009,7 +3427,7 @@ class _MechanicIncidentCard extends StatelessWidget {
               notes,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
           ],
           if (mechanic.isNotEmpty) ...[
@@ -3017,7 +3435,7 @@ class _MechanicIncidentCard extends StatelessWidget {
             Text(
               'Mechanic: ${mechanicName.isEmpty ? 'Pending assignment' : mechanicName}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -3027,7 +3445,7 @@ class _MechanicIncidentCard extends StatelessWidget {
                 'Phone: $mechanicPhone',
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
             const SizedBox(height: 2),
@@ -3035,7 +3453,7 @@ class _MechanicIncidentCard extends StatelessWidget {
               'Status: ${mechanicStatus.isEmpty ? 'requested' : mechanicStatus}',
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
             if (mechanicNotes.isNotEmpty) ...[
               const SizedBox(height: 2),
@@ -3043,7 +3461,7 @@ class _MechanicIncidentCard extends StatelessWidget {
                 mechanicNotes,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ],
@@ -3110,7 +3528,7 @@ class _IncidentTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? option.background : const Color(0xFFF8FAFD),
+      color: selected ? option.background : AppColors.fillSubtle,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -3121,7 +3539,7 @@ class _IncidentTypeChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selected ? option.accent : const Color(0xFFF0F2F6),
+              color: selected ? option.accent : AppColors.line,
               width: selected ? 1.4 : 1,
             ),
           ),
@@ -3134,7 +3552,7 @@ class _IncidentTypeChip extends StatelessWidget {
                 option.label,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -3192,7 +3610,7 @@ class _EmergencyAssistanceTile extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -3200,7 +3618,7 @@ class _EmergencyAssistanceTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -3227,7 +3645,7 @@ class _DriverDeliveryMapBackdrop extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF4F7FC), Color(0xFFE7EEF7)],
+            colors: [AppColors.fillSubtle, AppColors.line],
           ),
         ),
       ),
@@ -3239,26 +3657,26 @@ class _DriverDeliveryMapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final roadPaint = Paint()
-      ..color = const Color(0xFFD6DDE8)
+      ..color = AppColors.line
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
     final accentPaint = Paint()
-      ..color = const Color(0xFFC9D4E3)
+      ..color = AppColors.line
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
 
-    final nodePaint = Paint()..color = const Color(0xFFF9FBFD);
+    final nodePaint = Paint()..color = AppColors.surface;
     final nodeBorderPaint = Paint()
-      ..color = const Color(0xFFD8E2EF)
+      ..color = AppColors.line
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = const Color(0xFFF4F7FC),
+      Paint()..color = AppColors.fillSubtle,
     );
 
     final paths = [
@@ -3323,11 +3741,11 @@ class _DriverDeliveryMapPainter extends CustomPainter {
     for (final node in nodes) {
       canvas.drawCircle(node, 11, nodePaint);
       canvas.drawCircle(node, 11, nodeBorderPaint);
-      canvas.drawCircle(node, 3.5, Paint()..color = const Color(0xFF2FA56E));
+      canvas.drawCircle(node, 3.5, Paint()..color = AppColors.brand);
     }
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFE6ECF4)
+      ..color = AppColors.line
       ..strokeWidth = 1;
     for (var i = 0; i < 4; i++) {
       final y = size.height * (0.12 + i * 0.18);

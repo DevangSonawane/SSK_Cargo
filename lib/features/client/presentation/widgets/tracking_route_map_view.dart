@@ -1,5 +1,6 @@
 // ignore_for_file: use_null_aware_elements
 
+import 'dart:ui' as ui;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -12,6 +13,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../../../core/services/google_places_service.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import 'client_flow_widgets.dart';
 
 class TrackingRouteMapView extends StatefulWidget {
@@ -34,6 +36,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   List<LatLng> _routePoints = const [];
   int _routeRequestToken = 0;
   BitmapDescriptor? _truckMarkerIcon;
+  final Map<String, BitmapDescriptor> _stopMarkerIcons = {};
   LatLng? _lastRoutedOrigin;
   String? _lastRoutedPhase;
 
@@ -45,6 +48,23 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
 
   LatLng? get _livePoint {
     return _latLng(widget.shipment.liveLat, widget.shipment.liveLng);
+  }
+
+  List<TripRouteStop> get _routeStops => widget.shipment.stops
+      .where((stop) => stop.isExtraStop && stop.hasCoordinates)
+      .toList(growable: false);
+
+  List<LatLng> get _stopPoints => [
+    for (final stop in _routeStops) LatLng(stop.lat!, stop.lng!),
+  ];
+
+  bool get _prePickup {
+    final status = (widget.shipment.bookingStatus ?? widget.shipment.status)
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+    return const {'assigned', 'confirmed', 'en_route_pickup'}.contains(status);
   }
 
   List<LatLng> get _points {
@@ -61,6 +81,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
               live.latitude != drop.latitude ||
               live.longitude != drop.longitude))
         live,
+      if (!_prePickup) ..._stopPoints,
       if (drop != null) drop,
     ];
   }
@@ -73,6 +94,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     final pickup = _pickupPoint;
     final live = _livePoint;
     final drop = _dropPoint;
+    final stops = _routeStops;
 
     if (pickup != null) {
       markers.add(
@@ -111,6 +133,35 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
       );
+    }
+
+    if (!_prePickup) {
+      var loadingCount = 0;
+      var unloadingCount = 0;
+      for (var index = 0; index < stops.length; index++) {
+        final stop = stops[index];
+        final label = stop.isLoading
+            ? 'L${++loadingCount}'
+            : 'U${++unloadingCount}';
+        markers.add(
+          Marker(
+            markerId: MarkerId('stop-${stop.index}'),
+            position: LatLng(stop.lat!, stop.lng!),
+            infoWindow: InfoWindow(
+              title: '$label ${stop.isLoading ? 'Loading' : 'Unloading'}',
+              snippet: stop.location,
+            ),
+            icon:
+                _stopMarkerIcons[label] ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                  stop.isLoading
+                      ? BitmapDescriptor.hueYellow
+                      : BitmapDescriptor.hueOrange,
+                ),
+            zIndexInt: 2,
+          ),
+        );
+      }
     }
 
     return markers;
@@ -185,6 +236,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     if (oldWidget.shipment != widget.shipment ||
         oldWidget.liveMode != widget.liveMode) {
       _loadRoute();
+      _loadStopMarkerIcons();
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     }
   }
@@ -194,6 +246,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     super.initState();
     _loadRoute();
     _loadTruckMarkerIcon();
+    _loadStopMarkerIcons();
   }
 
   Future<void> _loadTruckMarkerIcon() async {
@@ -213,6 +266,36 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
   }
 
+  Future<void> _loadStopMarkerIcons() async {
+    final labels = <String, Color>{};
+    var loadingCount = 0;
+    var unloadingCount = 0;
+    for (final stop in _routeStops) {
+      if (stop.isLoading) {
+        labels['L${++loadingCount}'] = const Color(0xFFB45309);
+      } else if (stop.isUnloading) {
+        labels['U${++unloadingCount}'] = const Color(0xFF2FA56E);
+      }
+    }
+    final missingLabels = labels.entries
+        .where((entry) => !_stopMarkerIcons.containsKey(entry.key))
+        .toList(growable: false);
+    if (missingLabels.isEmpty) {
+      return;
+    }
+
+    final icons = <String, BitmapDescriptor>{};
+    for (final entry in missingLabels) {
+      icons[entry.key] = await _buildStopMarkerIcon(entry.key, entry.value);
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _stopMarkerIcons.addAll(icons);
+    });
+  }
+
   Future<void> _loadRoute() async {
     final pickup = _pickupPoint;
     final drop = _dropPoint;
@@ -220,9 +303,10 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     final status = (widget.shipment.bookingStatus ?? widget.shipment.status)
         .trim()
         .toLowerCase();
-    final prePickup = const {'assigned', 'en_route_pickup'}.contains(status);
+    final prePickup = _prePickup;
     final origin = live ?? pickup;
     final destination = prePickup ? pickup : drop;
+    final waypoints = prePickup ? const <LatLng>[] : _stopPoints;
     final token = ++_routeRequestToken;
     if (origin == null || destination == null) {
       if (mounted) {
@@ -234,7 +318,9 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
 
     final previousOrigin = _lastRoutedOrigin;
-    if (_lastRoutedPhase == status &&
+    final routePhase =
+        '$status|${waypoints.map((point) => '${point.latitude},${point.longitude}').join('|')}';
+    if (_lastRoutedPhase == routePhase &&
         previousOrigin != null &&
         Geolocator.distanceBetween(
               previousOrigin.latitude,
@@ -248,7 +334,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
 
     _lastRoutedOrigin = origin;
-    _lastRoutedPhase = status;
+    _lastRoutedPhase = routePhase;
 
     try {
       final route = await _routesService.fetchDrivingRoute(
@@ -256,6 +342,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
         originLongitude: origin.longitude,
         destinationLatitude: destination.latitude,
         destinationLongitude: destination.longitude,
+        waypoints: waypoints,
       );
       if (!mounted || token != _routeRequestToken) {
         return;
@@ -330,6 +417,63 @@ LatLng? _latLng(double? latitude, double? longitude) {
     return null;
   }
   return LatLng(latitude, longitude);
+}
+
+Future<BitmapDescriptor> _buildStopMarkerIcon(String label, Color color) async {
+  const size = 96.0;
+  const center = Offset(size / 2, size / 2);
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+
+  final shadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.22)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+  canvas.drawCircle(center.translate(0, 5), 30, shadowPaint);
+
+  final fillPaint = Paint()..color = color;
+  canvas.drawCircle(center, 30, fillPaint);
+
+  final borderPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 5;
+  canvas.drawCircle(center, 30, borderPaint);
+
+  final tailPath = Path()
+    ..moveTo(center.dx - 10, center.dy + 24)
+    ..lineTo(center.dx, center.dy + 43)
+    ..lineTo(center.dx + 10, center.dy + 24)
+    ..close();
+  canvas.drawPath(tailPath, fillPaint);
+  canvas.drawPath(tailPath, borderPaint);
+
+  final textPainter = TextPainter(
+    text: TextSpan(
+      text: label,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 25,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0,
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  textPainter.paint(
+    canvas,
+    Offset(
+      center.dx - textPainter.width / 2,
+      center.dy - textPainter.height / 2,
+    ),
+  );
+
+  final image = await recorder.endRecording().toImage(
+    size.toInt(),
+    size.toInt(),
+  );
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  final bytes = byteData?.buffer.asUint8List() ?? Uint8List(0);
+  return BitmapDescriptor.bytes(bytes, width: 48, height: 48);
 }
 
 class _EmptyMapState extends StatelessWidget {

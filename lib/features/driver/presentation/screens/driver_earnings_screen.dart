@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../data/driver_dashboard_models.dart';
 
 class DriverEarningsScreen extends ConsumerStatefulWidget {
@@ -20,14 +21,14 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       body: dashboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => RefreshIndicator(
           onRefresh: () async {
             final _ = await ref.refresh(driverDashboardProvider.future);
           },
-          color: const Color(0xFF1F88C9),
+          color: AppColors.brand,
           backgroundColor: Colors.white,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -41,7 +42,7 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
                   child: Text(
                     error.toString().replaceFirst('Exception: ', ''),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFFE23A4B)),
+                    style: const TextStyle(color: AppColors.dangerText),
                   ),
                 ),
               ),
@@ -66,7 +67,7 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
             onRefresh: () async {
               final _ = await ref.refresh(driverDashboardProvider.future);
             },
-            color: const Color(0xFF1F88C9),
+            color: AppColors.brand,
             backgroundColor: Colors.white,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(
@@ -79,7 +80,6 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
                 _EarningsStatsGrid(
                   thisMonth: thisMonth,
                   lastMonth: lastMonth,
-                  total: total,
                   deliveredCount: deliveredCount,
                 ),
                 const SizedBox(height: 14),
@@ -88,7 +88,7 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
                 TextButton(
                   onPressed: () => context.push('/driver/all-earnings'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF1F8F49),
+                    foregroundColor: AppColors.brandDark,
                     textStyle: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   child: const Text('View all earnings'),
@@ -118,14 +118,8 @@ class _HeroBalanceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -137,7 +131,7 @@ class _HeroBalanceCard extends StatelessWidget {
                 Text(
                   'Current Balance',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -146,7 +140,7 @@ class _HeroBalanceCard extends StatelessWidget {
                 Text(
                   '₹${total.toStringAsFixed(0)}',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                     fontSize: 28,
                     height: 1.0,
@@ -158,13 +152,13 @@ class _HeroBalanceCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEAF8EF),
+                        color: AppColors.brandTint,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Icon(
                         AppIcons.account_balance_wallet_outlined,
                         size: 16,
-                        color: Color(0xFF1F8F49),
+                        color: AppColors.brandDark,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -172,7 +166,7 @@ class _HeroBalanceCard extends StatelessWidget {
                       Text(
                         'Ready for payout',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: const Color(0xFF1F8F49),
+                          color: AppColors.brandDark,
                           fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
@@ -185,7 +179,7 @@ class _HeroBalanceCard extends StatelessWidget {
                       ? 'You have not completed any deliveries yet.'
                       : 'You have completed $deliveredCount deliveries.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontSize: 12,
                     height: 1.4,
                   ),
@@ -194,7 +188,7 @@ class _HeroBalanceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Container(width: 1, height: 74, color: const Color(0xFFE4E7EC)),
+          Container(width: 1, height: 74, color: AppColors.divider),
           const SizedBox(width: 10),
           SizedBox(
             width: 96,
@@ -207,11 +201,11 @@ class _HeroBalanceCard extends StatelessWidget {
                   width: 88,
                   height: 88,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF8F1),
+                    color: AppColors.brandFill,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2FA56E).withValues(alpha: 0.12),
+                        color: AppColors.brand.withValues(alpha: 0.12),
                         blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),
@@ -240,13 +234,11 @@ class _EarningsStatsGrid extends StatelessWidget {
   const _EarningsStatsGrid({
     required this.thisMonth,
     required this.lastMonth,
-    required this.total,
     required this.deliveredCount,
   });
 
   final double thisMonth;
   final double lastMonth;
-  final double total;
   final int deliveredCount;
 
   @override
@@ -273,8 +265,7 @@ class _EarningsStatsGrid extends StatelessWidget {
           child: _EarningsStatTile(
             icon: AppIcons.trending_up_rounded,
             label: 'Trips',
-            value: deliveredCount.toString(),
-            helper: '₹${total.toStringAsFixed(0)}',
+            value: _formatTripCount(deliveredCount),
           ),
         ),
       ],
@@ -287,69 +278,50 @@ class _EarningsStatTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    this.helper,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final String? helper;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 112),
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: const Color(0xFF2152D0), size: 20),
-          const SizedBox(height: 18),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF667085),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          if (helper != null) ...[
-            const SizedBox(height: 1),
+    return SizedBox(
+      height: 112,
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.divider),
+          boxShadow: AppShadows.card,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.brand, size: 20),
+            const Spacer(),
             Text(
-              helper!,
+              label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF1F8F49),
-                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -366,7 +338,7 @@ class _AveragePerDeliveryText extends StatelessWidget {
       'Average per delivery: ₹${average.toStringAsFixed(0)}',
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: const Color(0xFF667085),
+        color: AppColors.textSecondary,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -383,4 +355,11 @@ double _sumForMonth(List<BrokerSettlement> history, DateTime month) {
     }
     return sum + item.netEarnings;
   });
+}
+
+String _formatTripCount(int count) {
+  if (count > 999) {
+    return '999+';
+  }
+  return count.toString();
 }

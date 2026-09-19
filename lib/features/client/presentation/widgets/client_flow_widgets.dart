@@ -19,6 +19,7 @@ import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
@@ -1881,6 +1882,7 @@ class TrackingDemoShipment {
     this.haltingGraceHours,
     this.haltingHours = 0,
     this.haltingCharge = 0,
+    this.stops = const [],
   });
 
   TrackingDemoShipment copyWith({
@@ -1921,6 +1923,7 @@ class TrackingDemoShipment {
     double? haltingGraceHours,
     double? haltingHours,
     double? haltingCharge,
+    List<TripRouteStop>? stops,
     bool clearPickupLat = false,
     bool clearPickupLng = false,
     bool clearDropLat = false,
@@ -1966,6 +1969,7 @@ class TrackingDemoShipment {
       haltingGraceHours: haltingGraceHours ?? this.haltingGraceHours,
       haltingHours: haltingHours ?? this.haltingHours,
       haltingCharge: haltingCharge ?? this.haltingCharge,
+      stops: stops ?? this.stops,
       amount: amount ?? this.amount,
       amountPaid: amountPaid ?? this.amountPaid,
       paymentStatus: paymentStatus ?? this.paymentStatus,
@@ -2009,6 +2013,7 @@ class TrackingDemoShipment {
   final double? haltingGraceHours;
   final double haltingHours;
   final double haltingCharge;
+  final List<TripRouteStop> stops;
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {
@@ -2238,6 +2243,7 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     tripId: '',
     bookingId: booking.id,
     bookingStatus: status,
+    stops: tripRouteStopsFromSource(raw),
     assignedDriverName: booking.raw['driver'] is Map
         ? _readString(
             (booking.raw['driver'] as Map).cast<String, dynamic>(),
@@ -3971,16 +3977,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       }
       return;
     }
-    if (_draft.loadingStops.isNotEmpty || _draft.unloadingStops.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          _brokerRoutePoints = const [];
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) => _fitBrokerCamera());
-      }
-      return;
-    }
-
     try {
       final service = ref.read(googlePlacesServiceProvider);
       final route = await service.fetchDrivingRoute(
@@ -3988,6 +3984,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         originLongitude: pickup.longitude,
         destinationLatitude: drop.latitude,
         destinationLongitude: drop.longitude,
+        waypoints: [
+          ..._draft.loadingStops.map((stop) => stop.latLng),
+          ..._draft.unloadingStops.map((stop) => stop.latLng),
+        ],
       );
       if (!mounted || token != _brokerRouteRequestToken) {
         return;
@@ -7372,10 +7372,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Icon(
-                AppIcons.chevron_right_rounded,
-                size: 22,
-              ),
+              child: const Icon(AppIcons.chevron_right_rounded, size: 22),
             ),
           ),
         ],

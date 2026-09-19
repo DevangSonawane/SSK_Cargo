@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import '../../../../core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -213,7 +214,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   ? 'Payment marked as ${paymentMode.toUpperCase()}.'
                   : 'Payment marked as paid.',
             ),
-            backgroundColor: const Color(0xFF2FA56E),
+            backgroundColor: AppColors.brand,
           ),
         );
         unawaited(_finalizeTripAfterPayment());
@@ -245,7 +246,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -253,7 +254,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -328,7 +329,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Payment QR uploaded successfully.'),
-          backgroundColor: Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
     } on ApiException catch (error) {
@@ -336,7 +337,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -344,7 +345,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -390,7 +391,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Payment recorded as ${mode.toUpperCase()}.'),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
       context.go('/driver/thank-you/${widget.tripId}');
@@ -399,7 +400,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -407,7 +408,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -498,132 +499,167 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         ? 'Advance paid - balance due'
         : 'Payment pending';
     final paymentStatusBackground = _paymentStatus == 'paid'
-        ? const Color(0xFFEAF7EF)
-        : hasAdvance
-        ? const Color(0xFFFFF4DB)
-        : const Color(0xFFFFF7ED);
-    final paymentStatusForeground = _paymentStatus == 'paid'
-        ? const Color(0xFF2FA56E)
-        : hasAdvance
-        ? const Color(0xFFB54708)
-        : const Color(0xFFB54708);
-    const paidToWallet = '₹40.30';
-    const orderValue = '₹101.00';
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.black.withValues(alpha: 0.16);
+    final paymentStatusForeground = Colors.white;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF101828),
-        elevation: 0,
-        title: const Text(
-          'Payments',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD0D5DD)),
-              ),
-              child: const Icon(AppIcons.support_agent_rounded, size: 18),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(AppIcons.help_outline_rounded, size: 18),
-              label: const Text('Help'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF101828),
-                side: const BorderSide(color: Color(0xFFD0D5DD)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
           children: [
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => context.pop(),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      AppIcons.arrow_back_rounded,
+                      size: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Collect payment',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _bookingId ?? widget.tripId,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
             if (_loadingTrip) ...[
               const LinearProgressIndicator(
                 minHeight: 2,
-                backgroundColor: Color(0xFFE8EDF2),
-                color: Color(0xFF1F88C9),
+                backgroundColor: AppColors.divider,
+                color: AppColors.brand,
               ),
               const SizedBox(height: 12),
             ],
-            const SizedBox(height: 16),
-            Text(
-              hasAdvance
-                  ? 'Remaining balance to collect'
-                  : 'Amount to be collected',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              amountToCollect,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: const Color(0xFF2FA56E),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: paymentStatusBackground,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  paymentStatusLabel,
-                  style: TextStyle(
-                    color: paymentStatusForeground,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF2FB),
-                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [AppColors.brandDark, AppColors.brand],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.brand.withValues(alpha: 0.28),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _PaymentRow(
-                    label: 'Collect from customer',
-                    value: amountToCollect,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          hasAdvance
+                              ? 'Remaining balance to collect'
+                              : 'Amount to collect from the customer',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: paymentStatusBackground,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Text(
+                          paymentStatusLabel,
+                          style: TextStyle(
+                            color: paymentStatusForeground,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _PaymentRow(label: 'Paid to wallet', value: paidToWallet),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Divider(height: 1, thickness: 1),
+                  const SizedBox(height: 14),
+                  Text(
+                    amountToCollect,
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  _PaymentRow(label: 'Order Value', value: orderValue),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: _PaymentRow(
+                      label: 'Due from customer',
+                      value: amountToCollect,
+                      light: true,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    hasAdvance
+                        ? 'An advance has already been paid for this delivery.'
+                        : 'Share your QR or collect cash to complete the payment.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -631,7 +667,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: const Color(0xFF171A23),
+                color: AppColors.brandDark,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -668,7 +704,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                       selected: {_qrSource},
                       style: SegmentedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        selectedForegroundColor: const Color(0xFF101828),
+                        selectedForegroundColor: AppColors.textPrimary,
                         selectedBackgroundColor: Colors.white,
                       ),
                       onSelectionChanged: (selection) {
@@ -696,7 +732,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                     child: ElevatedButton(
                       onPressed: _savingQr ? null : _uploadQrCode,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3F73E0),
+                        backgroundColor: AppColors.brand,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -729,7 +765,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: Color(0xFFD0D5DD),
+                    color: AppColors.line,
                   ),
                 ),
                 Padding(
@@ -737,7 +773,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   child: Text(
                     'OR',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -746,33 +782,36 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: Color(0xFFD0D5DD),
+                    color: AppColors.line,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 52,
-              child: OutlinedButton(
+              height: 54,
+              child: ElevatedButton.icon(
                 onPressed: _collectingPayment ? null : _showPaymentModeSheet,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF101828),
-                  side: const BorderSide(color: Color(0xFFD0D5DD)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.textPrimary,
+                  disabledBackgroundColor: Colors.white.withValues(alpha: 0.7),
+                  side: const BorderSide(color: AppColors.line),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
-                child: _collectingPayment
+                icon: _collectingPayment
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2.2),
                       )
-                    : const Text(
-                        'Collect Cash',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
+                    : const Icon(AppIcons.payments_rounded, size: 20),
+                label: Text(
+                  _collectingPayment ? 'Recording…' : 'Collect Cash',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
           ],
@@ -829,32 +868,44 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
 }
 
 class _PaymentRow extends StatelessWidget {
-  const _PaymentRow({required this.label, required this.value});
+  const _PaymentRow({
+    required this.label,
+    required this.value,
+    this.light = false,
+  });
 
   final String label;
   final String value;
+  final bool light;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontWeight: FontWeight.w600,
+    final baseColor = light ? Colors.white : AppColors.textPrimary;
+    final dimColor = light
+        ? Colors.white.withValues(alpha: 0.82)
+        : AppColors.textPrimary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: dimColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF101828),
-            fontWeight: FontWeight.w800,
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: baseColor,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -879,7 +930,7 @@ class _QrPlaceholder extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1F2230),
+        color: AppColors.brandDark,
         borderRadius: BorderRadius.circular(28),
       ),
       child: Stack(
@@ -909,9 +960,9 @@ class _QrPlaceholder extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFF2D28B), width: 3),
+              border: Border.all(color: AppColors.warningBorder, width: 3),
             ),
-            child: Icon(centerIcon, color: Color(0xFFCA8A04), size: 28),
+            child: Icon(centerIcon, color: AppColors.warningText, size: 28),
           ),
         ],
       ),
@@ -942,8 +993,8 @@ class _QrPattern extends StatelessWidget {
               color: accent
                   ? Colors.white
                   : isDark
-                  ? const Color(0xFF707784)
-                  : const Color(0xFF2A2F3E),
+                  ? AppColors.textTertiary
+                  : AppColors.brandDark,
               borderRadius: BorderRadius.circular(3),
             ),
           );

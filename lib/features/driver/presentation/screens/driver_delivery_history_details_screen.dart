@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/data/client_booking_models.dart';
@@ -387,7 +388,7 @@ class _DriverDeliveryHistoryDetailsScreenState
   Widget build(BuildContext context) {
     final shipment = _shipment;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -405,7 +406,7 @@ class _DriverDeliveryHistoryDetailsScreenState
 
                   return RefreshIndicator(
                     onRefresh: _loadDetails,
-                    color: const Color(0xFF2FA56E),
+                    color: AppColors.brand,
                     backgroundColor: Colors.white,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(
@@ -461,7 +462,7 @@ class _DriverDeliveryHistoryDetailsScreenState
                                 const SizedBox(height: 16),
                                 _SectionCard(
                                   title: 'Trip Details',
-                                  accentColor: const Color(0xFF2FA56E),
+                                  accentColor: AppColors.brand,
                                   child: _TripDetailsGrid(
                                     bookingTime: _bookingTimeValue,
                                     expectedDelivery: _expectedDeliveryValue,
@@ -501,7 +502,7 @@ class _DriverDeliveryHistoryDetailsScreenState
                                 const SizedBox(height: 16),
                                 _SectionCard(
                                   title: 'Earnings',
-                                  accentColor: const Color(0xFF2FA56E),
+                                  accentColor: AppColors.brand,
                                   child: _EarningsPanel(
                                     earningsValue: _earningsValue,
                                     isPaid: _isPaidStatusText(_statusLabel),
@@ -699,13 +700,7 @@ class _HeaderBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -717,13 +712,13 @@ class _HeaderBar extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F6FB),
+                color: AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: const Icon(
                 AppIcons.arrow_back_rounded,
-                color: Color(0xFF101828),
+                color: AppColors.textPrimary,
                 size: 20,
               ),
             ),
@@ -737,7 +732,7 @@ class _HeaderBar extends StatelessWidget {
                 Text(
                   'Booking ID',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: AppColors.textTertiary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -747,7 +742,7 @@ class _HeaderBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -787,14 +782,8 @@ class _RouteSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -965,8 +954,8 @@ class _DeliverySlaPanel extends StatelessWidget {
     return _SectionCard(
       title: hasCharge ? 'Delivery Delay' : 'Delivery SLA',
       accentColor: hasCharge
-          ? const Color(0xFFC2410C)
-          : const Color(0xFF1F88C9),
+          ? AppColors.warningText
+          : AppColors.brand,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -975,8 +964,8 @@ class _DeliverySlaPanel extends StatelessWidget {
                 ? AppIcons.warning_amber_rounded
                 : AppIcons.schedule_rounded,
             color: hasCharge
-                ? const Color(0xFFC2410C)
-                : const Color(0xFF1F88C9),
+                ? AppColors.warningText
+                : AppColors.brand,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -985,7 +974,7 @@ class _DeliverySlaPanel extends StatelessWidget {
                   ? 'Delay charge ₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)} for ${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h over the expected delivery time.'
                   : 'Expected delivery within ~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: AppColors.textSecondary,
                 height: 1.35,
                 fontWeight: FontWeight.w700,
               ),
@@ -1013,7 +1002,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
 
     return _SectionCard(
       title: 'Driver Changed (${history.length})',
-      accentColor: const Color(0xFF1F88C9),
+      accentColor: AppColors.brand,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1021,12 +1010,12 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
             if (index > 0)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: Color(0xFFE8EDF2)),
+                child: Divider(height: 1, color: AppColors.divider),
               ),
             Text(
               '${sorted[index].fromDriverName.isEmpty ? 'Previous driver' : sorted[index].fromDriverName} -> ${sorted[index].toDriverName.isEmpty ? 'New driver' : sorted[index].toDriverName}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1035,7 +1024,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
               Text(
                 sorted[index].reason,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: AppColors.textSecondary,
                   height: 1.35,
                 ),
               ),
@@ -1049,7 +1038,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                   _formatFullDateTime(sorted[index].createdAt!),
               ].join(' • '),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF98A2B3),
+                color: AppColors.textTertiary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1136,14 +1125,8 @@ class _MapPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: SizedBox(
         height: 280,
@@ -1174,7 +1157,7 @@ class _MapPanel extends StatelessWidget {
                       },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF101828),
+                  foregroundColor: AppColors.textPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
@@ -1218,14 +1201,8 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1236,7 +1213,7 @@ class _SectionCard extends StatelessWidget {
                 width: 3,
                 height: 18,
                 decoration: BoxDecoration(
-                  color: accentColor ?? const Color(0xFF2FA56E),
+                  color: accentColor ?? AppColors.brand,
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -1244,7 +1221,7 @@ class _SectionCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1276,14 +1253,14 @@ class _PickupDropColumn extends StatelessWidget {
               _LocationBlock(
                 label: 'Pickup',
                 value: pickup,
-                color: const Color(0xFF2FA56E),
+                color: AppColors.brand,
                 icon: AppIcons.arrow_upward_rounded,
               ),
               const SizedBox(height: 14),
               _LocationBlock(
                 label: 'Drop',
                 value: drop,
-                color: const Color(0xFFF59E0B),
+                color: AppColors.warningText,
                 icon: AppIcons.location_on_rounded,
               ),
             ],
@@ -1337,7 +1314,7 @@ class _LocationBlock extends StatelessWidget {
               Text(
                 value,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),
@@ -1372,25 +1349,25 @@ class _TripDetailsGrid extends StatelessWidget {
             icon: AppIcons.calendar_month_outlined,
             label: 'Booking Time',
             value: bookingTime,
-            iconColor: const Color(0xFF2FA56E),
+            iconColor: AppColors.brand,
           ),
           _DetailStatTile(
             icon: AppIcons.access_time_rounded,
             label: 'Expected Delivery',
             value: expectedDelivery,
-            iconColor: const Color(0xFF2FA56E),
+            iconColor: AppColors.brand,
           ),
           _DetailStatTile(
             icon: AppIcons.local_shipping_outlined,
             label: 'Delivered On',
             value: deliveredOn,
-            iconColor: const Color(0xFF2FA56E),
+            iconColor: AppColors.brand,
           ),
           _DetailStatTile(
             icon: AppIcons.route_outlined,
             label: 'Distance Travelled',
             value: distanceTravelled,
-            iconColor: const Color(0xFF2FA56E),
+            iconColor: AppColors.brand,
           ),
         ];
 
@@ -1438,9 +1415,9 @@ class _DetailStatTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFD),
+          color: AppColors.fillSubtle,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFECEFF3)),
+          border: Border.all(color: AppColors.fillSubtle),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1463,7 +1440,7 @@ class _DetailStatTile extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: AppColors.textTertiary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1473,7 +1450,7 @@ class _DetailStatTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                       height: 1.15,
                     ),
@@ -1503,9 +1480,9 @@ class _EarningsPanel extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFD),
+            color: AppColors.fillSubtle,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFECEFF3)),
+            border: Border.all(color: AppColors.fillSubtle),
           ),
           child: Row(
             children: [
@@ -1513,7 +1490,7 @@ class _EarningsPanel extends StatelessWidget {
                 child: Text(
                   'Total Earnings',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1522,7 +1499,7 @@ class _EarningsPanel extends StatelessWidget {
                 earningsValue,
                 textAlign: TextAlign.right,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF2FA56E),
+                  color: AppColors.brand,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1535,18 +1512,18 @@ class _EarningsPanel extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF8EF),
+              color: AppColors.brandTint,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
-                const Icon(AppIcons.verified_rounded, color: Color(0xFF2FA56E)),
+                const Icon(AppIcons.verified_rounded, color: AppColors.brand),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Paid to Driver',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: const Color(0xFF2FA56E),
+                      color: AppColors.brand,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1554,7 +1531,7 @@ class _EarningsPanel extends StatelessWidget {
                 Text(
                   earningsValue,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF2FA56E),
+                    color: AppColors.brand,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1579,14 +1556,14 @@ class _StatusPill extends StatelessWidget {
       'completed' ||
       'delivered' ||
       'paid' ||
-      'settled' => const Color(0xFF2FA56E),
+      'settled' => AppColors.brand,
       'cancelled' ||
       'canceled' ||
       'declined' ||
       'rejected' ||
-      'expired' => const Color(0xFFE23A4B),
-      'pending' => const Color(0xFFF59E0B),
-      _ => const Color(0xFF667085),
+      'expired' => AppColors.dangerText,
+      'pending' => AppColors.warningText,
+      _ => AppColors.textSecondary,
     };
 
     return Container(
@@ -1621,7 +1598,7 @@ class _ErrorState extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: AppColors.divider),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1629,14 +1606,14 @@ class _ErrorState extends StatelessWidget {
             const Icon(
               AppIcons.error_outline_rounded,
               size: 36,
-              color: Color(0xFFE23A4B),
+              color: AppColors.dangerIcon,
             ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),

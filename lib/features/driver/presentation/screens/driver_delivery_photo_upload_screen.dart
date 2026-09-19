@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
@@ -166,7 +167,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not open image picker: $error'),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     }
@@ -206,7 +207,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not open video camera: $error'),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     }
@@ -219,7 +220,7 @@ class _DriverDeliveryPhotoUploadScreenState
           content: Text(
             'Add at least ${_minMedia - _totalMediaCount} more proof-of-delivery item(s).',
           ),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return;
@@ -274,7 +275,7 @@ class _DriverDeliveryPhotoUploadScreenState
           content: Text(
             '${_media.length} proof-of-delivery item(s) uploaded successfully.',
           ),
-          backgroundColor: const Color(0xFF2FA56E),
+          backgroundColor: AppColors.brand,
         ),
       );
 
@@ -298,7 +299,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -306,7 +307,7 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -319,86 +320,171 @@ class _DriverDeliveryPhotoUploadScreenState
   @override
   Widget build(BuildContext context) {
     final canSubmit = _totalMediaCount >= _minMedia && !_uploading;
+    final progress = _totalMediaCount / _maxMedia;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        title: const Text('Upload proof'),
-      ),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
-            if (_loadingTrip) ...[
-              const LinearProgressIndicator(
-                minHeight: 2,
-                backgroundColor: Color(0xFFE8EDF2),
-                color: Color(0xFF1F88C9),
-              ),
-              const SizedBox(height: 12),
-            ],
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => context.pop(),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      AppIcons.arrow_back_rounded,
+                      size: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Delivery proof',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Capture proof of the delivered item',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                gradient: const LinearGradient(
+                  colors: [AppColors.brandDark, AppColors.brand],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    color: AppColors.brand.withValues(alpha: 0.28),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
-              child: Center(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final pillMaxWidth = constraints.maxWidth.isFinite
-                        ? constraints.maxWidth
-                        : MediaQuery.sizeOf(context).width - 80;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          AppIcons.verified_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAF2FB),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFBFD4EA)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            AppIcons.receipt_long_rounded,
-                            size: 15,
-                            color: Color(0xFF1F88C9),
-                          ),
-                          const SizedBox(width: 6),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: math.max(0, pillMaxWidth - 42),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Proof of delivery',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                             ),
-                            child: Text(
+                            const SizedBox(height: 2),
+                            Text(
                               widget.tripId,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontWeight: FontWeight.w700,
                                   ),
                             ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            '$_totalMediaCount',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                          Text(
+                            'of $_maxMedia items',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ],
                       ),
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: _loadingTrip ? null : progress.clamp(0, 1),
+                      minHeight: 8,
+                      backgroundColor: Colors.white.withValues(alpha: 0.22),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _totalMediaCount < _minMedia
+                        ? 'Add at least ${_minMedia - _totalMediaCount} more to continue'
+                        : 'Ready to submit',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 18),
@@ -407,7 +493,7 @@ class _DriverDeliveryPhotoUploadScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -425,32 +511,82 @@ class _DriverDeliveryPhotoUploadScreenState
                     onAddVideo: _uploading ? null : _pickVideo,
                   ),
                   const SizedBox(height: 14),
-                  Text(
-                    '$_totalMediaCount of $_maxMedia photos/videos added',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (_totalMediaCount < _minMedia) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      'Add at least ${_minMedia - _totalMediaCount} more to continue.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFFB54708),
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _totalMediaCount >= _minMedia
+                              ? AppColors.brandTint
+                              : AppColors.warningFill,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: _totalMediaCount >= _minMedia
+                                ? AppColors.brandBorder
+                                : AppColors.warningBorder,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _totalMediaCount >= _minMedia
+                                  ? AppIcons.check_circle_outline_rounded
+                                  : AppIcons.add_rounded,
+                              size: 14,
+                              color: _totalMediaCount >= _minMedia
+                                  ? AppColors.brand
+                                  : AppColors.warningText,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '$_totalMediaCount added',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: _totalMediaCount >= _minMedia
+                                    ? AppColors.brand
+                                    : AppColors.warningText,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.fillSubtle,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Min $_minMedia · Max $_maxMedia',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton(
                       onPressed: canSubmit ? _submitPhotos : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
+                        backgroundColor: AppColors.brand,
+                        disabledBackgroundColor: AppColors.brand.withValues(
+                          alpha: 0.4,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -458,14 +594,27 @@ class _DriverDeliveryPhotoUploadScreenState
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 180),
                         child: _uploading
-                            ? const SizedBox(
+                            ? const Row(
                                 key: ValueKey('uploading'),
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Colors.white,
-                                ),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Uploading…',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
                               )
                             : const Text(
                                 key: ValueKey('submit'),
@@ -473,6 +622,7 @@ class _DriverDeliveryPhotoUploadScreenState
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
+                                  fontSize: 16,
                                 ),
                               ),
                       ),
@@ -556,7 +706,7 @@ class _PhotoTile extends StatelessWidget {
                 Image.memory(media.bytes, fit: BoxFit.cover)
               else
                 Container(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   child: const Center(
                     child: Icon(
                       AppIcons.play_circle_fill_rounded,
@@ -682,7 +832,7 @@ class _AddPhotoTile extends StatelessWidget {
             Positioned.fill(
               child: CustomPaint(
                 painter: _DashedRoundedRectPainter(
-                  color: const Color(0xFFBFD4EA),
+                  color: AppColors.brandBorder,
                   strokeWidth: 2,
                   dashWidth: 7,
                   dashSpace: 5,
@@ -721,12 +871,12 @@ class _AddPhotoTile extends StatelessWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEAF2FB),
+                            color: AppColors.brandTint,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: const Icon(
                             AppIcons.add_rounded,
-                            color: Color(0xFF1F88C9),
+                            color: AppColors.brand,
                             size: 24,
                           ),
                         ),
@@ -734,7 +884,7 @@ class _AddPhotoTile extends StatelessWidget {
                         const Text(
                           'More',
                           style: TextStyle(
-                            color: Color(0xFF1F88C9),
+                            color: AppColors.brand,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                           ),
@@ -759,14 +909,14 @@ class _RemoteMediaTile extends StatelessWidget {
       height: 104,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF7F0),
+          color: AppColors.brandTint,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFCDEFD9)),
+          border: Border.all(color: AppColors.brandBorder),
         ),
         child: const Center(
           child: Icon(
             AppIcons.check_circle_rounded,
-            color: Color(0xFF2FA56E),
+            color: AppColors.brand,
             size: 34,
           ),
         ),
@@ -796,12 +946,12 @@ class _MediaPickButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF1F88C9), size: 22),
+            Icon(icon, color: AppColors.brand, size: 22),
             const SizedBox(height: 4),
             Text(
               label,
               style: const TextStyle(
-                color: Color(0xFF1F88C9),
+                color: AppColors.brand,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
               ),

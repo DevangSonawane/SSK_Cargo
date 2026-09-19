@@ -28,8 +28,8 @@ class AdaptiveBottomLayoutWrapper extends StatelessWidget {
   /// Additional app-side breathing room when a thick navigation bar is present.
   final double extraThickNavigationPadding;
 
-  /// Uses [MediaQueryData.viewPadding] by default so keyboard appearance does
-  /// not remove the system navigation-bar reservation.
+  /// Uses [MediaQueryData.viewPadding] by default so runtime navigation-mode
+  /// changes remain detectable.
   final bool useViewPadding;
 
   final bool enabled;
@@ -41,6 +41,11 @@ class AdaptiveBottomLayoutWrapper extends StatelessWidget {
     }
 
     final mediaQuery = MediaQuery.of(context);
+    final keyboardIsOpen = mediaQuery.viewInsets.bottom > 0;
+    if (keyboardIsOpen) {
+      return child;
+    }
+
     final bottomSystemInset = useViewPadding
         ? mediaQuery.viewPadding.bottom
         : mediaQuery.padding.bottom;

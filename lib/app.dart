@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -12,7 +13,6 @@ import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
 import 'core/providers/driver_tracking_state_provider.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/adaptive_bottom_layout_wrapper.dart';
 import 'features/auth/data/auth_models.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 
@@ -24,6 +24,16 @@ class SSKApp extends ConsumerStatefulWidget {
 }
 
 class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
+  static const SystemUiOverlayStyle _transparentSystemBars =
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
+      );
+
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
@@ -374,8 +384,12 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       scaffoldMessengerKey: _messengerKey,
       routerConfig: router,
       builder: (context, child) {
-        return AdaptiveBottomLayoutWrapper(
-          child: child ?? const SizedBox.shrink(),
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: _transparentSystemBars,
+          child: ColoredBox(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );

@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
@@ -291,7 +292,7 @@ class _DriverKycRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please sign in again to submit KYC.'),
-          backgroundColor: Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
       return;
@@ -319,7 +320,7 @@ class _DriverKycRegistrationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('KYC submitted for review.'),
-            backgroundColor: Color(0xFF2FA56E),
+            backgroundColor: AppColors.brand,
           ),
         );
       }
@@ -328,7 +329,7 @@ class _DriverKycRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } catch (error) {
@@ -336,7 +337,7 @@ class _DriverKycRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString()),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -362,7 +363,7 @@ class _DriverKycRegistrationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please sign in again to upload documents.'),
-            backgroundColor: Color(0xFFE23A4B),
+            backgroundColor: AppColors.dangerIcon,
           ),
         );
         return;
@@ -402,7 +403,7 @@ class _DriverKycRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unable to pick document right now.'),
-          backgroundColor: Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     }
@@ -420,7 +421,7 @@ class _DriverKycRegistrationScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -432,14 +433,14 @@ class _DriverKycRegistrationScreenState
                       document.title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Choose how you want to upload this document.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -492,7 +493,7 @@ class _DriverKycRegistrationScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -504,7 +505,7 @@ class _DriverKycRegistrationScreenState
                       children: [
                         const Icon(
                           AppIcons.document_scanner_rounded,
-                          color: Color(0xFF1F88C9),
+                          color: AppColors.brand,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -513,7 +514,7 @@ class _DriverKycRegistrationScreenState
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF101828),
+                                  color: AppColors.textPrimary,
                                 ),
                           ),
                         ),
@@ -523,9 +524,9 @@ class _DriverKycRegistrationScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FB),
+                        color: AppColors.canvas,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                        border: Border.all(color: AppColors.divider),
                       ),
                       child: Row(
                         children: [
@@ -533,12 +534,12 @@ class _DriverKycRegistrationScreenState
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE6F3FF),
+                              color: AppColors.brandTint,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
                               AppIcons.insert_drive_file_rounded,
-                              color: Color(0xFF1F88C9),
+                              color: AppColors.brand,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -551,7 +552,7 @@ class _DriverKycRegistrationScreenState
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF101828),
+                                        color: AppColors.textPrimary,
                                       ),
                                 ),
                                 const SizedBox(height: 4),
@@ -559,7 +560,7 @@ class _DriverKycRegistrationScreenState
                                   attachment.sourceLabel ?? 'Upload',
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
-                                        color: const Color(0xFF667085),
+                                        color: AppColors.textSecondary,
                                       ),
                                 ),
                               ],
@@ -572,7 +573,7 @@ class _DriverKycRegistrationScreenState
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F88C9),
+                        backgroundColor: AppColors.brand,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
@@ -623,8 +624,8 @@ class _DriverKycRegistrationScreenState
                         child: Container(
                           height: 2,
                           color: activeIndex > i
-                              ? const Color(0xFF1F88C9)
-                              : const Color(0xFFE5E7EB),
+                              ? AppColors.brand
+                              : AppColors.line,
                         ),
                       ),
                     ],
@@ -663,7 +664,7 @@ class _DriverKycRegistrationScreenState
         Text(
           'Complete your KYC to verify your driver account.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF667085),
+            color: AppColors.textSecondary,
             height: 1.4,
           ),
         ),
@@ -838,7 +839,7 @@ class _DriverKycRegistrationScreenState
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               value: checked,
-              activeColor: const Color(0xFF1F88C9),
+              activeColor: AppColors.brand,
               onChanged: (value) {
                 _confirmCheckboxController.value = value ?? false;
                 setState(() {});
@@ -846,7 +847,7 @@ class _DriverKycRegistrationScreenState
               title: Text(
                 'I confirm that all the information provided is accurate.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -869,8 +870,8 @@ class _DriverKycRegistrationScreenState
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
     final currentStatus = isApproved ? 'Verified' : 'Pending Review';
     final statusColor = isApproved
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFF1F88C9);
+        ? AppColors.brand
+        : AppColors.brand;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -883,7 +884,7 @@ class _DriverKycRegistrationScreenState
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                color: AppColors.brand.withValues(alpha: 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 8),
               ),
@@ -896,16 +897,16 @@ class _DriverKycRegistrationScreenState
                 height: 170,
                 decoration: BoxDecoration(
                   color: isApproved
-                      ? const Color(0xFFEAF9F1)
-                      : const Color(0xFFEAF2FF),
+                      ? AppColors.brandTint
+                      : AppColors.brandTint,
                   shape: BoxShape.circle,
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(26),
                   decoration: BoxDecoration(
                     color: isApproved
-                        ? const Color(0xFF20B978)
-                        : const Color(0xFF2D72E8),
+                        ? AppColors.brandBright
+                        : AppColors.brand,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -925,8 +926,8 @@ class _DriverKycRegistrationScreenState
                 ),
                 decoration: BoxDecoration(
                   color: isApproved
-                      ? const Color(0xFF20B978)
-                      : const Color(0xFF2D72E8),
+                      ? AppColors.brandBright
+                      : AppColors.brand,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -944,7 +945,7 @@ class _DriverKycRegistrationScreenState
                 title,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF101B43),
+                  color: AppColors.textHeading,
                   fontSize: 23,
                   fontWeight: FontWeight.w700,
                 ),
@@ -954,7 +955,7 @@ class _DriverKycRegistrationScreenState
                 description,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF5F6D8E),
+                  color: AppColors.textSecondary,
                   fontSize: 15,
                   height: 1.55,
                 ),
@@ -970,7 +971,7 @@ class _DriverKycRegistrationScreenState
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                color: AppColors.brand.withValues(alpha: 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 8),
               ),
@@ -983,14 +984,14 @@ class _DriverKycRegistrationScreenState
                 children: [
                   _KycIconBadge(
                     icon: AppIcons.assignment_outlined,
-                    color: const Color(0xFF2D72E8),
-                    background: const Color(0xFFEAF2FF),
+                    color: AppColors.brand,
+                    background: AppColors.brandTint,
                   ),
                   const SizedBox(width: 16),
                   Text(
                     'Verification Details',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF101B43),
+                      color: AppColors.textHeading,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1000,8 +1001,8 @@ class _DriverKycRegistrationScreenState
               const SizedBox(height: 18),
               _verificationInfoRow(
                 icon: AppIcons.verified_rounded,
-                iconColor: const Color(0xFF20B978),
-                iconBackground: const Color(0xFFE9F9F1),
+                iconColor: AppColors.brandBright,
+                iconBackground: AppColors.brandTint,
                 label: 'Current Status',
                 value: currentStatus,
                 valueColor: statusColor,
@@ -1009,8 +1010,8 @@ class _DriverKycRegistrationScreenState
               ),
               _verificationInfoRow(
                 icon: AppIcons.calendar_month_outlined,
-                iconColor: const Color(0xFF2D72E8),
-                iconBackground: const Color(0xFFEAF2FF),
+                iconColor: AppColors.brand,
+                iconBackground: AppColors.brandTint,
                 label: 'Submitted Date',
                 value: _submittedAt != null
                     ? _formatDateTime(_submittedAt!)
@@ -1018,16 +1019,16 @@ class _DriverKycRegistrationScreenState
               ),
               _verificationInfoRow(
                 icon: AppIcons.badge_outlined,
-                iconColor: const Color(0xFF7656D9),
-                iconBackground: const Color(0xFFF0ECFF),
+                iconColor: AppColors.brand,
+                iconBackground: AppColors.brandTint,
                 label: 'Submission ID',
                 value: _submissionId ?? 'Not available',
               ),
               if (_reviewedAt != null)
                 _verificationInfoRow(
                   icon: AppIcons.schedule_outlined,
-                  iconColor: const Color(0xFFF5A623),
-                  iconBackground: const Color(0xFFFFF5E6),
+                  iconColor: AppColors.warningText,
+                  iconBackground: AppColors.warningFill,
                   label: 'Reviewed At',
                   value: _formatDateTime(_reviewedAt!),
                 ),
@@ -1039,9 +1040,9 @@ class _DriverKycRegistrationScreenState
           onPressed: _goBack,
           icon: const Icon(AppIcons.arrow_back_rounded, size: 23),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF1764E8),
+            foregroundColor: AppColors.brand,
             minimumSize: const Size.fromHeight(60),
-            side: const BorderSide(color: Color(0xFF1764E8), width: 1.5),
+            side: const BorderSide(color: AppColors.brand, width: 1.5),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
@@ -1069,7 +1070,7 @@ class _DriverKycRegistrationScreenState
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE5EAF2))),
+        border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
         children: [
@@ -1083,7 +1084,7 @@ class _DriverKycRegistrationScreenState
             child: Text(
               label,
               style: const TextStyle(
-                color: Color(0xFF5E6D8D),
+                color: AppColors.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -1097,7 +1098,7 @@ class _DriverKycRegistrationScreenState
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE9F9F1),
+                      color: AppColors.brandTint,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
@@ -1106,7 +1107,7 @@ class _DriverKycRegistrationScreenState
                         Text(
                           value,
                           style: TextStyle(
-                            color: valueColor ?? const Color(0xFF20B978),
+                            color: valueColor ?? AppColors.brandBright,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1114,7 +1115,7 @@ class _DriverKycRegistrationScreenState
                         const SizedBox(width: 6),
                         Icon(
                           AppIcons.check_rounded,
-                          color: valueColor ?? const Color(0xFF20B978),
+                          color: valueColor ?? AppColors.brandBright,
                           size: 18,
                         ),
                       ],
@@ -1124,7 +1125,7 @@ class _DriverKycRegistrationScreenState
                     value,
                     textAlign: TextAlign.right,
                     style: TextStyle(
-                      color: valueColor ?? const Color(0xFF101B43),
+                      color: valueColor ?? AppColors.textHeading,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1165,7 +1166,7 @@ class _DriverKycRegistrationScreenState
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE8EDF2))),
+          border: Border(top: BorderSide(color: AppColors.divider)),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(22),
             topRight: Radius.circular(22),
@@ -1176,7 +1177,7 @@ class _DriverKycRegistrationScreenState
           child: FilledButton(
             onPressed: _saving ? null : action,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1F88C9),
+              backgroundColor: AppColors.brand,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
@@ -1291,7 +1292,7 @@ class _DriverKycRegistrationScreenState
                     : 'Submit for Review',
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2152D0),
+                backgroundColor: AppColors.brand,
                 foregroundColor: Colors.white,
                 textStyle: const TextStyle(fontWeight: FontWeight.w900),
                 shape: RoundedRectangleBorder(
@@ -1320,9 +1321,9 @@ class _DriverKycRegistrationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: AppColors.fillSubtle,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FC),
+        backgroundColor: AppColors.fillSubtle,
         elevation: 0,
         centerTitle: true,
         toolbarHeight: 72,
@@ -1340,7 +1341,7 @@ class _DriverKycRegistrationScreenState
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF4B6B9D).withValues(alpha: 0.08),
+                    color: AppColors.brand.withValues(alpha: 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -1348,7 +1349,7 @@ class _DriverKycRegistrationScreenState
               ),
               child: const Icon(
                 AppIcons.chevron_left_rounded,
-                color: Color(0xFF173E9A),
+                color: AppColors.brand,
                 size: 30,
               ),
             ),
@@ -1360,7 +1361,7 @@ class _DriverKycRegistrationScreenState
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFF0F172A),
+            color: AppColors.textHeading,
           ),
         ),
       ),
@@ -1416,10 +1417,10 @@ class _KycStatusSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -1447,7 +1448,7 @@ class _KycStatusSummaryCard extends StatelessWidget {
                     Text(
                       visuals.title,
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
@@ -1456,7 +1457,7 @@ class _KycStatusSummaryCard extends StatelessWidget {
                     Text(
                       visuals.subtitle,
                       style: const TextStyle(
-                        color: Color(0xFF64748B),
+                        color: AppColors.textTertiary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         height: 1.35,
@@ -1526,10 +1527,10 @@ class _SubmittedDocumentsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.line),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -1545,12 +1546,12 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: AppColors.brandTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     AppIcons.fact_check_outlined,
-                    color: Color(0xFF2152D0),
+                    color: AppColors.brand,
                     size: 18,
                   ),
                 ),
@@ -1559,7 +1560,7 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                   child: Text(
                     'Submitted Documents',
                     style: TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1570,14 +1571,14 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                   icon: const Icon(AppIcons.edit_outlined, size: 15),
                   label: const Text('Edit'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF2152D0),
+                    foregroundColor: AppColors.brand,
                     textStyle: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, thickness: 1, color: AppColors.line),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -1647,7 +1648,7 @@ class _SubmittedFieldTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -1655,7 +1656,7 @@ class _SubmittedFieldTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF94A3B8), size: 14),
+              Icon(icon, color: AppColors.textTertiary, size: 14),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
@@ -1663,7 +1664,7 @@ class _SubmittedFieldTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.textTertiary,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1677,7 +1678,7 @@ class _SubmittedFieldTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               fontFamily: 'monospace',
@@ -1707,7 +1708,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1716,7 +1717,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
             uploaded
                 ? AppIcons.check_circle_rounded
                 : AppIcons.pending_outlined,
-            color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF94A3B8),
+            color: uploaded ? AppColors.brand : AppColors.textTertiary,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1727,7 +1728,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
                 Text(
                   '${document.title} Photo',
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1737,8 +1738,8 @@ class _SubmittedDocumentTile extends StatelessWidget {
                   uploaded ? 'Uploaded' : 'Not uploaded',
                   style: TextStyle(
                     color: uploaded
-                        ? const Color(0xFF1F8F49)
-                        : const Color(0xFF94A3B8),
+                        ? AppColors.brandDark
+                        : AppColors.textTertiary,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1752,7 +1753,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
               icon: const Icon(AppIcons.visibility_outlined, size: 14),
               label: const Text('View'),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF2152D0),
+                foregroundColor: AppColors.brand,
                 textStyle: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
@@ -1789,8 +1790,8 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
       subtitle: 'Your driver account is verified and active.',
       badge: 'VERIFIED',
       icon: AppIcons.verified_rounded,
-      color: Color(0xFF047857),
-      background: Color(0xFFEAF8EF),
+      color: AppColors.brandDark,
+      background: AppColors.brandTint,
     );
   }
   if (status.contains('reject') || status.contains('declin')) {
@@ -1799,8 +1800,8 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
       subtitle: 'Review the reason below and resubmit your documents.',
       badge: 'REJECTED',
       icon: AppIcons.error_outline_rounded,
-      color: Color(0xFFE23A4B),
-      background: Color(0xFFFFEEF0),
+      color: AppColors.dangerText,
+      background: AppColors.dangerFill,
     );
   }
   if (status.contains('submit') || status.contains('review')) {
@@ -1810,8 +1811,8 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
           'Documents submitted successfully. Review usually takes 24-48 hours.',
       badge: 'SUBMITTED',
       icon: AppIcons.hourglass_top_rounded,
-      color: Color(0xFF2152D0),
-      background: Color(0xFFEFF6FF),
+      color: AppColors.brand,
+      background: AppColors.brandTint,
     );
   }
   return const _KycStatusVisuals(
@@ -1819,8 +1820,8 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
     subtitle: 'Submit your identity and vehicle documents for verification.',
     badge: 'PENDING',
     icon: AppIcons.badge_outlined,
-    color: Color(0xFFD97706),
-    background: Color(0xFFFFF7ED),
+    color: AppColors.warningText,
+    background: AppColors.warningFill,
   );
 }
 
@@ -1866,8 +1867,8 @@ class _StepperItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompleted = index < activeIndex;
     final isActive = index == activeIndex;
-    final textMuted = const Color(0xFF667085);
-    final muted = const Color(0xFFE5E7EB);
+    final textMuted = AppColors.textSecondary;
+    final muted = AppColors.line;
 
     Widget circle;
     if (isCompleted) {
@@ -1875,7 +1876,7 @@ class _StepperItem extends StatelessWidget {
         width: 42,
         height: 42,
         decoration: const BoxDecoration(
-          color: Color(0xFF2FA56E),
+          color: AppColors.brand,
           shape: BoxShape.circle,
         ),
         child: const Icon(
@@ -1889,7 +1890,7 @@ class _StepperItem extends StatelessWidget {
         width: 42,
         height: 42,
         decoration: const BoxDecoration(
-          color: Color(0xFF1F88C9),
+          color: AppColors.brand,
           shape: BoxShape.circle,
         ),
         child: Center(
@@ -1916,7 +1917,7 @@ class _StepperItem extends StatelessWidget {
           child: Text(
             '${index + 1}',
             style: const TextStyle(
-              color: Color(0xFF98A2B3),
+              color: AppColors.textTertiary,
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
@@ -1941,7 +1942,7 @@ class _StepperItem extends StatelessWidget {
               height: 1.0,
               fontWeight: FontWeight.w600,
               color: isCompleted || isActive
-                  ? const Color(0xFF101828)
+                  ? AppColors.textPrimary
                   : textMuted,
             ),
           ),
@@ -1967,14 +1968,14 @@ class _SectionHeader extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF101828),
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF667085),
+            color: AppColors.textSecondary,
             height: 1.4,
           ),
         ),
@@ -1996,7 +1997,7 @@ class _CardSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -2013,7 +2014,7 @@ class _CardSection extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -2034,20 +2035,20 @@ class _WarningCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E8),
+        color: AppColors.warningFill,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF2D9A8)),
+        border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(AppIcons.info_outline_rounded, color: Color(0xFFB54708)),
+          const Icon(AppIcons.info_outline_rounded, color: AppColors.warningText),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF8A4B0F),
+                color: AppColors.warningText,
                 fontWeight: FontWeight.w600,
                 height: 1.35,
               ),
@@ -2091,17 +2092,17 @@ class _PremiumTextField extends StatelessWidget {
         ? AppIcons.check_rounded
         : AppIcons.close_rounded;
     final statusColor = !hasValue
-        ? const Color(0xFF98A2B3)
+        ? AppColors.textTertiary
         : valid
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFFE23A4B);
+        ? AppColors.brand
+        : AppColors.dangerIcon;
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -2124,7 +2125,7 @@ class _PremiumTextField extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -2147,7 +2148,7 @@ class _PremiumTextField extends StatelessWidget {
                     focusedErrorBorder: InputBorder.none,
                     hintText: hintText,
                     hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: AppColors.textTertiary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2186,12 +2187,12 @@ class _KycUploadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final uploaded = attachment.isUploaded;
     final borderColor = uploaded
-        ? const Color(0xFFB7E4C7)
-        : const Color(0xFFE8EDF2);
-    final backgroundColor = uploaded ? const Color(0xFFF0FBF4) : Colors.white;
+        ? AppColors.successBorder
+        : AppColors.divider;
+    final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
     final titleColor = uploaded
-        ? const Color(0xFF1F7A52)
-        : const Color(0xFF101828);
+        ? AppColors.successText
+        : AppColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2218,8 +2219,8 @@ class _KycUploadCard extends StatelessWidget {
                 height: 38,
                 decoration: BoxDecoration(
                   color: uploaded
-                      ? const Color(0xFFD9F3E5)
-                      : const Color(0xFFEAF1FF),
+                      ? AppColors.brandBorder
+                      : AppColors.brandTint,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -2227,8 +2228,8 @@ class _KycUploadCard extends StatelessWidget {
                       ? AppIcons.check_circle_rounded
                       : AppIcons.description_rounded,
                   color: uploaded
-                      ? const Color(0xFF2FA56E)
-                      : const Color(0xFF1F88C9),
+                      ? AppColors.brand
+                      : AppColors.brand,
                   size: 18,
                 ),
               ),
@@ -2265,7 +2266,7 @@ class _KycUploadCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                         fontSize: 10,
                       ),
                     ),
@@ -2275,7 +2276,7 @@ class _KycUploadCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                         fontSize: 10,
                       ),
                     ),
@@ -2335,11 +2336,11 @@ class _MiniIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = filled ? const Color(0xFF2FA56E) : Colors.white;
-    final iconColor = filled ? Colors.white : const Color(0xFF667085);
+    final background = filled ? AppColors.brand : Colors.white;
+    final iconColor = filled ? Colors.white : AppColors.textSecondary;
     final borderColor = filled
-        ? const Color(0xFF2FA56E)
-        : const Color(0xFFD0D5DD);
+        ? AppColors.brand
+        : AppColors.line;
 
     return SizedBox(
       width: 34,
@@ -2372,13 +2373,13 @@ class _TinyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: uploaded ? const Color(0xFFD9F3E5) : const Color(0xFFF2F4F7),
+        color: uploaded ? AppColors.brandBorder : AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: uploaded ? const Color(0xFF1F7A52) : const Color(0xFF667085),
+          color: uploaded ? AppColors.successText : AppColors.textSecondary,
           fontSize: 9,
           fontWeight: FontWeight.w700,
         ),
@@ -2406,7 +2407,7 @@ class _ReviewFieldRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -2424,7 +2425,7 @@ class _ReviewFieldRow extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -2433,7 +2434,7 @@ class _ReviewFieldRow extends StatelessWidget {
                 Text(
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
@@ -2444,7 +2445,7 @@ class _ReviewFieldRow extends StatelessWidget {
           IconButton(
             onPressed: onEdit,
             icon: const Icon(AppIcons.edit_rounded),
-            color: const Color(0xFF1F88C9),
+            color: AppColors.brand,
           ),
         ],
       ),
@@ -2478,7 +2479,7 @@ class _ReviewDocumentRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -2496,8 +2497,8 @@ class _ReviewDocumentRow extends StatelessWidget {
               width: 38,
               height: 38,
               color: uploaded
-                  ? const Color(0xFFD9F3E5)
-                  : const Color(0xFFEAF1FF),
+                  ? AppColors.brandBorder
+                  : AppColors.brandTint,
               child: hasPreview
                   ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
@@ -2505,8 +2506,8 @@ class _ReviewDocumentRow extends StatelessWidget {
                           ? AppIcons.check_rounded
                           : AppIcons.insert_drive_file_rounded,
                       color: uploaded
-                          ? const Color(0xFF2FA56E)
-                          : const Color(0xFF1F88C9),
+                          ? AppColors.brand
+                          : AppColors.brand,
                       size: 18,
                     ),
             ),
@@ -2523,7 +2524,7 @@ class _ReviewDocumentRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: const Color(0xFF101828),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -2533,8 +2534,8 @@ class _ReviewDocumentRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: uploaded
-                        ? const Color(0xFF1F7A52)
-                        : const Color(0xFF667085),
+                        ? AppColors.successText
+                        : AppColors.textSecondary,
                     fontSize: 10,
                   ),
                 ),
@@ -2579,22 +2580,22 @@ class _SheetAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: muted ? const Color(0xFFF8F9FC) : const Color(0xFFF5F7FB),
+          color: muted ? AppColors.fillSubtle : AppColors.canvas,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: AppColors.divider),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: muted ? const Color(0xFF667085) : const Color(0xFF1F88C9),
+              color: muted ? AppColors.textSecondary : AppColors.brand,
             ),
             const SizedBox(width: 12),
             Text(
               label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
+                color: AppColors.textPrimary,
               ),
             ),
           ],

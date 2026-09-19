@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../shared/data/trip_route_stop.dart';
 import '../../../../core/network/api_client.dart';
 
 class DriverDashboardData {
@@ -224,6 +225,7 @@ TrackingDemoShipment _shipmentFromTrip(Map<String, dynamic> trip) {
     bookingStatus: status,
     assignedDriverName: _stringFrom(trip, const ['driverName', 'driver_name']),
     assignedTruckName: _stringFrom(trip, const ['truckName', 'truck_name']),
+    stops: tripRouteStopsFromSource(trip),
   );
 }
 

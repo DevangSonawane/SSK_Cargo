@@ -17,6 +17,7 @@ import '../../data/client_booking_models.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 
 Map<String, dynamic> _asMap(Object? value) {
@@ -1975,6 +1976,7 @@ class _CompactSummaryCard extends StatelessWidget {
           _ReactRouteRail(
             fromLocation: shipment.fromLocation,
             toLocation: shipment.toLocation,
+            stops: shipment.stops,
           ),
           if (truckName.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -2243,15 +2245,21 @@ class _ExpressIconChip extends StatelessWidget {
 }
 
 class _ReactRouteRail extends StatelessWidget {
-  const _ReactRouteRail({required this.fromLocation, required this.toLocation});
+  const _ReactRouteRail({
+    required this.fromLocation,
+    required this.toLocation,
+    this.stops = const [],
+  });
 
   final String fromLocation;
   final String toLocation;
+  final List<TripRouteStop> stops;
 
   @override
   Widget build(BuildContext context) {
     final pickup = _cleanTrackingLocation(fromLocation, 'Pickup pending');
     final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
+    final extraStops = stops.where((stop) => stop.isExtraStop).toList();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -2262,35 +2270,22 @@ class _ReactRouteRail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _RouteRailStop(
-            marker: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2FA56E),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2FA56E).withValues(alpha: 0.18),
-                    spreadRadius: 3,
-                  ),
-                ],
-              ),
+          _RouteRailStop(marker: const _RoutePickupMarker(), value: pickup),
+          const _RouteRailConnector(),
+          for (final stop in extraStops) ...[
+            _RouteRailStop(
+              marker: _RouteStopMarker(stop: stop),
+              value: _cleanTrackingLocation(stop.location, stop.label),
+              trailing: stop.isDone
+                  ? const Icon(
+                      AppIcons.check_circle_rounded,
+                      size: 15,
+                      color: Color(0xFF12B76A),
+                    )
+                  : null,
             ),
-            value: pickup,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Container(
-              width: 2,
-              height: 30,
-              margin: const EdgeInsets.symmetric(vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE4E7EC),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
+            const _RouteRailConnector(),
+          ],
           _RouteRailStop(
             marker: const Icon(
               AppIcons.location_on_rounded,
@@ -2306,10 +2301,15 @@ class _ReactRouteRail extends StatelessWidget {
 }
 
 class _RouteRailStop extends StatelessWidget {
-  const _RouteRailStop({required this.marker, required this.value});
+  const _RouteRailStop({
+    required this.marker,
+    required this.value,
+    this.trailing,
+  });
 
   final Widget marker;
   final String value;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -2323,19 +2323,85 @@ class _RouteRailStop extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            value,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF101828),
-              fontSize: 14,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF101828),
+                    fontSize: 14,
+                    height: 1.3,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RoutePickupMarker extends StatelessWidget {
+  const _RoutePickupMarker();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2FA56E),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2FA56E).withValues(alpha: 0.18),
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteStopMarker extends StatelessWidget {
+  const _RouteStopMarker({required this.stop});
+
+  final TripRouteStop stop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      stop.isLoading
+          ? AppIcons.inventory_2_outlined
+          : AppIcons.inventory_2_rounded,
+      color: const Color(0xFFF59E0B),
+      size: 16,
+    );
+  }
+}
+
+class _RouteRailConnector extends StatelessWidget {
+  const _RouteRailConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Container(
+        width: 2,
+        height: 30,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE4E7EC),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
     );
   }
 }

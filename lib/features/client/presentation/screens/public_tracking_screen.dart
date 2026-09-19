@@ -5,6 +5,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/client_flow_widgets.dart';
@@ -216,6 +217,14 @@ class _RouteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _InfoLine(label: 'Pickup', value: shipment.fromLocation),
+          for (final stop in shipment.stops.where((stop) => stop.isExtraStop))
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: _InfoLine(
+                label: stop.label,
+                value: stop.location.isEmpty ? '-' : stop.location,
+              ),
+            ),
           const SizedBox(height: 12),
           _InfoLine(label: 'Drop-off', value: shipment.toLocation),
         ],
@@ -489,6 +498,7 @@ TrackingDemoShipment _shipmentFromPublicTracking(Map<String, dynamic> data) {
     haltingCharge:
         _readPublicDouble(data, const ['haltingCharge', 'halting_charge']) ?? 0,
     bookingStatus: status,
+    stops: tripRouteStopsFromSource(data),
     assignedDriverName: _readPublicString(data, const [
       'driverName',
       'driver_name',

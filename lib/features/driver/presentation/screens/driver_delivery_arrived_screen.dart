@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 class DriverDeliveryArrivedScreen extends ConsumerStatefulWidget {
   const DriverDeliveryArrivedScreen({super.key, required this.tripId});
@@ -45,9 +46,9 @@ class _DriverDeliveryArrivedScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         title: const Text('Arrived at destination'),
       ),
@@ -60,7 +61,7 @@ class _DriverDeliveryArrivedScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.06),
@@ -78,12 +79,12 @@ class _DriverDeliveryArrivedScreenState
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7EF),
+                          color: AppColors.brandTint,
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Icon(
                           AppIcons.location_on_rounded,
-                          color: Color(0xFF2FA56E),
+                          color: AppColors.brand,
                           size: 28,
                         ),
                       ),
@@ -96,7 +97,7 @@ class _DriverDeliveryArrivedScreenState
                               'Delivery complete at location',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
-                                    color: const Color(0xFF101828),
+                                    color: AppColors.textPrimary,
                                     fontWeight: FontWeight.w900,
                                   ),
                             ),
@@ -105,7 +106,7 @@ class _DriverDeliveryArrivedScreenState
                               'The on-route card is replaced with this arrival step.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color: const Color(0xFF667085),
+                                    color: AppColors.textSecondary,
                                     height: 1.35,
                                   ),
                             ),
@@ -119,9 +120,9 @@ class _DriverDeliveryArrivedScreenState
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7FAFD),
+                      color: AppColors.fillSubtle,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                      border: Border.all(color: AppColors.divider),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +132,7 @@ class _DriverDeliveryArrivedScreenState
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: const Color(0xFF98A2B3),
+                                color: AppColors.textTertiary,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
@@ -140,7 +141,7 @@ class _DriverDeliveryArrivedScreenState
                           widget.tripId,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -175,7 +176,7 @@ class _DriverDeliveryArrivedScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,7 +192,7 @@ class _DriverDeliveryArrivedScreenState
                                 'Slide to confirm arrival',
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF101828),
+                                      color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w900,
                                     ),
                                 textAlign: TextAlign.center,
@@ -202,7 +203,7 @@ class _DriverDeliveryArrivedScreenState
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF667085),
+                                      color: AppColors.textSecondary,
                                       height: 1.4,
                                     ),
                               ),
@@ -223,12 +224,8 @@ class _DriverDeliveryArrivedScreenState
                                             const RoundSliderOverlayShape(
                                               overlayRadius: 0,
                                             ),
-                                        activeTrackColor: const Color(
-                                          0xFFE5E7EB,
-                                        ),
-                                        inactiveTrackColor: const Color(
-                                          0xFFE5E7EB,
-                                        ),
+                                        activeTrackColor: AppColors.line,
+                                        inactiveTrackColor: AppColors.line,
                                         thumbColor: Colors.white,
                                         overlayColor: Colors.transparent,
                                         trackGap: 6,
@@ -270,7 +267,7 @@ class _DriverDeliveryArrivedScreenState
                                               .textTheme
                                               .titleMedium
                                               ?.copyWith(
-                                                color: const Color(0xFF6B7280),
+                                                color: AppColors.textSecondary,
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w800,
                                               ),
@@ -290,10 +287,10 @@ class _DriverDeliveryArrivedScreenState
                               horizontal: 18,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF7FAFD),
+                              color: AppColors.fillSubtle,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFFE8EDF2),
+                                color: AppColors.divider,
                               ),
                             ),
                             child: Column(
@@ -303,7 +300,7 @@ class _DriverDeliveryArrivedScreenState
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.2,
-                                    color: Color(0xFF1F88C9),
+                                    color: AppColors.brand,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -312,7 +309,7 @@ class _DriverDeliveryArrivedScreenState
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
-                                        color: const Color(0xFF101828),
+                                        color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
@@ -322,7 +319,7 @@ class _DriverDeliveryArrivedScreenState
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
-                                        color: const Color(0xFF667085),
+                                        color: AppColors.textSecondary,
                                       ),
                                 ),
                               ],
@@ -360,7 +357,7 @@ class _MiniStat extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF98A2B3),
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -369,7 +366,7 @@ class _MiniStat extends StatelessWidget {
           value,
           textAlign: alignRight ? TextAlign.right : TextAlign.left,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF101828),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -408,7 +405,7 @@ class _ArrivalThumbShape extends SliderComponentShape {
       ..color = Colors.white
       ..isAntiAlias = true;
     final borderPaint = Paint()
-      ..color = const Color(0xFFE5E7EB)
+      ..color = AppColors.line
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
@@ -434,7 +431,7 @@ class _ArrivalThumbShape extends SliderComponentShape {
       text: TextSpan(
         text: String.fromCharCode(AppIcons.chevron_right_rounded.codePoint),
         style: TextStyle(
-          color: const Color(0xFF2FA56E),
+          color: AppColors.brand,
           fontSize: 28,
           fontWeight: FontWeight.w800,
           fontFamily: AppIcons.chevron_right_rounded.fontFamily,

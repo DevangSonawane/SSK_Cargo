@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../data/driver_dashboard_models.dart';
 
 class DriverAllEarningsScreen extends ConsumerWidget {
@@ -14,7 +15,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: dashboardAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -24,7 +25,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
               child: Text(
                 error.toString().replaceFirst('Exception: ', ''),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFFE23A4B)),
+                style: const TextStyle(color: AppColors.dangerText),
               ),
             ),
           ),
@@ -49,13 +50,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                      boxShadow: AppShadows.card,
                     ),
                     child: Row(
                       children: [
@@ -66,12 +61,12 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F6FB),
+                              color: AppColors.fillSubtle,
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Icon(
                               AppIcons.arrow_back_rounded,
-                              color: Color(0xFF101828),
+                              color: AppColors.textPrimary,
                               size: 20,
                             ),
                           ),
@@ -81,7 +76,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                           'All earnings',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w900,
                               ),
                         ),
@@ -100,14 +95,8 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0xFFE8EDF2)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
+                            border: Border.all(color: AppColors.divider),
+                            boxShadow: AppShadows.card,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,7 +105,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                                 'All earnings summary',
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF101828),
+                                      color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w900,
                                     ),
                               ),
@@ -125,7 +114,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                                 'A complete view of your delivery earnings across all months.',
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: const Color(0xFF667085),
+                                      color: AppColors.textSecondary,
                                       height: 1.4,
                                     ),
                               ),
@@ -133,7 +122,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                               const Divider(
                                 height: 1,
                                 thickness: 1,
-                                color: Color(0xFFECEFF3),
+                                color: AppColors.fillSubtle,
                               ),
                               const SizedBox(height: 14),
                               Row(
@@ -187,11 +176,11 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                               if (entry.key != grouped.keys.last)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 14),
-                                  child: Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    color: Color(0xFFECEFF3),
-                                  ),
+child: Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: AppColors.fillSubtle,
+                                    ),
                                 ),
                             ],
                           ),
@@ -219,9 +208,9 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFE),
+        color: AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EEF5)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +218,7 @@ class _SummaryChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -237,7 +226,7 @@ class _SummaryChip extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -266,14 +255,8 @@ class _MonthlyEarningsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -283,7 +266,7 @@ class _MonthlyEarningsSection extends StatelessWidget {
               Text(
                 month,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -291,14 +274,14 @@ class _MonthlyEarningsSection extends StatelessWidget {
               Text(
                 '₹${total.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFECEFF3)),
+          const Divider(height: 1, thickness: 1, color: AppColors.fillSubtle),
           const SizedBox(height: 12),
           ...deliveries.asMap().entries.expand(
             (entry) => [
@@ -333,7 +316,7 @@ class _DeliveryEarningRow extends StatelessWidget {
           child: Text(
             bookingNumber,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -341,7 +324,7 @@ class _DeliveryEarningRow extends StatelessWidget {
         Text(
           '₹${amount.toStringAsFixed(0)}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF101828),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -361,20 +344,20 @@ class _EmptyHistory extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         children: [
           const Icon(
             AppIcons.payments_outlined,
-            color: Color(0xFF98A2B3),
+            color: AppColors.textTertiary,
             size: 34,
           ),
           const SizedBox(height: 12),
           Text(
             'No completed trips yet',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -383,7 +366,7 @@ class _EmptyHistory extends StatelessWidget {
             'Settled earnings will show up here once trips are completed.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               height: 1.4,
             ),
           ),

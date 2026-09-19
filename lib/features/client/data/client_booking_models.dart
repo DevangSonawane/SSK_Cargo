@@ -1,3 +1,5 @@
+import '../../shared/data/trip_route_stop.dart';
+
 class ClientBookingPage {
   const ClientBookingPage({
     required this.bookings,
@@ -175,6 +177,7 @@ class ClientBooking {
     required this.haltingGraceHours,
     required this.haltingHours,
     required this.haltingCharge,
+    required this.stops,
     required this.raw,
   });
 
@@ -377,6 +380,7 @@ class ClientBooking {
             'halting_charge',
           ]) ??
           0,
+      stops: tripRouteStopsFromSource(json),
       raw: json,
     );
   }
@@ -406,6 +410,7 @@ class ClientBooking {
   final double? haltingGraceHours;
   final double haltingHours;
   final double haltingCharge;
+  final List<TripRouteStop> stops;
   final Map<String, dynamic> raw;
 
   String get displayTitle => material.isNotEmpty

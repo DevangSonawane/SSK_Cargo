@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
@@ -195,9 +196,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(accept ? 'Trip accepted.' : 'Trip declined.'),
-          backgroundColor: accept
-              ? const Color(0xFF2FA56E)
-              : const Color(0xFFE23A4B),
+          backgroundColor: accept ? AppColors.brand : AppColors.dangerIcon,
         ),
       );
       if (accept) {
@@ -208,7 +207,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -275,7 +274,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: const Color(0xFFE23A4B),
+          backgroundColor: AppColors.dangerIcon,
         ),
       );
     } finally {
@@ -331,8 +330,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: isOnline
-                          ? const Color(0xFF98A2B3)
-                          : const Color(0xFFE23A4B),
+                          ? AppColors.textTertiary
+                          : AppColors.dangerText,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -360,14 +359,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               ref.read(driverOnlineProvider.notifier).state =
                                   value;
                             },
-                      activeThumbColor: const Color(0xFF2FA56E),
-                      activeTrackColor: const Color(
-                        0xFF2FA56E,
-                      ).withValues(alpha: 0.35),
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: const Color(
-                        0xFFE23A4B,
-                      ).withValues(alpha: 0.35),
+                      activeThumbColor: AppColors.brand,
+                      activeTrackColor: AppColors.brand.withValues(alpha: 0.35),
+                      inactiveThumbColor: AppColors.surface,
+                      inactiveTrackColor: AppColors.dangerIcon.withValues(
+                        alpha: 0.35,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -376,8 +373,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: isOnline
-                          ? const Color(0xFF2FA56E)
-                          : const Color(0xFF98A2B3),
+                          ? AppColors.brand
+                          : AppColors.textTertiary,
                     ),
                   ),
                 ],
@@ -392,15 +389,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAFD),
+                  color: AppColors.brandFill,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Text(
                   'Active trip in progress. Online mode stays locked until the trip is completed.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textSecondary,
                     height: 1.35,
                     fontWeight: FontWeight.w600,
                   ),
@@ -408,7 +405,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
             ],
             const SizedBox(height: 18),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+            const Divider(height: 1, thickness: 1, color: AppColors.divider),
             const SizedBox(height: 18),
             Row(
               children: [
@@ -416,7 +413,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   child: Text(
                     'Deliveries',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF101828),
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -522,7 +519,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           'More requests',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -595,9 +592,10 @@ class _EmptyStateCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
@@ -605,17 +603,17 @@ class _EmptyStateCard extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: const BoxDecoration(
-              color: Color(0xFFF7FAFD),
+              color: AppColors.fillSubtle,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF98A2B3), size: 34),
+            child: Icon(icon, color: AppColors.textTertiary, size: 34),
           ),
           const SizedBox(height: 14),
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -623,7 +621,7 @@ class _EmptyStateCard extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF667085),
+              color: AppColors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -662,16 +660,10 @@ class _DeliveryOrderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -686,7 +678,7 @@ class _DeliveryOrderCard extends StatelessWidget {
                     Text(
                       'Delivery ID',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
+                        color: AppColors.textTertiary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -694,7 +686,7 @@ class _DeliveryOrderCard extends StatelessWidget {
                     Text(
                       request.displayRef,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -704,27 +696,27 @@ class _DeliveryOrderCard extends StatelessWidget {
               Text(
                 '₹${amount.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF2)),
+          const Divider(height: 1, thickness: 1, color: AppColors.divider),
           const SizedBox(height: 14),
           Column(
             children: [
               _RoutePointCard(
                 label: 'Pickup',
                 value: request.pickup,
-                accentColor: const Color(0xFF2FA56E),
+                accentColor: AppColors.brand,
               ),
               const SizedBox(height: 10),
               _RoutePointCard(
                 label: 'Drop',
                 value: request.drop,
-                accentColor: const Color(0xFFE23A4B),
+                accentColor: AppColors.dangerIcon,
               ),
             ],
           ),
@@ -734,14 +726,14 @@ class _DeliveryOrderCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFDF4E8),
+                color: AppColors.warningFill,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF4D3A5)),
+                border: Border.all(color: AppColors.warningBorder),
               ),
               child: Text(
                 'This request timed out for the driver. Broker handoff is active.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF9A5B13),
+                  color: AppColors.warningText,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),
@@ -763,7 +755,7 @@ class _DeliveryOrderCard extends StatelessWidget {
             Text(
               canOpen ? 'Slide to open negotiation' : statusLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF98A2B3),
+                color: AppColors.textTertiary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -776,9 +768,9 @@ class _DeliveryOrderCard extends StatelessWidget {
                 trackShape: const RoundedRectSliderTrackShape(),
                 thumbShape: const _RequestThumbShape(),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                activeTrackColor: const Color(0xFFE5E7EB),
-                inactiveTrackColor: const Color(0xFFE5E7EB),
-                thumbColor: Colors.white,
+                activeTrackColor: AppColors.line,
+                inactiveTrackColor: AppColors.line,
+                thumbColor: AppColors.surface,
                 overlayColor: Colors.transparent,
               ),
               child: Slider(
@@ -857,16 +849,10 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -881,7 +867,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                     Text(
                       request.displayRef,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -891,7 +877,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                           ? request.clientName
                           : 'Client request',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -904,13 +890,13 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
-                  borderRadius: BorderRadius.circular(999),
+                  color: AppColors.brandTint,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   '₹${amount.toStringAsFixed(0)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF2FA56E),
+                    color: AppColors.brand,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -923,13 +909,13 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
               _RoutePointCard(
                 label: 'Pickup',
                 value: request.pickup,
-                accentColor: const Color(0xFF2FA56E),
+                accentColor: AppColors.brand,
               ),
               const SizedBox(height: 10),
               _RoutePointCard(
                 label: 'Drop',
                 value: request.drop,
-                accentColor: const Color(0xFFE23A4B),
+                accentColor: AppColors.dangerIcon,
               ),
             ],
           ),
@@ -942,7 +928,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             ].join(' • '),
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           if (request.driverTimedOut) ...[
             const SizedBox(height: 12),
@@ -950,14 +936,14 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFDF4E8),
+                color: AppColors.warningFill,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF4D3A5)),
+                border: Border.all(color: AppColors.warningBorder),
               ),
               child: Text(
                 'This request timed out for the driver. Broker handoff is active.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF9A5B13),
+                  color: AppColors.warningText,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),
@@ -979,7 +965,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             Text(
               canOpen ? 'Swipe to open negotiation' : statusLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF98A2B3),
+                color: AppColors.textTertiary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -990,9 +976,9 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                 trackShape: const RoundedRectSliderTrackShape(),
                 thumbShape: const _RequestThumbShape(),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                activeTrackColor: const Color(0xFFE5E7EB),
-                inactiveTrackColor: const Color(0xFFE5E7EB),
-                thumbColor: Colors.white,
+                activeTrackColor: AppColors.line,
+                inactiveTrackColor: AppColors.line,
+                thumbColor: AppColors.surface,
                 overlayColor: Colors.transparent,
               ),
               child: Slider(
@@ -1026,9 +1012,9 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                     ? () => widget.onOpenNegotiation(request)
                     : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2FA56E),
-                  disabledBackgroundColor: const Color(0xFFE5E7EB),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.brand,
+                  disabledBackgroundColor: AppColors.fillSubtle,
+                  foregroundColor: AppColors.textOnBrand,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1066,7 +1052,7 @@ class _BrokerAssignedActions extends StatelessWidget {
         Text(
           'Already agreed with the broker - accept or decline.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF98A2B3),
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -1079,8 +1065,8 @@ class _BrokerAssignedActions extends StatelessWidget {
                 icon: const Icon(AppIcons.close_rounded, size: 17),
                 label: const Text('Decline'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFE23A4B),
-                  side: const BorderSide(color: Color(0xFFF3B4B4)),
+                  foregroundColor: AppColors.dangerText,
+                  side: const BorderSide(color: AppColors.dangerBorder),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1104,8 +1090,8 @@ class _BrokerAssignedActions extends StatelessWidget {
                     : const Icon(AppIcons.check_rounded, size: 17),
                 label: Text(busy ? 'Saving...' : 'Accept'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF2FA56E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.brand,
+                  foregroundColor: AppColors.textOnBrand,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1129,23 +1115,23 @@ class _BrokerAssignedNotice extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: AppColors.brandTint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCDEFD9)),
+        border: Border.all(color: AppColors.brandBorder),
       ),
       child: Row(
         children: [
           const Icon(
             AppIcons.handshake_rounded,
             size: 18,
-            color: Color(0xFF2FA56E),
+            color: AppColors.brand,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Broker-assigned - accept or decline, no negotiation.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF2FA56E),
+                color: AppColors.brand,
                 fontWeight: FontWeight.w800,
                 height: 1.35,
               ),
@@ -1177,16 +1163,10 @@ class _RoutePointCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1205,7 +1185,7 @@ class _RoutePointCard extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1217,7 +1197,7 @@ class _RoutePointCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
               height: 1.2,
             ),
@@ -1229,7 +1209,7 @@ class _RoutePointCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: AppColors.textSecondary,
                 height: 1.35,
               ),
             ),
@@ -1290,7 +1270,7 @@ class _RequestThumbShape extends SliderComponentShape {
     required Size sizeWithOverflow,
   }) {
     final canvas = context.canvas;
-    final paint = Paint()..color = Colors.white;
+    final paint = Paint()..color = AppColors.surface;
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.14)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
@@ -1311,7 +1291,7 @@ class _RequestThumbShape extends SliderComponentShape {
       text: const TextSpan(
         text: '\u27A4',
         style: TextStyle(
-          color: Color(0xFF2FA56E),
+          color: AppColors.brand,
           fontSize: 20,
           fontWeight: FontWeight.w900,
         ),

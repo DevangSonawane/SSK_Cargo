@@ -9,6 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import '../../../shared/data/trip_route_stop.dart';
 
 typedef BrokerTrucksQuery = ({String? status, int page, int limit});
 typedef BrokerDriversQuery = ({String? status, int page, int limit});
@@ -1997,6 +1998,7 @@ TrackingDemoShipment brokerDriverRequestToShipment(
     paymentStatus: request.driverTimedOut ? 'pending' : 'confirmed',
     bookingId: request.bookingId,
     bookingStatus: status,
+    stops: tripRouteStopsFromSource(request.raw),
     isExpress: request.isExpress,
     assignedDriverName: request.driverName.isNotEmpty
         ? request.driverName
@@ -2132,7 +2134,9 @@ class BrokerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = highlighted ? AppColors.surface : Colors.transparent;
+    final backgroundColor = highlighted
+        ? AppColors.surface
+        : Colors.transparent;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -2952,11 +2956,11 @@ class VehicleCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.line),
-        boxShadow: AppShadows.card,
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.line),
+          boxShadow: AppShadows.card,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -3053,31 +3057,31 @@ class VehicleCard extends StatelessWidget {
                 ),
               ],
             ),
-const SizedBox(height: 12),
-          Container(height: 1, color: AppColors.line),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _VehicleStatBlock(
-                  label: 'Capacity',
-                  value: vehicle.capacity,
-                  icon: AppIcons.shopping_bag_outlined,
+            const SizedBox(height: 12),
+            Container(height: 1, color: AppColors.line),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _VehicleStatBlock(
+                    label: 'Capacity',
+                    value: vehicle.capacity,
+                    icon: AppIcons.shopping_bag_outlined,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Container(width: 1, height: 28, color: AppColors.line),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _VehicleStatBlock(
-                  label: 'Location',
-                  value: meta.secondaryValue,
-                  icon: AppIcons.location_on_outlined,
-                  valueColor: meta.secondaryValueColor,
+                const SizedBox(width: 12),
+                Container(width: 1, height: 28, color: AppColors.line),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _VehicleStatBlock(
+                    label: 'Location',
+                    value: meta.secondaryValue,
+                    icon: AppIcons.location_on_outlined,
+                    valueColor: meta.secondaryValueColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ],
         ),
       ),
@@ -3404,11 +3408,7 @@ class DriverListTile extends StatelessWidget {
                 children: [
                   leftColumn,
                   const SizedBox(height: 14),
-                  const Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: AppColors.line,
-                  ),
+                  const Divider(height: 1, thickness: 1, color: AppColors.line),
                   const SizedBox(height: 6),
                   footer,
                 ],
@@ -4235,7 +4235,10 @@ class BrokerBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onTap,
-      icon: const Icon(AppIcons.arrow_back_rounded, color: AppColors.textPrimary),
+      icon: const Icon(
+        AppIcons.arrow_back_rounded,
+        color: AppColors.textPrimary,
+      ),
       iconSize: 24,
       padding: const EdgeInsets.all(8),
       alignment: Alignment.centerLeft,

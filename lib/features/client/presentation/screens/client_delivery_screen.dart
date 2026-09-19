@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
 import 'tracking_details_screen.dart';
@@ -452,6 +453,7 @@ class _MyBookingMobileCard extends StatelessWidget {
               child: _CompactRouteBlock(
                 pickup: _locationLabel(booking.pickupLocation, 'Pickup'),
                 drop: _locationLabel(booking.dropoffLocation, 'Drop'),
+                stops: booking.stops,
               ),
             ),
           ],
@@ -462,13 +464,19 @@ class _MyBookingMobileCard extends StatelessWidget {
 }
 
 class _CompactRouteBlock extends StatelessWidget {
-  const _CompactRouteBlock({required this.pickup, required this.drop});
+  const _CompactRouteBlock({
+    required this.pickup,
+    required this.drop,
+    this.stops = const [],
+  });
 
   final String pickup;
   final String drop;
+  final List<TripRouteStop> stops;
 
   @override
   Widget build(BuildContext context) {
+    final extraStops = stops.where((stop) => stop.isExtraStop).toList();
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,16 +486,20 @@ class _CompactRouteBlock extends StatelessWidget {
             child: Column(
               children: [
                 const _RouteDot(color: Color(0xFF2EBD72)),
-                Expanded(
-                  child: Container(
-                    width: 3,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD0D5DD),
-                      borderRadius: BorderRadius.circular(999),
+                for (var index = 0; index <= extraStops.length; index++) ...[
+                  Expanded(
+                    child: Container(
+                      width: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD0D5DD),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
-                ),
+                  if (index < extraStops.length)
+                    _RouteStopIcon(stop: extraStops[index]),
+                ],
                 const _RouteDot(color: Color(0xFFE8243C)),
               ],
             ),
@@ -503,6 +515,31 @@ class _CompactRouteBlock extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: _routeAddressStyle(context),
                 ),
+                for (final stop in extraStops) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          stop.location.isEmpty ? stop.label : stop.location,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: _routeAddressStyle(
+                            context,
+                          ).copyWith(color: const Color(0xFF667085)),
+                        ),
+                      ),
+                      if (stop.isDone) ...[
+                        const SizedBox(width: 8),
+                        const Icon(
+                          AppIcons.check_circle_rounded,
+                          color: Color(0xFF12B76A),
+                          size: 15,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Text(
                   drop,
@@ -530,6 +567,23 @@ class _RouteDot extends StatelessWidget {
       width: 9,
       height: 9,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
+class _RouteStopIcon extends StatelessWidget {
+  const _RouteStopIcon({required this.stop});
+
+  final TripRouteStop stop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      stop.isLoading
+          ? AppIcons.inventory_2_outlined
+          : AppIcons.inventory_2_rounded,
+      color: const Color(0xFFF59E0B),
+      size: 14,
     );
   }
 }

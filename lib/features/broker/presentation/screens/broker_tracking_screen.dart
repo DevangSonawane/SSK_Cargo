@@ -13,6 +13,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -1037,6 +1038,7 @@ class _BrokerDriverTripSheetState
   late Future<_BrokerDriverTripSnapshot> _snapshotFuture;
   bool _refreshing = false;
   bool _reassigning = false;
+  int? _completingStopIndex;
 
   @override
   void initState() {
@@ -1428,6 +1430,49 @@ class _BrokerDriverTripSheetState
     }
   }
 
+  Future<void> _completeStop(
+    _BrokerDriverTripSnapshot snapshot,
+    TripRouteStop stop,
+  ) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final tripId = snapshot.tripId;
+    if (session == null || tripId.isEmpty || _completingStopIndex != null) {
+      return;
+    }
+
+    setState(() => _completingStopIndex = stop.index);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .completeTripStop(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            index: stop.index,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${stop.label} marked complete.')));
+      await _refresh();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _completingStopIndex = null);
+      }
+    }
+  }
+
   Future<void> _updateIncidentMechanic(
     _BrokerTripIncident incident,
     _BrokerDriverTripSnapshot snapshot,
@@ -1692,6 +1737,14 @@ class _BrokerDriverTripSheetState
                     ),
                     const SizedBox(height: 10),
                     _TimelineSection(steps: data.shipment.timeline),
+                    if (data.shipment.stops.any((stop) => stop.isExtraStop))
+                      _BrokerStopsPanel(
+                        stops: data.shipment.stops,
+                        completingStopIndex: _completingStopIndex,
+                        onComplete: data.tripId.isEmpty
+                            ? null
+                            : (stop) => _completeStop(data, stop),
+                      ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -1876,6 +1929,167 @@ class _BrokerDriverTripSnapshot {
   final double? haltingRatePerHour;
   final double haltingHours;
   final double haltingCharge;
+}
+
+class _BrokerStopsPanel extends StatelessWidget {
+  const _BrokerStopsPanel({
+    required this.stops,
+    required this.completingStopIndex,
+    required this.onComplete,
+  });
+
+  final List<TripRouteStop> stops;
+  final int? completingStopIndex;
+  final ValueChanged<TripRouteStop>? onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final extraStops = stops.where((stop) => stop.isExtraStop).toList();
+    if (extraStops.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.fillSubtle,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Loading & Unloading Stops',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final stop in extraStops) ...[
+              _BrokerStopRow(
+                stop: stop,
+                actionable:
+                    !stop.isDone &&
+                    TripRouteStop.nextActionableIndex(stops, stop.type) ==
+                        stop.index,
+                completing: completingStopIndex == stop.index,
+                blocked: completingStopIndex != null,
+                onComplete: onComplete,
+              ),
+              if (stop != extraStops.last) const SizedBox(height: 10),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BrokerStopRow extends StatelessWidget {
+  const _BrokerStopRow({
+    required this.stop,
+    required this.actionable,
+    required this.completing,
+    required this.blocked,
+    required this.onComplete,
+  });
+
+  final TripRouteStop stop;
+  final bool actionable;
+  final bool completing;
+  final bool blocked;
+  final ValueChanged<TripRouteStop>? onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = stop.isDone
+        ? AppColors.successText
+        : stop.isLoading
+        ? AppColors.warningText
+        : AppColors.brand;
+    final canComplete = actionable && !blocked && onComplete != null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            stop.isDone
+                ? AppIcons.check_circle_rounded
+                : stop.isLoading
+                ? AppIcons.inventory_2_outlined
+                : AppIcons.inventory_2_rounded,
+            size: 19,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                stop.label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                stop.location.isEmpty ? '-' : stop.location,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ),
+              if (!stop.isDone && !actionable) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Complete earlier ${stop.type} stop first',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        if (stop.isDone)
+          const Icon(
+            AppIcons.check_circle_rounded,
+            color: AppColors.successText,
+          )
+        else
+          OutlinedButton(
+            onPressed: canComplete ? () => onComplete?.call(stop) : null,
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: completing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(stop.actionLabel),
+          ),
+      ],
+    );
+  }
 }
 
 class _BrokerTripIncident {
@@ -2173,9 +2387,7 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = step.completed
-        ? AppColors.brand
-        : AppColors.textTertiary;
+    final color = step.completed ? AppColors.brand : AppColors.textTertiary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2183,9 +2395,7 @@ class _TimelineRow extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: step.completed
-                ? AppColors.brandFill
-                : AppColors.fillSubtle,
+            color: step.completed ? AppColors.brandFill : AppColors.fillSubtle,
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -2532,6 +2742,7 @@ TrackingDemoShipment _shipmentFromTripData({
     bookingStatus: status,
     assignedDriverName: driver.name,
     assignedTruckName: driver.assignedVehicle,
+    stops: tripRouteStopsFromSource(tripData),
   );
 }
 

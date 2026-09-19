@@ -10,7 +10,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/negotiation_timer.dart';
+import '../../../../core/widgets/map_route_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
@@ -346,7 +348,7 @@ class _DriverOrderAcceptedScreenState
                             IconButton(
                               onPressed: _dismissClientConfirmationDialog,
                               icon: const Icon(AppIcons.close_rounded),
-                              color: const Color(0xFF98A2B3),
+                              color: AppColors.textTertiary,
                               tooltip: 'Close',
                             ),
                           ],
@@ -355,12 +357,12 @@ class _DriverOrderAcceptedScreenState
                           width: 56,
                           height: 56,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFEAF7EF),
+                            color: AppColors.brandTint,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             AppIcons.handshake_rounded,
-                            color: Color(0xFF2FA56E),
+                            color: AppColors.brand,
                             size: 30,
                           ),
                         ),
@@ -371,7 +373,7 @@ class _DriverOrderAcceptedScreenState
                           style: Theme.of(overlayContext).textTheme.titleLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
+                                color: AppColors.textPrimary,
                               ),
                         ),
                         const SizedBox(height: 10),
@@ -380,7 +382,7 @@ class _DriverOrderAcceptedScreenState
                           textAlign: TextAlign.center,
                           style: Theme.of(overlayContext).textTheme.bodyMedium
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: AppColors.textSecondary,
                                 height: 1.45,
                               ),
                         ),
@@ -405,9 +407,9 @@ class _DriverOrderAcceptedScreenState
                                         );
                                       },
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFE23A4B),
+                                  foregroundColor: AppColors.dangerText,
                                   side: const BorderSide(
-                                    color: Color(0xFFF3B4B4),
+                                    color: AppColors.dangerBorder,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
@@ -442,7 +444,7 @@ class _DriverOrderAcceptedScreenState
                                         );
                                       },
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2D6EF2),
+                                  backgroundColor: AppColors.brand,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
                                   ),
@@ -1033,7 +1035,7 @@ class _DriverOrderAcceptedScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('This offer is no longer available.'),
-            backgroundColor: Color(0xFFE23A4B),
+            backgroundColor: AppColors.dangerIcon,
           ),
         );
         ref.invalidate(driverRequestFeedProvider);
@@ -1061,6 +1063,304 @@ class _DriverOrderAcceptedScreenState
         });
       }
     }
+  }
+
+  Widget _buildStatusPanel({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool showSpinner = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showSpinner) ...[
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.6,
+                color: AppColors.brand,
+              ),
+            ),
+            const SizedBox(height: 14),
+          ] else ...[
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.brandTint,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, color: AppColors.brand, size: 26),
+            ),
+            const SizedBox(height: 14),
+          ],
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHandoffPanel() {
+    if (_handoffTripId?.trim().isNotEmpty ?? true) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.fillSubtle,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.6,
+                color: AppColors.brand,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              _handoffBookingReady
+                  ? 'Booking confirmed'
+                  : 'Booking is still syncing.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _handoffBookingReady
+                  ? 'We are opening the active trip view as soon as the trip is ready.'
+                  : 'We check the request, booking, and trip APIs every 5 seconds.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            if (!_handoffBookingReady) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: _refreshTripForHandoff,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.brand,
+                    side: const BorderSide(color: AppColors.brandBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  child: const Text(
+                    'Check now',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+    return _buildStatusPanel(
+      icon: AppIcons.play_circle_fill_rounded,
+      title: 'Booking finalized',
+      subtitle: 'Opening the active trip view.',
+    );
+  }
+
+  Widget _buildActionPanel({
+    required bool showCounterControls,
+    required bool actionLocked,
+    required double baseAmount,
+    required double minOffer,
+    required double maxOffer,
+    required double selectedAmount,
+  }) {
+    final request = _request;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showCounterControls) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Your offer',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'Base ₹${baseAmount.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '₹',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.brand,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  selectedAmount.toStringAsFixed(0),
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: AppColors.brand,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Slider(
+              value: selectedAmount.clamp(minOffer, maxOffer),
+              min: minOffer,
+              max: maxOffer,
+              divisions: 24,
+              activeColor: AppColors.brand,
+              inactiveColor: AppColors.line,
+              label: '₹${selectedAmount.toStringAsFixed(0)}',
+              onChanged: actionLocked
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _counterAmount = value;
+                      });
+                    },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '₹${minOffer.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+                Text(
+                  '₹${maxOffer.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
+          if (_handoffInProgress) ...[
+            _buildHandoffPanel(),
+          ] else if (_awaitingDriverConfirmation) ...[
+            _buildStatusPanel(
+              icon: AppIcons.handshake_rounded,
+              title: 'Client accepted your request',
+              subtitle:
+                  'Confirm or decline from the prompt that appeared above.',
+            ),
+          ] else if (_waitingOnClient) ...[
+            _buildStatusPanel(
+              showSpinner: true,
+              icon: AppIcons.hourglass_top_rounded,
+              title: 'Accepted - waiting for the client to confirm.',
+              subtitle: 'We update this in real time.',
+            ),
+          ] else if (_counterLocked) ...[
+            _buildStatusPanel(
+              showSpinner: true,
+              icon: AppIcons.send_rounded,
+              title: 'Counter sent. Waiting for client response...',
+              subtitle:
+                  'We will unlock the tracking button once the client accepts the offer.',
+            ),
+          ] else if (showCounterControls) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton(
+                onPressed: actionLocked
+                    ? null
+                    : () => _runAction(
+                        (token) => ref
+                            .read(apiClientProvider)
+                            .counterDriverRequestAsDriver(
+                              accessToken: token,
+                              id: request.id,
+                              amount: selectedAmount,
+                            ),
+                        isCounter: true,
+                      ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.brand,
+                  disabledBackgroundColor: AppColors.line,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                ),
+                child: Text(
+                  _submitting ? 'Saving...' : 'Send counter',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -1093,12 +1393,41 @@ class _DriverOrderAcceptedScreenState
         !_awaitingDriverConfirmation &&
         !_waitingOnClient &&
         !_counterLocked;
+    final heroShowCountdown = showCounterControls && !serverTimedOut;
+    final String heroTitle;
+    if (serverTimedOut) {
+      heroTitle = 'Handed over to broker';
+    } else if (_handoffInProgress) {
+      heroTitle = 'Finalizing the trip';
+    } else if (showCounterControls) {
+      heroTitle = 'Set your counter offer';
+    } else {
+      heroTitle = 'Negotiating with the client';
+    }
+    final String heroChipLabel;
+    if (serverTimedOut) {
+      heroChipLabel = 'Handed over';
+    } else if (_handoffInProgress) {
+      heroChipLabel = 'Handoff';
+    } else if (showCounterControls) {
+      heroChipLabel = _countdownLabel;
+    } else {
+      heroChipLabel = 'Locked';
+    }
+    final double? heroProgressValue = heroShowCountdown && remaining != null
+        ? (remaining.inMilliseconds / const Duration(minutes: 2).inMilliseconds)
+              .clamp(0.0, 1.0)
+              .toDouble()
+        : null;
+    final String? heroProgressCaption = heroShowCountdown
+        ? 'Client has $_countdownLabel to confirm your offer'
+        : null;
 
     if (brokerAssigned) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.canvas,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F7FB),
+          backgroundColor: AppColors.canvas,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(AppIcons.arrow_back_rounded),
@@ -1110,152 +1439,123 @@ class _DriverOrderAcceptedScreenState
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
+              const _StatusHero(
+                icon: AppIcons.assignment_turned_in_rounded,
+                title: 'Broker-assigned trip',
+                subtitle:
+                    'Already agreed with the broker - accept or decline, no counter-offers.',
+                chipLabel: 'Fixed price',
+              ),
+              const SizedBox(height: 14),
+              MapRouteCard(
+                pickup: request.pickup.isEmpty ? '-' : request.pickup,
+                drop: request.drop.isEmpty ? '-' : request.drop,
+                showRouteLabels: false,
+              ),
+              const SizedBox(height: 14),
+              _RequestRouteCard(
+                refText: request.displayRef,
+                amountLabel: 'AGREED AMOUNT',
+                amountText: '₹${baseAmount.toStringAsFixed(0)}',
+                pickup: request.pickup.isEmpty ? '-' : request.pickup,
+                drop: request.drop.isEmpty ? '-' : request.drop,
+              ),
+              const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.all(18),
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                  color: AppColors.fillSubtle,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      AppIcons.info_outline_rounded,
+                      size: 18,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'This trip was assigned by the broker at the agreed amount. You can decline it if you are not available.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF7EF),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Icon(
-                            AppIcons.assignment_turned_in_rounded,
-                            color: Color(0xFF2FA56E),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Broker-assigned trip',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: const Color(0xFF101828),
-                                    ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Already agreed with the broker - accept or decline, no counter-offers.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      height: 1.35,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    _SummaryPill(label: 'Request', value: request.displayRef),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Pickup',
-                      value: request.pickup.isNotEmpty ? request.pickup : '-',
-                    ),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Drop',
-                      value: request.drop.isNotEmpty ? request.drop : '-',
-                    ),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Agreed amount',
-                      value: '₹${baseAmount.toStringAsFixed(0)}',
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _submitting || serverTimedOut
-                                ? null
-                                : () => _runAction(
-                                    (token) => ref
-                                        .read(apiClientProvider)
-                                        .rejectDriverRequestAsDriver(
-                                          accessToken: token,
-                                          id: request.id,
-                                        ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _submitting || serverTimedOut
+                          ? null
+                          : () => _runAction(
+                              (token) => ref
+                                  .read(apiClientProvider)
+                                  .rejectDriverRequestAsDriver(
+                                    accessToken: token,
+                                    id: request.id,
                                   ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFE23A4B),
-                              side: const BorderSide(color: Color(0xFFF3B4B4)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
                             ),
-                            child: const Text(
-                              'Decline',
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.dangerText,
+                        side: const BorderSide(color: AppColors.dangerBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Decline',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _submitting || serverTimedOut
+                          ? null
+                          : () => _runAction(
+                              (token) => ref
+                                  .read(apiClientProvider)
+                                  .acceptDriverRequestAsDriver(
+                                    accessToken: token,
+                                    id: request.id,
+                                  ),
+                              resolveTripOnSuccess: true,
+                            ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Accept',
                               style: TextStyle(fontWeight: FontWeight.w800),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _submitting || serverTimedOut
-                                ? null
-                                : () => _runAction(
-                                    (token) => ref
-                                        .read(apiClientProvider)
-                                        .acceptDriverRequestAsDriver(
-                                          accessToken: token,
-                                          id: request.id,
-                                        ),
-                                    resolveTripOnSuccess: true,
-                                  ),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF2FA56E),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: _submitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.4,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Accept',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1264,9 +1564,9 @@ class _DriverOrderAcceptedScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(AppIcons.arrow_back_rounded),
@@ -1284,600 +1584,65 @@ class _DriverOrderAcceptedScreenState
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: serverTimedOut
-                      ? const Color(0xFFFFF7ED)
-                      : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: serverTimedOut
-                        ? const Color(0xFFFECF9E)
-                        : const Color(0xFFB7D7F0),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      serverTimedOut
-                          ? AppIcons.support_agent_rounded
-                          : AppIcons.timer_outlined,
-                      color: serverTimedOut
-                          ? const Color(0xFFB54708)
-                          : const Color(0xFF1F88C9),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            serverTimedOut
-                                ? 'Broker will take over negotiation'
-                                : 'Client is waiting for your request',
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: serverTimedOut
-                                      ? const Color(0xFF9A5B13)
-                                      : const Color(0xFF1F88C9),
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            handoffText,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: serverTimedOut
-                                      ? const Color(0xFF9A5B13)
-                                      : const Color(0xFF406B8F),
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        _countdownLabel,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: serverTimedOut
-                                  ? const Color(0xFF9A5B13)
-                                  : const Color(0xFF1F88C9),
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
+              _StatusHero(
+                isWarning: serverTimedOut,
+                icon: serverTimedOut
+                    ? AppIcons.support_agent_rounded
+                    : AppIcons.handshake_rounded,
+                title: heroTitle,
+                subtitle: serverTimedOut
+                    ? 'Broker controls this request now - waiting for new leads.'
+                    : handoffText,
+                chipLabel: heroShowCountdown ? null : heroChipLabel,
+                clockLabel: heroShowCountdown ? _countdownLabel : null,
+                clockFraction: heroProgressValue,
+                progress: heroProgressValue,
+                progressCaption: heroProgressCaption,
               ),
               const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+              MapRouteCard(
+                pickup: request.pickup.isEmpty ? '-' : request.pickup,
+                drop: request.drop.isEmpty ? '-' : request.drop,
+                showRouteLabels: false,
+              ),
+              const SizedBox(height: 14),
+              _RequestRouteCard(
+                refText: request.displayRef,
+                amountLabel: 'BASE OFFER',
+                amountText: '₹${baseAmount.toStringAsFixed(0)}',
+                pickup: request.pickup.isEmpty ? '-' : request.pickup,
+                drop: request.drop.isEmpty ? '-' : request.drop,
+                metaChips: [
+                  if (serverTimedOut)
+                    _MetaChip(
+                      icon: AppIcons.support_agent_rounded,
+                      text: 'Broker handling',
+                    )
+                  else if (_clientDecisionReady)
+                    _MetaChip(
+                      icon: AppIcons.handshake_rounded,
+                      text: 'Client responded',
+                    )
+                  else if (showCounterControls)
+                    _MetaChip(
+                      icon: AppIcons.bolt_rounded,
+                      text: 'Counter window',
+                    )
+                  else
+                    _MetaChip(
+                      icon: AppIcons.timer_outlined,
+                      text: 'Awaiting response',
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF7EF),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Icon(
-                            AppIcons.handshake_rounded,
-                            color: Color(0xFF2FA56E),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _clientDecisionReady
-                                    ? 'Client response received'
-                                    : 'Request ready',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: const Color(0xFF101828),
-                                    ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _clientDecisionReady
-                                    ? 'Client has responded. Choose whether to continue or decline.'
-                                    : 'Send a counter first. Accept and reject stay locked until the client responds.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      height: 1.35,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    _SummaryPill(label: 'Request', value: request.displayRef),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Pickup',
-                      value: request.pickup.isNotEmpty ? request.pickup : '-',
-                    ),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Drop',
-                      value: request.drop.isNotEmpty ? request.drop : '-',
-                    ),
-                    const SizedBox(height: 10),
-                    _SummaryPill(
-                      label: 'Base offer',
-                      value: '₹${baseAmount.toStringAsFixed(0)}',
-                    ),
-                    if (showCounterControls) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Counter amount',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF101828),
-                            ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Slide to set your counter amount before you confirm the request.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Offer price',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                Text(
-                                  '₹${selectedAmount.toStringAsFixed(0)}',
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        color: const Color(0xFF2FA56E),
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Slider(
-                              value: selectedAmount.clamp(minOffer, maxOffer),
-                              min: minOffer,
-                              max: maxOffer,
-                              divisions: 24,
-                              activeColor: const Color(0xFF2FA56E),
-                              inactiveColor: const Color(0xFFE4E7EC),
-                              label: '₹${selectedAmount.toStringAsFixed(0)}',
-                              onChanged: actionLocked
-                                  ? null
-                                  : (value) {
-                                      setState(() {
-                                        _counterAmount = value;
-                                      });
-                                    },
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '₹${minOffer.toStringAsFixed(0)}',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: const Color(0xFF98A2B3),
-                                      ),
-                                ),
-                                Text(
-                                  '₹${maxOffer.toStringAsFixed(0)}',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: const Color(0xFF98A2B3),
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ] else
-                      const SizedBox(height: 16),
-                    if (_handoffInProgress) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_handoffTripId?.isEmpty ?? true) ...[
-                              const SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.6,
-                                  color: Color(0xFF1F88C9),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                _handoffBookingReady
-                                    ? 'Booking confirmed'
-                                    : 'Booking is still syncing.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF101828),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _handoffBookingReady
-                                    ? 'We are opening the active trip view as soon as the trip is ready.'
-                                    : 'We check the request, booking, and trip APIs every 5 seconds.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      height: 1.35,
-                                    ),
-                              ),
-                              if (!_handoffBookingReady) ...[
-                                const SizedBox(height: 14),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: OutlinedButton(
-                                    onPressed: _refreshTripForHandoff,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF1F88C9),
-                                      side: const BorderSide(
-                                        color: Color(0xFFB7D7F0),
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Check now',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ] else ...[
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF7EF),
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: const Icon(
-                                  AppIcons.play_circle_fill_rounded,
-                                  color: Color(0xFF2FA56E),
-                                  size: 30,
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                'Booking finalized',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF101828),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Opening the active trip view.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      height: 1.35,
-                                    ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ] else if (_awaitingDriverConfirmation) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF7EF),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFBFE7CE)),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                AppIcons.handshake_rounded,
-                                color: Color(0xFF2FA56E),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'The client accepted at ₹${baseAmount.toStringAsFixed(0)}',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Confirm to finalize the booking.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF667085),
-                                    height: 1.35,
-                                  ),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .rejectDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: request.id,
-                                                ),
-                                          ),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFE23A4B),
-                                      side: const BorderSide(
-                                        color: Color(0xFFF3B4B4),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Decline',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: FilledButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => _runAction(
-                                            (token) => ref
-                                                .read(apiClientProvider)
-                                                .acceptDriverRequestAsDriver(
-                                                  accessToken: token,
-                                                  id: request.id,
-                                                ),
-                                            resolveTripOnSuccess: true,
-                                          ),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2FA56E),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: _submitting
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.4,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Text(
-                                            'Confirm',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (_waitingOnClient) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(
-                              width: 26,
-                              height: 26,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: Color(0xFF1F88C9),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Accepted - waiting for the client to confirm.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (_counterLocked) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFD),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8EDF2)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 26,
-                              height: 26,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: Color(0xFF1F88C9),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Counter sent. Waiting for client response...',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: const Color(0xFF101828),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'We will unlock the tracking button once the client accepts the offer.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF667085),
-                                    height: 1.35,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: actionLocked
-                              ? null
-                              : () => _runAction(
-                                  (token) => ref
-                                      .read(apiClientProvider)
-                                      .counterDriverRequestAsDriver(
-                                        accessToken: token,
-                                        id: request.id,
-                                        amount: selectedAmount,
-                                      ),
-                                  isCounter: true,
-                                ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF1F88C9),
-                            disabledBackgroundColor: const Color(0xFFD0D5DD),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            _submitting
-                                ? 'Saving...'
-                                : serverTimedOut
-                                ? 'Broker takeover'
-                                : 'Send counter',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _buildActionPanel(
+                showCounterControls: showCounterControls,
+                actionLocked: actionLocked,
+                baseAmount: baseAmount,
+                minOffer: minOffer,
+                maxOffer: maxOffer,
+                selectedAmount: selectedAmount,
               ),
             ],
           ),
@@ -1887,46 +1652,479 @@ class _DriverOrderAcceptedScreenState
   }
 }
 
-class _SummaryPill extends StatelessWidget {
-  const _SummaryPill({required this.label, required this.value});
+class _StatusHero extends StatelessWidget {
+  const _StatusHero({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.chipLabel,
+    this.clockLabel,
+    this.clockFraction,
+    this.progress,
+    this.progressCaption,
+    this.isWarning = false,
+  });
 
-  final String label;
-  final String value;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? chipLabel;
+  final String? clockLabel;
+  final double? clockFraction;
+  final double? progress;
+  final String? progressCaption;
+  final bool isWarning;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isWarning ? AppColors.warningText : AppColors.brandDark;
+    final textColor = isWarning ? AppColors.warningText : Colors.white;
+    final iconBg = isWarning
+        ? AppColors.warningBorder.withValues(alpha: 0.45)
+        : Colors.white.withValues(alpha: 0.16);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: isWarning
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.brand, AppColors.brandDark],
+              ),
+        color: isWarning ? AppColors.warningFill : null,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: isWarning ? Border.all(color: AppColors.warningBorder) : null,
+        boxShadow: isWarning ? null : AppShadows.brandGlow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: textColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: textColor.withValues(alpha: 0.9),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (clockLabel != null) ...[
+                const SizedBox(width: 10),
+                _CountdownClock(
+                  label: clockLabel!,
+                  fraction: clockFraction ?? 0,
+                ),
+              ] else if (chipLabel != null) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    chipLabel!,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (progress != null && progressCaption != null) ...[
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.22),
+                color: AppColors.brandBright,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(
+                  AppIcons.timer_outlined,
+                  size: 13,
+                  color: AppColors.brandBright,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    progressCaption!,
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.85),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestRefChip extends StatelessWidget {
+  const _RequestRefChip({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFD),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '$label: ',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
-              fontWeight: FontWeight.w700,
-            ),
+          const Icon(
+            AppIcons.assignment_outlined,
+            size: 15,
+            color: AppColors.textTertiary,
           ),
-          Expanded(
-            child: Text(
-              value.isEmpty ? '-' : value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF101828),
-                fontWeight: FontWeight.w800,
-              ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _RouteConnector extends StatelessWidget {
+  const _RouteConnector({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 2,
+      height: height,
+      child: CustomPaint(painter: _DashedLinePainter(color: AppColors.divider)),
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  _DashedLinePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    const dash = 5.0;
+    const gap = 4.0;
+    var y = 0.0;
+    while (y < size.height) {
+      final end = y + dash;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(0, end > size.height ? size.height : end),
+        paint,
+      );
+      y = end + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _RouteLabel extends StatelessWidget {
+  const _RouteLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.textTertiary,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+}
+
+class _RouteText extends StatelessWidget {
+  const _RouteText({
+    required this.title,
+    required this.subtitle,
+    required this.fallback,
+  });
+
+  final String title;
+  final String subtitle;
+  final String fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title.isEmpty ? fallback : title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            height: 1.25,
+          ),
+        ),
+        if (subtitle.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _RequestRouteCard extends StatelessWidget {
+  const _RequestRouteCard({
+    required this.refText,
+    required this.amountLabel,
+    required this.amountText,
+    required this.pickup,
+    required this.drop,
+    this.metaChips = const [],
+  });
+
+  final String refText;
+  final String amountLabel;
+  final String amountText;
+  final String pickup;
+  final String drop;
+  final List<Widget> metaChips;
+
+  @override
+  Widget build(BuildContext context) {
+    final pickupParts = _splitAddress(pickup);
+    final dropParts = _splitAddress(drop);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.divider),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _RequestRefChip(text: refText),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    amountLabel,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    amountText,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.brand,
+                    ),
+                  ),
+                  const _RouteConnector(height: 36),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.dangerIcon,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _RouteLabel(label: 'Pickup'),
+                    const SizedBox(height: 6),
+                    _RouteText(
+                      title: pickupParts.title,
+                      subtitle: pickupParts.subtitle,
+                      fallback: 'Pickup location',
+                    ),
+                    const SizedBox(height: 18),
+                    const _RouteLabel(label: 'Drop off'),
+                    const SizedBox(height: 6),
+                    _RouteText(
+                      title: dropParts.title,
+                      subtitle: dropParts.subtitle,
+                      fallback: 'Drop location',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (metaChips.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1, thickness: 1, color: AppColors.divider),
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: metaChips),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: AppColors.textTertiary),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddressParts {
+  const _AddressParts({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+}
+
+_AddressParts _splitAddress(String raw) {
+  final value = raw.trim();
+  if (value.isEmpty) {
+    return const _AddressParts(title: '', subtitle: '');
+  }
+  const separators = ['\n', ' - ', ' | ', ', '];
+  for (final separator in separators) {
+    final index = value.indexOf(separator);
+    if (index > 0) {
+      final title = value.substring(0, index).trim();
+      final subtitle = value.substring(index + separator.length).trim();
+      if (title.isNotEmpty) {
+        return _AddressParts(title: title, subtitle: subtitle);
+      }
+    }
+  }
+  return _AddressParts(title: value, subtitle: '');
 }
 
 Map<String, dynamic> _extractPayload(Map<String, dynamic> response) {
@@ -1960,4 +2158,143 @@ Map<String, dynamic>? _nestedRequestPayload(Map<String, dynamic> source) {
     }
   }
   return null;
+}
+
+class _CountdownClock extends StatefulWidget {
+  const _CountdownClock({required this.label, required this.fraction});
+
+  final String label;
+  final double fraction;
+
+  @override
+  State<_CountdownClock> createState() => _CountdownClockState();
+}
+
+class _CountdownClockState extends State<_CountdownClock>
+    with SingleTickerProviderStateMixin {
+  static const Color _green = Color(0xFF22C55E);
+  static const Color _amber = Color(0xFFF57C00);
+  static const Color _red = Color(0xFFDC2626);
+
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  static Color _zoneColor(double fraction) {
+    if (fraction > 0.45) return _green;
+    if (fraction > 0.2) return _amber;
+    return _red;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fraction = widget.fraction.clamp(0.0, 1.0).toDouble();
+    final urgent = fraction <= 0.2;
+    return TweenAnimationBuilder<Color>(
+      tween: Tween<Color>(begin: _green, end: _zoneColor(fraction)),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      builder: (context, color, child) {
+        return AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            final scale = urgent ? 1.0 + _pulseController.value * 0.08 : 1.0;
+            return Transform.scale(scale: scale, child: child);
+          },
+          child: SizedBox(
+            width: 66,
+            height: 66,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.95),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                CustomPaint(
+                  size: const Size(66, 66),
+                  painter: _CountdownRingPainter(
+                    color: color,
+                    fraction: fraction,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.timer_outlined, size: 13, color: color),
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CountdownRingPainter extends CustomPainter {
+  _CountdownRingPainter({required this.color, required this.fraction});
+
+  final Color color;
+  final double fraction;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 5.0;
+    final center = size.center(Offset.zero);
+    final radius = (size.shortestSide - stroke) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFFDFE6EC);
+    canvas.drawCircle(center, radius, trackPaint);
+
+    final progress = fraction.clamp(0.0, 1.0);
+    if (progress > 0) {
+      final arcPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color;
+      canvas.drawArc(
+        rect,
+        -math.pi / 2,
+        2 * math.pi * progress,
+        false,
+        arcPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CountdownRingPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.fraction != fraction;
 }
