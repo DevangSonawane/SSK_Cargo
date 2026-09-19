@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class GpsDemoVehicle {
@@ -40,7 +41,7 @@ const gpsDemoFleetVehicles = <GpsDemoVehicle>[
     location: 'Andheri East, Mumbai',
     timeAgo: '2 mins ago',
     color: Color(0xFF13B36C),
-    icon: Icons.local_shipping_rounded,
+    icon: AppIcons.local_shipping_rounded,
     position: LatLng(19.1176, 72.8697),
   ),
   GpsDemoVehicle(
@@ -53,7 +54,7 @@ const gpsDemoFleetVehicles = <GpsDemoVehicle>[
     location: 'Jogeshwari, Mumbai',
     timeAgo: '45 mins ago',
     color: Color(0xFFFF595D),
-    icon: Icons.local_shipping_rounded,
+    icon: AppIcons.local_shipping_rounded,
     position: LatLng(19.1364, 72.8427),
   ),
   GpsDemoVehicle(
@@ -66,7 +67,7 @@ const gpsDemoFleetVehicles = <GpsDemoVehicle>[
     location: 'Borivali West, Mumbai',
     timeAgo: '1 hr ago',
     color: Color(0xFF4B84F6),
-    icon: Icons.local_shipping_rounded,
+    icon: AppIcons.local_shipping_rounded,
     position: LatLng(19.2315, 72.8462),
   ),
   GpsDemoVehicle(
@@ -79,7 +80,7 @@ const gpsDemoFleetVehicles = <GpsDemoVehicle>[
     location: 'Unknown Location',
     timeAgo: '--',
     color: Color(0xFF8F98AA),
-    icon: Icons.local_shipping_rounded,
+    icon: AppIcons.local_shipping_rounded,
     position: LatLng(19.0760, 72.8777),
   ),
 ];

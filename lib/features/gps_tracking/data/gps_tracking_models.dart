@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 
 class GpsTrackerDevice {
   const GpsTrackerDevice({
@@ -151,7 +152,7 @@ class GpsTrackerDevice {
     return const Color(0xFF8F98AA);
   }
 
-  IconData get icon => Icons.local_shipping_rounded;
+  IconData get icon => AppIcons.local_shipping_rounded;
 }
 
 List<GpsTrackerDevice> parseGpsTrackerDevices(Map<String, dynamic> response) {

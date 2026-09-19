@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -344,7 +345,7 @@ class _DriverOrderAcceptedScreenState
                           children: [
                             IconButton(
                               onPressed: _dismissClientConfirmationDialog,
-                              icon: const Icon(Icons.close_rounded),
+                              icon: const Icon(AppIcons.close_rounded),
                               color: const Color(0xFF98A2B3),
                               tooltip: 'Close',
                             ),
@@ -358,7 +359,7 @@ class _DriverOrderAcceptedScreenState
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.handshake_rounded,
+                            AppIcons.handshake_rounded,
                             color: Color(0xFF2FA56E),
                             size: 30,
                           ),
@@ -1100,7 +1101,7 @@ class _DriverOrderAcceptedScreenState
           backgroundColor: const Color(0xFFF5F7FB),
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(AppIcons.arrow_back_rounded),
             onPressed: () => context.go('/driver/home'),
           ),
           title: const Text('Assigned request'),
@@ -1136,7 +1137,7 @@ class _DriverOrderAcceptedScreenState
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: const Icon(
-                            Icons.assignment_turned_in_rounded,
+                            AppIcons.assignment_turned_in_rounded,
                             color: Color(0xFF2FA56E),
                           ),
                         ),
@@ -1268,7 +1269,7 @@ class _DriverOrderAcceptedScreenState
         backgroundColor: const Color(0xFFF5F7FB),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
           onPressed: _goBackToHome,
         ),
         title: const Text('Driver request'),
@@ -1302,8 +1303,8 @@ class _DriverOrderAcceptedScreenState
                   children: [
                     Icon(
                       serverTimedOut
-                          ? Icons.support_agent_rounded
-                          : Icons.timer_outlined,
+                          ? AppIcons.support_agent_rounded
+                          : AppIcons.timer_outlined,
                       color: serverTimedOut
                           ? const Color(0xFFB54708)
                           : const Color(0xFF1F88C9),
@@ -1391,7 +1392,7 @@ class _DriverOrderAcceptedScreenState
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: const Icon(
-                            Icons.handshake_rounded,
+                            AppIcons.handshake_rounded,
                             color: Color(0xFF2FA56E),
                           ),
                         ),
@@ -1610,7 +1611,7 @@ class _DriverOrderAcceptedScreenState
                                   borderRadius: BorderRadius.circular(18),
                                 ),
                                 child: const Icon(
-                                  Icons.play_circle_fill_rounded,
+                                  AppIcons.play_circle_fill_rounded,
                                   color: Color(0xFF2FA56E),
                                   size: 30,
                                 ),
@@ -1658,7 +1659,7 @@ class _DriverOrderAcceptedScreenState
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.handshake_rounded,
+                                AppIcons.handshake_rounded,
                                 color: Color(0xFF2FA56E),
                               ),
                             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -180,49 +181,49 @@ class _ProfileContentCard extends StatelessWidget {
           const SizedBox(height: 10),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.person_outline_rounded,
+            icon: AppIcons.person_outline_rounded,
             title: 'Account Details',
             subtitle: 'View and update your personal information',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.notifications_none_rounded,
+            icon: AppIcons.notifications_none_rounded,
             title: 'Notifications',
             subtitle: 'Manage your notification preferences',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.settings_outlined,
+            icon: AppIcons.settings_outlined,
             title: 'Settings',
             subtitle: 'App settings and preferences',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.palette_outlined,
+            icon: AppIcons.palette_outlined,
             title: 'Appearance',
             subtitle: 'Customize app theme and display',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.lock_outline_rounded,
+            icon: AppIcons.lock_outline_rounded,
             title: 'Change Password',
             subtitle: 'Update your account password',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.help_outline_rounded,
+            icon: AppIcons.help_outline_rounded,
             title: 'Help & Support',
             subtitle: 'Get help and contact support',
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
           const _ProfileMenuTile(
-            icon: Icons.info_outline_rounded,
+            icon: AppIcons.info_outline_rounded,
             title: 'About',
             subtitle: 'App information and policies',
           ),
           const SizedBox(height: 4),
           _ProfileMenuTile(
-            icon: Icons.logout_rounded,
+            icon: AppIcons.logout_rounded,
             title: 'Logout',
             subtitle: 'Sign out from your account',
             danger: true,
@@ -287,7 +288,7 @@ class _ProfileSummaryRow extends StatelessWidget {
                   ],
                 ),
                 child: const Icon(
-                  Icons.edit_rounded,
+                  AppIcons.edit_rounded,
                   size: 12,
                   color: Color(0xFF245BD8),
                 ),
@@ -389,7 +390,7 @@ class _ProfileMenuTile extends StatelessWidget {
               ),
             ),
             const Icon(
-              Icons.chevron_right_rounded,
+              AppIcons.chevron_right_rounded,
               color: Color(0xFF8A96AB),
               size: 20,
             ),
@@ -430,14 +431,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -445,14 +446,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       selected: true,
                       onTap: () => context.go('/gps/profile'),
@@ -475,7 +476,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.map_outlined,
+                  AppIcons.map_outlined,
                   color: Colors.white,
                   size: 26,
                 ),

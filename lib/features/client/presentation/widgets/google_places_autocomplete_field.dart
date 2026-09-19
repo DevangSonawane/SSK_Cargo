@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/google_places_provider.dart';
@@ -251,7 +252,7 @@ class _GooglePlacesAutocompleteFieldState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
-                : const Icon(Icons.place_outlined, size: 18),
+                : const Icon(AppIcons.place_outlined, size: 18),
           ),
         ),
         if (_errorMessage != null) ...[
@@ -324,7 +325,7 @@ class _SuggestionTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.location_on_rounded,
+                  AppIcons.location_on_rounded,
                   size: 16,
                   color: Color(0xFF1F88C9),
                 ),

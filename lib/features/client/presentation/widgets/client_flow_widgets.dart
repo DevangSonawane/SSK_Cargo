@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -435,8 +437,8 @@ class _LocationDetailsScreenState
       : 'Use current location';
 
   IconData get _fieldIcon => widget.kind == _LocationFieldKind.pickup
-      ? Icons.arrow_upward_rounded
-      : Icons.arrow_downward_rounded;
+      ? AppIcons.arrow_upward_rounded
+      : AppIcons.arrow_downward_rounded;
 
   Color get _fieldIconColor => widget.kind == _LocationFieldKind.pickup
       ? const Color(0xFF38B47A)
@@ -550,13 +552,13 @@ class _LocationDetailsScreenState
                           child: const SizedBox(
                             width: 36,
                             height: 36,
-                            child: Icon(Icons.arrow_back_rounded, size: 24),
+                            child: Icon(AppIcons.arrow_back_rounded, size: 24),
                           ),
                         ),
                         const Spacer(),
                         OutlinedButton.icon(
                           onPressed: _openMapPicker,
-                          icon: const Icon(Icons.map_outlined, size: 17),
+                          icon: const Icon(AppIcons.map_outlined, size: 17),
                           label: Text(widget.mapButtonLabel),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF1F88C9),
@@ -696,7 +698,7 @@ class _LocationDetailsScreenState
                                                   child: const Padding(
                                                     padding: EdgeInsets.all(2),
                                                     child: Icon(
-                                                      Icons.close_rounded,
+                                                      AppIcons.close_rounded,
                                                       size: 18,
                                                       color: Color(0xFF667085),
                                                     ),
@@ -733,7 +735,7 @@ class _LocationDetailsScreenState
                                       ),
                                     )
                                   : const Icon(
-                                      Icons.my_location_rounded,
+                                      AppIcons.my_location_rounded,
                                       color: Color(0xFF2D8EDB),
                                       size: 24,
                                     ),
@@ -787,8 +789,8 @@ class _LocationDetailsScreenState
                               ActionChip(
                                 avatar: Icon(
                                   widget.kind == _LocationFieldKind.pickup
-                                      ? Icons.upload_rounded
-                                      : Icons.download_rounded,
+                                      ? AppIcons.upload_rounded
+                                      : AppIcons.download_rounded,
                                   size: 16,
                                   color:
                                       widget.kind == _LocationFieldKind.pickup
@@ -862,7 +864,7 @@ class _LocationDetailsScreenState
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: const Icon(Icons.arrow_forward_rounded),
+                  child: const Icon(AppIcons.arrow_forward_rounded),
                 ),
               ),
             ),
@@ -928,6 +930,7 @@ class _MapLocationPickerScreenState
   LatLng _center = _defaultCenter;
   LatLng? _ownLocation;
   bool _locationPermissionGranted = false;
+  bool _locatingOwnLocation = false;
   bool _resolving = false;
   String? _address;
 
@@ -937,13 +940,13 @@ class _MapLocationPickerScreenState
   @override
   void initState() {
     super.initState();
-    _loadCurrentPosition();
+    unawaited(_loadCurrentPosition());
   }
 
-  Future<void> _loadCurrentPosition() async {
+  Future<LatLng?> _loadCurrentPosition() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        return;
+        return null;
       }
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -951,7 +954,7 @@ class _MapLocationPickerScreenState
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        return;
+        return null;
       }
 
       if (mounted) {
@@ -965,36 +968,54 @@ class _MapLocationPickerScreenState
           accuracy: LocationAccuracy.high,
         ),
       );
-      if (!mounted) return;
+      if (!mounted) return null;
       final center = LatLng(position.latitude, position.longitude);
       setState(() {
         _center = center;
         _ownLocation = center;
       });
-      _mapController?.animateCamera(CameraUpdate.newLatLng(center));
+      await _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(center, 15),
+      );
+      return center;
     } catch (_) {
       // The picker remains usable from the default map center.
+      return null;
     }
   }
 
   Future<void> _returnToOwnLocation() async {
-    if (_ownLocation == null) {
-      await _loadCurrentPosition();
-    }
-    final ownLocation = _ownLocation;
-    if (ownLocation == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your location is not available yet.')),
-      );
+    if (_locatingOwnLocation) {
       return;
     }
     setState(() {
-      _center = ownLocation;
+      _locatingOwnLocation = true;
     });
-    await _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(ownLocation, 15),
-    );
+    try {
+      if (_ownLocation == null) {
+        await _loadCurrentPosition();
+      }
+      final ownLocation = _ownLocation;
+      if (ownLocation == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your location is not available yet.')),
+        );
+        return;
+      }
+      setState(() {
+        _center = ownLocation;
+      });
+      await _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(ownLocation, 15),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _locatingOwnLocation = false;
+        });
+      }
+    }
   }
 
   Future<void> _confirmLocation() async {
@@ -1056,6 +1077,14 @@ class _MapLocationPickerScreenState
             mapToolbarEnabled: false,
             onMapCreated: (controller) {
               _mapController = controller;
+              final ownLocation = _ownLocation;
+              if (ownLocation != null) {
+                unawaited(
+                  controller.animateCamera(
+                    CameraUpdate.newLatLngZoom(ownLocation, 15),
+                  ),
+                );
+              }
             },
             onCameraMove: (position) {
               _center = position.target;
@@ -1065,7 +1094,7 @@ class _MapLocationPickerScreenState
           const IgnorePointer(
             child: Center(
               child: Icon(
-                Icons.location_on_rounded,
+                AppIcons.location_on_rounded,
                 size: 48,
                 color: Color(0xFFE53935),
               ),
@@ -1077,7 +1106,7 @@ class _MapLocationPickerScreenState
               child: Row(
                 children: [
                   _MapCircleButton(
-                    icon: Icons.arrow_back_rounded,
+                    icon: AppIcons.arrow_back_rounded,
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 12),
@@ -1130,9 +1159,26 @@ class _MapLocationPickerScreenState
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _returnToOwnLocation,
-                        icon: const Icon(Icons.my_location_rounded, size: 18),
-                        label: const Text('Use my location'),
+                        onPressed: _locatingOwnLocation
+                            ? null
+                            : _returnToOwnLocation,
+                        icon: _locatingOwnLocation
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                AppIcons.my_location_rounded,
+                                size: 18,
+                              ),
+                        label: Text(
+                          _locatingOwnLocation
+                              ? 'Locating you...'
+                              : 'Use my location',
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1F88C9),
                           side: const BorderSide(color: Color(0xFFD7E7F4)),
@@ -1154,7 +1200,7 @@ class _MapLocationPickerScreenState
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.check_rounded),
+                            : const Icon(AppIcons.check_rounded),
                         label: Text(
                           _resolving
                               ? 'Finding address...'
@@ -1230,7 +1276,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.location_on_outlined,
+                  AppIcons.location_on_outlined,
                   size: 18,
                   color: Color(0xFF98A2B3),
                 ),
@@ -1506,7 +1552,7 @@ class _IntermediateStopsList extends StatelessWidget {
         _IntermediateStopTile(
           label: 'Loading point ${index + 1}',
           location: loadingStops[index].location,
-          icon: Icons.inventory_2_outlined,
+          icon: AppIcons.inventory_2_outlined,
           color: const Color(0xFFB7791F),
           onRemove: () => onRemoveLoading(index),
         ),
@@ -1514,7 +1560,7 @@ class _IntermediateStopsList extends StatelessWidget {
         _IntermediateStopTile(
           label: 'Unloading point ${index + 1}',
           location: unloadingStops[index].location,
-          icon: Icons.inventory_2_rounded,
+          icon: AppIcons.inventory_2_rounded,
           color: const Color(0xFFE35A62),
           onRemove: () => onRemoveUnloading(index),
         ),
@@ -1594,7 +1640,7 @@ class _IntermediateStopTile extends StatelessWidget {
           ),
           IconButton(
             onPressed: onRemove,
-            icon: const Icon(Icons.close_rounded, size: 18),
+            icon: const Icon(AppIcons.close_rounded, size: 18),
             tooltip: 'Remove stop',
             color: const Color(0xFF667085),
           ),
@@ -2059,7 +2105,7 @@ class PickupOtpBanner extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isVerified ? Icons.verified_rounded : Icons.key_rounded,
+                isVerified ? AppIcons.verified_rounded : AppIcons.key_rounded,
                 size: 18,
                 color: accentColor,
               ),
@@ -2582,7 +2628,7 @@ class LocationArc extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.location_on_rounded, color: scheme.primary, size: 17),
+            Icon(AppIcons.location_on_rounded, color: scheme.primary, size: 17),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -2611,7 +2657,7 @@ class LocationArc extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              AppIcons.arrow_forward_ios_rounded,
               size: 12,
               color: Colors.black.withValues(alpha: 0.45),
             ),
@@ -2914,7 +2960,7 @@ class PackageTrackingCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                 ),
-                icon: const Icon(Icons.more_horiz_rounded, size: 22),
+                icon: const Icon(AppIcons.more_horiz_rounded, size: 22),
                 color: Colors.black45,
               ),
             ],
@@ -3114,7 +3160,7 @@ class TruckIllustration extends StatelessWidget {
                 ],
               ),
               child: const Icon(
-                Icons.local_shipping_rounded,
+                AppIcons.local_shipping_rounded,
                 color: Colors.white,
                 size: 22,
               ),
@@ -3131,7 +3177,7 @@ class TruckIllustration extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Icon(
-                Icons.inventory_2_outlined,
+                AppIcons.inventory_2_outlined,
                 color: Colors.white,
                 size: 13,
               ),
@@ -3215,7 +3261,7 @@ class OptionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+            const Icon(AppIcons.chevron_right_rounded, color: Colors.black38),
           ],
         ),
       ),
@@ -4887,7 +4933,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               ),
               IconButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(AppIcons.close_rounded),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints.tightFor(
@@ -4914,7 +4960,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               Row(
                 children: [
                   const Icon(
-                    Icons.local_shipping_rounded,
+                    AppIcons.local_shipping_rounded,
                     color: Color(0xFF2FA56E),
                     size: 18,
                   ),
@@ -6012,7 +6058,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             width: 28,
                                             height: 28,
                                             child: Icon(
-                                              Icons.arrow_back_rounded,
+                                              AppIcons.arrow_back_rounded,
                                               size: 18,
                                             ),
                                           ),
@@ -6084,7 +6130,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                           width: 28,
                                           height: 28,
                                           child: Icon(
-                                            Icons.arrow_back_rounded,
+                                            AppIcons.arrow_back_rounded,
                                             size: 18,
                                           ),
                                         ),
@@ -6150,11 +6196,26 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final brokerMode = mode == BookingSearchMode.broker;
-        final normalSheetExtent = brokerMode ? 0.72 : 0.44;
-        final maxSheetExtent = brokerMode ? 0.78 : 0.54;
+        final mediaQuery = MediaQuery.of(context);
+        final view = View.of(context);
+        final viewBottomInset =
+            max(view.padding.bottom, view.viewPadding.bottom) /
+            view.devicePixelRatio;
+        final bottomSystemInset = max(
+          max(mediaQuery.viewPadding.bottom, mediaQuery.padding.bottom),
+          viewBottomInset,
+        );
+        final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+        final contentBottomPadding = isAndroid
+            ? max(bottomSystemInset, 56.0)
+            : bottomSystemInset;
+        final sheetBottomPadding = contentBottomPadding + 18;
+        const collapsedSheetExtent = 0.16;
+        const normalSheetExtent = 0.58;
+        final maxSheetExtent = brokerMode ? 0.82 : normalSheetExtent;
         final snapSizes = brokerMode
-            ? const [0.07, 0.44, 0.72, 0.78]
-            : const [0.07, 0.44, 0.54];
+            ? const [collapsedSheetExtent, normalSheetExtent, 0.82]
+            : const [collapsedSheetExtent, normalSheetExtent];
 
         return Stack(
           fit: StackFit.expand,
@@ -6186,149 +6247,58 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 ),
               ),
             if (!hideSearchPanel)
-              NotificationListener<DraggableScrollableNotification>(
-                onNotification: (notification) {
-                  final collapsedChanged =
-                      (_truckSearchSheetExtent <= 0.12) !=
-                      (notification.extent <= 0.12);
-                  if (collapsedChanged && mounted) {
-                    setState(() {
+              Positioned.fill(
+                child: NotificationListener<DraggableScrollableNotification>(
+                  onNotification: (notification) {
+                    final collapsedChanged =
+                        (_truckSearchSheetExtent <= 0.20) !=
+                        (notification.extent <= 0.20);
+                    if (collapsedChanged && mounted) {
+                      setState(() {
+                        _truckSearchSheetExtent = notification.extent;
+                      });
+                    } else {
                       _truckSearchSheetExtent = notification.extent;
-                    });
-                  } else {
-                    _truckSearchSheetExtent = notification.extent;
-                  }
-                  return false;
-                },
-                child: DraggableScrollableSheet(
-                  controller: _truckSearchSheetController,
-                  initialChildSize: normalSheetExtent,
-                  minChildSize: 0.07,
-                  maxChildSize: maxSheetExtent,
-                  snap: true,
-                  snapSizes: snapSizes,
-                  builder: (context, scrollController) {
-                    final isCollapsed = _truckSearchSheetExtent <= 0.12;
-                    return _SearchMethodSheet(
-                      child: AbsorbPointer(
-                        absorbing: isFindTruckSearching,
-                        child: Opacity(
-                          opacity: isFindTruckSearching ? 0.58 : 1,
-                          child: SingleChildScrollView(
-                            controller: scrollController,
-                            padding: EdgeInsets.fromLTRB(
-                              12,
-                              10,
-                              12,
-                              isCollapsed
-                                  ? 10
-                                  : MediaQuery.of(context).viewPadding.bottom +
-                                        14,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 58,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFD2DCEA),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                  ),
-                                ),
-                                if (!isCollapsed) ...[
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Choose Trucks',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          color: const Color(0xFF0B1F3A),
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 0,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildTruckCategoryPicker(context),
-                                  const SizedBox(height: 8),
-                                  if (mode == BookingSearchMode.truck) ...[
-                                    _buildFindTruckOptions(context),
-                                    const SizedBox(height: 8),
-                                    const Divider(
-                                      height: 1,
-                                      color: Color(0xFFE1E8F2),
-                                    ),
-                                    const SizedBox(height: 8),
-                                  ],
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _SearchModeCard(
-                                          selected:
-                                              mode == BookingSearchMode.truck,
-                                          icon: Icons.local_shipping_rounded,
-                                          title: 'Find Truck',
-                                          onTap: () {
-                                            _animateTruckSearchSheetTo(0.44);
-                                            setState(() {
-                                              _draft = _draft.copyWith(
-                                                searchMode:
-                                                    BookingSearchMode.truck,
-                                                selectedBrokerId: '',
-                                              );
-                                            });
-                                            unawaited(_startFindTruckSearch());
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: _SearchModeCard(
-                                          selected:
-                                              mode == BookingSearchMode.broker,
-                                          icon: Icons.person_rounded,
-                                          title: 'Search Broker',
-                                          onTap: () {
-                                            setState(() {
-                                              _draft = _draft.copyWith(
-                                                searchMode:
-                                                    BookingSearchMode.broker,
-                                              );
-                                            });
-                                            WidgetsBinding.instance
-                                                .addPostFrameCallback((_) {
-                                                  if (mounted) {
-                                                    _animateTruckSearchSheetTo(
-                                                      0.72,
-                                                    );
-                                                  }
-                                                });
-                                            unawaited(_loadEligibleBrokers());
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (mode == BookingSearchMode.broker) ...[
-                                    const SizedBox(height: 10),
-                                    const Divider(
-                                      height: 1,
-                                      color: Color(0xFFE1E8F2),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    _buildBrokerListOptions(context),
-                                  ],
-                                ],
-                              ],
+                    }
+                    return false;
+                  },
+                  child: DraggableScrollableSheet(
+                    controller: _truckSearchSheetController,
+                    initialChildSize: normalSheetExtent,
+                    minChildSize: collapsedSheetExtent,
+                    maxChildSize: maxSheetExtent,
+                    snap: true,
+                    snapAnimationDuration: const Duration(milliseconds: 220),
+                    snapSizes: snapSizes,
+                    shouldCloseOnMinExtent: false,
+                    builder: (context, scrollController) {
+                      final isCollapsed = _truckSearchSheetExtent <= 0.20;
+                      return _SearchMethodSheet(
+                        child: AbsorbPointer(
+                          absorbing: isFindTruckSearching,
+                          child: Opacity(
+                            opacity: isFindTruckSearching ? 0.58 : 1,
+                            child: SingleChildScrollView(
+                              controller: scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              padding: EdgeInsets.fromLTRB(
+                                16,
+                                8,
+                                16,
+                                sheetBottomPadding,
+                              ),
+                              child: _buildTruckSearchSheetContent(
+                                context,
+                                mode: mode,
+                                brokerMode: brokerMode,
+                                isCollapsed: isCollapsed,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             if (!isFindTruckSearching)
@@ -6350,7 +6320,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         width: 44,
                         height: 44,
                         child: Icon(
-                          Icons.arrow_back_rounded,
+                          AppIcons.arrow_back_rounded,
                           color: Color(0xFF0B1F3A),
                           size: 23,
                         ),
@@ -6362,6 +6332,168 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTruckSearchSheetContent(
+    BuildContext context, {
+    required BookingSearchMode mode,
+    required bool brokerMode,
+    required bool isCollapsed,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SheetGrabber(),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeOutCubic,
+          child: isCollapsed
+              ? const _CollapsedTruckSearchBar(
+                  key: ValueKey('truck-sheet-collapsed'),
+                )
+              : Column(
+                  key: const ValueKey('truck-sheet-expanded'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 14),
+                    Text(
+                      'Choose Trucks',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF0B1F3A),
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      brokerMode
+                          ? 'Pick a broker for this route'
+                          : 'Select truck type and search radius',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF667085),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildTruckCategoryPicker(context),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SearchModeCard(
+                            selected: mode == BookingSearchMode.truck,
+                            icon: AppIcons.local_shipping_rounded,
+                            title: 'Find Truck',
+                            onTap: () {
+                              setState(() {
+                                _draft = _draft.copyWith(
+                                  searchMode: BookingSearchMode.truck,
+                                  selectedBrokerId: '',
+                                );
+                              });
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  _animateTruckSearchSheetTo(0.58);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _SearchModeCard(
+                            selected: mode == BookingSearchMode.broker,
+                            icon: AppIcons.person_rounded,
+                            title: 'Brokers',
+                            onTap: () {
+                              setState(() {
+                                _draft = _draft.copyWith(
+                                  searchMode: BookingSearchMode.broker,
+                                );
+                              });
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  _animateTruckSearchSheetTo(0.82);
+                                }
+                              });
+                              unawaited(_loadEligibleBrokers());
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeOutCubic,
+                      child: brokerMode
+                          ? Column(
+                              key: const ValueKey('broker-mode-content'),
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildBrokerListOptions(context),
+                                const SizedBox(height: 12),
+                                FilledButton(
+                                  onPressed:
+                                      _draft.selectedBrokerId.trim().isEmpty
+                                      ? null
+                                      : _continueWithSearchMode,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2FA56E),
+                                    disabledBackgroundColor: const Color(
+                                      0xFFD8E1ED,
+                                    ),
+                                    foregroundColor: Colors.white,
+                                    disabledForegroundColor: const Color(
+                                      0xFF7D8AA0,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: const Text('Continue'),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              key: const ValueKey('truck-mode-content'),
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildFindTruckOptions(context),
+                                const SizedBox(height: 12),
+                                FilledButton.icon(
+                                  onPressed: _startFindTruckSearch,
+                                  icon: const Icon(
+                                    AppIcons.search_rounded,
+                                    size: 19,
+                                  ),
+                                  label: const Text('Find Truck'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2FA56E),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 
@@ -6426,7 +6558,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             Expanded(
                               child: _SearchModeCard(
                                 selected: mode == BookingSearchMode.truck,
-                                icon: Icons.local_shipping_rounded,
+                                icon: AppIcons.local_shipping_rounded,
                                 title: 'Find Truck',
                                 onTap: () {
                                   setState(() {
@@ -6443,8 +6575,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             Expanded(
                               child: _SearchModeCard(
                                 selected: mode == BookingSearchMode.broker,
-                                icon: Icons.person_rounded,
-                                title: 'Search Broker',
+                                icon: AppIcons.person_rounded,
+                                title: 'Brokers',
                                 onTap: () {
                                   setState(() {
                                     _draft = _draft.copyWith(
@@ -6485,7 +6617,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         Row(
           children: [
             const Icon(
-              Icons.my_location_rounded,
+              AppIcons.my_location_rounded,
               color: Color(0xFF0B1F3A),
               size: 24,
             ),
@@ -6589,7 +6721,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
     if (_eligibleBrokersError != null) {
       return _BrokerEmptyCard(
-        icon: Icons.wifi_off_rounded,
+        icon: AppIcons.wifi_off_rounded,
         title: 'Could not load brokers',
         message: _eligibleBrokersError!,
         onRetry: _loadEligibleBrokers,
@@ -6597,7 +6729,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
     if (_eligibleBrokers.isEmpty) {
       return _BrokerEmptyCard(
-        icon: Icons.manage_search_rounded,
+        icon: AppIcons.manage_search_rounded,
         title: 'No broker nearby',
         message: 'No eligible brokers found for this route yet.',
         onRetry: _loadEligibleBrokers,
@@ -6877,7 +7009,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.gps_fixed_rounded, size: 14),
+                  : const Icon(AppIcons.gps_fixed_rounded, size: 14),
               label: Text(
                 _resolvingCurrentLocation
                     ? 'Locating...'
@@ -6978,7 +7110,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: _WeightStepActionChip(
                 label: 'Loading point',
-                icon: Icons.add_location_alt_rounded,
+                icon: AppIcons.add_location_alt_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: true);
                 },
@@ -6988,7 +7120,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Expanded(
               child: _WeightStepActionChip(
                 label: 'Unloading point',
-                icon: Icons.add_road_rounded,
+                icon: AppIcons.add_road_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: false);
                 },
@@ -7052,7 +7184,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
-                      Icons.scale_rounded,
+                      AppIcons.scale_rounded,
                       color: Color(0xFF2FA56E),
                       size: 21,
                     ),
@@ -7174,7 +7306,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _HeaderScheduleIconButton(
-          icon: Icons.flash_on_rounded,
+          icon: AppIcons.flash_on_rounded,
           tooltip: 'Book now',
           selected: !_draft.isScheduled,
           onTap: () {
@@ -7185,7 +7317,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ),
         const SizedBox(width: 8),
         _HeaderScheduleIconButton(
-          icon: Icons.event_available_rounded,
+          icon: AppIcons.event_available_rounded,
           tooltip: _draft.scheduledDate == null
               ? 'Book later'
               : 'Book later: ${_formatDateTime(_draft.scheduledDate!)}',
@@ -7358,7 +7490,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       }
                       setState(() => _step = _BookingFlowStep.brokerSelection);
                     },
-                    icon: const Icon(Icons.arrow_back_rounded),
+                    icon: const Icon(AppIcons.arrow_back_rounded),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.94),
                       foregroundColor: const Color(0xFF101828),
@@ -7481,7 +7613,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 _CheckoutMethodCard(
                                   title: 'Pay Now',
                                   subtitle: 'Secure checkout',
-                                  icon: Icons.lock_outline_rounded,
+                                  icon: AppIcons.lock_outline_rounded,
                                   selected: fullSelected,
                                   enabled: true,
                                   onTap: () => setState(
@@ -7493,8 +7625,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   title: 'Advance',
                                   subtitle: advanceSubtitle,
                                   icon: _loadingAdvanceAmount
-                                      ? Icons.hourglass_top_rounded
-                                      : Icons.payments_outlined,
+                                      ? AppIcons.hourglass_top_rounded
+                                      : AppIcons.payments_outlined,
                                   selected:
                                       selectedMethod == PaymentMethod.advance,
                                   enabled:
@@ -7508,7 +7640,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                 _CheckoutMethodCard(
                                   title: 'To Pay',
                                   subtitle: 'Pay on delivery',
-                                  icon: Icons.local_shipping_outlined,
+                                  icon: AppIcons.local_shipping_outlined,
                                   selected:
                                       selectedMethod == PaymentMethod.payLater,
                                   enabled: true,
@@ -7522,7 +7654,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   subtitle: allowToBeBilled
                                       ? 'No collection now'
                                       : 'After driver confirm',
-                                  icon: Icons.receipt_long_outlined,
+                                  icon: AppIcons.receipt_long_outlined,
                                   selected:
                                       selectedMethod ==
                                       PaymentMethod.toBeBilled,
@@ -7839,7 +7971,7 @@ class _FindTruckScreenLoader extends StatelessWidget {
                                   width: 42,
                                   height: 42,
                                   child: Icon(
-                                    Icons.radar_rounded,
+                                    AppIcons.radar_rounded,
                                     color: Color(0xFF2FA56E),
                                     size: 24,
                                   ),
@@ -7897,7 +8029,7 @@ class _FindTruckScreenLoader extends StatelessWidget {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.close_rounded, size: 18),
+                              : const Icon(AppIcons.close_rounded, size: 18),
                         ),
                       ],
                     ),
@@ -7915,7 +8047,7 @@ class _FindTruckScreenLoader extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _FindTruckStatusChip(
-                            icon: Icons.local_shipping_rounded,
+                            icon: AppIcons.local_shipping_rounded,
                             label: hasNotifiedDrivers
                                 ? '$activeCount active'
                                 : 'Live scan',
@@ -7924,7 +8056,7 @@ class _FindTruckScreenLoader extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: _FindTruckStatusChip(
-                            icon: Icons.near_me_rounded,
+                            icon: AppIcons.near_me_rounded,
                             label: '${searchRadiusKm.round()} km radius',
                           ),
                         ),
@@ -9174,7 +9306,7 @@ class _FindTruckNegotiationSheetState
                           : () => Navigator.of(
                               context,
                             ).pop(_FindTruckNegotiationResult.dismissed),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(AppIcons.close_rounded),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFFF2F4F7),
                         foregroundColor: const Color(0xFF475467),
@@ -9201,7 +9333,7 @@ class _FindTruckNegotiationSheetState
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.local_shipping_rounded,
+                          AppIcons.local_shipping_rounded,
                           color: Color(0xFF2FA56E),
                         ),
                       ),
@@ -9499,7 +9631,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.swap_horiz_rounded,
+                        AppIcons.swap_horiz_rounded,
                         color: Color(0xFF2FA56E),
                       ),
                     ),
@@ -9528,7 +9660,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(AppIcons.close_rounded),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFFF2F4F7),
                         foregroundColor: const Color(0xFF475467),
@@ -9599,7 +9731,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                               ),
                             ),
                             const Icon(
-                              Icons.drag_indicator_rounded,
+                              AppIcons.drag_indicator_rounded,
                               color: Color(0xFF98A2B3),
                               size: 18,
                             ),
@@ -9851,7 +9983,7 @@ class _CheckoutChoiceCard extends StatelessWidget {
           _CheckoutChoiceTile(
             title: 'Pay Now',
             subtitle: 'Full amount now through secure checkout',
-            icon: Icons.lock_outline_rounded,
+            icon: AppIcons.lock_outline_rounded,
             selected: fullSelected,
             onTap: () => onSelect(PaymentMethod.googlePay),
           ),
@@ -9859,8 +9991,8 @@ class _CheckoutChoiceCard extends StatelessWidget {
             title: 'Advance',
             subtitle: advanceSubtitle,
             icon: loadingAdvanceAmount
-                ? Icons.hourglass_top_rounded
-                : Icons.payments_outlined,
+                ? AppIcons.hourglass_top_rounded
+                : AppIcons.payments_outlined,
             selected: selectedMethod == PaymentMethod.advance,
             enabled: advanceAmount != null && !loadingAdvanceAmount,
             onTap: () => onSelect(PaymentMethod.advance),
@@ -9868,7 +10000,7 @@ class _CheckoutChoiceCard extends StatelessWidget {
           _CheckoutChoiceTile(
             title: 'To Pay',
             subtitle: 'Full amount collected by the driver on delivery',
-            icon: Icons.local_shipping_outlined,
+            icon: AppIcons.local_shipping_outlined,
             selected: selectedMethod == PaymentMethod.payLater,
             onTap: () => onSelect(PaymentMethod.payLater),
           ),
@@ -9877,7 +10009,7 @@ class _CheckoutChoiceCard extends StatelessWidget {
             subtitle: allowToBeBilled
                 ? 'Nothing collected now or on delivery'
                 : 'Available after a driver is confirmed',
-            icon: Icons.receipt_long_outlined,
+            icon: AppIcons.receipt_long_outlined,
             selected: selectedMethod == PaymentMethod.toBeBilled,
             enabled: allowToBeBilled,
             onTap: () => onSelect(PaymentMethod.toBeBilled),
@@ -9945,7 +10077,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                         ],
                       ),
                       child: const Icon(
-                        Icons.check_rounded,
+                        AppIcons.check_rounded,
                         color: Color(0xFF2FA56E),
                         size: 58,
                       ),
@@ -10042,8 +10174,8 @@ class _CheckoutMethodCard extends StatelessWidget {
                   const Spacer(),
                   Icon(
                     selected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
+                        ? AppIcons.radio_button_checked
+                        : AppIcons.radio_button_off,
                     size: 18,
                     color: enabled
                         ? selected
@@ -10124,7 +10256,7 @@ class _CheckoutChoiceTile extends StatelessWidget {
       ),
       subtitle: Text(subtitle),
       trailing: Icon(
-        selected ? Icons.radio_button_checked : Icons.radio_button_off,
+        selected ? AppIcons.radio_button_checked : AppIcons.radio_button_off,
         color: enabled
             ? selected
                   ? accent
@@ -10185,7 +10317,7 @@ class _LocationLaunchCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
-                          Icons.arrow_upward_rounded,
+                          AppIcons.arrow_upward_rounded,
                           color: Colors.white,
                           size: 16,
                         ),
@@ -10242,7 +10374,7 @@ class _LocationLaunchCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons.arrow_downward_rounded,
+                      AppIcons.arrow_downward_rounded,
                       color: Colors.white,
                       size: 16,
                     ),
@@ -10328,7 +10460,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.arrow_upward_rounded,
+                  AppIcons.arrow_upward_rounded,
                   color: Colors.white,
                   size: 13,
                 ),
@@ -10350,7 +10482,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.arrow_downward_rounded,
+                  AppIcons.arrow_downward_rounded,
                   color: Colors.white,
                   size: 13,
                 ),
@@ -10418,7 +10550,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.edit_rounded,
+                AppIcons.edit_rounded,
                 size: 15,
                 color: Color(0xFF2FA56E),
               ),
@@ -10642,7 +10774,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.close_rounded,
+                            AppIcons.close_rounded,
                             color: Color(0xFF475467),
                             size: 20,
                           ),
@@ -10778,7 +10910,7 @@ class _TimeStepper extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _RoundIconButton(icon: Icons.remove_rounded, onTap: onDecrease),
+            _RoundIconButton(icon: AppIcons.remove_rounded, onTap: onDecrease),
             const SizedBox(width: 4),
             SizedBox(
               width: 30,
@@ -10793,7 +10925,7 @@ class _TimeStepper extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            _RoundIconButton(icon: Icons.add_rounded, onTap: onIncrease),
+            _RoundIconButton(icon: AppIcons.add_rounded, onTap: onIncrease),
           ],
         ),
       ],
@@ -10994,7 +11126,7 @@ class _BookingSuccessCard extends StatelessWidget {
               ],
             ),
             child: const Icon(
-              Icons.check_rounded,
+              AppIcons.check_rounded,
               color: Color(0xFF2FA56E),
               size: 58,
             ),
@@ -11117,7 +11249,7 @@ class _BookingWaitingCard extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.local_shipping_rounded,
+                  AppIcons.local_shipping_rounded,
                   color: Color(0xFF2FA56E),
                   size: 34,
                 ),
@@ -11213,7 +11345,7 @@ class _BookingWaitingCard extends StatelessWidget {
             child: Row(
               children: [
                 const Icon(
-                  Icons.radar_rounded,
+                  AppIcons.radar_rounded,
                   color: Color(0xFF2FA56E),
                   size: 20,
                 ),
@@ -11749,6 +11881,68 @@ class _BookingSummaryCard extends StatelessWidget {
   }
 }
 
+class _SheetGrabber extends StatelessWidget {
+  const _SheetGrabber();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 46,
+        height: 5,
+        decoration: BoxDecoration(
+          color: const Color(0xFFD0DAE8),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsedTruckSearchBar extends StatelessWidget {
+  const _CollapsedTruckSearchBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF7EF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              AppIcons.local_shipping_rounded,
+              color: Color(0xFF2FA56E),
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Choose trucks',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: const Color(0xFF0B1F3A),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const Icon(
+            AppIcons.keyboard_arrow_up_rounded,
+            color: Color(0xFF667085),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SearchModeCard extends StatelessWidget {
   const _SearchModeCard({
     required this.selected,
@@ -11764,44 +11958,58 @@ class _SearchModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : const Color(0xFF0B1F3A);
+    final foreground = selected
+        ? const Color(0xFF167247)
+        : const Color(0xFF475467);
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(17),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 56,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2FA56E) : Colors.white,
-          borderRadius: BorderRadius.circular(17),
+          color: selected ? const Color(0xFFEAF7EF) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFD4DEEC),
-            width: 1.4,
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE2E8F0),
+            width: selected ? 1.6 : 1,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF2FA56E).withValues(alpha: 0.24),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(
+                0xFF0B1F3A,
+              ).withValues(alpha: selected ? 0.08 : 0.035),
+              blurRadius: selected ? 16 : 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foreground, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
+            Icon(icon, color: foreground, size: 20),
+            const SizedBox(width: 8),
+            Flexible(
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                style:
+                    Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: foreground,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ) ??
+                    const TextStyle(),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ],
@@ -11825,24 +12033,28 @@ class _ChooseTruckCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 58,
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        height: 60,
+        padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? const Color(0xFFF0FAF4) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFD8E1ED),
-            width: selected ? 1.7 : 1,
+            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE2E8F0),
+            width: selected ? 1.6 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF36506F).withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF0B1F3A).withValues(alpha: 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -11851,10 +12063,10 @@ class _ChooseTruckCard extends StatelessWidget {
           children: [
             SizedBox(
               width: 52,
-              height: 36,
+              height: 38,
               child: Image.asset(vehicle.assetPath, fit: BoxFit.contain),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 7),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -11865,33 +12077,21 @@ class _ChooseTruckCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: const Color(0xFF0B1F3A),
+                      color: selected
+                          ? const Color(0xFF167247)
+                          : const Color(0xFF0B1F3A),
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 2),
                   _TruckSpec(
-                    icon: Icons.scale_rounded,
+                    icon: AppIcons.scale_rounded,
                     label: vehicle.capacity,
                   ),
                 ],
               ),
             ),
-            if (selected)
-              Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2FA56E),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 12,
-                ),
-              ),
           ],
         ),
       ),
@@ -11940,12 +12140,15 @@ class _SearchMethodSheet extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE6EDF5), width: 1),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 18,
-            offset: const Offset(0, -5),
+            color: const Color(0xFF0B1F3A).withValues(alpha: 0.14),
+            blurRadius: 28,
+            offset: const Offset(0, -10),
           ),
         ],
       ),
@@ -12073,19 +12276,19 @@ class _EligibleBrokerTile extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       _BrokerMetaPill(
-                        icon: Icons.local_shipping_rounded,
+                        icon: AppIcons.local_shipping_rounded,
                         label:
                             '${broker.truckCount} truck${broker.truckCount == 1 ? '' : 's'}',
                         highlighted: true,
                       ),
                       if (broker.serviceCity.isNotEmpty)
                         _BrokerMetaPill(
-                          icon: Icons.location_city_rounded,
+                          icon: AppIcons.location_city_rounded,
                           label: broker.serviceCity,
                         ),
                       if (broker.phone.isNotEmpty)
                         _BrokerMetaPill(
-                          icon: Icons.call_rounded,
+                          icon: AppIcons.call_rounded,
                           label: broker.phone,
                         ),
                     ],
@@ -12109,7 +12312,7 @@ class _EligibleBrokerTile extends StatelessWidget {
               ),
               child: selected
                   ? const Icon(
-                      Icons.check_rounded,
+                      AppIcons.check_rounded,
                       color: Colors.white,
                       size: 16,
                     )
@@ -12140,7 +12343,7 @@ class _BrokerListHeader extends StatelessWidget {
       child: Row(
         children: [
           const Icon(
-            Icons.verified_user_rounded,
+            AppIcons.verified_user_rounded,
             color: Color(0xFF2FA56E),
             size: 18,
           ),
@@ -12326,7 +12529,11 @@ class _HaltingInfoCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.timer_outlined, size: 20, color: Color(0xFFB88900)),
+          const Icon(
+            AppIcons.timer_outlined,
+            size: 20,
+            color: Color(0xFFB88900),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -12374,7 +12581,7 @@ class _DeliveryEstimateCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
-            Icons.calendar_month_rounded,
+            AppIcons.calendar_month_rounded,
             color: Color(0xFF1F88C9),
             size: 20,
           ),
@@ -12454,7 +12661,7 @@ class _ExpressBookingSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.bolt_rounded,
+              AppIcons.bolt_rounded,
               color: Colors.white,
               size: 21,
             ),
@@ -12541,7 +12748,7 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              Icons.bolt_rounded,
+              AppIcons.bolt_rounded,
               color: selected ? Colors.white : const Color(0xFF98A2B3),
               size: 22,
             ),
@@ -12670,7 +12877,7 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
                         child: const SizedBox(
                           width: 28,
                           height: 28,
-                          child: Icon(Icons.arrow_back_rounded, size: 18),
+                          child: Icon(AppIcons.arrow_back_rounded, size: 18),
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -55,7 +56,7 @@ class _VehiclesHeader extends StatelessWidget {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 15),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  AppIcons.search_rounded,
                   color: Color(0xFF94A3B8),
                 ),
                 hintText: 'Search vehicles, drivers or location',
@@ -228,7 +229,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                         onPressed: () {
                           context.push('/broker/vehicles/add');
                         },
-                        icon: const Icon(Icons.add),
+                        icon: const Icon(AppIcons.add),
                         label: const Text('Add truck'),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF1F88C9),
@@ -243,7 +244,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                   ),
                   const SizedBox(height: 18),
                   _FleetEmptyState(
-                    icon: Icons.error_outline_rounded,
+                    icon: AppIcons.error_outline_rounded,
                     title: 'Could not load trucks',
                     subtitle: error.toString().replaceFirst('Exception: ', ''),
                     actionLabel: 'Try again',
@@ -306,7 +307,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                           onPressed: () {
                             context.push('/broker/vehicles/add');
                           },
-                          icon: const Icon(Icons.add),
+                          icon: const Icon(AppIcons.add),
                           label: const Text('Add truck'),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF1F88C9),
@@ -322,7 +323,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                     const SizedBox(height: 14),
                     if (visibleVehicles.isEmpty)
                       const _FleetEmptyState(
-                        icon: Icons.local_shipping_outlined,
+                        icon: AppIcons.local_shipping_outlined,
                         title: 'No matching vehicles',
                         subtitle: 'Try a different search or add a new truck.',
                       )
@@ -459,7 +460,7 @@ class _TruckActionDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
-                  Icons.local_shipping_rounded,
+                  AppIcons.local_shipping_rounded,
                   color: Color(0xFF2152D0),
                   size: 26,
                 ),
@@ -485,7 +486,7 @@ class _TruckActionDialog extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(AppIcons.close_rounded),
                 style: IconButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),
                 ),
@@ -532,22 +533,22 @@ class _TruckActionDialog extends StatelessWidget {
             childAspectRatio: 0.9,
             children: [
               _TruckDialogAction(
-                icon: Icons.edit_rounded,
+                icon: AppIcons.edit_rounded,
                 label: 'Edit',
                 onTap: onEdit,
               ),
               _TruckDialogAction(
-                icon: Icons.manage_accounts_rounded,
+                icon: AppIcons.manage_accounts_rounded,
                 label: 'Assign',
                 onTap: onAssign,
               ),
               _TruckDialogAction(
-                icon: Icons.location_on_rounded,
+                icon: AppIcons.location_on_rounded,
                 label: 'Track',
                 onTap: onTrack,
               ),
               _TruckDialogAction(
-                icon: Icons.history_rounded,
+                icon: AppIcons.history_rounded,
                 label: 'History',
                 onTap: onHistory,
               ),
@@ -556,7 +557,7 @@ class _TruckActionDialog extends StatelessWidget {
           const SizedBox(height: 10),
           TextButton.icon(
             onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded),
+            icon: const Icon(AppIcons.delete_outline_rounded),
             label: const Text('Remove Truck'),
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFFE23A4B),

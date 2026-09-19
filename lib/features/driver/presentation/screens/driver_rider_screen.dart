@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -88,7 +89,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   if (trips.isEmpty)
                     const _EmptyCard(
-                      icon: Icons.route_rounded,
+                      icon: AppIcons.route_rounded,
                       title: 'No trips yet',
                       subtitle: 'Your full trip history will appear here.',
                     )
@@ -140,7 +141,7 @@ class _AllTripsHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Color(0xFF0F172A),
                 size: 20,
               ),
@@ -272,7 +273,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: const [
               _EmptyCard(
-                icon: Icons.route_rounded,
+                icon: AppIcons.route_rounded,
                 title: 'No active delivery',
                 subtitle: 'Accepted deliveries will appear here live.',
               ),
@@ -344,7 +345,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 const SizedBox(height: 12),
                 if (currentTrip == null)
                   const _EmptyCard(
-                    icon: Icons.route_rounded,
+                    icon: AppIcons.route_rounded,
                     title: 'No active delivery',
                     subtitle: 'Accepted deliveries will appear here live.',
                   )
@@ -541,7 +542,7 @@ class _SectionHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.chevron_right_rounded, size: 18),
+                const Icon(AppIcons.chevron_right_rounded, size: 18),
               ],
             ),
           ),
@@ -688,13 +689,13 @@ class _TripSummaryCard extends StatelessWidget {
                               runSpacing: 6,
                               children: [
                                 _TripFooterMeta(
-                                  icon: Icons.inventory_2_outlined,
+                                  icon: AppIcons.inventory_2_outlined,
                                   value: trip.truckReg.isEmpty
                                       ? 'Cargo'
                                       : trip.truckReg,
                                 ),
                                 _TripFooterMeta(
-                                  icon: Icons.route_outlined,
+                                  icon: AppIcons.route_outlined,
                                   value: distance,
                                 ),
                               ],
@@ -703,7 +704,7 @@ class _TripSummaryCard extends StatelessWidget {
                           const SizedBox(width: 10),
                           Flexible(
                             child: _TripFooterMeta(
-                              icon: Icons.schedule_rounded,
+                              icon: AppIcons.schedule_rounded,
                               value: _formatTripTimestamp(bookingTime),
                             ),
                           ),
@@ -976,7 +977,7 @@ class _TripHistoryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Icon(
-                      Icons.visibility_rounded,
+                      AppIcons.visibility_rounded,
                       size: 18,
                       color: Color(0xFF1F88C9),
                     ),
@@ -1581,7 +1582,7 @@ class _ActiveTripCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Icon(
-                                  Icons.arrow_forward_rounded,
+                                  AppIcons.arrow_forward_rounded,
                                   size: iconSize,
                                 ),
                               ],

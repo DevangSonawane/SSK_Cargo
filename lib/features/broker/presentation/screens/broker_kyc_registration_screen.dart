@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -516,7 +517,7 @@ class _BrokerKycRegistrationScreenState
                     ),
                     const SizedBox(height: 16),
                     _SheetAction(
-                      icon: Icons.photo_camera_rounded,
+                      icon: AppIcons.photo_camera_rounded,
                       label: 'Camera',
                       onTap: () {
                         Navigator.of(context).pop();
@@ -525,7 +526,7 @@ class _BrokerKycRegistrationScreenState
                     ),
                     const SizedBox(height: 10),
                     _SheetAction(
-                      icon: Icons.photo_library_rounded,
+                      icon: AppIcons.photo_library_rounded,
                       label: 'Gallery',
                       onTap: () {
                         Navigator.of(context).pop();
@@ -534,7 +535,7 @@ class _BrokerKycRegistrationScreenState
                     ),
                     const SizedBox(height: 10),
                     _SheetAction(
-                      icon: Icons.close_rounded,
+                      icon: AppIcons.close_rounded,
                       label: 'Cancel',
                       onTap: () => Navigator.of(context).pop(),
                       muted: true,
@@ -575,7 +576,7 @@ class _BrokerKycRegistrationScreenState
                     Row(
                       children: [
                         const Icon(
-                          Icons.document_scanner_rounded,
+                          AppIcons.document_scanner_rounded,
                           color: Color(0xFF1F88C9),
                         ),
                         const SizedBox(width: 10),
@@ -609,7 +610,7 @@ class _BrokerKycRegistrationScreenState
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
-                              Icons.insert_drive_file_rounded,
+                              AppIcons.insert_drive_file_rounded,
                               color: Color(0xFF1F88C9),
                             ),
                           ),
@@ -1043,8 +1044,8 @@ class _BrokerKycRegistrationScreenState
                   ),
                   child: Icon(
                     isApproved
-                        ? Icons.check_rounded
-                        : Icons.hourglass_top_rounded,
+                        ? AppIcons.check_rounded
+                        : AppIcons.hourglass_top_rounded,
                     size: 38,
                     color: Colors.white,
                   ),
@@ -1115,7 +1116,7 @@ class _BrokerKycRegistrationScreenState
               Row(
                 children: [
                   _KycIconBadge(
-                    icon: Icons.assignment_outlined,
+                    icon: AppIcons.assignment_outlined,
                     color: const Color(0xFF2D72E8),
                     background: const Color(0xFFEAF2FF),
                   ),
@@ -1132,7 +1133,7 @@ class _BrokerKycRegistrationScreenState
               ),
               const SizedBox(height: 10),
               _verificationInfoRow(
-                icon: Icons.verified_rounded,
+                icon: AppIcons.verified_rounded,
                 iconColor: const Color(0xFF20B978),
                 iconBackground: const Color(0xFFE9F9F1),
                 label: 'Current Status',
@@ -1141,7 +1142,7 @@ class _BrokerKycRegistrationScreenState
                 valueBadge: isApproved,
               ),
               _verificationInfoRow(
-                icon: Icons.calendar_month_outlined,
+                icon: AppIcons.calendar_month_outlined,
                 iconColor: const Color(0xFF2D72E8),
                 iconBackground: const Color(0xFFEAF2FF),
                 label: 'Submitted Date',
@@ -1150,7 +1151,7 @@ class _BrokerKycRegistrationScreenState
                     : 'Not available',
               ),
               _verificationInfoRow(
-                icon: Icons.badge_outlined,
+                icon: AppIcons.badge_outlined,
                 iconColor: const Color(0xFF7656D9),
                 iconBackground: const Color(0xFFF0ECFF),
                 label: 'Submission ID',
@@ -1158,7 +1159,7 @@ class _BrokerKycRegistrationScreenState
               ),
               if (_reviewedAt != null)
                 _verificationInfoRow(
-                  icon: Icons.schedule_outlined,
+                  icon: AppIcons.schedule_outlined,
                   iconColor: const Color(0xFFF5A623),
                   iconBackground: const Color(0xFFFFF5E6),
                   label: 'Reviewed At',
@@ -1170,7 +1171,7 @@ class _BrokerKycRegistrationScreenState
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: isApproved ? _showAllDocuments : null,
-          icon: const Icon(Icons.insert_drive_file_outlined, size: 20),
+          icon: const Icon(AppIcons.insert_drive_file_outlined, size: 20),
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFF2D72E8),
             disabledBackgroundColor: const Color(0xFFB8C9E8),
@@ -1188,14 +1189,14 @@ class _BrokerKycRegistrationScreenState
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
               SizedBox(width: 10),
-              Icon(Icons.arrow_forward_rounded, size: 18),
+              Icon(AppIcons.arrow_forward_rounded, size: 18),
             ],
           ),
         ),
         const SizedBox(height: 10),
         OutlinedButton.icon(
           onPressed: _goBack,
-          icon: const Icon(Icons.arrow_back_rounded, size: 19),
+          icon: const Icon(AppIcons.arrow_back_rounded, size: 19),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF1764E8),
             minimumSize: const Size.fromHeight(48),
@@ -1273,7 +1274,7 @@ class _BrokerKycRegistrationScreenState
                         ),
                         const SizedBox(width: 5),
                         Icon(
-                          Icons.check_rounded,
+                          AppIcons.check_rounded,
                           color: valueColor ?? const Color(0xFF20B978),
                           size: 17,
                         ),
@@ -1321,7 +1322,7 @@ class _BrokerKycRegistrationScreenState
                     Row(
                       children: [
                         const Icon(
-                          Icons.folder_copy_rounded,
+                          AppIcons.folder_copy_rounded,
                           color: Color(0xFF1F88C9),
                         ),
                         const SizedBox(width: 10),
@@ -1347,7 +1348,7 @@ class _BrokerKycRegistrationScreenState
                         child: Row(
                           children: [
                             const Icon(
-                              Icons.insert_drive_file_rounded,
+                              AppIcons.insert_drive_file_rounded,
                               color: Color(0xFF1F88C9),
                             ),
                             const SizedBox(width: 12),
@@ -1570,7 +1571,7 @@ class _KycPageHeader extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Colors.white,
                 size: 21,
               ),
@@ -1684,7 +1685,11 @@ class _StepperItem extends StatelessWidget {
           color: Color(0xFF2FA56E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+        child: const Icon(
+          AppIcons.check_rounded,
+          size: 18,
+          color: Colors.white,
+        ),
       );
     } else if (isActive) {
       circle = Container(
@@ -1851,7 +1856,7 @@ class _WarningCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
-            Icons.info_outline_rounded,
+            AppIcons.info_outline_rounded,
             color: Color(0xFFB54708),
             size: 18,
           ),
@@ -1902,10 +1907,10 @@ class _PremiumTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasValue = controller.text.trim().isNotEmpty;
     final statusIcon = !hasValue
-        ? Icons.radio_button_unchecked_rounded
+        ? AppIcons.radio_button_unchecked_rounded
         : valid
-        ? Icons.check_rounded
-        : Icons.close_rounded;
+        ? AppIcons.check_rounded
+        : AppIcons.close_rounded;
     final statusColor = !hasValue
         ? const Color(0xFF98A2B3)
         : valid
@@ -2064,8 +2069,8 @@ class _KycUploadCard extends StatelessWidget {
                 ),
                 child: Icon(
                   uploaded
-                      ? Icons.check_circle_rounded
-                      : Icons.description_rounded,
+                      ? AppIcons.check_circle_rounded
+                      : AppIcons.description_rounded,
                   color: uploaded
                       ? const Color(0xFF2FA56E)
                       : const Color(0xFF1F88C9),
@@ -2125,21 +2130,21 @@ class _KycUploadCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _MiniIconButton(
-                icon: Icons.cloud_upload_rounded,
+                icon: AppIcons.cloud_upload_rounded,
                 onPressed: document.uploadable
                     ? onUpload
                     : () => _showDetailInfo(context),
               ),
               const SizedBox(width: 6),
               _MiniIconButton(
-                icon: Icons.photo_camera_rounded,
+                icon: AppIcons.photo_camera_rounded,
                 onPressed: document.uploadable
                     ? onCamera
                     : () => _showDetailInfo(context),
               ),
               const SizedBox(width: 6),
               _MiniIconButton(
-                icon: Icons.photo_library_rounded,
+                icon: AppIcons.photo_library_rounded,
                 onPressed: document.uploadable
                     ? onGallery
                     : () => _showDetailInfo(context),
@@ -2147,13 +2152,13 @@ class _KycUploadCard extends StatelessWidget {
               if (uploaded) ...[
                 const SizedBox(width: 8),
                 _MiniIconButton(
-                  icon: Icons.visibility_rounded,
+                  icon: AppIcons.visibility_rounded,
                   onPressed: onView,
                   filled: true,
                 ),
                 const SizedBox(width: 6),
                 _MiniIconButton(
-                  icon: Icons.swap_horiz_rounded,
+                  icon: AppIcons.swap_horiz_rounded,
                   onPressed: document.uploadable
                       ? onReplace
                       : () => _showDetailInfo(context),
@@ -2295,7 +2300,7 @@ class _ReviewFieldRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onEdit,
-            icon: const Icon(Icons.edit_rounded),
+            icon: const Icon(AppIcons.edit_rounded),
             color: const Color(0xFF1F88C9),
           ),
         ],
@@ -2356,8 +2361,8 @@ class _ReviewDocumentRow extends StatelessWidget {
                   ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
                       uploaded
-                          ? Icons.check_rounded
-                          : Icons.insert_drive_file_rounded,
+                          ? AppIcons.check_rounded
+                          : AppIcons.insert_drive_file_rounded,
                       color: uploaded
                           ? const Color(0xFF2FA56E)
                           : const Color(0xFF1F88C9),
@@ -2397,12 +2402,15 @@ class _ReviewDocumentRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _MiniIconButton(
-            icon: Icons.visibility_rounded,
+            icon: AppIcons.visibility_rounded,
             onPressed: onView,
             filled: true,
           ),
           const SizedBox(width: 8),
-          _MiniIconButton(icon: Icons.swap_horiz_rounded, onPressed: onReplace),
+          _MiniIconButton(
+            icon: AppIcons.swap_horiz_rounded,
+            onPressed: onReplace,
+          ),
         ],
       ),
     );

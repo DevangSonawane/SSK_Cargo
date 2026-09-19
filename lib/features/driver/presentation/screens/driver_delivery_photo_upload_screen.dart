@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -372,7 +373,7 @@ class _DriverDeliveryPhotoUploadScreenState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.receipt_long_rounded,
+                            AppIcons.receipt_long_rounded,
                             size: 15,
                             color: Color(0xFF1F88C9),
                           ),
@@ -558,7 +559,7 @@ class _PhotoTile extends StatelessWidget {
                   color: const Color(0xFF101828),
                   child: const Center(
                     child: Icon(
-                      Icons.play_circle_fill_rounded,
+                      AppIcons.play_circle_fill_rounded,
                       color: Colors.white,
                       size: 36,
                     ),
@@ -631,7 +632,7 @@ class _AddPhotoTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.photo_camera_rounded),
+                  leading: const Icon(AppIcons.photo_camera_rounded),
                   title: const Text('Take photo'),
                   onTap: onCameraTap == null
                       ? null
@@ -641,7 +642,7 @@ class _AddPhotoTile extends StatelessWidget {
                         },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.videocam_rounded),
+                  leading: const Icon(AppIcons.videocam_rounded),
                   title: const Text('Record video'),
                   onTap: onVideoTap == null
                       ? null
@@ -651,7 +652,7 @@ class _AddPhotoTile extends StatelessWidget {
                         },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_rounded),
+                  leading: const Icon(AppIcons.photo_library_rounded),
                   title: const Text('Choose photo'),
                   onTap: onGalleryTap == null
                       ? null
@@ -695,19 +696,19 @@ class _AddPhotoTile extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _MediaPickButton(
-                          icon: Icons.photo_camera_rounded,
+                          icon: AppIcons.photo_camera_rounded,
                           label: 'Photo',
                           onTap: onCameraTap,
                         ),
                         const SizedBox(width: 10),
                         _MediaPickButton(
-                          icon: Icons.videocam_rounded,
+                          icon: AppIcons.videocam_rounded,
                           label: 'Video',
                           onTap: onVideoTap,
                         ),
                         const SizedBox(width: 10),
                         _MediaPickButton(
-                          icon: Icons.photo_library_rounded,
+                          icon: AppIcons.photo_library_rounded,
                           label: 'Gallery',
                           onTap: onGalleryTap,
                         ),
@@ -724,7 +725,7 @@ class _AddPhotoTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: const Icon(
-                            Icons.add_rounded,
+                            AppIcons.add_rounded,
                             color: Color(0xFF1F88C9),
                             size: 24,
                           ),
@@ -764,7 +765,7 @@ class _RemoteMediaTile extends StatelessWidget {
         ),
         child: const Center(
           child: Icon(
-            Icons.check_circle_rounded,
+            AppIcons.check_circle_rounded,
             color: Color(0xFF2FA56E),
             size: 34,
           ),

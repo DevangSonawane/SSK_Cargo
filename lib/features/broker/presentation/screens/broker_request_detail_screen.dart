@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -837,7 +838,7 @@ class _BrokerRequestDetailScreenState
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Icon(
-                                Icons.local_shipping_rounded,
+                                AppIcons.local_shipping_rounded,
                                 color: Color(0xFF2152D0),
                               ),
                             ),
@@ -872,7 +873,7 @@ class _BrokerRequestDetailScreenState
                         const SizedBox(height: 18),
                         _AssignmentPickerField(
                           label: 'Driver',
-                          icon: Icons.person_rounded,
+                          icon: AppIcons.person_rounded,
                           value: selectedDriver == null
                               ? 'Select driver'
                               : selectedDriver.name.isNotEmpty
@@ -901,7 +902,7 @@ class _BrokerRequestDetailScreenState
                         const SizedBox(height: 12),
                         _AssignmentPickerField(
                           label: 'Truck',
-                          icon: Icons.fire_truck_rounded,
+                          icon: AppIcons.fire_truck_rounded,
                           value: selectedTruck == null
                               ? 'Select truck'
                               : '${selectedTruck.label} - ${selectedTruck.plateNumber.isNotEmpty ? selectedTruck.plateNumber : selectedTruck.id}',
@@ -1575,7 +1576,7 @@ class _BrokerRequestDetailScreenState
         centerTitle: true,
         title: const Text('Booking Details'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -1607,7 +1608,7 @@ class _BrokerRequestDetailScreenState
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.receipt_long_rounded,
+                      AppIcons.receipt_long_rounded,
                       color: Colors.white,
                     ),
                   ),
@@ -1676,7 +1677,7 @@ class _BrokerRequestDetailScreenState
               child: Column(
                 children: [
                   _TimelineRouteRow(
-                    icon: Icons.place_rounded,
+                    icon: AppIcons.place_rounded,
                     iconBackground: const Color(0xFFEFF4FF),
                     iconColor: const Color(0xFF2152D0),
                     label: 'Pickup',
@@ -1684,7 +1685,7 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 14),
                   _TimelineRouteRow(
-                    icon: Icons.near_me_rounded,
+                    icon: AppIcons.near_me_rounded,
                     iconBackground: const Color(0xFFEFF4FF),
                     iconColor: const Color(0xFF2152D0),
                     label: 'Drop-off',
@@ -1701,7 +1702,7 @@ class _BrokerRequestDetailScreenState
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.local_shipping_rounded,
+                          AppIcons.local_shipping_rounded,
                           color: Color(0xFF2152D0),
                         ),
                         const SizedBox(width: 10),
@@ -1727,7 +1728,7 @@ class _BrokerRequestDetailScreenState
               child: Column(
                 children: [
                   _OverviewRow(
-                    icon: Icons.calendar_today_rounded,
+                    icon: AppIcons.calendar_today_rounded,
                     label: 'Requested On',
                     value: _request.requestedAt.isEmpty
                         ? 'Unavailable'
@@ -1735,7 +1736,7 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 18),
                   _OverviewRow(
-                    icon: Icons.person_rounded,
+                    icon: AppIcons.person_rounded,
                     label: 'Requested By',
                     value: _isDriverNegotiation
                         ? (_driverRequest!.clientName.isEmpty
@@ -1747,7 +1748,7 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 18),
                   _OverviewRow(
-                    icon: Icons.local_offer_rounded,
+                    icon: AppIcons.local_offer_rounded,
                     label: 'Load Type',
                     value: _isDriverNegotiation
                         ? (_driverRequest!.truckCategory.isEmpty
@@ -1759,7 +1760,7 @@ class _BrokerRequestDetailScreenState
                   ),
                   const SizedBox(height: 18),
                   _OverviewRow(
-                    icon: Icons.currency_rupee_rounded,
+                    icon: AppIcons.currency_rupee_rounded,
                     label: 'Payment',
                     value: topAmount,
                     valueColor: const Color(0xFF0F172A),
@@ -1774,8 +1775,8 @@ class _BrokerRequestDetailScreenState
                 entries: [
                   _TimelineEntry(
                     icon: isDeclined
-                        ? Icons.cancel_rounded
-                        : Icons.check_circle_rounded,
+                        ? AppIcons.cancel_rounded
+                        : AppIcons.check_circle_rounded,
                     iconColor: isDeclined
                         ? const Color(0xFFE23A4B)
                         : const Color(0xFF2152D0),
@@ -1787,7 +1788,7 @@ class _BrokerRequestDetailScreenState
                   ),
                   if (isDeclined)
                     _TimelineEntry(
-                      icon: Icons.circle_rounded,
+                      icon: AppIcons.circle_rounded,
                       iconColor: const Color(0xFF98A2B3),
                       title: 'Requested',
                       subtitle: 'Waiting for broker action',
@@ -2289,7 +2290,7 @@ class _HelpCard extends StatelessWidget {
                   height: 44,
                   child: FilledButton.tonalIcon(
                     onPressed: onPressed,
-                    icon: const Icon(Icons.call_rounded, size: 18),
+                    icon: const Icon(AppIcons.call_rounded, size: 18),
                     label: const Text(
                       'Contact Support',
                       style: TextStyle(fontWeight: FontWeight.w800),
@@ -2308,7 +2309,7 @@ class _HelpCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           const Icon(
-            Icons.support_agent_rounded,
+            AppIcons.support_agent_rounded,
             size: 72,
             color: Color(0xFF2152D0),
           ),
@@ -2498,7 +2499,7 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
             'This request has been accepted. Assign a driver and truck.',
         backgroundColor: Color(0xFFEAF8EF),
         textColor: Color(0xFF136F3E),
-        icon: Icons.check_circle_rounded,
+        icon: AppIcons.check_circle_rounded,
       );
     case 'countered':
       return const _DetailRequestStatusVisual(
@@ -2506,7 +2507,7 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
         description: 'Counter sent. Waiting for the client to respond.',
         backgroundColor: Color(0xFFFEF3C7),
         textColor: Color(0xFFB45309),
-        icon: Icons.payments_rounded,
+        icon: AppIcons.payments_rounded,
       );
     case 'declined':
     case 'rejected':
@@ -2519,7 +2520,7 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
             'This booking has been cancelled. No further broker actions are available.',
         backgroundColor: Color(0xFFFDECEC),
         textColor: Color(0xFFB42318),
-        icon: Icons.cancel_rounded,
+        icon: AppIcons.cancel_rounded,
       );
     default:
       return const _DetailRequestStatusVisual(
@@ -2527,7 +2528,7 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
         description: 'This request is still waiting for action.',
         backgroundColor: Color(0xFFEFF6FF),
         textColor: Color(0xFF1F88C9),
-        icon: Icons.inbox_rounded,
+        icon: AppIcons.inbox_rounded,
       );
   }
 }
@@ -2783,7 +2784,7 @@ class _AssignmentPickerField extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             const Icon(
-              Icons.keyboard_arrow_down_rounded,
+              AppIcons.keyboard_arrow_down_rounded,
               color: Color(0xFF94A3B8),
             ),
           ],
@@ -2889,7 +2890,7 @@ class _AssignmentChoiceSheet<T> extends StatelessWidget {
                                 ),
                                 if (selected)
                                   const Icon(
-                                    Icons.check_rounded,
+                                    AppIcons.check_rounded,
                                     color: Color(0xFF2152D0),
                                     size: 18,
                                   ),

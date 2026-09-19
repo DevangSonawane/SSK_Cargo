@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -295,7 +296,7 @@ class _VehiclesHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HeaderButton(
-          icon: Icons.menu_rounded,
+          icon: AppIcons.menu_rounded,
           size: width < 390 ? 48 : 52,
           onTap: () => Scaffold.of(context).openDrawer(),
         ),
@@ -421,7 +422,7 @@ class _ViewToggle extends StatelessWidget {
             child: Row(
               children: const [
                 Icon(
-                  Icons.view_list_rounded,
+                  AppIcons.view_list_rounded,
                   color: Color(0xFF182B4E),
                   size: 16,
                 ),
@@ -449,7 +450,7 @@ class _ViewToggle extends StatelessWidget {
                 child: Row(
                   children: const [
                     Icon(
-                      Icons.map_outlined,
+                      AppIcons.map_outlined,
                       color: Color(0xFF72809B),
                       size: 16,
                     ),
@@ -496,7 +497,11 @@ class _SearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, color: Color(0xFF72809B), size: 24),
+          const Icon(
+            AppIcons.search_rounded,
+            color: Color(0xFF72809B),
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -521,7 +526,7 @@ class _SearchBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.tune_rounded,
+              AppIcons.tune_rounded,
               color: Color(0xFF182B4E),
               size: 18,
             ),
@@ -755,8 +760,8 @@ class _VehicleCard extends StatelessWidget {
                                 vehicle.statusLabel.toLowerCase().contains(
                                       'offline',
                                     )
-                                    ? Icons.wifi_off_rounded
-                                    : Icons.speed_rounded,
+                                    ? AppIcons.wifi_off_rounded
+                                    : AppIcons.speed_rounded,
                                 size: 14,
                                 color: const Color(0xFF66758D),
                               ),
@@ -796,7 +801,7 @@ class _VehicleCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       const Icon(
-                        Icons.chevron_right_rounded,
+                        AppIcons.chevron_right_rounded,
                         color: Color(0xFF8A96AB),
                         size: 20,
                       ),
@@ -897,7 +902,7 @@ class _PaginationBar extends StatelessWidget {
                 onPressed: currentPage <= 1
                     ? null
                     : () => onPageChanged(currentPage - 1),
-                icon: const Icon(Icons.chevron_left_rounded),
+                icon: const Icon(AppIcons.chevron_left_rounded),
                 visualDensity: VisualDensity.compact,
               ),
               Text(
@@ -912,7 +917,7 @@ class _PaginationBar extends StatelessWidget {
                 onPressed: currentPage >= totalPages
                     ? null
                     : () => onPageChanged(currentPage + 1),
-                icon: const Icon(Icons.chevron_right_rounded),
+                icon: const Icon(AppIcons.chevron_right_rounded),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -953,14 +958,14 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       selected: true,
                       onTap: () => context.go('/gps/vehicles'),
@@ -969,14 +974,14 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       onTap: () => context.go('/gps/profile'),
                     ),
@@ -1001,7 +1006,7 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                     ),
                   ),
                   child: const Icon(
-                    Icons.map_outlined,
+                    AppIcons.map_outlined,
                     color: Colors.white,
                     size: 26,
                   ),

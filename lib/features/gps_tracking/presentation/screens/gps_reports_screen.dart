@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
@@ -63,7 +64,7 @@ class GpsReportsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _DropdownField(
-                          icon: Icons.local_shipping_rounded,
+                          icon: AppIcons.local_shipping_rounded,
                           label: 'Select a vehicle',
                         ),
                         const SizedBox(height: 14),
@@ -75,7 +76,7 @@ class GpsReportsScreen extends StatelessWidget {
                             child: Row(
                               children: const [
                                 Icon(
-                                  Icons.groups_rounded,
+                                  AppIcons.groups_rounded,
                                   color: Color(0xFF2D6EF2),
                                   size: 20,
                                 ),
@@ -91,7 +92,7 @@ class GpsReportsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Icon(
-                                  Icons.chevron_right_rounded,
+                                  AppIcons.chevron_right_rounded,
                                   color: Color(0xFF2D6EF2),
                                 ),
                               ],
@@ -153,7 +154,7 @@ class GpsReportsScreen extends StatelessWidget {
                     height: 54,
                     child: ElevatedButton.icon(
                       onPressed: () {},
-                      icon: const Icon(Icons.bar_chart_rounded, size: 20),
+                      icon: const Icon(AppIcons.bar_chart_rounded, size: 20),
                       label: const Text(
                         'Generate Report',
                         style: TextStyle(
@@ -191,7 +192,7 @@ class GpsReportsScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.verified_rounded,
+                            AppIcons.verified_rounded,
                             color: Color(0xFF2D6EF2),
                             size: 18,
                           ),
@@ -253,7 +254,7 @@ class _ReportsHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HeaderButton(
-          icon: Icons.menu_rounded,
+          icon: AppIcons.menu_rounded,
           size: width < 390 ? 48 : 52,
           onTap: () => Scaffold.of(context).openDrawer(),
         ),
@@ -427,10 +428,7 @@ class _ReportCard extends StatelessWidget {
 }
 
 class _DropdownField extends StatelessWidget {
-  const _DropdownField({
-    required this.icon,
-    required this.label,
-  });
+  const _DropdownField({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -468,7 +466,7 @@ class _DropdownField extends StatelessWidget {
               ),
             ),
           const Icon(
-            Icons.keyboard_arrow_down_rounded,
+            AppIcons.keyboard_arrow_down_rounded,
             color: Color(0xFF72809B),
           ),
         ],
@@ -485,10 +483,10 @@ class _MiniOption {
 }
 
 const _reportTypes = <_MiniOption>[
-  _MiniOption(title: 'Trip Summary', icon: Icons.show_chart_rounded),
-  _MiniOption(title: 'Route History', icon: Icons.place_rounded),
-  _MiniOption(title: 'Fuel Summary', icon: Icons.local_gas_station_rounded),
-  _MiniOption(title: 'Usage Summary', icon: Icons.speed_rounded),
+  _MiniOption(title: 'Trip Summary', icon: AppIcons.show_chart_rounded),
+  _MiniOption(title: 'Route History', icon: AppIcons.place_rounded),
+  _MiniOption(title: 'Fuel Summary', icon: AppIcons.local_gas_station_rounded),
+  _MiniOption(title: 'Usage Summary', icon: AppIcons.speed_rounded),
 ];
 
 class _MiniOptionCard extends StatelessWidget {
@@ -580,7 +578,7 @@ class _DateField extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                Icons.calendar_month_rounded,
+                AppIcons.calendar_month_rounded,
                 size: 16,
                 color: Color(0xFF72809B),
               ),
@@ -598,7 +596,7 @@ class _DateField extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.keyboard_arrow_down_rounded,
+                AppIcons.keyboard_arrow_down_rounded,
                 color: Color(0xFF72809B),
                 size: 18,
               ),
@@ -632,7 +630,7 @@ class _DurationChip extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.calendar_today_rounded,
+            AppIcons.calendar_today_rounded,
             size: 14,
             color: selected ? const Color(0xFF2D6EF2) : const Color(0xFF72809B),
           ),
@@ -683,14 +681,14 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -698,7 +696,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       selected: true,
                       onTap: () => context.go('/gps/reports'),
@@ -706,7 +704,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       onTap: () => context.go('/gps/profile'),
                     ),
@@ -728,7 +726,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.map_outlined,
+                  AppIcons.map_outlined,
                   color: Colors.white,
                   size: 26,
                 ),

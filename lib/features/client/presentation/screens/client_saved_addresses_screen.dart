@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -209,7 +210,7 @@ class _ClientSavedAddressesScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
         ),
         title: const Text('Saved Addresses'),
       ),
@@ -222,7 +223,7 @@ class _ClientSavedAddressesScreenState
           children: [
             if (session == null)
               const _EmptyState(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock_outline_rounded,
                 title: 'Sign in to manage addresses',
                 subtitle:
                     'We need an active client session before we can load your saved locations.',
@@ -231,7 +232,7 @@ class _ClientSavedAddressesScreenState
               const Center(child: CircularProgressIndicator())
             else if (_error)
               _EmptyState(
-                icon: Icons.error_outline_rounded,
+                icon: AppIcons.error_outline_rounded,
                 title: 'Could not load saved addresses',
                 subtitle: 'Pull to refresh or try again in a moment.',
                 actionLabel: 'Retry',
@@ -239,7 +240,7 @@ class _ClientSavedAddressesScreenState
               )
             else if (_addresses.isEmpty)
               _EmptyState(
-                icon: Icons.location_on_outlined,
+                icon: AppIcons.location_on_outlined,
                 title: 'No saved addresses yet',
                 subtitle:
                     'Save your frequent pickup and drop-off locations to check out faster next time.',
@@ -255,7 +256,7 @@ class _ClientSavedAddressesScreenState
               const SizedBox(height: 12),
               if (filtered.isEmpty)
                 const _EmptyState(
-                  icon: Icons.search_off_rounded,
+                  icon: AppIcons.search_off_rounded,
                   title: 'No addresses match your search',
                   subtitle: 'Try another name, address, or contact.',
                 )
@@ -298,7 +299,11 @@ class _SavedAddressSearchField extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 13),
-          const Icon(Icons.search_rounded, color: Color(0xFFD0D5DD), size: 19),
+          const Icon(
+            AppIcons.search_rounded,
+            color: Color(0xFFD0D5DD),
+            size: 19,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -317,7 +322,7 @@ class _SavedAddressSearchField extends StatelessWidget {
                 controller.clear();
                 onQueryChanged('');
               },
-              icon: const Icon(Icons.close_rounded, size: 18),
+              icon: const Icon(AppIcons.close_rounded, size: 18),
             ),
         ],
       ),
@@ -421,7 +426,7 @@ class _AddAddressTile extends StatelessWidget {
                 color: const Color(0xFFE0F4E8),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Icon(Icons.add_rounded, color: Color(0xFF2FA56E)),
+              child: const Icon(AppIcons.add_rounded, color: Color(0xFF2FA56E)),
             ),
             const SizedBox(height: 10),
             Text(
@@ -812,7 +817,7 @@ class _ClientSavedAddressEditorScreenState
           elevation: 0,
           leading: IconButton(
             onPressed: () => context.pop(false),
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(AppIcons.arrow_back_rounded),
           ),
           title: Text(title),
         ),
@@ -845,7 +850,7 @@ class _ClientSavedAddressEditorScreenState
           elevation: 0,
           leading: IconButton(
             onPressed: () => context.pop(false),
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(AppIcons.arrow_back_rounded),
           ),
           title: Text(title),
         ),
@@ -854,7 +859,7 @@ class _ClientSavedAddressEditorScreenState
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
             children: [
               _EmptyState(
-                icon: Icons.error_outline_rounded,
+                icon: AppIcons.error_outline_rounded,
                 title: 'Could not load this address',
                 subtitle:
                     'Go back to saved addresses and try editing it again.',
@@ -874,7 +879,7 @@ class _ClientSavedAddressEditorScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(false),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
         ),
         title: Text(title),
       ),
@@ -902,7 +907,7 @@ class _ClientSavedAddressEditorScreenState
                   _FieldLabel(text: 'Name'),
                   const SizedBox(height: 8),
                   _CardField(
-                    leading: Icons.business_outlined,
+                    leading: AppIcons.business_outlined,
                     child: TextField(
                       controller: _labelController,
                       maxLength: 60,
@@ -929,7 +934,10 @@ class _ClientSavedAddressEditorScreenState
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.my_location_rounded, size: 15),
+                            : const Icon(
+                                AppIcons.my_location_rounded,
+                                size: 15,
+                              ),
                         label: const Text('Use current'),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF2FA56E),
@@ -945,7 +953,7 @@ class _ClientSavedAddressEditorScreenState
                   ),
                   const SizedBox(height: 8),
                   _CardField(
-                    leading: Icons.location_on_outlined,
+                    leading: AppIcons.location_on_outlined,
                     child: GooglePlacesAutocompleteField(
                       controller: _addressController,
                       label: '',
@@ -1019,7 +1027,7 @@ class _ClientSavedAddressEditorScreenState
                       const SizedBox(width: 10),
                       Expanded(
                         child: _CardField(
-                          leading: Icons.phone_outlined,
+                          leading: AppIcons.phone_outlined,
                           child: TextField(
                             controller: _contactPhoneController,
                             keyboardType: TextInputType.phone,
@@ -1176,7 +1184,7 @@ class _EditorMapPanel extends StatelessWidget {
             child: IconButton(
               onPressed: onFullscreen,
               tooltip: 'Open map picker',
-              icon: const Icon(Icons.open_in_full_rounded, size: 18),
+              icon: const Icon(AppIcons.open_in_full_rounded, size: 18),
               color: const Color(0xFF344054),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -1218,7 +1226,7 @@ class _EditorMapPanel extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(
-                            Icons.location_on_outlined,
+                            AppIcons.location_on_outlined,
                             color: Color(0xFF2FA56E),
                           ),
                   ),
@@ -1348,7 +1356,7 @@ class _SavedAddressMapPickerState
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(AppIcons.close_rounded),
                     color: const Color(0xFF101828),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -1371,7 +1379,7 @@ class _SavedAddressMapPickerState
                               ),
                             ),
                           )
-                        : const Icon(Icons.check_rounded, size: 18),
+                        : const Icon(AppIcons.check_rounded, size: 18),
                     label: const Text('Use'),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF2FA56E),
@@ -1416,7 +1424,7 @@ class _SavedAddressMapPickerState
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.location_on_outlined,
+                      AppIcons.location_on_outlined,
                       color: Color(0xFF2FA56E),
                     ),
                   ),
@@ -1546,18 +1554,18 @@ class _AddressListTile extends StatelessWidget {
               children: [
                 if (!address.isDefault)
                   _AddressIconAction(
-                    icon: Icons.star_outline_rounded,
+                    icon: AppIcons.star_outline_rounded,
                     onTap: isDefaulting ? null : onSetDefault,
                     loading: isDefaulting,
                     tooltip: 'Set default',
                   ),
                 _AddressIconAction(
-                  icon: Icons.edit_outlined,
+                  icon: AppIcons.edit_outlined,
                   onTap: onEdit,
                   tooltip: 'Edit',
                 ),
                 _AddressIconAction(
-                  icon: Icons.delete_outline_rounded,
+                  icon: AppIcons.delete_outline_rounded,
                   onTap: isDeleting ? null : onDelete,
                   loading: isDeleting,
                   danger: true,
@@ -1589,14 +1597,14 @@ class _AddressTypeMeta {
     if (type == 'dropoff') {
       return const _AddressTypeMeta(
         label: 'Drop-off',
-        icon: Icons.remove_shopping_cart_outlined,
+        icon: AppIcons.remove_shopping_cart_outlined,
         background: Color(0xFFFFF7ED),
         color: Color(0xFFEA580C),
       );
     }
     return const _AddressTypeMeta(
       label: 'Pickup',
-      icon: Icons.add_business_outlined,
+      icon: AppIcons.add_business_outlined,
       background: Color(0xFFEAF6EF),
       color: Color(0xFF2FA56E),
     );
@@ -1659,7 +1667,7 @@ class _DefaultBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.star_rounded,
+            AppIcons.star_rounded,
             size: dense ? 11 : 13,
             color: const Color(0xFF2FA56E),
           ),

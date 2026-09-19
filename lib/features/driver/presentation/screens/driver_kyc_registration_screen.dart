@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -443,7 +444,7 @@ class _DriverKycRegistrationScreenState
                     ),
                     const SizedBox(height: 16),
                     _SheetAction(
-                      icon: Icons.photo_camera_rounded,
+                      icon: AppIcons.photo_camera_rounded,
                       label: 'Camera',
                       onTap: () {
                         Navigator.of(context).pop();
@@ -452,7 +453,7 @@ class _DriverKycRegistrationScreenState
                     ),
                     const SizedBox(height: 10),
                     _SheetAction(
-                      icon: Icons.photo_library_rounded,
+                      icon: AppIcons.photo_library_rounded,
                       label: 'Gallery',
                       onTap: () {
                         Navigator.of(context).pop();
@@ -461,7 +462,7 @@ class _DriverKycRegistrationScreenState
                     ),
                     const SizedBox(height: 10),
                     _SheetAction(
-                      icon: Icons.close_rounded,
+                      icon: AppIcons.close_rounded,
                       label: 'Cancel',
                       onTap: () => Navigator.of(context).pop(),
                       muted: true,
@@ -502,7 +503,7 @@ class _DriverKycRegistrationScreenState
                     Row(
                       children: [
                         const Icon(
-                          Icons.document_scanner_rounded,
+                          AppIcons.document_scanner_rounded,
                           color: Color(0xFF1F88C9),
                         ),
                         const SizedBox(width: 10),
@@ -536,7 +537,7 @@ class _DriverKycRegistrationScreenState
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
-                              Icons.insert_drive_file_rounded,
+                              AppIcons.insert_drive_file_rounded,
                               color: Color(0xFF1F88C9),
                             ),
                           ),
@@ -909,8 +910,8 @@ class _DriverKycRegistrationScreenState
                   ),
                   child: Icon(
                     isApproved
-                        ? Icons.check_rounded
-                        : Icons.hourglass_top_rounded,
+                        ? AppIcons.check_rounded
+                        : AppIcons.hourglass_top_rounded,
                     size: 54,
                     color: Colors.white,
                   ),
@@ -981,7 +982,7 @@ class _DriverKycRegistrationScreenState
               Row(
                 children: [
                   _KycIconBadge(
-                    icon: Icons.assignment_outlined,
+                    icon: AppIcons.assignment_outlined,
                     color: const Color(0xFF2D72E8),
                     background: const Color(0xFFEAF2FF),
                   ),
@@ -998,7 +999,7 @@ class _DriverKycRegistrationScreenState
               ),
               const SizedBox(height: 18),
               _verificationInfoRow(
-                icon: Icons.verified_rounded,
+                icon: AppIcons.verified_rounded,
                 iconColor: const Color(0xFF20B978),
                 iconBackground: const Color(0xFFE9F9F1),
                 label: 'Current Status',
@@ -1007,7 +1008,7 @@ class _DriverKycRegistrationScreenState
                 valueBadge: isApproved,
               ),
               _verificationInfoRow(
-                icon: Icons.calendar_month_outlined,
+                icon: AppIcons.calendar_month_outlined,
                 iconColor: const Color(0xFF2D72E8),
                 iconBackground: const Color(0xFFEAF2FF),
                 label: 'Submitted Date',
@@ -1016,7 +1017,7 @@ class _DriverKycRegistrationScreenState
                     : 'Not available',
               ),
               _verificationInfoRow(
-                icon: Icons.badge_outlined,
+                icon: AppIcons.badge_outlined,
                 iconColor: const Color(0xFF7656D9),
                 iconBackground: const Color(0xFFF0ECFF),
                 label: 'Submission ID',
@@ -1024,7 +1025,7 @@ class _DriverKycRegistrationScreenState
               ),
               if (_reviewedAt != null)
                 _verificationInfoRow(
-                  icon: Icons.schedule_outlined,
+                  icon: AppIcons.schedule_outlined,
                   iconColor: const Color(0xFFF5A623),
                   iconBackground: const Color(0xFFFFF5E6),
                   label: 'Reviewed At',
@@ -1036,7 +1037,7 @@ class _DriverKycRegistrationScreenState
         const SizedBox(height: 18),
         OutlinedButton.icon(
           onPressed: _goBack,
-          icon: const Icon(Icons.arrow_back_rounded, size: 23),
+          icon: const Icon(AppIcons.arrow_back_rounded, size: 23),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF1764E8),
             minimumSize: const Size.fromHeight(60),
@@ -1112,7 +1113,7 @@ class _DriverKycRegistrationScreenState
                         ),
                         const SizedBox(width: 6),
                         Icon(
-                          Icons.check_rounded,
+                          AppIcons.check_rounded,
                           color: valueColor ?? const Color(0xFF20B978),
                           size: 18,
                         ),
@@ -1283,7 +1284,7 @@ class _DriverKycRegistrationScreenState
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Icon(Icons.file_upload_outlined, size: 18),
+                  : const Icon(AppIcons.file_upload_outlined, size: 18),
               label: Text(
                 _isRejectedStatus(status)
                     ? 'Resubmit for Review'
@@ -1346,7 +1347,7 @@ class _DriverKycRegistrationScreenState
                 ],
               ),
               child: const Icon(
-                Icons.chevron_left_rounded,
+                AppIcons.chevron_left_rounded,
                 color: Color(0xFF173E9A),
                 size: 30,
               ),
@@ -1548,7 +1549,7 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
-                    Icons.fact_check_outlined,
+                    AppIcons.fact_check_outlined,
                     color: Color(0xFF2152D0),
                     size: 18,
                   ),
@@ -1566,7 +1567,7 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  icon: const Icon(AppIcons.edit_outlined, size: 15),
                   label: const Text('Edit'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF2152D0),
@@ -1591,22 +1592,22 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                   children: [
                     _SubmittedFieldTile(
                       label: 'Driving License',
-                      icon: Icons.credit_card_rounded,
+                      icon: AppIcons.credit_card_rounded,
                       value: licenseNumber,
                     ),
                     _SubmittedFieldTile(
                       label: 'Aadhaar Number',
-                      icon: Icons.fingerprint_rounded,
+                      icon: AppIcons.fingerprint_rounded,
                       value: aadhaarNumber,
                     ),
                     _SubmittedFieldTile(
                       label: 'Vehicle Reg.',
-                      icon: Icons.local_shipping_outlined,
+                      icon: AppIcons.local_shipping_outlined,
                       value: vehicleRegistration,
                     ),
                     _SubmittedFieldTile(
                       label: 'Insurance',
-                      icon: Icons.shield_outlined,
+                      icon: AppIcons.shield_outlined,
                       value: insuranceNumber,
                     ),
                   ],
@@ -1712,7 +1713,9 @@ class _SubmittedDocumentTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            uploaded ? Icons.check_circle_rounded : Icons.pending_outlined,
+            uploaded
+                ? AppIcons.check_circle_rounded
+                : AppIcons.pending_outlined,
             color: uploaded ? const Color(0xFF2FA56E) : const Color(0xFF94A3B8),
             size: 20,
           ),
@@ -1746,7 +1749,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
           if (uploaded)
             TextButton.icon(
               onPressed: onView,
-              icon: const Icon(Icons.visibility_outlined, size: 14),
+              icon: const Icon(AppIcons.visibility_outlined, size: 14),
               label: const Text('View'),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFF2152D0),
@@ -1785,7 +1788,7 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
       title: 'KYC Verified',
       subtitle: 'Your driver account is verified and active.',
       badge: 'VERIFIED',
-      icon: Icons.verified_rounded,
+      icon: AppIcons.verified_rounded,
       color: Color(0xFF047857),
       background: Color(0xFFEAF8EF),
     );
@@ -1795,7 +1798,7 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
       title: 'KYC Rejected',
       subtitle: 'Review the reason below and resubmit your documents.',
       badge: 'REJECTED',
-      icon: Icons.error_outline_rounded,
+      icon: AppIcons.error_outline_rounded,
       color: Color(0xFFE23A4B),
       background: Color(0xFFFFEEF0),
     );
@@ -1806,7 +1809,7 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
       subtitle:
           'Documents submitted successfully. Review usually takes 24-48 hours.',
       badge: 'SUBMITTED',
-      icon: Icons.hourglass_top_rounded,
+      icon: AppIcons.hourglass_top_rounded,
       color: Color(0xFF2152D0),
       background: Color(0xFFEFF6FF),
     );
@@ -1815,7 +1818,7 @@ _KycStatusVisuals _kycStatusVisuals(String status) {
     title: 'Complete Driver KYC',
     subtitle: 'Submit your identity and vehicle documents for verification.',
     badge: 'PENDING',
-    icon: Icons.badge_outlined,
+    icon: AppIcons.badge_outlined,
     color: Color(0xFFD97706),
     background: Color(0xFFFFF7ED),
   );
@@ -1875,7 +1878,11 @@ class _StepperItem extends StatelessWidget {
           color: Color(0xFF2FA56E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check_rounded, size: 22, color: Colors.white),
+        child: const Icon(
+          AppIcons.check_rounded,
+          size: 22,
+          color: Colors.white,
+        ),
       );
     } else if (isActive) {
       circle = Container(
@@ -2034,7 +2041,7 @@ class _WarningCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFFB54708)),
+          const Icon(AppIcons.info_outline_rounded, color: Color(0xFFB54708)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -2079,10 +2086,10 @@ class _PremiumTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasValue = controller.text.trim().isNotEmpty;
     final statusIcon = !hasValue
-        ? Icons.radio_button_unchecked_rounded
+        ? AppIcons.radio_button_unchecked_rounded
         : valid
-        ? Icons.check_rounded
-        : Icons.close_rounded;
+        ? AppIcons.check_rounded
+        : AppIcons.close_rounded;
     final statusColor = !hasValue
         ? const Color(0xFF98A2B3)
         : valid
@@ -2217,8 +2224,8 @@ class _KycUploadCard extends StatelessWidget {
                 ),
                 child: Icon(
                   uploaded
-                      ? Icons.check_circle_rounded
-                      : Icons.description_rounded,
+                      ? AppIcons.check_circle_rounded
+                      : AppIcons.description_rounded,
                   color: uploaded
                       ? const Color(0xFF2FA56E)
                       : const Color(0xFF1F88C9),
@@ -2281,29 +2288,29 @@ class _KycUploadCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _MiniIconButton(
-                icon: Icons.cloud_upload_rounded,
+                icon: AppIcons.cloud_upload_rounded,
                 onPressed: onUpload,
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
-                icon: Icons.photo_camera_rounded,
+                icon: AppIcons.photo_camera_rounded,
                 onPressed: onCamera,
               ),
               const SizedBox(width: 8),
               _MiniIconButton(
-                icon: Icons.photo_library_rounded,
+                icon: AppIcons.photo_library_rounded,
                 onPressed: onGallery,
               ),
               if (uploaded) ...[
                 const SizedBox(width: 10),
                 _MiniIconButton(
-                  icon: Icons.visibility_rounded,
+                  icon: AppIcons.visibility_rounded,
                   onPressed: onView,
                   filled: true,
                 ),
                 const SizedBox(width: 8),
                 _MiniIconButton(
-                  icon: Icons.swap_horiz_rounded,
+                  icon: AppIcons.swap_horiz_rounded,
                   onPressed: onReplace,
                 ),
               ],
@@ -2436,7 +2443,7 @@ class _ReviewFieldRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onEdit,
-            icon: const Icon(Icons.edit_rounded),
+            icon: const Icon(AppIcons.edit_rounded),
             color: const Color(0xFF1F88C9),
           ),
         ],
@@ -2495,8 +2502,8 @@ class _ReviewDocumentRow extends StatelessWidget {
                   ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
                       uploaded
-                          ? Icons.check_rounded
-                          : Icons.insert_drive_file_rounded,
+                          ? AppIcons.check_rounded
+                          : AppIcons.insert_drive_file_rounded,
                       color: uploaded
                           ? const Color(0xFF2FA56E)
                           : const Color(0xFF1F88C9),
@@ -2536,12 +2543,15 @@ class _ReviewDocumentRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _MiniIconButton(
-            icon: Icons.visibility_rounded,
+            icon: AppIcons.visibility_rounded,
             onPressed: onView,
             filled: true,
           ),
           const SizedBox(width: 8),
-          _MiniIconButton(icon: Icons.swap_horiz_rounded, onPressed: onReplace),
+          _MiniIconButton(
+            icon: AppIcons.swap_horiz_rounded,
+            onPressed: onReplace,
+          ),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class PaymentMethodTypeOption {
@@ -126,31 +127,27 @@ const paymentMethodTypeOptions = <PaymentMethodTypeOption>[
   PaymentMethodTypeOption(
     id: 'upi',
     label: 'UPI',
-    icon: Icons.smartphone_rounded,
+    icon: AppIcons.smartphone_rounded,
   ),
   PaymentMethodTypeOption(
     id: 'card',
     label: 'Card',
-    icon: Icons.credit_card_rounded,
+    icon: AppIcons.credit_card_rounded,
   ),
   PaymentMethodTypeOption(
     id: 'netbanking',
     label: 'Bank',
-    icon: Icons.account_balance_rounded,
+    icon: AppIcons.account_balance_rounded,
   ),
   PaymentMethodTypeOption(
     id: 'wallet',
     label: 'Wallet',
-    icon: Icons.account_balance_wallet_rounded,
+    icon: AppIcons.account_balance_wallet_rounded,
   ),
 ];
 
 const paymentWalletOptions = <PaymentWalletOption>[
-  PaymentWalletOption(
-    id: 'paytm',
-    label: 'Paytm',
-    logoBuilder: _paytmLogo,
-  ),
+  PaymentWalletOption(id: 'paytm', label: 'Paytm', logoBuilder: _paytmLogo),
   PaymentWalletOption(
     id: 'amazonpay',
     label: 'Amazon Pay',
@@ -166,11 +163,7 @@ const paymentWalletOptions = <PaymentWalletOption>[
     label: 'Freecharge',
     logoBuilder: _freechargeLogo,
   ),
-  PaymentWalletOption(
-    id: 'paypal',
-    label: 'PayPal',
-    logoBuilder: _paypalLogo,
-  ),
+  PaymentWalletOption(id: 'paypal', label: 'PayPal', logoBuilder: _paypalLogo),
 ];
 
 const paymentBankOptions = <PaymentBankOption>[
@@ -401,7 +394,7 @@ Widget paymentBrandLogo(String brand) {
 }
 
 Widget paymentMethodIcon(SavedPaymentMethod method) {
-    switch (method.methodType) {
+  switch (method.methodType) {
     case 'card':
       return paymentBrandLogo(readString(method.details, const ['brand']));
     case 'netbanking':
@@ -410,9 +403,9 @@ Widget paymentMethodIcon(SavedPaymentMethod method) {
       final wallet = readString(method.details, const ['wallet']);
       return walletLogo(wallet.isNotEmpty ? wallet : method.label);
     case 'upi':
-      return const Icon(Icons.smartphone_rounded, color: Color(0xFF2FA56E));
+      return const Icon(AppIcons.smartphone_rounded, color: Color(0xFF2FA56E));
     default:
-      return const Icon(Icons.payment_rounded, color: Color(0xFF2FA56E));
+      return const Icon(AppIcons.payment_rounded, color: Color(0xFF2FA56E));
   }
 }
 
@@ -427,13 +420,22 @@ Widget bankLogo(String bankName) {
 Widget walletLogo(String walletName) {
   final normalized = walletName.trim().toLowerCase();
   if (normalized.contains('paytm')) {
-    return SvgPicture.asset('assets/svgs/icons8-paytm.svg', fit: BoxFit.contain);
+    return SvgPicture.asset(
+      'assets/svgs/icons8-paytm.svg',
+      fit: BoxFit.contain,
+    );
   }
   if (normalized.contains('google')) {
-    return SvgPicture.asset('assets/svgs/icons8-google-pay.svg', fit: BoxFit.contain);
+    return SvgPicture.asset(
+      'assets/svgs/icons8-google-pay.svg',
+      fit: BoxFit.contain,
+    );
   }
   if (normalized.contains('phonepe') || normalized.contains('phone pe')) {
-    return SvgPicture.asset('assets/svgs/icons8-phone-pe.svg', fit: BoxFit.contain);
+    return SvgPicture.asset(
+      'assets/svgs/icons8-phone-pe.svg',
+      fit: BoxFit.contain,
+    );
   }
   if (normalized.contains('amazon')) {
     return SvgPicture.string(_amazonPayLogoSvg, fit: BoxFit.contain);
@@ -450,10 +452,13 @@ Widget walletLogo(String walletName) {
   return SvgPicture.string(_genericWalletSvg, fit: BoxFit.contain);
 }
 
-List<SavedPaymentMethod> parseSavedPaymentMethods(Map<String, dynamic> response) {
+List<SavedPaymentMethod> parseSavedPaymentMethods(
+  Map<String, dynamic> response,
+) {
   final payload = response['data'];
   final data = payload is Map<String, dynamic> ? payload : response;
-  final raw = data['paymentMethods'] ??
+  final raw =
+      data['paymentMethods'] ??
       data['items'] ??
       data['results'] ??
       data['rows'] ??
@@ -466,7 +471,10 @@ List<SavedPaymentMethod> parseSavedPaymentMethods(Map<String, dynamic> response)
       .toList(growable: false);
 }
 
-Map<String, dynamic> pickResponseItem(Map<String, dynamic> response, String key) {
+Map<String, dynamic> pickResponseItem(
+  Map<String, dynamic> response,
+  String key,
+) {
   final payload = response['data'];
   final data = payload is Map<String, dynamic> ? payload : response;
   final item = data[key];

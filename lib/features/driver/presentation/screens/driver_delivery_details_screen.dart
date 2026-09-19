@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -95,10 +96,10 @@ class _TripStopTile extends StatelessWidget {
         children: [
           Icon(
             stop.done
-                ? Icons.check_circle_rounded
+                ? AppIcons.check_circle_rounded
                 : stop.loading
-                ? Icons.inventory_2_outlined
-                : Icons.inventory_2_rounded,
+                ? AppIcons.inventory_2_outlined
+                : AppIcons.inventory_2_rounded,
             color: stop.done ? const Color(0xFF2FA56E) : color,
             size: 20,
           ),
@@ -1140,7 +1141,7 @@ class _DriverDeliveryDetailsScreenState
                       duration: const Duration(milliseconds: 280),
                       curve: Curves.easeInOutCubicEmphasized,
                       child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
+                        AppIcons.keyboard_arrow_down_rounded,
                         color: Color(0xFF101828),
                         size: 24,
                       ),
@@ -1780,7 +1781,7 @@ class _DriverDeliveryDetailsScreenState
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(
-                          Icons.shield_outlined,
+                          AppIcons.shield_outlined,
                           color: Color(0xFFE35A62),
                           size: 22,
                         ),
@@ -1798,7 +1799,7 @@ class _DriverDeliveryDetailsScreenState
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(sheetContext).pop(),
-                        icon: const Icon(Icons.close_rounded),
+                        icon: const Icon(AppIcons.close_rounded),
                         color: const Color(0xFF98A2B3),
                         tooltip: 'Close',
                       ),
@@ -1808,7 +1809,7 @@ class _DriverDeliveryDetailsScreenState
                   _EmergencyAssistanceTile(
                     backgroundColor: const Color(0xFFFDEEEF),
                     iconColor: const Color(0xFFE35A62),
-                    icon: Icons.local_police_rounded,
+                    icon: AppIcons.local_police_rounded,
                     title: 'Call Police',
                     subtitle: 'Emergency: 112',
                     onTap: () {
@@ -1824,7 +1825,7 @@ class _DriverDeliveryDetailsScreenState
                   _EmergencyAssistanceTile(
                     backgroundColor: const Color(0xFFFDEEEF),
                     iconColor: const Color(0xFFE35A62),
-                    icon: Icons.local_hospital_rounded,
+                    icon: AppIcons.local_hospital_rounded,
                     title: 'Call Ambulance',
                     subtitle: 'Emergency: 108',
                     onTap: () {
@@ -1840,7 +1841,7 @@ class _DriverDeliveryDetailsScreenState
                   _EmergencyAssistanceTile(
                     backgroundColor: const Color(0xFFEAF2FF),
                     iconColor: const Color(0xFF3F7DE8),
-                    icon: Icons.call_rounded,
+                    icon: AppIcons.call_rounded,
                     title: 'Call Broker',
                     subtitle: '9000000003',
                     onTap: () {
@@ -1854,7 +1855,7 @@ class _DriverDeliveryDetailsScreenState
                   _EmergencyAssistanceTile(
                     backgroundColor: const Color(0xFFFFF7DE),
                     iconColor: const Color(0xFFC98B17),
-                    icon: Icons.report_outlined,
+                    icon: AppIcons.report_outlined,
                     title: 'Report Incident to Support',
                     subtitle: 'Notify our support team immediately',
                     onTap: () {
@@ -1866,7 +1867,7 @@ class _DriverDeliveryDetailsScreenState
                   _EmergencyAssistanceTile(
                     backgroundColor: const Color(0xFFEAF2FB),
                     iconColor: const Color(0xFF1F88C9),
-                    icon: Icons.build_circle_outlined,
+                    icon: AppIcons.build_circle_outlined,
                     title: 'View Mechanic Status',
                     subtitle: 'See breakdown and repair progress',
                     onTap: () {
@@ -2006,7 +2007,7 @@ class _DriverDeliveryDetailsScreenState
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Icon(
-                          Icons.arrow_back_rounded,
+                          AppIcons.arrow_back_rounded,
                           color: Color(0xFF101828),
                           size: 20,
                         ),
@@ -2062,7 +2063,7 @@ class _DriverDeliveryDetailsScreenState
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
-                              Icons.call_rounded,
+                              AppIcons.call_rounded,
                               size: 18,
                               color: Color(0xFF1F88C9),
                             ),
@@ -2091,7 +2092,7 @@ class _DriverDeliveryDetailsScreenState
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Icon(
-                          Icons.chat_bubble_outline_rounded,
+                          AppIcons.chat_bubble_outline_rounded,
                           color: Color(0xFF1F88C9),
                           size: 20,
                         ),
@@ -2109,7 +2110,7 @@ class _DriverDeliveryDetailsScreenState
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Icon(
-                          Icons.more_vert_rounded,
+                          AppIcons.more_vert_rounded,
                           color: Color(0xFF101828),
                           size: 20,
                         ),
@@ -2328,7 +2329,9 @@ class _DeliverySlaCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            hasCharge
+                ? AppIcons.warning_amber_rounded
+                : AppIcons.schedule_rounded,
             color: hasCharge
                 ? const Color(0xFFC2410C)
                 : const Color(0xFF475569),
@@ -2420,13 +2423,13 @@ class _ArrivalThumbShape extends SliderComponentShape {
 
     final textPainter = TextPainter(
       text: TextSpan(
-        text: String.fromCharCode(Icons.chevron_right_rounded.codePoint),
+        text: String.fromCharCode(AppIcons.chevron_right_rounded.codePoint),
         style: TextStyle(
           color: const Color(0xFF2FA56E),
           fontSize: 28,
           fontWeight: FontWeight.w800,
-          fontFamily: Icons.chevron_right_rounded.fontFamily,
-          package: Icons.chevron_right_rounded.fontPackage,
+          fontFamily: AppIcons.chevron_right_rounded.fontFamily,
+          package: AppIcons.chevron_right_rounded.fontPackage,
           height: 1,
         ),
       ),
@@ -2462,31 +2465,31 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
   static const _incidentTypes = <_IncidentTypeOption>[
     _IncidentTypeOption(
       label: 'Accident',
-      icon: Icons.warning_amber_rounded,
+      icon: AppIcons.warning_amber_rounded,
       accent: Color(0xFFE08A1E),
       background: Color(0xFFFFF7EA),
     ),
     _IncidentTypeOption(
       label: 'Breakdown',
-      icon: Icons.build_rounded,
+      icon: AppIcons.build_rounded,
       accent: Color(0xFF7B8DA6),
       background: Color(0xFFF5F7FA),
     ),
     _IncidentTypeOption(
       label: 'Traffic Block',
-      icon: Icons.traffic_rounded,
+      icon: AppIcons.traffic_rounded,
       accent: Color(0xFF7A5AF8),
       background: Color(0xFFF3EEFF),
     ),
     _IncidentTypeOption(
       label: 'Medical',
-      icon: Icons.favorite_border_rounded,
+      icon: AppIcons.favorite_border_rounded,
       accent: Color(0xFFE35A62),
       background: Color(0xFFFFF1F2),
     ),
     _IncidentTypeOption(
       label: 'Other',
-      icon: Icons.chat_bubble_outline_rounded,
+      icon: AppIcons.chat_bubble_outline_rounded,
       accent: Color(0xFF7B8DA6),
       background: Color(0xFFF5F7FA),
     ),
@@ -2598,7 +2601,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
-                        Icons.report_gmailerrorred_outlined,
+                        AppIcons.report_gmailerrorred_outlined,
                         color: Color(0xFFE2A22F),
                         size: 22,
                       ),
@@ -2615,7 +2618,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(AppIcons.close_rounded),
                       color: const Color(0xFF98A2B3),
                       tooltip: 'Close',
                     ),
@@ -2769,7 +2772,7 @@ class _DriverBookingChatSheet extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(AppIcons.close_rounded),
                   ),
                 ],
               ),
@@ -2886,7 +2889,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
-                      Icons.build_circle_outlined,
+                      AppIcons.build_circle_outlined,
                       color: Color(0xFF1F88C9),
                       size: 22,
                     ),
@@ -2903,7 +2906,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(AppIcons.close_rounded),
                     color: const Color(0xFF98A2B3),
                     tooltip: 'Close',
                   ),

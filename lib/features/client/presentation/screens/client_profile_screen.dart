@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -100,7 +101,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       title: 'Shipments',
                       children: [
                         _ProfileMenuTile(
-                          icon: Icons.inventory_2_outlined,
+                          icon: AppIcons.inventory_2_outlined,
                           title: 'My Bookings',
                           onTap: () => context.go('/client/delivery'),
                         ),
@@ -111,22 +112,22 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       title: 'Account',
                       children: [
                         _ProfileMenuTile(
-                          icon: Icons.location_on_outlined,
+                          icon: AppIcons.location_on_outlined,
                           title: 'Saved Addresses',
                           onTap: () => context.push('/client/saved-addresses'),
                         ),
                         _ProfileMenuTile(
-                          icon: Icons.credit_card_outlined,
+                          icon: AppIcons.credit_card_outlined,
                           title: 'Payment Methods',
                           onTap: () => context.push('/client/payment-methods'),
                         ),
                         _ProfileMenuTile(
-                          icon: Icons.notifications_active_outlined,
+                          icon: AppIcons.notifications_active_outlined,
                           title: 'Notifications',
                           onTap: () => context.push('/client/notifications'),
                         ),
                         _ProfileMenuTile(
-                          icon: Icons.key_rounded,
+                          icon: AppIcons.key_rounded,
                           title: 'Change Password',
                           onTap: () => context.push('/change-password'),
                         ),
@@ -137,13 +138,13 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       title: 'Help',
                       children: [
                         _ProfileMenuTile(
-                          icon: Icons.headset_mic_outlined,
+                          icon: AppIcons.headset_mic_outlined,
                           title: 'Help & Support',
                           subtitle: 'Coming soon',
                           onTap: () => _showComingSoon(context),
                         ),
                         _ProfileMenuTile(
-                          icon: Icons.description_outlined,
+                          icon: AppIcons.description_outlined,
                           title: 'Terms & Privacy',
                           subtitle: 'Coming soon',
                           onTap: () => _showComingSoon(context),
@@ -310,12 +311,12 @@ class _ProfileHeroCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     _HeroContactLine(
-                      icon: Icons.phone_rounded,
+                      icon: AppIcons.phone_rounded,
                       value: _fallback(user?.phone, 'Not provided'),
                     ),
                     const SizedBox(height: 4),
                     _HeroContactLine(
-                      icon: Icons.mail_rounded,
+                      icon: AppIcons.mail_rounded,
                       value: _fallback(user?.email, 'Not provided'),
                     ),
                     const SizedBox(height: 16),
@@ -331,7 +332,7 @@ class _ProfileHeroCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      icon: const Icon(Icons.edit_rounded, size: 16),
+                      icon: const Icon(AppIcons.edit_rounded, size: 16),
                       label: const Text('Edit Profile'),
                     ),
                   ],
@@ -503,21 +504,21 @@ class _AccountInfoCard extends StatelessWidget {
             )
           else ...[
             _InfoRow(
-              icon: Icons.calendar_month_rounded,
+              icon: AppIcons.calendar_month_rounded,
               iconColor: const Color(0xFF2FA56E),
               label: 'Member Since',
               value: _formatDate(user?.createdAt),
             ),
             const SizedBox(height: 13),
             _InfoRow(
-              icon: Icons.inventory_2_rounded,
+              icon: AppIcons.inventory_2_rounded,
               iconColor: const Color(0xFF1F88C9),
               label: 'Active Shipments',
               value: stats.activeShipments.toString(),
             ),
             const SizedBox(height: 13),
             _InfoRow(
-              icon: Icons.account_balance_wallet_rounded,
+              icon: AppIcons.account_balance_wallet_rounded,
               iconColor: const Color(0xFFE6A700),
               label: 'Lifetime Value',
               value: _formatCurrency(stats.totalSpent),
@@ -699,7 +700,10 @@ class _ProfileMenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFFD0D5DD)),
+            const Icon(
+              AppIcons.chevron_right_rounded,
+              color: Color(0xFFD0D5DD),
+            ),
           ],
         ),
       ),
@@ -723,7 +727,7 @@ class _SignOutTile extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.logout_rounded, color: Color(0xFFE23A4B)),
+            const Icon(AppIcons.logout_rounded, color: Color(0xFFE23A4B)),
             const SizedBox(width: 9),
             Text(
               'Sign Out',
@@ -763,7 +767,7 @@ class _LogoutSheet extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.logout_rounded,
+                AppIcons.logout_rounded,
                 color: Color(0xFFE23A4B),
                 size: 30,
               ),

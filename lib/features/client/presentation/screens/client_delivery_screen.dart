@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -164,7 +165,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
             const SizedBox(height: 16),
             if (session == null)
               const _EmptyState(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock_outline_rounded,
                 title: 'Sign in to view bookings',
                 subtitle:
                     'We need an active client session before we can load your activity feed.',
@@ -178,7 +179,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _EmptyState(
-                  icon: Icons.error_outline_rounded,
+                  icon: AppIcons.error_outline_rounded,
                   title: 'Could not load bookings',
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                   actionLabel: 'Try again',
@@ -189,7 +190,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
 
                   if (bookings.isEmpty) {
                     return _EmptyState(
-                      icon: Icons.inbox_rounded,
+                      icon: AppIcons.inbox_rounded,
                       title: 'No bookings found',
                       subtitle:
                           'Once a booking is created, it will show up here.',
@@ -258,14 +259,14 @@ class _BookingsHeader extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _HeaderActionButton(
-              icon: Icons.download_rounded,
+              icon: AppIcons.download_rounded,
               label: 'Export',
               onPressed: onExport,
               filled: false,
             ),
             const SizedBox(width: 8),
             _HeaderActionButton(
-              icon: Icons.add_rounded,
+              icon: AppIcons.add_rounded,
               label: 'New Booking',
               onPressed: onNewBooking,
               filled: true,
@@ -435,7 +436,7 @@ class _MyBookingMobileCard extends StatelessWidget {
                       if (booking.isExpress) ...[
                         const SizedBox(width: 6),
                         const Icon(
-                          Icons.bolt_rounded,
+                          AppIcons.bolt_rounded,
                           color: Color(0xFF2FA56E),
                           size: 16,
                         ),
@@ -923,7 +924,7 @@ class ClientBookingCard extends StatelessWidget {
               child: Row(
                 children: [
                   const Icon(
-                    Icons.inventory_2_rounded,
+                    AppIcons.inventory_2_rounded,
                     color: Color(0xFF667085),
                     size: 18,
                   ),
@@ -1019,7 +1020,7 @@ class _ExpressBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
+          const Icon(AppIcons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
           const SizedBox(width: 3),
           Text(
             'Express',

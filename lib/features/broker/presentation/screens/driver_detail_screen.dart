@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -241,7 +242,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.arrow_back_rounded, size: 20),
+                    child: const Icon(AppIcons.arrow_back_rounded, size: 20),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -354,7 +355,7 @@ class _DriverSummaryCard extends StatelessWidget {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.chat_bubble_outline_rounded),
+                : const Icon(AppIcons.chat_bubble_outline_rounded),
             tooltip: 'Chat with driver',
           ),
         ],

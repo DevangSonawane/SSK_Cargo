@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 class ClientSettingsScreen extends StatelessWidget {
@@ -35,7 +36,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Chats',
                   subtitle: 'View conversations from all your bookings',
-                  icon: Icons.chat_bubble_outline_rounded,
+                  icon: AppIcons.chat_bubble_outline_rounded,
                   iconBackgroundColor: const Color(0xFFDDEBFF),
                   iconColor: const Color(0xFF1F88C9),
                   onTap: () => context.push('/chats'),
@@ -44,7 +45,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Notifications',
                   subtitle: 'Review booking updates and invoice alerts',
-                  icon: Icons.notifications_active_outlined,
+                  icon: AppIcons.notifications_active_outlined,
                   iconBackgroundColor: const Color(0xFFE0F4E8),
                   iconColor: const Color(0xFF2FA56E),
                   onTap: () => context.push('/client/notifications'),
@@ -53,7 +54,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Change password',
                   subtitle: 'Update the password for this account',
-                  icon: Icons.password_rounded,
+                  icon: AppIcons.password_rounded,
                   iconBackgroundColor: const Color(0xFFDDEBFF),
                   iconColor: const Color(0xFF2D6EF2),
                   onTap: () => context.push('/change-password'),
@@ -62,7 +63,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Manage account',
                   subtitle: 'Update your name, email, phone, and photo',
-                  icon: Icons.manage_accounts_rounded,
+                  icon: AppIcons.manage_accounts_rounded,
                   iconBackgroundColor: const Color(0xFFF2E8FF),
                   iconColor: const Color(0xFF7A4FD6),
                   onTap: () => context.push('/manage-account'),
@@ -71,7 +72,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Saved Addresses',
                   subtitle: 'Manage pickup and drop locations',
-                  icon: Icons.location_on_outlined,
+                  icon: AppIcons.location_on_outlined,
                   iconBackgroundColor: const Color(0xFFE0F4E8),
                   iconColor: const Color(0xFF2FA56E),
                   onTap: () => context.push('/client/saved-addresses'),
@@ -80,7 +81,7 @@ class ClientSettingsScreen extends StatelessWidget {
                 _SettingsMenuTile(
                   title: 'Payment Methods',
                   subtitle: 'Save UPI IDs, cards, banks, and wallets',
-                  icon: Icons.credit_card_outlined,
+                  icon: AppIcons.credit_card_outlined,
                   iconBackgroundColor: const Color(0xFFE0F4E8),
                   iconColor: const Color(0xFF2FA56E),
                   onTap: () => context.push('/client/payment-methods'),
@@ -157,7 +158,10 @@ class _SettingsMenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+            const Icon(
+              AppIcons.chevron_right_rounded,
+              color: Color(0xFF98A2B3),
+            ),
           ],
         ),
       ),

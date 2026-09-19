@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -163,7 +164,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           elevation: 0,
                           child: IconButton(
                             onPressed: () => context.go('/login'),
-                            icon: const Icon(Icons.arrow_back_rounded),
+                            icon: const Icon(AppIcons.arrow_back_rounded),
                             color: const Color(0xFF0F172A),
                             tooltip: 'Back to login',
                           ),
@@ -241,7 +242,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   textInputAction: TextInputAction.next,
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your full name',
-                                    icon: Icons.person_outline_rounded,
+                                    icon: AppIcons.person_outline_rounded,
                                   ),
                                 ),
                               ),
@@ -254,7 +255,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   textInputAction: TextInputAction.next,
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your email address',
-                                    icon: Icons.mail_outline_rounded,
+                                    icon: AppIcons.mail_outline_rounded,
                                   ),
                                 ),
                               ),
@@ -267,7 +268,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   textInputAction: TextInputAction.next,
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your phone number',
-                                    icon: Icons.phone_outlined,
+                                    icon: AppIcons.phone_outlined,
                                   ),
                                 ),
                               ),
@@ -282,7 +283,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   onSubmitted: (_) => _submit(),
                                   decoration: _inputDecoration(
                                     hintText: 'Create a password',
-                                    icon: Icons.lock_outline_rounded,
+                                    icon: AppIcons.lock_outline_rounded,
                                     suffix: IconButton(
                                       onPressed: () {
                                         setState(
@@ -292,8 +293,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                       },
                                       icon: Icon(
                                         _obscurePassword
-                                            ? Icons.visibility_off_outlined
-                                            : Icons.visibility_outlined,
+                                            ? AppIcons.visibility_off_outlined
+                                            : AppIcons.visibility_outlined,
                                       ),
                                     ),
                                   ),
@@ -360,7 +361,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               ),
                                               SizedBox(width: 6),
                                               Icon(
-                                                Icons.arrow_forward_rounded,
+                                                AppIcons.arrow_forward_rounded,
                                                 size: 16,
                                                 color: Colors.white,
                                               ),
@@ -454,7 +455,7 @@ class _TermsRow extends StatelessWidget {
                 ),
               ),
               child: accepted
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(AppIcons.check, size: 16, color: Colors.white)
                   : null,
             ),
             const SizedBox(width: 10),

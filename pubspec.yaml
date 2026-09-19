@@ -101,6 +101,7 @@ flutter:
     - assets/IMG_1750.PNG
     - assets/truck/truck-marker.png
     - assets/google_logo.svg
+    - assets/apple_logo.svg
     - assets/upi-icon.svg
     - assets/gps_tracking_screen_fotos/loginpage_gps.png
     - assets/gps_tracking_screen_fotos/sidebar.png

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 class BrokerSettingsScreen extends StatelessWidget {
@@ -23,21 +24,21 @@ class BrokerSettingsScreen extends StatelessWidget {
               _SettingsTile(
                 title: 'Invoices',
                 subtitle: 'Review bookings and invoice actions',
-                icon: Icons.receipt_long_rounded,
+                icon: AppIcons.receipt_long_rounded,
                 onTap: () => context.push('/broker/settings/invoices'),
               ),
               const SizedBox(height: 10),
               _SettingsTile(
                 title: 'Settlements',
                 subtitle: 'View payouts and settlement status',
-                icon: Icons.payments_rounded,
+                icon: AppIcons.payments_rounded,
                 onTap: () => context.push('/broker/settings/settlements'),
               ),
               const SizedBox(height: 10),
               _SettingsTile(
                 title: 'Analytics',
                 subtitle: 'Track this month vs last month',
-                icon: Icons.bar_chart_rounded,
+                icon: AppIcons.bar_chart_rounded,
                 onTap: () => context.push('/broker/settings/analytics'),
               ),
             ],
@@ -50,7 +51,7 @@ class BrokerSettingsScreen extends StatelessWidget {
               _SettingsTile(
                 title: 'Notifications',
                 subtitle: 'Open your notification inbox',
-                icon: Icons.notifications_active_rounded,
+                icon: AppIcons.notifications_active_rounded,
                 onTap: () => context.push('/broker/notifications'),
               ),
             ],
@@ -171,7 +172,10 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+            const Icon(
+              AppIcons.chevron_right_rounded,
+              color: Color(0xFF98A2B3),
+            ),
           ],
         ),
       ),

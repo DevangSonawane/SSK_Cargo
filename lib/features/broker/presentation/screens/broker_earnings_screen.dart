@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -72,7 +73,7 @@ class BrokerEarningsScreen extends ConsumerWidget {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => context.go('/broker/profile'),
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
                   label: const Text('Back to Profile'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF64748B),
@@ -148,7 +149,7 @@ class _EarningsContent extends StatelessWidget {
         _EarningsStatCard(
           label: 'Gross Revenue',
           value: _formatCurrency(totalGross),
-          icon: Icons.currency_rupee_rounded,
+          icon: AppIcons.currency_rupee_rounded,
           color: const Color(0xFF2152D0),
           background: const Color(0xFFEAF2FF),
         ),
@@ -156,7 +157,7 @@ class _EarningsContent extends StatelessWidget {
         _EarningsStatCard(
           label: 'Platform Fees',
           value: _formatCurrency(totalFees),
-          icon: Icons.account_balance_wallet_rounded,
+          icon: AppIcons.account_balance_wallet_rounded,
           color: const Color(0xFFE23A4B),
           background: const Color(0xFFFDECEC),
         ),
@@ -164,7 +165,7 @@ class _EarningsContent extends StatelessWidget {
         _EarningsStatCard(
           label: 'Net Earnings',
           value: _formatCurrency(totalNet),
-          icon: Icons.trending_up_rounded,
+          icon: AppIcons.trending_up_rounded,
           color: const Color(0xFF2FA56E),
           background: const Color(0xFFEAF7EF),
         ),
@@ -377,10 +378,10 @@ class _TrendPill extends StatelessWidget {
           children: [
             Icon(
               neutral
-                  ? Icons.remove_rounded
+                  ? AppIcons.remove_rounded
                   : positive
-                  ? Icons.trending_up_rounded
-                  : Icons.trending_down_rounded,
+                  ? AppIcons.trending_up_rounded
+                  : AppIcons.trending_down_rounded,
               color: color,
               size: 15,
             ),

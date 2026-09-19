@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
@@ -71,7 +72,7 @@ class _GeofenceHeader extends StatelessWidget {
     return Row(
       children: [
         _HeaderButton(
-          icon: Icons.menu_rounded,
+          icon: AppIcons.menu_rounded,
           size: width < 390 ? 48 : 52,
           onTap: () => Scaffold.of(context).openDrawer(),
         ),
@@ -85,11 +86,11 @@ class _GeofenceHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0F1F44),
-                      letterSpacing: -0.7,
-                    ),
+                  fontSize: titleSize,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0F1F44),
+                  letterSpacing: -0.7,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -97,10 +98,10 @@ class _GeofenceHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: subtitleSize,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF63708A),
-                    ),
+                  fontSize: subtitleSize,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF63708A),
+                ),
               ),
             ],
           ),
@@ -143,11 +144,7 @@ class _HeaderButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            size: size * 0.48,
-            color: const Color(0xFF182B4E),
-          ),
+          child: Icon(icon, size: size * 0.48, color: const Color(0xFF182B4E)),
         ),
       ),
     );
@@ -198,14 +195,16 @@ class _HeroPanel extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2F6EEA).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFF2F6EEA,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 24,
                           offset: const Offset(0, 10),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.location_on_rounded,
+                      AppIcons.location_on_rounded,
                       color: Colors.white,
                       size: 38,
                     ),
@@ -237,7 +236,10 @@ class _HeroPanel extends StatelessWidget {
               left: 18,
               top: 20,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(18),
@@ -248,7 +250,7 @@ class _HeroPanel extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.map_outlined, color: Colors.white, size: 18),
+                    Icon(AppIcons.map_outlined, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Text(
                       'Define zones for your fleet',
@@ -332,8 +334,16 @@ class _HeroMapPainter extends CustomPainter {
       ..strokeWidth = 2
       ..color = Colors.white.withValues(alpha: 0.08);
 
-    canvas.drawCircle(Offset(size.width * 0.72, size.height * 0.58), 88, ringPaint);
-    canvas.drawCircle(Offset(size.width * 0.72, size.height * 0.58), 60, ringPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.58),
+      88,
+      ringPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.58),
+      60,
+      ringPaint,
+    );
   }
 
   @override
@@ -365,7 +375,11 @@ class _SearchRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded, color: Color(0xFF8A96AB), size: 24),
+                const Icon(
+                  AppIcons.search_rounded,
+                  color: Color(0xFF8A96AB),
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -373,10 +387,10 @@ class _SearchRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: isCompact ? 11.5 : 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8A96AB),
-                        ),
+                      fontSize: isCompact ? 11.5 : 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF8A96AB),
+                    ),
                   ),
                 ),
               ],
@@ -399,7 +413,7 @@ class _SearchRow extends StatelessWidget {
             ],
           ),
           child: const Icon(
-            Icons.filter_list_rounded,
+            AppIcons.filter_list_rounded,
             color: Color(0xFF8A96AB),
             size: 28,
           ),
@@ -435,20 +449,20 @@ class _EmptyStateCard extends StatelessWidget {
             'No geofences yet',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF172B4D),
-                ),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF172B4D),
+            ),
           ),
           const SizedBox(height: 10),
           Text(
             'Create a geofence to monitor areas and get notified when vehicles enter or exit the zone.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 13,
-                  height: 1.35,
-                  color: const Color(0xFF74839A),
-                ),
+              fontSize: 13,
+              height: 1.35,
+              color: const Color(0xFF74839A),
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -456,13 +470,10 @@ class _EmptyStateCard extends StatelessWidget {
             height: 54,
             child: ElevatedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.add_rounded, size: 20),
+              icon: const Icon(AppIcons.add_rounded, size: 20),
               label: const Text(
                 'Create Geofence',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF245BD8),
@@ -479,6 +490,7 @@ class _EmptyStateCard extends StatelessWidget {
     );
   }
 }
+
 class _GpsBottomNavBar extends StatelessWidget {
   const _GpsBottomNavBar();
 
@@ -509,7 +521,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       selected: true,
                       onTap: () => context.go('/gps/dashboard'),
@@ -517,7 +529,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       selected: false,
                       onTap: () => context.go('/gps/vehicles'),
@@ -526,7 +538,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       selected: false,
                       onTap: () => context.go('/gps/reports'),
@@ -534,7 +546,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       selected: false,
                       onTap: () => context.go('/gps/profile'),
@@ -557,7 +569,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.map_outlined,
+                  AppIcons.map_outlined,
                   color: Colors.white,
                   size: 26,
                 ),

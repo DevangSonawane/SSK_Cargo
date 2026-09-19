@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -44,7 +45,7 @@ class _BrokerSettlementsScreenState
               const _SettlementsHeader(),
               const SizedBox(height: 24),
               _EmptyState(
-                icon: Icons.payments_rounded,
+                icon: AppIcons.payments_rounded,
                 title: 'Could not load settlements',
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
@@ -58,7 +59,7 @@ class _BrokerSettlementsScreenState
                   _SettlementsHeader(),
                   SizedBox(height: 24),
                   _EmptyState(
-                    icon: Icons.payments_rounded,
+                    icon: AppIcons.payments_rounded,
                     title: 'No settlements yet',
                     subtitle:
                         'Paid and pending settlement records will appear here.',
@@ -269,7 +270,7 @@ class _SettlementsHeader extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Colors.white,
                 size: 24,
               ),
@@ -304,7 +305,7 @@ class _SettlementsHeader extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.filter_alt_outlined,
+              AppIcons.filter_alt_outlined,
               color: Colors.white,
               size: 19,
             ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -342,7 +343,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       ],
                     ),
                     child: const Icon(
-                      Icons.arrow_back_rounded,
+                      AppIcons.arrow_back_rounded,
                       color: Color(0xFF1769D1),
                       size: 24,
                     ),
@@ -398,7 +399,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             child: const Padding(
                               padding: EdgeInsets.all(13),
                               child: Icon(
-                                Icons.camera_alt_outlined,
+                                AppIcons.camera_alt_outlined,
                                 color: Colors.white,
                                 size: 25,
                               ),
@@ -438,7 +439,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: _fieldDecoration(
                         labelText: 'Full name',
-                        prefixIcon: Icons.person_rounded,
+                        prefixIcon: AppIcons.person_rounded,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -454,7 +455,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: _fieldDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icons.email_rounded,
+                        prefixIcon: AppIcons.email_rounded,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -476,7 +477,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       ],
                       decoration: _fieldDecoration(
                         labelText: 'Mobile number',
-                        prefixIcon: Icons.phone_rounded,
+                        prefixIcon: AppIcons.phone_rounded,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -489,7 +490,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         filled: true,
                         fillColor: Colors.white,
                         prefixIcon: const Icon(
-                          Icons.lock_rounded,
+                          AppIcons.lock_rounded,
                           color: Color(0xFF667085),
                         ),
                         suffixIcon: IconButton(
@@ -500,8 +501,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           },
                           icon: Icon(
                             _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
+                                ? AppIcons.visibility_off_outlined
+                                : AppIcons.visibility_outlined,
                           ),
                           tooltip: _obscurePassword
                               ? 'Show password'
@@ -551,7 +552,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     textInputAction: TextInputAction.next,
                     decoration: _fieldDecoration(
                       labelText: 'License number',
-                      prefixIcon: Icons.badge_rounded,
+                      prefixIcon: AppIcons.badge_rounded,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -572,7 +573,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     ],
                     decoration: _fieldDecoration(
                       labelText: 'Aadhaar number',
-                      prefixIcon: Icons.credit_card_rounded,
+                      prefixIcon: AppIcons.credit_card_rounded,
                     ),
                     validator: (value) {
                       final digits = value?.replaceAll(' ', '').trim() ?? '';
@@ -593,12 +594,12 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     decoration:
                         _fieldDecoration(
                           labelText: 'License expiry',
-                          prefixIcon: Icons.event_rounded,
+                          prefixIcon: AppIcons.event_rounded,
                           hintText: 'YYYY-MM-DD',
                         ).copyWith(
                           suffixIcon: IconButton(
                             onPressed: _pickLicenseExpiry,
-                            icon: const Icon(Icons.calendar_month_rounded),
+                            icon: const Icon(AppIcons.calendar_month_rounded),
                             tooltip: 'Pick date',
                           ),
                         ),
@@ -619,7 +620,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       isExpanded: true,
                       decoration: _fieldDecoration(
                         labelText: 'Assign truck',
-                        prefixIcon: Icons.local_shipping_rounded,
+                        prefixIcon: AppIcons.local_shipping_rounded,
                       ),
                       items: trucks
                           .map(
@@ -648,7 +649,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: _fieldDecoration(
                         labelText: 'Truck ID',
-                        prefixIcon: Icons.local_shipping_rounded,
+                        prefixIcon: AppIcons.local_shipping_rounded,
                         hintText: 'Enter truck UUID',
                       ),
                       validator: (value) {
@@ -667,7 +668,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       isExpanded: true,
                       decoration: _fieldDecoration(
                         labelText: 'Status',
-                        prefixIcon: Icons.toggle_on_rounded,
+                        prefixIcon: AppIcons.toggle_on_rounded,
                       ),
                       items: const [
                         DropdownMenuItem<String>(
@@ -716,7 +717,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(
-                                  Icons.local_shipping_rounded,
+                                  AppIcons.local_shipping_rounded,
                                   color: Colors.white,
                                   size: 23,
                                 ),

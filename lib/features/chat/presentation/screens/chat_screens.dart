@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -66,7 +67,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           }
           if (snapshot.hasError) {
             return _EmptyState(
-              icon: Icons.refresh_rounded,
+              icon: AppIcons.refresh_rounded,
               message: "Couldn't load your chats",
               action: TextButton(onPressed: _retry, child: const Text('Retry')),
             );
@@ -74,7 +75,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           final threads = snapshot.data ?? const <ChatThreadSummary>[];
           if (threads.isEmpty) {
             return const _EmptyState(
-              icon: Icons.chat_bubble_outline_rounded,
+              icon: AppIcons.chat_bubble_outline_rounded,
               message: 'No chats yet',
             );
           }

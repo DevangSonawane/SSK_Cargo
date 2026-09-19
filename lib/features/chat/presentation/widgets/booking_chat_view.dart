@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -525,7 +526,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
-                    Icons.lock_outline_rounded,
+                    AppIcons.lock_outline_rounded,
                     size: 16,
                     color: Color(0xFF98A2B3),
                   ),
@@ -627,7 +628,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.send_rounded, size: 18),
+                        : const Icon(AppIcons.send_rounded, size: 18),
                   ),
                 ),
               ],
@@ -711,7 +712,7 @@ class _ChatMessageBubble extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.smart_toy_outlined,
+                        AppIcons.smart_toy_outlined,
                         size: 14,
                         color: Color(0xFF7F56D9),
                       ),

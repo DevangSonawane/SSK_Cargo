@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -229,7 +230,7 @@ class _BookingPromptCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _BookingRouteRow(
-              icon: Icons.arrow_upward_rounded,
+              icon: AppIcons.arrow_upward_rounded,
               iconColor: const Color(0xFF38B47A),
               hintText: 'Enter loading location (e.g. delhi)',
             ),
@@ -237,7 +238,7 @@ class _BookingPromptCard extends StatelessWidget {
             const _BookingRouteDivider(),
             const SizedBox(height: 12),
             _BookingRouteRow(
-              icon: Icons.arrow_downward_rounded,
+              icon: AppIcons.arrow_downward_rounded,
               iconColor: const Color(0xFFF05252),
               hintText: 'Search your unloading location',
             ),

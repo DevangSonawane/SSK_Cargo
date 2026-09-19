@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -364,7 +365,10 @@ class _EmptyMapState extends StatelessWidget {
                   color: Color(0xFFEAF8EF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.map_outlined, color: Color(0xFF2FA56E)),
+                child: const Icon(
+                  AppIcons.map_outlined,
+                  color: Color(0xFF2FA56E),
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -467,7 +471,7 @@ class TrackingRouteOverviewCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   const Icon(
-                    Icons.chevron_right_rounded,
+                    AppIcons.chevron_right_rounded,
                     color: Color(0xFF98A2B3),
                   ),
                 ],
@@ -806,7 +810,7 @@ class _EmptyLiveLocationState extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.gps_fixed_rounded,
+                  AppIcons.gps_fixed_rounded,
                   color: Color(0xFF1F88C9),
                 ),
               ),

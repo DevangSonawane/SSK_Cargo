@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,7 +38,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
               const _AnalyticsHeader(),
               const SizedBox(height: 24),
               _EmptyState(
-                icon: Icons.bar_chart_rounded,
+                icon: AppIcons.bar_chart_rounded,
                 title: 'Could not load analytics',
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
@@ -109,7 +110,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                             child: const Row(
                               children: [
                                 Icon(
-                                  Icons.filter_list_rounded,
+                                  AppIcons.filter_list_rounded,
                                   color: Color(0xFF1769D1),
                                   size: 18,
                                 ),
@@ -129,7 +130,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                       const SizedBox(height: 10),
                       if (tripHistory.isEmpty)
                         const _EmptyState(
-                          icon: Icons.timeline_rounded,
+                          icon: AppIcons.timeline_rounded,
                           title: 'No trip history yet',
                           subtitle:
                               'Completed settlements will appear here once trips close.',
@@ -193,7 +194,7 @@ class _AnalyticsHeader extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Colors.white,
                 size: 24,
               ),
@@ -228,7 +229,7 @@ class _AnalyticsHeader extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.calendar_month_outlined,
+              AppIcons.calendar_month_outlined,
               color: Colors.white,
               size: 24,
             ),
@@ -316,7 +317,11 @@ class _MetricCard extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.trending_up_rounded, color: accent, size: 27),
+                child: Icon(
+                  AppIcons.trending_up_rounded,
+                  color: accent,
+                  size: 27,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -346,7 +351,11 @@ class _MetricCard extends StatelessWidget {
           Positioned(
             top: 18,
             right: 0,
-            child: Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+            child: Icon(
+              AppIcons.chevron_right_rounded,
+              color: accent,
+              size: 28,
+            ),
           ),
           Positioned(
             left: -16,

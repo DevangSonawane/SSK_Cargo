@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
@@ -312,7 +313,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                           child: const Padding(
                                             padding: EdgeInsets.all(11),
                                             child: Icon(
-                                              Icons.camera_alt_outlined,
+                                              AppIcons.camera_alt_outlined,
                                               color: Colors.white,
                                               size: 22,
                                             ),
@@ -354,7 +355,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                   controller: _nameController,
                                   decoration: _accountFieldDecoration(
                                     labelText: 'Full name',
-                                    icon: Icons.person_rounded,
+                                    icon: AppIcons.person_rounded,
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
@@ -369,7 +370,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: _accountFieldDecoration(
                                     labelText: 'Email',
-                                    icon: Icons.email_rounded,
+                                    icon: AppIcons.email_rounded,
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
@@ -387,7 +388,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                   keyboardType: TextInputType.phone,
                                   decoration: _accountFieldDecoration(
                                     labelText: 'Phone',
-                                    icon: Icons.phone_rounded,
+                                    icon: AppIcons.phone_rounded,
                                   ).copyWith(helperText: 'Optional'),
                                 ),
                                 if (isBroker) ...[
@@ -398,7 +399,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                     maxLines: 4,
                                     decoration: _accountFieldDecoration(
                                       labelText: 'Business address',
-                                      icon: Icons.location_on_rounded,
+                                      icon: AppIcons.location_on_rounded,
                                     ),
                                   ),
                                   const SizedBox(height: 12),
@@ -408,7 +409,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                         TextCapitalization.words,
                                     decoration: _accountFieldDecoration(
                                       labelText: 'Service city',
-                                      icon: Icons.location_city_rounded,
+                                      icon: AppIcons.location_city_rounded,
                                     ),
                                     validator: (value) {
                                       if ((value ?? '').trim().isEmpty) {
@@ -451,7 +452,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                             MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            Icons.save_rounded,
+                                            AppIcons.save_rounded,
                                             color: Colors.white,
                                           ),
                                           SizedBox(width: 12),
@@ -491,7 +492,7 @@ class _ManageAccountTitle extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -560,7 +561,7 @@ class _ActiveStatusToggle extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.verified_user_rounded,
+              AppIcons.verified_user_rounded,
               color: Color(0xFF2FA56E),
               size: 18,
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -109,7 +110,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               const _InvoicesHeader(),
               const SizedBox(height: 24),
               _EmptyState(
-                icon: Icons.receipt_long_rounded,
+                icon: AppIcons.receipt_long_rounded,
                 title: 'Could not load invoices',
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
@@ -126,7 +127,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
                   Padding(
                     padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
                     child: _EmptyState(
-                      icon: Icons.receipt_long_rounded,
+                      icon: AppIcons.receipt_long_rounded,
                       title: 'No invoice-ready bookings yet',
                       subtitle:
                           'Completed or delivered bookings will appear here.',
@@ -204,7 +205,7 @@ class _InvoicesHeader extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Colors.white,
                 size: 26,
               ),
@@ -307,7 +308,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onTap,
-                  icon: const Icon(Icons.more_horiz_rounded),
+                  icon: const Icon(AppIcons.more_horiz_rounded),
                   color: const Color(0xFF1769D1),
                   style: IconButton.styleFrom(
                     backgroundColor: const Color(0xFFEAF3FF),
@@ -391,7 +392,9 @@ class _InvoiceBookingCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isCompleted ? Icons.check_circle_rounded : Icons.circle,
+                    _isCompleted
+                        ? AppIcons.check_circle_rounded
+                        : AppIcons.circle,
                     color: statusColor,
                     size: 18,
                   ),

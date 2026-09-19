@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -424,7 +425,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   onPressed: () {
                     ref.read(driverRequestFeedProvider.notifier).refresh();
                   },
-                  icon: const Icon(Icons.refresh_rounded),
+                  icon: const Icon(AppIcons.refresh_rounded),
                   tooltip: 'Refresh requests',
                 ),
               ],
@@ -432,14 +433,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             const SizedBox(height: 12),
             if (!isOnline)
               const _EmptyStateCard(
-                icon: Icons.wifi_off_rounded,
+                icon: AppIcons.wifi_off_rounded,
                 title: 'Go online to receive requests',
                 subtitle:
                     'Negotiation cards will appear here once you are available.',
               )
             else if (session == null)
               const _EmptyStateCard(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock_outline_rounded,
                 title: 'Please sign in again',
                 subtitle:
                     'We need an active session before we can load requests.',
@@ -447,12 +448,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             else
               requestsAsync.when(
                 loading: () => const _EmptyStateCard(
-                  icon: Icons.hourglass_top_rounded,
+                  icon: AppIcons.hourglass_top_rounded,
                   title: 'Loading requests',
                   subtitle: 'Fetching driver requests from the server.',
                 ),
                 error: (error, _) => _EmptyStateCard(
-                  icon: Icons.error_outline_rounded,
+                  icon: AppIcons.error_outline_rounded,
                   title: 'Could not load requests',
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
@@ -463,7 +464,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
                   if (newRequests.isEmpty) {
                     return const _EmptyStateCard(
-                      icon: Icons.inbox_rounded,
+                      icon: AppIcons.inbox_rounded,
                       title: 'No new deliveries',
                       subtitle:
                           'New client requests will appear here when they arrive.',
@@ -1075,7 +1076,7 @@ class _BrokerAssignedActions extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: busy ? null : onDecline,
-                icon: const Icon(Icons.close_rounded, size: 17),
+                icon: const Icon(AppIcons.close_rounded, size: 17),
                 label: const Text('Decline'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFE23A4B),
@@ -1100,7 +1101,7 @@ class _BrokerAssignedActions extends StatelessWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(Icons.check_rounded, size: 17),
+                    : const Icon(AppIcons.check_rounded, size: 17),
                 label: Text(busy ? 'Saving...' : 'Accept'),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF2FA56E),
@@ -1135,7 +1136,7 @@ class _BrokerAssignedNotice extends StatelessWidget {
       child: Row(
         children: [
           const Icon(
-            Icons.handshake_rounded,
+            AppIcons.handshake_rounded,
             size: 18,
             color: Color(0xFF2FA56E),
           ),

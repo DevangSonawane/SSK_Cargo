@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 
 class ExpressBadge extends StatelessWidget {
   const ExpressBadge({super.key, this.compact = false});
@@ -21,7 +22,7 @@ class ExpressBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.bolt_rounded,
+            AppIcons.bolt_rounded,
             size: compact ? 13 : 14,
             color: const Color(0xFFEA580C),
           ),

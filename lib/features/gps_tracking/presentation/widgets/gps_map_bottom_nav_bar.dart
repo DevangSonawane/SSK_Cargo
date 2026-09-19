@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 class GpsMapBottomNavBar extends StatelessWidget {
@@ -35,7 +36,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       selected: currentRoute == '/gps/dashboard',
                       onTap: () => context.go('/gps/dashboard'),
@@ -43,7 +44,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       selected: currentRoute == '/gps/vehicles',
                       onTap: () => context.go('/gps/vehicles'),
@@ -52,7 +53,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       selected: currentRoute == '/gps/reports',
                       onTap: () => context.go('/gps/reports'),
@@ -60,7 +61,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       selected: currentRoute == '/gps/profile',
                       onTap: () => context.go('/gps/profile'),
@@ -95,7 +96,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                     ],
                   ),
                   child: const Icon(
-                    Icons.map_outlined,
+                    AppIcons.map_outlined,
                     color: Colors.white,
                     size: 26,
                   ),

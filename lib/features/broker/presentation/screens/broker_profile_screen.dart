@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -100,7 +101,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () => context.go('/broker/home'),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
                 label: const Text('Back'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),
@@ -117,13 +118,13 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 _ProfileMenuTile(
                   title: 'Manage Account',
                   subtitle: 'Profile details, security, and preferences',
-                  icon: Icons.person_outline_rounded,
+                  icon: AppIcons.person_outline_rounded,
                   onTap: () => context.push('/manage-account'),
                 ),
                 _ProfileMenuTile(
                   title: 'Earnings',
                   subtitle: 'Revenue and settlement performance',
-                  icon: Icons.trending_up_rounded,
+                  icon: AppIcons.trending_up_rounded,
                   accent: const Color(0xFF2FA56E),
                   onTap: () => context.push('/broker/earnings'),
                 ),
@@ -135,8 +136,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                       ? 'Verified'
                       : 'Complete your broker verification',
                   icon: _kycApproved
-                      ? Icons.verified_rounded
-                      : Icons.verified_user_outlined,
+                      ? AppIcons.verified_rounded
+                      : AppIcons.verified_user_outlined,
                   accent: _kycApproved
                       ? const Color(0xFF2FA56E)
                       : const Color(0xFF2152D0),
@@ -145,7 +146,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 _ProfileMenuTile(
                   title: 'Change Password',
                   subtitle: 'Update your sign-in credentials',
-                  icon: Icons.lock_outline_rounded,
+                  icon: AppIcons.lock_outline_rounded,
                   onTap: () => context.push('/change-password'),
                 ),
               ],
@@ -157,14 +158,14 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                 _ProfileMenuTile(
                   title: 'Help & Support',
                   subtitle: 'Contact support for account or trip issues',
-                  icon: Icons.support_agent_rounded,
+                  icon: AppIcons.support_agent_rounded,
                   accent: const Color(0xFF2152D0),
                   onTap: () {},
                 ),
                 _ProfileMenuTile(
                   title: 'Logout',
                   subtitle: 'Sign out from this device',
-                  icon: Icons.logout_rounded,
+                  icon: AppIcons.logout_rounded,
                   accent: const Color(0xFFE23A4B),
                   onTap: () async {
                     await ref.read(authSessionProvider.notifier).logout();
@@ -382,7 +383,7 @@ class _ProfileMenuTile extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             const Icon(
-              Icons.chevron_right_rounded,
+              AppIcons.chevron_right_rounded,
               color: Color(0xFFCBD5E1),
               size: 22,
             ),

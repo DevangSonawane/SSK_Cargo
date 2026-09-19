@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 
 Future<bool> showFakePaymentCheckout({
   required BuildContext context,
@@ -89,7 +90,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                 Row(
                   children: [
                     const Icon(
-                      Icons.lock_outline_rounded,
+                      AppIcons.lock_outline_rounded,
                       color: Color(0xFF2FA56E),
                     ),
                     const SizedBox(width: 8),
@@ -255,7 +256,7 @@ class _PinPad extends StatelessWidget {
               ? () => key == 'delete' ? onDelete() : onDigit(key)
               : null,
           child: key == 'delete'
-              ? const Icon(Icons.backspace_outlined, size: 18)
+              ? const Icon(AppIcons.backspace_outlined, size: 18)
               : Text(key),
         );
       },

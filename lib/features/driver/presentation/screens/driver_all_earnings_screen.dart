@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -69,7 +70,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Icon(
-                              Icons.arrow_back_rounded,
+                              AppIcons.arrow_back_rounded,
                               color: Color(0xFF101828),
                               size: 20,
                             ),
@@ -365,7 +366,7 @@ class _EmptyHistory extends StatelessWidget {
       child: Column(
         children: [
           const Icon(
-            Icons.payments_outlined,
+            AppIcons.payments_outlined,
             color: Color(0xFF98A2B3),
             size: 34,
           ),

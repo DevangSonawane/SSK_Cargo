@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/client_booking_models.dart';
@@ -188,7 +189,7 @@ class _ClientNotificationsScreenState
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
             children: [
               _EmptyState(
-                icon: Icons.notifications_off_outlined,
+                icon: AppIcons.notifications_off_outlined,
                 title: 'Could not load notifications',
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
@@ -201,7 +202,7 @@ class _ClientNotificationsScreenState
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 children: const [
                   _EmptyState(
-                    icon: Icons.notifications_none_rounded,
+                    icon: AppIcons.notifications_none_rounded,
                     title: 'No notifications yet',
                     subtitle:
                         'Updates about bookings, invoices, and activity will appear here.',
@@ -250,8 +251,8 @@ class _ClientNotificationsScreenState
                           ),
                           child: Icon(
                             notification.isRead
-                                ? Icons.notifications_none_rounded
-                                : Icons.notifications_active_rounded,
+                                ? AppIcons.notifications_none_rounded
+                                : AppIcons.notifications_active_rounded,
                             color: const Color(0xFF2FA56E),
                           ),
                         ),

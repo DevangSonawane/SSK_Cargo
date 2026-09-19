@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -435,13 +436,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.qr_code_rounded),
+                    leading: const Icon(AppIcons.qr_code_rounded),
                     title: const Text('UPI'),
                     onTap: () => Navigator.of(sheetContext).pop('upi'),
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.payments_rounded),
+                    leading: const Icon(AppIcons.payments_rounded),
                     title: const Text('Cash'),
                     onTap: () => Navigator.of(sheetContext).pop('cash'),
                   ),
@@ -530,14 +531,14 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFD0D5DD)),
               ),
-              child: const Icon(Icons.support_agent_rounded, size: 18),
+              child: const Icon(AppIcons.support_agent_rounded, size: 18),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: OutlinedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              icon: const Icon(AppIcons.help_outline_rounded, size: 18),
               label: const Text('Help'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF101828),
@@ -655,12 +656,12 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                       segments: const [
                         ButtonSegment<String>(
                           value: 'personal',
-                          icon: Icon(Icons.person_rounded),
+                          icon: Icon(AppIcons.person_rounded),
                           label: Text('Personal'),
                         ),
                         ButtonSegment<String>(
                           value: 'company',
-                          icon: Icon(Icons.apartment_rounded),
+                          icon: Icon(AppIcons.apartment_rounded),
                           label: Text('Company'),
                         ),
                       ],
@@ -685,8 +686,8 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                         .accessToken,
                     requiresAuth: generatedQrUrl == null,
                     centerIcon: activeQrSource == 'company'
-                        ? Icons.apartment_rounded
-                        : Icons.person_rounded,
+                        ? AppIcons.apartment_rounded
+                        : AppIcons.person_rounded,
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -863,7 +864,7 @@ class _QrPlaceholder extends StatelessWidget {
     this.qrUrl,
     this.accessToken,
     this.requiresAuth = true,
-    this.centerIcon = Icons.person_rounded,
+    this.centerIcon = AppIcons.person_rounded,
   });
 
   final String? qrUrl;

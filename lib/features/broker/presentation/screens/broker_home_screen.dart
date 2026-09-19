@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -307,7 +308,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.currency_rupee_rounded),
+                      prefixIcon: const Icon(AppIcons.currency_rupee_rounded),
                       hintText: 'Enter amount',
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -414,8 +415,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                         setState(() => _sortNewestFirst = !_sortNewestFirst),
                     icon: Icon(
                       _sortNewestFirst
-                          ? Icons.south_rounded
-                          : Icons.north_rounded,
+                          ? AppIcons.south_rounded
+                          : AppIcons.north_rounded,
                     ),
                     label: const Text('Sort'),
                     style: TextButton.styleFrom(
@@ -484,7 +485,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
               Center(
                 child: TextButton.icon(
                   onPressed: _refresh,
-                  icon: const Icon(Icons.refresh_rounded),
+                  icon: const Icon(AppIcons.refresh_rounded),
                   label: const Text('Reload requests'),
                 ),
               ),
@@ -581,7 +582,7 @@ class _NewBookingsHero extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.inventory_2_outlined,
+              AppIcons.inventory_2_outlined,
               color: Color(0xFF2152D0),
               size: 22,
             ),
@@ -660,7 +661,7 @@ class _SearchField extends StatelessWidget {
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
           prefixIcon: const Icon(
-            Icons.search_rounded,
+            AppIcons.search_rounded,
             color: Color(0xFF64748B),
           ),
           hintText: hintText,
@@ -798,7 +799,7 @@ class _BookingRequestCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.schedule_rounded,
+                          AppIcons.schedule_rounded,
                           size: 12,
                           color: Color(0xFF94A3B8),
                         ),
@@ -870,7 +871,7 @@ class _BookingRequestCard extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: busy ? null : onAssign,
-                  icon: const Icon(Icons.local_shipping_rounded, size: 17),
+                  icon: const Icon(AppIcons.local_shipping_rounded, size: 17),
                   label: const Text('Assign Driver & Truck'),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2152D0),
@@ -883,7 +884,7 @@ class _BookingRequestCard extends StatelessWidget {
               ),
             ] else if (status == 'countered') ...[
               _InlineStatusNote(
-                icon: Icons.schedule_rounded,
+                icon: AppIcons.schedule_rounded,
                 text: 'Waiting for client response to your $amountText offer',
                 color: const Color(0xFFD97706),
                 backgroundColor: const Color(0xFFFFFBEB),
@@ -892,7 +893,7 @@ class _BookingRequestCard extends StatelessWidget {
             ] else if (status == 'awaiting_confirmation' &&
                 !showConfirmActions) ...[
               _InlineStatusNote(
-                icon: Icons.schedule_rounded,
+                icon: AppIcons.schedule_rounded,
                 text: 'You accepted - waiting for the client to confirm',
                 color: const Color(0xFF0F766E),
                 backgroundColor: const Color(0xFFF0FDFA),
@@ -904,7 +905,7 @@ class _BookingRequestCard extends StatelessWidget {
                   Expanded(
                     child: _JobActionButton(
                       label: 'Confirm',
-                      icon: Icons.check_circle_outline_rounded,
+                      icon: AppIcons.check_circle_outline_rounded,
                       color: const Color(0xFF047857),
                       borderColor: const Color(0xFFA7F3D0),
                       onPressed: busy ? null : onAccept,
@@ -915,7 +916,7 @@ class _BookingRequestCard extends StatelessWidget {
                   Expanded(
                     child: _JobActionButton(
                       label: 'Decline',
-                      icon: Icons.cancel_outlined,
+                      icon: AppIcons.cancel_outlined,
                       color: const Color(0xFF64748B),
                       borderColor: const Color(0xFFE2E8F0),
                       onPressed: busy ? null : onDecline,
@@ -934,7 +935,7 @@ class _BookingRequestCard extends StatelessWidget {
                   Expanded(
                     child: _JobActionButton(
                       label: 'Accept',
-                      icon: Icons.check_circle_outline_rounded,
+                      icon: AppIcons.check_circle_outline_rounded,
                       color: const Color(0xFF047857),
                       borderColor: const Color(0xFFA7F3D0),
                       onPressed: busy ? null : onAccept,
@@ -946,7 +947,7 @@ class _BookingRequestCard extends StatelessWidget {
                     Expanded(
                       child: _JobActionButton(
                         label: 'Counter',
-                        icon: Icons.currency_rupee_rounded,
+                        icon: AppIcons.currency_rupee_rounded,
                         color: const Color(0xFF2152D0),
                         borderColor: const Color(0xFFC7D7FE),
                         onPressed: busy ? null : onCounter,
@@ -957,7 +958,7 @@ class _BookingRequestCard extends StatelessWidget {
                   Expanded(
                     child: _JobActionButton(
                       label: 'Decline',
-                      icon: Icons.cancel_outlined,
+                      icon: AppIcons.cancel_outlined,
                       color: const Color(0xFF64748B),
                       borderColor: const Color(0xFFE2E8F0),
                       onPressed: busy ? null : onDecline,
@@ -976,7 +977,7 @@ class _BookingRequestCard extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: onTap,
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  icon: const Icon(AppIcons.open_in_new_rounded, size: 16),
                   label: const Text('Review request'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2152D0),
@@ -993,7 +994,7 @@ class _BookingRequestCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(
-                  Icons.phone_outlined,
+                  AppIcons.phone_outlined,
                   size: 13,
                   color: Color(0xFF94A3B8),
                 ),
@@ -1117,7 +1118,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
-                Icons.local_shipping_rounded,
+                AppIcons.local_shipping_rounded,
                 color: Color(0xFF2152D0),
               ),
             ),
@@ -1148,7 +1149,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         const SizedBox(height: 18),
         _AssignmentDropdown<BrokerDriver>(
           label: 'Driver',
-          icon: Icons.person_rounded,
+          icon: AppIcons.person_rounded,
           value: selectedDriver?.id,
           items: drivers,
           idOf: (driver) => driver.id,
@@ -1173,7 +1174,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         const SizedBox(height: 12),
         _AssignmentDropdown<BrokerVehicle>(
           label: 'Truck',
-          icon: Icons.fire_truck_rounded,
+          icon: AppIcons.fire_truck_rounded,
           value: selectedTruck?.id,
           items: trucks,
           idOf: (truck) => truck.id,
@@ -1482,7 +1483,7 @@ class _AssignmentErrorState extends StatelessWidget {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(AppIcons.refresh_rounded),
             label: const Text('Retry'),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF2152D0),
@@ -1537,7 +1538,11 @@ class _JobLocationRow extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 1),
-          child: Icon(Icons.location_on_outlined, size: 14, color: iconColor),
+          child: Icon(
+            AppIcons.location_on_outlined,
+            size: 14,
+            color: iconColor,
+          ),
         ),
         const SizedBox(width: 7),
         Expanded(
@@ -1635,7 +1640,7 @@ class _NegotiationHistory extends StatelessWidget {
           Row(
             children: [
               const Icon(
-                Icons.history_rounded,
+                AppIcons.history_rounded,
                 size: 12,
                 color: Color(0xFF94A3B8),
               ),
@@ -1809,7 +1814,7 @@ class _EmptyBookingsState extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.inbox_rounded,
+              AppIcons.inbox_rounded,
               color: Color(0xFF2152D0),
               size: 34,
             ),
@@ -1886,7 +1891,7 @@ class _NotificationButton extends StatelessWidget {
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: const Icon(
-              Icons.notifications_none_rounded,
+              AppIcons.notifications_none_rounded,
               color: Color(0xFF334155),
             ),
           ),

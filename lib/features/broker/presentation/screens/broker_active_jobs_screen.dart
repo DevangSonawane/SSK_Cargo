@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -334,7 +335,7 @@ class _BrokerActiveJobsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _MiniInfoTile(
-                  icon: Icons.local_shipping_rounded,
+                  icon: AppIcons.local_shipping_rounded,
                   label: 'Currently Assigned',
                   value: job.driverName.isEmpty
                       ? 'Not Assigned'
@@ -603,7 +604,7 @@ class _ActiveJobCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniInfoTile(
-                  icon: Icons.local_shipping_rounded,
+                  icon: AppIcons.local_shipping_rounded,
                   label: 'Truck',
                   value: job.truckReg.isEmpty ? 'Not Assigned' : job.truckReg,
                 ),
@@ -611,7 +612,7 @@ class _ActiveJobCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _MiniInfoTile(
-                  icon: Icons.person_rounded,
+                  icon: AppIcons.person_rounded,
                   label: 'Driver',
                   value: job.driverName.isEmpty
                       ? 'Not Assigned'
@@ -641,13 +642,13 @@ class _ActiveJobCard extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _TextAction(
-                      icon: Icons.flag_rounded,
+                      icon: AppIcons.flag_rounded,
                       label: 'Report a Problem',
                       color: const Color(0xFFE23A4B),
                       onTap: onDispute,
                     ),
                     _TextAction(
-                      icon: Icons.navigation_rounded,
+                      icon: AppIcons.navigation_rounded,
                       label: 'Track Live',
                       color: const Color(0xFF2152D0),
                       onTap: onTrack,
@@ -663,13 +664,13 @@ class _ActiveJobCard extends StatelessWidget {
                   alignment: WrapAlignment.end,
                   children: [
                     _TextAction(
-                      icon: Icons.repeat_rounded,
+                      icon: AppIcons.repeat_rounded,
                       label: 'Reassign Driver',
                       color: const Color(0xFF2152D0),
                       onTap: onReassign,
                     ),
                     _TextAction(
-                      icon: Icons.chat_bubble_outline_rounded,
+                      icon: AppIcons.chat_bubble_outline_rounded,
                       label: 'Chat',
                       color: const Color(0xFF2152D0),
                       onTap: onChat,
@@ -747,7 +748,7 @@ class _ActiveEmptyState extends StatelessWidget {
       child: Column(
         children: [
           const Icon(
-            Icons.assignment_turned_in_rounded,
+            AppIcons.assignment_turned_in_rounded,
             color: Color(0xFF94A3B8),
             size: 36,
           ),
@@ -842,7 +843,7 @@ class _RouteLine extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.location_on_outlined, size: 15, color: color),
+        Icon(AppIcons.location_on_outlined, size: 15, color: color),
         const SizedBox(width: 8),
         Expanded(
           child: Column(

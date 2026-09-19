@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -100,7 +101,7 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null && shipment == null
             ? _PublicTrackingMessage(
-                icon: Icons.link_off_rounded,
+                icon: AppIcons.link_off_rounded,
                 title: 'Tracking unavailable',
                 message: _errorMessage!,
               )
@@ -278,7 +279,9 @@ class _DeliverySlaCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            hasCharge
+                ? AppIcons.warning_amber_rounded
+                : AppIcons.schedule_rounded,
             color: hasCharge
                 ? const Color(0xFFC2410C)
                 : const Color(0xFF475569),
@@ -321,7 +324,7 @@ class _IncidentBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Color(0xFFB54708)),
+          const Icon(AppIcons.warning_amber_rounded, color: Color(0xFFB54708)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

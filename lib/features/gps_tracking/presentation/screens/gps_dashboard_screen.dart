@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
@@ -119,7 +120,7 @@ class _DashboardHeader extends StatelessWidget {
     return Row(
       children: [
         _HeaderButton(
-          icon: Icons.menu_rounded,
+          icon: AppIcons.menu_rounded,
           size: width < 390 ? 50 : 56,
           onTap: () => Scaffold.of(context).openDrawer(),
         ),
@@ -211,7 +212,7 @@ class _NotificationButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         _HeaderButton(
-          icon: Icons.notifications_none_rounded,
+          icon: AppIcons.notifications_none_rounded,
           size: size,
           onTap: () {},
         ),
@@ -281,28 +282,28 @@ const _kpiCards = <_KpiCardData>[
   _KpiCardData(
     title: 'Total Vehicles',
     value: '32',
-    icon: Icons.local_shipping_rounded,
+    icon: AppIcons.local_shipping_rounded,
     tint: Color(0xFF2D6EF2),
     background: Color(0xFFEAF1FF),
   ),
   _KpiCardData(
     title: 'Running',
     value: '18',
-    icon: Icons.play_arrow_rounded,
+    icon: AppIcons.play_arrow_rounded,
     tint: Color(0xFF13B36C),
     background: Color(0xFFEAF9F1),
   ),
   _KpiCardData(
     title: 'Stopped',
     value: '6',
-    icon: Icons.stop_circle_rounded,
+    icon: AppIcons.stop_circle_rounded,
     tint: Color(0xFFFF595D),
     background: Color(0xFFFFEEEE),
   ),
   _KpiCardData(
     title: 'Offline',
     value: '4',
-    icon: Icons.wifi_rounded,
+    icon: AppIcons.wifi_rounded,
     tint: Color(0xFF4B84F6),
     background: Color(0xFFEAF1FF),
   ),
@@ -424,7 +425,7 @@ class _FleetStatusCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 2),
                   const Icon(
-                    Icons.chevron_right_rounded,
+                    AppIcons.chevron_right_rounded,
                     size: 18,
                     color: Color(0xFF8B96AB),
                   ),
@@ -652,7 +653,7 @@ class _StatusRow extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             const Icon(
-              Icons.chevron_right_rounded,
+              AppIcons.chevron_right_rounded,
               color: Color(0xFF98A2B3),
               size: 18,
             ),
@@ -718,7 +719,7 @@ class _RecentActivityCard extends StatelessWidget {
           const SizedBox(height: 12),
           const _ActivityRow(
             iconColor: Color(0xFFFF595D),
-            icon: Icons.stop_circle_rounded,
+            icon: AppIcons.stop_circle_rounded,
             title: 'MH12 AB 1234',
             status: 'Stopped',
             location: 'Oshiwara, Mumbai',
@@ -728,7 +729,7 @@ class _RecentActivityCard extends StatelessWidget {
           const Divider(height: 24, color: Color(0xFFE9EEF6)),
           const _ActivityRow(
             iconColor: Color(0xFF13B36C),
-            icon: Icons.local_shipping_rounded,
+            icon: AppIcons.local_shipping_rounded,
             title: 'DL01 XY 5521',
             status: 'Running',
             location: 'Noida, Uttar Pradesh',
@@ -771,7 +772,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       selected: true,
                       onTap: () => context.go('/gps/dashboard'),
@@ -779,7 +780,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -787,14 +788,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       onTap: () => context.go('/gps/profile'),
                     ),
@@ -816,7 +817,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.map_outlined,
+                  AppIcons.map_outlined,
                   color: Colors.white,
                   size: 26,
                 ),

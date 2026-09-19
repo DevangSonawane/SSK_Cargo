@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -81,7 +82,7 @@ class _DriverDeliveryArrivedScreenState
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Icon(
-                          Icons.location_on_rounded,
+                          AppIcons.location_on_rounded,
                           color: Color(0xFF2FA56E),
                           size: 28,
                         ),
@@ -431,13 +432,13 @@ class _ArrivalThumbShape extends SliderComponentShape {
 
     final textPainter = TextPainter(
       text: TextSpan(
-        text: String.fromCharCode(Icons.chevron_right_rounded.codePoint),
+        text: String.fromCharCode(AppIcons.chevron_right_rounded.codePoint),
         style: TextStyle(
           color: const Color(0xFF2FA56E),
           fontSize: 28,
           fontWeight: FontWeight.w800,
-          fontFamily: Icons.chevron_right_rounded.fontFamily,
-          package: Icons.chevron_right_rounded.fontPackage,
+          fontFamily: AppIcons.chevron_right_rounded.fontFamily,
+          package: AppIcons.chevron_right_rounded.fontPackage,
           height: 1,
         ),
       ),

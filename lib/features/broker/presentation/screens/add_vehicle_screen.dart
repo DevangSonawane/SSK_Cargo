@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -207,7 +208,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(isEditing ? 'Edit truck' : 'Add truck'),
@@ -266,7 +267,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
                     labelText: 'Registration',
-                    prefixIcon: Icons.confirmation_number_rounded,
+                    prefixIcon: AppIcons.confirmation_number_rounded,
                   ),
                   enabled: !isEditing,
                   validator: (value) {
@@ -282,7 +283,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
                     labelText: 'Capacity',
-                    prefixIcon: Icons.scale_rounded,
+                    prefixIcon: AppIcons.scale_rounded,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -301,7 +302,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   menuMaxHeight: 320,
                   borderRadius: BorderRadius.circular(20),
                   icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
+                    AppIcons.keyboard_arrow_down_rounded,
                     color: Color(0xFF667085),
                   ),
                   selectedItemBuilder: (context) {
@@ -336,7 +337,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   },
                   decoration: _fieldDecoration(
                     labelText: 'Assign driver',
-                    prefixIcon: Icons.person_rounded,
+                    prefixIcon: AppIcons.person_rounded,
                   ),
                   items: drivers
                       .map(
@@ -360,7 +361,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
                     labelText: 'Make',
-                    prefixIcon: Icons.precision_manufacturing_rounded,
+                    prefixIcon: AppIcons.precision_manufacturing_rounded,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -377,7 +378,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
                     labelText: 'Year',
-                    prefixIcon: Icons.event_rounded,
+                    prefixIcon: AppIcons.event_rounded,
                   ),
                   validator: (value) {
                     final parsed = int.tryParse(value?.trim() ?? '');
@@ -396,8 +397,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   decoration: _fieldDecoration(
                     labelText: 'Insurance expiry',
                     hintText: 'Pick a date',
-                    prefixIcon: Icons.event_available_rounded,
-                    suffixIcon: Icons.calendar_month_rounded,
+                    prefixIcon: AppIcons.event_available_rounded,
+                    suffixIcon: AppIcons.calendar_month_rounded,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {

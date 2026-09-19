@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -297,7 +298,7 @@ class _HistorySearchField extends StatelessWidget {
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 15),
-          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+          prefixIcon: Icon(AppIcons.search_rounded, color: Color(0xFF94A3B8)),
           hintText: 'Search bookings, routes, drivers...',
           hintStyle: TextStyle(
             color: Color(0xFF94A3B8),
@@ -476,7 +477,7 @@ class _NetEarningsCard extends StatelessWidget {
       child: Row(
         children: [
           const Icon(
-            Icons.account_balance_wallet_rounded,
+            AppIcons.account_balance_wallet_rounded,
             color: Color(0xFF047857),
           ),
           const SizedBox(width: 10),
@@ -639,7 +640,7 @@ class _HistoryBookingCard extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: deleting ? null : onOpen,
-                  icon: const Icon(Icons.visibility_rounded),
+                  icon: const Icon(AppIcons.visibility_rounded),
                   color: const Color(0xFF2152D0),
                   tooltip: 'View details',
                 ),
@@ -651,7 +652,7 @@ class _HistoryBookingCard extends StatelessWidget {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.delete_outline_rounded),
+                      : const Icon(AppIcons.delete_outline_rounded),
                   color: const Color(0xFFE23A4B),
                   tooltip: 'Remove',
                 ),
@@ -680,7 +681,7 @@ class _HistoryRouteLine extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.location_on_outlined, size: 15, color: color),
+        Icon(AppIcons.location_on_outlined, size: 15, color: color),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -841,7 +842,11 @@ class _HistoryEmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.history_rounded, color: Color(0xFF94A3B8), size: 36),
+          const Icon(
+            AppIcons.history_rounded,
+            color: Color(0xFF94A3B8),
+            size: 36,
+          ),
           const SizedBox(height: 12),
           Text(
             title,

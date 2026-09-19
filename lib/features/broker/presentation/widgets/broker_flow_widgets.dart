@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -2186,7 +2187,7 @@ class BrokerHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _HeaderIconButton(
-            icon: Icons.chat_bubble_outline_rounded,
+            icon: AppIcons.chat_bubble_outline_rounded,
             hasBadge: chatUnreadCount > 0,
             iconColor: iconAccent,
             size: 30,
@@ -2195,7 +2196,7 @@ class BrokerHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _HeaderIconButton(
-            icon: Icons.notifications_none_rounded,
+            icon: AppIcons.notifications_none_rounded,
             hasBadge: pendingRequestsCount > 0,
             iconColor: iconAccent,
             size: 30,
@@ -2310,21 +2311,21 @@ class BrokerBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <_BrokerNavItem>[
       _BrokerNavItem(
-        icon: Icons.inbox_rounded,
+        icon: AppIcons.inbox_rounded,
         label: 'New Booking',
         showDot: pendingRequestsCount > 0,
       ),
       _BrokerNavItem(
-        icon: Icons.assignment_turned_in_rounded,
+        icon: AppIcons.assignment_turned_in_rounded,
         label: 'Active',
         showDot: activeJobsCount > 0,
       ),
       const _BrokerNavItem(
-        icon: Icons.local_shipping_rounded,
+        icon: AppIcons.local_shipping_rounded,
         label: 'Vehicles',
       ),
-      const _BrokerNavItem(icon: Icons.gps_fixed_rounded, label: 'Tracking'),
-      const _BrokerNavItem(icon: Icons.history_rounded, label: 'History'),
+      const _BrokerNavItem(icon: AppIcons.gps_fixed_rounded, label: 'Tracking'),
+      const _BrokerNavItem(icon: AppIcons.history_rounded, label: 'History'),
     ];
 
     return SafeArea(
@@ -2634,7 +2635,7 @@ class BrokerRequestCard extends StatelessWidget {
                     children: [
                       _LoadPoint(
                         label: 'Pickup',
-                        icon: Icons.location_on_rounded,
+                        icon: AppIcons.location_on_rounded,
                         iconColor: const Color(0xFF1F88C9),
                         place: pickupText,
                         timeText: request.requestedAt,
@@ -2642,7 +2643,7 @@ class BrokerRequestCard extends StatelessWidget {
                       const SizedBox(height: 14),
                       _LoadPoint(
                         label: 'Drop-off',
-                        icon: Icons.near_me_rounded,
+                        icon: AppIcons.near_me_rounded,
                         iconColor: const Color(0xFF1F88C9),
                         place: dropText,
                         timeText: '',
@@ -2662,7 +2663,7 @@ class BrokerRequestCard extends StatelessWidget {
               child: Row(
                 children: [
                   const Icon(
-                    Icons.inventory_2_rounded,
+                    AppIcons.inventory_2_rounded,
                     size: 18,
                     color: Color(0xFF667085),
                   ),
@@ -2890,7 +2891,7 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         backgroundColor: Color(0xFFEAF8EF),
         borderColor: Color(0xFFB7E4C7),
         textColor: Color(0xFF136F3E),
-        icon: Icons.check_circle_rounded,
+        icon: AppIcons.check_circle_rounded,
       );
     case 'countered':
       return const _BookingRequestStatusVisual(
@@ -2899,7 +2900,7 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         backgroundColor: Color(0xFFFEF3C7),
         borderColor: Color(0xFFFCD34D),
         textColor: Color(0xFFB45309),
-        icon: Icons.payments_rounded,
+        icon: AppIcons.payments_rounded,
       );
     case 'awaiting_confirmation':
       return const _BookingRequestStatusVisual(
@@ -2908,7 +2909,7 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         backgroundColor: Color(0xFFEFF6FF),
         borderColor: Color(0xFFC7DAFF),
         textColor: Color(0xFF1F88C9),
-        icon: Icons.hourglass_top_rounded,
+        icon: AppIcons.hourglass_top_rounded,
       );
     case 'declined':
     case 'rejected':
@@ -2919,7 +2920,7 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         backgroundColor: Color(0xFFFDECEC),
         borderColor: Color(0xFFF7B4B4),
         textColor: Color(0xFFB42318),
-        icon: Icons.cancel_rounded,
+        icon: AppIcons.cancel_rounded,
       );
     default:
       return const _BookingRequestStatusVisual(
@@ -2928,7 +2929,7 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
         backgroundColor: Color(0xFFEFF6FF),
         borderColor: Color(0xFFC7DAFF),
         textColor: Color(0xFF1F88C9),
-        icon: Icons.inbox_rounded,
+        icon: AppIcons.inbox_rounded,
       );
   }
 }
@@ -3025,7 +3026,7 @@ class VehicleCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             const Icon(
-                              Icons.chevron_right_rounded,
+                              AppIcons.chevron_right_rounded,
                               size: 22,
                               color: Color(0xFF667085),
                             ),
@@ -3047,7 +3048,7 @@ class VehicleCard extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(
-                              Icons.person_outline_rounded,
+                              AppIcons.person_outline_rounded,
                               size: 15,
                               color: Color(0xFF667085),
                             ),
@@ -3082,7 +3083,7 @@ class VehicleCard extends StatelessWidget {
                   child: _VehicleStatBlock(
                     label: 'Capacity',
                     value: vehicle.capacity,
-                    icon: Icons.shopping_bag_outlined,
+                    icon: AppIcons.shopping_bag_outlined,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -3092,7 +3093,7 @@ class VehicleCard extends StatelessWidget {
                   child: _VehicleStatBlock(
                     label: 'Location',
                     value: meta.secondaryValue,
-                    icon: Icons.location_on_outlined,
+                    icon: AppIcons.location_on_outlined,
                     valueColor: meta.secondaryValueColor,
                   ),
                 ),
@@ -3359,7 +3360,7 @@ class DriverListTile extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(
-                              Icons.local_shipping_rounded,
+                              AppIcons.local_shipping_rounded,
                               size: 16,
                               color: Color(0xFF1F5BD7),
                             ),
@@ -3391,7 +3392,7 @@ class DriverListTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _DriverFooterButton(
-                      icon: Icons.call_rounded,
+                      icon: AppIcons.call_rounded,
                       label: 'Call',
                       iconColor: const Color(0xFF1F5BD7),
                       onTap: canCall
@@ -3675,8 +3676,8 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
           ? 'Recently completed'
           : '${driver.onTripSince} ago',
       ctaLabel: 'Settlements',
-      ctaIcon: Icons.payments_rounded,
-      statusIcon: Icons.verified_rounded,
+      ctaIcon: AppIcons.payments_rounded,
+      statusIcon: AppIcons.verified_rounded,
     );
   }
 
@@ -3692,24 +3693,24 @@ _DriverCardMeta _driverCardMeta(BrokerDriver driver) {
             ? 'Just now'
             : '${driver.onTripSince} ago',
         ctaLabel: 'View Map',
-        ctaIcon: Icons.map_outlined,
-        statusIcon: Icons.check_circle,
+        ctaIcon: AppIcons.map_outlined,
+        statusIcon: AppIcons.check_circle,
       );
     case BrokerDriverStatus.idle:
       return _DriverCardMeta(
         statusLine: 'Idle - Awaiting Assignment',
         lastSeen: '14 mins ago',
         ctaLabel: '',
-        ctaIcon: Icons.add_task_rounded,
-        statusIcon: Icons.schedule,
+        ctaIcon: AppIcons.add_task_rounded,
+        statusIcon: AppIcons.schedule,
       );
     case BrokerDriverStatus.offline:
       return _DriverCardMeta(
         statusLine: 'Offline',
         lastSeen: 'Not available',
         ctaLabel: 'View Details',
-        ctaIcon: Icons.info_outline_rounded,
-        statusIcon: Icons.do_not_disturb_on_outlined,
+        ctaIcon: AppIcons.info_outline_rounded,
+        statusIcon: AppIcons.do_not_disturb_on_outlined,
       );
   }
 }
@@ -3871,13 +3872,16 @@ class BrokerMenuTile extends StatelessWidget {
             ),
             if (completed) ...[
               const Icon(
-                Icons.check_circle_rounded,
+                AppIcons.check_circle_rounded,
                 color: Color(0xFF2FA56E),
                 size: 18,
               ),
               const SizedBox(width: 8),
             ],
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+            const Icon(
+              AppIcons.chevron_right_rounded,
+              color: Color(0xFF98A2B3),
+            ),
           ],
         ),
       ),
@@ -4031,8 +4035,8 @@ class VehicleSelectionTile extends StatelessWidget {
                 const Spacer(),
                 Icon(
                   selected
-                      ? Icons.radio_button_checked_rounded
-                      : Icons.radio_button_off_rounded,
+                      ? AppIcons.radio_button_checked_rounded
+                      : AppIcons.radio_button_off_rounded,
                   color: accent,
                   size: 26,
                 ),
@@ -4052,7 +4056,7 @@ class VehicleSelectionTile extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.scale_outlined, color: accent, size: 18),
+                Icon(AppIcons.scale_outlined, color: accent, size: 18),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(

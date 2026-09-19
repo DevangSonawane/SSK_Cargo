@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 
 class HaltingTimerCard extends StatefulWidget {
   const HaltingTimerCard({
@@ -84,7 +85,7 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
         return const SizedBox.shrink();
       }
       return _TimerShell(
-        icon: Icons.receipt_long_rounded,
+        icon: AppIcons.receipt_long_rounded,
         title: 'Halting charge applied',
         message:
             '${_formatMoney(widget.haltingCharge)}${widget.haltingHours > 0 ? ' for ${_formatHours(widget.haltingHours)}' : ''} after the free ${_formatHours(graceHours)} window.',
@@ -100,7 +101,7 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
         return const SizedBox.shrink();
       }
       return _TimerShell(
-        icon: Icons.hourglass_top_rounded,
+        icon: AppIcons.hourglass_top_rounded,
         title: 'Free halting window',
         message: '${_formatHours(graceHours)} once the trip starts.',
         backgroundColor: const Color(0xFFF8FAFC),
@@ -118,7 +119,7 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
 
     if (!remaining.isNegative) {
       return _TimerShell(
-        icon: Icons.timer_rounded,
+        icon: AppIcons.timer_rounded,
         title: 'Free halting time remaining',
         message:
             '${_formatDuration(remaining)} left in the ${_formatHours(graceHours)} free window.',
@@ -136,7 +137,7 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
         : null;
 
     return _TimerShell(
-      icon: Icons.warning_amber_rounded,
+      icon: AppIcons.warning_amber_rounded,
       title: 'Halting time exceeded',
       message: estimatedCharge == null
           ? '${_formatDuration(overage)} over the free window - a charge will be added on delivery.'

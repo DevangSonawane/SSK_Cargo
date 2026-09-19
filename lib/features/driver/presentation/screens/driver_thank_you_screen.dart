@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -65,7 +66,7 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     child: const Icon(
-                      Icons.check_circle_rounded,
+                      AppIcons.check_circle_rounded,
                       size: 48,
                       color: Color(0xFF2FA56E),
                     ),

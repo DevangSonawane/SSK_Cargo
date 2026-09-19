@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -970,8 +971,8 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                           onPressed: () => setState(() => stars = rating),
                           icon: Icon(
                             rating <= stars
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
+                                ? AppIcons.star_rounded
+                                : AppIcons.star_border_rounded,
                             color: const Color(0xFFF5B301),
                           ),
                         );
@@ -1191,7 +1192,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       children: [
                         IconButton(
                           onPressed: () => Navigator.of(context).maybePop(),
-                          icon: const Icon(Icons.arrow_back_rounded),
+                          icon: const Icon(AppIcons.arrow_back_rounded),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF101828),
@@ -1245,7 +1246,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         child: FilledButton.icon(
                                           onPressed: _payBooking,
                                           icon: const Icon(
-                                            Icons.payments_outlined,
+                                            AppIcons.payments_outlined,
                                             size: 18,
                                           ),
                                           label: Text(
@@ -1314,7 +1315,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: _rateBooking,
                                     icon: const Icon(
-                                      Icons.star_outline_rounded,
+                                      AppIcons.star_outline_rounded,
                                     ),
                                     label: const Text('Rate delivery'),
                                     style: OutlinedButton.styleFrom(
@@ -1498,7 +1499,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                       color: Colors.white.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.arrow_back_rounded, size: 20),
+                    child: const Icon(AppIcons.arrow_back_rounded, size: 20),
                   ),
                 ),
               ),
@@ -1524,7 +1525,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                   onPressed: _googleMapsDirectionsUri == null
                       ? null
                       : _openInGoogleMaps,
-                  icon: const Icon(Icons.map_outlined, size: 16),
+                  icon: const Icon(AppIcons.map_outlined, size: 16),
                   label: const Text('Maps'),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -1596,7 +1597,7 @@ class _LivePickupOtpCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            verified ? Icons.verified_rounded : Icons.key_rounded,
+            verified ? AppIcons.verified_rounded : AppIcons.key_rounded,
             size: 16,
             color: verified ? const Color(0xFF2FA56E) : const Color(0xFFB88900),
           ),
@@ -1653,7 +1654,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          const Icon(Icons.local_shipping_rounded, color: Color(0xFF2FA56E)),
+          const Icon(AppIcons.local_shipping_rounded, color: Color(0xFF2FA56E)),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1679,11 +1680,11 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
             ),
           ),
           _ContactIconButton(
-            icon: Icons.chat_bubble_outline_rounded,
+            icon: AppIcons.chat_bubble_outline_rounded,
             onTap: onChatTap,
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.black54),
+          const Icon(AppIcons.keyboard_arrow_up_rounded, color: Colors.black54),
         ],
       ),
     );
@@ -1845,7 +1846,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
-                                    Icons.person_rounded,
+                                    AppIcons.person_rounded,
                                     color: Color(0xFF2FA56E),
                                   ),
                                 ),
@@ -1884,12 +1885,13 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                 Row(
                                   children: [
                                     _ContactIconButton(
-                                      icon: Icons.chat_bubble_outline_rounded,
+                                      icon:
+                                          AppIcons.chat_bubble_outline_rounded,
                                       onTap: onChatTap,
                                     ),
                                     const SizedBox(width: 10),
                                     _ContactIconButton(
-                                      icon: Icons.call_rounded,
+                                      icon: AppIcons.call_rounded,
                                       onTap: onCallTap,
                                     ),
                                   ],
@@ -1956,8 +1958,8 @@ class _CompactSummaryCard extends StatelessWidget {
               if (onShareTracking != null) ...[
                 _CircleIconButton(
                   icon: isSharingTracking
-                      ? Icons.more_horiz_rounded
-                      : Icons.link_rounded,
+                      ? AppIcons.more_horiz_rounded
+                      : AppIcons.link_rounded,
                   onTap: isSharingTracking ? null : onShareTracking,
                 ),
                 const SizedBox(width: 8),
@@ -1978,7 +1980,7 @@ class _CompactSummaryCard extends StatelessWidget {
             const SizedBox(height: 14),
             _ReactInfoRow(
               leading: const _ReactSquareIcon(
-                icon: Icons.local_shipping_outlined,
+                icon: AppIcons.local_shipping_outlined,
               ),
               title: truckName,
               trailing: shipment.weight.isEmpty
@@ -2124,7 +2126,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
         child: Row(
           children: [
             const Icon(
-              Icons.check_circle_rounded,
+              AppIcons.check_circle_rounded,
               size: 18,
               color: Color(0xFF2FA56E),
             ),
@@ -2231,7 +2233,11 @@ class _ExpressIconChip extends StatelessWidget {
         color: Color(0xFFEAF6EF),
         shape: BoxShape.circle,
       ),
-      child: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFF2FA56E)),
+      child: const Icon(
+        AppIcons.bolt_rounded,
+        size: 16,
+        color: Color(0xFF2FA56E),
+      ),
     );
   }
 }
@@ -2287,7 +2293,7 @@ class _ReactRouteRail extends StatelessWidget {
           ),
           _RouteRailStop(
             marker: const Icon(
-              Icons.location_on_rounded,
+              AppIcons.location_on_rounded,
               color: Color(0xFF2FA56E),
               size: 18,
             ),
@@ -2486,7 +2492,11 @@ class _CallDriverButton extends StatelessWidget {
           color: Color(0xFF2FA56E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+        child: const Icon(
+          AppIcons.phone_rounded,
+          color: Colors.white,
+          size: 18,
+        ),
       ),
     );
   }
@@ -2673,7 +2683,7 @@ class _HorizontalTimelineStep extends StatelessWidget {
                 ),
                 child: isCompleted
                     ? const Icon(
-                        Icons.check_rounded,
+                        AppIcons.check_rounded,
                         size: 15,
                         color: Colors.white,
                       )
@@ -2812,7 +2822,7 @@ class _PremiumRouteLine extends StatelessWidget {
     return Column(
       children: [
         _RouteStop(
-          icon: Icons.radio_button_checked_rounded,
+          icon: AppIcons.radio_button_checked_rounded,
           iconColor: const Color(0xFF2FA56E),
           label: 'Pickup',
           value: pickup,
@@ -2832,7 +2842,7 @@ class _PremiumRouteLine extends StatelessWidget {
           ),
         ),
         _RouteStop(
-          icon: Icons.location_on_rounded,
+          icon: AppIcons.location_on_rounded,
           iconColor: const Color(0xFFE23A4B),
           label: 'Drop',
           value: drop,
@@ -2879,7 +2889,9 @@ class _CompactPickupOtpChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              pickupOtpVerified ? Icons.verified_rounded : Icons.key_rounded,
+              pickupOtpVerified
+                  ? AppIcons.verified_rounded
+                  : AppIcons.key_rounded,
               size: 15,
               color: accentColor,
             ),
@@ -3038,7 +3050,7 @@ class _PremiumCrewCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.local_shipping_outlined,
+              AppIcons.local_shipping_outlined,
               size: 19,
               color: Color(0xFF247B52),
             ),
@@ -3093,7 +3105,7 @@ class _ExpressBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
+          const Icon(AppIcons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
           const SizedBox(width: 3),
           Text(
             'Express',
@@ -3164,7 +3176,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
         leading: const Icon(
-          Icons.sync_alt_rounded,
+          AppIcons.sync_alt_rounded,
           color: Color(0xFF1F88C9),
           size: 18,
         ),
@@ -3508,49 +3520,49 @@ class _BookingActionsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _ActionSheetTile(
-                icon: Icons.chat_bubble_outline_rounded,
+                icon: AppIcons.chat_bubble_outline_rounded,
                 title: 'Open chat',
                 subtitle: 'Message the booking thread over Socket.IO',
                 onTap: () => onChat(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.handshake_outlined,
+                icon: AppIcons.handshake_outlined,
                 title: 'Negotiation & offers',
                 subtitle: 'Review driver requests and broker offers',
                 onTap: () => onNegotiation(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.receipt_long_rounded,
+                icon: AppIcons.receipt_long_rounded,
                 title: 'Download invoice',
                 subtitle: 'Fetch the PDF invoice stream',
                 onTap: () => onDownloadInvoice(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.mail_outline_rounded,
+                icon: AppIcons.mail_outline_rounded,
                 title: 'Email invoice',
                 subtitle: 'Send the invoice PDF by email',
                 onTap: () => onEmailInvoice(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.payments_outlined,
+                icon: AppIcons.payments_outlined,
                 title: 'Pay booking',
                 subtitle: 'Open secure checkout',
                 onTap: () => onPay(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.star_outline_rounded,
+                icon: AppIcons.star_outline_rounded,
                 title: 'Rate booking',
                 subtitle: 'Submit delivery feedback',
                 onTap: () => onRate(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
-                icon: Icons.report_gmailerrorred_outlined,
+                icon: AppIcons.report_gmailerrorred_outlined,
                 title: 'Raise dispute',
                 subtitle: 'Open a backend dispute record',
                 onTap: () => onDispute(),
@@ -3632,7 +3644,10 @@ class _ActionSheetTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+            const Icon(
+              AppIcons.chevron_right_rounded,
+              color: Color(0xFF98A2B3),
+            ),
           ],
         ),
       ),
@@ -3689,7 +3704,7 @@ class _ClientBookingChatSheet extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(AppIcons.close_rounded),
                   ),
                 ],
               ),
@@ -4005,7 +4020,7 @@ class _LegacyClientBookingChatSheetState
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(AppIcons.close_rounded),
                   ),
                 ],
               ),
@@ -4221,7 +4236,7 @@ class _LegacyClientBookingChatSheetState
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.send_rounded, size: 18),
+                          : const Icon(AppIcons.send_rounded, size: 18),
                     ),
                   ),
                 ],
@@ -4982,7 +4997,7 @@ class _NegotiationCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.local_shipping_rounded,
+                  AppIcons.local_shipping_rounded,
                   color: Color(0xFF2FA56E),
                 ),
               ),
@@ -5120,7 +5135,11 @@ class _NegotiationEmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.inbox_outlined, color: Color(0xFF98A2B3), size: 30),
+          const Icon(
+            AppIcons.inbox_outlined,
+            color: Color(0xFF98A2B3),
+            size: 30,
+          ),
           const SizedBox(height: 10),
           Text(
             title,

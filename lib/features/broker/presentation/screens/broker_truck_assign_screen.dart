@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -82,7 +83,7 @@ class _BrokerTruckAssignScreenState
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () => context.go('/broker/vehicles'),
-                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
                 label: const Text('Back to Trucks'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),

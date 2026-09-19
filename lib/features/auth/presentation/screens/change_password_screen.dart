@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -125,7 +126,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
         ),
         title: const Text('Change Password'),
       ),
@@ -246,7 +247,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF7783A2)),
             prefixIcon: const Icon(
-              Icons.lock_outline_rounded,
+              AppIcons.lock_outline_rounded,
               color: Color(0xFF657291),
               size: 22,
             ),
@@ -254,8 +255,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               onPressed: onToggle,
               icon: Icon(
                 obscureText
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
+                    ? AppIcons.visibility_off_outlined
+                    : AppIcons.visibility_outlined,
                 color: const Color(0xFF3E4867),
                 size: 22,
               ),
@@ -356,7 +357,9 @@ class _PasswordStrengthMeter extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Icon(
-            score >= 4 ? Icons.verified_user_outlined : Icons.shield_outlined,
+            score >= 4
+                ? AppIcons.verified_user_outlined
+                : AppIcons.shield_outlined,
             color: color,
             size: 22,
           ),

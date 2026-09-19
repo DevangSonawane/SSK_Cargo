@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -249,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           textInputAction: TextInputAction.next,
                           decoration: _pillDecoration(
                             label: 'Email',
-                            icon: Icons.email_rounded,
+                            icon: AppIcons.email_rounded,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -260,7 +261,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onSubmitted: (_) => _submit(),
                           decoration: _pillDecoration(
                             label: 'Password',
-                            icon: Icons.lock_rounded,
+                            icon: AppIcons.lock_rounded,
                             suffixIcon: IconButton(
                               onPressed: () {
                                 setState(
@@ -269,8 +270,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               },
                               icon: Icon(
                                 _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
+                                    ? AppIcons.visibility_off_outlined
+                                    : AppIcons.visibility_outlined,
                               ),
                               tooltip: _obscurePassword
                                   ? 'Show password'
@@ -371,10 +372,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   );
                                 },
-                                icon: const Icon(
-                                  Icons.apple,
-                                  size: 22,
-                                  color: Color(0xFF1B2A3A),
+                                icon: SvgPicture.asset(
+                                  'assets/apple_logo.svg',
+                                  width: 22,
+                                  height: 22,
                                 ),
                                 label: const Text(
                                   'Apple',

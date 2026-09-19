@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -161,7 +162,7 @@ class _HeroBalanceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Icon(
-                        Icons.account_balance_wallet_outlined,
+                        AppIcons.account_balance_wallet_outlined,
                         size: 16,
                         color: Color(0xFF1F8F49),
                       ),
@@ -254,7 +255,7 @@ class _EarningsStatsGrid extends StatelessWidget {
       children: [
         Expanded(
           child: _EarningsStatTile(
-            icon: Icons.currency_rupee_rounded,
+            icon: AppIcons.currency_rupee_rounded,
             label: 'This Month',
             value: '₹${thisMonth.toStringAsFixed(0)}',
           ),
@@ -262,7 +263,7 @@ class _EarningsStatsGrid extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _EarningsStatTile(
-            icon: Icons.account_balance_wallet_outlined,
+            icon: AppIcons.account_balance_wallet_outlined,
             label: 'Last Month',
             value: '₹${lastMonth.toStringAsFixed(0)}',
           ),
@@ -270,7 +271,7 @@ class _EarningsStatsGrid extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _EarningsStatTile(
-            icon: Icons.trending_up_rounded,
+            icon: AppIcons.trending_up_rounded,
             label: 'Trips',
             value: deliveredCount.toString(),
             helper: '₹${total.toStringAsFixed(0)}',

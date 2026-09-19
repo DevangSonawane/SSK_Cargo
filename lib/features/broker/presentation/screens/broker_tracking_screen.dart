@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -121,7 +122,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(dialogContext).pop(),
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(AppIcons.close_rounded),
                           visualDensity: VisualDensity.compact,
                         ),
                       ],
@@ -275,7 +276,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                                 ),
                               ),
                               const Icon(
-                                Icons.warning_amber_rounded,
+                                AppIcons.warning_amber_rounded,
                                 color: Color(0xFFB54708),
                               ),
                             ],
@@ -402,7 +403,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       children: [
                         FilledButton.icon(
                           onPressed: () => context.go('/broker/drivers/add'),
-                          icon: const Icon(Icons.add_rounded, size: 18),
+                          icon: const Icon(AppIcons.add_rounded, size: 18),
                           label: const Text('Add'),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF1F88C9),
@@ -768,7 +769,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.refresh_rounded),
+                        : const Icon(AppIcons.refresh_rounded),
                   ),
                 ],
               ),
@@ -1609,7 +1610,7 @@ class _BrokerDriverTripSheetState
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.refresh_rounded),
+                              : const Icon(AppIcons.refresh_rounded),
                         ),
                         TextButton(
                           onPressed: () {
@@ -1644,30 +1645,30 @@ class _BrokerDriverTripSheetState
                       runSpacing: 8,
                       children: [
                         _TripInfoChip(
-                          icon: Icons.route_rounded,
+                          icon: AppIcons.route_rounded,
                           label: data.statusLabel.isEmpty
                               ? 'Live'
                               : data.statusLabel,
                         ),
                         _TripInfoChip(
-                          icon: Icons.payments_rounded,
+                          icon: AppIcons.payments_rounded,
                           label: data.paymentStatus.isEmpty
                               ? 'Payment pending'
                               : data.paymentStatus,
                         ),
                         _TripInfoChip(
-                          icon: Icons.report_problem_rounded,
+                          icon: AppIcons.report_problem_rounded,
                           label: '${data.incidents.length} incidents',
                         ),
                         if (data.shipment.expectedDeliveryHours != null)
                           _TripInfoChip(
-                            icon: Icons.schedule_rounded,
+                            icon: AppIcons.schedule_rounded,
                             label:
                                 'SLA ~${_formatTripHours(data.shipment.expectedDeliveryHours!)}',
                           ),
                         if (data.shipment.slaOverageCharge > 0)
                           _TripInfoChip(
-                            icon: Icons.warning_amber_rounded,
+                            icon: AppIcons.warning_amber_rounded,
                             label:
                                 'Delay +₹${data.shipment.slaOverageCharge.toStringAsFixed(data.shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
                           ),
@@ -1704,7 +1705,7 @@ class _BrokerDriverTripSheetState
                             onPressed: data.tripId.isEmpty
                                 ? null
                                 : () => _reportIncident(data),
-                            icon: const Icon(Icons.warning_amber_rounded),
+                            icon: const Icon(AppIcons.warning_amber_rounded),
                             label: const Text('Report issue'),
                           ),
                         ),
@@ -1714,7 +1715,7 @@ class _BrokerDriverTripSheetState
                             onPressed: data.tripId.isEmpty
                                 ? null
                                 : () => _collectSettlement(data),
-                            icon: const Icon(Icons.payments_rounded),
+                            icon: const Icon(AppIcons.payments_rounded),
                             label: const Text('Settle'),
                           ),
                         ),
@@ -1728,7 +1729,7 @@ class _BrokerDriverTripSheetState
                             onPressed: data.tripId.isEmpty
                                 ? null
                                 : () => _completeTrip(data),
-                            icon: const Icon(Icons.check_circle_outline),
+                            icon: const Icon(AppIcons.check_circle_outline),
                             label: const Text('Mark complete'),
                           ),
                         ),
@@ -1750,7 +1751,7 @@ class _BrokerDriverTripSheetState
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.swap_horiz_rounded),
+                              : const Icon(AppIcons.swap_horiz_rounded),
                           label: Text(
                             _reassigning ? 'Reassigning...' : 'Reassign driver',
                           ),
@@ -2151,7 +2152,9 @@ class _TimelineRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Icon(
-            step.completed ? Icons.check_rounded : Icons.radio_button_unchecked,
+            step.completed
+                ? AppIcons.check_rounded
+                : AppIcons.radio_button_unchecked,
             size: 14,
             color: color,
           ),

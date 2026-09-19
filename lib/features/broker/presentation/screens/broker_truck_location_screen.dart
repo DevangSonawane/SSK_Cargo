@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -76,7 +77,7 @@ class _BrokerTruckLocationScreenState
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => context.go('/broker/vehicles'),
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
                   label: const Text('Back'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF64748B),
@@ -133,7 +134,7 @@ class _TruckLocationContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
-                  Icons.local_shipping_rounded,
+                  AppIcons.local_shipping_rounded,
                   color: Color(0xFF2152D0),
                 ),
               ),
@@ -221,7 +222,7 @@ class _LocationEmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.location_off_outlined,
+            AppIcons.location_off_outlined,
             color: Color(0xFF94A3B8),
             size: 34,
           ),

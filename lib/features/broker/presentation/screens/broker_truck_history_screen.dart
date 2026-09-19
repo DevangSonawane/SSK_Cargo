@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -92,7 +93,7 @@ class _BrokerTruckHistoryScreenState
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => context.go('/broker/vehicles'),
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
                   label: const Text('Back to Trucks'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF64748B),
@@ -179,7 +180,7 @@ class _HistoryHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
-              Icons.local_shipping_rounded,
+              AppIcons.local_shipping_rounded,
               color: Color(0xFF2152D0),
             ),
           ),
@@ -235,7 +236,7 @@ class _HistorySearchField extends StatelessWidget {
         onChanged: onChanged,
         decoration: const InputDecoration(
           border: InputBorder.none,
-          prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+          prefixIcon: Icon(AppIcons.search_rounded, color: Color(0xFF94A3B8)),
           hintText: 'Search by booking ID, route...',
           hintStyle: TextStyle(
             color: Color(0xFF94A3B8),
@@ -304,19 +305,19 @@ class _TripHistoryCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _TripMetric(
-                    icon: Icons.person_rounded,
+                    icon: AppIcons.person_rounded,
                     label: trip.driverName.isEmpty
                         ? 'Driver pending'
                         : trip.driverName,
                   ),
                   _TripMetric(
-                    icon: Icons.route_rounded,
+                    icon: AppIcons.route_rounded,
                     label: trip.distance > 0
                         ? '${trip.distance.toStringAsFixed(trip.distance % 1 == 0 ? 0 : 1)} km'
                         : 'Distance pending',
                   ),
                   _TripMetric(
-                    icon: Icons.payments_rounded,
+                    icon: AppIcons.payments_rounded,
                     label: _formatRupees(trip.earnings),
                   ),
                 ],
@@ -413,7 +414,7 @@ class _HistoryEmptyState extends StatelessWidget {
       child: Column(
         children: [
           const Icon(
-            Icons.navigation_rounded,
+            AppIcons.navigation_rounded,
             color: Color(0xFF94A3B8),
             size: 30,
           ),

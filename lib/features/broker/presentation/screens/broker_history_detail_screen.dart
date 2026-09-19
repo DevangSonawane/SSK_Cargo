@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -278,7 +279,7 @@ class _DetailBackRow extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
         onPressed: onBack,
-        icon: const Icon(Icons.arrow_back_rounded),
+        icon: const Icon(AppIcons.arrow_back_rounded),
         label: const Text('Back to Job History'),
         style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
       ),
@@ -352,17 +353,17 @@ class _DetailTopCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _IconAction(
-                icon: Icons.chat_bubble_outline_rounded,
+                icon: AppIcons.chat_bubble_outline_rounded,
                 label: 'Chat',
                 onTap: onChat,
               ),
               _IconAction(
-                icon: Icons.receipt_long_rounded,
+                icon: AppIcons.receipt_long_rounded,
                 label: invoiceBusy ? 'Fetching...' : 'Invoice',
                 onTap: invoiceBusy ? null : onInvoice,
               ),
               _IconAction(
-                icon: Icons.delete_outline_rounded,
+                icon: AppIcons.delete_outline_rounded,
                 label: deleting ? 'Removing...' : 'Remove',
                 color: const Color(0xFFE23A4B),
                 onTap: deleting ? null : onDelete,
@@ -386,27 +387,27 @@ class _DetailInfoCard extends StatelessWidget {
       title: 'Job Details',
       children: [
         _DetailRow(
-          icon: Icons.local_shipping_rounded,
+          icon: AppIcons.local_shipping_rounded,
           label: 'Truck',
           value: _truckReg(booking).isEmpty ? '-' : _truckReg(booking),
         ),
         _DetailRow(
-          icon: Icons.person_rounded,
+          icon: AppIcons.person_rounded,
           label: 'Driver',
           value: _driverName(booking).isEmpty ? '-' : _driverName(booking),
         ),
         _DetailRow(
-          icon: Icons.calendar_today_rounded,
+          icon: AppIcons.calendar_today_rounded,
           label: 'Date',
           value: _formatDate(booking.requestedAt),
         ),
         _DetailRow(
-          icon: Icons.route_rounded,
+          icon: AppIcons.route_rounded,
           label: 'Distance',
           value: _distance(booking),
         ),
         _DetailRow(
-          icon: Icons.inventory_2_rounded,
+          icon: AppIcons.inventory_2_rounded,
           label: 'Cargo',
           value: _cargo(booking),
         ),
@@ -471,7 +472,7 @@ class _ReassignmentCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(
-                Icons.repeat_rounded,
+                AppIcons.repeat_rounded,
                 color: Color(0xFF2152D0),
                 size: 17,
               ),

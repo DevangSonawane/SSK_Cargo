@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -227,7 +228,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.shield_rounded,
+                              AppIcons.shield_rounded,
                               color: Color(0xFFE3A008),
                               size: 28,
                             ),

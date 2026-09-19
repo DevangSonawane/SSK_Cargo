@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -222,7 +223,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                       Builder(
                         builder: (drawerContext) {
                           return _HeaderButton(
-                            icon: Icons.menu_rounded,
+                            icon: AppIcons.menu_rounded,
                             onTap: () =>
                                 Scaffold.of(drawerContext).openDrawer(),
                           );
@@ -263,7 +264,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                       TextButton.icon(
                         onPressed: () => context.go('/gps/vehicles'),
                         icon: const Icon(
-                          Icons.local_shipping_rounded,
+                          AppIcons.local_shipping_rounded,
                           size: 18,
                         ),
                         label: const Text('Vehicles'),
@@ -468,7 +469,7 @@ class _FleetSummaryCard extends StatelessWidget {
               color: const Color(0xFF2D6EF2).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.map_rounded, color: Color(0xFF2D6EF2)),
+            child: const Icon(AppIcons.map_rounded, color: Color(0xFF2D6EF2)),
           ),
           const SizedBox(width: 12),
           Expanded(

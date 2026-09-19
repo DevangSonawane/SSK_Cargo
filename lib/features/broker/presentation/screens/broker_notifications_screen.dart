@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -276,7 +277,7 @@ class _NotificationsHeader extends StatelessWidget {
         if (unreadCount > 0)
           OutlinedButton.icon(
             onPressed: markingAllRead ? null : onMarkAllRead,
-            icon: const Icon(Icons.done_all_rounded, size: 16),
+            icon: const Icon(AppIcons.done_all_rounded, size: 16),
             label: Text(markingAllRead ? 'Saving...' : 'Mark all read'),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF475569),
@@ -494,7 +495,7 @@ class _NotificationCardBody extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onAction,
                   iconAlignment: IconAlignment.end,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                  icon: const Icon(AppIcons.arrow_forward_rounded, size: 14),
                   label: Text(actionLabel!),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2152D0),
@@ -642,43 +643,43 @@ _NotificationMeta _metaFor(ClientNotification notification) {
   switch (_notificationType(notification)) {
     case 'booking':
       return const _NotificationMeta(
-        icon: Icons.local_shipping_rounded,
+        icon: AppIcons.local_shipping_rounded,
         color: Color(0xFF2152D0),
         background: Color(0xFFEAF2FF),
       );
     case 'incident':
       return const _NotificationMeta(
-        icon: Icons.build_rounded,
+        icon: AppIcons.build_rounded,
         color: Color(0xFFB7791F),
         background: Color(0xFFFFF7E6),
       );
     case 'chat':
       return const _NotificationMeta(
-        icon: Icons.chat_bubble_rounded,
+        icon: AppIcons.chat_bubble_rounded,
         color: Color(0xFF2152D0),
         background: Color(0xFFEAF2FF),
       );
     case 'payment':
       return const _NotificationMeta(
-        icon: Icons.receipt_long_rounded,
+        icon: AppIcons.receipt_long_rounded,
         color: Color(0xFF2FA56E),
         background: Color(0xFFEAF7EF),
       );
     case 'dispute':
       return const _NotificationMeta(
-        icon: Icons.gpp_maybe_rounded,
+        icon: AppIcons.gpp_maybe_rounded,
         color: Color(0xFFE23A4B),
         background: Color(0xFFFDECEC),
       );
     case 'kyc':
       return const _NotificationMeta(
-        icon: Icons.verified_user_rounded,
+        icon: AppIcons.verified_user_rounded,
         color: Color(0xFF2152D0),
         background: Color(0xFFEAF2FF),
       );
     default:
       return const _NotificationMeta(
-        icon: Icons.notifications_rounded,
+        icon: AppIcons.notifications_rounded,
         color: Color(0xFF64748B),
         background: Color(0xFFF1F5F9),
       );

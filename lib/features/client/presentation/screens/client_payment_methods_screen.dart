@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -177,7 +178,7 @@ class _ClientPaymentMethodsScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrow_back_rounded),
         ),
         title: const Text('Payment Methods'),
       ),
@@ -190,7 +191,7 @@ class _ClientPaymentMethodsScreenState
           children: [
             if (session == null)
               const _EmptyState(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock_outline_rounded,
                 title: 'Sign in to manage payment methods',
                 subtitle:
                     'We need an active client session before we can load your saved methods.',
@@ -199,7 +200,7 @@ class _ClientPaymentMethodsScreenState
               const _LoadingGrid()
             else if (_error)
               _EmptyState(
-                icon: Icons.error_outline_rounded,
+                icon: AppIcons.error_outline_rounded,
                 title: 'Could not load payment methods',
                 subtitle: 'Pull to refresh or try again in a moment.',
                 actionLabel: 'Retry',
@@ -207,7 +208,7 @@ class _ClientPaymentMethodsScreenState
               )
             else if (_methods.isEmpty)
               _EmptyState(
-                icon: Icons.credit_card_outlined,
+                icon: AppIcons.credit_card_outlined,
                 title: 'No saved payment methods yet',
                 subtitle:
                     'Save a UPI ID, card, bank, or wallet so checkout can remember it next time.',
@@ -479,7 +480,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                   ),
                                 )
                               : Icon(
-                                  Icons.star_outline_rounded,
+                                  AppIcons.star_outline_rounded,
                                   size: 16,
                                   color: theme.accent,
                                 ),
@@ -505,7 +506,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                 ),
                               )
                             : const Icon(
-                                Icons.delete_outline_rounded,
+                                AppIcons.delete_outline_rounded,
                                 size: 18,
                               ),
                         color: const Color(0xFF98A2B3),
@@ -562,7 +563,7 @@ class _AddTile extends StatelessWidget {
                 color: const Color(0xFFE0F4E8),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Icon(Icons.add_rounded, color: Color(0xFF2FA56E)),
+              child: const Icon(AppIcons.add_rounded, color: Color(0xFF2FA56E)),
             ),
             const SizedBox(height: 10),
             Text(

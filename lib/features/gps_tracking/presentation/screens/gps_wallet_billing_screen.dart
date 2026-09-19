@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
@@ -58,7 +59,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                             _SearchAndFilterRow(compact: compact),
                             const SizedBox(height: 10),
                             const _TransactionCard(
-                              icon: Icons.add_circle_outline_rounded,
+                              icon: AppIcons.add_circle_outline_rounded,
                               iconBackground: Color(0xFFEAF8EE),
                               iconColor: Color(0xFF23A852),
                               title: 'Welcome Bonus',
@@ -72,7 +73,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             const _TransactionCard(
-                              icon: Icons.shopping_cart_outlined,
+                              icon: AppIcons.shopping_cart_outlined,
                               iconBackground: Color(0xFFEAF1FF),
                               iconColor: Color(0xFF2D6EF2),
                               title: 'Token Purchase',
@@ -86,7 +87,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             const _TransactionCard(
-                              icon: Icons.remove_circle_outline_rounded,
+                              icon: AppIcons.remove_circle_outline_rounded,
                               iconBackground: Color(0xFFFFEDEF),
                               iconColor: Color(0xFFFF595D),
                               title: 'Subscription Payment',
@@ -100,7 +101,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             const _TransactionCard(
-                              icon: Icons.schedule_rounded,
+                              icon: AppIcons.schedule_rounded,
                               iconBackground: Color(0xFFFFF5DF),
                               iconColor: Color(0xFFD19A00),
                               title: 'Token Expiry',
@@ -123,10 +124,15 @@ class GpsWalletBillingScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   child: Text(
                                     'No more transactions',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
                                           fontSize: 10.5,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF8A96AB),
@@ -211,10 +217,7 @@ class _WalletBackdrop extends StatelessWidget {
 }
 
 class _WalletHeader extends StatelessWidget {
-  const _WalletHeader({
-    required this.compact,
-    required this.onMenu,
-  });
+  const _WalletHeader({required this.compact, required this.onMenu});
 
   final bool compact;
   final VoidCallback onMenu;
@@ -230,7 +233,7 @@ class _WalletHeader extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             child: const Icon(
-              Icons.menu_rounded,
+              AppIcons.menu_rounded,
               color: Colors.white,
               size: 24,
             ),
@@ -243,11 +246,11 @@ class _WalletHeader extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: compact ? 19.5 : 21,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  height: 1,
-                ),
+              fontSize: compact ? 19.5 : 21,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              height: 1,
+            ),
           ),
         ),
       ],
@@ -315,7 +318,7 @@ class _TokenHeroCard extends StatelessWidget {
                 ),
               ),
               child: const Icon(
-                Icons.add_rounded,
+                AppIcons.add_rounded,
                 color: Colors.white,
                 size: 18,
               ),
@@ -335,7 +338,7 @@ class _TokenHeroCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
-                      Icons.account_balance_wallet_rounded,
+                      AppIcons.account_balance_wallet_rounded,
                       color: Colors.white,
                       size: 30,
                     ),
@@ -349,7 +352,8 @@ class _TokenHeroCard extends StatelessWidget {
                           children: [
                             Text(
                               'Token Balance',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
                                     fontSize: compact ? 12.8 : 13.5,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white.withValues(alpha: 0.92),
@@ -357,9 +361,14 @@ class _TokenHeroCard extends StatelessWidget {
                             ),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2BC56A).withValues(alpha: 0.18),
+                                color: const Color(
+                                  0xFF2BC56A,
+                                ).withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: const Text(
@@ -374,13 +383,14 @@ class _TokenHeroCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                            const SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               '0',
-                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              style: Theme.of(context).textTheme.displaySmall
+                                  ?.copyWith(
                                     fontSize: compact ? 32 : 34,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
@@ -392,19 +402,23 @@ class _TokenHeroCard extends StatelessWidget {
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Text(
                                 'tokens',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white.withValues(alpha: 0.82),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.82,
+                                      ),
                                     ),
                               ),
                             ),
                           ],
                         ),
-                            const SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           '₹0.00 equivalent',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 fontSize: compact ? 10 : 10.5,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white.withValues(alpha: 0.72),
@@ -438,10 +452,10 @@ class _SectionTabs extends StatelessWidget {
                   Text(
                     'Transactions',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF2056D8),
-                        ),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF2056D8),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Container(
@@ -461,10 +475,10 @@ class _SectionTabs extends StatelessWidget {
                   Text(
                     'Invoices',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF91A0B7),
-                        ),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF91A0B7),
+                    ),
                   ),
                   const SizedBox(height: 9),
                   const SizedBox(height: 3),
@@ -500,16 +514,20 @@ class _SearchAndFilterRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded, size: 20, color: Color(0xFF75849A)),
+                const Icon(
+                  AppIcons.search_rounded,
+                  size: 20,
+                  color: Color(0xFF75849A),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
-                            child: Text(
-                              'Search transactions...',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF94A0B5),
-                                ),
+                  child: Text(
+                    'Search transactions...',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF94A0B5),
+                    ),
                   ),
                 ),
               ],
@@ -527,15 +545,19 @@ class _SearchAndFilterRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.filter_alt_outlined, size: 18, color: Color(0xFF75849A)),
+              const Icon(
+                AppIcons.filter_alt_outlined,
+                size: 18,
+                color: Color(0xFF75849A),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Filter',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF64748B),
-                    ),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ],
           ),
@@ -607,28 +629,28 @@ class _TransactionCard extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF11264C),
-                      ),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF11264C),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF5F6F89),
-                      ),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF5F6F89),
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   meta,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 9.2,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF71809A),
-                      ),
+                    fontSize: 9.2,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF71809A),
+                  ),
                 ),
               ],
             ),
@@ -640,10 +662,10 @@ class _TransactionCard extends StatelessWidget {
               Text(
                 amount,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w900,
-                      color: amountColor,
-                    ),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  color: amountColor,
+                ),
               ),
               const SizedBox(height: 6),
               Container(
@@ -655,10 +677,10 @@ class _TransactionCard extends StatelessWidget {
                 child: Text(
                   status,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: statusColor,
-                      ),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: statusColor,
+                  ),
                 ),
               ),
             ],
@@ -699,14 +721,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.home_rounded,
+                      icon: AppIcons.home_rounded,
                       label: 'Dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.local_shipping_rounded,
+                      icon: AppIcons.local_shipping_rounded,
                       label: 'Vehicles',
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -714,14 +736,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   const Expanded(child: SizedBox(width: 58)),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.insert_chart_rounded,
+                      icon: AppIcons.insert_chart_rounded,
                       label: 'Reports',
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
-                      icon: Icons.person_rounded,
+                      icon: AppIcons.person_rounded,
                       label: 'Profile',
                       onTap: () => context.go('/gps/profile'),
                     ),
@@ -743,7 +765,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.map_outlined,
+                  AppIcons.map_outlined,
                   color: Colors.white,
                   size: 26,
                 ),
@@ -783,10 +805,10 @@ class _GpsNavItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF8692A8),
-                  ),
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF8692A8),
+              ),
             ),
           ],
         ),

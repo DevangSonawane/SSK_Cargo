@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -721,7 +722,7 @@ class _HeaderBar extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFE8EDF2)),
               ),
               child: const Icon(
-                Icons.arrow_back_rounded,
+                AppIcons.arrow_back_rounded,
                 color: Color(0xFF101828),
                 size: 20,
               ),
@@ -970,7 +971,9 @@ class _DeliverySlaPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            hasCharge ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+            hasCharge
+                ? AppIcons.warning_amber_rounded
+                : AppIcons.schedule_rounded,
             color: hasCharge
                 ? const Color(0xFFC2410C)
                 : const Color(0xFF1F88C9),
@@ -1180,7 +1183,7 @@ class _MapPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                icon: const Icon(Icons.navigation_rounded, size: 14),
+                icon: const Icon(AppIcons.navigation_rounded, size: 14),
                 label: Text(
                   'Open in Maps',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -1274,14 +1277,14 @@ class _PickupDropColumn extends StatelessWidget {
                 label: 'Pickup',
                 value: pickup,
                 color: const Color(0xFF2FA56E),
-                icon: Icons.arrow_upward_rounded,
+                icon: AppIcons.arrow_upward_rounded,
               ),
               const SizedBox(height: 14),
               _LocationBlock(
                 label: 'Drop',
                 value: drop,
                 color: const Color(0xFFF59E0B),
-                icon: Icons.location_on_rounded,
+                icon: AppIcons.location_on_rounded,
               ),
             ],
           ),
@@ -1366,25 +1369,25 @@ class _TripDetailsGrid extends StatelessWidget {
       builder: (context, constraints) {
         final tiles = [
           _DetailStatTile(
-            icon: Icons.calendar_month_outlined,
+            icon: AppIcons.calendar_month_outlined,
             label: 'Booking Time',
             value: bookingTime,
             iconColor: const Color(0xFF2FA56E),
           ),
           _DetailStatTile(
-            icon: Icons.access_time_rounded,
+            icon: AppIcons.access_time_rounded,
             label: 'Expected Delivery',
             value: expectedDelivery,
             iconColor: const Color(0xFF2FA56E),
           ),
           _DetailStatTile(
-            icon: Icons.local_shipping_outlined,
+            icon: AppIcons.local_shipping_outlined,
             label: 'Delivered On',
             value: deliveredOn,
             iconColor: const Color(0xFF2FA56E),
           ),
           _DetailStatTile(
-            icon: Icons.route_outlined,
+            icon: AppIcons.route_outlined,
             label: 'Distance Travelled',
             value: distanceTravelled,
             iconColor: const Color(0xFF2FA56E),
@@ -1537,7 +1540,7 @@ class _EarningsPanel extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.verified_rounded, color: Color(0xFF2FA56E)),
+                const Icon(AppIcons.verified_rounded, color: Color(0xFF2FA56E)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -1624,7 +1627,7 @@ class _ErrorState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.error_outline_rounded,
+              AppIcons.error_outline_rounded,
               size: 36,
               color: Color(0xFFE23A4B),
             ),

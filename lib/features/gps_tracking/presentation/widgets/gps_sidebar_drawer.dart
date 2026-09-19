@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,63 +50,63 @@ class GpsSidebarDrawer extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       _SidebarNavTile(
-                        icon: Icons.grid_view_rounded,
+                        icon: AppIcons.grid_view_rounded,
                         label: 'Dashboard',
                         selected: currentRoute == '/gps/dashboard',
                         onTap: () => _go(context, '/gps/dashboard'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.local_shipping_rounded,
+                        icon: AppIcons.local_shipping_rounded,
                         label: 'My Fleet',
                         selected: currentRoute == '/gps/vehicles',
                         onTap: () => _go(context, '/gps/vehicles'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.map_outlined,
+                        icon: AppIcons.map_outlined,
                         label: 'Live Map',
                         selected: false,
                         onTap: () => _showComingSoon(context, 'Live Map'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.insert_chart_rounded,
+                        icon: AppIcons.insert_chart_rounded,
                         label: 'Reports',
                         selected: currentRoute == '/gps/reports',
                         onTap: () => _go(context, '/gps/reports'),
                       ),
                       const _SectionHeader(label: 'Modules'),
                       _SidebarNavTile(
-                        icon: Icons.gps_fixed_rounded,
+                        icon: AppIcons.gps_fixed_rounded,
                         label: 'Geofences',
                         selected: currentRoute == '/gps/geofences',
                         onTap: () => _go(context, '/gps/geofences'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.account_balance_wallet_rounded,
+                        icon: AppIcons.account_balance_wallet_rounded,
                         label: 'Wallet & Billing',
                         selected: currentRoute == '/gps/wallet-billing',
                         onTap: () => _go(context, '/gps/wallet-billing'),
                       ),
                       const _SectionHeader(label: 'Account'),
                       _SidebarNavTile(
-                        icon: Icons.person_rounded,
+                        icon: AppIcons.person_rounded,
                         label: 'Profile',
                         selected: currentRoute == '/gps/profile',
                         onTap: () => _go(context, '/gps/profile'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.settings_rounded,
+                        icon: AppIcons.settings_rounded,
                         label: 'Settings',
                         selected: false,
                         onTap: () => _showComingSoon(context, 'Settings'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.palette_outlined,
+                        icon: AppIcons.palette_outlined,
                         label: 'Appearance',
                         selected: false,
                         onTap: () => _showComingSoon(context, 'Appearance'),
                       ),
                       _SidebarNavTile(
-                        icon: Icons.logout_rounded,
+                        icon: AppIcons.logout_rounded,
                         label: 'Logout',
                         selected: false,
                         danger: true,
@@ -329,7 +330,7 @@ class _SidebarNavTile extends StatelessWidget {
                   ),
                 ),
                 const Icon(
-                  Icons.chevron_right_rounded,
+                  AppIcons.chevron_right_rounded,
                   color: Color(0xFF8A96AB),
                   size: 17,
                 ),
