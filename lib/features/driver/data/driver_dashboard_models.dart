@@ -155,7 +155,15 @@ List<DriverTripSummary> _tripFeedFromResponse(Map<String, dynamic> response) {
   return trips
       .whereType<Map<String, dynamic>>()
       .map(DriverTripSummary.fromJson)
-      .toList();
+      .toList()
+    ..sort((a, b) {
+      final aTime = a.activityTime;
+      final bTime = b.activityTime;
+      if (aTime == null && bTime == null) return 0;
+      if (aTime == null) return 1;
+      if (bTime == null) return -1;
+      return bTime.compareTo(aTime);
+    });
 }
 
 TrackingDemoShipment _shipmentFromTrip(Map<String, dynamic> trip) {
@@ -415,6 +423,7 @@ class DriverTripSummary {
     required this.distanceKm,
     required this.status,
     required this.bookingTime,
+    required this.activityTime,
     required this.amount,
     required this.driverName,
     required this.truckReg,
@@ -427,6 +436,20 @@ class DriverTripSummary {
     final deliveredAt = _stringFrom(json, const [
       'deliveredAt',
       'delivered_at',
+    ]);
+    final activityTime = _dateTimeFrom(json, const [
+      'updatedAt',
+      'updated_at',
+      'deliveredAt',
+      'delivered_at',
+      'completedAt',
+      'completed_at',
+      'cancelledAt',
+      'cancelled_at',
+      'canceledAt',
+      'canceled_at',
+      'createdAt',
+      'created_at',
     ]);
     return DriverTripSummary(
       id: _stringFrom(json, const ['id', 'tripId', 'trip_id']),
@@ -442,6 +465,7 @@ class DriverTripSummary {
           ? _stringFrom(json, const ['status', 'rawStatus'])
           : 'pending',
       bookingTime: deliveredAt.isNotEmpty ? deliveredAt : createdAt,
+      activityTime: activityTime,
       amount: _doubleFrom(json, const [
         'earnings',
         'amountToCollect',
@@ -460,6 +484,7 @@ class DriverTripSummary {
   final double distanceKm;
   final String status;
   final String bookingTime;
+  final DateTime? activityTime;
   final double amount;
   final String driverName;
   final String truckReg;

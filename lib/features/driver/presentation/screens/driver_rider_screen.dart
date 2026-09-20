@@ -481,11 +481,23 @@ bool _isVisibleDriverTripStatus(String status) {
 
 bool _isCompletedTrip(DriverTripSummary trip) {
   final status = trip.status.trim().toLowerCase();
-  return status == 'completed' || status == 'paid' || status == 'settled';
+  return status == 'completed' ||
+      status == 'delivered' ||
+      status == 'paid' ||
+      status == 'settled';
+}
+
+bool _isCancelledTrip(DriverTripSummary trip) {
+  final status = trip.status.trim().toLowerCase();
+  return status == 'cancelled' ||
+      status == 'canceled' ||
+      status == 'rejected' ||
+      status == 'declined' ||
+      status == 'expired';
 }
 
 bool _isPendingTrip(DriverTripSummary trip) {
-  return !_isCompletedTrip(trip);
+  return !_isCompletedTrip(trip) && !_isCancelledTrip(trip);
 }
 
 class _LifecycleRefreshObserver extends WidgetsBindingObserver {

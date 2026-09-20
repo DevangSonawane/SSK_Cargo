@@ -435,6 +435,9 @@ class ClientBookingOffer {
     required this.amountText,
     required this.brokerName,
     required this.note,
+    required this.driverLat,
+    required this.driverLng,
+    required this.driverHeading,
     required this.driverTimedOut,
     required this.createdAt,
     required this.raw,
@@ -511,6 +514,23 @@ class ClientBookingOffer {
           ? nestedBrokerName
           : 'Driver',
       note: _readString(json, const ['note', 'message', 'remarks']),
+      driverLat: _readFiniteDouble(json, const [
+        'driverLat',
+        'driver_lat',
+        'lat',
+        'latitude',
+      ]),
+      driverLng: _readFiniteDouble(json, const [
+        'driverLng',
+        'driver_lng',
+        'lng',
+        'longitude',
+      ]),
+      driverHeading: _readFiniteDouble(json, const [
+        'driverHeading',
+        'driver_heading',
+        'heading',
+      ]),
       driverTimedOut: _readBool(json, const [
         'driverTimedOut',
         'driver_timed_out',
@@ -528,6 +548,9 @@ class ClientBookingOffer {
   final String amountText;
   final String brokerName;
   final String note;
+  final double? driverLat;
+  final double? driverLng;
+  final double? driverHeading;
   final bool driverTimedOut;
   final DateTime? createdAt;
   final Map<String, dynamic> raw;
@@ -917,6 +940,22 @@ double _asDouble(Object? value) {
     return value.toDouble();
   }
   return double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+double? _readFiniteDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) {
+      continue;
+    }
+    final parsed = value is num
+        ? value.toDouble()
+        : double.tryParse(value.toString().trim());
+    if (parsed != null && parsed.isFinite) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {

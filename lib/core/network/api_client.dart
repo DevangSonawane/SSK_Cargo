@@ -1825,6 +1825,39 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> createTripPaymentQr({
+    required String accessToken,
+    required String tripId,
+  }) async {
+    developer.log(
+      'POST /api/trips/$tripId/collect-payment/qr',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/trips/$tripId/collect-payment/qr',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getTripPaymentQrStatus({
+    required String accessToken,
+    required String tripId,
+  }) async {
+    developer.log(
+      'GET /api/trips/$tripId/collect-payment/qr/status',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips/$tripId/collect-payment/qr/status',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateTripStatus({
     required String accessToken,
     required String tripId,

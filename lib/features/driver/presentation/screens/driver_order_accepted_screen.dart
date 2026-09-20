@@ -1372,15 +1372,6 @@ class _DriverOrderAcceptedScreenState
     final selectedAmount = _counterAmount.clamp(minOffer, maxOffer).toDouble();
     final serverTimedOut = _serverTimedOut;
     final remaining = _negotiationRemaining;
-    final handoffText = negotiationWindowStatusText(
-      remaining: remaining,
-      serverTimedOut: serverTimedOut,
-      activeLabel: 'Broker handoff in',
-      expiredLabel: 'Broker will take over negotiation',
-      fallbackLabel: _counterLocked
-          ? 'Counter sent. Waiting for the other side to respond.'
-          : 'This request waits for 2 minutes before broker handoff.',
-    );
     final actionLocked =
         _submitting ||
         _counterLocked ||
@@ -1418,9 +1409,6 @@ class _DriverOrderAcceptedScreenState
         ? (remaining.inMilliseconds / const Duration(minutes: 2).inMilliseconds)
               .clamp(0.0, 1.0)
               .toDouble()
-        : null;
-    final String? heroProgressCaption = heroShowCountdown
-        ? 'Client has $_countdownLabel to confirm your offer'
         : null;
 
     if (brokerAssigned) {
@@ -1592,12 +1580,10 @@ class _DriverOrderAcceptedScreenState
                 title: heroTitle,
                 subtitle: serverTimedOut
                     ? 'Broker controls this request now - waiting for new leads.'
-                    : handoffText,
+                    : null,
                 chipLabel: heroShowCountdown ? null : heroChipLabel,
                 clockLabel: heroShowCountdown ? _countdownLabel : null,
                 clockFraction: heroProgressValue,
-                progress: heroProgressValue,
-                progressCaption: heroProgressCaption,
               ),
               const SizedBox(height: 14),
               MapRouteCard(
@@ -1656,23 +1642,19 @@ class _StatusHero extends StatelessWidget {
   const _StatusHero({
     required this.icon,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.chipLabel,
     this.clockLabel,
     this.clockFraction,
-    this.progress,
-    this.progressCaption,
     this.isWarning = false,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final String? chipLabel;
   final String? clockLabel;
   final double? clockFraction;
-  final double? progress;
-  final String? progressCaption;
   final bool isWarning;
 
   @override
@@ -1728,13 +1710,14 @@ class _StatusHero extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: textColor.withValues(alpha: 0.9),
-                        height: 1.4,
+                    if (subtitle != null)
+                      Text(
+                        subtitle!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: textColor.withValues(alpha: 0.9),
+                          height: 1.4,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -1766,39 +1749,6 @@ class _StatusHero extends StatelessWidget {
               ],
             ],
           ),
-          if (progress != null && progressCaption != null) ...[
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor: Colors.white.withValues(alpha: 0.22),
-                color: AppColors.brandBright,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  AppIcons.timer_outlined,
-                  size: 13,
-                  color: AppColors.brandBright,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    progressCaption!,
-                    style: TextStyle(
-                      color: textColor.withValues(alpha: 0.85),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );

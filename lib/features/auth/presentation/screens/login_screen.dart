@@ -316,15 +316,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: OutlinedButton(
                                 onPressed: _isGoogleSubmitting
                                     ? null
                                     : _submitWithGoogle,
-                                icon: SvgPicture.asset(
-                                  'assets/google_logo.svg',
-                                  width: 18,
-                                  height: 18,
-                                ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF1B2A3A),
                                   side: const BorderSide(
@@ -336,33 +331,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
+                                  minimumSize: const Size(
+                                    double.infinity,
+                                    0,
+                                  ),
                                   shape: const StadiumBorder(),
                                 ),
-                                label: AnimatedSwitcher(
+                                child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 180),
                                   child: _isGoogleSubmitting
                                       ? const SizedBox(
                                           key: ValueKey('google-loading'),
-                                          width: 18,
-                                          height: 18,
+                                          width: 20,
+                                          height: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                             color: Color(0xFF1B2A3A),
                                           ),
                                         )
-                                      : const Text(
-                                          'Google',
-                                          key: ValueKey('google-label'),
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                                      : SvgPicture.asset(
+                                          'assets/google_logo.svg',
+                                          key: const ValueKey('google-icon'),
+                                          width: 20,
+                                          height: 20,
                                         ),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: OutlinedButton.icon(
+                              child: OutlinedButton(
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -372,15 +370,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   );
                                 },
-                                icon: SvgPicture.asset(
-                                  'assets/apple_logo.svg',
-                                  width: 22,
-                                  height: 22,
-                                ),
-                                label: const Text(
-                                  'Apple',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF1B2A3A),
                                   side: const BorderSide(
@@ -392,7 +381,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
+                                  minimumSize: const Size(
+                                    double.infinity,
+                                    0,
+                                  ),
                                   shape: const StadiumBorder(),
+                                ),
+                                child: SvgPicture.asset(
+                                  'assets/apple_logo.svg',
+                                  width: 20,
+                                  height: 20,
                                 ),
                               ),
                             ),

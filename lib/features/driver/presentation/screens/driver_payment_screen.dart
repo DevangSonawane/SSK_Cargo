@@ -35,9 +35,15 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   String? _companyUpiId;
   String? _companyUpiName;
   String _qrSource = 'personal';
+  bool _razorpayQrAvailable = false;
+  String? _razorpayQrImageUrl;
+  bool _creatingRazorpayQr = false;
+  bool _razorpayQrError = false;
+  bool _razorpayPaid = false;
   String? _bookingId;
   String _paymentStatus = 'pending';
   StreamSubscription<Map<String, dynamic>>? _paymentSubscription;
+  Timer? _razorpayQrPollTimer;
 
   void _setTripSession({
     required String tripId,
@@ -82,6 +88,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
   @override
   void dispose() {
     _paymentSubscription?.cancel();
+    _stopRazorpayPolling();
     super.dispose();
   }
 
@@ -129,6 +136,27 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         'companyUpiName',
         'company_upi_name',
       ]);
+      final razorpayQrAvailable = _readBool(trip, const [
+        'razorpayQrAvailable',
+        'razorpay_qr_available',
+      ]);
+      final razorpayQrImageUrl = _readString(trip, const [
+        'razorpayQrImageUrl',
+        'razorpay_qr_image_url',
+      ]);
+      final razorpayQrStatus = _readString(trip, const [
+        'razorpayQrStatus',
+        'razorpay_qr_status',
+      ]).toLowerCase();
+      final hasPersonalUpi = driverUpiId.isNotEmpty;
+      final hasCompanyUpi = companyUpiId.isNotEmpty;
+      final defaultQrSource = hasPersonalUpi
+          ? 'personal'
+          : hasCompanyUpi
+          ? 'company'
+          : razorpayQrAvailable
+          ? 'razorpay'
+          : 'personal';
 
       if (!mounted) return;
       setState(() {
@@ -150,9 +178,14 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         _driverName = _readString(trip, const ['driverName', 'driver_name']);
         _companyUpiId = companyUpiId.isNotEmpty ? companyUpiId : null;
         _companyUpiName = companyUpiName.isNotEmpty ? companyUpiName : null;
-        if (_driverUpiId == null && _companyUpiId != null) {
-          _qrSource = 'company';
-        }
+        _razorpayQrAvailable = razorpayQrAvailable;
+        _razorpayQrImageUrl =
+            razorpayQrStatus == 'active' && razorpayQrImageUrl.isNotEmpty
+            ? razorpayQrImageUrl
+            : null;
+        _razorpayQrError = false;
+        _razorpayPaid = _paymentStatus == 'paid';
+        _qrSource = defaultQrSource;
         _loadingTrip = false;
       });
       _setTripSession(
@@ -163,6 +196,8 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
 
       if (_paymentStatus == 'paid' && mounted) {
         unawaited(_finalizeTripAfterPayment());
+      } else {
+        unawaited(_syncRazorpayQrFlow());
       }
     } catch (error) {
       if (!mounted) return;
@@ -355,6 +390,119 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     }
   }
 
+  Future<void> _syncRazorpayQrFlow() async {
+    if (!mounted ||
+        _qrSource != 'razorpay' ||
+        !_razorpayQrAvailable ||
+        _razorpayPaid ||
+        _paymentStatus == 'paid') {
+      _stopRazorpayPolling();
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    if (_razorpayQrImageUrl == null && !_creatingRazorpayQr) {
+      setState(() {
+        _creatingRazorpayQr = true;
+        _razorpayQrError = false;
+      });
+      try {
+        final response = await ref
+            .read(apiClientProvider)
+            .createTripPaymentQr(
+              accessToken: session.tokens.accessToken,
+              tripId: widget.tripId,
+            );
+        final data = _responseData(response);
+        final imageUrl = _readString(data, const ['imageUrl', 'image_url']);
+        if (!mounted || _qrSource != 'razorpay') return;
+        setState(() {
+          _razorpayQrImageUrl = imageUrl.isNotEmpty ? imageUrl : null;
+          _razorpayQrError = imageUrl.isEmpty;
+        });
+      } on ApiException catch (_) {
+        if (!mounted) return;
+        setState(() => _razorpayQrError = true);
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _razorpayQrError = true);
+        return;
+      } finally {
+        if (mounted) {
+          setState(() => _creatingRazorpayQr = false);
+        }
+      }
+    }
+
+    if (_razorpayQrImageUrl != null) {
+      _startRazorpayPolling();
+    }
+  }
+
+  void _startRazorpayPolling() {
+    if (_razorpayQrPollTimer != null) {
+      return;
+    }
+    unawaited(_pollRazorpayQrStatus());
+    _razorpayQrPollTimer = Timer.periodic(const Duration(milliseconds: 3500), (
+      _,
+    ) {
+      unawaited(_pollRazorpayQrStatus());
+    });
+  }
+
+  void _stopRazorpayPolling() {
+    _razorpayQrPollTimer?.cancel();
+    _razorpayQrPollTimer = null;
+  }
+
+  Future<void> _pollRazorpayQrStatus() async {
+    if (!mounted ||
+        _qrSource != 'razorpay' ||
+        !_razorpayQrAvailable ||
+        _razorpayPaid ||
+        _paymentStatus == 'paid') {
+      _stopRazorpayPolling();
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getTripPaymentQrStatus(
+            accessToken: session.tokens.accessToken,
+            tripId: widget.tripId,
+          );
+      final data = _responseData(response);
+      if (!_readBool(data, const ['paid']) || !mounted) {
+        return;
+      }
+      _stopRazorpayPolling();
+      setState(() {
+        _razorpayPaid = true;
+        _paymentStatus = 'paid';
+      });
+      _setTripSession(
+        tripId: widget.tripId,
+        bookingId: _bookingId,
+        paymentStatus: 'paid',
+      );
+      unawaited(_finalizeTripAfterPayment());
+    } catch (_) {
+      // Polling failures are treated as transient; the next tick can recover.
+    }
+  }
+
   Future<void> _collectPayment(String mode) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
@@ -418,47 +566,6 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     }
   }
 
-  Future<void> _showPaymentModeSheet() async {
-    if (_collectingPayment) return;
-
-    final selectedMode = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(AppIcons.qr_code_rounded),
-                    title: const Text('UPI'),
-                    onTap: () => Navigator.of(sheetContext).pop('upi'),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(AppIcons.payments_rounded),
-                    title: const Text('Cash'),
-                    onTap: () => Navigator.of(sheetContext).pop('cash'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selectedMode == null || !mounted) return;
-    await _collectPayment(selectedMode);
-  }
-
   @override
   Widget build(BuildContext context) {
     final amountToCollect = _amountToCollect == null
@@ -466,11 +573,17 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         : _formatCurrency(_amountToCollect!);
     final hasPersonalUpi = _driverUpiId?.trim().isNotEmpty == true;
     final hasCompanyUpi = _companyUpiId?.trim().isNotEmpty == true;
-    final activeQrSource = hasPersonalUpi && hasCompanyUpi
+    final hasRazorpayQr = _razorpayQrAvailable;
+    final availableQrSources = <String>[
+      if (hasPersonalUpi) 'personal',
+      if (hasCompanyUpi) 'company',
+      if (hasRazorpayQr) 'razorpay',
+    ];
+    final activeQrSource = availableQrSources.contains(_qrSource)
         ? _qrSource
-        : hasCompanyUpi
-        ? 'company'
-        : 'personal';
+        : (availableQrSources.isNotEmpty
+              ? availableQrSources.first
+              : 'personal');
     final activeUpiId = activeQrSource == 'company'
         ? _companyUpiId
         : _driverUpiId;
@@ -492,6 +605,13 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
             ),
           )
         : null;
+    final razorpayTabActiveUnpaid =
+        activeQrSource == 'razorpay' && !_razorpayPaid;
+    final canSelfReportUpi =
+        !razorpayTabActiveUnpaid &&
+        activeQrSource != 'razorpay' &&
+        (activeUpiId?.trim().isNotEmpty == true ||
+            _driverQrUrl?.trim().isNotEmpty == true);
     final hasAdvance = _paymentStatus == 'partial';
     final paymentStatusLabel = _paymentStatus == 'paid'
         ? 'Paid'
@@ -636,20 +756,7 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: _PaymentRow(
-                      label: 'Due from customer',
-                      value: amountToCollect,
-                      light: true,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 14),
                   Text(
                     hasAdvance
                         ? 'An advance has already been paid for this delivery.'
@@ -673,7 +780,11 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
               child: Column(
                 children: [
                   Text(
-                    activeQrSource == 'company' ? 'Company QR' : 'Your QR here',
+                    switch (activeQrSource) {
+                      'company' => 'Company QR',
+                      'razorpay' => 'Verified QR',
+                      _ => 'Your QR here',
+                    },
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -681,117 +792,153 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '100% money in your bank',
+                    activeQrSource == 'razorpay'
+                        ? 'Auto-confirmed by Razorpay'
+                        : '100% money in your bank',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.82),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (hasPersonalUpi && hasCompanyUpi) ...[
+                  if (availableQrSources.length > 1) ...[
                     SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment<String>(
-                          value: 'personal',
-                          icon: Icon(AppIcons.person_rounded),
-                          label: Text('Personal'),
-                        ),
-                        ButtonSegment<String>(
-                          value: 'company',
-                          icon: Icon(AppIcons.apartment_rounded),
-                          label: Text('Company'),
-                        ),
+                      segments: [
+                        if (hasPersonalUpi)
+                          const ButtonSegment<String>(
+                            value: 'personal',
+                            icon: Icon(AppIcons.person_rounded),
+                            label: Text('Personal'),
+                          ),
+                        if (hasCompanyUpi)
+                          const ButtonSegment<String>(
+                            value: 'company',
+                            icon: Icon(AppIcons.apartment_rounded),
+                            label: Text('Company'),
+                          ),
+                        if (hasRazorpayQr)
+                          const ButtonSegment<String>(
+                            value: 'razorpay',
+                            icon: Icon(AppIcons.shield_rounded),
+                            label: Text('Verified'),
+                          ),
                       ],
-                      selected: {_qrSource},
+                      selected: {activeQrSource},
                       style: SegmentedButton.styleFrom(
                         foregroundColor: Colors.white,
                         selectedForegroundColor: AppColors.textPrimary,
                         selectedBackgroundColor: Colors.white,
                       ),
                       onSelectionChanged: (selection) {
-                        setState(() => _qrSource = selection.first);
+                        final source = selection.first;
+                        setState(() => _qrSource = source);
+                        if (source == 'razorpay') {
+                          unawaited(_syncRazorpayQrFlow());
+                        } else {
+                          _stopRazorpayPolling();
+                        }
                       },
                     ),
                     const SizedBox(height: 14),
                   ],
-                  _QrPlaceholder(
-                    qrUrl: generatedQrUrl ?? _driverQrUrl,
-                    accessToken: ref
-                        .read(authSessionProvider)
-                        .valueOrNull
-                        ?.tokens
-                        .accessToken,
-                    requiresAuth: generatedQrUrl == null,
-                    centerIcon: activeQrSource == 'company'
-                        ? AppIcons.apartment_rounded
-                        : AppIcons.person_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _savingQr ? null : _uploadQrCode,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brand,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child: _savingQr
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              '+ Add your QR',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                  if (activeQrSource == 'razorpay')
+                    _RazorpayQrView(
+                      imageUrl: _razorpayQrImageUrl,
+                      loading: _creatingRazorpayQr,
+                      error: _razorpayQrError,
+                      paid: _razorpayPaid,
+                      amount: amountToCollect,
+                    )
+                  else
+                    _QrPlaceholder(
+                      qrUrl: generatedQrUrl ?? _driverQrUrl,
+                      accessToken: ref
+                          .read(authSessionProvider)
+                          .valueOrNull
+                          ?.tokens
+                          .accessToken,
+                      requiresAuth: generatedQrUrl == null,
+                      centerIcon: activeQrSource == 'company'
+                          ? AppIcons.apartment_rounded
+                          : AppIcons.person_rounded,
                     ),
-                  ),
+                  const SizedBox(height: 16),
+                  if (activeQrSource != 'razorpay')
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _savingQr ? null : _uploadQrCode,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: _savingQr
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                '+ Add your QR',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                      ),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                const Expanded(
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: AppColors.line,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'OR',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
+            if (canSelfReportUpi) ...[
+              SizedBox(
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: _collectingPayment
+                      ? null
+                      : () => _collectPayment('upi'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.brand,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.brand.withValues(
+                      alpha: 0.55,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                ),
-                const Expanded(
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: AppColors.line,
+                  icon: _collectingPayment
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(AppIcons.qr_code_rounded, size: 20),
+                  label: Text(
+                    _collectingPayment
+                        ? 'Confirming...'
+                        : 'Payment Received via UPI',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 12),
+            ],
             SizedBox(
               height: 54,
               child: ElevatedButton.icon(
-                onPressed: _collectingPayment ? null : _showPaymentModeSheet,
+                onPressed: _collectingPayment
+                    ? null
+                    : () => _collectPayment('cash'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.textPrimary,
@@ -865,47 +1012,168 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     }
     return '';
   }
+
+  bool _readBool(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is bool) {
+        return value;
+      }
+      if (value is num) {
+        return value != 0;
+      }
+      final text = value?.toString().trim().toLowerCase();
+      if (text == 'true' || text == '1' || text == 'yes') {
+        return true;
+      }
+      if (text == 'false' || text == '0' || text == 'no') {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Map<String, dynamic> _responseData(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    return response;
+  }
 }
 
-class _PaymentRow extends StatelessWidget {
-  const _PaymentRow({
-    required this.label,
-    required this.value,
-    this.light = false,
+class _RazorpayQrView extends StatelessWidget {
+  const _RazorpayQrView({
+    required this.imageUrl,
+    required this.loading,
+    required this.error,
+    required this.paid,
+    required this.amount,
   });
 
-  final String label;
-  final String value;
-  final bool light;
+  final String? imageUrl;
+  final bool loading;
+  final bool error;
+  final bool paid;
+  final String amount;
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = light ? Colors.white : AppColors.textPrimary;
-    final dimColor = light
-        ? Colors.white.withValues(alpha: 0.82)
-        : AppColors.textPrimary;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
+    if (paid) {
+      return Column(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: dimColor,
-                fontWeight: FontWeight.w600,
-              ),
+          Container(
+            width: 74,
+            height: 74,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              AppIcons.check_circle_rounded,
+              color: AppColors.successText,
+              size: 42,
             ),
           ),
+          const SizedBox(height: 12),
           Text(
-            value,
+            'Payment verified by Razorpay',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: baseColor,
+              color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
         ],
-      ),
+      );
+    }
+
+    if (error) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Text(
+          'Could not generate the verified QR code. Collect via UPI ID or cash instead.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Colors.white,
+            height: 1.4,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: 14),
+        Container(
+          width: 220,
+          height: 220,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: imageUrl == null || loading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: AppColors.brand,
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    imageUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          AppIcons.qr_code_rounded,
+                          color: AppColors.textSecondary,
+                          size: 56,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.warningFill,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: AppColors.warningText,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 7),
+              const Text(
+                'Waiting for payment...',
+                style: TextStyle(
+                  color: AppColors.warningText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

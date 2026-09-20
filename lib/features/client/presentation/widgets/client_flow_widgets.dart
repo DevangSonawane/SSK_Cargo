@@ -3579,6 +3579,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   String? _bookingReference;
   ClientBookingOffer? _driverRequest;
   String? _activeBookingId;
+  List<ClientBookingOffer> _findTruckRequests = const [];
   int _findTruckRequestCount = 0;
   int _findTruckDeclinedCount = 0;
   bool _findTruckNegotiationOpen = false;
@@ -3608,6 +3609,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   StreamSubscription<Map<String, dynamic>>? _findTruckRequestSubscription;
   bool _locationStreamStarted = false;
 
+  BookingData _freshBookingDraft() {
+    return BookingData(
+      from: '',
+      to: '',
+      tripType: widget.tripType,
+      city: '',
+      vehicle: _vehicle,
+      scheduledDate: DateTime.now().add(const Duration(hours: 3)),
+      amount: _priceValue(_vehicle.price),
+      truckCategory: _truckCategoryForVehicle(_vehicle.label),
+      searchMode: BookingSearchMode.truck,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -3628,24 +3643,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
     final initialDraft = widget.initialBookingData;
-    _draft =
-        (initialDraft ??
-                BookingData(
-                  from: '',
-                  to: '',
-                  tripType: widget.tripType,
-                  city: '',
-                  scheduledDate: DateTime.now().add(const Duration(hours: 3)),
-                  amount: _priceValue(_vehicle.price),
-                ))
-            .copyWith(
-              tripType: initialDraft?.tripType ?? widget.tripType,
-              vehicle: initialDraft?.vehicle ?? _vehicle,
-              truckCategory: initialDraft?.truckCategory.isNotEmpty == true
-                  ? initialDraft!.truckCategory
-                  : _truckCategoryForVehicle(_vehicle.label),
-              amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
-            );
+    _draft = (initialDraft ?? _freshBookingDraft()).copyWith(
+      tripType: initialDraft?.tripType ?? widget.tripType,
+      vehicle: initialDraft?.vehicle ?? _vehicle,
+      truckCategory: initialDraft?.truckCategory.isNotEmpty == true
+          ? initialDraft!.truckCategory
+          : _truckCategoryForVehicle(_vehicle.label),
+      amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
+    );
     _fromController = TextEditingController(text: _draft.from);
     _toController = TextEditingController(text: _draft.to);
     _weightController = TextEditingController(
@@ -4354,6 +4359,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     setState(() {
       _submitting = true;
       _driverRequest = null;
+      _findTruckRequests = const [];
       _findTruckRequestCount = 0;
       _findTruckDeclinedCount = 0;
       _paymentCompletionVisible = false;
@@ -4453,6 +4459,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _bookingReference = null;
       _activeBookingId = null;
       _driverRequest = null;
+      _findTruckRequests = const [];
       _findTruckRequestCount = 0;
       _findTruckDeclinedCount = 0;
       _findTruckNegotiationOpen = false;
@@ -4608,6 +4615,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
       setState(() {
         _findTruckRequestCount = requests.length;
+        _findTruckRequests = requests;
         _findTruckDeclinedCount = requests
             .where((request) => request.normalizedStatus == 'declined')
             .length;
@@ -4658,7 +4666,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             .cancelBooking(
               accessToken: session.tokens.accessToken,
               id: bookingId,
-              reason: 'Client cancelled find truck search',
+              reason: 'No driver found within the search window',
             );
       }
 
@@ -4670,16 +4678,23 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _bookingReference = null;
         _activeBookingId = null;
         _driverRequest = null;
+        _findTruckRequests = const [];
         _findTruckRequestCount = 0;
         _findTruckDeclinedCount = 0;
         _findTruckNegotiationOpen = false;
         _postNegotiationPayment = false;
         _cancellingFindTruckSearch = false;
+        _selectedTruck = null;
         _draft = _draft.copyWith(
           searchMode: BookingSearchMode.truck,
           selectedBrokerId: '',
         );
         _step = _BookingFlowStep.brokerSelection;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _animateTruckSearchSheetTo(0.58);
+        }
       });
     } on ApiException catch (error) {
       if (!mounted) {
@@ -4748,6 +4763,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       await _findTruckRequestSubscription?.cancel();
       setState(() {
         _postNegotiationPayment = true;
+        _findTruckRequests = const [];
         _step = _BookingFlowStep.payment;
       });
       unawaited(_loadAdvanceAmount());
@@ -6220,7 +6236,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            _buildBrokerMap(context, const <NearbyTruck>[]),
+            _buildBrokerMap(
+              context,
+              const <NearbyTruck>[],
+              findTruckRequests: isFindTruckSearching
+                  ? _findTruckRequests
+                  : const <ClientBookingOffer>[],
+              searchRadiusKm: isFindTruckSearching
+                  ? _draft.searchRadiusKm
+                  : null,
+            ),
             if (dimFindTruckMap)
               Positioned.fill(
                 child: IgnorePointer(
@@ -6244,6 +6269,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   searchRadiusKm: _draft.searchRadiusKm,
                   isCancelling: _cancellingFindTruckSearch,
                   onCancel: _cancelFindTruckSearch,
+                  pickup: _draft.from,
+                  drop: _draft.to,
+                  amountText: _draft.amountText,
                 ),
               ),
             if (!hideSearchPanel)
@@ -6762,10 +6790,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   // ignore: unused_element
-  Widget _buildBrokerMap(BuildContext context, List<NearbyTruck> trucks) {
+  Widget _buildBrokerMap(
+    BuildContext context,
+    List<NearbyTruck> trucks, {
+    List<ClientBookingOffer> findTruckRequests = const [],
+    double? searchRadiusKm,
+  }) {
     final cameraTarget = _brokerMapCenter();
-    final markers = _buildBrokerMarkers(trucks);
+    final markers = _buildBrokerMarkers(
+      trucks,
+      findTruckRequests: findTruckRequests,
+    );
     final polylines = _buildBrokerPolylines();
+    final circles = _buildFindTruckSearchCircles(searchRadiusKm);
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
     final shouldAutoFitCamera = _step != _BookingFlowStep.payment;
@@ -6781,6 +6818,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ),
       mapType: MapType.normal,
       markers: markers,
+      circles: circles,
       polylines: polylines,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
@@ -6805,7 +6843,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     );
   }
 
-  Set<Marker> _buildBrokerMarkers(List<NearbyTruck> trucks) {
+  Set<Marker> _buildBrokerMarkers(
+    List<NearbyTruck> trucks, {
+    List<ClientBookingOffer> findTruckRequests = const [],
+  }) {
     final icon =
         _truckMarkerIcon ??
         BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
@@ -6855,6 +6896,39 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       );
     }
 
+    for (final entry in findTruckRequests.asMap().entries) {
+      final request = entry.value;
+      if (request.normalizedStatus == 'declined') {
+        continue;
+      }
+      final latitude = request.driverLat;
+      final longitude = request.driverLng;
+      if (latitude == null ||
+          longitude == null ||
+          !latitude.isFinite ||
+          !longitude.isFinite) {
+        continue;
+      }
+      final markerKey = request.id.isEmpty ? entry.key.toString() : request.id;
+      markers.add(
+        Marker(
+          markerId: MarkerId('find-truck-driver-$markerKey'),
+          position: LatLng(latitude, longitude),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          rotation: request.driverHeading?.isFinite == true
+              ? request.driverHeading!
+              : 0,
+          flat: true,
+          zIndexInt: 2,
+          infoWindow: InfoWindow(
+            title: request.brokerName.isEmpty ? 'Driver' : request.brokerName,
+            snippet: request.displayStatusLabel,
+          ),
+        ),
+      );
+    }
+
     if (drop != null) {
       markers.add(
         Marker(
@@ -6869,6 +6943,27 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     return markers;
+  }
+
+  Set<Circle> _buildFindTruckSearchCircles(double? searchRadiusKm) {
+    final pickup = _pickupLatLng;
+    if (pickup == null ||
+        searchRadiusKm == null ||
+        !searchRadiusKm.isFinite ||
+        searchRadiusKm <= 0) {
+      return const {};
+    }
+    return {
+      Circle(
+        circleId: const CircleId('find-truck-search-radius'),
+        center: pickup,
+        radius: searchRadiusKm * 1000,
+        strokeWidth: 2,
+        strokeColor: const Color(0xFF2FA56E).withValues(alpha: 0.55),
+        fillColor: const Color(0xFF2FA56E).withValues(alpha: 0.10),
+        zIndex: 1,
+      ),
+    };
   }
 
   Set<Polyline> _buildBrokerPolylines() {
@@ -7239,8 +7334,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         },
                         decoration: const InputDecoration(
                           hintText: '0.0',
+                          filled: false,
+                          fillColor: Colors.transparent,
                           isDense: true,
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -7421,7 +7520,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildPaymentMapSheetStep(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final view = View.of(context);
+    final viewBottomInset =
+        max(view.padding.bottom, view.viewPadding.bottom) /
+        view.devicePixelRatio;
+    final bottomSystemInset = max(
+      max(mediaQuery.viewPadding.bottom, mediaQuery.padding.bottom),
+      viewBottomInset,
+    );
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+    final contentBottomPadding = isAndroid
+        ? max(bottomSystemInset, 28.0)
+        : bottomSystemInset;
     final selectedMethod = _selectedPaymentMethod;
     final amount = _draft.amount > 0
         ? _draft.amount
@@ -7448,9 +7559,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final sheetHeight = min(constraints.maxHeight * 0.48, 350.0);
-        final paymentBottomPadding = bottomInset <= 0
-            ? 12.0
-            : bottomInset.clamp(10.0, 18.0).toDouble();
+        final paymentBottomPadding = contentBottomPadding + 10;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -7516,9 +7625,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         maxHeight: sheetHeight + paymentBottomPadding,
                       ),
                       padding: EdgeInsets.fromLTRB(
-                        18,
+                        0,
                         16,
-                        18,
+                        0,
                         paymentBottomPadding,
                       ),
                       decoration: BoxDecoration(
@@ -7550,55 +7659,61 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Choose payment',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            color: const Color(0xFF101828),
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      'Map stays live while you finish checkout.',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: const Color(0xFF667085),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 9,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF8F1),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  _formatRupees(amount),
-                                  style: Theme.of(context).textTheme.titleSmall
-                                      ?.copyWith(
-                                        color: const Color(0xFF1E7F55),
-                                        fontWeight: FontWeight.w900,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Choose payment',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              color: const Color(0xFF101828),
+                                              fontWeight: FontWeight.w900,
+                                            ),
                                       ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        'Map stays live while you finish checkout.',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF667085),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEAF8F1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    _formatRupees(amount),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: const Color(0xFF1E7F55),
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 14),
                           SizedBox(
@@ -7665,28 +7780,31 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: _submitting ? null : _next,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF2FA56E),
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size.fromHeight(52),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: _submitting ? null : _next,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2FA56E),
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
                                 ),
+                                child: _submitting
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(ctaLabel),
                               ),
-                              child: _submitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(ctaLabel),
                             ),
                           ),
                         ],
@@ -7895,7 +8013,7 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
   }
 }
 
-class _FindTruckScreenLoader extends StatelessWidget {
+class _FindTruckScreenLoader extends StatefulWidget {
   const _FindTruckScreenLoader({
     required this.bookingReference,
     required this.requestCount,
@@ -7903,6 +8021,9 @@ class _FindTruckScreenLoader extends StatelessWidget {
     required this.searchRadiusKm,
     required this.isCancelling,
     required this.onCancel,
+    required this.pickup,
+    required this.drop,
+    required this.amountText,
   });
 
   final String? bookingReference;
@@ -7911,173 +8032,459 @@ class _FindTruckScreenLoader extends StatelessWidget {
   final double searchRadiusKm;
   final bool isCancelling;
   final VoidCallback onCancel;
+  final String pickup;
+  final String drop;
+  final String amountText;
+
+  @override
+  State<_FindTruckScreenLoader> createState() => _FindTruckScreenLoaderState();
+}
+
+class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
+  static const int _searchWindowSeconds = 120;
+
+  Timer? _elapsedTimer;
+  int _elapsedSeconds = 0;
+
+  bool get _allDeclined =>
+      widget.requestCount > 0 && widget.declinedCount >= widget.requestCount;
+
+  bool get _active => !_allDeclined;
+
+  bool get _timedOut => _active && _elapsedSeconds >= _searchWindowSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FindTruckScreenLoader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncTimer();
+  }
+
+  @override
+  void dispose() {
+    _elapsedTimer?.cancel();
+    super.dispose();
+  }
+
+  void _syncTimer() {
+    if (!_active) {
+      _elapsedTimer?.cancel();
+      _elapsedTimer = null;
+      if (_elapsedSeconds != 0) {
+        _elapsedSeconds = 0;
+      }
+      return;
+    }
+    _elapsedTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || !_active) {
+        return;
+      }
+      setState(() {
+        _elapsedSeconds += 1;
+      });
+    });
+  }
+
+  void _searchAgain() {
+    setState(() {
+      _elapsedSeconds = 0;
+    });
+  }
+
+  String _elapsedLabel() {
+    final minutes = (_elapsedSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_elapsedSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final activeCount = (requestCount - declinedCount).clamp(0, requestCount);
-    final hasNotifiedDrivers = requestCount > 0;
+    final activeCount = (widget.requestCount - widget.declinedCount).clamp(
+      0,
+      widget.requestCount,
+    );
+    final hasNotifiedDrivers = activeCount > 0;
+    final progress = (_elapsedSeconds / _searchWindowSeconds).clamp(0.0, 1.0);
     return SafeArea(
-      child: Align(
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.97),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFDDEFE6)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 30,
-                    offset: const Offset(0, 16),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 16, 14, 18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 58,
-                          height: 58,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: const [
-                              SizedBox(
-                                width: 58,
-                                height: 58,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 4,
-                                  color: Color(0xFF2FA56E),
-                                ),
-                              ),
-                              DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFEAF8F1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: SizedBox(
-                                  width: 42,
-                                  height: 42,
-                                  child: Icon(
-                                    AppIcons.radar_rounded,
-                                    color: Color(0xFF2FA56E),
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                hasNotifiedDrivers
-                                    ? 'Notified $requestCount driver${requestCount == 1 ? '' : 's'}'
-                                    : 'Finding nearby drivers',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF101828),
-                                      fontWeight: FontWeight.w900,
-                                      height: 1.12,
-                                    ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                hasNotifiedDrivers
-                                    ? 'Waiting for the first live response.'
-                                    : 'Scanning the route for available trucks.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF667085),
-                                      height: 1.35,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Cancel search',
-                          onPressed: isCancelling ? null : onCancel,
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFF2F6F4),
-                            foregroundColor: const Color(0xFF475467),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          icon: isCancelling
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(AppIcons.close_rounded, size: 18),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: const LinearProgressIndicator(
-                        minHeight: 6,
-                        color: Color(0xFF2FA56E),
-                        backgroundColor: Color(0xFFE4E7EC),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _FindTruckStatusChip(
-                            icon: AppIcons.local_shipping_rounded,
-                            label: hasNotifiedDrivers
-                                ? '$activeCount active'
-                                : 'Live scan',
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _FindTruckStatusChip(
-                            icon: AppIcons.near_me_rounded,
-                            label: '${searchRadiusKm.round()} km radius',
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (bookingReference?.isNotEmpty == true) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Booking #$bookingReference',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: const Color(0xFF2FA56E),
-                              fontWeight: FontWeight.w800,
-                            ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (_active) const Positioned.fill(child: _FindTruckRadarPulse()),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.97),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFDDEFE6)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 26,
+                        offset: const Offset(0, 12),
                       ),
                     ],
-                  ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEAF8F1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                AppIcons.radar_rounded,
+                                color: Color(0xFF2FA56E),
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _allDeclined
+                                        ? 'No drivers accepted yet'
+                                        : hasNotifiedDrivers
+                                        ? 'Notified $activeCount driver${activeCount == 1 ? '' : 's'} nearby'
+                                        : 'Finding nearby trucks',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFF101828),
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.12,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _allDeclined
+                                        ? 'Every notified driver declined or timed out.'
+                                        : hasNotifiedDrivers
+                                        ? 'Waiting for the first live response.'
+                                        : 'Scanning the route for available trucks.',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: const Color(0xFF667085),
+                                          height: 1.35,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Cancel search',
+                              onPressed: widget.isCancelling
+                                  ? null
+                                  : widget.onCancel,
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFF2F6F4),
+                                foregroundColor: const Color(0xFF475467),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: widget.isCancelling
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      AppIcons.close_rounded,
+                                      size: 18,
+                                    ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        if (_active) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 6,
+                                    color: const Color(0xFF2FA56E),
+                                    backgroundColor: const Color(0xFFE4E7EC),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                _elapsedLabel(),
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF475467),
+                                      fontWeight: FontWeight.w800,
+                                      fontFeatures: const [
+                                        ui.FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _FindTruckStatusChip(
+                                icon: AppIcons.local_shipping_rounded,
+                                label: hasNotifiedDrivers
+                                    ? '$activeCount active'
+                                    : 'Live scan',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _FindTruckStatusChip(
+                                icon: AppIcons.near_me_rounded,
+                                label:
+                                    '${widget.searchRadiusKm.round()} km radius',
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (widget.pickup.isNotEmpty ||
+                            widget.drop.isNotEmpty ||
+                            widget.amountText.isNotEmpty ||
+                            widget.bookingReference?.isNotEmpty == true) ...[
+                          const SizedBox(height: 12),
+                          _FindTruckSummaryLine(
+                            pickup: widget.pickup,
+                            drop: widget.drop,
+                            amountText: widget.amountText,
+                            bookingReference: widget.bookingReference,
+                          ),
+                        ],
+                        if (_timedOut) ...[
+                          const SizedBox(height: 14),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFAEB),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFFEDFA7),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Still no driver yet',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF101828),
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Search again to keep waiting, or cancel and start over.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF667085),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: widget.isCancelling
+                                            ? null
+                                            : _searchAgain,
+                                        child: const Text('Search Again'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: widget.isCancelling
+                                            ? null
+                                            : widget.onCancel,
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFD92D20,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        child: Text(
+                                          widget.isCancelling
+                                              ? 'Cancelling...'
+                                              : 'Cancel Search',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FindTruckRadarPulse extends StatefulWidget {
+  const _FindTruckRadarPulse();
+
+  @override
+  State<_FindTruckRadarPulse> createState() => _FindTruckRadarPulseState();
+}
+
+class _FindTruckRadarPulseState extends State<_FindTruckRadarPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                for (final delay in const [0.0, 0.33, 0.66])
+                  _RadarRing(progress: (_controller.value + delay) % 1),
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2FA56E),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        spreadRadius: 5,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF2FA56E).withValues(alpha: 0.30),
+                        blurRadius: 14,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+class _RadarRing extends StatelessWidget {
+  const _RadarRing({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = ui.lerpDouble(18, 252, progress)!;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(
+            0xFF2FA56E,
+          ).withValues(alpha: (0.52 * (1 - progress)).clamp(0.0, 0.52)),
+          width: 2,
+        ),
+        color: const Color(
+          0xFF2FA56E,
+        ).withValues(alpha: (0.12 * (1 - progress)).clamp(0.0, 0.12)),
+      ),
+    );
+  }
+}
+
+class _FindTruckSummaryLine extends StatelessWidget {
+  const _FindTruckSummaryLine({
+    required this.pickup,
+    required this.drop,
+    required this.amountText,
+    required this.bookingReference,
+  });
+
+  final String pickup;
+  final String drop;
+  final String amountText;
+  final String? bookingReference;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[
+      if (pickup.isNotEmpty && drop.isNotEmpty) '$pickup to $drop',
+      if (amountText.isNotEmpty) amountText,
+      if (bookingReference?.isNotEmpty == true) 'Booking #$bookingReference',
+    ];
+    return Text(
+      parts.join(' · '),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: const Color(0xFF2FA56E),
+        fontWeight: FontWeight.w800,
       ),
     );
   }
