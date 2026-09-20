@@ -541,7 +541,7 @@ class _BrokerNegotiationSheetState
         Text(
           title,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFF101828),
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -549,7 +549,7 @@ class _BrokerNegotiationSheetState
         Text(
           body,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
             height: 1.45,
           ),
         ),
@@ -571,9 +571,9 @@ class _BrokerNegotiationSheetState
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.colors.fillSubtle,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+              border: Border.all(color: context.colors.line),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,7 +584,7 @@ class _BrokerNegotiationSheetState
                       : widget.truck.displayTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -595,7 +595,7 @@ class _BrokerNegotiationSheetState
                       ? 'Counter offer: ${request.amountText}'
                       : 'Current amount: ${request.amountText}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                   ),
                 ),
               ],
@@ -606,7 +606,7 @@ class _BrokerNegotiationSheetState
           Text(
             _errorMessage!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFFB42318),
+              color: context.colors.dangerEmphasis,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -627,9 +627,9 @@ class _BrokerNegotiationSheetState
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.colors.fillSubtle,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+              border: Border.all(color: context.colors.line),
             ),
             child: Row(
               children: [
@@ -643,7 +643,7 @@ class _BrokerNegotiationSheetState
                   child: Text(
                     'Waiting for a live counter offer...',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -680,7 +680,7 @@ class _BrokerNegotiationSheetState
         Text(
           'Choose payment',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFF101828),
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -688,7 +688,7 @@ class _BrokerNegotiationSheetState
         Text(
           'Pick how this freight booking should be settled. Advance uses the latest admin-configured amount.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
             height: 1.45,
           ),
         ),
@@ -697,7 +697,7 @@ class _BrokerNegotiationSheetState
           'Razorpay checkout will show the available payment methods before you pay.',
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+          ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
         ),
         const SizedBox(height: 16),
         _CheckoutChoiceCard(
@@ -781,8 +781,8 @@ class _BrokerNegotiationSheetState
       maxChildSize: 0.88,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: SingleChildScrollView(
@@ -796,7 +796,7 @@ class _BrokerNegotiationSheetState
                     width: 44,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD0D5DD),
+                      color: context.colors.line,
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -1134,7 +1134,7 @@ class _FindTruckNegotiationSheetState
         constraints: const BoxConstraints(maxWidth: 430),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -1160,7 +1160,7 @@ class _FindTruckNegotiationSheetState
                             title,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
-                                  color: const Color(0xFF101828),
+                                  color: context.colors.textPrimary,
                                   fontWeight: FontWeight.w800,
                                 ),
                           ),
@@ -1169,7 +1169,7 @@ class _FindTruckNegotiationSheetState
                             body,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: const Color(0xFF667085),
+                                  color: context.colors.textSecondary,
                                   height: 1.35,
                                 ),
                           ),
@@ -1182,10 +1182,10 @@ class _FindTruckNegotiationSheetState
                           : () => Navigator.of(
                               context,
                             ).pop(_FindTruckNegotiationResult.dismissed),
-                      icon: const Icon(AppIcons.close_rounded),
+                      icon: Icon(AppIcons.close_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2F4F7),
-                        foregroundColor: const Color(0xFF475467),
+                        backgroundColor: context.colors.fillSubtle,
+                        foregroundColor: context.colors.textSecondary,
                       ),
                     ),
                   ],
@@ -1195,17 +1195,17 @@ class _FindTruckNegotiationSheetState
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: context.colors.fillSubtle,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                    border: Border.all(color: context.colors.line),
                   ),
                   child: Row(
                     children: [
                       Container(
                         width: 42,
                         height: 42,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEAF8F1),
+                        decoration: BoxDecoration(
+                          color: context.colors.brandFill,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -1224,7 +1224,7 @@ class _FindTruckNegotiationSheetState
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
-                                    color: const Color(0xFF101828),
+                                    color: context.colors.textPrimary,
                                     fontWeight: FontWeight.w800,
                                   ),
                             ),
@@ -1254,7 +1254,7 @@ class _FindTruckNegotiationSheetState
                   Text(
                     _errorMessage!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFFB42318),
+                      color: context.colors.dangerEmphasis,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1276,9 +1276,9 @@ class _FindTruckNegotiationSheetState
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.colors.fillSubtle,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                      border: Border.all(color: context.colors.line),
                     ),
                     child: Row(
                       children: [
@@ -1293,7 +1293,7 @@ class _FindTruckNegotiationSheetState
                             'Waiting for the next driver update...',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: const Color(0xFF667085),
+                                  color: context.colors.textSecondary,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -1340,7 +1340,7 @@ class _NegotiationSliderStep extends StatelessWidget {
         Text(
           'Review price for ${truck.displayTitle}',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFF101828),
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1348,7 +1348,7 @@ class _NegotiationSliderStep extends StatelessWidget {
         Text(
           'Use the slider to set the amount you want to continue with.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
             height: 1.45,
           ),
         ),
@@ -1357,7 +1357,7 @@ class _NegotiationSliderStep extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: context.colors.fillSubtle,
             borderRadius: BorderRadius.circular(22),
           ),
           child: Column(
@@ -1388,7 +1388,7 @@ class _NegotiationSliderStep extends StatelessWidget {
                 max: maxPrice,
                 divisions: 24,
                 activeColor: const Color(0xFF2FA56E),
-                inactiveColor: const Color(0xFFE4E7EC),
+                inactiveColor: context.colors.line,
                 label: '₹${displayValue.toStringAsFixed(0)}',
                 onChanged: onChanged,
               ),
@@ -1398,13 +1398,13 @@ class _NegotiationSliderStep extends StatelessWidget {
                   Text(
                     '₹${minPrice.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                     ),
                   ),
                   Text(
                     '₹${maxPrice.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                     ),
                   ),
                 ],
@@ -1437,7 +1437,7 @@ class _NegotiationSliderStep extends StatelessWidget {
           Text(
             errorMessage!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFFB42318),
+              color: context.colors.dangerEmphasis,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1482,7 +1482,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
         constraints: const BoxConstraints(maxWidth: 390),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -1502,8 +1502,8 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                     Container(
                       width: 42,
                       height: 42,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEAF8F1),
+                      decoration: BoxDecoration(
+                        color: context.colors.brandFill,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -1519,7 +1519,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                           Text(
                             'Counter offer',
                             style: theme.textTheme.titleLarge?.copyWith(
-                              color: const Color(0xFF101828),
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -1527,7 +1527,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                           Text(
                             'Drag to set your price',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF667085),
+                              color: context.colors.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1536,10 +1536,10 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(AppIcons.close_rounded),
+                      icon: Icon(AppIcons.close_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2F4F7),
-                        foregroundColor: const Color(0xFF475467),
+                        backgroundColor: context.colors.fillSubtle,
+                        foregroundColor: context.colors.textSecondary,
                       ),
                     ),
                   ],
@@ -1552,16 +1552,16 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                     vertical: 18,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: context.colors.fillSubtle,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                    border: Border.all(color: context.colors.line),
                   ),
                   child: Column(
                     children: [
                       Text(
                         _formatRupees(_amount),
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -1570,7 +1570,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                         data: SliderTheme.of(context).copyWith(
                           trackHeight: 7,
                           activeTrackColor: const Color(0xFF2FA56E),
-                          inactiveTrackColor: const Color(0xFFE4E7EC),
+                          inactiveTrackColor: context.colors.line,
                           thumbColor: Colors.white,
                           overlayColor: const Color(
                             0xFF2FA56E,
@@ -1602,19 +1602,19 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                             Text(
                               _formatRupees(_minAmount),
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: const Color(0xFF98A2B3),
+                                color: context.colors.textTertiary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const Icon(
+                            Icon(
                               AppIcons.drag_indicator_rounded,
-                              color: Color(0xFF98A2B3),
+                              color: context.colors.textTertiary,
                               size: 18,
                             ),
                             Text(
                               _formatRupees(_maxAmount),
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: const Color(0xFF98A2B3),
+                                color: context.colors.textTertiary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),

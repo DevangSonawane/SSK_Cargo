@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/core/theme/app_tokens.dart';
 
 Future<bool> showFakePaymentCheckout({
   required BuildContext context,
@@ -67,8 +68,8 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
       child: Padding(
         padding: EdgeInsets.fromLTRB(14, 0, 14, bottomInset + 14),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
@@ -81,7 +82,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                     width: 52,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDDE3EA),
+                      color: context.colors.line,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -115,7 +116,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                 Text(
                   '${widget.description} • Demo mode',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -164,7 +165,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                           border: Border.all(
                             color: index < _pin.length
                                 ? const Color(0xFF2FA56E)
-                                : const Color(0xFF98A2B3),
+                                : context.colors.textTertiary,
                             width: 2,
                           ),
                         ),

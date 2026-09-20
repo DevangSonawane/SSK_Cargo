@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../widgets/client_flow_widgets.dart';
 
 class ClientHomeScreen extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         Positioned.fill(
@@ -47,11 +49,17 @@ class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF8ED7F0).withValues(alpha: 0.88),
-                  const Color(0xFF8ED7F0).withValues(alpha: 0.30),
-                  const Color(0xFFFFFFFF).withValues(alpha: 0.0),
-                ],
+                colors: isDark
+                    ? [
+                        Colors.black.withValues(alpha: 0.72),
+                        Colors.black.withValues(alpha: 0.35),
+                        Colors.black.withValues(alpha: 0.0),
+                      ]
+                    : [
+                        const Color(0xFF8ED7F0).withValues(alpha: 0.88),
+                        const Color(0xFF8ED7F0).withValues(alpha: 0.30),
+                        const Color(0xFFFFFFFF).withValues(alpha: 0.0),
+                      ],
                 begin: Alignment.topCenter,
                 end: Alignment.center,
               ),
@@ -118,7 +126,7 @@ class _TripHeader extends StatelessWidget {
                     onTap: () => onTripTypeChanged(TripType.interCity),
                   ),
                 ),
-                Container(width: 1, height: 24, color: const Color(0xFFE3E8EF)),
+                Container(width: 1, height: 24, color: context.colors.line),
                 Expanded(
                   child: _TripModeLabel(
                     label: TripType.intraCity.displayLabel,
@@ -177,8 +185,8 @@ class _TripModeLabel extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: selected
-                        ? const Color(0xFF101828)
-                        : const Color(0xFF9AA4B2),
+                        ? context.colors.textPrimary
+                        : context.colors.textTertiary,
                   ),
                 ),
               ],
@@ -215,9 +223,9 @@ class _BookingPromptCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE3E8EF)),
+          border: Border.all(color: context.colors.line),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -312,7 +320,7 @@ class _BookingRouteRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF9B9B9B),
+                  color: context.colors.textTertiary,
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                 ),
@@ -345,7 +353,7 @@ class _BookingRouteDivider extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Container(height: 1, color: const Color(0xFFE8EAF0))),
+          Expanded(child: Container(height: 1, color: context.colors.line)),
         ],
       ),
     );

@@ -211,7 +211,7 @@ class _IntermediateStopsList extends StatelessWidget {
           label: 'Loading point ${index + 1}',
           location: loadingStops[index].location,
           icon: AppIcons.inventory_2_outlined,
-          color: const Color(0xFFB7791F),
+          color: context.colors.warningEmphasis,
           onRemove: () => onRemoveLoading(index),
         ),
       for (var index = 0; index < unloadingStops.length; index++)
@@ -255,9 +255,9 @@ class _IntermediateStopTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4EAF1)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         children: [
@@ -278,7 +278,7 @@ class _IntermediateStopTile extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -288,7 +288,7 @@ class _IntermediateStopTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
                     height: 1.25,
                   ),
@@ -300,7 +300,7 @@ class _IntermediateStopTile extends StatelessWidget {
             onPressed: onRemove,
             icon: const Icon(AppIcons.close_rounded, size: 18),
             tooltip: 'Remove stop',
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
           ),
         ],
       ),
@@ -740,10 +740,10 @@ class PickupOtpBanner extends StatelessWidget {
 
     final isVerified = pickupOtpVerified;
     final backgroundColor = isVerified
-        ? const Color(0xFFEAF7EF)
+        ? context.colors.brandFill
         : const Color(0xFFFFF6DB);
     final borderColor = isVerified
-        ? const Color(0xFFCDEFD9)
+        ? context.colors.brandBorder
         : const Color(0xFFF3DC8C);
     final accentColor = isVerified
         ? const Color(0xFF2FA56E)
@@ -776,7 +776,7 @@ class PickupOtpBanner extends StatelessWidget {
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -805,7 +805,7 @@ class PickupOtpBanner extends StatelessWidget {
           Text(
             message,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF475467),
+              color: context.colors.textSecondary,
               height: 1.35,
             ),
           ),
@@ -818,7 +818,7 @@ class PickupOtpBanner extends StatelessWidget {
                   fontSize: 34,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 3,
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                 ),
               ),
             ),
@@ -1278,9 +1278,9 @@ class LocationArc extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE6EDF3)),
+          border: Border.all(color: context.colors.line),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -1301,7 +1301,7 @@ class LocationArc extends StatelessWidget {
                   Text(
                     'Pick up from',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1311,7 +1311,7 @@ class LocationArc extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: const Color(0xFF17324D),
+                      color: context.colors.textPrimary,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -1322,7 +1322,7 @@ class LocationArc extends StatelessWidget {
             Icon(
               AppIcons.arrow_forward_ios_rounded,
               size: 12,
-              color: Colors.black.withValues(alpha: 0.45),
+              color: context.colors.textSecondary.withValues(alpha: 0.45),
             ),
           ],
         ),
@@ -1498,9 +1498,9 @@ class TrackingMockCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE7EEF5)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         children: [
@@ -1524,7 +1524,7 @@ class TrackingMockCard extends StatelessWidget {
                   subtitle,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                  ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 ClipRRect(
@@ -1557,9 +1557,9 @@ class PackageTrackingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEFEFF),
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0F3F7)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1596,7 +1596,7 @@ class PackageTrackingCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF121826),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                     if (shipment.isExpress) ...[
@@ -1607,7 +1607,7 @@ class PackageTrackingCard extends StatelessWidget {
                     Text(
                       '#Tracking ID: ${shipment.trackingId}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black45,
+                        color: context.colors.textTertiary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1623,8 +1623,8 @@ class PackageTrackingCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                 ),
-                icon: const Icon(AppIcons.more_horiz_rounded, size: 22),
-                color: Colors.black45,
+                icon: Icon(AppIcons.more_horiz_rounded, size: 22),
+                color: context.colors.textTertiary,
               ),
             ],
           ),
@@ -1660,7 +1660,7 @@ class PackageTrackingCard extends StatelessWidget {
                       height: 30,
                       margin: const EdgeInsets.symmetric(vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F4E8),
+                        color: context.colors.brandFill,
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
@@ -1668,7 +1668,7 @@ class PackageTrackingCard extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE0F4E8),
+                        color: context.colors.brandFill,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -1693,7 +1693,7 @@ class PackageTrackingCard extends StatelessWidget {
                     Text(
                       'From:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
+                        color: context.colors.textTertiary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1704,7 +1704,7 @@ class PackageTrackingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -1713,7 +1713,7 @@ class PackageTrackingCard extends StatelessWidget {
                     Text(
                       'Shipping to:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
+                        color: context.colors.textTertiary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1724,7 +1724,7 @@ class PackageTrackingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1C2430),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -1735,7 +1735,7 @@ class PackageTrackingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF3)),
+          Divider(height: 1, color: context.colors.line),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1760,7 +1760,7 @@ class PackageTrackingCard extends StatelessWidget {
               Text(
                 'Status:',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF1C2430),
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -1770,7 +1770,7 @@ class PackageTrackingCard extends StatelessWidget {
                 child: Text(
                   shipment.status,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF1C2430),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w500,
                     fontSize: 14,
                   ),
@@ -1863,7 +1863,7 @@ class Wheel extends StatelessWidget {
       width: 14,
       height: 14,
       decoration: BoxDecoration(
-        color: const Color(0xFF17324D),
+        color: context.colors.textPrimary,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Colors.white, width: 2),
       ),
@@ -1893,9 +1893,9 @@ class OptionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FBFE),
+          color: context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE7EEF5)),
+          border: Border.all(color: context.colors.line),
         ),
         child: Row(
           children: [
@@ -1919,12 +1919,12 @@ class OptionTile extends StatelessWidget {
                     subtitle,
                     style: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                    ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
                   ),
                 ],
               ),
             ),
-            const Icon(AppIcons.chevron_right_rounded, color: Colors.black38),
+            Icon(AppIcons.chevron_right_rounded, color: context.colors.textTertiary),
           ],
         ),
       ),
@@ -1950,8 +1950,8 @@ class SheetContainer extends StatelessWidget {
         expand: false,
         builder: (context, controller) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
               borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
             child: SingleChildScrollView(
@@ -1965,7 +1965,7 @@ class SheetContainer extends StatelessWidget {
                       width: 54,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDDE7EF),
+                        color: context.colors.line,
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -1993,8 +1993,8 @@ class TripTypeSheet extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
@@ -2007,7 +2007,7 @@ class TripTypeSheet extends StatelessWidget {
                 width: 46,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDE7EF),
+                  color: context.colors.line,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -2067,9 +2067,9 @@ class _TripTypeRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         constraints: const BoxConstraints(minHeight: 84),
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F6F8),
+          color: context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: context.colors.line),
         ),
         child: Row(
           children: [
@@ -2082,7 +2082,7 @@ class _TripTypeRow extends StatelessWidget {
                   Text(
                     helperText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),

@@ -14,6 +14,7 @@ import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
 import 'tracking_details_screen.dart';
 import '../widgets/client_flow_widgets.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 class ClientDeliveryScreen extends ConsumerStatefulWidget {
   const ClientDeliveryScreen({super.key});
@@ -239,7 +240,7 @@ class _BookingsHeader extends StatelessWidget {
               Text(
                 'My Bookings',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -248,7 +249,7 @@ class _BookingsHeader extends StatelessWidget {
               Text(
                 'Manage and review your fleet transportation schedules.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
+                  color: context.colors.textTertiary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -316,11 +317,11 @@ class _HeaderActionButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF344054),
-        side: const BorderSide(color: Color(0xFFE4E7EC)),
+        foregroundColor: context.colors.textSecondary,
+        side: BorderSide(color: context.colors.line),
         shape: shape,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surface,
       ),
       child: child,
     );
@@ -360,7 +361,8 @@ class _MyBookingMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _statusColor(booking.status);
+    final statusColor =
+        _statusColor(booking.status, info: context.colors.infoEmphasis);
     final vehicleType = _truckTypeLabel(booking);
     final amount = booking.amountText.trim().isEmpty ? '-' : booking.amountText;
 
@@ -370,9 +372,9 @@ class _MyBookingMobileCard extends StatelessWidget {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFDDE5EE)),
+          border: Border.all(color: context.colors.line),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF101828).withValues(alpha: 0.08),
@@ -404,7 +406,7 @@ class _MyBookingMobileCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: context.colors.textSecondary,
                                 fontSize: 14,
                                 height: 1.1,
                                 fontWeight: FontWeight.w900,
@@ -415,7 +417,7 @@ class _MyBookingMobileCard extends StatelessWidget {
                       Text(
                         amount,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: context.colors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
@@ -447,7 +449,7 @@ class _MyBookingMobileCard extends StatelessWidget {
                 ],
               ),
             ),
-            Container(height: 1, color: const Color(0xFFE8EDF2)),
+            Container(height: 1, color: context.colors.line),
             Padding(
               padding: const EdgeInsets.fromLTRB(13, 10, 13, 11),
               child: _CompactRouteBlock(
@@ -492,7 +494,7 @@ class _CompactRouteBlock extends StatelessWidget {
                       width: 3,
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD0D5DD),
+                        color: context.colors.textTertiary,
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -526,7 +528,7 @@ class _CompactRouteBlock extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: _routeAddressStyle(
                             context,
-                          ).copyWith(color: const Color(0xFF667085)),
+                          ).copyWith(color: context.colors.textSecondary),
                         ),
                       ),
                       if (stop.isDone) ...[
@@ -701,7 +703,7 @@ String _readRawString(Map<String, dynamic> json, List<String> keys) {
 
 TextStyle _routeAddressStyle(BuildContext context) {
   return Theme.of(context).textTheme.bodyMedium!.copyWith(
-    color: const Color(0xFF344054),
+    color: context.colors.textSecondary,
     fontSize: 13,
     height: 1.18,
     fontWeight: FontWeight.w500,
@@ -729,9 +731,9 @@ class _EmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -745,11 +747,11 @@ class _EmptyState extends StatelessWidget {
           Container(
             width: 72,
             height: 72,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF5F7FB),
+            decoration: BoxDecoration(
+              color: context.colors.canvas,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF667085), size: 34),
+            child: Icon(icon, color: context.colors.textSecondary, size: 34),
           ),
           const SizedBox(height: 16),
           Text(
@@ -757,7 +759,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -766,7 +768,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 16),
@@ -786,15 +788,16 @@ class ClientBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _statusColor(booking.status);
+    final statusColor =
+        _statusColor(booking.status, info: context.colors.infoEmphasis);
 
     final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEFEFF),
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0F3F7)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -829,14 +832,14 @@ class ClientBookingCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF121826),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       booking.displaySubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black45,
+                        color: context.colors.textSecondary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -919,7 +922,7 @@ class ClientBookingCard extends StatelessWidget {
                     Text(
                       'From:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
+                        color: context.colors.textSecondary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -932,7 +935,7 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF344054),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
@@ -941,7 +944,7 @@ class ClientBookingCard extends StatelessWidget {
                     Text(
                       'Shipping to:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black38,
+                        color: context.colors.textSecondary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
@@ -954,7 +957,7 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF344054),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
@@ -972,14 +975,14 @@ class ClientBookingCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FB),
+                color: context.colors.canvas,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     AppIcons.inventory_2_rounded,
-                    color: Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -993,7 +996,7 @@ class ClientBookingCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF1C2430),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -1037,7 +1040,7 @@ class ClientBookingCard extends StatelessWidget {
                 Text(
                   booking.id,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1115,7 +1118,7 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-Color _statusColor(String status) {
+Color _statusColor(String status, {Color info = const Color(0xFF1F88C9)}) {
   switch (status.toLowerCase()) {
     case 'completed':
     case 'delivered':
@@ -1127,7 +1130,7 @@ Color _statusColor(String status) {
     case 'in_transit':
     case 'en_route_pickup':
     case 'picked_up':
-      return const Color(0xFF1F88C9);
+      return info;
     case 'pending':
       return const Color(0xFFF59E0B);
     default:

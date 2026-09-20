@@ -52,6 +52,195 @@ abstract final class AppColors {
   static const Color unreadDot = Color(0xFFE23A4B);
 }
 
+/// Uber-subtle dark palette for the client flow.
+///
+/// Deliberately charcoal, not AMOLED black: surfaces sit slightly above the
+/// canvas, text is off-white (~87%) instead of pure white, and the green
+/// brand color is brightened one step so it keeps contrast on dark surfaces.
+abstract final class AppDarkColors {
+  // Surfaces
+  static const Color canvas = Color(0xFF101214);
+  static const Color surface = Color(0xFF1A1D21);
+  static const Color surfaceElevated = Color(0xFF23272E);
+  static const Color fillSubtle = Color(0xFF23272E);
+  static const Color line = Color(0xFF2B3138);
+  static const Color divider = Color(0xFF262C34);
+
+  // Text (off-whites, never pure white)
+  static const Color textPrimary = Color(0xFFECEEF1);
+  static const Color textSecondary = Color(0xFF9AA4B2);
+  static const Color textTertiary = Color(0xFF6E7A89);
+  static const Color textOnBrand = Colors.white;
+
+  // Emphasis text: colored text that stays legible on both light fills and
+  // dark surfaces (deep tones in light mode, brightened pastels in dark).
+  static const Color brandEmphasis = Color(0xFF4ADE80);
+  static const Color dangerEmphasis = Color(0xFFF97066);
+  static const Color warningEmphasis = Color(0xFFFDB022);
+  static const Color infoEmphasis = Color(0xFF53B1FD);
+
+  // Brand on dark
+  static const Color brand = Color(0xFF3BB97F);
+  static const Color brandFill = Color(0xFF10281D);
+  static const Color brandTint = Color(0xFF143325);
+  static const Color brandBorder = Color(0xFF1E4A34);
+
+  // Semantic fills tuned for dark surfaces
+  static const Color successFill = Color(0xFF10281D);
+  static const Color successBorder = Color(0xFF1E4A34);
+  static const Color dangerFill = Color(0xFF33151A);
+  static const Color dangerBorder = Color(0xFF5C222B);
+  static const Color warningFill = Color(0xFF2E2111);
+  static const Color warningBorder = Color(0xFF5C441A);
+  static const Color infoFill = Color(0xFF14222E);
+  static const Color infoBorder = Color(0xFF23405A);
+}
+
+/// Semantic surface/text tokens that resolve per brightness.
+///
+/// Client flow widgets should read these via `context.colors` instead of
+/// hardcoding light hex values, so both [AppTheme.light] and [AppTheme.dark]
+/// render correctly.
+class AppColorScheme extends ThemeExtension<AppColorScheme> {
+  const AppColorScheme({
+    required this.canvas,
+    required this.surface,
+    required this.surfaceElevated,
+    required this.fillSubtle,
+    required this.line,
+    required this.divider,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
+    required this.brandFill,
+    required this.brandBorder,
+    required this.brandEmphasis,
+    required this.dangerEmphasis,
+    required this.warningEmphasis,
+    required this.infoEmphasis,
+  });
+
+  final Color canvas;
+  final Color surface;
+  final Color surfaceElevated;
+  final Color fillSubtle;
+  final Color line;
+  final Color divider;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textTertiary;
+  final Color brandFill;
+  final Color brandBorder;
+
+  /// Colored text/icons on tinted or theme surfaces. Light values match the
+  /// legacy deep tones; dark values are brightened for charcoal backgrounds.
+  final Color brandEmphasis;
+  final Color dangerEmphasis;
+  final Color warningEmphasis;
+  final Color infoEmphasis;
+
+  static const AppColorScheme light = AppColorScheme(
+    canvas: AppColors.canvas,
+    surface: AppColors.surface,
+    surfaceElevated: AppColors.surface,
+    fillSubtle: AppColors.fillSubtle,
+    line: AppColors.line,
+    divider: AppColors.divider,
+    textPrimary: AppColors.textPrimary,
+    textSecondary: AppColors.textSecondary,
+    textTertiary: AppColors.textTertiary,
+    brandFill: AppColors.brandFill,
+    brandBorder: AppColors.brandBorder,
+    brandEmphasis: Color(0xFF167247),
+    dangerEmphasis: Color(0xFFB42318),
+    warningEmphasis: Color(0xFFB45309),
+    infoEmphasis: Color(0xFF1F88C9),
+  );
+
+  static const AppColorScheme dark = AppColorScheme(
+    canvas: AppDarkColors.canvas,
+    surface: AppDarkColors.surface,
+    surfaceElevated: AppDarkColors.surfaceElevated,
+    fillSubtle: AppDarkColors.fillSubtle,
+    line: AppDarkColors.line,
+    divider: AppDarkColors.divider,
+    textPrimary: AppDarkColors.textPrimary,
+    textSecondary: AppDarkColors.textSecondary,
+    textTertiary: AppDarkColors.textTertiary,
+    brandFill: AppDarkColors.brandFill,
+    brandBorder: AppDarkColors.brandBorder,
+    brandEmphasis: AppDarkColors.brandEmphasis,
+    dangerEmphasis: AppDarkColors.dangerEmphasis,
+    warningEmphasis: AppDarkColors.warningEmphasis,
+    infoEmphasis: AppDarkColors.infoEmphasis,
+  );
+
+  @override
+  AppColorScheme copyWith({
+    Color? canvas,
+    Color? surface,
+    Color? surfaceElevated,
+    Color? fillSubtle,
+    Color? line,
+    Color? divider,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
+    Color? brandFill,
+    Color? brandBorder,
+    Color? brandEmphasis,
+    Color? dangerEmphasis,
+    Color? warningEmphasis,
+    Color? infoEmphasis,
+  }) {
+    return AppColorScheme(
+      canvas: canvas ?? this.canvas,
+      surface: surface ?? this.surface,
+      surfaceElevated: surfaceElevated ?? this.surfaceElevated,
+      fillSubtle: fillSubtle ?? this.fillSubtle,
+      line: line ?? this.line,
+      divider: divider ?? this.divider,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      textTertiary: textTertiary ?? this.textTertiary,
+      brandFill: brandFill ?? this.brandFill,
+      brandBorder: brandBorder ?? this.brandBorder,
+      brandEmphasis: brandEmphasis ?? this.brandEmphasis,
+      dangerEmphasis: dangerEmphasis ?? this.dangerEmphasis,
+      warningEmphasis: warningEmphasis ?? this.warningEmphasis,
+      infoEmphasis: infoEmphasis ?? this.infoEmphasis,
+    );
+  }
+
+  @override
+  AppColorScheme lerp(ThemeExtension<AppColorScheme>? other, double t) {
+    if (other is! AppColorScheme) return this;
+    return AppColorScheme(
+      canvas: Color.lerp(canvas, other.canvas, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
+      surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
+      fillSubtle: Color.lerp(fillSubtle, other.fillSubtle, t)!,
+      line: Color.lerp(line, other.line, t)!,
+      divider: Color.lerp(divider, other.divider, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
+      brandFill: Color.lerp(brandFill, other.brandFill, t)!,
+      brandBorder: Color.lerp(brandBorder, other.brandBorder, t)!,
+      brandEmphasis: Color.lerp(brandEmphasis, other.brandEmphasis, t)!,
+      dangerEmphasis: Color.lerp(dangerEmphasis, other.dangerEmphasis, t)!,
+      warningEmphasis: Color.lerp(warningEmphasis, other.warningEmphasis, t)!,
+      infoEmphasis: Color.lerp(infoEmphasis, other.infoEmphasis, t)!,
+    );
+  }
+}
+
+/// Shortcut for `Theme.of(context).extension<AppColorScheme>()`.
+extension AppThemeContext on BuildContext {
+  AppColorScheme get colors =>
+      Theme.of(this).extension<AppColorScheme>() ?? AppColorScheme.light;
+}
+
 abstract final class AppRadius {
   static const double card = 24;
   static const double field = 22;

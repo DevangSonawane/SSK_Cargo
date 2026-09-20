@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app.dart';
+import 'core/theme/client_map_theme.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -22,5 +23,6 @@ Future<void> main() async {
   );
   GoogleFonts.config.allowRuntimeFetching = false;
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await ClientMapTheme.ensureLoaded();
   runApp(const ProviderScope(child: SSKApp()));
 }

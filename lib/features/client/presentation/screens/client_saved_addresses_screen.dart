@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/client_map_theme.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -200,13 +202,14 @@ class _ClientSavedAddressesScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final filtered = _filteredAddresses;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -294,15 +297,15 @@ class _SavedAddressSearchField extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           const SizedBox(width: 13),
-          const Icon(
+          Icon(
             AppIcons.search_rounded,
-            color: Color(0xFFD0D5DD),
+            color: context.colors.textTertiary,
             size: 19,
           ),
           const SizedBox(width: 8),
@@ -414,9 +417,9 @@ class _AddAddressTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(22),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFB8DCC7), width: 1.5),
+          border: Border.all(color: context.colors.brandBorder, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -443,14 +446,14 @@ class _AddAddressTile extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 fontSize: 14.5,
-                color: const Color(0xFF101828),
+                color: context.colors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Pickup or Drop-off Location',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: context.colors.textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -815,14 +818,15 @@ class _ClientSavedAddressEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final hasCoordinates = _draft.latitude != null && _draft.longitude != null;
     final title = _isEditing ? 'Edit Address' : 'Add Address';
 
     if (_loading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F7FB),
+          backgroundColor: colors.canvas,
           elevation: 0,
           leading: IconButton(
             onPressed: () => context.pop(false),
@@ -840,7 +844,7 @@ class _ClientSavedAddressEditorScreenState
                 Text(
                   'Loading address...',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: colors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -853,9 +857,9 @@ class _ClientSavedAddressEditorScreenState
 
     if (_loadError) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F7FB),
+          backgroundColor: colors.canvas,
           elevation: 0,
           leading: IconButton(
             onPressed: () => context.pop(false),
@@ -882,9 +886,9 @@ class _ClientSavedAddressEditorScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(false),
@@ -921,17 +925,17 @@ class _ClientSavedAddressEditorScreenState
                       controller: _labelController,
                       maxLength: 60,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF101828),
+                        color: colors.textPrimary,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Home, Office, Warehouse 2',
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF98A2B3),
+                          color: colors.textTertiary,
                         ),
                         filled: false,
                         fillColor: Colors.transparent,
@@ -1005,7 +1009,7 @@ class _ClientSavedAddressEditorScreenState
                   Text(
                     'Search, tap the map, or drag the pin once it is placed.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: colors.textTertiary,
                       height: 1.3,
                     ),
                   ),
@@ -1014,7 +1018,7 @@ class _ClientSavedAddressEditorScreenState
                     Text(
                       'City: ${_draft.city}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: colors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1027,17 +1031,17 @@ class _ClientSavedAddressEditorScreenState
                       controller: _floorController,
                       maxLength: 100,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF101828),
+                        color: colors.textPrimary,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '3rd Floor, Flat 402, Gate 2',
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF98A2B3),
+                          color: colors.textTertiary,
                         ),
                         filled: false,
                         fillColor: Colors.transparent,
@@ -1064,17 +1068,17 @@ class _ClientSavedAddressEditorScreenState
                             controller: _contactNameController,
                             maxLength: 60,
                             textInputAction: TextInputAction.next,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF101828),
+                              color: colors.textPrimary,
                             ),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Contact name',
                               hintStyle: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFF98A2B3),
+                                color: colors.textTertiary,
                               ),
                               filled: false,
                               fillColor: Colors.transparent,
@@ -1102,17 +1106,17 @@ class _ClientSavedAddressEditorScreenState
                             keyboardType: TextInputType.phone,
                             maxLength: 20,
                             textInputAction: TextInputAction.done,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF101828),
+                              color: colors.textPrimary,
                             ),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: '+91',
                               hintStyle: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFF98A2B3),
+                                color: colors.textTertiary,
                               ),
                               filled: false,
                               fillColor: Colors.transparent,
@@ -1216,7 +1220,7 @@ class _AddressFormSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: _savedCardDecoration(radius: 18),
+      decoration: _savedCardDecoration(radius: 18, colors: context.colors),
       child: child,
     );
   }
@@ -1252,6 +1256,7 @@ class _EditorMapPanel extends StatelessWidget {
             key: ValueKey(
               '${position.latitude.toStringAsFixed(6)}:${position.longitude.toStringAsFixed(6)}:$hasCoordinates',
             ),
+            style: ClientMapTheme.styleFor(context),
             initialCameraPosition: CameraPosition(target: position, zoom: 15),
             markers: hasCoordinates
                 ? {
@@ -1275,9 +1280,9 @@ class _EditorMapPanel extends StatelessWidget {
               onPressed: onFullscreen,
               tooltip: 'Open map picker',
               icon: const Icon(AppIcons.open_in_full_rounded, size: 18),
-              color: const Color(0xFF344054),
+              color: context.colors.textSecondary,
               style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: context.colors.surfaceElevated,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1291,7 +1296,7 @@ class _EditorMapPanel extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
@@ -1329,7 +1334,7 @@ class _EditorMapPanel extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF344054),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         height: 1.3,
                       ),
@@ -1424,6 +1429,7 @@ class _SavedAddressMapPickerState
       body: Stack(
         children: [
           GoogleMap(
+            style: ClientMapTheme.styleFor(context),
             initialCameraPosition: CameraPosition(
               target: widget.initialTarget,
               zoom: 15,
@@ -1447,9 +1453,9 @@ class _SavedAddressMapPickerState
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(AppIcons.close_rounded),
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: context.colors.surfaceElevated,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -1494,7 +1500,7 @@ class _SavedAddressMapPickerState
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
@@ -1527,7 +1533,7 @@ class _SavedAddressMapPickerState
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF344054),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                         height: 1.3,
                       ),
@@ -1564,7 +1570,7 @@ class _AddressListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final meta = _AddressTypeMeta.from(address.addressType);
     return Container(
-      decoration: _savedCardDecoration(radius: 14),
+      decoration: _savedCardDecoration(radius: 14, colors: context.colors),
       padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1591,7 +1597,7 @@ class _AddressListTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF101828),
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1610,7 +1616,7 @@ class _AddressListTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     height: 1.3,
                   ),
                 ),
@@ -1630,7 +1636,7 @@ class _AddressListTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                       fontSize: 11,
                     ),
                   ),
@@ -1813,7 +1819,7 @@ class _AddressIconAction extends StatelessWidget {
                     size: 17,
                     color: danger
                         ? const Color(0xFFE23A4B)
-                        : const Color(0xFF98A2B3),
+                        : context.colors.textTertiary,
                   ),
           ),
         ),
@@ -1871,12 +1877,12 @@ class _AddressTypeOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         decoration: BoxDecoration(
-          color: selected ? meta.background : Colors.white,
+          color: selected ? meta.background : context.colors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? meta.color.withValues(alpha: 0.35)
-                : const Color(0xFFE4E7EC),
+                : context.colors.line,
           ),
           boxShadow: selected
               ? null
@@ -1898,7 +1904,7 @@ class _AddressTypeOption extends StatelessWidget {
               meta.label,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: selected ? meta.color : const Color(0xFF667085),
+                color: selected ? meta.color : context.colors.textSecondary,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 height: 1,
@@ -1911,11 +1917,14 @@ class _AddressTypeOption extends StatelessWidget {
   }
 }
 
-BoxDecoration _savedCardDecoration({required double radius}) {
+BoxDecoration _savedCardDecoration({
+  required double radius,
+  required AppColorScheme colors,
+}) {
   return BoxDecoration(
-    color: Colors.white,
+    color: colors.surface,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: const Color(0xFFF2F4F7)),
+    border: Border.all(color: colors.line),
     boxShadow: [
       BoxShadow(
         color: const Color(0xFF101828).withValues(alpha: 0.06),
@@ -1939,7 +1948,7 @@ class _FieldLabel extends StatelessWidget {
         Text(
           text,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -1949,7 +1958,7 @@ class _FieldLabel extends StatelessWidget {
             trailing!,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF98A2B3)),
+            ).textTheme.bodySmall?.copyWith(color: context.colors.textTertiary),
           ),
         ],
       ],
@@ -1969,9 +1978,9 @@ class _CardField extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 52),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFEAEDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1984,7 +1993,7 @@ class _CardField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (leading != null) ...[
-            Icon(leading, size: 18, color: const Color(0xFF98A2B3)),
+            Icon(leading, size: 18, color: context.colors.textTertiary),
             const SizedBox(width: 12),
           ],
           Expanded(child: child),
@@ -2039,9 +2048,9 @@ class _EmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Column(
         children: [
@@ -2060,7 +2069,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -2068,7 +2077,7 @@ class _EmptyState extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: context.colors.textSecondary,
               height: 1.4,
             ),
           ),

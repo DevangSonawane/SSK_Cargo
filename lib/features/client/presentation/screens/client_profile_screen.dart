@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/providers/theme_provider.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../data/client_booking_models.dart';
 import '../controllers/client_bookings_controller.dart';
 
@@ -45,6 +47,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
     final bookingsState = ref.watch(
@@ -54,7 +57,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
     final stats = _ProfileStats.fromBookings(bookings);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       body: SafeArea(
         child: RefreshIndicator(
           color: const Color(0xFF2FA56E),
@@ -69,7 +72,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       'My Profile',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
-                            color: const Color(0xFF101828),
+                            color: colors.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                           ),
@@ -123,6 +126,11 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                     ),
                     const SizedBox(height: 18),
                     _ProfileSection(
+                      title: 'Preferences',
+                      children: const [_AppearanceTile()],
+                    ),
+                    const SizedBox(height: 18),
+                    _ProfileSection(
                       title: 'Help',
                       children: [
                         _ProfileMenuTile(
@@ -146,7 +154,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                       child: Text(
                         'SSK Logistics v1.0.0',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
+                          color: colors.textTertiary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -469,14 +477,14 @@ class _AccountInfoCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: _surfaceDecoration(),
+      decoration: _surfaceDecoration(context.colors),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Account Info',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: const Color(0xFF344054),
+              color: context.colors.textSecondary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -531,7 +539,7 @@ class _AccountInfoLoading extends StatelessWidget {
           child: Container(
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F4F7),
+              color: context.colors.fillSubtle,
               borderRadius: BorderRadius.circular(14),
             ),
           ),
@@ -575,7 +583,7 @@ class _InfoRow extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
+                  color: context.colors.textTertiary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -585,7 +593,7 @@ class _InfoRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF344054),
+                  color: context.colors.textSecondary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -613,23 +621,23 @@ class _ProfileSection extends StatelessWidget {
           child: Text(
             title.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF98A2B3),
+              color: context.colors.textTertiary,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.2,
             ),
           ),
         ),
         Container(
-          decoration: _surfaceDecoration(),
+          decoration: _surfaceDecoration(context.colors),
           child: Column(
             children: [
               for (var i = 0; i < children.length; i++) ...[
                 children[i],
                 if (i != children.length - 1)
-                  const Divider(
+                  Divider(
                     height: 1,
                     indent: 56,
-                    color: Color(0xFFE8EDF2),
+                    color: context.colors.line,
                   ),
               ],
             ],
@@ -662,7 +670,7 @@ class _ProfileMenuTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
         child: Row(
           children: [
-            Icon(icon, size: 21, color: const Color(0xFF98A2B3)),
+            Icon(icon, size: 21, color: context.colors.textTertiary),
             const SizedBox(width: 13),
             Expanded(
               child: Column(
@@ -671,7 +679,7 @@ class _ProfileMenuTile extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF344054),
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -680,7 +688,7 @@ class _ProfileMenuTile extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
+                        color: context.colors.textTertiary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -688,12 +696,98 @@ class _ProfileMenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               AppIcons.chevron_right_rounded,
-              color: Color(0xFFD0D5DD),
+              color: context.colors.textTertiary,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AppearanceTile extends ConsumerWidget {
+  const _AppearanceTile();
+
+  String _label(ThemeMode mode) => switch (mode) {
+    ThemeMode.light => 'Light',
+    ThemeMode.dark => 'Dark',
+    ThemeMode.system => 'Auto',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final mode = ref.watch(themeModeProvider);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                AppIcons.dark_mode_rounded,
+                size: 21,
+                color: colors.textTertiary,
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Appearance',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Currently ${_label(mode)}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.textTertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(AppIcons.light_mode_rounded, size: 16),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text('Auto'),
+                icon: Icon(AppIcons.settings_suggest_rounded, size: 16),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(AppIcons.dark_mode_rounded, size: 16),
+              ),
+            ],
+            selected: {mode},
+            onSelectionChanged: (selection) =>
+                ref.read(themeModeProvider.notifier).state = selection.first,
+            style: SegmentedButton.styleFrom(
+              backgroundColor: colors.fillSubtle,
+              foregroundColor: colors.textSecondary,
+              selectedBackgroundColor: colors.brandFill,
+              selectedForegroundColor: colors.textPrimary,
+              side: BorderSide(color: colors.line),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -711,7 +805,7 @@ class _SignOutTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         height: 56,
-        decoration: _surfaceDecoration(),
+        decoration: _surfaceDecoration(context.colors),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -731,11 +825,11 @@ class _SignOutTile extends StatelessWidget {
   }
 }
 
-BoxDecoration _surfaceDecoration() {
+BoxDecoration _surfaceDecoration(AppColorScheme colors) {
   return BoxDecoration(
-    color: Colors.white,
+    color: colors.surface,
     borderRadius: BorderRadius.circular(20),
-    border: Border.all(color: const Color(0xFFE8EDF2)),
+    border: Border.all(color: colors.line),
     boxShadow: [
       BoxShadow(
         color: Colors.black.withValues(alpha: 0.035),

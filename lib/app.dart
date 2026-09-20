@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'core/router/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/providers/app_providers.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
 import 'core/providers/driver_tracking_state_provider.dart';
@@ -24,16 +25,6 @@ class SSKApp extends ConsumerStatefulWidget {
 }
 
 class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
-  static const SystemUiOverlayStyle _transparentSystemBars =
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarDividerColor: Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.dark,
-        systemNavigationBarContrastEnforced: false,
-      );
-
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
@@ -376,16 +367,29 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     });
 
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'SSK Cargo',
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       scaffoldMessengerKey: _messengerKey,
       routerConfig: router,
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final systemBars = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarDividerColor: Colors.transparent,
+          systemNavigationBarIconBrightness:
+              isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarContrastEnforced: false,
+        );
         return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: _transparentSystemBars,
+          value: systemBars,
           child: ColoredBox(
             color: Theme.of(context).scaffoldBackgroundColor,
             child: child ?? const SizedBox.shrink(),

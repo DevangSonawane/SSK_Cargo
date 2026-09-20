@@ -470,6 +470,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: GoogleMap(
+              style: ClientMapTheme.styleFor(context),
               initialCameraPosition: CameraPosition(target: target, zoom: 10.5),
               markers: _buildLocationMapMarkers(),
               myLocationEnabled: _locationStreamStarted,
@@ -486,7 +487,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           Text(
             'Estimated route distance: ${distance.toStringAsFixed(distance < 10 ? 1 : 0)} km',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: context.colors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1495,7 +1496,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   truck.displayTitle,
                   style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: dialogContext.colors.textPrimary,
                   ),
                 ),
               ),
@@ -1518,7 +1519,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               Text(
                 truck.displaySubtitle,
                 style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: dialogContext.colors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1541,7 +1542,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       style: Theme.of(dialogContext).textTheme.titleMedium
                           ?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF101828),
+                            color: dialogContext.colors.textPrimary,
                           ),
                     ),
                   ),
@@ -2518,8 +2519,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _step == _BookingFlowStep.location;
 
     if (hideInitialAutoLocationFrame) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
+      return Scaffold(
+        backgroundColor: context.colors.canvas,
         body: SizedBox.shrink(),
       );
     }
@@ -2542,7 +2543,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.canvas,
       bottomNavigationBar:
           (_bookingCreated && !_postNegotiationPayment) || !showBottomButton
           ? const SizedBox.shrink()
@@ -2719,7 +2720,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             .textTheme
                                             .labelLarge
                                             ?.copyWith(
-                                              color: const Color(0xFF667085),
+                                              color: context.colors.textSecondary,
                                               fontWeight: FontWeight.w700,
                                             ),
                                       ),
@@ -2887,7 +2888,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 top: 0,
                 child: SafeArea(
                   child: Material(
-                    color: Colors.white,
+                    color: context.colors.surface,
                     shape: const CircleBorder(),
                     elevation: 5,
                     shadowColor: Colors.black.withValues(alpha: 0.18),
@@ -2896,12 +2897,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       onTap: () => setState(() {
                         _step = _BookingFlowStep.itemDetails;
                       }),
-                      child: const SizedBox(
+                      child: SizedBox(
                         width: 44,
                         height: 44,
                         child: Icon(
                           AppIcons.arrow_back_rounded,
-                          color: Color(0xFF0B1F3A),
+                          color: context.colors.textPrimary,
                           size: 23,
                         ),
                       ),
@@ -2941,7 +2942,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     Text(
                       'Choose Trucks',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF0B1F3A),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0,
                       ),
@@ -2954,7 +2955,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3029,9 +3030,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       0xFFD8E1ED,
                                     ),
                                     foregroundColor: Colors.white,
-                                    disabledForegroundColor: const Color(
-                                      0xFF7D8AA0,
-                                    ),
+                                    disabledForegroundColor:
+                                        context.colors.textSecondary,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 14,
                                     ),
@@ -3115,7 +3115,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                             width: 54,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD2DCEA),
+                              color: context.colors.line,
                               borderRadius: BorderRadius.circular(999),
                             ),
                           ),
@@ -3125,7 +3125,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           'Choose Trucks',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
-                                color: const Color(0xFF0B1F3A),
+                                color: context.colors.textPrimary,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0,
                               ),
@@ -3170,7 +3170,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        const Divider(height: 1, color: Color(0xFFE1E8F2)),
+                        Divider(height: 1, color: context.colors.line),
                         const SizedBox(height: 14),
                         if (mode == BookingSearchMode.truck)
                           _buildFindTruckOptions(context)
@@ -3196,9 +3196,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       children: [
         Row(
           children: [
-            const Icon(
+            Icon(
               AppIcons.my_location_rounded,
-              color: Color(0xFF0B1F3A),
+              color: context.colors.textPrimary,
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -3208,7 +3208,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFF0B1F3A),
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0,
                 ),
@@ -3217,7 +3217,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF7EF),
+                color: context.colors.brandFill,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -3234,7 +3234,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: const Color(0xFF2FA56E),
-            inactiveTrackColor: const Color(0xFFE2E8F2),
+            inactiveTrackColor: context.colors.line,
             thumbColor: const Color(0xFF2FA56E),
             overlayColor: const Color(0xFF2FA56E).withValues(alpha: 0.12),
             trackHeight: 4,
@@ -3362,6 +3362,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _scheduleBrokerRouteRefresh();
 
     return GoogleMap(
+      style: ClientMapTheme.styleFor(context),
       initialCameraPosition:
           _brokerMapCameraPosition ??
           CameraPosition(
@@ -3642,7 +3643,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF101828),
+                color: context.colors.textPrimary,
               ),
             ),
             const Spacer(),
@@ -3666,7 +3667,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                 minimumSize: const Size(0, 28),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                foregroundColor: const Color(0xFF1F88C9),
+                foregroundColor: context.colors.infoEmphasis,
                 textStyle: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -3803,12 +3804,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FBF9),
+            color: context.colors.brandFill,
             borderRadius: BorderRadius.circular(26),
             border: Border.all(
               color: _weightError != null
                   ? const Color(0xFFE23A4B)
-                  : const Color(0xFFE4EFE8),
+                  : context.colors.brandBorder,
             ),
             boxShadow: [
               BoxShadow(
@@ -3841,7 +3842,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     child: Text(
                       'Material weight',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF0B1F3A),
+                        color: context.colors.textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
                       ),
@@ -3853,9 +3854,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 7, 14, 7),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE1E8F0)),
+                  border: Border.all(color: context.colors.line),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -3868,7 +3869,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         ),
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
-                              color: const Color(0xFF0B1F3A),
+                              color: context.colors.textPrimary,
                               fontSize: 26,
                               fontWeight: FontWeight.w500,
                               height: 1.12,
@@ -3902,7 +3903,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         'ton',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              color: const Color(0xFF667085),
+                              color: context.colors.textSecondary,
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                             ),
@@ -3983,9 +3984,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(18, 12, 18, bottomInset + 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE7EDF3))),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.line)),
       ),
       child: Row(
         children: [
@@ -3995,8 +3996,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   ? null
                   : () => _advanceFromWeightStep(unknown: true),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE9ECF2),
-                foregroundColor: const Color(0xFF475467),
+                backgroundColor: context.colors.fillSubtle,
+                foregroundColor: context.colors.textSecondary,
                 minimumSize: const Size.fromHeight(54),
                 textStyle: const TextStyle(
                   fontSize: 14,
@@ -4148,10 +4149,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       }
                       setState(() => _step = _BookingFlowStep.brokerSelection);
                     },
-                    icon: const Icon(AppIcons.arrow_back_rounded),
+                    icon: Icon(AppIcons.arrow_back_rounded),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.94),
-                      foregroundColor: const Color(0xFF101828),
+                      backgroundColor: context.colors.surface.withValues(alpha: 0.94),
+                      foregroundColor: context.colors.textPrimary,
                     ),
                   ),
                 ),
@@ -4183,11 +4184,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         paymentBottomPadding,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.colors.surfaceElevated,
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(30),
                         ),
-                        border: Border.all(color: const Color(0xFFE8EDF2)),
+                        border: Border.all(color: context.colors.line),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.18),
@@ -4205,7 +4206,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                               width: 44,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD0D5DD),
+                                color: context.colors.line,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
@@ -4226,7 +4227,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             .textTheme
                                             .titleLarge
                                             ?.copyWith(
-                                              color: const Color(0xFF101828),
+                                              color: context.colors.textPrimary,
                                               fontWeight: FontWeight.w900,
                                             ),
                                       ),
@@ -4237,7 +4238,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                              color: const Color(0xFF667085),
+                                              color: context.colors.textSecondary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                       ),
@@ -4250,7 +4251,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                     vertical: 9,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEAF8F1),
+                                    color: context.colors.brandFill,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Text(
@@ -4259,7 +4260,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                         .textTheme
                                         .titleSmall
                                         ?.copyWith(
-                                          color: const Color(0xFF1E7F55),
+                                          color: context.colors.brandEmphasis,
                                           fontWeight: FontWeight.w900,
                                         ),
                                   ),

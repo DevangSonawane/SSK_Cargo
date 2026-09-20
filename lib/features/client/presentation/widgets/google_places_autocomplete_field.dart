@@ -6,6 +6,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/google_places_provider.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/services/google_places_service.dart';
 
 class GooglePlacesAutocompleteField extends ConsumerStatefulWidget {
@@ -229,7 +230,7 @@ class _GooglePlacesAutocompleteFieldState
           Text(
             widget.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: context.colors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -239,17 +240,17 @@ class _GooglePlacesAutocompleteFieldState
           controller: widget.controller,
           focusNode: _focusNode,
           textInputAction: TextInputAction.search,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF101828),
+            color: context.colors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF98A2B3),
+              color: context.colors.textTertiary,
             ),
             filled: false,
             fillColor: Colors.transparent,
@@ -270,10 +271,10 @@ class _GooglePlacesAutocompleteFieldState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
-                : const Icon(
+                : Icon(
                     AppIcons.search_rounded,
                     size: 16,
-                    color: Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                   ),
             suffixIconConstraints: const BoxConstraints(
               minWidth: 32,
@@ -286,7 +287,7 @@ class _GooglePlacesAutocompleteFieldState
           Text(
             'Could not load suggestions',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFFB42318),
+              color: context.colors.dangerEmphasis,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -316,9 +317,9 @@ class _GooglePlacesAutocompleteFieldState
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: content,
     );
@@ -334,7 +335,7 @@ class _SuggestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF8FAFC),
+      color: context.colors.fillSubtle,
       borderRadius: BorderRadius.circular(16),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -367,7 +368,7 @@ class _SuggestionTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF101828),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                     if (suggestion.secondaryText.isNotEmpty) ...[
@@ -377,7 +378,7 @@ class _SuggestionTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+              color: context.colors.textSecondary,
                         ),
                       ),
                     ],
@@ -389,7 +390,7 @@ class _SuggestionTile extends StatelessWidget {
                 Text(
                   '${(suggestion.distanceMeters! / 1000).toStringAsFixed(suggestion.distanceMeters! >= 1000 ? 1 : 0)} km',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

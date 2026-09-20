@@ -10,6 +10,7 @@ import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 class PublicTrackingScreen extends ConsumerStatefulWidget {
   const PublicTrackingScreen({super.key, required this.token});
@@ -96,7 +97,7 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
   Widget build(BuildContext context) {
     final shipment = _shipment;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: context.colors.canvas,
       body: SafeArea(
         child: _loading && shipment == null
             ? const Center(child: CircularProgressIndicator())
@@ -169,7 +170,7 @@ class _PublicHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -178,7 +179,7 @@ class _PublicHeader extends StatelessWidget {
           Text(
             shipment.trackingId,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -210,7 +211,7 @@ class _RouteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -245,7 +246,7 @@ class _DriverCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -278,10 +279,10 @@ class _DeliverySlaCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: hasCharge ? const Color(0xFFFFF7ED) : Colors.white,
+        color: hasCharge ? const Color(0xFFFFF7ED) : context.colors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: hasCharge ? const Color(0xFFFED7AA) : const Color(0xFFE8EDF2),
+          color: hasCharge ? const Color(0xFFFED7AA) : context.colors.line,
         ),
       ),
       child: Row(
@@ -293,7 +294,7 @@ class _DeliverySlaCard extends StatelessWidget {
                 : AppIcons.schedule_rounded,
             color: hasCharge
                 ? const Color(0xFFC2410C)
-                : const Color(0xFF475569),
+                : context.colors.textSecondary,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -304,7 +305,7 @@ class _DeliverySlaCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: hasCharge
                     ? const Color(0xFF9A5B13)
-                    : const Color(0xFF667085),
+                    : context.colors.textSecondary,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
               ),
@@ -366,7 +367,7 @@ class _InfoLine extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: const Color(0xFF98A2B3),
+            color: context.colors.textTertiary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -374,7 +375,7 @@ class _InfoLine extends StatelessWidget {
         Text(
           value.isEmpty ? '-' : value,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF101828),
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -402,7 +403,7 @@ class _PublicTrackingMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFF98A2B3)),
+            Icon(icon, size: 44, color: context.colors.textTertiary),
             const SizedBox(height: 14),
             Text(
               title,
@@ -416,7 +417,7 @@ class _PublicTrackingMessage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+              ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),

@@ -27,9 +27,9 @@ class _CheckoutChoiceCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -107,7 +107,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                 width: 178,
                 padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
@@ -124,7 +124,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                       width: 88,
                       height: 88,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEAF8F1),
+                        color: context.colors.brandFill,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -147,7 +147,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                       'Booking confirmed',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -156,7 +156,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                       'Opening activity',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -192,12 +192,12 @@ class _CheckoutMethodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = selected
         ? const Color(0xFF2FA56E)
-        : const Color(0xFFE8EDF2);
+        : context.colors.line;
     final iconColor = enabled
         ? selected
               ? const Color(0xFF2FA56E)
-              : const Color(0xFF667085)
-        : const Color(0xFFB8C0CC);
+              : context.colors.textSecondary
+        : context.colors.textTertiary;
 
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -211,9 +211,9 @@ class _CheckoutMethodCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: enabled
                 ? selected
-                      ? const Color(0xFFEAF8F1)
-                      : const Color(0xFFF8FAFC)
-                : const Color(0xFFF2F4F7),
+                      ? context.colors.brandFill
+                      : context.colors.fillSubtle
+                : context.colors.fillSubtle,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
           ),
@@ -226,7 +226,7 @@ class _CheckoutMethodCard extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, size: 18, color: iconColor),
@@ -240,8 +240,8 @@ class _CheckoutMethodCard extends StatelessWidget {
                     color: enabled
                         ? selected
                               ? const Color(0xFF2FA56E)
-                              : const Color(0xFF98A2B3)
-                        : const Color(0xFFD0D5DD),
+                              : context.colors.textTertiary
+                        : context.colors.textTertiary,
                   ),
                 ],
               ),
@@ -252,8 +252,8 @@ class _CheckoutMethodCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: enabled
-                      ? const Color(0xFF101828)
-                      : const Color(0xFF98A2B3),
+                      ? context.colors.textPrimary
+                      : context.colors.textTertiary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -264,8 +264,8 @@ class _CheckoutMethodCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: enabled
-                      ? const Color(0xFF667085)
-                      : const Color(0xFF98A2B3),
+                      ? context.colors.textSecondary
+                      : context.colors.textTertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -305,13 +305,13 @@ class _CheckoutChoiceTile extends StatelessWidget {
         color: enabled
             ? selected
                   ? accent
-                  : const Color(0xFF667085)
-            : const Color(0xFFB8C0CC),
+                  : context.colors.textSecondary
+            : context.colors.textTertiary,
       ),
       title: Text(
         title,
         style: TextStyle(
-          color: enabled ? const Color(0xFF101828) : const Color(0xFF98A2B3),
+          color: enabled ? context.colors.textPrimary : context.colors.textTertiary,
         ),
       ),
       subtitle: Text(subtitle),
@@ -320,8 +320,8 @@ class _CheckoutChoiceTile extends StatelessWidget {
         color: enabled
             ? selected
                   ? accent
-                  : const Color(0xFF98A2B3)
-            : const Color(0xFFD0D5DD),
+                  : context.colors.textTertiary
+            : context.colors.textTertiary,
       ),
     );
   }
@@ -346,9 +346,9 @@ class _LocationLaunchCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFEAEFF4)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -387,7 +387,7 @@ class _LocationLaunchCard extends StatelessWidget {
                         height: 28,
                         margin: const EdgeInsets.symmetric(vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD7DDE4),
+                          color: context.colors.line,
                           borderRadius: BorderRadius.circular(99),
                         ),
                       ),
@@ -404,13 +404,13 @@ class _LocationLaunchCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: const Color(0xFF9B9B9B),
+                                color: context.colors.textTertiary,
                                 fontSize: 17,
                                 fontWeight: FontWeight.w400,
                               ),
                         ),
                         const SizedBox(height: 12),
-                        Container(height: 1, color: const Color(0xFFE9EDF2)),
+                        Container(height: 1, color: context.colors.line),
                       ],
                     ),
                   ),
@@ -446,7 +446,7 @@ class _LocationLaunchCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF9B9B9B),
+                        color: context.colors.textTertiary,
                         fontSize: 17,
                         fontWeight: FontWeight.w400,
                       ),
@@ -503,9 +503,9 @@ class _WeightStepRouteSummary extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7EDF3)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,7 +530,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 height: 22,
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD8E7DE),
+                  color: context.colors.brandBorder,
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -561,7 +561,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111111),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -570,7 +570,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: context.colors.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -582,7 +582,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111111),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -591,7 +591,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF8E8E93),
+                    color: context.colors.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -605,8 +605,8 @@ class _WeightStepRouteSummary extends StatelessWidget {
             child: Container(
               width: 32,
               height: 32,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF2F6F4),
+              decoration: BoxDecoration(
+                color: context.colors.brandFill,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -641,8 +641,8 @@ class _WeightStepActionChip extends StatelessWidget {
       label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xFF2FA56E),
-        side: const BorderSide(color: Color(0xFFDCEBE2)),
-        backgroundColor: const Color(0xFFFAFCFB),
+        side: BorderSide(color: context.colors.brandBorder),
+        backgroundColor: context.colors.brandFill,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -676,17 +676,17 @@ class _HeaderScheduleIconButton extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFF5F7FA),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.fillSubtle,
             shape: BoxShape.circle,
             border: Border.all(
               color: selected
                   ? const Color(0xFF2FA56E)
-                  : const Color(0xFFE4EAF1),
+                  : context.colors.line,
             ),
           ),
           child: Icon(
             icon,
-            color: selected ? Colors.white : const Color(0xFF667085),
+            color: selected ? Colors.white : context.colors.textSecondary,
             size: 20,
           ),
         ),
@@ -794,7 +794,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
         padding: EdgeInsets.fromLTRB(12, 0, 12, bottomInset + 12),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -818,7 +818,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                           'Book later',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
-                                color: const Color(0xFF0B1F3A),
+                                color: context.colors.textPrimary,
                                 fontWeight: FontWeight.w900,
                               ),
                         ),
@@ -829,13 +829,13 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                         child: Container(
                           width: 36,
                           height: 36,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF2F4F7),
+                          decoration: BoxDecoration(
+                            color: context.colors.fillSubtle,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             AppIcons.close_rounded,
-                            color: Color(0xFF475467),
+                            color: context.colors.textSecondary,
                             size: 20,
                           ),
                         ),
@@ -847,7 +847,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                 Text(
                   _formatSchedulePreview(_selectedDateTime),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -857,8 +857,8 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                     colorScheme: Theme.of(context).colorScheme.copyWith(
                       primary: const Color(0xFF2FA56E),
                       onPrimary: Colors.white,
-                      surface: Colors.white,
-                      onSurface: const Color(0xFF0B1F3A),
+                      surface: context.colors.surfaceElevated,
+                      onSurface: context.colors.textPrimary,
                     ),
                   ),
                   child: CalendarDatePicker(
@@ -877,9 +877,9 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FBF9),
+                    color: context.colors.brandFill,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFE4EFE8)),
+                    border: Border.all(color: context.colors.brandBorder),
                   ),
                   child: Row(
                     children: [
@@ -962,7 +962,7 @@ class _TimeStepper extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFF667085),
+            color: context.colors.textSecondary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -978,7 +978,7 @@ class _TimeStepper extends StatelessWidget {
                 value,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF0B1F3A),
+                  color: context.colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1007,8 +1007,8 @@ class _RoundIconButton extends StatelessWidget {
       child: Container(
         width: 28,
         height: 28,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: context.colors.surface,
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 17, color: const Color(0xFF2FA56E)),
@@ -1029,7 +1029,7 @@ class _MeridiemToggle extends StatelessWidget {
       width: 54,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Column(
@@ -1079,7 +1079,7 @@ class _MeridiemButton extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: selected ? Colors.white : const Color(0xFF667085),
+            color: selected ? Colors.white : context.colors.textSecondary,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1127,14 +1127,14 @@ class _WeightChip extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onTap(),
       labelStyle: TextStyle(
-        color: selected ? Colors.white : const Color(0xFF475467),
+        color: selected ? Colors.white : context.colors.textSecondary,
         fontWeight: FontWeight.w800,
         fontSize: 12,
       ),
       selectedColor: const Color(0xFF2FA56E),
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surface,
       side: BorderSide(
-        color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE0E7EF),
+        color: selected ? const Color(0xFF2FA56E) : context.colors.line,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
@@ -1163,9 +1163,9 @@ class _BookingSuccessCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
+        color: context.colors.canvas,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1175,7 +1175,7 @@ class _BookingSuccessCard extends StatelessWidget {
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF8EF),
+              color: context.colors.brandFill,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -1196,7 +1196,7 @@ class _BookingSuccessCard extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1205,7 +1205,7 @@ class _BookingSuccessCard extends StatelessWidget {
             message,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -1215,7 +1215,7 @@ class _BookingSuccessCard extends StatelessWidget {
                 : 'Booking Number: $bookingReference',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1277,7 +1277,7 @@ class _BookingWaitingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF7FBF9),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE0EFE7)),
+        border: Border.all(color: context.colors.brandBorder),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1287,7 +1287,7 @@ class _BookingWaitingCard extends StatelessWidget {
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF8F1),
+              color: context.colors.brandFill,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -1325,7 +1325,7 @@ class _BookingWaitingCard extends StatelessWidget {
                 : 'Finding nearby trucks',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1340,7 +1340,7 @@ class _BookingWaitingCard extends StatelessWidget {
                 : 'Your booking is live. We are notifying drivers inside ${searchRadiusKm.round()} km.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -1350,7 +1350,7 @@ class _BookingWaitingCard extends StatelessWidget {
                 : 'Booking Number: $bookingReference',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1360,9 +1360,9 @@ class _BookingWaitingCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE8EDF2)),
+                border: Border.all(color: context.colors.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1373,7 +1373,7 @@ class _BookingWaitingCard extends StatelessWidget {
                         : 'Driver response',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1386,7 +1386,7 @@ class _BookingWaitingCard extends StatelessWidget {
                         ? 'Driver response timed out.'
                         : 'Latest amount: ${request.amountText}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 ],
@@ -1398,9 +1398,9 @@ class _BookingWaitingCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE0EFE7)),
+              border: Border.all(color: context.colors.brandBorder),
             ),
             child: Row(
               children: [
@@ -1416,7 +1416,7 @@ class _BookingWaitingCard extends StatelessWidget {
                         ? 'Searching live'
                         : '$activeCount active request${activeCount == 1 ? '' : 's'} nearby',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF344054),
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1425,7 +1425,7 @@ class _BookingWaitingCard extends StatelessWidget {
                   Text(
                     '$declinedCount declined',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1800,9 +1800,9 @@ class _BookingSummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEAEFF4)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1833,7 +1833,7 @@ class _BookingSummaryCard extends StatelessWidget {
                   height: 36,
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9E0E7),
+                    color: context.colors.line,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
@@ -1842,7 +1842,7 @@ class _BookingSummaryCard extends StatelessWidget {
                   height: 16,
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9E0E7),
+                    color: context.colors.line,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
@@ -1866,7 +1866,7 @@ class _BookingSummaryCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FB),
+                    color: context.colors.fillSubtle,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -1878,7 +1878,7 @@ class _BookingSummaryCard extends StatelessWidget {
                             ?.copyWith(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1C2430),
+                              color: context.colors.textPrimary,
                             ),
                       ),
                       if (distanceText != null && distanceText!.isNotEmpty) ...[
@@ -1887,7 +1887,7 @@ class _BookingSummaryCard extends StatelessWidget {
                           distanceText!,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: context.colors.textSecondary,
                                 fontSize: 11,
                               ),
                         ),
@@ -1898,7 +1898,7 @@ class _BookingSummaryCard extends StatelessWidget {
                           amountText!,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: const Color(0xFF1F88C9),
+                                color: context.colors.infoEmphasis,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1912,7 +1912,7 @@ class _BookingSummaryCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FB),
+                    color: context.colors.fillSubtle,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -1924,7 +1924,7 @@ class _BookingSummaryCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
-                                color: const Color(0xFF1C2430),
+                                color: context.colors.textPrimary,
                                 fontSize: 13,
                               ),
                         ),

@@ -11,6 +11,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/widgets/truck_marker_icon.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/client_map_theme.dart';
 import '../../../broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../shared/data/trip_route_stop.dart';
@@ -378,6 +380,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
 
     return GoogleMap(
+      style: ClientMapTheme.styleFor(context),
       initialCameraPosition: CameraPosition(
         target: _defaultCenter(),
         zoom: points.length == 1 ? 11 : 7,
@@ -495,9 +498,9 @@ class _EmptyMapState extends StatelessWidget {
           width: 260,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: context.colors.surfaceElevated.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
+            border: Border.all(color: context.colors.line),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -505,8 +508,8 @@ class _EmptyMapState extends StatelessWidget {
               Container(
                 width: 54,
                 height: 54,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF8EF),
+                decoration: BoxDecoration(
+                  color: context.colors.brandFill,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -527,7 +530,7 @@ class _EmptyMapState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+                ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
               ),
             ],
           ),
@@ -558,7 +561,7 @@ class TrackingRouteOverviewCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -578,13 +581,13 @@ class TrackingRouteOverviewCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: context.colors.surfaceElevated.withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF1F88C9),
+                  color: context.colors.infoEmphasis,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -597,7 +600,7 @@ class TrackingRouteOverviewCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: context.colors.surfaceElevated.withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
@@ -609,14 +612,14 @@ class TrackingRouteOverviewCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF101828),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Icon(
+                  Icon(
                     AppIcons.chevron_right_rounded,
-                    color: Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                   ),
                 ],
               ),
@@ -742,6 +745,7 @@ class _LiveLocationMapViewState extends State<LiveLocationMapView> {
     }
 
     return GoogleMap(
+      style: ClientMapTheme.styleFor(context),
       initialCameraPosition: CameraPosition(
         target: _defaultCenter(),
         zoom: 13.5,
@@ -804,13 +808,13 @@ class DriverLocationOverviewCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: context.colors.surfaceElevated.withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF1F88C9),
+                  color: context.colors.infoEmphasis,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -823,7 +827,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: context.colors.surfaceElevated.withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Column(
@@ -836,7 +840,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -850,7 +854,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF667085),
+                                color: context.colors.textSecondary,
                               ),
                         ),
                       ),
@@ -870,7 +874,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
                         ? '${driver.currentLatitude!.toStringAsFixed(5)}, ${driver.currentLongitude!.toStringAsFixed(5)}'
                         : 'Live GPS pending from backend',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                     ),
                   ),
                 ],
@@ -886,7 +890,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: context.colors.line),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -904,7 +908,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -939,9 +943,9 @@ class _EmptyLiveLocationState extends StatelessWidget {
           width: 280,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: context.colors.surfaceElevated.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE8EDF2)),
+            border: Border.all(color: context.colors.line),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -972,7 +976,7 @@ class _EmptyLiveLocationState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+                ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
               ),
             ],
           ),

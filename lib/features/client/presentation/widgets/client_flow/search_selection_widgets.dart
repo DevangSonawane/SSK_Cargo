@@ -10,7 +10,7 @@ class _SheetGrabber extends StatelessWidget {
         width: 46,
         height: 5,
         decoration: BoxDecoration(
-          color: const Color(0xFFD0DAE8),
+          color: context.colors.line,
           borderRadius: BorderRadius.circular(999),
         ),
       ),
@@ -31,7 +31,7 @@ class _CollapsedTruckSearchBar extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: context.colors.brandFill,
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
@@ -47,14 +47,14 @@ class _CollapsedTruckSearchBar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF0B1F3A),
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const Icon(
+          Icon(
             AppIcons.keyboard_arrow_up_rounded,
-            color: Color(0xFF667085),
+            color: context.colors.textSecondary,
           ),
         ],
       ),
@@ -78,8 +78,8 @@ class _SearchModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = selected
-        ? const Color(0xFF167247)
-        : const Color(0xFF475467);
+        ? context.colors.brandEmphasis
+        : context.colors.textSecondary;
     return InkWell(
       onTap: () {
         HapticFeedback.mediumImpact();
@@ -92,10 +92,10 @@ class _SearchModeCard extends StatelessWidget {
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEAF7EF) : const Color(0xFFF8FAFC),
+          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE2E8F0),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
             width: selected ? 1.6 : 1,
           ),
           boxShadow: [
@@ -163,10 +163,10 @@ class _ChooseTruckCard extends StatelessWidget {
         height: 60,
         padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0FAF4) : Colors.white,
+          color: selected ? context.colors.brandFill : context.colors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE2E8F0),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
             width: selected ? 1.6 : 1,
           ),
           boxShadow: [
@@ -197,8 +197,8 @@ class _ChooseTruckCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: selected
-                          ? const Color(0xFF167247)
-                          : const Color(0xFF0B1F3A),
+                          ? context.colors.brandEmphasis
+                          : context.colors.textPrimary,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0,
                     ),
@@ -229,7 +229,7 @@ class _TruckSpec extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: const Color(0xFF7D8AA0)),
+        Icon(icon, size: 13, color: context.colors.textSecondary),
         const SizedBox(width: 4),
         Flexible(
           child: Text(
@@ -237,7 +237,7 @@ class _TruckSpec extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF6A7890),
+              color: context.colors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -258,10 +258,10 @@ class _SearchMethodSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: const Border(
-          top: BorderSide(color: Color(0xFFE6EDF5), width: 1),
+        border: Border(
+          top: BorderSide(color: context.colors.line, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -308,10 +308,10 @@ class _EligibleBrokerTile extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0FAF4) : Colors.white,
+          color: selected ? context.colors.brandFill : context.colors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE7EDF3),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
             width: selected ? 1.5 : 1,
           ),
           boxShadow: [
@@ -335,14 +335,14 @@ class _EligibleBrokerTile extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: selected ? null : const Color(0xFFF3F6F8),
+                color: selected ? null : context.colors.fillSubtle,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
                 child: Text(
                   initials,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: selected ? Colors.white : const Color(0xFF667085),
+                    color: selected ? Colors.white : context.colors.textSecondary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -363,7 +363,7 @@ class _EligibleBrokerTile extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF101828),
+                                color: context.colors.textPrimary,
                               ),
                         ),
                       ),
@@ -421,12 +421,12 @@ class _EligibleBrokerTile extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: selected ? const Color(0xFF2FA56E) : Colors.white,
+                color: selected ? const Color(0xFF2FA56E) : context.colors.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: selected
                       ? const Color(0xFF2FA56E)
-                      : const Color(0xFFD0D5DD),
+                      : context.colors.line,
                 ),
               ),
               child: selected
@@ -455,9 +455,9 @@ class _BrokerListHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBF8),
+        color: context.colors.brandFill,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EFE7)),
+        border: Border.all(color: context.colors.brandBorder),
       ),
       child: Row(
         children: [
@@ -473,7 +473,7 @@ class _BrokerListHeader extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: const Color(0xFF0B1F3A),
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -500,7 +500,7 @@ class _BrokerMetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: highlighted ? const Color(0xFFE8F7EE) : const Color(0xFFF5F7FA),
+        color: highlighted ? context.colors.brandFill : context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -511,15 +511,15 @@ class _BrokerMetaPill extends StatelessWidget {
             size: 12,
             color: highlighted
                 ? const Color(0xFF2FA56E)
-                : const Color(0xFF667085),
+                : context.colors.textSecondary,
           ),
           const SizedBox(width: 4),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: highlighted
-                  ? const Color(0xFF167247)
-                  : const Color(0xFF667085),
+                  ? context.colors.brandEmphasis
+                  : context.colors.textSecondary,
               fontWeight: FontWeight.w800,
               fontSize: 10,
             ),
@@ -539,9 +539,9 @@ class _BrokerLoadingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF9),
+        color: context.colors.brandFill,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4EFE8)),
+        border: Border.all(color: context.colors.brandBorder),
       ),
       child: Row(
         children: [
@@ -555,7 +555,7 @@ class _BrokerLoadingCard extends StatelessWidget {
             child: Text(
               'Finding verified brokers for this route...',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: context.colors.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -585,9 +585,9 @@ class _BrokerEmptyCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4EAF1)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         children: [
@@ -595,10 +595,10 @@ class _BrokerEmptyCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF4FA),
+              color: context.colors.fillSubtle,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: const Color(0xFF667085), size: 21),
+            child: Icon(icon, color: context.colors.textSecondary, size: 21),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -608,7 +608,7 @@ class _BrokerEmptyCard extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF0B1F3A),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -616,7 +616,7 @@ class _BrokerEmptyCard extends StatelessWidget {
                 Text(
                   message,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -692,16 +692,16 @@ class _DeliveryEstimateCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4EAF1)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             AppIcons.calendar_month_rounded,
-            color: Color(0xFF1F88C9),
+            color: context.colors.infoEmphasis,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -713,7 +713,7 @@ class _DeliveryEstimateCard extends StatelessWidget {
                   Text(
                     'Estimated delivery by ${_formatDateOnly(date)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF344054),
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w800,
                       height: 1.35,
                     ),
@@ -723,7 +723,7 @@ class _DeliveryEstimateCard extends StatelessWidget {
                   Text(
                     'SLA window: ~${_formatHours(hours)}${isExpress ? ' (Express)' : ''}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
                       height: 1.35,
                     ),
@@ -734,7 +734,7 @@ class _DeliveryEstimateCard extends StatelessWidget {
                   Text(
                     '$days day${days == 1 ? '' : 's'} estimated from pickup.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF98A2B3),
+                      color: context.colors.textTertiary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -793,7 +793,7 @@ class _ExpressBookingSummaryCard extends StatelessWidget {
                 Text(
                   'Express Delivery selected',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -848,10 +848,10 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFFFFF7ED) : Colors.white,
+        color: selected ? const Color(0xFFFFF7ED) : context.colors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: selected ? const Color(0xFFFFC89A) : const Color(0xFFE4EAF1),
+          color: selected ? const Color(0xFFFFC89A) : context.colors.line,
         ),
       ),
       child: Row(
@@ -863,12 +863,12 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? const Color(0xFFEA580C)
-                  : const Color(0xFFF2F4F7),
+                  : context.colors.fillSubtle,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               AppIcons.bolt_rounded,
-              color: selected ? Colors.white : const Color(0xFF98A2B3),
+              color: selected ? Colors.white : context.colors.textTertiary,
               size: 22,
             ),
           ),
@@ -880,7 +880,7 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
                 Text(
                   'Express Delivery',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -888,7 +888,7 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
                 Text(
                   'Faster deadline for intra-city bookings.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -920,7 +920,7 @@ class _ExpressDeliveryOptionCard extends StatelessWidget {
                     Text(
                       'Includes transit insurance',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
+                        color: context.colors.textTertiary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

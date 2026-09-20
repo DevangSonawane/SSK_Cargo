@@ -127,6 +127,9 @@ abstract final class AppIcons {
   static const IconData lock_outline_rounded = LucideIcons.lock_keyhole;
   static const IconData lock_rounded = LucideIcons.lock_keyhole;
   static const IconData logout_rounded = LucideIcons.log_out;
+  static const IconData light_mode_rounded = LucideIcons.sun;
+  static const IconData dark_mode_rounded = LucideIcons.moon;
+  static const IconData settings_suggest_rounded = LucideIcons.monitor_smartphone;
   static const IconData mail_outline_rounded = LucideIcons.mail;
   static const IconData mail_rounded = LucideIcons.mail;
   static const IconData manage_accounts_rounded = LucideIcons.user_cog;

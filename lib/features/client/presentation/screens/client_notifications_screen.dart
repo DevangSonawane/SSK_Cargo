@@ -6,6 +6,7 @@ import '../../data/client_booking_models.dart';
 import '../controllers/client_notifications_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 class ClientNotificationsScreen extends ConsumerStatefulWidget {
   const ClientNotificationsScreen({super.key});
@@ -90,7 +91,7 @@ class _ClientNotificationsScreenState
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surfaceElevated,
               borderRadius: BorderRadius.circular(28),
             ),
             padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
@@ -103,7 +104,7 @@ class _ClientNotificationsScreenState
                     width: 54,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE1E5EB),
+                      color: context.colors.line,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -116,7 +117,7 @@ class _ClientNotificationsScreenState
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -124,7 +125,7 @@ class _ClientNotificationsScreenState
                   Text(
                     '${createdAt.toLocal()}'.split('.').first,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 const SizedBox(height: 12),
@@ -133,7 +134,7 @@ class _ClientNotificationsScreenState
                       ? 'No message available.'
                       : notification.message,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF344054),
+                    color: context.colors.textSecondary,
                     height: 1.5,
                   ),
                 ),
@@ -161,12 +162,13 @@ class _ClientNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         elevation: 0,
         title: const Text('Notifications'),
         actions: [
@@ -225,10 +227,10 @@ class _ClientNotificationsScreenState
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: notification.isRead
-                          ? Colors.white
-                          : const Color(0xFFF7FBF9),
+                          ? colors.surface
+                          : colors.brandFill,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE8EDF2)),
+                      border: Border.all(color: colors.line),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
@@ -273,7 +275,7 @@ class _ClientNotificationsScreenState
                                           .titleMedium
                                           ?.copyWith(
                                             fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF101828),
+                                            color: colors.textPrimary,
                                           ),
                                     ),
                                   ),
@@ -294,7 +296,7 @@ class _ClientNotificationsScreenState
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: const Color(0xFF667085)),
+                                    ?.copyWith(color: colors.textSecondary),
                               ),
                             ],
                           ),
@@ -333,7 +335,7 @@ class _EmptyState extends StatelessWidget {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6F1),
+              color: context.colors.brandFill,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 34, color: const Color(0xFF2FA56E)),
@@ -344,7 +346,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -353,7 +355,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),

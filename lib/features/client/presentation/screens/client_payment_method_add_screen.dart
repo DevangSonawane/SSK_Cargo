@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
 
@@ -217,10 +218,11 @@ class _ClientPaymentMethodAddScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -237,9 +239,9 @@ class _ClientPaymentMethodAddScreenState
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
+                  border: Border.all(color: colors.line),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -256,7 +258,7 @@ class _ClientPaymentMethodAddScreenState
                       Text(
                         'Type',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: colors.textSecondary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -337,7 +339,7 @@ class _ClientPaymentMethodAddScreenState
                         Text(
                           'Only the brand and last 4 digits are stored.',
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: const Color(0xFF98A2B3)),
+                              ?.copyWith(color: colors.textTertiary),
                         ),
                       ] else if (_methodType == 'netbanking') ...[
                         const _FieldLabel(text: 'Bank'),
@@ -488,7 +490,7 @@ class _ClientPaymentMethodAddScreenState
                         title: Text(
                           'Set as default payment method',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: colors.textSecondary),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -526,7 +528,7 @@ class _ClientPaymentMethodAddScreenState
                         'We only store display details like your card\'s last 4 digits — never your full number or CVV.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF98A2B3),
+                          color: colors.textTertiary,
                           height: 1.4,
                         ),
                       ),
@@ -649,10 +651,10 @@ class _SelectableLogoTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEFF8F2) : const Color(0xFFF5F7FB),
+          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE8EDF2),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
           ),
         ),
         child: Row(
@@ -668,7 +670,7 @@ class _SelectableLogoTile extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: selected
                       ? const Color(0xFF2FA56E)
-                      : const Color(0xFF667085),
+                      : context.colors.textSecondary,
                 ),
               ),
             ),
@@ -699,10 +701,10 @@ class _TypeChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFE0F4E8) : const Color(0xFFF5F7FB),
+          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF2FA56E) : const Color(0xFFE8EDF2),
+            color: selected ? const Color(0xFF2FA56E) : context.colors.line,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -713,7 +715,7 @@ class _TypeChip extends StatelessWidget {
               icon,
               color: selected
                   ? const Color(0xFF2FA56E)
-                  : const Color(0xFF667085),
+                  : context.colors.textSecondary,
             ),
             const SizedBox(height: 6),
             Text(
@@ -722,7 +724,7 @@ class _TypeChip extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: selected
                     ? const Color(0xFF2FA56E)
-                    : const Color(0xFF667085),
+                    : context.colors.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -743,7 +745,7 @@ class _FieldLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: const Color(0xFF667085),
+        color: context.colors.textSecondary,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -760,9 +762,9 @@ class _CardField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: child,
     );

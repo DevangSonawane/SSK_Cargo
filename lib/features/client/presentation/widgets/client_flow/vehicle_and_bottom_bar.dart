@@ -39,7 +39,7 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surface,
       body: SafeArea(
         bottom: false,
         child: Stack(
@@ -75,7 +75,7 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                       letterSpacing: 0.1,
                     ),
                   ),
@@ -148,6 +148,12 @@ class _VehicleOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Per-vehicle accent brightened slightly on dark surfaces so the
+    // selected border + label keep their identity without going muddy.
+    final accent =
+        Theme.of(context).brightness == Brightness.dark
+            ? Color.lerp(option.accentColor, Colors.white, 0.3)!
+            : option.accentColor;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -155,10 +161,10 @@ class _VehicleOptionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? option.accentColor : const Color(0xFFE7EEF5),
+            color: selected ? accent : context.colors.line,
             width: selected ? 1.8 : 1,
           ),
           boxShadow: [
@@ -191,14 +197,14 @@ class _VehicleOptionTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     option.capacity,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black54,
+                      color: context.colors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -214,14 +220,14 @@ class _VehicleOptionTile extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   selected ? 'Selected' : '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: selected ? option.accentColor : Colors.transparent,
+                    color: selected ? accent : Colors.transparent,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                   ),
@@ -263,10 +269,10 @@ class ClientBottomBar extends StatelessWidget {
             filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: context.colors.surfaceElevated.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.72),
+                  color: context.colors.surfaceElevated.withValues(alpha: 0.72),
                   width: 1.2,
                 ),
                 boxShadow: [
@@ -362,7 +368,7 @@ class _ClientBottomBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = selected ? Colors.white : const Color(0xFF64748B);
+    final iconColor = selected ? Colors.white : context.colors.textSecondary;
 
     return Tooltip(
       message: item.label,

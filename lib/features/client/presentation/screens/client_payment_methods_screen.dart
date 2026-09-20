@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
 
@@ -169,12 +170,13 @@ class _ClientPaymentMethodsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -374,7 +376,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                         ?.copyWith(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 15,
-                                          color: const Color(0xFF101828),
+                                          color: context.colors.textPrimary,
                                         ),
                                   ),
                                 ),
@@ -460,7 +462,7 @@ class _PaymentMethodCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
+                        color: context.colors.textTertiary,
                         fontSize: 11.5,
                       ),
                     ),
@@ -509,7 +511,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                 AppIcons.delete_outline_rounded,
                                 size: 18,
                               ),
-                        color: const Color(0xFF98A2B3),
+                        color: context.colors.textTertiary,
                         tooltip: 'Delete',
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
@@ -542,9 +544,9 @@ class _AddTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(22),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFB8DCC7), width: 1.5),
+          border: Border.all(color: context.colors.brandBorder, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -571,14 +573,14 @@ class _AddTile extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 fontSize: 14.5,
-                color: const Color(0xFF101828),
+                color: context.colors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Credit, Debit, or Bank Transfer',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF667085),
+                color: context.colors.textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -732,9 +734,9 @@ class _EmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -760,7 +762,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -768,7 +770,7 @@ class _EmptyState extends StatelessWidget {
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667085),
+              color: context.colors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -818,9 +820,9 @@ class _LoadingGrid extends StatelessWidget {
           itemCount: 3,
           itemBuilder: (context, index) => Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+              border: Border.all(color: context.colors.line),
             ),
           ),
         );

@@ -56,9 +56,9 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFE8EDF2)),
+              border: Border.all(color: context.colors.line),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -81,7 +81,7 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
                 Text(
                   message,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                   textAlign: TextAlign.center,
@@ -90,7 +90,7 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
                 Text(
                   'Dont worry, I will help you reach your package in its proper destination safely.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -102,7 +102,7 @@ class _BrokerDiscoveryLoaderState extends State<_BrokerDiscoveryLoader> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF8F2),
+                    color: context.colors.brandFill,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -232,9 +232,9 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.97),
+                    color: context.colors.surfaceElevated.withValues(alpha: 0.97),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFDDEFE6)),
+                    border: Border.all(color: context.colors.brandBorder),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.18),
@@ -255,8 +255,8 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                             Container(
                               width: 46,
                               height: 46,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEAF8F1),
+                              decoration: BoxDecoration(
+                                color: context.colors.brandFill,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -282,7 +282,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                         .textTheme
                                         .titleMedium
                                         ?.copyWith(
-                                          color: const Color(0xFF101828),
+                                          color: context.colors.textPrimary,
                                           fontWeight: FontWeight.w900,
                                           height: 1.12,
                                         ),
@@ -298,7 +298,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: const Color(0xFF667085),
+                                          color: context.colors.textSecondary,
                                           height: 1.35,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -312,8 +312,8 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                   ? null
                                   : widget.onCancel,
                               style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFF2F6F4),
-                                foregroundColor: const Color(0xFF475467),
+                                backgroundColor: context.colors.fillSubtle,
+                                foregroundColor: context.colors.textSecondary,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               icon: widget.isCancelling
@@ -342,7 +342,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                     value: progress,
                                     minHeight: 6,
                                     color: const Color(0xFF2FA56E),
-                                    backgroundColor: const Color(0xFFE4E7EC),
+                                    backgroundColor: context.colors.fillSubtle,
                                   ),
                                 ),
                               ),
@@ -351,7 +351,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                 _elapsedLabel(),
                                 style: Theme.of(context).textTheme.labelMedium
                                     ?.copyWith(
-                                      color: const Color(0xFF475467),
+                                      color: context.colors.textSecondary,
                                       fontWeight: FontWeight.w800,
                                       fontFeatures: const [
                                         ui.FontFeature.tabularFigures(),
@@ -413,7 +413,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                   'Still no driver yet',
                                   style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(
-                                        color: const Color(0xFF101828),
+                                        color: context.colors.textPrimary,
                                         fontWeight: FontWeight.w900,
                                       ),
                                 ),
@@ -422,7 +422,7 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                                   'Search again to keep waiting, or cancel and start over.',
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
-                                        color: const Color(0xFF667085),
+                                        color: context.colors.textSecondary,
                                         fontWeight: FontWeight.w600,
                                       ),
                                 ),
@@ -611,9 +611,9 @@ class _FindTruckStatusChip extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 40),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -626,7 +626,7 @@ class _FindTruckStatusChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF475467),
+                color: context.colors.textSecondary,
                 fontWeight: FontWeight.w800,
               ),
             ),

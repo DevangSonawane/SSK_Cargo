@@ -509,7 +509,7 @@ class _LocationDetailsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: context.colors.canvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -538,7 +538,7 @@ class _LocationDetailsScreenState
                           icon: const Icon(AppIcons.map_outlined, size: 17),
                           label: Text(widget.mapButtonLabel),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1F88C9),
+                            foregroundColor: context.colors.infoEmphasis,
                             side: const BorderSide(color: Color(0xFFD7E7F4)),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -557,7 +557,7 @@ class _LocationDetailsScreenState
                       _title,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
-                            color: const Color(0xFF0B1F3A),
+                            color: context.colors.textPrimary,
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                             height: 1.05,
@@ -567,7 +567,7 @@ class _LocationDetailsScreenState
                     Text(
                       _subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: context.colors.textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         height: 1.35,
@@ -600,10 +600,10 @@ class _LocationDetailsScreenState
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.colors.surface,
                               borderRadius: BorderRadius.circular(22),
                               border: Border.all(
-                                color: const Color(0xFFE7EEF6),
+                                color: context.colors.line,
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -626,7 +626,7 @@ class _LocationDetailsScreenState
                                         .textTheme
                                         .titleMedium
                                         ?.copyWith(
-                                          color: const Color(0xFF101828),
+                                          color: context.colors.textPrimary,
                                           fontWeight: FontWeight.w500,
                                           fontSize: 15,
                                         ),
@@ -636,7 +636,7 @@ class _LocationDetailsScreenState
                                           .textTheme
                                           .titleMedium
                                           ?.copyWith(
-                                            color: const Color(0xFF98A2B3),
+                                            color: context.colors.textTertiary,
                                             fontWeight: FontWeight.w400,
                                             fontSize: 15,
                                           ),
@@ -672,12 +672,14 @@ class _LocationDetailsScreenState
                                                       BorderRadius.circular(
                                                         999,
                                                       ),
-                                                  child: const Padding(
+                                                  child: Padding(
                                                     padding: EdgeInsets.all(2),
                                                     child: Icon(
                                                       AppIcons.close_rounded,
                                                       size: 18,
-                                                      color: Color(0xFF667085),
+                                                      color: context
+                                                          .colors
+                                                          .textSecondary,
                                                     ),
                                                   ),
                                                 )),
@@ -738,13 +740,13 @@ class _LocationDetailsScreenState
                           'Fetching your current location...',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: const Color(0xFF667085),
+                                color: context.colors.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
                       ],
                       const SizedBox(height: 18),
-                      Container(height: 1, color: const Color(0xFFE6EAF0)),
+                      Container(height: 1, color: context.colors.divider),
                     ],
                     if (_matchingSavedAddresses.isNotEmpty) ...[
                       const SizedBox(height: 14),
@@ -752,7 +754,7 @@ class _LocationDetailsScreenState
                         'Saved addresses',
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
-                              color: const Color(0xFF98A2B3),
+                              color: context.colors.textTertiary,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
                             ),
@@ -776,9 +778,9 @@ class _LocationDetailsScreenState
                                 ),
                                 label: Text(address.label),
                                 onPressed: () => _selectSavedAddress(address),
-                                backgroundColor: const Color(0xFFF0F7F3),
-                                side: const BorderSide(
-                                  color: Color(0xFFD7EBDD),
+                                backgroundColor: context.colors.brandFill,
+                                side: BorderSide(
+                                  color: context.colors.brandBorder,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -792,7 +794,7 @@ class _LocationDetailsScreenState
                       Text(
                         'Could not load suggestions',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFB42318),
+                          color: context.colors.dangerEmphasis,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -807,12 +809,12 @@ class _LocationDetailsScreenState
                               onTap: () => _selectSuggestion(entry.value),
                             ),
                             if (entry.key != _suggestions.length - 1)
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.symmetric(vertical: 2),
                                 child: Divider(
                                   height: 1,
                                   thickness: 1,
-                                  color: Color(0xFFE6EAF0),
+                                  color: context.colors.divider,
                                 ),
                               ),
                           ],
@@ -909,7 +911,7 @@ class _MapLocationPickerScreenState
   bool _locationPermissionGranted = false;
   bool _locatingOwnLocation = false;
   bool _resolving = false;
-  String? _address;
+  bool _dragging = false;
 
   String get _locationLabel =>
       widget.kind == _LocationFieldKind.pickup ? 'pickup' : 'drop-off';
@@ -1046,9 +1048,10 @@ class _MapLocationPickerScreenState
       body: Stack(
         children: [
           GoogleMap(
+            style: ClientMapTheme.styleFor(context),
             initialCameraPosition: CameraPosition(target: _center, zoom: 15),
             myLocationEnabled: _locationPermissionGranted,
-            myLocationButtonEnabled: true,
+            myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             compassEnabled: false,
             mapToolbarEnabled: false,
@@ -1065,35 +1068,59 @@ class _MapLocationPickerScreenState
             },
             onCameraMove: (position) {
               _center = position.target;
-              _address = null;
+            },
+            onCameraMoveStarted: () {
+              if (!_dragging && mounted) {
+                setState(() {
+                  _dragging = true;
+                });
+              }
+            },
+            onCameraIdle: () {
+              if (_dragging && mounted) {
+                setState(() {
+                  _dragging = false;
+                });
+              }
             },
           ),
-          const IgnorePointer(
-            child: Center(
-              child: Icon(
-                AppIcons.location_on_rounded,
-                size: 48,
-                color: Color(0xFFE53935),
-              ),
-            ),
-          ),
+          Center(child: _CenterPin(lifted: _dragging)),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Row(
                 children: [
-                  _MapCircleButton(
-                    icon: AppIcons.arrow_back_rounded,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Set $_locationLabel location',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(6, 6, 18, 6),
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: context.colors.line),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MapCircleButton(
+                          icon: AppIcons.arrow_back_rounded,
+                          onTap: () => Navigator.of(context).pop(),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Set $_locationLabel location',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: context.colors.textPrimary,
+                              ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1106,91 +1133,130 @@ class _MapLocationPickerScreenState
             bottom: 0,
             child: SafeArea(
               top: false,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Move the map to position the pin',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _MapCircleButton(
+                    icon: AppIcons.my_location_rounded,
+                    loading: _locatingOwnLocation,
+                    onTap: _locatingOwnLocation ? () {} : _returnToOwnLocation,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: context.colors.line),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.14),
+                          blurRadius: 28,
+                          offset: const Offset(0, -6),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _address ??
-                          'The exact address will be detected after you confirm.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _locatingOwnLocation
-                            ? null
-                            : _returnToOwnLocation,
-                        icon: _locatingOwnLocation
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: context.colors.line,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: context.colors.fillSubtle,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: context.colors.brandFill,
+                                  shape: BoxShape.circle,
                                 ),
-                              )
-                            : const Icon(
-                                AppIcons.my_location_rounded,
-                                size: 18,
+                                child: Icon(
+                                  AppIcons.location_on_rounded,
+                                  color: context.colors.brandEmphasis,
+                                  size: 22,
+                                ),
                               ),
-                        label: Text(
-                          _locatingOwnLocation
-                              ? 'Locating you...'
-                              : 'Use my location',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF1F88C9),
-                          side: const BorderSide(color: Color(0xFFD7E7F4)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _resolving ? null : _confirmLocation,
-                        icon: _resolving
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Move the map to position the pin',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color:
+                                                context.colors.textPrimary,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      'The exact address will be detected after you confirm.',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color:
+                                                context.colors.textSecondary,
+                                          ),
+                                    ),
+                                  ],
                                 ),
-                              )
-                            : const Icon(AppIcons.check_rounded),
-                        label: Text(
-                          _resolving
-                              ? 'Finding address...'
-                              : 'Use this $_locationLabel',
+                              ),
+                            ],
+                          ),
                         ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE53935),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        const SizedBox(height: 14),
+                        FilledButton.icon(
+                          onPressed: _resolving ? null : _confirmLocation,
+                          icon: _resolving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(AppIcons.check_rounded),
+                          label: Text(
+                            _resolving
+                                ? 'Finding address...'
+                                : 'Use this $_locationLabel',
+                          ),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1201,16 +1267,23 @@ class _MapLocationPickerScreenState
 }
 
 class _MapCircleButton extends StatelessWidget {
-  const _MapCircleButton({required this.icon, required this.onTap});
+  const _MapCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.loading = false,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
+      color: context.colors.surface,
+      shape: CircleBorder(
+        side: BorderSide(color: context.colors.line),
+      ),
       elevation: 2,
       child: InkWell(
         onTap: onTap,
@@ -1218,7 +1291,84 @@ class _MapCircleButton extends StatelessWidget {
         child: SizedBox(
           width: 42,
           height: 42,
-          child: Icon(icon, color: const Color(0xFF101828)),
+          child: loading
+              ? Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.colors.textSecondary,
+                    ),
+                  ),
+                )
+              : Icon(icon, color: context.colors.textPrimary),
+        ),
+      ),
+    );
+  }
+}
+
+/// Brand center pin with a ground shadow. Lifts while the camera moves,
+/// Uber-style, so the user feels the pin detach from the map.
+class _CenterPin extends StatelessWidget {
+  const _CenterPin({required this.lifted});
+
+  final bool lifted;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox(
+        width: 76,
+        height: 76,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              bottom: 9,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                width: lifted ? 24 : 34,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(
+                    alpha: lifted ? 0.16 : 0.28,
+                  ),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+            AnimatedSlide(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              offset: lifted ? const Offset(0, -0.22) : Offset.zero,
+              child: Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2FA56E),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(
+                        0xFF2FA56E,
+                      ).withValues(alpha: lifted ? 0.55 : 0.40),
+                      blurRadius: lifted ? 22 : 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  AppIcons.location_on_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1248,14 +1398,14 @@ class _LocationSuggestionTile extends StatelessWidget {
               Container(
                 width: 34,
                 height: 34,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF2F4F7),
+                decoration: BoxDecoration(
+                  color: context.colors.fillSubtle,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   AppIcons.location_on_outlined,
                   size: 18,
-                  color: Color(0xFF98A2B3),
+                  color: context.colors.textTertiary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1268,7 +1418,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF101828),
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -1280,7 +1430,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF98A2B3),
+                          color: context.colors.textTertiary,
                           fontWeight: FontWeight.w400,
                           fontSize: 12,
                         ),
@@ -1294,7 +1444,7 @@ class _LocationSuggestionTile extends StatelessWidget {
                 Text(
                   '${(suggestion.distanceMeters! / 1000).toStringAsFixed(suggestion.distanceMeters! >= 1000 ? 1 : 0)} km',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

@@ -19,6 +19,7 @@ import '../widgets/tracking_route_map_view.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
 import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
@@ -1195,8 +1196,8 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                           onPressed: () => Navigator.of(context).maybePop(),
                           icon: const Icon(AppIcons.arrow_back_rounded),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF101828),
+                            backgroundColor: context.colors.surfaceElevated,
+                            foregroundColor: context.colors.textPrimary,
                             shadowColor: const Color(
                               0xFF101828,
                             ).withValues(alpha: 0.10),
@@ -1290,7 +1291,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                               foregroundColor: const Color(
                                                 0xFFE23A4B,
                                               ),
-                                              backgroundColor: Colors.white,
+                                              backgroundColor: context.colors.surface,
                                             ),
                                             child: Text(
                                               _isCancelling
@@ -1357,7 +1358,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         color: Color(0xFFE23A4B),
                                       ),
                                       foregroundColor: const Color(0xFFE23A4B),
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: context.colors.surface,
                                     ),
                                     child: Text(
                                       _isCancelling
@@ -1497,7 +1498,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.92),
+                      color: context.colors.surfaceElevated.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(AppIcons.arrow_back_rounded, size: 20),
@@ -1514,7 +1515,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF111111),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                 ),
@@ -1533,8 +1534,8 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    foregroundColor: const Color(0xFF1F88C9),
-                    backgroundColor: Colors.white.withValues(alpha: 0.92),
+                    foregroundColor: context.colors.infoEmphasis,
+                    backgroundColor: context.colors.surfaceElevated.withValues(alpha: 0.92),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
                     ),
@@ -1581,10 +1582,10 @@ class _LivePickupOtpCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: verified ? const Color(0xFFEAF7EF) : const Color(0xFFFFF6DB),
+        color: verified ? context.colors.brandFill : const Color(0xFFFFF6DB),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: verified ? const Color(0xFFCDEFD9) : const Color(0xFFF3DC8C),
+          color: verified ? context.colors.brandBorder : const Color(0xFFF3DC8C),
         ),
         boxShadow: [
           BoxShadow(
@@ -1607,7 +1608,7 @@ class _LivePickupOtpCard extends StatelessWidget {
             verified ? 'Verified' : 'OTP ${shipment.pickupOtp}',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
         ],
@@ -1674,7 +1675,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                   ),
                 ),
               ],
@@ -1685,13 +1686,13 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
             onTap: onChatTap,
           ),
           const SizedBox(width: 8),
-          const Icon(AppIcons.keyboard_arrow_up_rounded, color: Colors.black54),
+          Icon(AppIcons.keyboard_arrow_up_rounded, color: context.colors.textSecondary),
         ],
       ),
     );
   }
 
-  Widget _buildSheetHandle() {
+  Widget _buildSheetHandle(BuildContext context) {
     return GestureDetector(
       onVerticalDragEnd: _handleSheetSwipe,
       behavior: HitTestBehavior.opaque,
@@ -1703,7 +1704,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
             width: 56,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFFE1E5EB),
+              color: context.colors.line,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -1719,7 +1720,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.97),
+        color: context.colors.surfaceElevated.withValues(alpha: 0.97),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
@@ -1732,7 +1733,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildSheetHandle(),
+          _buildSheetHandle(context),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
             child: _expanded
@@ -1750,7 +1751,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 18,
-                                  color: const Color(0xFF101828),
+                                  color: context.colors.textPrimary,
                                 ),
                           ),
                           const SizedBox(height: 12),
@@ -1758,7 +1759,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF2F4FA),
+                              color: context.colors.fillSubtle,
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: Column(
@@ -1777,7 +1778,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.copyWith(
-                                                  color: Colors.black45,
+                                                  color: context.colors.textSecondary,
                                                   fontSize: 11,
                                                 ),
                                           ),
@@ -1806,7 +1807,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.copyWith(
-                                                  color: Colors.black45,
+                                                  color: context.colors.textSecondary,
                                                   fontSize: 11,
                                                 ),
                                           ),
@@ -1843,7 +1844,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                   width: 52,
                                   height: 52,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF4F4F4),
+                                    color: context.colors.fillSubtle,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -1936,7 +1937,7 @@ class _CompactSummaryCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: _premiumDetailBlockDecoration(radius: 20),
+      decoration: _premiumDetailBlockDecoration(context, radius: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1951,7 +1952,7 @@ class _CompactSummaryCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                   ),
                 ),
               ),
@@ -2023,14 +2024,16 @@ class _CompactSummaryCard extends StatelessWidget {
   }
 }
 
-BoxDecoration _premiumDetailBlockDecoration({
+BoxDecoration _premiumDetailBlockDecoration(
+  BuildContext context, {
   double radius = 18,
-  Color color = Colors.white,
+  Color? color,
 }) {
+  final colors = context.colors;
   return BoxDecoration(
-    color: color,
+    color: color ?? colors.surface,
     borderRadius: BorderRadius.circular(radius),
-    border: Border.all(color: const Color(0xFFE8EDF3)),
+    border: Border.all(color: colors.line),
     boxShadow: [
       BoxShadow(
         color: const Color(0xFF101828).withValues(alpha: 0.055),
@@ -2052,16 +2055,16 @@ class _PremiumStatusPill extends StatelessWidget {
     final isCancelled = _isCancelledTrackingStatus(label);
     final backgroundColor = isCancelled
         ? const Color(0xFFFFEBEE)
-        : const Color(0xFFEAF6EF);
+        : context.colors.brandFill;
     final borderColor = isCancelled
         ? const Color(0xFFFFCDD2)
-        : const Color(0xFFCFECDC);
+        : context.colors.brandBorder;
     final dotColor = isCancelled
         ? const Color(0xFFE23A4B)
         : const Color(0xFF2FA56E);
     final textColor = isCancelled
         ? const Color(0xFFC62828)
-        : const Color(0xFF1C2430);
+        : context.colors.textPrimary;
 
     return Flexible(
       child: Container(
@@ -2121,9 +2124,9 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF7EF),
+          color: context.colors.brandFill,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFCDEFD9)),
+          border: Border.all(color: context.colors.brandBorder),
         ),
         child: Row(
           children: [
@@ -2137,7 +2140,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
               child: Text(
                 'Pickup verified with your code.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: context.colors.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                 ),
@@ -2152,9 +2155,9 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF6EF),
+        color: context.colors.brandFill,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCFECDC)),
+        border: Border.all(color: context.colors.brandBorder),
       ),
       child: Row(
         children: [
@@ -2165,7 +2168,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                 Text(
                   'Pickup Code',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF247B52),
+                    color: context.colors.brandEmphasis,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -2174,7 +2177,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                 Text(
                   'Share this with your driver when they arrive to confirm pickup.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontSize: 12,
                     height: 1.25,
                     fontWeight: FontWeight.w400,
@@ -2213,11 +2216,11 @@ class _CircleIconButton extends StatelessWidget {
       child: Container(
         width: 30,
         height: 30,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFC),
+        decoration: BoxDecoration(
+          color: context.colors.fillSubtle,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: const Color(0xFF667085)),
+        child: Icon(icon, size: 16, color: context.colors.textSecondary),
       ),
     );
   }
@@ -2231,8 +2234,8 @@ class _ExpressIconChip extends StatelessWidget {
     return Container(
       width: 28,
       height: 28,
-      decoration: const BoxDecoration(
-        color: Color(0xFFEAF6EF),
+      decoration: BoxDecoration(
+        color: context.colors.brandFill,
         shape: BoxShape.circle,
       ),
       child: const Icon(
@@ -2263,10 +2266,7 @@ class _ReactRouteRail extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _premiumDetailBlockDecoration(
-        radius: 16,
-        color: const Color(0xFFFCFDFE),
-      ),
+      decoration: _premiumDetailBlockDecoration(context, radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2331,7 +2331,7 @@ class _RouteRailStop extends StatelessWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                     fontSize: 14,
                     height: 1.3,
                     fontWeight: FontWeight.w500,
@@ -2398,7 +2398,7 @@ class _RouteRailConnector extends StatelessWidget {
         height: 30,
         margin: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFE4E7EC),
+          color: context.colors.line,
           borderRadius: BorderRadius.circular(999),
         ),
       ),
@@ -2434,7 +2434,7 @@ class _ReactInfoRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF344054),
+                  color: context.colors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -2446,7 +2446,7 @@ class _ReactInfoRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
@@ -2472,7 +2472,7 @@ class _ReactSquareIcon extends StatelessWidget {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF6EF),
+        color: context.colors.brandFill,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, size: 18, color: const Color(0xFF2FA56E)),
@@ -2490,7 +2490,7 @@ class _SoftTextPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF6EF),
+        color: context.colors.brandFill,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -2525,8 +2525,8 @@ class _DriverInitialsAvatar extends StatelessWidget {
     return Container(
       width: 38,
       height: 38,
-      decoration: const BoxDecoration(
-        color: Color(0xFFEAF6EF),
+      decoration: BoxDecoration(
+        color: context.colors.brandFill,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
@@ -2586,7 +2586,7 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Ink(
           height: 190,
-          decoration: _premiumDetailBlockDecoration(radius: 20),
+          decoration: _premiumDetailBlockDecoration(context, radius: 20),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Stack(
@@ -2652,14 +2652,14 @@ class _ShipmentTimelineCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: _premiumDetailBlockDecoration(radius: 20),
+      decoration: _premiumDetailBlockDecoration(context, radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Shipment Timeline',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
@@ -2684,7 +2684,7 @@ class _ShipmentTimelineCard extends StatelessWidget {
             Text(
               'Current Status: ${shipment.timeline[currentIndex].title}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF98A2B3),
+                color: context.colors.textTertiary,
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
               ),
@@ -2715,12 +2715,12 @@ class _HorizontalTimelineStep extends StatelessWidget {
         : Colors.white;
     final borderColor = isCompleted || isCurrent
         ? const Color(0xFF2FA56E)
-        : const Color(0xFFE4E7EC);
+        : context.colors.line;
     final textColor = isCompleted
         ? const Color(0xFF2FA56E)
         : isCurrent
         ? const Color(0xFF2FA56E)
-        : const Color(0xFFD0D5DD);
+        : context.colors.textTertiary;
 
     return SizedBox(
       width: showConnector ? 96 : 70,
@@ -2791,7 +2791,7 @@ class _HorizontalTimelineStep extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 12, left: 4, right: 4),
                 color: isCompleted
                     ? const Color(0xFF2FA56E)
-                    : const Color(0xFFF2F4F7),
+                    : context.colors.fillSubtle,
               ),
             ),
         ],
@@ -2840,14 +2840,14 @@ class _QuickStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: _premiumDetailBlockDecoration(radius: 18),
+      decoration: _premiumDetailBlockDecoration(context, radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF98A2B3),
+              color: context.colors.textTertiary,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -2860,7 +2860,7 @@ class _QuickStatCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: highlight
                   ? const Color(0xFF2FA56E)
-                  : const Color(0xFF101828),
+                  : context.colors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
@@ -2901,7 +2901,7 @@ class _PremiumRouteLine extends StatelessWidget {
               width: 2,
               height: 18,
               decoration: BoxDecoration(
-                color: const Color(0xFFD9E2EC),
+                color: context.colors.line,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -2936,10 +2936,10 @@ class _CompactPickupOtpChip extends StatelessWidget {
         ? const Color(0xFF2FA56E)
         : const Color(0xFFB88900);
     final backgroundColor = pickupOtpVerified
-        ? const Color(0xFFEAF7EF)
+        ? context.colors.brandFill
         : const Color(0xFFFFF8E6);
     final borderColor = pickupOtpVerified
-        ? const Color(0xFFCDEFD9)
+        ? context.colors.brandBorder
         : const Color(0xFFF3DC8C);
 
     return Align(
@@ -2965,7 +2965,7 @@ class _CompactPickupOtpChip extends StatelessWidget {
             Text(
               otp,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: const Color(0xFF101828),
+                color: context.colors.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1.2,
@@ -3005,7 +3005,7 @@ class _RouteStop extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF98A2B3),
+                  color: context.colors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
@@ -3016,7 +3016,7 @@ class _RouteStop extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                   fontSize: 13,
                   height: 1.25,
                   fontWeight: FontWeight.w500,
@@ -3047,9 +3047,9 @@ class _PremiumFactTile extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 74),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFECEFF3)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3057,7 +3057,7 @@ class _PremiumFactTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 15, color: const Color(0xFF667085)),
+              Icon(icon, size: 15, color: context.colors.textSecondary),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
@@ -3065,7 +3065,7 @@ class _PremiumFactTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: context.colors.textTertiary,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                   ),
@@ -3079,7 +3079,7 @@ class _PremiumFactTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -3102,23 +3102,23 @@ class _PremiumCrewCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFECEFF3)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Row(
         children: [
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF6EF),
+            decoration: BoxDecoration(
+              color: context.colors.brandFill,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               AppIcons.local_shipping_outlined,
               size: 19,
-              color: Color(0xFF247B52),
+              color: context.colors.brandEmphasis,
             ),
           ),
           const SizedBox(width: 10),
@@ -3133,7 +3133,7 @@ class _PremiumCrewCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -3144,7 +3144,7 @@ class _PremiumCrewCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                   ),
                 ),
               ],
@@ -3241,9 +3241,9 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
-        leading: const Icon(
+        leading: Icon(
           AppIcons.sync_alt_rounded,
-          color: Color(0xFF1F88C9),
+          color: context.colors.infoEmphasis,
           size: 18,
         ),
         title: Text(
@@ -3251,7 +3251,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF1C2430),
+            color: context.colors.textPrimary,
           ),
         ),
         children: [
@@ -3262,7 +3262,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: context.colors.fillSubtle,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -3271,7 +3271,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                     Text(
                       '${entry.fromDriverName.isEmpty ? 'Unassigned' : entry.fromDriverName} -> ${entry.toDriverName.isEmpty ? 'Unknown' : entry.toDriverName}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF344054),
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -3280,7 +3280,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                       Text(
                         entry.reason,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF667085),
+                          color: context.colors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -3294,7 +3294,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                           _formatTrackingDate(entry.createdAt!),
                       ].join(' - '),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF98A2B3),
+                        color: context.colors.textTertiary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -3333,7 +3333,7 @@ class _InfoGrid extends StatelessWidget {
               Text(
                 leftLabel,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black45,
+                  color: context.colors.textSecondary,
                   fontSize: 10,
                 ),
               ),
@@ -3344,7 +3344,7 @@ class _InfoGrid extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1C2430),
+                  color: context.colors.textPrimary,
                   fontSize: 13,
                 ),
               ),
@@ -3359,7 +3359,7 @@ class _InfoGrid extends StatelessWidget {
               Text(
                 rightLabel,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black45,
+                  color: context.colors.textSecondary,
                   fontSize: 10,
                 ),
               ),
@@ -3370,7 +3370,7 @@ class _InfoGrid extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1C2430),
+                  color: context.colors.textPrimary,
                   fontSize: 13,
                 ),
               ),
@@ -3456,7 +3456,7 @@ class _TimelineStepItem extends StatelessWidget {
         : const Color(0xFFE0F4E8);
     final connectorColor = step.completed
         ? const Color(0xFF2FA56E)
-        : const Color(0xFFD9E2EC);
+        : context.colors.line;
 
     return IntrinsicHeight(
       child: Row(
@@ -3501,7 +3501,7 @@ class _TimelineStepItem extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
-                    color: const Color(0xFF101828),
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -3510,7 +3510,7 @@ class _TimelineStepItem extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: context.colors.textSecondary,
                     fontSize: 11,
                     height: 1.3,
                   ),
@@ -3550,7 +3550,7 @@ class _BookingActionsSheet extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
           ),
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
@@ -3563,7 +3563,7 @@ class _BookingActionsSheet extends StatelessWidget {
                   width: 54,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE1E5EB),
+                    color: context.colors.line,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -3574,14 +3574,14 @@ class _BookingActionsSheet extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Use the live APIs for chat, invoice, rating, payment, and disputes.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: context.colors.textSecondary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -3670,9 +3670,9 @@ class _ActionSheetTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: destructive
               ? const Color(0xFFFFF5F6)
-              : const Color(0xFFF5F7FB),
+              : context.colors.canvas,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE8EDF2)),
+          border: Border.all(color: context.colors.line),
         ),
         child: Row(
           children: [
@@ -3697,22 +3697,22 @@ class _ActionSheetTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               AppIcons.chevron_right_rounded,
-              color: Color(0xFF98A2B3),
+              color: context.colors.textTertiary,
             ),
           ],
         ),
@@ -3741,7 +3741,7 @@ class _ClientBookingChatSheet extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
           ),
           padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + bottomInset),
@@ -3751,20 +3751,20 @@ class _ClientBookingChatSheet extends StatelessWidget {
                 width: 54,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
+                  color: context.colors.line,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Booking chat',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF101828),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -4045,7 +4045,7 @@ class _LegacyClientBookingChatSheetState
         padding: const EdgeInsets.all(12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
           ),
           padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + bottomInset),
@@ -4055,7 +4055,7 @@ class _LegacyClientBookingChatSheetState
                 width: 54,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE1E5EB),
+                  color: context.colors.line,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -4072,14 +4072,14 @@ class _LegacyClientBookingChatSheetState
                               ?.copyWith(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF101828),
+                                color: context.colors.textPrimary,
                               ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Thread updates over REST + Socket.IO',
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       ],
                     ),
@@ -4099,7 +4099,7 @@ class _LegacyClientBookingChatSheetState
                         child: Text(
                           'Could not load this chat.',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       )
                     : _messages.isEmpty
@@ -4107,7 +4107,7 @@ class _LegacyClientBookingChatSheetState
                         child: Text(
                           'No messages yet.',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       )
                     : ListView.separated(
@@ -4165,7 +4165,7 @@ class _LegacyClientBookingChatSheetState
                                   decoration: BoxDecoration(
                                     color: isMine
                                         ? const Color(0xFF2FA56E)
-                                        : const Color(0xFFF5F7FB),
+                                        : context.colors.canvas,
                                     borderRadius: BorderRadius.circular(18)
                                         .copyWith(
                                           bottomRight: Radius.circular(
@@ -4188,7 +4188,7 @@ class _LegacyClientBookingChatSheetState
                                               .textTheme
                                               .labelSmall
                                               ?.copyWith(
-                                                color: const Color(0xFF667085),
+                                                color: context.colors.textSecondary,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                         ),
@@ -4204,7 +4204,7 @@ class _LegacyClientBookingChatSheetState
                                             ?.copyWith(
                                               color: isMine
                                                   ? Colors.white
-                                                  : const Color(0xFF101828),
+                                                  : context.colors.textPrimary,
                                               height: 1.35,
                                             ),
                                       ),
@@ -4222,7 +4222,7 @@ class _LegacyClientBookingChatSheetState
                                             ?.copyWith(
                                               color: isMine
                                                   ? Colors.white70
-                                                  : const Color(0xFF98A2B3),
+                                                  : context.colors.textTertiary,
                                               fontSize: 10,
                                             ),
                                       ),
@@ -4252,7 +4252,7 @@ class _LegacyClientBookingChatSheetState
                   child: Text(
                     'Typing...',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF667085),
+                      color: context.colors.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -4268,7 +4268,7 @@ class _LegacyClientBookingChatSheetState
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         filled: true,
-                        fillColor: const Color(0xFFF5F7FB),
+                        fillColor: context.colors.canvas,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(999),
                           borderSide: BorderSide.none,
@@ -4738,7 +4738,7 @@ class _BookingNegotiationSheetState
         padding: const EdgeInsets.all(12),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
           ),
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
@@ -4750,7 +4750,7 @@ class _BookingNegotiationSheetState
                   width: 54,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE1E5EB),
+                    color: context.colors.line,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -4761,14 +4761,14 @@ class _BookingNegotiationSheetState
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF101828),
+                  color: context.colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Driver requests and broker offers from the client flow.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667085),
+                  color: context.colors.textSecondary,
                 ),
               ),
               const SizedBox(height: 14),
@@ -4781,7 +4781,7 @@ class _BookingNegotiationSheetState
                           _errorMessage ?? 'Could not load negotiation data.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: const Color(0xFF667085)),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       )
                     : RefreshIndicator(
@@ -5000,7 +5000,7 @@ class _NegotiationSectionTitle extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF101828),
+            color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -5008,7 +5008,7 @@ class _NegotiationSectionTitle extends StatelessWidget {
           subtitle,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+          ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
         ),
       ],
     );
@@ -5038,7 +5038,7 @@ class _NegotiationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF2FA56E), width: 1.2),
         boxShadow: [
@@ -5076,14 +5076,14 @@ class _NegotiationCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF101828),
+                        color: context.colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF667085),
+                        color: context.colors.textSecondary,
                       ),
                     ),
                   ],
@@ -5097,7 +5097,7 @@ class _NegotiationCard extends StatelessWidget {
                     amountText,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF101828),
+                      color: context.colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -5128,7 +5128,7 @@ class _NegotiationCard extends StatelessWidget {
               note,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF344054)),
+              ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
             ),
           ],
           if (actions.isNotEmpty) ...[
@@ -5195,15 +5195,15 @@ class _NegotiationEmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF2)),
+        border: Border.all(color: context.colors.line),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             AppIcons.inbox_outlined,
-            color: Color(0xFF98A2B3),
+            color: context.colors.textTertiary,
             size: 30,
           ),
           const SizedBox(height: 10),
@@ -5212,7 +5212,7 @@ class _NegotiationEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF101828),
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -5221,7 +5221,7 @@ class _NegotiationEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF667085)),
+            ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
           ),
         ],
       ),
@@ -5400,7 +5400,7 @@ class _ContactIconButton extends StatelessWidget {
       child: Container(
         width: 42,
         height: 42,
-        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: context.colors.surfaceElevated, shape: BoxShape.circle),
         child: Icon(icon, size: 18, color: const Color(0xFF2FA56E)),
       ),
     );
