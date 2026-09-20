@@ -12,6 +12,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
+import '../widgets/slide_to_action.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
@@ -21,8 +22,6 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
-  double _acceptSlide = 0;
-  bool _launchingRequest = false;
   bool _launchingActiveTrip = false;
   bool _reconcilingActiveTrip = false;
   String _reconcilingTripId = '';
@@ -473,7 +472,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     children: [
                       _DeliveryOrderCard(
                         request: newRequests.first,
-                        acceptSlide: _acceptSlide,
                         busy: _answeringRequestIds.contains(
                           newRequests.first.id,
                         ),
@@ -487,25 +485,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               newRequests.first,
                               accept: false,
                             ),
-                        onSlideChanged: (value) {
-                          if (_launchingRequest) return;
-                          setState(() => _acceptSlide = value);
-                          if (value >= 0.98) {
-                            _launchingRequest = true;
-                            Future.delayed(
-                              const Duration(milliseconds: 350),
-                              () {
-                                if (!context.mounted) return;
-                                context.push(
-                                  '/driver/request',
-                                  extra: newRequests.first.raw,
-                                );
-                                setState(() => _acceptSlide = 0);
-                                _launchingRequest = false;
-                              },
-                            );
-                          }
-                        },
                         onOpenNegotiation: () {
                           context.push(
                             '/driver/request',
@@ -634,18 +613,14 @@ class _EmptyStateCard extends StatelessWidget {
 class _DeliveryOrderCard extends StatelessWidget {
   const _DeliveryOrderCard({
     required this.request,
-    required this.acceptSlide,
     required this.busy,
-    required this.onSlideChanged,
     required this.onOpenNegotiation,
     required this.onAcceptBrokerAssigned,
     required this.onDeclineBrokerAssigned,
   });
 
   final DriverRequestItem request;
-  final double acceptSlide;
   final bool busy;
-  final ValueChanged<double> onSlideChanged;
   final VoidCallback onOpenNegotiation;
   final VoidCallback onAcceptBrokerAssigned;
   final VoidCallback onDeclineBrokerAssigned;
@@ -745,49 +720,23 @@ class _DeliveryOrderCard extends StatelessWidget {
             const _BrokerAssignedNotice(),
           ],
           const SizedBox(height: 14),
-          if (brokerAssigned) ...[
+          if (brokerAssigned)
             _BrokerAssignedActions(
               busy: busy,
               onAccept: onAcceptBrokerAssigned,
               onDecline: onDeclineBrokerAssigned,
-            ),
-          ] else ...[
+            )
+          else if (canOpen)
+            SlideToAction(
+              label: 'Swipe to accept',
+              onCompleted: onOpenNegotiation,
+            )
+          else
             Text(
-              canOpen ? 'Slide to open negotiation' : statusLabel,
+              statusLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textTertiary,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          if (canOpen && !brokerAssigned)
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 48,
-                trackShape: const RoundedRectSliderTrackShape(),
-                thumbShape: const _RequestThumbShape(),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                activeTrackColor: AppColors.line,
-                inactiveTrackColor: AppColors.line,
-                thumbColor: AppColors.surface,
-                overlayColor: Colors.transparent,
-              ),
-              child: Slider(
-                value: acceptSlide,
-                min: 0,
-                max: 1,
-                divisions: 100,
-                onChanged: (value) {
-                  onSlideChanged(value);
-                  if (value >= 0.98) {
-                    Future.delayed(const Duration(milliseconds: 250), () {
-                      if (context.mounted) {
-                        onOpenNegotiation();
-                      }
-                    });
-                  }
-                },
               ),
             ),
         ],
@@ -834,9 +783,6 @@ class _DriverRequestCard extends StatefulWidget {
 }
 
 class _DriverRequestCardState extends State<_DriverRequestCard> {
-  double _slideValue = 0;
-  bool _opening = false;
-
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
@@ -961,69 +907,17 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
               onAccept: widget.onAcceptBrokerAssigned,
               onDecline: widget.onDeclineBrokerAssigned,
             ),
+          ] else if (canOpen) ...[
+            SlideToAction(
+              label: 'Swipe to accept',
+              onCompleted: () => widget.onOpenNegotiation(request),
+            ),
           ] else ...[
             Text(
-              canOpen ? 'Swipe to open negotiation' : statusLabel,
+              statusLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textTertiary,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 48,
-                trackShape: const RoundedRectSliderTrackShape(),
-                thumbShape: const _RequestThumbShape(),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-                activeTrackColor: AppColors.line,
-                inactiveTrackColor: AppColors.line,
-                thumbColor: AppColors.surface,
-                overlayColor: Colors.transparent,
-              ),
-              child: Slider(
-                value: canOpen ? _slideValue : 0,
-                min: 0,
-                max: 1,
-                divisions: 100,
-                onChanged: canOpen
-                    ? (value) {
-                        setState(() {
-                          _slideValue = value;
-                        });
-                        if (!_opening && value >= 0.98) {
-                          _opening = true;
-                          Future.delayed(const Duration(milliseconds: 250), () {
-                            if (!mounted) return;
-                            widget.onOpenNegotiation(request);
-                            setState(() => _slideValue = 0);
-                            _opening = false;
-                          });
-                        }
-                      }
-                    : null,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: canOpen
-                    ? () => widget.onOpenNegotiation(request)
-                    : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.brand,
-                  disabledBackgroundColor: AppColors.fillSubtle,
-                  foregroundColor: AppColors.textOnBrand,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Open negotiation',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
               ),
             ),
           ],
@@ -1246,64 +1140,4 @@ _LocationTextParts _splitLocationText(String value) {
   }
 
   return _LocationTextParts(title: raw, subtitle: '');
-}
-
-class _RequestThumbShape extends SliderComponentShape {
-  const _RequestThumbShape();
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(44, 44);
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    final canvas = context.canvas;
-    final paint = Paint()..color = AppColors.surface;
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.14)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    final rect = Rect.fromCenter(center: center, width: 44, height: 44);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.shift(const Offset(0, 2)),
-        const Radius.circular(14),
-      ),
-      shadowPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(14)),
-      paint,
-    );
-
-    final iconPainter = TextPainter(
-      text: const TextSpan(
-        text: '\u27A4',
-        style: TextStyle(
-          color: AppColors.brand,
-          fontSize: 20,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: textDirection,
-    )..layout();
-    iconPainter.paint(
-      canvas,
-      Offset(
-        center.dx - iconPainter.width / 2,
-        center.dy - iconPainter.height / 2 - 1,
-      ),
-    );
-  }
 }

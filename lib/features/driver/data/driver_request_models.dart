@@ -32,6 +32,8 @@ class DriverRequestItem {
     required this.status,
     required this.driverTimedOut,
     required this.offerCount,
+    required this.respondentCountersUsed,
+    required this.maxCountersPerSide,
     required this.requestedAt,
     required this.updatedAt,
     required this.tripId,
@@ -60,6 +62,8 @@ class DriverRequestItem {
   final String status;
   final bool driverTimedOut;
   final int offerCount;
+  final int respondentCountersUsed;
+  final int maxCountersPerSide;
   final DateTime? requestedAt;
   final DateTime? updatedAt;
   final String tripId;
@@ -211,6 +215,18 @@ class DriverRequestItem {
       status: status.isEmpty ? 'requested' : status,
       driverTimedOut: driverTimedOut,
       offerCount: offerHistory.length,
+      respondentCountersUsed:
+          _readInt(json, const [
+            'respondentCountersUsed',
+            'respondent_counters_used',
+          ]) ??
+          0,
+      maxCountersPerSide:
+          _readInt(json, const [
+            'maxCountersPerSide',
+            'max_counters_per_side',
+          ]) ??
+          0,
       requestedAt: _parseDateTimeObject(
         json['createdAt'] ?? json['created_at'] ?? json['requested_at'],
       ),
@@ -256,6 +272,8 @@ class DriverRequestItem {
       status: 'requested',
       driverTimedOut: false,
       offerCount: 0,
+      respondentCountersUsed: 0,
+      maxCountersPerSide: 0,
       requestedAt: null,
       updatedAt: null,
       tripId: '',
@@ -587,6 +605,23 @@ bool _readBool(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return false;
+}
+
+int? _readInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.round();
+    }
+    final parsed = int.tryParse(value?.toString().trim() ?? '');
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 DateTime? _parseDateTimeObject(Object? value) {

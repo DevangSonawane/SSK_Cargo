@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,8 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart'
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_dashboard_models.dart';
+import '../widgets/history_segment_bar.dart';
+import '../widgets/trip_summary_card.dart';
 
 class DriverRiderScreen extends ConsumerStatefulWidget {
   const DriverRiderScreen({super.key});
@@ -109,7 +112,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
                         const SizedBox(height: 10),
                         ...group.value.asMap().entries.expand(
                           (entry) => [
-                            _TripSummaryCard(
+                            TripSummaryCard(
                               trip: entry.value,
                               onTap: () => _openTrip(context, entry.value),
                             ),
@@ -198,6 +201,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
   late final _LifecycleRefreshObserver _lifecycleRefreshObserver;
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
+  int _historyTab = 0;
 
   @override
   void initState() {
@@ -296,21 +300,9 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                 subtitle: 'Accepted deliveries will appear here live.',
               ),
               SizedBox(height: 18),
-              _SectionHeader(
-                title: 'Latest trip activity',
-                subtitle: 'Pending deliveries and settlements',
-                actionLabel: 'View all',
-              ),
+              _SegmentBarPlaceholder(),
               SizedBox(height: 12),
-              _InlineEmptyMessage(message: 'Loading active delivery...'),
-              SizedBox(height: 18),
-              _SectionHeader(
-                title: 'Deliveries done',
-                subtitle: 'Recently completed deliveries',
-                actionLabel: 'View all',
-              ),
-              SizedBox(height: 12),
-              _InlineEmptyMessage(message: 'Loading recent deliveries...'),
+              _InlineEmptyMessage(message: 'Loading trips...'),
             ],
           ),
         ),
@@ -346,110 +338,201 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
           final pendingHistory = tripFeed.where(_isPendingTrip).toList();
           final completedHistory = tripFeed.where(_isCompletedTrip).toList();
 
+          final showCompleted = _historyTab == 1;
+          final visibleTrips = showCompleted
+              ? completedHistory
+              : pendingHistory;
+
           return RefreshIndicator(
             onRefresh: _refreshDashboard,
             color: AppColors.brand,
             backgroundColor: Colors.white,
-            child: ListView(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              children: [
-                _SectionHeader(
-                  title: 'Active delivery',
-                  subtitle: 'Your live trip appears here first',
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SectionHeader(
+                          title: 'Active delivery',
+                          subtitle: 'Your live trip appears here first',
+                        ),
+                        const SizedBox(height: 12),
+                        if (currentTrip == null)
+                          const _EmptyCard(
+                            icon: AppIcons.route_rounded,
+                            title: 'No active delivery',
+                            subtitle:
+                                'Accepted deliveries will appear here live.',
+                          )
+                        else
+                          _ActiveTripCard(
+                            shipment: currentTrip,
+                            onTap: () {
+                              final tripId =
+                                  currentTrip.tripId?.trim() ?? '';
+                              final bookingId =
+                                  currentTrip.bookingId?.trim() ?? '';
+                              final effectiveTripId = tripId.isNotEmpty
+                                  ? tripId
+                                  : bookingId;
+                              if (effectiveTripId.isEmpty) {
+                                return;
+                              }
+                              context.go(
+                                '/driver/delivery-details/$effectiveTripId',
+                              );
+                            },
+                          ),
+                        const SizedBox(height: 18),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                if (currentTrip == null)
-                  const _EmptyCard(
-                    icon: AppIcons.route_rounded,
-                    title: 'No active delivery',
-                    subtitle: 'Accepted deliveries will appear here live.',
-                  )
-                else
-                  _ActiveTripCard(
-                    shipment: currentTrip,
-                    onTap: () {
-                      final tripId = currentTrip.tripId?.trim() ?? '';
-                      final bookingId = currentTrip.bookingId?.trim() ?? '';
-                      final effectiveTripId = tripId.isNotEmpty
-                          ? tripId
-                          : bookingId;
-                      if (effectiveTripId.isEmpty) {
-                        return;
-                      }
-                      context.go('/driver/delivery-details/$effectiveTripId');
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: HistorySegmentHeaderDelegate(
+                    upcomingCount: pendingHistory.length,
+                    completedCount: completedHistory.length,
+                    selectedIndex: _historyTab,
+                    onChanged: (index) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _historyTab = index);
                     },
                   ),
-                const SizedBox(height: 18),
-                _SectionHeader(
-                  title: 'Latest trip activity',
-                  subtitle: 'Pending deliveries and settlements',
-                  actionLabel: 'View all',
-                  onActionTap: () => context.push('/driver/all-trips'),
                 ),
-                const SizedBox(height: 12),
-                if (pendingHistory.isEmpty)
-                  const _InlineEmptyMessage(message: 'No latest trip yet')
-                else
-                  ...pendingHistory.asMap().entries.expand(
-                    (entry) => [
-                      _TripSummaryCard(
-                        trip: entry.value,
-                        onTap: () {
-                          final trip = entry.value;
-                          final bookingId = trip.bookingId.isNotEmpty
-                              ? trip.bookingId
-                              : trip.bookingNumber;
-                          if (bookingId.isEmpty) {
-                            return;
-                          }
-                          context.push(
-                            '/driver/deliveries/$bookingId',
-                            extra: trip.toSettlement(),
-                          );
-                        },
-                      ),
-                      if (entry.key != pendingHistory.length - 1)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                showCompleted
+                                    ? 'Recently completed deliveries'
+                                    : 'Pending deliveries and settlements',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            TextButton(
+                              onPressed: () =>
+                                  context.push('/driver/all-trips'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.textSecondary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'View all',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(
+                                    AppIcons.chevron_right_rounded,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 12),
-                    ],
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 280),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) {
+                            final offset =
+                                Tween<Offset>(
+                                  begin: Offset(
+                                    showCompleted ? 0.05 : -0.05,
+                                    0,
+                                  ),
+                                  end: Offset.zero,
+                                ).animate(animation);
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: offset,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: visibleTrips.isEmpty
+                              ? Column(
+                                  key: ValueKey(
+                                    showCompleted ? 'empty-done' : 'empty-upcoming',
+                                  ),
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _InlineEmptyMessage(
+                                      message: showCompleted
+                                          ? 'No deliveries done yet, start working'
+                                          : 'No latest trip yet',
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  key: ValueKey(
+                                    showCompleted ? 'list-done' : 'list-upcoming',
+                                  ),
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ...visibleTrips.asMap().entries.expand(
+                                      (entry) => [
+                                        TripSummaryCard(
+                                          trip: entry.value,
+                                          onTap: () {
+                                            final trip = entry.value;
+                                            final bookingId = trip
+                                                    .bookingId
+                                                    .isNotEmpty
+                                                ? trip.bookingId
+                                                : trip.bookingNumber;
+                                            if (bookingId.isEmpty) {
+                                              return;
+                                            }
+                                            context.push(
+                                              '/driver/deliveries/$bookingId',
+                                              extra: trip.toSettlement(),
+                                            );
+                                          },
+                                        ),
+                                        if (entry.key !=
+                                            visibleTrips.length - 1)
+                                          const SizedBox(height: 12),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
-                const SizedBox(height: 18),
-                _SectionHeader(
-                  title: 'Deliveries done',
-                  subtitle: 'Recently completed deliveries',
-                  actionLabel: 'View all',
-                  onActionTap: () => context.push('/driver/all-trips'),
                 ),
-                const SizedBox(height: 12),
-                if (completedHistory.isEmpty)
-                  const _InlineEmptyMessage(
-                    message: 'No deliveries done yet, start working',
-                  )
-                else
-                  ...completedHistory.asMap().entries.expand(
-                    (entry) => [
-                      _TripSummaryCard(
-                        trip: entry.value,
-                        onTap: () {
-                          final trip = entry.value;
-                          final bookingId = trip.bookingId.isNotEmpty
-                              ? trip.bookingId
-                              : trip.bookingNumber;
-                          if (bookingId.isEmpty) {
-                            return;
-                          }
-                          context.push(
-                            '/driver/deliveries/$bookingId',
-                            extra: trip.toSettlement(),
-                          );
-                        },
-                      ),
-                      if (entry.key != completedHistory.length - 1)
-                        const SizedBox(height: 12),
-                    ],
-                  ),
               ],
             ),
           );
@@ -514,358 +597,76 @@ class _LifecycleRefreshObserver extends WidgetsBindingObserver {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-    this.actionLabel,
-    this.onActionTap,
-  });
+  const _SectionHeader({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
-  final String? actionLabel;
-  final VoidCallback? onActionTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
           ),
         ),
-        if (actionLabel != null) ...[
-          const SizedBox(width: 12),
-          TextButton(
-            onPressed: onActionTap,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  actionLabel!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 2),
-                const Icon(AppIcons.chevron_right_rounded, size: 18),
-              ],
-            ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
-        ],
+        ),
       ],
     );
   }
 }
 
-class _TripSummaryCard extends StatelessWidget {
-  const _TripSummaryCard({required this.trip, required this.onTap});
-
-  final DriverTripSummary trip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final bookingId = trip.bookingId.isNotEmpty
-        ? trip.bookingId
-        : trip.bookingNumber;
-    final status = trip.status.trim().toLowerCase();
-    final statusLabel = _activeStatusLabel(trip.status);
-    final isCompleted =
-        status == 'completed' ||
-        status == 'delivered' ||
-        status == 'paid' ||
-        status == 'settled';
-    final isCancelled =
-        status == 'cancelled' ||
-        status == 'canceled' ||
-        status == 'rejected' ||
-        status == 'declined' ||
-        status == 'expired';
-    final statusColor = isCompleted
-        ? AppColors.brand
-        : isCancelled
-        ? AppColors.dangerText
-        : AppColors.brand;
-    final accentColor = isCompleted
-        ? AppColors.brandBright
-        : isCancelled
-        ? AppColors.dangerBorder
-        : AppColors.brand;
-    final bookingTime = trip.bookingTime.isNotEmpty ? trip.bookingTime : '—';
-    final distance = trip.distanceLabel;
-    final route = (trip.fromLocation.isNotEmpty || trip.toLocation.isNotEmpty)
-        ? (from: trip.fromLocation, to: trip.toLocation)
-        : (from: 'Location unavailable', to: 'Location unavailable');
-    final amountText = isCancelled
-        ? '—'
-        : trip.amount > 0
-        ? '₹${trip.amount.toStringAsFixed(0)}'
-        : '₹0';
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.divider),
-              boxShadow: AppShadows.card,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(height: 4, color: accentColor),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 13, 14, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 6,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Text(
-                                  bookingId.isEmpty
-                                      ? trip.bookingNumber
-                                      : bookingId,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelMedium
-                                      ?.copyWith(
-                                        fontFamily: 'monospace',
-                                        color: AppColors.textTertiary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                                _TripStatusBadge(
-                                  label: statusLabel,
-                                  color: statusColor,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            amountText,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: isCancelled
-                                      ? AppColors.dangerText
-                                      : statusColor,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _CompactRouteLine(
-                        color: AppColors.textPrimary,
-                        value: _locationLead(route.from),
-                      ),
-                      const SizedBox(height: 8),
-                      _CompactRouteLine(
-                        color: AppColors.brand,
-                        value: _locationLead(route.to),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(height: 1, color: AppColors.fillSubtle),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 6,
-                              children: [
-                                _TripFooterMeta(
-                                  icon: AppIcons.inventory_2_outlined,
-                                  value: trip.truckReg.isEmpty
-                                      ? 'Cargo'
-                                      : trip.truckReg,
-                                ),
-                                _TripFooterMeta(
-                                  icon: AppIcons.route_outlined,
-                                  value: distance,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: _TripFooterMeta(
-                              icon: AppIcons.schedule_rounded,
-                              value: _formatTripTimestamp(bookingTime),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TripStatusBadge extends StatelessWidget {
-  const _TripStatusBadge({required this.label, required this.color});
-
-  final String label;
-  final Color color;
+/// Sticky Upcoming / Completed switcher (Rapido "My Rides" style) with count
+/// badges. Selecting a segment swaps the trip list below it.
+/// Loading-state placeholder mirroring the segment bar shape.
+class _SegmentBarPlaceholder extends StatelessWidget {
+  const _SegmentBarPlaceholder();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.line),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactRouteLine extends StatelessWidget {
-  const _CompactRouteLine({required this.color, required this.value});
-
-  final Color color;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textHeading,
-              fontWeight: FontWeight.w800,
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TripFooterMeta extends StatelessWidget {
-  const _TripFooterMeta({required this.icon, required this.value});
-
-  final IconData icon;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textTertiary),
-        const SizedBox(width: 5),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w700,
+          const SizedBox(width: 4),
+          Expanded(
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
-
-String _locationLead(String value) {
-  final trimmed = value.trim();
-  if (trimmed.isEmpty) {
-    return '—';
-  }
-  final parts = trimmed.split(RegExp(r'\s[-|•]\s|,'));
-  final first = parts.first.trim();
-  return first.isEmpty ? trimmed : first;
-}
-
-String _activeStatusLabel(String status) {
-  final normalized = status.trim().toLowerCase();
-  if (normalized.isEmpty) {
-    return 'In Progress';
-  }
-  if (normalized == 'delivered') {
-    return 'Delivered';
-  }
-  if (normalized == 'accepted' ||
-      normalized == 'confirmed' ||
-      normalized == 'en_route_pickup' ||
-      normalized == 'en route' ||
-      normalized == 'en_route' ||
-      normalized == 'in_transit' ||
-      normalized == 'in transit' ||
-      normalized == 'picked_up' ||
-      normalized == 'picked up') {
-    return 'In Progress';
-  }
-  return normalized
-      .split(RegExp(r'[_\s-]+'))
-      .where((part) => part.isNotEmpty)
-      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
-      .join(' ');
 }
 
 String _formatDisplayDate(String value) {
@@ -892,27 +693,6 @@ String _formatDisplayDate(String value) {
   final minute = parsed.minute.toString().padLeft(2, '0');
   final period = parsed.hour >= 12 ? 'PM' : 'AM';
   return '${months[parsed.month - 1]} ${parsed.day}, $hour:$minute $period';
-}
-
-String _formatTripTimestamp(String value) {
-  final parsed = DateTime.tryParse(value);
-  if (parsed == null) {
-    return value;
-  }
-
-  final local = parsed.toLocal();
-  final now = DateTime.now();
-  final sameDay =
-      local.year == now.year &&
-      local.month == now.month &&
-      local.day == now.day;
-  final dateLabel = sameDay
-      ? 'Today'
-      : _formatDisplayDate(local.toIso8601String()).split(',').first;
-  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-  final minute = local.minute.toString().padLeft(2, '0');
-  final period = local.hour >= 12 ? 'PM' : 'AM';
-  return '$dateLabel, $hour:$minute $period';
 }
 
 String _tripDayKey(String value) {
@@ -1480,7 +1260,7 @@ class _ActiveTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusLabel = _activeStatusLabel(shipment.status);
+    final statusLabel = tripStatusLabel(shipment.status);
     final isDelivered = shipment.status.trim().toLowerCase() == 'delivered';
 
     return Material(

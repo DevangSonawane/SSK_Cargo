@@ -48,9 +48,9 @@ class _DriverOrderAcceptedScreenState
   bool _latestDriverTimedOut = false;
   DateTime? _latestUpdatedAt;
   String? _handoffTripId;
+  late DriverRequestItem _liveRequest;
 
-  DriverRequestItem get _request =>
-      DriverRequestItem.fromExtra(widget.initialRequest);
+  DriverRequestItem get _request => _liveRequest;
 
   bool get _clientDecisionReady =>
       _isAcceptedStatus(_latestStatus) ||
@@ -68,7 +68,8 @@ class _DriverOrderAcceptedScreenState
 
   bool get _shouldRefreshNegotiationState {
     final status = _latestStatus.trim().toLowerCase();
-    return status == 'pending' ||
+    return status == 'requested' ||
+        status == 'pending' ||
         status == 'countered' ||
         status == 'awaiting_confirmation';
   }
@@ -84,6 +85,7 @@ class _DriverOrderAcceptedScreenState
   void initState() {
     super.initState();
     final request = DriverRequestItem.fromExtra(widget.initialRequest);
+    _liveRequest = request;
     _counterAmount = request.amount > 0 ? request.amount : 1000;
     _latestStatus = request.status.trim().toLowerCase();
     _latestPendingConfirmationBy = request.pendingConfirmationBy
@@ -175,6 +177,39 @@ class _DriverOrderAcceptedScreenState
     return null;
   }
 
+  String _latestOfferBy(Map<String, dynamic> payload) {
+    final history = payload['offerHistory'] ?? payload['offer_history'];
+    if (history is! List || history.isEmpty) {
+      return '';
+    }
+    final last = history.last;
+    if (last is Map<String, dynamic>) {
+      return _readPayloadString(last, const [
+        'by',
+        'actor',
+        'from',
+      ]).trim().toLowerCase();
+    }
+    if (last is Map) {
+      return _readPayloadString(last.cast<String, dynamic>(), const [
+        'by',
+        'actor',
+        'from',
+      ]).trim().toLowerCase();
+    }
+    return '';
+  }
+
+  bool _isDriverTurnPayload({
+    required String status,
+    required Map<String, dynamic> payload,
+  }) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'pending' ||
+        normalized == 'requested' ||
+        _latestOfferBy(payload) == 'client';
+  }
+
   bool get _serverTimedOut => _latestDriverTimedOut || _request.driverTimedOut;
 
   DateTime? get _countdownAnchor =>
@@ -205,6 +240,9 @@ class _DriverOrderAcceptedScreenState
   }
 
   void _syncLiveRequestState(Map<String, dynamic> payload) {
+    final previousAmount = _liveRequest.amount;
+    final mergedPayload = <String, dynamic>{..._liveRequest.raw, ...payload};
+    final updatedRequest = DriverRequestItem.fromMap(mergedPayload);
     final status = _readPayloadString(payload, const [
       'status',
       'requestStatus',
@@ -224,12 +262,21 @@ class _DriverOrderAcceptedScreenState
       'updatedAt',
       'updated_at',
     ]);
+    final driverTurn = _isDriverTurnPayload(
+      status: status,
+      payload: mergedPayload,
+    );
+    final amountChanged =
+        updatedRequest.amount > 0 && updatedRequest.amount != previousAmount;
 
     if (!mounted) {
       return;
     }
 
     setState(() {
+      if (updatedRequest.id.isNotEmpty) {
+        _liveRequest = updatedRequest;
+      }
       if (status.isNotEmpty) {
         _latestStatus = status;
       }
@@ -239,6 +286,12 @@ class _DriverOrderAcceptedScreenState
       if (status == 'awaiting_confirmation' &&
           pendingConfirmationBy == 'client') {
         _counterLocked = false;
+      }
+      if (driverTurn || (_counterLocked && amountChanged)) {
+        _counterLocked = false;
+        if (updatedRequest.amount > 0) {
+          _counterAmount = updatedRequest.amount;
+        }
       }
       if (_isAcceptedStatus(status) || _isRejectedStatus(status)) {
         _counterLocked = false;
@@ -896,7 +949,8 @@ class _DriverOrderAcceptedScreenState
 
     if (_latestStatus == 'awaiting_confirmation' ||
         _latestStatus == 'countered' ||
-        _latestStatus == 'pending') {
+        _latestStatus == 'pending' ||
+        _latestStatus == 'requested') {
       _stopTripHandoff();
     }
 
@@ -914,7 +968,13 @@ class _DriverOrderAcceptedScreenState
       return;
     }
 
-    if (mounted && (status == 'countered' || status == 'accepted')) {
+    final driverTurn = _isDriverTurnPayload(
+      status: status,
+      payload: normalizedPayload,
+    );
+    if (mounted &&
+        !driverTurn &&
+        (status == 'countered' || status == 'accepted')) {
       setState(() {
         _counterLocked = true;
       });
@@ -955,6 +1015,9 @@ class _DriverOrderAcceptedScreenState
 
       if (mounted) {
         setState(() {
+          if (request.id.isNotEmpty) {
+            _liveRequest = request;
+          }
           if (request.status.trim().isNotEmpty) {
             _latestStatus = request.status.trim().toLowerCase();
           }
@@ -1204,6 +1267,7 @@ class _DriverOrderAcceptedScreenState
   Widget _buildActionPanel({
     required bool showCounterControls,
     required bool actionLocked,
+    required bool counterLimitReached,
     required double baseAmount,
     required double minOffer,
     required double maxOffer,
@@ -1327,6 +1391,74 @@ class _DriverOrderAcceptedScreenState
               subtitle:
                   'We will unlock the tracking button once the client accepts the offer.',
             ),
+          ] else if (counterLimitReached) ...[
+            Text(
+              'You have used your counter-offers - accept or decline instead.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: actionLocked
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .rejectDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                          ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.dangerText,
+                      side: const BorderSide(color: AppColors.dangerBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Decline',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: actionLocked
+                        ? null
+                        : () => _runAction(
+                            (token) => ref
+                                .read(apiClientProvider)
+                                .acceptDriverRequestAsDriver(
+                                  accessToken: token,
+                                  id: request.id,
+                                ),
+                            resolveTripOnSuccess: true,
+                          ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Accept',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ] else if (showCounterControls) ...[
             SizedBox(
               width: double.infinity,
@@ -1379,11 +1511,15 @@ class _DriverOrderAcceptedScreenState
         _waitingOnClient ||
         _awaitingDriverConfirmation;
     final brokerAssigned = request.jobRequestId.isNotEmpty;
+    final counterLimitReached =
+        request.maxCountersPerSide > 0 &&
+        request.respondentCountersUsed >= request.maxCountersPerSide;
     final showCounterControls =
         !_handoffInProgress &&
         !_awaitingDriverConfirmation &&
         !_waitingOnClient &&
-        !_counterLocked;
+        !_counterLocked &&
+        !counterLimitReached;
     final heroShowCountdown = showCounterControls && !serverTimedOut;
     final String heroTitle;
     if (serverTimedOut) {
@@ -1625,6 +1761,7 @@ class _DriverOrderAcceptedScreenState
               _buildActionPanel(
                 showCounterControls: showCounterControls,
                 actionLocked: actionLocked,
+                counterLimitReached: counterLimitReached,
                 baseAmount: baseAmount,
                 minOffer: minOffer,
                 maxOffer: maxOffer,
@@ -1685,7 +1822,7 @@ class _StatusHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 48,
@@ -2153,11 +2290,12 @@ class _CountdownClockState extends State<_CountdownClock>
   Widget build(BuildContext context) {
     final fraction = widget.fraction.clamp(0.0, 1.0).toDouble();
     final urgent = fraction <= 0.2;
-    return TweenAnimationBuilder<Color>(
-      tween: Tween<Color>(begin: _green, end: _zoneColor(fraction)),
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(begin: _green, end: _zoneColor(fraction)),
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
       builder: (context, color, child) {
+        final ringColor = color ?? _zoneColor(fraction);
         return AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
@@ -2179,20 +2317,20 @@ class _CountdownClockState extends State<_CountdownClock>
                 CustomPaint(
                   size: const Size(66, 66),
                   painter: _CountdownRingPainter(
-                    color: color,
+                    color: ringColor,
                     fraction: fraction,
                   ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.timer_outlined, size: 13, color: color),
+                    Icon(AppIcons.timer_outlined, size: 13, color: ringColor),
                     Text(
                       widget.label,
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w900,
-                        color: color,
+                        color: ringColor,
                         letterSpacing: -0.2,
                       ),
                     ),
