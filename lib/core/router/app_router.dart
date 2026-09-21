@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/app_providers.dart';
+import '../theme/app_theme.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/manage_account_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -76,6 +78,8 @@ BrokerDriver? _findBrokerDriver(List<BrokerDriver> drivers, String? id) {
   }
   return null;
 }
+
+Widget _lightFlow(Widget child) => Theme(data: AppTheme.light, child: child);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = ref.read(rootNavigatorKeyProvider);
@@ -154,28 +158,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/driver/profile',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverProfileScreen()),
+            NoTransitionPage(child: _lightFlow(const DriverProfileScreen())),
       ),
       GoRoute(
         path: '/driver/kyc-registration',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverKycRegistrationScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const DriverKycRegistrationScreen()),
+        ),
       ),
       GoRoute(
         path: '/driver/request',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: DriverOrderAcceptedScreen(initialRequest: state.extra),
+          child: _lightFlow(
+            DriverOrderAcceptedScreen(initialRequest: state.extra),
+          ),
         ),
       ),
       GoRoute(
         path: '/broker/driver-requests',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerDriverRequestsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerDriverRequestsScreen()),
+        ),
       ),
       GoRoute(
         path: '/driver/order-accepted',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: DriverOrderAcceptedScreen(initialRequest: state.extra),
+          child: _lightFlow(
+            DriverOrderAcceptedScreen(initialRequest: state.extra),
+          ),
         ),
       ),
       GoRoute(
@@ -183,7 +193,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId'] ?? '';
           return NoTransitionPage(
-            child: DriverDeliveryDetailsScreen(tripId: tripId),
+            child: _lightFlow(DriverDeliveryDetailsScreen(tripId: tripId)),
           );
         },
       ),
@@ -195,9 +205,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ? state.extra as BrokerSettlement
               : null;
           return NoTransitionPage(
-            child: DriverDeliveryHistoryDetailsScreen(
-              bookingId: bookingId,
-              initialSettlement: settlement,
+            child: _lightFlow(
+              DriverDeliveryHistoryDetailsScreen(
+                bookingId: bookingId,
+                initialSettlement: settlement,
+              ),
             ),
           );
         },
@@ -209,9 +221,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final paymentMode = state.uri.queryParameters['payment'];
           final requiresPayment = paymentMode != 'paid';
           return NoTransitionPage(
-            child: DriverDeliveryPhotoUploadScreen(
-              tripId: tripId,
-              requiresPayment: requiresPayment,
+            child: _lightFlow(
+              DriverDeliveryPhotoUploadScreen(
+                tripId: tripId,
+                requiresPayment: requiresPayment,
+              ),
             ),
           );
         },
@@ -220,30 +234,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver/payment/:tripId',
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId'] ?? '';
-          return NoTransitionPage(child: DriverPaymentScreen(tripId: tripId));
+          return NoTransitionPage(
+            child: _lightFlow(DriverPaymentScreen(tripId: tripId)),
+          );
         },
       ),
       GoRoute(
         path: '/driver/thank-you/:tripId',
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId'] ?? '';
-          return NoTransitionPage(child: DriverThankYouScreen(tripId: tripId));
+          return NoTransitionPage(
+            child: _lightFlow(DriverThankYouScreen(tripId: tripId)),
+          );
         },
       ),
       GoRoute(
         path: '/driver/all-earnings',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverAllEarningsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const DriverAllEarningsScreen()),
+        ),
       ),
       GoRoute(
         path: '/driver/all-trips',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: DriverAllTripsScreen()),
+            NoTransitionPage(child: _lightFlow(const DriverAllTripsScreen())),
       ),
       GoRoute(
         path: '/signup',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: SignupScreen()),
+            NoTransitionPage(child: _lightFlow(const SignupScreen())),
       ),
       GoRoute(
         path: '/change-password',
@@ -253,43 +272,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/manage-account',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ManageAccountScreen()),
+            NoTransitionPage(child: _lightFlow(const ManageAccountScreen())),
       ),
       GoRoute(
         path: '/broker/kyc-registration',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerKycRegistrationScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerKycRegistrationScreen()),
+        ),
       ),
       GoRoute(
         path: '/broker/notifications',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerNotificationsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerNotificationsScreen()),
+        ),
       ),
       GoRoute(
         path: '/broker/settings',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerSettingsScreen()),
+            NoTransitionPage(child: _lightFlow(const BrokerSettingsScreen())),
       ),
       GoRoute(
         path: '/broker/request',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: BrokerRequestDetailScreen(initialRequest: state.extra),
+          child: _lightFlow(
+            BrokerRequestDetailScreen(initialRequest: state.extra),
+          ),
         ),
       ),
       GoRoute(
         path: '/broker/settings/invoices',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerInvoicesScreen()),
+            NoTransitionPage(child: _lightFlow(const BrokerInvoicesScreen())),
       ),
       GoRoute(
         path: '/broker/settings/settlements',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerSettlementsScreen()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: _lightFlow(const BrokerSettlementsScreen()),
+        ),
       ),
       GoRoute(
         path: '/broker/settings/analytics',
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: BrokerAnalyticsScreen()),
+            NoTransitionPage(child: _lightFlow(const BrokerAnalyticsScreen())),
       ),
       GoRoute(
         path: '/client/settings',
@@ -412,8 +436,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final shipment = state.extra as TrackingDemoShipment?;
           return NoTransitionPage(
-            child: TrackingDetailsScreen(
-              shipment: shipment ?? trackingDemoShipments.first,
+            child: _lightFlow(
+              TrackingDetailsScreen(
+                shipment: shipment ?? trackingDemoShipments.first,
+              ),
             ),
           );
         },
@@ -423,31 +449,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final existingTruck = state.extra as BrokerVehicle?;
           return NoTransitionPage(
-            child: AddTruckScreen(existingTruck: existingTruck),
+            child: _lightFlow(AddTruckScreen(existingTruck: existingTruck)),
           );
         },
       ),
       GoRoute(
         path: '/broker/vehicles/:id/assign',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: BrokerTruckAssignScreen(
-            truckId: state.pathParameters['id'] ?? '',
+          child: _lightFlow(
+            BrokerTruckAssignScreen(truckId: state.pathParameters['id'] ?? ''),
           ),
         ),
       ),
       GoRoute(
         path: '/broker/vehicles/:id/location',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: BrokerTruckLocationScreen(
-            truckId: state.pathParameters['id'] ?? '',
+          child: _lightFlow(
+            BrokerTruckLocationScreen(
+              truckId: state.pathParameters['id'] ?? '',
+            ),
           ),
         ),
       ),
       GoRoute(
         path: '/broker/vehicles/:id/history',
         pageBuilder: (context, state) => NoTransitionPage(
-          child: BrokerTruckHistoryScreen(
-            truckId: state.pathParameters['id'] ?? '',
+          child: _lightFlow(
+            BrokerTruckHistoryScreen(truckId: state.pathParameters['id'] ?? ''),
           ),
         ),
       ),
@@ -460,7 +488,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final existingDriver = state.extra as BrokerDriver?;
           return NoTransitionPage(
-            child: AddDriverScreen(existingDriver: existingDriver),
+            child: _lightFlow(AddDriverScreen(existingDriver: existingDriver)),
           );
         },
       ),
@@ -479,7 +507,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 driverId,
               ) ??
               (throw StateError('Driver not found'));
-          return NoTransitionPage(child: DriverDetailScreen(driver: driver));
+          return NoTransitionPage(
+            child: _lightFlow(DriverDetailScreen(driver: driver)),
+          );
         },
       ),
       StatefulShellRoute.indexedStack(

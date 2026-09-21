@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../data/driver_dashboard_models.dart';
+import '../widgets/driver_currency.dart';
 
 class DriverAllEarningsScreen extends ConsumerWidget {
   const DriverAllEarningsScreen({super.key});
@@ -14,183 +16,186 @@ class DriverAllEarningsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: SafeArea(
-        child: dashboardAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                error.toString().replaceFirst('Exception: ', ''),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.dangerText),
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: SafeArea(
+          child: dashboardAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  error.toString().replaceFirst('Exception: ', ''),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.dangerText),
+                ),
               ),
             ),
-          ),
-          data: (dashboard) {
-            final history = dashboard.history;
-            final total = history.fold<double>(
-              0,
-              (sum, item) => sum + item.netEarnings,
-            );
-            final grouped = _groupByMonth(history);
-            final months = grouped.length;
-            final deliveries = history.length;
-            final average = deliveries == 0 ? 0 : total / deliveries;
+            data: (dashboard) {
+              final history = dashboard.history;
+              final total = history.fold<double>(
+                0,
+                (sum, item) => sum + item.netEarnings,
+              );
+              final grouped = _groupByMonth(history);
+              final months = grouped.length;
+              final deliveries = history.length;
+              final average = deliveries == 0 ? 0.0 : total / deliveries;
 
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: AppShadows.card,
-                    ),
-                    child: Row(
-                      children: [
-                        InkWell(
-                          onTap: () => context.pop(),
-                          borderRadius: BorderRadius.circular(999),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.fillSubtle,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Icon(
-                              AppIcons.arrow_back_rounded,
-                              color: AppColors.textPrimary,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          'All earnings',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w900,
-                              ),
-                        ),
-                        const Spacer(),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: AppColors.divider),
-                            boxShadow: AppShadows.card,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'All earnings summary',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'A complete view of your delivery earnings across all months.',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: AppColors.textSecondary,
-                                      height: 1.4,
-                                    ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Divider(
-                                height: 1,
-                                thickness: 1,
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: AppShadows.card,
+                      ),
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: () => context.pop(),
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
                                 color: AppColors.fillSubtle,
+                                borderRadius: BorderRadius.circular(999),
                               ),
-                              const SizedBox(height: 14),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _SummaryChip(
-                                      label: 'Months',
-                                      value: '$months',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _SummaryChip(
-                                      label: 'Deliveries',
-                                      value: '$deliveries',
-                                    ),
-                                  ),
-                                ],
+                              child: const Icon(
+                                AppIcons.arrow_back_rounded,
+                                color: AppColors.textPrimary,
+                                size: 20,
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _SummaryChip(
-                                      label: 'Total earned',
-                                      value: '₹${total.toStringAsFixed(0)}',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _SummaryChip(
-                                      label: 'Average',
-                                      value: '₹${average.toStringAsFixed(0)}',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        if (grouped.isEmpty)
-                          const _EmptyHistory()
-                        else
-                          ...grouped.entries.expand(
-                            (entry) => [
-                              _MonthlyEarningsSection(
-                                month: entry.key,
-                                deliveries: entry.value,
-                              ),
-                              if (entry.key != grouped.keys.last)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 14),
-child: Divider(
+                          const Spacer(),
+                          Text(
+                            'All earnings',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                          const Spacer(),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: AppColors.divider),
+                              boxShadow: AppShadows.card,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'All earnings summary',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'A complete view of your delivery earnings across all months.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.fillSubtle,
+                                ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _SummaryChip(
+                                        label: 'Months',
+                                        value: '$months',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _SummaryChip(
+                                        label: 'Deliveries',
+                                        value: '$deliveries',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _SummaryChip(
+                                        label: 'Total earned',
+                                        value: formatDriverCurrency(total),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _SummaryChip(
+                                        label: 'Average',
+                                        value: formatDriverCurrency(average),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          if (grouped.isEmpty)
+                            const _EmptyHistory()
+                          else
+                            ...grouped.entries.expand(
+                              (entry) => [
+                                _MonthlyEarningsSection(
+                                  month: entry.key,
+                                  deliveries: entry.value,
+                                ),
+                                if (entry.key != grouped.keys.last)
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 14),
+                                    child: Divider(
                                       height: 1,
                                       thickness: 1,
                                       color: AppColors.fillSubtle,
                                     ),
-                                ),
-                            ],
-                          ),
-                      ],
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -272,7 +277,7 @@ class _MonthlyEarningsSection extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '₹${total.toStringAsFixed(0)}',
+                formatDriverCurrency(total),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -322,7 +327,7 @@ class _DeliveryEarningRow extends StatelessWidget {
           ),
         ),
         Text(
-          '₹${amount.toStringAsFixed(0)}',
+          formatDriverCurrency(amount),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w800,

@@ -5,21 +5,36 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../widgets/client_flow_widgets.dart';
 
-class ClientShell extends ConsumerWidget {
+class ClientShell extends ConsumerStatefulWidget {
   const ClientShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientShell> createState() => _ClientShellState();
+}
+
+class _ClientShellState extends ConsumerState<ClientShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(bottomNavVisibleProvider.notifier).state = true;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isBottomNavVisible = ref.watch(bottomNavVisibleProvider);
-    final currentIndex = _visibleTabIndex(navigationShell.currentIndex);
+    final currentIndex = _visibleTabIndex(widget.navigationShell.currentIndex);
 
     return Scaffold(
       extendBody: true,
       body: Stack(
         children: [
-          Positioned.fill(child: navigationShell),
+          Positioned.fill(child: widget.navigationShell),
           if (isBottomNavVisible)
             Positioned(
               left: 0,
@@ -29,13 +44,13 @@ class ClientShell extends ConsumerWidget {
                 currentIndex: currentIndex,
                 onTap: (index) {
                   final branchIndex = _branchIndexForVisibleTab(index);
-                  if (branchIndex == navigationShell.currentIndex) {
+                  if (branchIndex == widget.navigationShell.currentIndex) {
                     return;
                   }
-                  navigationShell.goBranch(
+                  widget.navigationShell.goBranch(
                     branchIndex,
                     initialLocation:
-                        branchIndex == navigationShell.currentIndex,
+                        branchIndex == widget.navigationShell.currentIndex,
                   );
                 },
               ),

@@ -380,7 +380,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
     }
 
     return GoogleMap(
-      style: ClientMapTheme.styleFor(context),
+      style: widget.liveMode ? null : ClientMapTheme.styleFor(context),
       initialCameraPosition: CameraPosition(
         target: _defaultCenter(),
         zoom: points.length == 1 ? 11 : 7,
@@ -528,9 +528,9 @@ class _EmptyMapState extends StatelessWidget {
               Text(
                 'Location coordinates will appear once the booking has pickup and drop details.',
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -974,9 +974,9 @@ class _EmptyLiveLocationState extends StatelessWidget {
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
               ),
             ],
           ),

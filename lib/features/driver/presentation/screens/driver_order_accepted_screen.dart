@@ -17,6 +17,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
+import '../widgets/driver_currency.dart';
 
 class DriverOrderAcceptedScreen extends ConsumerStatefulWidget {
   const DriverOrderAcceptedScreen({super.key, this.initialRequest});
@@ -1300,7 +1301,7 @@ class _DriverOrderAcceptedScreenState
                   ),
                 ),
                 Text(
-                  'Base ₹${baseAmount.toStringAsFixed(0)}',
+                  'Base ${formatDriverCurrency(baseAmount)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textTertiary,
                     fontWeight: FontWeight.w700,
@@ -1322,7 +1323,7 @@ class _DriverOrderAcceptedScreenState
                 ),
                 const SizedBox(width: 2),
                 Text(
-                  selectedAmount.toStringAsFixed(0),
+                  formatDriverAmount(selectedAmount),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     color: AppColors.brand,
                     fontWeight: FontWeight.w900,
@@ -1339,7 +1340,7 @@ class _DriverOrderAcceptedScreenState
               divisions: 24,
               activeColor: AppColors.brand,
               inactiveColor: AppColors.line,
-              label: '₹${selectedAmount.toStringAsFixed(0)}',
+              label: formatDriverCurrency(selectedAmount),
               onChanged: actionLocked
                   ? null
                   : (value) {
@@ -1352,13 +1353,13 @@ class _DriverOrderAcceptedScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '₹${minOffer.toStringAsFixed(0)}',
+                  formatDriverCurrency(minOffer),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textTertiary,
                   ),
                 ),
                 Text(
-                  '₹${maxOffer.toStringAsFixed(0)}',
+                  formatDriverCurrency(maxOffer),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textTertiary,
                   ),
@@ -1580,7 +1581,7 @@ class _DriverOrderAcceptedScreenState
               _RequestRouteCard(
                 refText: request.displayRef,
                 amountLabel: 'AGREED AMOUNT',
-                amountText: '₹${baseAmount.toStringAsFixed(0)}',
+                amountText: formatDriverCurrency(baseAmount),
                 pickup: request.pickup.isEmpty ? '-' : request.pickup,
                 drop: request.drop.isEmpty ? '-' : request.drop,
               ),
@@ -1731,7 +1732,7 @@ class _DriverOrderAcceptedScreenState
               _RequestRouteCard(
                 refText: request.displayRef,
                 amountLabel: 'BASE OFFER',
-                amountText: '₹${baseAmount.toStringAsFixed(0)}',
+                amountText: formatDriverCurrency(baseAmount),
                 pickup: request.pickup.isEmpty ? '-' : request.pickup,
                 drop: request.drop.isEmpty ? '-' : request.drop,
                 metaChips: [

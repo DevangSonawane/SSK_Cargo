@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -119,99 +120,103 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
         backgroundColor: const Color(0xFFF5F7FB),
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(AppIcons.arrow_back_rounded),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF5F7FB),
+          foregroundColor: const Color(0xFF182344),
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(AppIcons.arrow_back_rounded),
+          ),
+          title: const Text('Change Password'),
         ),
-        title: const Text('Change Password'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE8EDF2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _passwordField(
-                      label: 'Current password',
-                      hint: 'Enter your current password',
-                      controller: _currentPasswordController,
-                      obscureText: _obscureCurrent,
-                      onToggle: () =>
-                          setState(() => _obscureCurrent = !_obscureCurrent),
-                    ),
-                    const SizedBox(height: 16),
-                    _passwordField(
-                      label: 'New password',
-                      hint: 'Enter your new password',
-                      controller: _newPasswordController,
-                      obscureText: _obscureNew,
-                      onChanged: (_) => setState(() {}),
-                      onToggle: () =>
-                          setState(() => _obscureNew = !_obscureNew),
-                    ),
-                    const SizedBox(height: 18),
-                    _PasswordStrengthMeter(
-                      password: _newPasswordController.text,
-                    ),
-                    const SizedBox(height: 18),
-                    _passwordField(
-                      label: 'Confirm new password',
-                      hint: 'Confirm your new password',
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirm,
-                      onToggle: () =>
-                          setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _isSubmitting ? null : _submit,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF2FA56E),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Change Password'),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE8EDF2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _passwordField(
+                        label: 'Current password',
+                        hint: 'Enter your current password',
+                        controller: _currentPasswordController,
+                        obscureText: _obscureCurrent,
+                        onToggle: () =>
+                            setState(() => _obscureCurrent = !_obscureCurrent),
+                      ),
+                      const SizedBox(height: 16),
+                      _passwordField(
+                        label: 'New password',
+                        hint: 'Enter your new password',
+                        controller: _newPasswordController,
+                        obscureText: _obscureNew,
+                        onChanged: (_) => setState(() {}),
+                        onToggle: () =>
+                            setState(() => _obscureNew = !_obscureNew),
+                      ),
+                      const SizedBox(height: 18),
+                      _PasswordStrengthMeter(
+                        password: _newPasswordController.text,
+                      ),
+                      const SizedBox(height: 18),
+                      _passwordField(
+                        label: 'Confirm new password',
+                        hint: 'Confirm your new password',
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirm,
+                        onToggle: () =>
+                            setState(() => _obscureConfirm = !_obscureConfirm),
+                      ),
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _isSubmitting ? null : _submit,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2FA56E),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Change Password'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -242,6 +247,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           controller: controller,
           obscureText: obscureText,
           onChanged: onChanged,
+          cursorColor: const Color(0xFF2FA56E),
           style: const TextStyle(color: Color(0xFF182344), fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,

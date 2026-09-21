@@ -3230,10 +3230,12 @@ class DriverListTile extends StatelessWidget {
   const DriverListTile({
     super.key,
     required this.driver,
+    this.onEdit,
     required this.onRemove,
   });
 
   final BrokerDriver driver;
+  final VoidCallback? onEdit;
   final VoidCallback onRemove;
 
   @override
@@ -3367,6 +3369,17 @@ class DriverListTile extends StatelessWidget {
 
               final footer = Row(
                 children: [
+                  if (onEdit != null) ...[
+                    Expanded(
+                      child: _DriverFooterButton(
+                        icon: AppIcons.edit_rounded,
+                        label: 'Edit',
+                        iconColor: AppColors.brand,
+                        onTap: onEdit,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Expanded(
                     child: _DriverFooterButton(
                       icon: AppIcons.call_rounded,
@@ -3381,6 +3394,15 @@ class DriverListTile extends StatelessWidget {
                               );
                             }
                           : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _DriverFooterButton(
+                      icon: AppIcons.delete_outline_rounded,
+                      label: 'Remove',
+                      iconColor: AppColors.dangerIcon,
+                      onTap: onRemove,
                     ),
                   ),
                 ],

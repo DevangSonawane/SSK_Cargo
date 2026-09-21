@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/chat_models.dart';
 import '../widgets/booking_chat_view.dart';
@@ -51,68 +52,75 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     final isClient = widget.audience == ChatAudience.client;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        title: const Text('Chats'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-      ),
-      body: FutureBuilder<List<ChatThreadSummary>>(
-        future: _threadsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _EmptyState(
-              icon: AppIcons.refresh_rounded,
-              message: "Couldn't load your chats",
-              action: TextButton(onPressed: _retry, child: const Text('Retry')),
-            );
-          }
-          final threads = snapshot.data ?? const <ChatThreadSummary>[];
-          if (threads.isEmpty) {
-            return const _EmptyState(
-              icon: AppIcons.chat_bubble_outline_rounded,
-              message: 'No chats yet',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _retry(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: threads.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final thread = threads[index];
-                final directPath = widget.audience == ChatAudience.broker
-                    ? '/broker/chats/direct/${thread.threadId}'
-                    : '/driver/chats/direct/${thread.threadId}';
-                return _ChatThreadTile(
-                  thread: thread,
-                  displayName: thread.displayNameFor(widget.audience),
-                  onTap: () {
-                    if (thread.isDirect || thread.bookingId.isEmpty) {
-                      if (!isClient && thread.threadId.isNotEmpty) {
-                        context.push(directPath);
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB),
+        appBar: AppBar(
+          title: const Text('Chats'),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+        ),
+        body: FutureBuilder<List<ChatThreadSummary>>(
+          future: _threadsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return _EmptyState(
+                icon: AppIcons.refresh_rounded,
+                message: "Couldn't load your chats",
+                action: TextButton(
+                  onPressed: _retry,
+                  child: const Text('Retry'),
+                ),
+              );
+            }
+            final threads = snapshot.data ?? const <ChatThreadSummary>[];
+            if (threads.isEmpty) {
+              return const _EmptyState(
+                icon: AppIcons.chat_bubble_outline_rounded,
+                message: 'No chats yet',
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async => _retry(),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: threads.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final thread = threads[index];
+                  final directPath = widget.audience == ChatAudience.broker
+                      ? '/broker/chats/direct/${thread.threadId}'
+                      : '/driver/chats/direct/${thread.threadId}';
+                  return _ChatThreadTile(
+                    thread: thread,
+                    displayName: thread.displayNameFor(widget.audience),
+                    onTap: () {
+                      if (thread.isDirect || thread.bookingId.isEmpty) {
+                        if (!isClient && thread.threadId.isNotEmpty) {
+                          context.push(directPath);
+                        }
+                        return;
                       }
-                      return;
-                    }
-                    context.push(
-                      isClient
-                          ? '/chats/${thread.bookingId}'
-                          : widget.audience == ChatAudience.broker
-                          ? '/broker/chats/${thread.bookingId}'
-                          : '/driver/chats/${thread.bookingId}',
-                    );
-                  },
-                );
-              },
-            ),
-          );
-        },
+                      context.push(
+                        isClient
+                            ? '/chats/${thread.bookingId}'
+                            : widget.audience == ChatAudience.broker
+                            ? '/broker/chats/${thread.bookingId}'
+                            : '/driver/chats/${thread.bookingId}',
+                      );
+                    },
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -142,49 +150,52 @@ class ChatDetailScreen extends ConsumerWidget {
         ? _loadThreadSummary(ref, session.tokens.accessToken, threadId!.trim())
         : Future<ChatThreadSummary?>.value(null);
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          isDirect
-              ? 'Direct chat'
-              : (isClient ? 'Booking chat' : 'Client chat'),
-        ),
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        bottom: !keyboardOpen,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, keyboardOpen ? 0 : 12),
-          child: Column(
-            children: [
-              if (isDirect)
-                FutureBuilder<ChatThreadSummary?>(
-                  future: summaryFuture,
-                  builder: (context, snapshot) {
-                    final summary = snapshot.data;
-                    final displayName = summary == null
-                        ? 'Direct message'
-                        : summary.displayNameFor(audience);
-                    return _DirectChatHeader(
-                      displayName: displayName,
-                      isLocked: summary?.isLocked ?? false,
-                      stage: summary?.stage ?? '',
-                    );
-                  },
+        appBar: AppBar(
+          title: Text(
+            isDirect
+                ? 'Direct chat'
+                : (isClient ? 'Booking chat' : 'Client chat'),
+          ),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+        ),
+        body: SafeArea(
+          bottom: !keyboardOpen,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, keyboardOpen ? 0 : 12),
+            child: Column(
+              children: [
+                if (isDirect)
+                  FutureBuilder<ChatThreadSummary?>(
+                    future: summaryFuture,
+                    builder: (context, snapshot) {
+                      final summary = snapshot.data;
+                      final displayName = summary == null
+                          ? 'Direct message'
+                          : summary.displayNameFor(audience);
+                      return _DirectChatHeader(
+                        displayName: displayName,
+                        isLocked: summary?.isLocked ?? false,
+                        stage: summary?.stage ?? '',
+                      );
+                    },
+                  ),
+                Expanded(
+                  child: BookingChatView(
+                    bookingId: bookingId,
+                    threadId: threadId,
+                    accessToken: session.tokens.accessToken,
+                    currentUserId: session.user.id,
+                    allowBotActions: isClient,
+                  ),
                 ),
-              Expanded(
-                child: BookingChatView(
-                  bookingId: bookingId,
-                  threadId: threadId,
-                  accessToken: session.tokens.accessToken,
-                  currentUserId: session.user.id,
-                  allowBotActions: isClient,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

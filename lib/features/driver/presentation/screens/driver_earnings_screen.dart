@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../data/driver_dashboard_models.dart';
+import '../widgets/driver_currency.dart';
 
 class DriverEarningsScreen extends ConsumerStatefulWidget {
   const DriverEarningsScreen({super.key});
@@ -138,7 +139,7 @@ class _HeroBalanceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '₹${total.toStringAsFixed(0)}',
+                  formatDriverCurrency(total),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -249,7 +250,7 @@ class _EarningsStatsGrid extends StatelessWidget {
           child: _EarningsStatTile(
             icon: AppIcons.currency_rupee_rounded,
             label: 'This Month',
-            value: '₹${thisMonth.toStringAsFixed(0)}',
+            value: formatDriverCurrency(thisMonth),
           ),
         ),
         const SizedBox(width: 10),
@@ -257,7 +258,7 @@ class _EarningsStatsGrid extends StatelessWidget {
           child: _EarningsStatTile(
             icon: AppIcons.account_balance_wallet_outlined,
             label: 'Last Month',
-            value: '₹${lastMonth.toStringAsFixed(0)}',
+            value: formatDriverCurrency(lastMonth),
           ),
         ),
         const SizedBox(width: 10),
@@ -335,7 +336,7 @@ class _AveragePerDeliveryText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Average per delivery: ₹${average.toStringAsFixed(0)}',
+      'Average per delivery: ${formatDriverCurrency(average)}',
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: AppColors.textSecondary,

@@ -251,6 +251,8 @@ class _BrokerActiveJobsScreenState
                       minLines: 3,
                       maxLines: 4,
                       maxLength: 2000,
+                      cursorColor: AppColors.brand,
+                      style: const TextStyle(color: AppColors.textPrimary),
                       decoration: _sheetInputDecoration(
                         'Description',
                       ).copyWith(hintText: 'Describe what went wrong...'),
@@ -411,6 +413,8 @@ class _BrokerActiveJobsScreenState
                       controller: reasonController,
                       minLines: 2,
                       maxLines: 3,
+                      cursorColor: AppColors.brand,
+                      style: const TextStyle(color: AppColors.textPrimary),
                       decoration: _sheetInputDecoration(
                         'Reason',
                       ).copyWith(hintText: 'Optional reason for reassignment'),
@@ -1252,6 +1256,8 @@ class _ActiveIncident {
 InputDecoration _sheetInputDecoration(String label) {
   return InputDecoration(
     labelText: label,
+    labelStyle: const TextStyle(color: AppColors.textSecondary),
+    hintStyle: const TextStyle(color: AppColors.textTertiary),
     filled: true,
     fillColor: AppColors.fillSubtle,
     border: OutlineInputBorder(

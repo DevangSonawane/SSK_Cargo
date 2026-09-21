@@ -75,6 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final role = appRoleFromApiRole(session.user.role);
       ref.read(selectedRoleProvider.notifier).state = role;
+      if (role == AppRole.client) {
+        ref.read(bottomNavVisibleProvider.notifier).state = true;
+      }
 
       if (!mounted) {
         return;
@@ -136,6 +139,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final role = appRoleFromApiRole(session.user.role);
       ref.read(selectedRoleProvider.notifier).state = role;
+      if (role == AppRole.client) {
+        ref.read(bottomNavVisibleProvider.notifier).state = true;
+      }
 
       if (!mounted) {
         return;
@@ -248,6 +254,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
+                          style: const TextStyle(color: Color(0xFF1B2A3A)),
+                          cursorColor: Color(0xFF2FA56E),
                           decoration: _pillDecoration(
                             label: 'Email',
                             icon: AppIcons.email_rounded,
@@ -259,6 +267,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _submit(),
+                          style: const TextStyle(color: Color(0xFF1B2A3A)),
+                          cursorColor: Color(0xFF2FA56E),
                           decoration: _pillDecoration(
                             label: 'Password',
                             icon: AppIcons.lock_rounded,
@@ -331,10 +341,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
-                                  minimumSize: const Size(
-                                    double.infinity,
-                                    0,
-                                  ),
+                                  minimumSize: const Size(double.infinity, 0),
                                   shape: const StadiumBorder(),
                                 ),
                                 child: AnimatedSwitcher(
@@ -381,10 +388,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
-                                  minimumSize: const Size(
-                                    double.infinity,
-                                    0,
-                                  ),
+                                  minimumSize: const Size(double.infinity, 0),
                                   shape: const StadiumBorder(),
                                 ),
                                 child: SvgPicture.asset(
@@ -457,9 +461,13 @@ InputDecoration _pillDecoration({
   return InputDecoration(
     labelText: label,
     prefixIcon: Icon(icon),
+    prefixIconColor: const Color(0xFF667085),
+    suffixIconColor: const Color(0xFF667085),
     suffixIcon: suffixIcon,
     filled: true,
     fillColor: const Color(0xFFF7FAFD),
+    labelStyle: const TextStyle(color: Color(0xFF667085)),
+    floatingLabelStyle: const TextStyle(color: Color(0xFF2FA56E)),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(999),
       borderSide: BorderSide.none,

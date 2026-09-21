@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -60,55 +61,58 @@ class BrokerShell extends ConsumerWidget {
       _ => null,
     };
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: AppColors.canvas,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Column(
-              children: [
-                if (showHeader) ...[
-                  BrokerHeader(
-                    highlighted: true,
-                    title: headerTitle,
-                    subtitle: headerSubtitle,
-                    pendingRequestsCount: pendingCount,
-                    onAvatarTap: () => context.push('/broker/profile'),
-                    onNotificationsTap: () =>
-                        context.push('/broker/notifications'),
-                    onChatTap: () => context.push('/broker/chats'),
-                    chatUnreadCount: ref.watch(chatUnreadCountProvider),
-                  ),
-                  const SizedBox(height: 8),
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
+        extendBody: true,
+        backgroundColor: AppColors.canvas,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Column(
+                children: [
+                  if (showHeader) ...[
+                    BrokerHeader(
+                      highlighted: true,
+                      title: headerTitle,
+                      subtitle: headerSubtitle,
+                      pendingRequestsCount: pendingCount,
+                      onAvatarTap: () => context.push('/broker/profile'),
+                      onNotificationsTap: () =>
+                          context.push('/broker/notifications'),
+                      onChatTap: () => context.push('/broker/chats'),
+                      chatUnreadCount: ref.watch(chatUnreadCountProvider),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Expanded(child: navigationShell),
                 ],
-                Expanded(child: navigationShell),
-              ],
-            ),
-          ),
-          if (showBottomNav)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: BrokerBottomBar(
-                currentIndex: navigationShell.currentIndex,
-                pendingRequestsCount: pendingCount,
-                activeJobsCount: activeJobsCount,
-                onTap: (index) {
-                  final route = switch (index) {
-                    0 => '/broker/home',
-                    1 => '/broker/active-jobs',
-                    2 => '/broker/vehicles',
-                    3 => '/broker/tracking',
-                    4 => '/broker/history',
-                    _ => '/broker/home',
-                  };
-                  context.go(route);
-                },
               ),
             ),
-        ],
+            if (showBottomNav)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: BrokerBottomBar(
+                  currentIndex: navigationShell.currentIndex,
+                  pendingRequestsCount: pendingCount,
+                  activeJobsCount: activeJobsCount,
+                  onTap: (index) {
+                    final route = switch (index) {
+                      0 => '/broker/home',
+                      1 => '/broker/active-jobs',
+                      2 => '/broker/vehicles',
+                      3 => '/broker/tracking',
+                      4 => '/broker/history',
+                      _ => '/broker/home',
+                    };
+                    context.go(route);
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

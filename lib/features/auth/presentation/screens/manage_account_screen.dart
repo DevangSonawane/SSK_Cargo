@@ -732,6 +732,7 @@ class _ProfileTextField extends StatelessWidget {
                   maxLines: maxLines,
                   textCapitalization: textCapitalization,
                   validator: validator,
+                  cursorColor: AppColors.brand,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,

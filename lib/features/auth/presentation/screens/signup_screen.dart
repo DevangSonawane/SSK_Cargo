@@ -240,6 +240,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   controller: _nameController,
                                   keyboardType: TextInputType.name,
                                   textInputAction: TextInputAction.next,
+                                  cursorColor: const Color(0xFF149468),
+                                  style: const TextStyle(
+                                    color: Color(0xFF101828),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your full name',
                                     icon: AppIcons.person_outline_rounded,
@@ -253,6 +259,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
+                                  cursorColor: const Color(0xFF149468),
+                                  style: const TextStyle(
+                                    color: Color(0xFF101828),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your email address',
                                     icon: AppIcons.mail_outline_rounded,
@@ -266,6 +278,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   controller: _phoneController,
                                   keyboardType: TextInputType.phone,
                                   textInputAction: TextInputAction.next,
+                                  cursorColor: const Color(0xFF149468),
+                                  style: const TextStyle(
+                                    color: Color(0xFF101828),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   decoration: _inputDecoration(
                                     hintText: 'Enter your phone number',
                                     icon: AppIcons.phone_outlined,
@@ -280,6 +298,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   controller: _passwordController,
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
+                                  cursorColor: const Color(0xFF149468),
+                                  style: const TextStyle(
+                                    color: Color(0xFF101828),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   onSubmitted: (_) => _submit(),
                                   decoration: _inputDecoration(
                                     hintText: 'Create a password',
@@ -295,6 +319,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                         _obscurePassword
                                             ? AppIcons.visibility_off_outlined
                                             : AppIcons.visibility_outlined,
+                                        color: const Color(0xFF475467),
                                       ),
                                     ),
                                   ),
@@ -522,10 +547,11 @@ InputDecoration _inputDecoration({
 }) {
   return InputDecoration(
     hintText: hintText,
-    prefixIcon: Icon(icon, size: 20),
+    prefixIcon: Icon(icon, size: 20, color: const Color(0xFF667085)),
     suffixIcon: suffix,
     filled: true,
     fillColor: const Color(0xFFFAFCFE),
+    hintStyle: const TextStyle(color: Color(0xFF98A2B3), fontSize: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: const BorderSide(color: Color(0xFFD9E2EA)),

@@ -13,7 +13,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-
 enum _KycStep { details, documents, review, submitted }
 
 class BrokerKycRegistrationScreen extends ConsumerStatefulWidget {
@@ -1004,9 +1003,7 @@ class _BrokerKycRegistrationScreenState
         ? 'Your KYC has been verified. Your broker account is now active.'
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
     final currentStatus = isApproved ? 'Verified' : 'Pending Review';
-    final statusColor = isApproved
-        ? AppColors.brand
-        : AppColors.brand;
+    final statusColor = isApproved ? AppColors.brand : AppColors.brand;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1031,17 +1028,13 @@ class _BrokerKycRegistrationScreenState
                 width: 112,
                 height: 112,
                 decoration: BoxDecoration(
-                  color: isApproved
-                      ? AppColors.brandFill
-                      : AppColors.brandFill,
+                  color: isApproved ? AppColors.brandFill : AppColors.brandFill,
                   shape: BoxShape.circle,
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: isApproved
-                        ? AppColors.brand
-                        : AppColors.brand,
+                    color: isApproved ? AppColors.brand : AppColors.brand,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -1060,9 +1053,7 @@ class _BrokerKycRegistrationScreenState
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: isApproved
-                      ? AppColors.brand
-                      : AppColors.brand,
+                  color: isApproved ? AppColors.brand : AppColors.brand,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1943,6 +1934,11 @@ class _PremiumTextField extends StatelessWidget {
                       textCapitalization: textCapitalization,
                       inputFormatters: inputFormatters,
                       onChanged: onChanged,
+                      cursorColor: AppColors.brand,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                       decoration: InputDecoration(
                         isDense: true,
                         contentPadding: const EdgeInsets.only(
@@ -1997,13 +1993,9 @@ class _KycUploadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uploaded = document.uploadable ? attachment.isUploaded : true;
-    final borderColor = uploaded
-        ? AppColors.brandBorder
-        : AppColors.line;
+    final borderColor = uploaded ? AppColors.brandBorder : AppColors.line;
     final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
-    final titleColor = uploaded
-        ? AppColors.brandInk
-        : AppColors.textPrimary;
+    final titleColor = uploaded ? AppColors.brandInk : AppColors.textPrimary;
     final badgeLabel = document.uploadable
         ? (uploaded ? 'Uploaded' : document.requiredLabel)
         : 'In details';
@@ -2032,18 +2024,14 @@ class _KycUploadCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: uploaded
-                      ? AppColors.brandFill
-                      : AppColors.brandFill,
+                  color: uploaded ? AppColors.brandFill : AppColors.brandFill,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   uploaded
                       ? AppIcons.check_circle_rounded
                       : AppIcons.description_rounded,
-                  color: uploaded
-                      ? AppColors.brand
-                      : AppColors.brand,
+                  color: uploaded ? AppColors.brand : AppColors.brand,
                   size: 16,
                 ),
               ),
@@ -2166,9 +2154,7 @@ class _MiniIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final background = filled ? AppColors.brand : Colors.white;
     final iconColor = filled ? Colors.white : AppColors.textSecondary;
-    final borderColor = filled
-        ? AppColors.brand
-        : AppColors.line;
+    final borderColor = filled ? AppColors.brand : AppColors.line;
 
     return SizedBox(
       width: 30,
@@ -2324,18 +2310,14 @@ class _ReviewDocumentRow extends StatelessWidget {
             child: Container(
               width: 38,
               height: 38,
-              color: uploaded
-                  ? AppColors.brandFill
-                  : AppColors.brandFill,
+              color: uploaded ? AppColors.brandFill : AppColors.brandFill,
               child: hasPreview
                   ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
                       uploaded
                           ? AppIcons.check_rounded
                           : AppIcons.insert_drive_file_rounded,
-                      color: uploaded
-                          ? AppColors.brand
-                          : AppColors.brand,
+                      color: uploaded ? AppColors.brand : AppColors.brand,
                       size: 18,
                     ),
             ),

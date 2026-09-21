@@ -649,6 +649,8 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
             TextField(
               controller: _toController,
               keyboardType: TextInputType.emailAddress,
+              cursorColor: AppColors.brand,
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 labelText: 'To',
                 hintText: 'recipient@example.com',
@@ -657,6 +659,8 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
             const SizedBox(height: 12),
             TextField(
               controller: _subjectController,
+              cursorColor: AppColors.brand,
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(labelText: 'Subject'),
             ),
             const SizedBox(height: 12),
@@ -664,6 +668,8 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
               controller: _messageController,
               minLines: 3,
               maxLines: 5,
+              cursorColor: AppColors.brand,
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(labelText: 'Message'),
             ),
           ],
@@ -953,9 +959,7 @@ class _DeliverySlaPanel extends StatelessWidget {
     final expected = shipment.expectedDeliveryHours;
     return _SectionCard(
       title: hasCharge ? 'Delivery Delay' : 'Delivery SLA',
-      accentColor: hasCharge
-          ? AppColors.warningText
-          : AppColors.brand,
+      accentColor: hasCharge ? AppColors.warningText : AppColors.brand,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -963,9 +967,7 @@ class _DeliverySlaPanel extends StatelessWidget {
             hasCharge
                 ? AppIcons.warning_amber_rounded
                 : AppIcons.schedule_rounded,
-            color: hasCharge
-                ? AppColors.warningText
-                : AppColors.brand,
+            color: hasCharge ? AppColors.warningText : AppColors.brand,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1553,10 +1555,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.trim().toLowerCase();
     final color = switch (normalized) {
-      'completed' ||
-      'delivered' ||
-      'paid' ||
-      'settled' => AppColors.brand,
+      'completed' || 'delivered' || 'paid' || 'settled' => AppColors.brand,
       'cancelled' ||
       'canceled' ||
       'declined' ||

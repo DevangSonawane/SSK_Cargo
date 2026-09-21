@@ -12,6 +12,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../data/driver_request_models.dart';
+import '../widgets/driver_currency.dart';
 import '../widgets/slide_to_action.dart';
 
 class DriverHomeScreen extends ConsumerStatefulWidget {
@@ -627,7 +628,7 @@ class _DeliveryOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = request.amount > 0 ? request.amount : 0;
+    final amount = request.amount > 0 ? request.amount : 0.0;
     final brokerAssigned = request.isBrokerAssigned;
     final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(request);
@@ -669,7 +670,7 @@ class _DeliveryOrderCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '₹${amount.toStringAsFixed(0)}',
+                formatDriverCurrency(amount),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -786,7 +787,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
-    final amount = request.amount > 0 ? request.amount : 0;
+    final amount = request.amount > 0 ? request.amount : 0.0;
     final brokerAssigned = request.isBrokerAssigned;
     final canOpen = request.canNegotiate || brokerAssigned;
     final statusLabel = _driverRequestStatusLabel(request);
@@ -840,7 +841,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
-                  '₹${amount.toStringAsFixed(0)}',
+                  formatDriverCurrency(amount),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.brand,
                     fontWeight: FontWeight.w800,

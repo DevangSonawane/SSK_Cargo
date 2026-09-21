@@ -1811,9 +1811,7 @@ class _DriverDeliveryDetailsScreenState
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Allow display over other apps'),
         content: const Text(
           'This opens SSK\u2019s page in system Settings.\n\n'
@@ -3070,6 +3068,8 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                   controller: _detailsController,
                   maxLines: 4,
                   minLines: 4,
+                  cursorColor: AppColors.brand,
+                  style: const TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Add any details (optional)',
                     hintStyle: const TextStyle(

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -68,7 +69,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
     final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
     final driver = _selectedDriver;
-    if (driver == null) {
+    if (driver == null && widget.existingTruck == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Please assign a driver.')));
@@ -108,7 +109,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
               },
             );
         final truckId = _extractEntityId(response);
-        if (truckId.isNotEmpty) {
+        if (truckId.isNotEmpty && driver != null) {
           await ref
               .read(apiClientProvider)
               .updateDriverProfile(
@@ -125,18 +126,21 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
               id: widget.existingTruck!.id,
               truck: truckPayload,
             );
-        await ref
-            .read(apiClientProvider)
-            .updateDriverProfile(
-              accessToken: session.tokens.accessToken,
-              id: driver.id,
-              driver: {'truck_id': widget.existingTruck!.id},
-            );
+        if (driver != null) {
+          await ref
+              .read(apiClientProvider)
+              .updateDriverProfile(
+                accessToken: session.tokens.accessToken,
+                id: driver.id,
+                driver: {'truck_id': widget.existingTruck!.id},
+              );
+        }
       }
 
       if (!mounted) return;
 
       ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
+      ref.invalidate(brokerVehiclesProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -214,270 +218,277 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-          children: [
-            Row(
-              children: [
-                BrokerBackButton(
-                  onTap: () => Navigator.of(context).maybePop(),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isEditing ? 'Edit Truck' : 'Add Truck',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Choose the truck type and fill in the fleet details.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Theme(
+      data: AppTheme.light,
+      child: Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            children: [
+              Row(
                 children: [
-                  Text(
-                    'Select truck type',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  BrokerBackButton(
+                    onTap: () => Navigator.of(context).maybePop(),
                   ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    itemCount: vehicleOptions.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 1.08,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEditing ? 'Edit Truck' : 'Add Truck',
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textPrimary,
+                              ),
                         ),
-                    itemBuilder: (context, index) {
-                      final vehicle = vehicleOptions[index];
-                      return VehicleSelectionTile(
-                        vehicle: vehicle,
-                        selected: _selectedVehicleIndex == index,
-                        onTap: () => setState(() {
-                          _selectedVehicleIndex = index;
-                          if (!isEditing &&
-                              _capacityController.text.trim().isEmpty) {
-                            _capacityController.text = vehicle.capacity;
-                          }
-                        }),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _registrationController,
-                    textInputAction: TextInputAction.next,
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Registration',
-                      prefixIcon: AppIcons.confirmation_number_rounded,
-                    ),
-                    enabled: !isEditing,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter registration number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _capacityController,
-                    textInputAction: TextInputAction.next,
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Capacity',
-                      prefixIcon: AppIcons.scale_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter capacity';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<BrokerDriver>(
-                    initialValue: _selectedDriver,
-                    isExpanded: true,
-                    isDense: true,
-                    itemHeight: 56,
-                    dropdownColor: Colors.white,
-                    menuMaxHeight: 320,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    icon: const Icon(
-                      AppIcons.keyboard_arrow_down_rounded,
-                      color: AppColors.textSecondary,
-                    ),
-                    selectedItemBuilder: (context) {
-                      return drivers
-                          .map(
-                            (driver) => Align(
-                              alignment: Alignment.centerLeft,
-                              child: Row(
-                                children: [
-                                  _DriverAvatar(
-                                    initials: _driverInitials(driver.name),
-                                    compact: true,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      driver.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                        const SizedBox(height: 4),
+                        Text(
+                          'Choose the truck type and fill in the fleet details.',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
                               ),
-                            ),
-                          )
-                          .toList();
-                    },
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Assign driver',
-                      prefixIcon: AppIcons.person_rounded,
-                    ),
-                    items: drivers
-                        .map(
-                          (driver) => DropdownMenuItem<BrokerDriver>(
-                            value: driver,
-                            child: _DriverDropdownMenuItem(driver: driver),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _selectedDriver = value),
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Select a driver';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _makeController,
-                    textInputAction: TextInputAction.next,
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Make',
-                      prefixIcon: AppIcons.precision_manufacturing_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter truck make';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _yearController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    textInputAction: TextInputAction.next,
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Year',
-                      prefixIcon: AppIcons.event_rounded,
-                    ),
-                    validator: (value) {
-                      final parsed = int.tryParse(value?.trim() ?? '');
-                      if (parsed == null || parsed < 1900) {
-                        return 'Enter a valid year';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _insuranceExpiryController,
-                    readOnly: true,
-                    textInputAction: TextInputAction.done,
-                    onTap: _pickInsuranceExpiry,
-                    decoration: brokerFieldDecoration(
-                      labelText: 'Insurance expiry',
-                      hintText: 'Pick a date',
-                      prefixIcon: AppIcons.event_available_rounded,
-                      suffixIcon: AppIcons.calendar_month_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter insurance expiry date';
-                      }
-                      if (DateTime.tryParse(value.trim()) == null) {
-                        return 'Use YYYY-MM-DD';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    height: 56,
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _submitting ? null : _submitTruck,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brand,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.button),
                         ),
-                      ),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              isEditing ? 'Save changes' : 'Continue',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select truck type',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.builder(
+                      itemCount: vehicleOptions.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 1.08,
+                          ),
+                      itemBuilder: (context, index) {
+                        final vehicle = vehicleOptions[index];
+                        return VehicleSelectionTile(
+                          vehicle: vehicle,
+                          selected: _selectedVehicleIndex == index,
+                          onTap: () => setState(() {
+                            _selectedVehicleIndex = index;
+                            if (!isEditing &&
+                                _capacityController.text.trim().isEmpty) {
+                              _capacityController.text = vehicle.capacity;
+                            }
+                          }),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _registrationController,
+                      textInputAction: TextInputAction.next,
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Registration',
+                        prefixIcon: AppIcons.confirmation_number_rounded,
+                      ),
+                      enabled: !isEditing,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter registration number';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _capacityController,
+                      textInputAction: TextInputAction.next,
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Capacity',
+                        prefixIcon: AppIcons.scale_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter capacity';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<BrokerDriver>(
+                      initialValue: _selectedDriver,
+                      isExpanded: true,
+                      isDense: true,
+                      itemHeight: 56,
+                      dropdownColor: Colors.white,
+                      menuMaxHeight: 320,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      icon: const Icon(
+                        AppIcons.keyboard_arrow_down_rounded,
+                        color: AppColors.textSecondary,
+                      ),
+                      selectedItemBuilder: (context) {
+                        return drivers
+                            .map(
+                              (driver) => Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    _DriverAvatar(
+                                      initials: _driverInitials(driver.name),
+                                      compact: true,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        driver.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList();
+                      },
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Assign driver',
+                        prefixIcon: AppIcons.person_rounded,
+                      ),
+                      items: drivers
+                          .map(
+                            (driver) => DropdownMenuItem<BrokerDriver>(
+                              value: driver,
+                              child: _DriverDropdownMenuItem(driver: driver),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedDriver = value),
+                      validator: (value) {
+                        if (value == null && !isEditing) {
+                          return 'Select a driver';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _makeController,
+                      textInputAction: TextInputAction.next,
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Make',
+                        prefixIcon: AppIcons.precision_manufacturing_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter truck make';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _yearController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      textInputAction: TextInputAction.next,
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Year',
+                        prefixIcon: AppIcons.event_rounded,
+                      ),
+                      validator: (value) {
+                        final parsed = int.tryParse(value?.trim() ?? '');
+                        if (parsed == null || parsed < 1900) {
+                          return 'Enter a valid year';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _insuranceExpiryController,
+                      readOnly: true,
+                      textInputAction: TextInputAction.done,
+                      onTap: _pickInsuranceExpiry,
+                      decoration: brokerFieldDecoration(
+                        labelText: 'Insurance expiry',
+                        hintText: 'Pick a date',
+                        prefixIcon: AppIcons.event_available_rounded,
+                        suffixIcon: AppIcons.calendar_month_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Enter insurance expiry date';
+                        }
+                        if (DateTime.tryParse(value.trim()) == null) {
+                          return 'Use YYYY-MM-DD';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 56,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitting ? null : _submitTruck,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.button,
+                            ),
+                          ),
+                        ),
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                isEditing ? 'Save changes' : 'Continue',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -536,7 +547,6 @@ BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
   }
   return null;
 }
-
 
 String _truckCategoryForVehicle(String label) {
   final text = label.toLowerCase();

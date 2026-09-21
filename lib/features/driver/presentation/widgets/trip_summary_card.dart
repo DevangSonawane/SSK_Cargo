@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
 import '../../data/driver_dashboard_models.dart';
+import 'driver_currency.dart';
 
 /// Trip history row in the Rapido / Ola / Uber language: a clean light card
 /// with date + status on top, a compact pickup → drop rail, and a
@@ -54,7 +55,7 @@ class TripSummaryCard extends StatelessWidget {
     final amountText = isCancelled
         ? '—'
         : trip.amount > 0
-        ? '₹${trip.amount.toStringAsFixed(0)}'
+        ? formatDriverCurrency(trip.amount)
         : '₹0';
     final from = trip.fromLocation.isNotEmpty
         ? _locationLead(trip.fromLocation)
@@ -123,11 +124,7 @@ class TripSummaryCard extends StatelessWidget {
                     child: Column(
                       children: [
                         _RailDot(color: AppColors.textTertiary),
-                        Container(
-                          width: 2,
-                          height: 24,
-                          color: AppColors.line,
-                        ),
+                        Container(width: 2, height: 24, color: AppColors.line),
                         _RailDot(color: dropDot),
                       ],
                     ),

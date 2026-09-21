@@ -869,9 +869,7 @@ class _DriverKycRegistrationScreenState
         ? 'Your KYC has been verified. Your driver account is now active.'
         : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
     final currentStatus = isApproved ? 'Verified' : 'Pending Review';
-    final statusColor = isApproved
-        ? AppColors.brand
-        : AppColors.brand;
+    final statusColor = isApproved ? AppColors.brand : AppColors.brand;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -896,17 +894,13 @@ class _DriverKycRegistrationScreenState
                 width: 170,
                 height: 170,
                 decoration: BoxDecoration(
-                  color: isApproved
-                      ? AppColors.brandTint
-                      : AppColors.brandTint,
+                  color: isApproved ? AppColors.brandTint : AppColors.brandTint,
                   shape: BoxShape.circle,
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(26),
                   decoration: BoxDecoration(
-                    color: isApproved
-                        ? AppColors.brandBright
-                        : AppColors.brand,
+                    color: isApproved ? AppColors.brandBright : AppColors.brand,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -925,9 +919,7 @@ class _DriverKycRegistrationScreenState
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isApproved
-                      ? AppColors.brandBright
-                      : AppColors.brand,
+                  color: isApproved ? AppColors.brandBright : AppColors.brand,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -2042,7 +2034,10 @@ class _WarningCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(AppIcons.info_outline_rounded, color: AppColors.warningText),
+          const Icon(
+            AppIcons.info_outline_rounded,
+            color: AppColors.warningText,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -2138,6 +2133,11 @@ class _PremiumTextField extends StatelessWidget {
                   textCapitalization: textCapitalization,
                   inputFormatters: inputFormatters,
                   onChanged: onChanged,
+                  cursorColor: AppColors.brand,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.only(top: 0, bottom: 0),
@@ -2186,13 +2186,9 @@ class _KycUploadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uploaded = attachment.isUploaded;
-    final borderColor = uploaded
-        ? AppColors.successBorder
-        : AppColors.divider;
+    final borderColor = uploaded ? AppColors.successBorder : AppColors.divider;
     final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
-    final titleColor = uploaded
-        ? AppColors.successText
-        : AppColors.textPrimary;
+    final titleColor = uploaded ? AppColors.successText : AppColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2218,18 +2214,14 @@ class _KycUploadCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: uploaded
-                      ? AppColors.brandBorder
-                      : AppColors.brandTint,
+                  color: uploaded ? AppColors.brandBorder : AppColors.brandTint,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   uploaded
                       ? AppIcons.check_circle_rounded
                       : AppIcons.description_rounded,
-                  color: uploaded
-                      ? AppColors.brand
-                      : AppColors.brand,
+                  color: uploaded ? AppColors.brand : AppColors.brand,
                   size: 18,
                 ),
               ),
@@ -2338,9 +2330,7 @@ class _MiniIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final background = filled ? AppColors.brand : Colors.white;
     final iconColor = filled ? Colors.white : AppColors.textSecondary;
-    final borderColor = filled
-        ? AppColors.brand
-        : AppColors.line;
+    final borderColor = filled ? AppColors.brand : AppColors.line;
 
     return SizedBox(
       width: 34,
@@ -2496,18 +2486,14 @@ class _ReviewDocumentRow extends StatelessWidget {
             child: Container(
               width: 38,
               height: 38,
-              color: uploaded
-                  ? AppColors.brandBorder
-                  : AppColors.brandTint,
+              color: uploaded ? AppColors.brandBorder : AppColors.brandTint,
               child: hasPreview
                   ? Image.file(File(attachment.path!), fit: BoxFit.cover)
                   : Icon(
                       uploaded
                           ? AppIcons.check_rounded
                           : AppIcons.insert_drive_file_rounded,
-                      color: uploaded
-                          ? AppColors.brand
-                          : AppColors.brand,
+                      color: uploaded ? AppColors.brand : AppColors.brand,
                       size: 18,
                     ),
             ),

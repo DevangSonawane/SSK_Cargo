@@ -465,6 +465,10 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         ) ...[
                           DriverListTile(
                             driver: mergedDrivers[index],
+                            onEdit: () => context.push(
+                              '/broker/drivers/add',
+                              extra: mergedDrivers[index],
+                            ),
                             onRemove: () => _confirmDeleteDriver(
                               context,
                               ref,
@@ -906,6 +910,12 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                             keyboardType:
                                                                 TextInputType
                                                                     .number,
+                                                            cursorColor:
+                                                                AppColors.brand,
+                                                            style: const TextStyle(
+                                                              color: AppColors
+                                                                  .textPrimary,
+                                                            ),
                                                             decoration:
                                                                 const InputDecoration(
                                                                   labelText:
@@ -918,6 +928,12 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                           TextField(
                                                             controller:
                                                                 noteController,
+                                                            cursorColor:
+                                                                AppColors.brand,
+                                                            style: const TextStyle(
+                                                              color: AppColors
+                                                                  .textPrimary,
+                                                            ),
                                                             decoration:
                                                                 const InputDecoration(
                                                                   labelText:
@@ -1283,11 +1299,15 @@ class _BrokerDriverTripSheetState
             children: [
               TextField(
                 controller: reasonController,
+                cursorColor: AppColors.brand,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Reason'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: notesController,
+                cursorColor: AppColors.brand,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Notes'),
                 minLines: 2,
                 maxLines: 4,
@@ -1497,16 +1517,22 @@ class _BrokerDriverTripSheetState
             children: [
               TextField(
                 controller: mechanicNameController,
+                cursorColor: AppColors.brand,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Mechanic name'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: mechanicPhoneController,
+                cursorColor: AppColors.brand,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Mechanic phone'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: notesController,
+                cursorColor: AppColors.brand,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(labelText: 'Notes'),
               ),
             ],
@@ -2292,6 +2318,8 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
           const SizedBox(height: 10),
           TextField(
             controller: _reasonController,
+            cursorColor: AppColors.brand,
+            style: const TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(
               labelText: 'Reason (optional)',
               hintText: 'Driver unavailable, breakdown, better route fit...',

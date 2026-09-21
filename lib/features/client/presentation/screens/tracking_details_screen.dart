@@ -1291,7 +1291,8 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                               foregroundColor: const Color(
                                                 0xFFE23A4B,
                                               ),
-                                              backgroundColor: context.colors.surface,
+                                              backgroundColor:
+                                                  context.colors.surface,
                                             ),
                                             child: Text(
                                               _isCancelling
@@ -1460,10 +1461,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
     return Stack(
       children: [
         Positioned.fill(
-          child: TrackingRouteMapView(
-            shipment: widget.shipment,
-            liveMode: true,
-          ),
+          child: _LiveTrackingRouteCanvas(shipment: widget.shipment),
         ),
         Positioned.fill(
           child: IgnorePointer(
@@ -1498,7 +1496,9 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: context.colors.surfaceElevated.withValues(alpha: 0.92),
+                      color: context.colors.surfaceElevated.withValues(
+                        alpha: 0.92,
+                      ),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(AppIcons.arrow_back_rounded, size: 20),
@@ -1535,7 +1535,9 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                       vertical: 8,
                     ),
                     foregroundColor: context.colors.infoEmphasis,
-                    backgroundColor: context.colors.surfaceElevated.withValues(alpha: 0.92),
+                    backgroundColor: context.colors.surfaceElevated.withValues(
+                      alpha: 0.92,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
                     ),
@@ -1571,6 +1573,284 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
   }
 }
 
+class _LiveTrackingRouteCanvas extends StatelessWidget {
+  const _LiveTrackingRouteCanvas({required this.shipment});
+
+  final TrackingDemoShipment shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = _cleanTrackingLocation(shipment.fromLocation, 'Pickup');
+    final drop = _cleanTrackingLocation(shipment.toLocation, 'Drop');
+    final truckName = shipment.assignedTruckName?.trim();
+    return Container(
+      color: const Color(0xFFF4F8F3),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(painter: const _LiveTrackingRoutePainter()),
+              ),
+              Positioned(
+                left: 28,
+                top: constraints.maxHeight * 0.23,
+                child: _LiveMapLabel(
+                  icon: AppIcons.location_on_rounded,
+                  label: pickup,
+                  accent: const Color(0xFF2FA56E),
+                ),
+              ),
+              Positioned(
+                right: 22,
+                top: constraints.maxHeight * 0.34,
+                child: _LiveMapLabel(
+                  icon: AppIcons.flag_rounded,
+                  label: drop,
+                  accent: const Color(0xFFE23A4B),
+                  alignEnd: true,
+                ),
+              ),
+              Positioned(
+                left: constraints.maxWidth * 0.42,
+                top: constraints.maxHeight * 0.47,
+                child: _LiveTruckBadge(
+                  label: truckName == null || truckName.isEmpty
+                      ? 'On the way'
+                      : truckName,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LiveMapLabel extends StatelessWidget {
+  const _LiveMapLabel({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    this.alignEnd = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 178),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE1E9DF)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            textDirection: alignEnd ? TextDirection.rtl : TextDirection.ltr,
+            children: [
+              Icon(icon, size: 17, color: accent),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: alignEnd ? TextAlign.right : TextAlign.left,
+                  style: const TextStyle(
+                    color: Color(0xFF1B2A3A),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveTruckBadge extends StatelessWidget {
+  const _LiveTruckBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF16251B),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2FA56E).withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              AppIcons.local_shipping_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveTrackingRoutePainter extends CustomPainter {
+  const _LiveTrackingRoutePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final background = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFF7FBF6), Color(0xFFEFF6F2)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, background);
+
+    final roadPaint = Paint()
+      ..color = const Color(0xFFE2EBDD)
+      ..strokeWidth = 16
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    for (final y in <double>[0.18, 0.36, 0.62, 0.78]) {
+      final road = Path()
+        ..moveTo(-20, size.height * y)
+        ..cubicTo(
+          size.width * 0.25,
+          size.height * (y - 0.07),
+          size.width * 0.58,
+          size.height * (y + 0.09),
+          size.width + 20,
+          size.height * (y - 0.02),
+        );
+      canvas.drawPath(road, roadPaint);
+    }
+
+    final route = Path()
+      ..moveTo(size.width * 0.17, size.height * 0.64)
+      ..cubicTo(
+        size.width * 0.26,
+        size.height * 0.48,
+        size.width * 0.46,
+        size.height * 0.56,
+        size.width * 0.53,
+        size.height * 0.42,
+      )
+      ..cubicTo(
+        size.width * 0.61,
+        size.height * 0.25,
+        size.width * 0.78,
+        size.height * 0.33,
+        size.width * 0.84,
+        size.height * 0.22,
+      );
+
+    canvas.drawPath(
+      route,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 18
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawPath(
+      route,
+      Paint()
+        ..color = const Color(0xFFD5E2D6)
+        ..strokeWidth = 11
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+
+    final routeMetric = route.computeMetrics().first;
+    canvas.drawPath(
+      routeMetric.extractPath(0, routeMetric.length * 0.58),
+      Paint()
+        ..color = const Color(0xFF2FA56E)
+        ..strokeWidth = 11
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+
+    _drawPin(
+      canvas,
+      Offset(size.width * 0.17, size.height * 0.64),
+      const Color(0xFF2FA56E),
+    );
+    _drawPin(
+      canvas,
+      Offset(size.width * 0.84, size.height * 0.22),
+      const Color(0xFFE23A4B),
+    );
+    _drawPulse(canvas, Offset(size.width * 0.53, size.height * 0.42));
+  }
+
+  void _drawPin(Canvas canvas, Offset center, Color color) {
+    canvas.drawCircle(
+      center,
+      16,
+      Paint()..color = Colors.white.withValues(alpha: 0.96),
+    );
+    canvas.drawCircle(center, 9, Paint()..color = color);
+  }
+
+  void _drawPulse(Canvas canvas, Offset center) {
+    canvas.drawCircle(
+      center,
+      24,
+      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.14),
+    );
+    canvas.drawCircle(
+      center,
+      14,
+      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.24),
+    );
+    canvas.drawCircle(center, 7, Paint()..color = const Color(0xFF2FA56E));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class _LivePickupOtpCard extends StatelessWidget {
   const _LivePickupOtpCard({required this.shipment});
 
@@ -1585,7 +1865,9 @@ class _LivePickupOtpCard extends StatelessWidget {
         color: verified ? context.colors.brandFill : const Color(0xFFFFF6DB),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: verified ? context.colors.brandBorder : const Color(0xFFF3DC8C),
+          color: verified
+              ? context.colors.brandBorder
+              : const Color(0xFFF3DC8C),
         ),
         boxShadow: [
           BoxShadow(
@@ -1686,7 +1968,10 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
             onTap: onChatTap,
           ),
           const SizedBox(width: 8),
-          Icon(AppIcons.keyboard_arrow_up_rounded, color: context.colors.textSecondary),
+          Icon(
+            AppIcons.keyboard_arrow_up_rounded,
+            color: context.colors.textSecondary,
+          ),
         ],
       ),
     );
@@ -1778,7 +2063,9 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.copyWith(
-                                                  color: context.colors.textSecondary,
+                                                  color: context
+                                                      .colors
+                                                      .textSecondary,
                                                   fontSize: 11,
                                                 ),
                                           ),
@@ -1807,7 +2094,9 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.copyWith(
-                                                  color: context.colors.textSecondary,
+                                                  color: context
+                                                      .colors
+                                                      .textSecondary,
                                                   fontSize: 11,
                                                 ),
                                           ),
@@ -3668,9 +3957,7 @@ class _ActionSheetTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: destructive
-              ? const Color(0xFFFFF5F6)
-              : context.colors.canvas,
+          color: destructive ? const Color(0xFFFFF5F6) : context.colors.canvas,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: context.colors.line),
         ),
@@ -4188,7 +4475,9 @@ class _LegacyClientBookingChatSheetState
                                               .textTheme
                                               .labelSmall
                                               ?.copyWith(
-                                                color: context.colors.textSecondary,
+                                                color: context
+                                                    .colors
+                                                    .textSecondary,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                         ),
@@ -5126,9 +5415,9 @@ class _NegotiationCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               note,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
             ),
           ],
           if (actions.isNotEmpty) ...[
@@ -5219,9 +5508,9 @@ class _NegotiationEmptyState extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -5400,7 +5689,10 @@ class _ContactIconButton extends StatelessWidget {
       child: Container(
         width: 42,
         height: 42,
-        decoration: BoxDecoration(color: context.colors.surfaceElevated, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: context.colors.surfaceElevated,
+          shape: BoxShape.circle,
+        ),
         child: Icon(icon, size: 18, color: const Color(0xFF2FA56E)),
       ),
     );
