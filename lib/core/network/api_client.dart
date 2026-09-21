@@ -1115,10 +1115,11 @@ class SskApiClient {
     String? status,
     String? truckId,
     String? driverId,
+    int page = 1,
     int limit = 100,
   }) async {
     developer.log(
-      'GET /api/trips status=$status truckId=$truckId driverId=$driverId limit=$limit',
+      'GET /api/trips status=$status truckId=$truckId driverId=$driverId page=$page limit=$limit',
       name: 'SSK.API',
     );
     return _request(
@@ -1128,6 +1129,7 @@ class SskApiClient {
           if (status != null && status.isNotEmpty) 'status': status,
           if (truckId != null && truckId.isNotEmpty) 'truckId': truckId,
           if (driverId != null && driverId.isNotEmpty) 'driverId': driverId,
+          'page': page,
           'limit': limit,
         },
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),

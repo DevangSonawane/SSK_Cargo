@@ -11,6 +11,10 @@ import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 
+const int _activeJobsFetchPageLimit = 100;
+const int _activeJobsFetchMaxPages = 50;
+const double _activeJobsBottomNavClearance = 84;
+
 final _brokerActiveJobsProvider =
     FutureProvider.autoDispose<List<_ActiveBrokerJob>>((ref) async {
       final session = ref.watch(authSessionProvider).valueOrNull;
@@ -21,19 +25,14 @@ final _brokerActiveJobsProvider =
       final api = ref.watch(apiClientProvider);
       final token = session.tokens.accessToken;
       final responses = await Future.wait([
-        api.getBookings(
-          accessToken: token,
-          status: 'confirmed,en_route_pickup,picked_up,in_transit',
-          page: 1,
-          limit: 100,
-        ),
-        api.getTrips(accessToken: token, limit: 100),
-        api.getJobRequests(accessToken: token, page: 1, limit: 100),
+        _fetchAllActiveBookings(api, accessToken: token),
+        _fetchAllActiveTrips(api, accessToken: token),
+        _fetchAllActiveJobRequestMaps(api, accessToken: token),
       ]);
 
-      final bookings = _extractList(responses[0], const ['bookings']);
-      final trips = _extractList(responses[1], const ['trips']);
-      final requests = _extractList(responses[2], const ['requests']);
+      final bookings = responses[0];
+      final trips = responses[1];
+      final requests = responses[2];
       final tripByBooking = <String, Map<String, dynamic>>{};
       for (final trip in trips) {
         final map = _asStringMap(trip);
@@ -88,6 +87,85 @@ final _brokerActiveJobsProvider =
       return jobs;
     });
 
+Future<List<Map<String, dynamic>>> _fetchAllActiveBookings(
+  SskApiClient api, {
+  required String accessToken,
+}) {
+  return _fetchPagedActiveMaps(
+    itemKeys: const ['bookings'],
+    fetchPage: (page, limit) => api.getBookings(
+      accessToken: accessToken,
+      status: 'confirmed,en_route_pickup,picked_up,in_transit',
+      page: page,
+      limit: limit,
+    ),
+  );
+}
+
+Future<List<Map<String, dynamic>>> _fetchAllActiveTrips(
+  SskApiClient api, {
+  required String accessToken,
+}) {
+  return _fetchPagedActiveMaps(
+    itemKeys: const ['trips'],
+    fetchPage: (page, limit) =>
+        api.getTrips(accessToken: accessToken, page: page, limit: limit),
+  );
+}
+
+Future<List<Map<String, dynamic>>> _fetchAllActiveJobRequestMaps(
+  SskApiClient api, {
+  required String accessToken,
+}) {
+  return _fetchPagedActiveMaps(
+    itemKeys: const ['requests'],
+    fetchPage: (page, limit) =>
+        api.getJobRequests(accessToken: accessToken, page: page, limit: limit),
+  );
+}
+
+Future<List<Map<String, dynamic>>> _fetchPagedActiveMaps({
+  required List<String> itemKeys,
+  required Future<Map<String, dynamic>> Function(int page, int limit) fetchPage,
+}) async {
+  final items = <Map<String, dynamic>>[];
+  final seenKeys = <String>{};
+
+  for (var page = 1; page <= _activeJobsFetchMaxPages; page++) {
+    final response = await fetchPage(page, _activeJobsFetchPageLimit);
+    final pageItems = _extractList(response, itemKeys)
+        .map(_asStringMap)
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+
+    var addedThisPage = 0;
+    for (final item in pageItems) {
+      final key = _activeItemKey(item);
+      if (key.isNotEmpty && !seenKeys.add(key)) {
+        continue;
+      }
+      items.add(item);
+      addedThisPage += 1;
+    }
+
+    if (page > 1 && addedThisPage == 0) {
+      break;
+    }
+
+    if (!_hasMoreActivePages(
+      response,
+      page: page,
+      pageItemCount: pageItems.length,
+      accumulatedItemCount: items.length,
+      limit: _activeJobsFetchPageLimit,
+    )) {
+      break;
+    }
+  }
+
+  return items;
+}
+
 class BrokerActiveJobsScreen extends ConsumerStatefulWidget {
   const BrokerActiveJobsScreen({super.key});
 
@@ -110,6 +188,7 @@ class _BrokerActiveJobsScreenState
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
+    final bottomPadding = _activeJobsBottomNavClearance;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -119,7 +198,7 @@ class _BrokerActiveJobsScreenState
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            padding: EdgeInsets.fromLTRB(20, 14, 20, bottomPadding),
             children: [
               _ActiveJobsHeader(total: jobsAsync.valueOrNull?.length ?? 0),
               const SizedBox(height: 18),
@@ -1280,6 +1359,76 @@ List<dynamic> _extractList(Map<String, dynamic> root, List<String> keys) {
   return const [];
 }
 
+bool _hasMoreActivePages(
+  Map<String, dynamic> response, {
+  required int page,
+  required int pageItemCount,
+  required int accumulatedItemCount,
+  required int limit,
+}) {
+  if (pageItemCount <= 0) {
+    return false;
+  }
+
+  final totalPages = _readPaginationInt(response, const [
+    'totalPages',
+    'total_pages',
+    'pages',
+    'pageCount',
+    'page_count',
+  ]);
+  if (totalPages != null) {
+    return page < totalPages;
+  }
+
+  final totalItems = _readPaginationInt(response, const [
+    'total',
+    'totalItems',
+    'total_items',
+    'totalCount',
+    'total_count',
+  ]);
+  if (totalItems != null && totalItems > 0) {
+    return accumulatedItemCount < totalItems;
+  }
+
+  return pageItemCount >= limit;
+}
+
+int? _readPaginationInt(Map<String, dynamic> response, List<String> keys) {
+  final data = _asStringMap(response['data']);
+  final meta = _asStringMap(response['meta']);
+  final pagination = _asStringMap(response['pagination']);
+  final dataMeta = _asStringMap(data['meta']);
+  final dataPagination = _asStringMap(data['pagination']);
+
+  return _readInt(response, keys) ??
+      _readInt(data, keys) ??
+      _readInt(meta, keys) ??
+      _readInt(pagination, keys) ??
+      _readInt(dataMeta, keys) ??
+      _readInt(dataPagination, keys);
+}
+
+int? _readInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    final parsed = int.tryParse(value?.toString().trim() ?? '');
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+String _activeItemKey(Map<String, dynamic> item) {
+  return _firstNonEmpty([
+    _readString(item, const ['id', 'uuid']),
+    _readString(item, const ['bookingId', 'booking_id']),
+    _readString(item, const ['requestId', 'request_id', 'jobRequestId']),
+  ]);
+}
+
 Map<String, dynamic> _asStringMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) {
@@ -1370,10 +1519,18 @@ String _statusLabel(String status) {
 }
 
 Color _statusColor(String status) {
+  // Matches the app-wide convention in client_delivery_screen._statusColor:
+  // completed/delivered -> green, cancelled -> red,
+  // confirmed/assigned/in-progress -> info blue, pending -> amber.
   return switch (status) {
-    'in_transit' => AppColors.brand,
-    'picked_up' => const Color(0xFFD97706),
-    'delivered' || 'completed' => AppColors.brandDark,
+    'delivered' || 'completed' => AppColors.brand,
+    'cancelled' || 'canceled' => AppColors.dangerIcon,
+    'confirmed' ||
+    'assigned' ||
+    'en_route_pickup' ||
+    'in_transit' ||
+    'picked_up' => AppColors.accentBlue,
+    'pending' => const Color(0xFFD97706),
     _ => AppColors.textSecondary,
   };
 }

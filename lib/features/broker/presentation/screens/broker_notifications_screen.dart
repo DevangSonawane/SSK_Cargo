@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
@@ -36,14 +38,24 @@ class _BrokerNotificationsScreenState
     extends ConsumerState<BrokerNotificationsScreen> {
   _NotificationTab _tab = _NotificationTab.all;
   bool _markingAllRead = false;
+  final Set<String> _optimisticReadIds = <String>{};
+
+  bool _isEffectivelyRead(ClientNotification notification) {
+    return notification.isRead || _optimisticReadIds.contains(notification.id);
+  }
 
   Future<void> _refresh() async {
     ref.invalidate(_brokerNotificationsProvider);
-    await ref.read(_brokerNotificationsProvider.future);
+    try {
+      await ref.read(_brokerNotificationsProvider.future);
+    } catch (_) {
+      // Error UI is driven by the provider state; swallow here.
+    }
   }
 
   Future<void> _markRead(ClientNotification notification) async {
-    if (notification.isRead) return;
+    if (notification.id.isEmpty || _isEffectivelyRead(notification)) return;
+    setState(() => _optimisticReadIds.add(notification.id));
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
     try {
@@ -54,8 +66,10 @@ class _BrokerNotificationsScreenState
             id: notification.id,
           );
     } catch (_) {
-      // Optimistic in the React app too; a future refresh will resync.
+      // Optimistic state stays; a future refresh will resync.
     }
+    // Background resync without clearing optimistic state, so the list
+    // never flashes back to unread or collapses into skeletons.
     ref.invalidate(_brokerNotificationsProvider);
   }
 
@@ -64,7 +78,17 @@ class _BrokerNotificationsScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
 
-    setState(() => _markingAllRead = true);
+    final current = ref.read(_brokerNotificationsProvider).valueOrNull;
+    if (current != null && current.isNotEmpty) {
+      setState(() {
+        _markingAllRead = true;
+        _optimisticReadIds.addAll(
+          current.where((n) => !n.isRead).map((n) => n.id),
+        );
+      });
+    } else {
+      setState(() => _markingAllRead = true);
+    }
     try {
       await ref
           .read(apiClientProvider)
@@ -174,44 +198,50 @@ class _BrokerNotificationsScreenState
     final notificationsAsync = ref.watch(_brokerNotificationsProvider);
     final notifications =
         notificationsAsync.valueOrNull ?? const <ClientNotification>[];
-    final unreadCount = notifications.where((item) => !item.isRead).length;
+    final unreadCount = notifications
+        .where((item) => !_isEffectivelyRead(item))
+        .length;
     final filtered = _filtered(notifications);
     final groups = _groupByDate(filtered);
+    final isBackgroundRefresh =
+        (notificationsAsync.isRefreshing || notificationsAsync.isReloading) &&
+        notificationsAsync.hasValue;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: RefreshIndicator(
-                color: AppColors.brand,
-                onRefresh: _refresh,
-                child: ListView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
-                  children: [
-                    _NotificationsHeader(
-                      unreadCount: unreadCount,
-                      markingAllRead: _markingAllRead,
-                      onMarkAllRead: unreadCount > 0 ? _markAllRead : null,
-                      onBack: () => context.pop(),
-                    ),
-                    const SizedBox(height: 22),
-                    _NotificationTabs(
-                      selected: _tab,
-                      counts: _tabsEnabled(notifications),
-                      onChanged: (tab) => setState(() => _tab = tab),
-                    ),
-                    const SizedBox(height: 22),
-                    ..._buildSection(notificationsAsync, groups),
-                  ],
-                ),
+        child: RefreshIndicator(
+          color: AppColors.brand,
+          onRefresh: _refresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
+            children: [
+              _NotificationsHeader(
+                totalCount: notifications.length,
+                unreadCount: unreadCount,
+                markingAllRead: _markingAllRead,
+                onMarkAllRead: _markAllRead,
+                onBack: () => context.pop(),
               ),
-            ),
-          ],
+              if (isBackgroundRefresh) ...[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(
+                  color: AppColors.brand,
+                  backgroundColor: AppColors.brandTint,
+                  borderRadius: BorderRadius.all(Radius.circular(999)),
+                ),
+              ],
+              const SizedBox(height: 22),
+              _NotificationTabs(
+                selected: _tab,
+                counts: _tabsEnabled(notifications),
+                onChanged: (tab) => setState(() => _tab = tab),
+              ),
+              const SizedBox(height: 22),
+              ..._buildSection(notificationsAsync, groups),
+            ],
+          ),
         ),
       ),
     );
@@ -230,13 +260,20 @@ class _BrokerNotificationsScreenState
     AsyncValue<List<ClientNotification>> notificationsAsync,
     List<_NotificationGroup> groups,
   ) {
-    if (notificationsAsync.isLoading) {
+    final hasData =
+        notificationsAsync.hasValue &&
+        (notificationsAsync.valueOrNull?.isNotEmpty == true ||
+            groups.isNotEmpty ||
+            notificationsAsync.valueOrNull != null);
+    // Only show skeletons on the very first load. Background refreshes keep
+    // the existing list on screen so "mark all read" never collapses the UI.
+    if (notificationsAsync.isLoading && !notificationsAsync.hasValue) {
       return const [
         _NotificationSkeletonList(),
         SizedBox(height: 24),
       ];
     }
-    if (notificationsAsync.hasError) {
+    if (notificationsAsync.hasError && !hasData) {
       return [
         _NotificationEmptyState(
           icon: AppIcons.inbox_outlined,
@@ -254,8 +291,8 @@ class _BrokerNotificationsScreenState
       return const [
         _NotificationEmptyState(
           icon: AppIcons.notifications_none_rounded,
-          title: 'You are all caught up!',
-          subtitle: 'Alerts and updates about your fleet will show up here.',
+          title: 'No notifications',
+          subtitle: 'New alerts will appear here.',
         ),
         SizedBox(height: 24),
       ];
@@ -268,8 +305,10 @@ class _BrokerNotificationsScreenState
       widgets.add(gap);
       for (final notification in group.items) {
         widgets.add(_NotificationCard(
+          key: ValueKey('broker-notif-${notification.id}'),
           notification: notification,
-          onTap: () => _markRead(notification),
+          effectiveRead: _isEffectivelyRead(notification),
+          onTap: () => _openNotification(notification),
           onAction: _actionLabel(notification) == null
               ? null
               : () => _openNotification(notification),
@@ -284,21 +323,27 @@ class _BrokerNotificationsScreenState
 
 class _NotificationsHeader extends StatelessWidget {
   const _NotificationsHeader({
+    required this.totalCount,
     required this.unreadCount,
     required this.markingAllRead,
     required this.onMarkAllRead,
     required this.onBack,
   });
 
+  final int totalCount;
   final int unreadCount;
   final bool markingAllRead;
-  final VoidCallback? onMarkAllRead;
+  final VoidCallback onMarkAllRead;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
+    final subtitle = totalCount == 0
+        ? 'No notifications yet'
+        : unreadCount > 0
+        ? '$unreadCount unread'
+        : '$totalCount notifications';
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         BrokerBackButton(onTap: onBack),
         const SizedBox(width: 4),
@@ -313,87 +358,25 @@ class _NotificationsHeader extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  if (unreadCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.brandTint,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        '$unreadCount new',
-                        style: const TextStyle(
-                          color: AppColors.brandInk,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  if (unreadCount > 0) const SizedBox(width: 8),
-                  const Flexible(
-                    child: Text(
-                      'Stay on top of your fleet activity.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
         ),
         if (unreadCount > 0)
-          InkWell(
-            onTap: markingAllRead ? null : onMarkAllRead,
-            borderRadius: BorderRadius.circular(999),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: markingAllRead
-                    ? AppColors.brandFill
-                    : AppColors.brandTint,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.brandBorder),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: markingAllRead
-                        ? const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.brand,
-                          )
-                        : const Icon(
-                            AppIcons.done_all_rounded,
-                            size: 15,
-                            color: AppColors.brandInk,
-                          ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    markingAllRead ? 'Saving' : 'Mark all read',
-                    style: const TextStyle(
-                      color: AppColors.brandInk,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
+          TextButton(
+            onPressed: markingAllRead ? null : onMarkAllRead,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.brandDark,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
+            child: Text(markingAllRead ? 'Saving...' : 'Mark all read'),
           ),
       ],
     );
@@ -411,110 +394,161 @@ class _NotificationTabs extends StatelessWidget {
   final Map<_NotificationTab, int> counts;
   final ValueChanged<_NotificationTab> onChanged;
 
+  static const double _innerHeight = 44;
+
+  int get _selectedIndex => switch (selected) {
+    _NotificationTab.all => 0,
+    _NotificationTab.operations => 1,
+    _NotificationTab.system => 2,
+    _NotificationTab.financial => 3,
+  };
+
   @override
   Widget build(BuildContext context) {
     const tabs = [
       (_NotificationTab.all, 'All'),
-      (_NotificationTab.operations, 'Operations'),
+      (_NotificationTab.operations, 'Ops'),
       (_NotificationTab.system, 'System'),
-      (_NotificationTab.financial, 'Financial'),
+      (_NotificationTab.financial, 'Money'),
     ];
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: AppColors.fillSubtle,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: [
-            for (final tab in tabs)
-              _NotificationTabButton(
-                label: tab.$2,
-                count: counts[tab.$1] ?? 0,
-                selected: selected == tab.$1,
-                onTap: () => onChanged(tab.$1),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-          ],
+            ],
+          ),
+          child: SizedBox(
+            height: _innerHeight,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final segmentWidth = constraints.maxWidth / tabs.length;
+                return Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      left: _selectedIndex * segmentWidth,
+                      top: 0,
+                      bottom: 0,
+                      width: segmentWidth,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.white, Color(0xFFEAF3EE)],
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.10),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (final tab in tabs)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => onChanged(tab.$1),
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                height: _innerHeight,
+                                alignment: Alignment.center,
+                                child: _NotificationTabLabel(
+                                  label: tab.$2,
+                                  count: counts[tab.$1] ?? 0,
+                                  selected: selected == tab.$1,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _NotificationTabButton extends StatelessWidget {
-  const _NotificationTabButton({
+class _NotificationTabLabel extends StatelessWidget {
+  const _NotificationTabLabel({
     required this.label,
     required this.count,
     required this.selected,
-    required this.onTap,
   });
 
   final String label;
   final int count;
   final bool selected;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selected ? AppColors.brandDark : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
+        if (count > 0) ...[
+          const SizedBox(width: 5),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.brandTint
+                  : Colors.white.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '$count',
               style: TextStyle(
-                color: selected ? AppColors.brandInk : AppColors.textTertiary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
+                color: selected
+                    ? AppColors.brandDark
+                    : AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
               ),
             ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.brandTint
-                      : AppColors.fillSubtle,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    color: selected
-                        ? AppColors.brandInk
-                        : AppColors.textTertiary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -543,46 +577,37 @@ class _NotificationSectionHeader extends StatelessWidget {
 
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
+    super.key,
     required this.notification,
     required this.onTap,
     required this.onAction,
+    this.effectiveRead,
   });
 
   final ClientNotification notification;
   final VoidCallback onTap;
   final VoidCallback? onAction;
+  final bool? effectiveRead;
 
   @override
   Widget build(BuildContext context) {
     final meta = _metaFor(notification);
     final actionLabel = _actionLabel(notification);
-    final isRead = notification.isRead;
+    final isRead = effectiveRead ?? notification.isRead;
     final title = notification.title.isEmpty
         ? 'Notification'
         : notification.title;
     final message = notification.message;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 14 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.all(14),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isRead ? Colors.white : AppColors.brandTint,
               borderRadius: BorderRadius.circular(20),
@@ -688,13 +713,11 @@ class _NotificationCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
-class _NotificationIconChip extends StatelessWidget {
-  const _NotificationIconChip({required this.meta, required this.isRead});
+class _NotificationIconChip extends StatelessWidget {  const _NotificationIconChip({required this.meta, required this.isRead});
 
   final _NotificationMeta meta;
   final bool isRead;

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
@@ -149,6 +151,17 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
     final bookingsAsync = ref.watch(_brokerHistoryBookingsProvider);
     final bookings = bookingsAsync.valueOrNull ?? const <ClientBooking>[];
     final visibleBookings = _visibleBookings(bookings);
+    final allCount = bookings.length;
+    final completedCount = bookings
+        .where((b) => _statusKey(b.status) == 'completed')
+        .length;
+    final cancelledCount = bookings
+        .where(
+          (b) =>
+              _statusKey(b.status) == 'cancelled' ||
+              _statusKey(b.status) == 'canceled',
+        )
+        .length;
     final totalNet = visibleBookings.fold<double>(
       0,
       (sum, booking) => sum + (_amount(booking) - _platformFee(booking)),
@@ -173,6 +186,9 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
               const SizedBox(height: 14),
               _HistoryTabs(
                 selected: _tab,
+                allCount: allCount,
+                completedCount: completedCount,
+                cancelledCount: cancelledCount,
                 onChanged: (tab) => setState(() => _tab = tab),
               ),
               const SizedBox(height: 14),
@@ -305,86 +321,166 @@ class _HistorySearchField extends StatelessWidget {
 class _HistoryTabs extends StatelessWidget {
   const _HistoryTabs({
     required this.selected,
+    required this.allCount,
+    required this.completedCount,
+    required this.cancelledCount,
     required this.onChanged,
   });
 
   final _HistoryTab selected;
+  final int allCount;
+  final int completedCount;
+  final int cancelledCount;
   final ValueChanged<_HistoryTab> onChanged;
+
+  static const double _innerHeight = 44;
+
+  int get _selectedIndex => switch (selected) {
+    _HistoryTab.all => 0,
+    _HistoryTab.completed => 1,
+    _HistoryTab.cancelled => 2,
+  };
 
   @override
   Widget build(BuildContext context) {
-    final tabs = [
-      (_HistoryTab.all, 'All'),
-      (_HistoryTab.completed, 'Completed'),
-      (_HistoryTab.cancelled, 'Cancelled'),
+    final entries = [
+      (_HistoryTab.all, 'All', allCount),
+      (_HistoryTab.completed, 'Completed', completedCount),
+      (_HistoryTab.cancelled, 'Cancelled', cancelledCount),
     ];
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(
-        children: [
-          for (final tab in tabs)
-            Expanded(
-              child: _HistoryTabButton(
-                label: tab.$2,
-                selected: selected == tab.$1,
-                onTap: () => onChanged(tab.$1),
-              ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.7),
             ),
-        ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: _innerHeight,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final segmentWidth = constraints.maxWidth / entries.length;
+                return Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      left: _selectedIndex * segmentWidth,
+                      top: 0,
+                      bottom: 0,
+                      width: segmentWidth,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.white, Color(0xFFEAF3EE)],
+                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.10),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (final entry in entries)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => onChanged(entry.$1),
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                height: _innerHeight,
+                                alignment: Alignment.center,
+                                child: _HistorySegmentLabel(
+                                  label: entry.$2,
+                                  count: entry.$3,
+                                  selected: selected == entry.$1,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _HistoryTabButton extends StatelessWidget {
-  const _HistoryTabButton({
+class _HistorySegmentLabel extends StatelessWidget {
+  const _HistorySegmentLabel({
     required this.label,
+    required this.count,
     required this.selected,
-    required this.onTap,
   });
 
   final String label;
+  final int count;
   final bool selected;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : AppColors.textSecondary;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        splashColor: Colors.transparent,
-        highlightColor: selected
-            ? Colors.white.withValues(alpha: 0.06)
-            : AppColors.brand.withValues(alpha: 0.04),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? AppColors.brand : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: foreground,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: selected ? AppColors.brandDark : AppColors.textSecondary,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
-      ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.brandTint
+                : Colors.white.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Text(
+            '$count',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: selected ? AppColors.brandDark : AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

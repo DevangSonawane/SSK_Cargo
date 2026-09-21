@@ -16,6 +16,9 @@ typedef BrokerDriversQuery = ({String? status, int page, int limit});
 typedef BrokerJobRequestsQuery = ({int page, int limit});
 typedef BrokerDriverRequestsQuery = ({int page, int limit});
 
+const int _brokerFetchPageLimit = 100;
+const int _brokerFetchMaxPages = 50;
+
 final brokerPendingRequestsProvider = FutureProvider.autoDispose<int>((
   ref,
 ) async {
@@ -24,17 +27,12 @@ final brokerPendingRequestsProvider = FutureProvider.autoDispose<int>((
     throw StateError('No active session');
   }
 
-  final response = await ref
-      .watch(apiClientProvider)
-      .getJobRequests(
-        accessToken: session.tokens.accessToken,
-        page: 1,
-        limit: 100,
-      );
+  final requests = await fetchAllBrokerJobRequests(
+    ref.watch(apiClientProvider),
+    accessToken: session.tokens.accessToken,
+  );
 
-  return _BrokerJobRequestPage.fromJson(
-    response,
-  ).requests.where(isBrokerJobRequestAttentionCount).length;
+  return requests.where(isBrokerJobRequestAttentionCount).length;
 });
 
 final brokerActiveJobsCountProvider = FutureProvider.autoDispose<int>((
@@ -67,15 +65,12 @@ final brokerHistoryProvider =
         throw StateError('No active session');
       }
 
-      final response = await ref
-          .watch(apiClientProvider)
-          .getJobRequests(
-            accessToken: session.tokens.accessToken,
-            page: 1,
-            limit: 100,
-          );
+      final requests = await fetchAllBrokerJobRequests(
+        ref.watch(apiClientProvider),
+        accessToken: session.tokens.accessToken,
+      );
 
-      return _BrokerJobRequestPage.fromJson(response).requests
+      return requests
           .where((request) => !isPendingBookingRequest(request))
           .map(brokerRequestToShipment)
           .toList();
@@ -88,15 +83,12 @@ final brokerJobRequestsProvider = FutureProvider.autoDispose
         throw StateError('No active session');
       }
 
-      final response = await ref
-          .watch(apiClientProvider)
-          .getJobRequests(
-            accessToken: session.tokens.accessToken,
-            page: query.page,
-            limit: query.limit,
-          );
-
-      return _BrokerJobRequestPage.fromJson(response).requests;
+      return fetchAllBrokerJobRequests(
+        ref.watch(apiClientProvider),
+        accessToken: session.tokens.accessToken,
+        initialPage: query.page,
+        pageLimit: query.limit,
+      );
     });
 
 final brokerDriverRequestsProvider = FutureProvider.autoDispose
@@ -255,6 +247,13 @@ class BookingOfferHistoryEntry {
   final double amount;
 }
 
+class BrokerContactInfo {
+  const BrokerContactInfo({required this.name, required this.phone});
+
+  final String name;
+  final String phone;
+}
+
 class BrokerDriverRequest {
   const BrokerDriverRequest({
     required this.id,
@@ -342,6 +341,7 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
   final driver = _asMap(source['driver']);
   final broker = _asMap(source['broker']);
   final load = _asMap(source['load']);
+  final contact = brokerContactInfoFromPayload(payload);
   final bookingId = _readString(payload, const ['bookingId', 'booking_id']);
   final requestId = _readString(payload, const [
     'request_id',
@@ -368,14 +368,8 @@ BrokerDriverRequest brokerDriverRequestFromNotificationPayload(
     ]),
     bookingNumber: bookingNumber,
     pendingConfirmationBy: pendingConfirmationBy,
-    clientName: _firstNonEmpty([
-      _readString(payload, const ['clientName', 'client_name']),
-      _readString(source, const ['clientName', 'client_name']),
-    ]),
-    clientPhone: _firstNonEmpty([
-      _readString(payload, const ['clientPhone', 'client_phone']),
-      _readString(source, const ['clientPhone', 'client_phone']),
-    ]),
+    clientName: contact.name,
+    clientPhone: contact.phone,
     driverName: _firstNonEmpty([
       _readString(payload, const ['driverName', 'driver_name']),
       _readString(source, const ['driverName', 'driver_name']),
@@ -498,6 +492,52 @@ class _BrokerDriverRequestPage {
   final List<BrokerDriverRequest> requests;
 }
 
+Future<List<BookingRequest>> fetchAllBrokerJobRequests(
+  SskApiClient api, {
+  required String accessToken,
+  int initialPage = 1,
+  int pageLimit = _brokerFetchPageLimit,
+}) async {
+  final requestsById = <String, BookingRequest>{};
+  var page = initialPage < 1 ? 1 : initialPage;
+  final limit = pageLimit <= 0 ? _brokerFetchPageLimit : pageLimit;
+
+  for (
+    var fetchedPages = 0;
+    fetchedPages < _brokerFetchMaxPages;
+    fetchedPages++
+  ) {
+    final response = await api.getJobRequests(
+      accessToken: accessToken,
+      page: page,
+      limit: limit,
+    );
+    final pageRequests = _BrokerJobRequestPage.fromJson(response).requests;
+    var addedThisPage = 0;
+    for (final request in pageRequests) {
+      if (!requestsById.containsKey(request.id)) {
+        addedThisPage += 1;
+      }
+      requestsById[request.id] = request;
+    }
+    if (page > 1 && addedThisPage == 0) {
+      break;
+    }
+    if (!_hasMoreBrokerPages(
+      response,
+      page: page,
+      pageItemCount: pageRequests.length,
+      accumulatedItemCount: requestsById.length,
+      limit: limit,
+    )) {
+      break;
+    }
+    page += 1;
+  }
+
+  return requestsById.values.toList(growable: false);
+}
+
 BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   final offerHistory = _asList(json['offerHistory'] ?? json['offer_history'])
       .whereType<Map<String, dynamic>>()
@@ -514,8 +554,6 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
       )
       .where((entry) => entry.amount > 0)
       .toList(growable: false);
-  final customer = _asMap(json['customer']);
-  final client = _asMap(json['client']);
   final load = _asMap(json['load']);
   final route = _asMap(json['route']);
   final cargo = _asMap(json['cargo']);
@@ -523,6 +561,7 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
   final request = _asMap(json['request']);
   final truck = _asMap(json['truck']);
   final driver = _asMap(json['driver']);
+  final contact = brokerContactInfoFromPayload(json);
   final source = request.isNotEmpty
       ? request
       : booking.isNotEmpty
@@ -992,23 +1031,6 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     _readString(source, const ['amountText', 'priceText']),
     '₹0',
   ]);
-  final clientName = _firstNonEmpty([
-    _readString(json, const ['client_name', 'customer_name', 'name']),
-    _readString(source, const ['client_name', 'customer_name', 'name']),
-    _readString(client, const ['name', 'full_name', 'display_name']),
-    _readString(customer, const ['name', 'full_name', 'display_name']),
-    'Customer',
-  ]);
-  final clientPhone = _firstNonEmpty([
-    _readString(json, const ['clientPhone', 'client_phone', 'customer_phone']),
-    _readString(source, const [
-      'clientPhone',
-      'client_phone',
-      'customer_phone',
-    ]),
-    _readString(client, const ['phone', 'mobile', 'phone_number']),
-    _readString(customer, const ['phone', 'mobile', 'phone_number']),
-  ]);
   final driverId = _firstNonEmpty([
     _readString(json, const ['driver_id', 'driverId', 'assigned_driver_id']),
     _readString(source, const ['driver_id', 'driverId', 'assigned_driver_id']),
@@ -1107,9 +1129,9 @@ BookingRequest _bookingRequestFromJson(Map<String, dynamic> json) {
     id: requestId,
     status: status.isEmpty ? 'unknown' : status,
     pendingConfirmationBy: pendingConfirmationBy,
-    clientName: clientName,
-    clientPhone: clientPhone,
-    clientInitials: _initials(clientName),
+    clientName: contact.name,
+    clientPhone: contact.phone,
+    clientInitials: _initials(contact.name),
     productName: productName,
     from: fromLocation,
     to: toLocation,
@@ -1165,6 +1187,7 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
   final driver = _asMap(json['driver']);
   final broker = _asMap(json['broker']);
   final load = _asMap(json['load']);
+  final contact = brokerContactInfoFromPayload(json, fallbackName: '');
   final pendingConfirmationBy = _readString(json, const [
     'pendingConfirmationBy',
     'pending_confirmation_by',
@@ -1180,12 +1203,8 @@ BrokerDriverRequest _brokerDriverRequestFromJson(Map<String, dynamic> json) {
     jobRequestId: _readString(json, const ['jobRequestId', 'job_request_id']),
     bookingNumber: _readString(json, const ['bookingNumber', 'booking_number']),
     pendingConfirmationBy: pendingConfirmationBy,
-    clientName: _firstNonEmpty([
-      _readString(json, const ['clientName', 'client_name']),
-    ]),
-    clientPhone: _firstNonEmpty([
-      _readString(json, const ['clientPhone', 'client_phone']),
-    ]),
+    clientName: contact.name,
+    clientPhone: contact.phone,
     driverName: _firstNonEmpty([
       _readString(json, const ['driverName', 'driver_name']),
       _readString(driver, const ['name', 'full_name', 'display_name']),
@@ -1490,9 +1509,63 @@ List<dynamic> _extractNestedList(Object? value) {
   return const <dynamic>[];
 }
 
+bool _hasMoreBrokerPages(
+  Map<String, dynamic> response, {
+  required int page,
+  required int pageItemCount,
+  required int accumulatedItemCount,
+  required int limit,
+}) {
+  if (pageItemCount <= 0) {
+    return false;
+  }
+
+  final totalPages = _readPaginationInt(response, const [
+    'totalPages',
+    'total_pages',
+    'pages',
+    'pageCount',
+    'page_count',
+  ]);
+  if (totalPages != null) {
+    return page < totalPages;
+  }
+
+  final totalItems = _readPaginationInt(response, const [
+    'total',
+    'totalItems',
+    'total_items',
+    'totalCount',
+    'total_count',
+  ]);
+  if (totalItems != null && totalItems > 0) {
+    return accumulatedItemCount < totalItems;
+  }
+
+  return pageItemCount >= limit;
+}
+
+int? _readPaginationInt(Map<String, dynamic> response, List<String> keys) {
+  final data = _asMap(response['data']);
+  final meta = _asMap(response['meta']);
+  final pagination = _asMap(response['pagination']);
+  final dataMeta = _asMap(data['meta']);
+  final dataPagination = _asMap(data['pagination']);
+
+  return _readInt(response, keys) ??
+      _readInt(data, keys) ??
+      _readInt(meta, keys) ??
+      _readInt(pagination, keys) ??
+      _readInt(dataMeta, keys) ??
+      _readInt(dataPagination, keys);
+}
+
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) {
     return value;
+  }
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
   }
   return <String, dynamic>{};
 }
@@ -1706,6 +1779,159 @@ String _readNestedName(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return '';
+}
+
+BrokerContactInfo brokerContactInfoFromPayload(
+  Map<String, dynamic> json, {
+  String fallbackName = 'Customer',
+  String fallbackPhone = '',
+}) {
+  final booking = _asMap(json['booking']);
+  final request = _asMap(json['request']);
+  final data = _asMap(json['data']);
+  final dataRequest = _asMap(data['request']);
+  final dataBooking = _asMap(data['booking']);
+  final source = request.isNotEmpty
+      ? request
+      : booking.isNotEmpty
+      ? booking
+      : dataRequest.isNotEmpty
+      ? dataRequest
+      : dataBooking.isNotEmpty
+      ? dataBooking
+      : data.isNotEmpty
+      ? data
+      : json;
+  final maps = <Map<String, dynamic>>[
+    json,
+    source,
+    request,
+    booking,
+    data,
+    dataRequest,
+    dataBooking,
+  ];
+  final personMaps = <Map<String, dynamic>>[];
+
+  for (final map in maps) {
+    if (map.isEmpty) {
+      continue;
+    }
+    for (final key in const [
+      'client',
+      'customer',
+      'user',
+      'shipper',
+      'consignor',
+      'sender',
+      'owner',
+      'createdBy',
+      'created_by',
+      'bookedBy',
+      'booked_by',
+      'clientDetails',
+      'client_details',
+      'customerDetails',
+      'customer_details',
+      'customerInfo',
+      'customer_info',
+      'contact',
+      'contactDetails',
+      'contact_details',
+    ]) {
+      final nested = _asMap(map[key]);
+      if (nested.isNotEmpty) {
+        personMaps.add(nested);
+      }
+    }
+  }
+
+  final name = _firstNonEmpty([
+    for (final map in maps) _readPayloadContactName(map),
+    for (final map in personMaps) _readPersonName(map),
+    fallbackName,
+  ]);
+  final phone = _firstNonEmpty([
+    for (final map in maps) _readPersonPhone(map),
+    for (final map in personMaps) _readPersonPhone(map),
+    fallbackPhone,
+  ]);
+
+  return BrokerContactInfo(name: name, phone: phone);
+}
+
+String _readPersonName(Map<String, dynamic> json) {
+  final direct = _readString(json, const [
+    'clientName',
+    'client_name',
+    'customerName',
+    'customer_name',
+    'shipperName',
+    'shipper_name',
+    'consignorName',
+    'consignor_name',
+    'senderName',
+    'sender_name',
+    'contactName',
+    'contact_name',
+    'name',
+    'fullName',
+    'full_name',
+    'displayName',
+    'display_name',
+    'businessName',
+    'business_name',
+    'companyName',
+    'company_name',
+  ]);
+  if (direct.isNotEmpty) {
+    return direct;
+  }
+
+  return [
+    _readString(json, const ['firstName', 'first_name']),
+    _readString(json, const ['middleName', 'middle_name']),
+    _readString(json, const ['lastName', 'last_name']),
+  ].where((part) => part.isNotEmpty).join(' ').trim();
+}
+
+String _readPayloadContactName(Map<String, dynamic> json) {
+  return _readString(json, const [
+    'clientName',
+    'client_name',
+    'customerName',
+    'customer_name',
+    'shipperName',
+    'shipper_name',
+    'consignorName',
+    'consignor_name',
+    'senderName',
+    'sender_name',
+    'contactName',
+    'contact_name',
+  ]);
+}
+
+String _readPersonPhone(Map<String, dynamic> json) {
+  return _readString(json, const [
+    'clientPhone',
+    'client_phone',
+    'customerPhone',
+    'customer_phone',
+    'phone',
+    'mobile',
+    'phoneNumber',
+    'phone_number',
+    'mobileNumber',
+    'mobile_number',
+    'contactNumber',
+    'contact_number',
+    'contactPhone',
+    'contact_phone',
+    'whatsapp',
+    'whatsappNumber',
+    'whatsapp_number',
+  ]);
 }
 
 class BrokerDriver {

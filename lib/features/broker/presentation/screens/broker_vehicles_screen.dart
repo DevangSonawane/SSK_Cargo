@@ -8,6 +8,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
+const double _vehiclesBottomNavClearance = 64;
+
 class _VehiclesHeader extends StatelessWidget {
   const _VehiclesHeader({this.controller, this.onSearchChanged});
 
@@ -178,6 +180,10 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
     final trucksAsync = ref.watch(
       brokerTrucksProvider(BrokerVehiclesScreen._query),
     );
+    final listPadding = EdgeInsets.only(
+      bottom:
+          MediaQuery.paddingOf(context).bottom + _vehiclesBottomNavClearance,
+    );
 
     Future<void> refreshTrucks() async {
       final refreshed = ref.refresh(
@@ -192,7 +198,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
       child: trucksAsync.when(
         loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
+          padding: listPadding,
           children: [
             _VehiclesHeader(),
             const Padding(
@@ -208,7 +214,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
         ),
         error: (error, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
+          padding: listPadding,
           children: [
             const _VehiclesHeader(),
             Padding(
@@ -273,7 +279,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
+            padding: listPadding,
             children: [
               _VehiclesHeader(
                 controller: _searchController,
@@ -637,9 +643,7 @@ class _TruckSummaryRow extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
               style: TextStyle(
-                color: danger
-                    ? AppColors.dangerIcon
-                    : AppColors.textPrimary,
+                color: danger ? AppColors.dangerIcon : AppColors.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),

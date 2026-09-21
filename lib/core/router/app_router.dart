@@ -34,6 +34,7 @@ import '../../features/broker/presentation/screens/broker_profile_screen.dart';
 import '../../features/broker/presentation/screens/broker_kyc_registration_screen.dart';
 import '../../features/broker/presentation/screens/broker_shell.dart';
 import '../../features/broker/presentation/screens/broker_tracking_screen.dart';
+import '../../features/broker/presentation/screens/broker_track_live_screen.dart';
 import '../../features/broker/presentation/screens/broker_truck_assign_screen.dart';
 import '../../features/broker/presentation/screens/broker_truck_history_screen.dart';
 import '../../features/broker/presentation/screens/broker_truck_location_screen.dart';
@@ -445,11 +446,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               : extra is ClientBooking
               ? trackingShipmentFromBooking(extra)
               : null;
+          // Broker gets its own tracking view (live map + route + driver
+          // contact). Never the client TrackingDetailsScreen, which carries
+          // Pay now / rate / cancel actions that make no sense for a broker.
           return NoTransitionPage(
             child: _lightFlow(
               shipment == null
                   ? const BrokerTrackingScreen()
-                  : TrackingDetailsScreen(shipment: shipment),
+                  : BrokerTrackLiveScreen(shipment: shipment),
             ),
           );
         },

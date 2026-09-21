@@ -18,6 +18,8 @@ import '../../../shared/presentation/widgets/express_badge.dart';
 import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/broker_flow_widgets.dart';
 
+const double _brokerTrackingBottomNavClearance = 64;
+
 class BrokerTrackingScreen extends ConsumerStatefulWidget {
   const BrokerTrackingScreen({super.key});
 
@@ -215,13 +217,18 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
       timedOutRequests: timedOutRequests,
       negotiationNotifications: negotiationNotifications,
     );
+    final listPadding = EdgeInsets.only(
+      bottom:
+          MediaQuery.paddingOf(context).bottom +
+          _brokerTrackingBottomNavClearance,
+    );
 
     return RefreshIndicator(
       color: AppColors.brand,
       onRefresh: _refreshTrackingData,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
+        padding: listPadding,
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(

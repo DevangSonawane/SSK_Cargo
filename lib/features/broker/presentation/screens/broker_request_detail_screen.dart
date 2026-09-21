@@ -472,15 +472,20 @@ class _BrokerRequestDetailScreenState
       'pendingConfirmationBy',
       'pending_confirmation_by',
     ]).toLowerCase();
+    final contact = brokerContactInfoFromPayload(
+      payload,
+      fallbackName: current.clientName,
+      fallbackPhone: current.clientPhone,
+    );
     return BookingRequest(
       id: current.id,
       status: effectiveStatus.isEmpty ? current.status : effectiveStatus,
       pendingConfirmationBy: pendingConfirmationBy.isEmpty
           ? current.pendingConfirmationBy
           : pendingConfirmationBy,
-      clientName: current.clientName,
-      clientPhone: current.clientPhone,
-      clientInitials: current.clientInitials,
+      clientName: contact.name,
+      clientPhone: contact.phone,
+      clientInitials: _detailInitials(contact.name),
       productName: current.productName,
       from: _detailFirstNonEmpty([
         _detailLocationString(payload, _detailPickupKeys),
@@ -526,6 +531,11 @@ class _BrokerRequestDetailScreenState
       'driver_timed_out',
     ]);
     final updatedAt = _readDateTime(payload, const ['updatedAt', 'updated_at']);
+    final contact = brokerContactInfoFromPayload(
+      payload,
+      fallbackName: current.clientName,
+      fallbackPhone: current.clientPhone,
+    );
     return BrokerDriverRequest(
       id: current.id,
       bookingId: current.bookingId,
@@ -534,8 +544,8 @@ class _BrokerRequestDetailScreenState
       pendingConfirmationBy: pendingConfirmationBy.isEmpty
           ? current.pendingConfirmationBy
           : pendingConfirmationBy,
-      clientName: current.clientName,
-      clientPhone: current.clientPhone,
+      clientName: contact.name,
+      clientPhone: contact.phone,
       driverName: current.driverName,
       driverPhone: current.driverPhone,
       brokerName: current.brokerName,
@@ -1082,83 +1092,29 @@ class _BrokerRequestDetailScreenState
         _normalizedStatus == 'assigned';
     final isAwaitingConfirmation = _normalizedStatus == 'awaiting_confirmation';
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: visual.backgroundColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(visual.icon, color: visual.textColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  visual.label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isAwaitingConfirmation
-                      ? 'This request is awaiting confirmation from the other side.'
-                      : isAccepted
-                      ? 'This request has been accepted. No assignment card is shown here.'
-                      : 'This request has been declined. No further broker actions are available.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return _StatusBannerCard(
+      icon: visual.icon,
+      title: visual.label,
+      subtitle: isAwaitingConfirmation
+          ? 'This request is awaiting confirmation from the other side.'
+          : isAccepted
+          ? 'This request has been accepted. No assignment card is shown here.'
+          : 'This request has been declined. No further broker actions are available.',
+      backgroundColor: visual.backgroundColor,
+      borderColor: visual.textColor.withValues(alpha: 0.30),
+      iconColor: visual.textColor,
     );
   }
 
   Widget _buildJobAwaitingConfirmationCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Accepted - waiting for the client to confirm',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Your accept has been saved. Countering is locked until the client confirms or declines.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
+    return const _StatusBannerCard(
+      icon: AppIcons.schedule_rounded,
+      title: 'Waiting for client confirmation',
+      subtitle:
+          'Your accept has been saved. Countering is locked until the client confirms or declines.',
+      backgroundColor: Color(0xFFEAF4FB),
+      borderColor: AppColors.accentBlueBorder,
+      iconColor: AppColors.accentBlue,
     );
   }
 
@@ -1168,62 +1124,26 @@ class _BrokerRequestDetailScreenState
     }
 
     if (_isWaitingOnBroker) {
-      return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Accepted - waiting for the client to confirm',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your accept has been saved. No more countering is available until the client responds.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
+      return const _StatusBannerCard(
+        icon: AppIcons.schedule_rounded,
+        title: 'Waiting for client confirmation',
+        subtitle:
+            'Your accept has been saved. No more countering is available until the client responds.',
+        backgroundColor: Color(0xFFEAF4FB),
+        borderColor: AppColors.accentBlueBorder,
+        iconColor: AppColors.accentBlue,
       );
     }
 
     if (_isLockedWaitingForClient) {
-      return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Accepted - waiting for the client to confirm',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your accept has been saved. The request is locked until the client confirms or declines.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
+      return const _StatusBannerCard(
+        icon: AppIcons.schedule_rounded,
+        title: 'Waiting for client confirmation',
+        subtitle:
+            'Your accept has been saved. The request is locked until the client confirms or declines.',
+        backgroundColor: Color(0xFFEAF4FB),
+        borderColor: AppColors.accentBlueBorder,
+        iconColor: AppColors.accentBlue,
       );
     }
 
@@ -1403,67 +1323,130 @@ class _BrokerRequestDetailScreenState
     final isConfirmationTurn = _isJobRequestBrokerTurn;
     final isAcceptedAssignment = _isAcceptedJobReadyForAssignment;
     final negotiationLocked = isConfirmationTurn || isAcceptedAssignment;
+    final colors = context.colors;
+    final title = isConfirmationTurn
+        ? 'Confirm booking'
+        : isAcceptedAssignment
+        ? 'Assign Driver & Truck'
+        : 'Assignment';
+    final subtitle = isConfirmationTurn
+        ? 'The client accepted this offer. Confirm to finalize, then assign the driver and truck.'
+        : isAcceptedAssignment
+        ? 'This request is accepted. Pick the assigned driver and truck to create the trip.'
+        : 'Driver and truck are auto-selected from the booking details.';
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.line),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.line),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.055),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isConfirmationTurn
-                ? 'Confirm booking'
-                : isAcceptedAssignment
-                ? 'Assign Driver & Truck'
-                : 'Assignment',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isConfirmationTurn
-                ? 'The client accepted this offer. Confirm to finalize, then assign the driver and truck.'
-                : isAcceptedAssignment
-                ? 'This request is accepted. Pick the assigned driver and truck to create the trip.'
-                : 'Driver and truck are auto-selected from the booking details.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.brandFill,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  AppIcons.local_shipping_rounded,
+                  color: Color(0xFF2FA56E),
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.fillSubtle,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.line),
+              color: colors.fillSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.line),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Auto-selected assignment',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
-                _SummaryRow(label: 'Driver', value: selectedDriverName),
-                const SizedBox(height: 10),
-                _SummaryRow(label: 'Truck', value: selectedTruckName),
+                _AssigneeRow(
+                  leading: _DriverInitialsBadge(name: selectedDriverName),
+                  label: 'Driver',
+                  value: selectedDriverName,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Divider(height: 1, thickness: 1, color: colors.line),
+                ),
+                _AssigneeRow(
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.brandFill,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      AppIcons.local_shipping_outlined,
+                      size: 18,
+                      color: Color(0xFF2FA56E),
+                    ),
+                  ),
+                  label: 'Truck',
+                  value: selectedTruckName,
+                ),
               ],
             ),
           ),
           if (!negotiationLocked) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             _CounterAmountSlider(
               label: 'Counter amount',
               amount: _counterAmount,
@@ -1478,7 +1461,7 @@ class _BrokerRequestDetailScreenState
                   : (value) => setState(() => _counterAmount = value),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           if (!isAcceptedAssignment) ...[
             Row(
               children: [
@@ -1488,6 +1471,10 @@ class _BrokerRequestDetailScreenState
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.dangerIcon,
                       side: const BorderSide(color: Color(0xFFF7B4B4)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: const Text('Reject'),
                   ),
@@ -1502,6 +1489,10 @@ class _BrokerRequestDetailScreenState
                         side: const BorderSide(
                           color: AppColors.brandBorder,
                           width: 1.4,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text('Counter'),
@@ -1519,7 +1510,16 @@ class _BrokerRequestDetailScreenState
               onPressed: _submitting
                   ? null
                   : () => _acceptAndAssign(drivers: drivers, trucks: trucks),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               child: Text(
                 _submitting
                     ? 'Saving...'
@@ -1532,12 +1532,40 @@ class _BrokerRequestDetailScreenState
             ),
           ),
           if (selectedDriverId == null || selectedTruckId == null) ...[
-            const SizedBox(height: 10),
-            Text(
-              'A fallback driver or truck will be used when you accept because the booking did not include an explicit assignment.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.brandFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.brandBorder),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 1),
+                    child: Icon(
+                      AppIcons.info_outline_rounded,
+                      size: 15,
+                      color: Color(0xFF2FA56E),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'No exact match found — a fallback driver or truck will be used when you accept.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],
@@ -1567,101 +1595,34 @@ class _BrokerRequestDetailScreenState
               isExpress: _isExpressRequest,
             ),
             const SizedBox(height: 14),
-            _DetailCard(
-              title: 'Route Information',
-              child: Column(
-                children: [
-                  _TimelineRouteRow(
-                    icon: AppIcons.place_rounded,
-                    iconBackground: AppColors.brandFill,
-                    iconColor: AppColors.brand,
-                    label: 'Pickup',
-                    value: _pickupText,
-                  ),
-                  const SizedBox(height: 14),
-                  _TimelineRouteRow(
-                    icon: AppIcons.near_me_rounded,
-                    iconBackground: AppColors.brandFill,
-                    iconColor: AppColors.brand,
-                    label: 'Drop-off',
-                    value: _dropText,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandFill,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          AppIcons.local_shipping_rounded,
-                          color: AppColors.brand,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '$_weightText • $_vehicleText',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            _BrokerRouteCard(
+              pickup: _pickupText,
+              drop: _dropText,
+              weight: _weightText,
+              vehicle: _vehicleText,
+              distance: _request.distance,
+              eta: _request.etaText,
             ),
             const SizedBox(height: 14),
-            _DetailCard(
-              title: 'Overview',
-              child: Column(
-                children: [
-                  _OverviewRow(
-                    icon: AppIcons.calendar_today_rounded,
-                    label: 'Requested On',
-                    value: _request.requestedAt.isEmpty
-                        ? 'Unavailable'
-                        : _request.requestedAt,
-                  ),
-                  const SizedBox(height: 18),
-                  _OverviewRow(
-                    icon: AppIcons.person_rounded,
-                    label: 'Requested By',
-                    value: _isDriverNegotiation
-                        ? (_driverRequest!.clientName.isEmpty
-                              ? 'Customer'
-                              : _driverRequest!.clientName)
-                        : (_request.clientName.isEmpty
-                              ? 'Customer'
-                              : _request.clientName),
-                  ),
-                  const SizedBox(height: 18),
-                  _OverviewRow(
-                    icon: AppIcons.local_offer_rounded,
-                    label: 'Load Type',
-                    value: _isDriverNegotiation
-                        ? (_driverRequest!.truckCategory.isEmpty
-                              ? 'General'
-                              : _driverRequest!.truckCategory)
-                        : (_request.productName.isEmpty
-                              ? 'General'
-                              : _request.productName),
-                  ),
-                  const SizedBox(height: 18),
-                  _OverviewRow(
-                    icon: AppIcons.currency_rupee_rounded,
-                    label: 'Payment',
-                    value: topAmount,
-                    valueColor: AppColors.textPrimary,
-                  ),
-                ],
-              ),
+            _BrokerOverviewCard(
+              requestedOn: _request.requestedAt.isEmpty
+                  ? 'Unavailable'
+                  : _request.requestedAt,
+              requestedBy: _isDriverNegotiation
+                  ? (_driverRequest!.clientName.isEmpty
+                        ? 'Customer'
+                        : _driverRequest!.clientName)
+                  : (_request.clientName.isEmpty
+                        ? 'Customer'
+                        : _request.clientName),
+              loadType: _isDriverNegotiation
+                  ? (_driverRequest!.truckCategory.isEmpty
+                        ? 'General'
+                        : _driverRequest!.truckCategory)
+                  : (_request.productName.isEmpty
+                        ? 'General'
+                        : _request.productName),
+              payment: topAmount,
             ),
             const SizedBox(height: 14),
             if (_isDriverNegotiation)
@@ -1760,6 +1721,92 @@ class _BrokerRequestDetailScreenState
   }
 }
 
+class _StatusBannerCard extends StatelessWidget {
+  const _StatusBannerCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.055),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withValues(alpha: 0.16),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BookingNavRow extends StatelessWidget {
   const _BookingNavRow({required this.onBack});
 
@@ -1799,93 +1846,133 @@ class _BookingNavRow extends StatelessWidget {
   }
 }
 
-class _DetailCard extends StatelessWidget {
-  const _DetailCard({this.title, required this.child});
+class _BrokerOverviewCard extends StatelessWidget {
+  const _BrokerOverviewCard({
+    required this.requestedOn,
+    required this.requestedBy,
+    required this.loadType,
+    required this.payment,
+  });
 
-  final String? title;
-  final Widget child;
+  final String requestedOn;
+  final String requestedBy;
+  final String loadType;
+  final String payment;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.line),
-        boxShadow: AppShadows.card,
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.line),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.055),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
-            Text(
-              title!,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-                letterSpacing: 0.2,
-              ),
+          Text(
+            'Overview',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: colors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 14),
-          ],
-          child,
+          ),
+          const SizedBox(height: 6),
+          _OverviewDetailRow(
+            icon: AppIcons.calendar_today_rounded,
+            label: 'Requested on',
+            value: requestedOn,
+          ),
+          Divider(height: 24, thickness: 1, color: colors.line),
+          _OverviewDetailRow(
+            icon: AppIcons.person_rounded,
+            label: 'Requested by',
+            value: requestedBy,
+          ),
+          Divider(height: 24, thickness: 1, color: colors.line),
+          _OverviewDetailRow(
+            icon: AppIcons.local_offer_rounded,
+            label: 'Load type',
+            value: loadType,
+          ),
+          Divider(height: 24, thickness: 1, color: colors.line),
+          _OverviewDetailRow(
+            icon: AppIcons.currency_rupee_rounded,
+            label: 'Payment',
+            value: payment,
+            highlight: true,
+          ),
         ],
       ),
     );
   }
 }
 
-class _TimelineRouteRow extends StatelessWidget {
-  const _TimelineRouteRow({
+class _OverviewDetailRow extends StatelessWidget {
+  const _OverviewDetailRow({
     required this.icon,
-    required this.iconBackground,
-    required this.iconColor,
     required this.label,
     required this.value,
+    this.highlight = false,
   });
 
   final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
   final String label;
   final String value;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
-            color: iconBackground,
-            shape: BoxShape.circle,
+            color: highlight ? colors.surface : colors.brandFill,
+            borderRadius: BorderRadius.circular(10),
+            border: highlight ? Border.all(color: colors.line) : null,
           ),
-          child: Icon(icon, color: iconColor, size: 20),
+          child: Icon(
+            icon,
+            size: 17,
+            color: highlight ? colors.textPrimary : const Color(0xFF2FA56E),
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label.toUpperCase(),
+                label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.textTertiary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
+                  color: colors.textTertiary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                  height: 1.3,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontSize: highlight ? 16 : 14,
+                  fontWeight: highlight ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ],
@@ -1896,45 +1983,410 @@ class _TimelineRouteRow extends StatelessWidget {
   }
 }
 
-class _OverviewRow extends StatelessWidget {
-  const _OverviewRow({
+class _BrokerRouteCard extends StatelessWidget {
+  const _BrokerRouteCard({
+    required this.pickup,
+    required this.drop,
+    required this.weight,
+    required this.vehicle,
+    this.distance = '',
+    this.eta = '',
+  });
+
+  final String pickup;
+  final String drop;
+  final String weight;
+  final String vehicle;
+  final String distance;
+  final String eta;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textTheme = Theme.of(context).textTheme;
+    final trimmedDistance = distance.trim();
+    final trimmedEta = eta.trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.line),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.055),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Route Information',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (trimmedDistance.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.brandFill,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: colors.brandBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        AppIcons.route_rounded,
+                        size: 13,
+                        color: Color(0xFF2FA56E),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        trimmedDistance,
+                        style: textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFF2FA56E),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.fillSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.line),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _BrokerRailStop(
+                  marker: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2FA56E),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF2FA56E,
+                          ).withValues(alpha: 0.18),
+                          spreadRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                  label: 'Pickup',
+                  value: pickup.trim().isEmpty
+                      ? 'Pickup pending'
+                      : pickup.trim(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: Container(
+                    width: 2,
+                    height: 28,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colors.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                _BrokerRailStop(
+                  marker: const Icon(
+                    AppIcons.location_on_rounded,
+                    color: Color(0xFF2FA56E),
+                    size: 18,
+                  ),
+                  label: 'Drop-off',
+                  value: drop.trim().isEmpty ? 'Drop pending' : drop.trim(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _BrokerMetaTile(
+                  icon: AppIcons.scale_outlined,
+                  label: 'Weight',
+                  value: weight.trim().isEmpty ? '-' : weight.trim(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _BrokerMetaTile(
+                  icon: AppIcons.local_shipping_outlined,
+                  label: 'Vehicle',
+                  value: vehicle.trim().isEmpty ? 'Truck' : vehicle.trim(),
+                ),
+              ),
+            ],
+          ),
+          if (trimmedEta.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.brandFill,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.brandBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    AppIcons.schedule_rounded,
+                    size: 15,
+                    color: Color(0xFF2FA56E),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ETA $trimmedEta',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BrokerRailStop extends StatelessWidget {
+  const _BrokerRailStop({
+    required this.marker,
+    required this.label,
+    required this.value,
+  });
+
+  final Widget marker;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 18,
+          height: 22,
+          child: Align(alignment: Alignment.topCenter, child: marker),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.textTertiary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BrokerMetaTile extends StatelessWidget {
+  const _BrokerMetaTile({
     required this.icon,
     required this.label,
     required this.value,
-    this.valueColor = AppColors.textPrimary,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: colors.brandFill,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, size: 15, color: const Color(0xFF2FA56E)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textTertiary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: colors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AssigneeRow extends StatelessWidget {
+  const _AssigneeRow({
+    required this.leading,
+    required this.label,
+    required this.value,
+  });
+
+  final Widget leading;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.textTertiary),
-        const SizedBox(width: 12),
+        leading,
+        const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: valueColor,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.textTertiary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DriverInitialsBadge extends StatelessWidget {
+  const _DriverInitialsBadge({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+    return Container(
+      width: 38,
+      height: 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: context.colors.brandFill,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        initials.isEmpty ? 'D' : initials,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: const Color(0xFF2FA56E),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
@@ -2277,33 +2729,51 @@ class _CounterAmountSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final value = amount.clamp(minAmount, maxAmount).toDouble();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.fillSubtle,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.line),
+        color: colors.fillSubtle,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '₹${value.toStringAsFixed(0)}',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.brand,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.brandFill,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '₹${value.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFF2FA56E),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
           Slider(
             value: value,
@@ -2319,14 +2789,14 @@ class _CounterAmountSlider extends StatelessWidget {
                 '₹${minAmount.toStringAsFixed(0)}',
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
               ),
               const Spacer(),
               Text(
                 '₹${maxAmount.toStringAsFixed(0)}',
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                ).textTheme.bodySmall?.copyWith(color: colors.textTertiary),
               ),
             ],
           ),
@@ -2605,37 +3075,14 @@ bool _isCancelledDetailStatus(String status) {
   return normalized == 'cancelled' || normalized == 'canceled';
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 76,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textTertiary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+String _detailInitials(String name) {
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList(growable: false);
+  if (parts.isEmpty) return 'C';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return '${parts.first.substring(0, 1)}${parts[1].substring(0, 1)}'
+      .toUpperCase();
 }
