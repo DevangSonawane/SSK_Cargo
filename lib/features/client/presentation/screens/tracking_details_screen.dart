@@ -500,6 +500,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         _shipment.ratingStars == null;
   }
 
+  bool get _isInvoiceReady {
+    final status = _shipment.bookingStatus?.toLowerCase();
+    return _shipment.bookingId != null &&
+        const {'delivered', 'completed', 'paid', 'settled'}.contains(status);
+  }
+
   double get _remainingAmount =>
       (_shipment.amount - _shipment.amountPaid).clamp(0, double.infinity);
 
@@ -801,13 +807,52 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
             id: bookingId,
           );
       final bytes = response.data ?? const <int>[];
+      if (bytes.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invoice file is empty.')));
+        return;
+      }
+      final fileName =
+          'invoice-${_shipment.trackingId.replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '-')}.pdf';
+      String? savedPath;
+      try {
+        savedPath =
+            await _shareChannel
+                .invokeMethod<String>('downloadFile', <String, dynamic>{
+                  'bytes': Uint8List.fromList(bytes),
+                  'fileName': fileName,
+                  'mimeType': 'application/pdf',
+                }) ??
+            '';
+      } catch (_) {
+        savedPath = null;
+      }
+      var sharedFallback = false;
+      if (savedPath == null || savedPath.isEmpty) {
+        try {
+          sharedFallback =
+              await _shareChannel.invokeMethod<bool>('shareFile', {
+                'bytes': Uint8List.fromList(bytes),
+                'fileName': fileName,
+                'mimeType': 'application/pdf',
+                'subject': 'Invoice ${_shipment.trackingId}',
+              }) ??
+              false;
+        } catch (_) {
+          sharedFallback = false;
+        }
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            bytes.isEmpty
-                ? 'Invoice downloaded.'
-                : 'Invoice downloaded (${bytes.length} bytes).',
+            savedPath != null && savedPath.isNotEmpty
+                ? 'Invoice downloaded to $savedPath.'
+                : sharedFallback
+                ? 'Invoice ready to save or share.'
+                : 'Failed to download invoice. Please restart the app and try again.',
           ),
         ),
       );
@@ -822,6 +867,28 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
+      );
+    }
+  }
+
+  Uri? _proofOfDeliveryUri(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed != null && parsed.hasScheme) return parsed;
+    final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return Uri.parse('https://apigadidosti.asynk.in$path');
+  }
+
+  Future<void> _viewProofOfDelivery() async {
+    final uri = _proofOfDeliveryUri(_shipment.podUrl ?? '');
+    if (uri == null) {
+      return;
+    }
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open delivery documents.')),
       );
     }
   }
@@ -967,15 +1034,25 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: List.generate(5, (index) {
                         final rating = index + 1;
-                        return IconButton(
-                          onPressed: () => setState(() => stars = rating),
-                          icon: Icon(
-                            rating <= stars
-                                ? AppIcons.star_rounded
-                                : AppIcons.star_border_rounded,
-                            color: const Color(0xFFF5B301),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: InkResponse(
+                            onTap: () => setState(() => stars = rating),
+                            radius: 20,
+                            child: SizedBox(
+                              width: 34,
+                              height: 38,
+                              child: Icon(
+                                rating <= stars
+                                    ? AppIcons.star_rounded
+                                    : AppIcons.star_border_rounded,
+                                color: const Color(0xFFF5B301),
+                                size: 28,
+                              ),
+                            ),
                           ),
                         );
                       }),
@@ -1232,6 +1309,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                         const SizedBox(height: 14),
                         _QuickStatsRow(shipment: shipment),
                         const SizedBox(height: 14),
+                        if ((shipment.podUrl ?? '').trim().isNotEmpty) ...[
+                          _ProofOfDeliveryCard(onTap: _viewProofOfDelivery),
+                          const SizedBox(height: 14),
+                        ],
                         Padding(
                           padding: EdgeInsets.only(
                             bottom: MediaQuery.of(context).padding.bottom,
@@ -1309,30 +1390,67 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                     ],
                                   ],
                                 ),
-                              if (_isPayable && _isRatable)
+                              if (_isPayable && (_isRatable || _isInvoiceReady))
                                 const SizedBox(height: 10),
-                              if (_isRatable)
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: OutlinedButton.icon(
-                                    onPressed: _rateBooking,
-                                    icon: const Icon(
-                                      AppIcons.star_outline_rounded,
-                                    ),
-                                    label: const Text('Rate delivery'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFB88900),
-                                      side: const BorderSide(
-                                        color: Color(0xFFF3DC8C),
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          999,
+                              if (_isRatable || _isInvoiceReady)
+                                Row(
+                                  children: [
+                                    if (_isRatable)
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 48,
+                                          child: OutlinedButton.icon(
+                                            onPressed: _rateBooking,
+                                            icon: const Icon(
+                                              AppIcons.star_outline_rounded,
+                                              size: 18,
+                                            ),
+                                            label: const Text('Rate delivery'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(
+                                                0xFFB88900,
+                                              ),
+                                              side: const BorderSide(
+                                                color: Color(0xFFF3DC8C),
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ),
+                                    if (_isRatable && _isInvoiceReady)
+                                      const SizedBox(width: 10),
+                                    if (_isInvoiceReady)
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 48,
+                                          child: OutlinedButton.icon(
+                                            onPressed: _downloadInvoice,
+                                            icon: const Icon(
+                                              AppIcons.download_rounded,
+                                              size: 18,
+                                            ),
+                                            label: const Text('Invoice'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  context.colors.textPrimary,
+                                              side: BorderSide(
+                                                color: context.colors.line,
+                                              ),
+                                              backgroundColor:
+                                                  context.colors.surface,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               if (_isRatable &&
                                   !_isPayable &&
@@ -1461,7 +1579,10 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
     return Stack(
       children: [
         Positioned.fill(
-          child: _LiveTrackingRouteCanvas(shipment: widget.shipment),
+          child: TrackingRouteMapView(
+            shipment: widget.shipment,
+            liveMode: true,
+          ),
         ),
         Positioned.fill(
           child: IgnorePointer(
@@ -1571,284 +1692,6 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
       ],
     );
   }
-}
-
-class _LiveTrackingRouteCanvas extends StatelessWidget {
-  const _LiveTrackingRouteCanvas({required this.shipment});
-
-  final TrackingDemoShipment shipment;
-
-  @override
-  Widget build(BuildContext context) {
-    final pickup = _cleanTrackingLocation(shipment.fromLocation, 'Pickup');
-    final drop = _cleanTrackingLocation(shipment.toLocation, 'Drop');
-    final truckName = shipment.assignedTruckName?.trim();
-    return Container(
-      color: const Color(0xFFF4F8F3),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: CustomPaint(painter: const _LiveTrackingRoutePainter()),
-              ),
-              Positioned(
-                left: 28,
-                top: constraints.maxHeight * 0.23,
-                child: _LiveMapLabel(
-                  icon: AppIcons.location_on_rounded,
-                  label: pickup,
-                  accent: const Color(0xFF2FA56E),
-                ),
-              ),
-              Positioned(
-                right: 22,
-                top: constraints.maxHeight * 0.34,
-                child: _LiveMapLabel(
-                  icon: AppIcons.flag_rounded,
-                  label: drop,
-                  accent: const Color(0xFFE23A4B),
-                  alignEnd: true,
-                ),
-              ),
-              Positioned(
-                left: constraints.maxWidth * 0.42,
-                top: constraints.maxHeight * 0.47,
-                child: _LiveTruckBadge(
-                  label: truckName == null || truckName.isEmpty
-                      ? 'On the way'
-                      : truckName,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _LiveMapLabel extends StatelessWidget {
-  const _LiveMapLabel({
-    required this.icon,
-    required this.label,
-    required this.accent,
-    this.alignEnd = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color accent;
-  final bool alignEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 178),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE1E9DF)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            textDirection: alignEnd ? TextDirection.rtl : TextDirection.ltr,
-            children: [
-              Icon(icon, size: 17, color: accent),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: alignEnd ? TextAlign.right : TextAlign.left,
-                  style: const TextStyle(
-                    color: Color(0xFF1B2A3A),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.15,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveTruckBadge extends StatelessWidget {
-  const _LiveTruckBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFF16251B),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2FA56E).withValues(alpha: 0.28),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              AppIcons.local_shipping_rounded,
-              size: 18,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveTrackingRoutePainter extends CustomPainter {
-  const _LiveTrackingRoutePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final background = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFF7FBF6), Color(0xFFEFF6F2)],
-      ).createShader(Offset.zero & size);
-    canvas.drawRect(Offset.zero & size, background);
-
-    final roadPaint = Paint()
-      ..color = const Color(0xFFE2EBDD)
-      ..strokeWidth = 16
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    for (final y in <double>[0.18, 0.36, 0.62, 0.78]) {
-      final road = Path()
-        ..moveTo(-20, size.height * y)
-        ..cubicTo(
-          size.width * 0.25,
-          size.height * (y - 0.07),
-          size.width * 0.58,
-          size.height * (y + 0.09),
-          size.width + 20,
-          size.height * (y - 0.02),
-        );
-      canvas.drawPath(road, roadPaint);
-    }
-
-    final route = Path()
-      ..moveTo(size.width * 0.17, size.height * 0.64)
-      ..cubicTo(
-        size.width * 0.26,
-        size.height * 0.48,
-        size.width * 0.46,
-        size.height * 0.56,
-        size.width * 0.53,
-        size.height * 0.42,
-      )
-      ..cubicTo(
-        size.width * 0.61,
-        size.height * 0.25,
-        size.width * 0.78,
-        size.height * 0.33,
-        size.width * 0.84,
-        size.height * 0.22,
-      );
-
-    canvas.drawPath(
-      route,
-      Paint()
-        ..color = Colors.white
-        ..strokeWidth = 18
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke,
-    );
-    canvas.drawPath(
-      route,
-      Paint()
-        ..color = const Color(0xFFD5E2D6)
-        ..strokeWidth = 11
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke,
-    );
-
-    final routeMetric = route.computeMetrics().first;
-    canvas.drawPath(
-      routeMetric.extractPath(0, routeMetric.length * 0.58),
-      Paint()
-        ..color = const Color(0xFF2FA56E)
-        ..strokeWidth = 11
-        ..strokeCap = StrokeCap.round
-        ..style = PaintingStyle.stroke,
-    );
-
-    _drawPin(
-      canvas,
-      Offset(size.width * 0.17, size.height * 0.64),
-      const Color(0xFF2FA56E),
-    );
-    _drawPin(
-      canvas,
-      Offset(size.width * 0.84, size.height * 0.22),
-      const Color(0xFFE23A4B),
-    );
-    _drawPulse(canvas, Offset(size.width * 0.53, size.height * 0.42));
-  }
-
-  void _drawPin(Canvas canvas, Offset center, Color color) {
-    canvas.drawCircle(
-      center,
-      16,
-      Paint()..color = Colors.white.withValues(alpha: 0.96),
-    );
-    canvas.drawCircle(center, 9, Paint()..color = color);
-  }
-
-  void _drawPulse(Canvas canvas, Offset center) {
-    canvas.drawCircle(
-      center,
-      24,
-      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.14),
-    );
-    canvas.drawCircle(
-      center,
-      14,
-      Paint()..color = const Color(0xFF2FA56E).withValues(alpha: 0.24),
-    );
-    canvas.drawCircle(center, 7, Paint()..color = const Color(0xFF2FA56E));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _LivePickupOtpCard extends StatelessWidget {
@@ -2001,6 +1844,9 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
   @override
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.of(context).size.height * 0.34;
+    final driverName = shipment.assignedDriverName?.trim() ?? '';
+    final truckName = shipment.assignedTruckName?.trim() ?? '';
+    final crewTitle = truckName.isNotEmpty ? truckName : 'Assigned driver';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
@@ -2148,7 +1994,9 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Rahul Patil',
+                                        driverName.isEmpty
+                                            ? 'Driver not assigned'
+                                            : driverName,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium
@@ -2160,7 +2008,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'Delivery man',
+                                        crewTitle,
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -2956,16 +2804,19 @@ class _ShipmentTimelineCard extends StatelessWidget {
           const SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var i = 0; i < shipment.timeline.length; i++)
-                  _HorizontalTimelineStep(
-                    step: shipment.timeline[i],
-                    isCurrent: i == currentIndex,
-                    showConnector: i != shipment.timeline.length - 1,
-                  ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < shipment.timeline.length; i++)
+                    _HorizontalTimelineStep(
+                      step: shipment.timeline[i],
+                      isCurrent: i == currentIndex,
+                      showConnector: i != shipment.timeline.length - 1,
+                    ),
+                ],
+              ),
             ),
           ),
           if (shipment.timeline.isNotEmpty) ...[
@@ -3084,6 +2935,76 @@ class _HorizontalTimelineStep extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProofOfDeliveryCard extends StatelessWidget {
+  const _ProofOfDeliveryCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: _premiumDetailBlockDecoration(context, radius: 18),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: context.colors.brandFill,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  AppIcons.camera_alt_outlined,
+                  color: Color(0xFF2FA56E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'View docs',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: context.colors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Proof posted by driver',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(
+                AppIcons.open_in_new_rounded,
+                color: context.colors.textTertiary,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

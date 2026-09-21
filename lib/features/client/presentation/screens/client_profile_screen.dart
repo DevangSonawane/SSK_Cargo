@@ -634,11 +634,7 @@ class _ProfileSection extends StatelessWidget {
               for (var i = 0; i < children.length; i++) ...[
                 children[i],
                 if (i != children.length - 1)
-                  Divider(
-                    height: 1,
-                    indent: 56,
-                    color: context.colors.line,
-                  ),
+                  Divider(height: 1, indent: 56, color: context.colors.line),
               ],
             ],
           ),
@@ -710,84 +706,161 @@ class _ProfileMenuTile extends StatelessWidget {
 class _AppearanceTile extends ConsumerWidget {
   const _AppearanceTile();
 
-  String _label(ThemeMode mode) => switch (mode) {
-    ThemeMode.light => 'Light',
-    ThemeMode.dark => 'Dark',
-    ThemeMode.system => 'Auto',
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final mode = ref.watch(themeModeProvider);
+    final isDark = mode == ThemeMode.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                AppIcons.dark_mode_rounded,
-                size: 21,
-                color: colors.textTertiary,
+          Icon(
+            isDark ? AppIcons.dark_mode_rounded : AppIcons.light_mode_rounded,
+            size: 21,
+            color: colors.textTertiary,
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Appearance',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isDark ? 'Liquid glass dark mode' : 'Liquid glass light mode',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _LiquidGlassAppearanceSwitch(
+            value: isDark,
+            onChanged: (value) {
+              ref.read(themeModeProvider.notifier).state = value
+                  ? ThemeMode.dark
+                  : ThemeMode.light;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiquidGlassAppearanceSwitch extends StatelessWidget {
+  const _LiquidGlassAppearanceSwitch({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Semantics(
+      label: 'Liquid glass appearance',
+      toggled: value,
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(!value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: 64,
+          height: 36,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: value
+                  ? const [Color(0xFF111827), Color(0xFF2F4858)]
+                  : const [Color(0xFFFFFFFF), Color(0xFFE9F8F0)],
+            ),
+            border: Border.all(
+              color: value
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : colors.line.withValues(alpha: 0.9),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (value ? Colors.black : const Color(0xFF2FA56E))
+                    .withValues(alpha: value ? 0.18 : 0.14),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Appearance',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colors.textSecondary,
-                        fontWeight: FontWeight.w800,
-                      ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Icon(
+                  AppIcons.light_mode_rounded,
+                  size: 14,
+                  color: value
+                      ? Colors.white.withValues(alpha: 0.38)
+                      : const Color(0xFF2FA56E),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  AppIcons.dark_mode_rounded,
+                  size: 14,
+                  color: value
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : colors.textTertiary.withValues(alpha: 0.42),
+                ),
+              ),
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: value ? const Color(0xFF172033) : Colors.white,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: value ? 0.22 : 0.9),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Currently ${_label(mode)}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colors.textTertiary,
-                        fontWeight: FontWeight.w600,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Icon(
+                    value
+                        ? AppIcons.dark_mode_rounded
+                        : AppIcons.light_mode_rounded,
+                    size: 15,
+                    color: value ? Colors.white : const Color(0xFF2FA56E),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(
-                value: ThemeMode.light,
-                label: Text('Light'),
-                icon: Icon(AppIcons.light_mode_rounded, size: 16),
-              ),
-              ButtonSegment(
-                value: ThemeMode.system,
-                label: Text('Auto'),
-                icon: Icon(AppIcons.settings_suggest_rounded, size: 16),
-              ),
-              ButtonSegment(
-                value: ThemeMode.dark,
-                label: Text('Dark'),
-                icon: Icon(AppIcons.dark_mode_rounded, size: 16),
-              ),
-            ],
-            selected: {mode},
-            onSelectionChanged: (selection) =>
-                ref.read(themeModeProvider.notifier).state = selection.first,
-            style: SegmentedButton.styleFrom(
-              backgroundColor: colors.fillSubtle,
-              foregroundColor: colors.textSecondary,
-              selectedBackgroundColor: colors.brandFill,
-              selectedForegroundColor: colors.textPrimary,
-              side: BorderSide(color: colors.line),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1074,157 +1074,6 @@ List<TrackingTimelineStep> _timelineForStatus(
   }
 }
 
-const trackingDemoShipments = <TrackingDemoShipment>[
-  TrackingDemoShipment(
-    packageName: 'MacBook Air M3',
-    trackingId: 'TRK-SSK-20489',
-    fromLocation: 'Mumbai Warehouse',
-    toLocation: 'Pune Distribution Center',
-    status: 'Your package is in transit',
-    customerName: 'Aarav Mehta',
-    weight: '2.40 KG',
-    pickupLat: 19.0760,
-    pickupLng: 72.8777,
-    dropLat: 18.5204,
-    dropLng: 73.8567,
-    liveLat: 18.7640,
-    liveLng: 73.4100,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Tracking Number Created',
-        subtitle: 'Mumbai Warehouse',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In Transit',
-        subtitle: 'Pune Gateway Hub',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Out for Delivery',
-        subtitle: 'Pune Distribution Center',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Awaiting final handoff',
-        completed: false,
-      ),
-    ],
-  ),
-  TrackingDemoShipment(
-    packageName: 'Apple iPhone 15 Pro',
-    trackingId: 'TRK-SSK-20841',
-    fromLocation: 'Navi Mumbai Hub',
-    toLocation: 'Bangalore Tech Park',
-    status: 'Arriving at next checkpoint',
-    customerName: 'Karan Shah',
-    weight: '1.15 KG',
-    pickupLat: 19.0330,
-    pickupLng: 73.0297,
-    dropLat: 12.9716,
-    dropLng: 77.5946,
-    liveLat: 16.0800,
-    liveLng: 75.3500,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Tracking Number Created',
-        subtitle: 'Navi Mumbai Hub',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In Transit',
-        subtitle: 'Kolhapur Sorting Center',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'Out for Delivery',
-        subtitle: 'Bangalore Tech Park',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Final confirmation pending',
-        completed: false,
-      ),
-    ],
-  ),
-  TrackingDemoShipment(
-    packageName: 'Office Chair Set',
-    trackingId: 'TRK-SSK-21077',
-    fromLocation: 'Delhi DC-3',
-    toLocation: 'Jaipur Office',
-    status: 'Awaiting dispatch',
-    customerName: 'Neha Kapoor',
-    weight: '8.60 KG',
-    pickupLat: 28.7041,
-    pickupLng: 77.1025,
-    dropLat: 26.9124,
-    dropLng: 75.7873,
-    liveLat: 27.5400,
-    liveLng: 76.4200,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Tracking Number Created',
-        subtitle: 'Delhi DC-3',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In Transit',
-        subtitle: 'Load assigned',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Out for Delivery',
-        subtitle: 'Queue for pickup',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Not started yet',
-        completed: false,
-      ),
-    ],
-  ),
-  TrackingDemoShipment(
-    packageName: 'Printer Cartridge Box',
-    trackingId: 'TRK-SSK-21330',
-    fromLocation: 'Pune Cargo Yard',
-    toLocation: 'Hyderabad Retail Store',
-    status: 'Out for pickup',
-    customerName: 'Rohan Kulkarni',
-    weight: '4.05 KG',
-    pickupLat: 18.5204,
-    pickupLng: 73.8567,
-    dropLat: 17.3850,
-    dropLng: 78.4867,
-    liveLat: 17.9400,
-    liveLng: 76.9900,
-    timeline: [
-      TrackingTimelineStep(
-        title: 'Tracking Number Created',
-        subtitle: 'Pune Cargo Yard',
-        completed: true,
-      ),
-      TrackingTimelineStep(
-        title: 'In Transit',
-        subtitle: 'Pickup scheduled',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Out for Delivery',
-        subtitle: 'Not started',
-        completed: false,
-      ),
-      TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Pending',
-        completed: false,
-      ),
-    ],
-  ),
-];
-
 class PillTag extends StatelessWidget {
   const PillTag({
     super.key,
@@ -1522,9 +1371,9 @@ class TrackingMockCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ClipRRect(
@@ -1917,14 +1766,17 @@ class OptionTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(AppIcons.chevron_right_rounded, color: context.colors.textTertiary),
+            Icon(
+              AppIcons.chevron_right_rounded,
+              color: context.colors.textTertiary,
+            ),
           ],
         ),
       ),

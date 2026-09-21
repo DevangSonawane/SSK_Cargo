@@ -78,9 +78,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: brandColor,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonRadius,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonRadius),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
             fontSize: 14,
@@ -92,9 +90,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: brandColor,
           side: BorderSide(color: appColors.brandBorder),
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonRadius,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonRadius),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
             fontSize: 13,
@@ -129,8 +125,15 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? AppDarkColors.surfaceElevated : null,
-        contentTextStyle: TextStyle(color: textPrimary),
+        backgroundColor: AppColors.surface,
+        actionTextColor: brandColor,
+        closeIconColor: AppColors.textSecondary,
+        contentTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+        elevation: 10,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.small),
         ),
@@ -145,9 +148,7 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: isDark ? AppDarkColors.surface : AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       dividerColor: appColors.divider,
       textTheme: TextTheme(

@@ -423,23 +423,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/client/tracking/details',
         pageBuilder: (context, state) {
-          final shipment = state.extra as TrackingDemoShipment?;
+          final extra = state.extra;
+          final shipment = extra is TrackingDemoShipment
+              ? extra
+              : extra is ClientBooking
+              ? trackingShipmentFromBooking(extra)
+              : null;
           return NoTransitionPage(
-            child: TrackingDetailsScreen(
-              shipment: shipment ?? trackingDemoShipments.first,
-            ),
+            child: shipment == null
+                ? const ClientDeliveryScreen()
+                : TrackingDetailsScreen(shipment: shipment),
           );
         },
       ),
       GoRoute(
         path: '/broker/tracking/details',
         pageBuilder: (context, state) {
-          final shipment = state.extra as TrackingDemoShipment?;
+          final extra = state.extra;
+          final shipment = extra is TrackingDemoShipment
+              ? extra
+              : extra is ClientBooking
+              ? trackingShipmentFromBooking(extra)
+              : null;
           return NoTransitionPage(
             child: _lightFlow(
-              TrackingDetailsScreen(
-                shipment: shipment ?? trackingDemoShipments.first,
-              ),
+              shipment == null
+                  ? const BrokerTrackingScreen()
+                  : TrackingDetailsScreen(shipment: shipment),
             ),
           );
         },

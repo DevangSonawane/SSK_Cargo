@@ -1,13 +1,17 @@
 package com.example.ssk
 
 import android.content.Intent
+import android.content.ContentValues
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
+import android.provider.MediaStore
 import android.util.TypedValue
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -17,6 +21,8 @@ import android.widget.TextView
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import androidx.core.content.FileProvider
+import java.io.File
 import kotlin.math.abs
 
 class MainActivity : FlutterActivity() {
@@ -106,6 +112,80 @@ class MainActivity : FlutterActivity() {
                             result.success(null)
                         } catch (error: Exception) {
                             result.notImplemented()
+                        }
+                    }
+                    "shareFile" -> {
+                        try {
+                            val bytes = call.argument<ByteArray>("bytes")
+                            val fileName = call.argument<String>("fileName") ?: "invoice.pdf"
+                            val mimeType = call.argument<String>("mimeType") ?: "application/pdf"
+                            val subject = call.argument<String>("subject") ?: "Share"
+                            if (bytes == null || bytes.isEmpty()) {
+                                result.success(null)
+                                return@setMethodCallHandler
+                            }
+
+                            val dir = File(cacheDir, "shared_files").apply { mkdirs() }
+                            val file = File(dir, fileName)
+                            file.writeBytes(bytes)
+                            val uri = FileProvider.getUriForFile(
+                                this,
+                                "${applicationContext.packageName}.fileprovider",
+                                file
+                            )
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = mimeType
+                                putExtra(Intent.EXTRA_SUBJECT, subject)
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            startActivity(Intent.createChooser(shareIntent, subject))
+                            result.success(true)
+                        } catch (error: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    "downloadFile" -> {
+                        try {
+                            val bytes = call.argument<ByteArray>("bytes")
+                            val fileName = call.argument<String>("fileName") ?: "invoice.pdf"
+                            val mimeType = call.argument<String>("mimeType") ?: "application/pdf"
+                            if (bytes == null || bytes.isEmpty()) {
+                                result.success("")
+                                return@setMethodCallHandler
+                            }
+
+                            val savedPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                val values = ContentValues().apply {
+                                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                                    put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                                }
+                                val uri = contentResolver.insert(
+                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                    values
+                                ) ?: throw IllegalStateException("Could not create download file")
+                                contentResolver.openOutputStream(uri)?.use { output ->
+                                    output.write(bytes)
+                                } ?: throw IllegalStateException("Could not write download file")
+                                "Downloads/$fileName"
+                            } else {
+                                val downloadsDir = Environment.getExternalStoragePublicDirectory(
+                                    Environment.DIRECTORY_DOWNLOADS
+                                ).apply { mkdirs() }
+                                val file = File(downloadsDir, fileName)
+                                file.writeBytes(bytes)
+                                sendBroadcast(
+                                    Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply {
+                                        data = Uri.fromFile(file)
+                                    }
+                                )
+                                file.absolutePath
+                            }
+                            result.success(savedPath)
+                        } catch (error: Exception) {
+                            Log.e("SSK.Invoice", "Failed to download invoice", error)
+                            result.success("")
                         }
                     }
                     else -> result.notImplemented()

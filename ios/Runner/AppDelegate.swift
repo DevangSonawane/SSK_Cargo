@@ -16,6 +16,64 @@ import UIKit
         binaryMessenger: controller.binaryMessenger
       )
       shareChannel.setMethodCallHandler { call, result in
+        if call.method == "downloadFile" {
+          guard
+            let args = call.arguments as? [String: Any],
+            let data = args["bytes"] as? FlutterStandardTypedData
+          else {
+            result("")
+            return
+          }
+          let fileName: String
+          if let providedFileName = args["fileName"] as? String, !providedFileName.isEmpty {
+            fileName = providedFileName
+          } else {
+            fileName = "invoice.pdf"
+          }
+          do {
+            let documentsUrl = try FileManager.default.url(
+              for: .documentDirectory,
+              in: .userDomainMask,
+              appropriateFor: nil,
+              create: true
+            )
+            let fileUrl = documentsUrl.appendingPathComponent(fileName)
+            try data.data.write(to: fileUrl, options: .atomic)
+            result(fileUrl.lastPathComponent)
+          } catch {
+            result("")
+          }
+          return
+        }
+        if call.method == "shareFile" {
+          guard
+            let args = call.arguments as? [String: Any],
+            let data = args["bytes"] as? FlutterStandardTypedData
+          else {
+            result(false)
+            return
+          }
+          let fileName: String
+          if let providedFileName = args["fileName"] as? String, !providedFileName.isEmpty {
+            fileName = providedFileName
+          } else {
+            fileName = "invoice.pdf"
+          }
+          let tempUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+          do {
+            try data.data.write(to: tempUrl, options: .atomic)
+            let activityController = UIActivityViewController(
+              activityItems: [tempUrl],
+              applicationActivities: nil
+            )
+            controller.present(activityController, animated: true) {
+              result(true)
+            }
+          } catch {
+            result(false)
+          }
+          return
+        }
         guard call.method == "share" else {
           result(FlutterMethodNotImplemented)
           return
