@@ -1593,6 +1593,7 @@ class _BrokerRequestDetailScreenState
               pickup: _pickupText,
               drop: _dropText,
               isExpress: _isExpressRequest,
+              showRouteLabels: false,
             ),
             const SizedBox(height: 14),
             _BrokerRouteCard(
@@ -1941,14 +1942,18 @@ class _OverviewDetailRow extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: highlight ? colors.surface : colors.brandFill,
+            color: highlight ? AppColors.warningFill : colors.brandFill,
             borderRadius: BorderRadius.circular(10),
-            border: highlight ? Border.all(color: colors.line) : null,
+            border: highlight
+                ? Border.all(color: AppColors.warningBorder)
+                : null,
           ),
           child: Icon(
             icon,
             size: 17,
-            color: highlight ? colors.textPrimary : const Color(0xFF2FA56E),
+            color: highlight
+                ? AppColors.warningText
+                : const Color(0xFF2FA56E),
           ),
         ),
         const SizedBox(width: 10),

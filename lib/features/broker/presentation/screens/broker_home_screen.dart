@@ -375,6 +375,16 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     return displayName.split(' ').first;
   }
 
+  String? _profileImage() {
+    final image = ref
+        .watch(authSessionProvider)
+        .valueOrNull
+        ?.user
+        .profileImage
+        ?.trim();
+    return (image == null || image.isEmpty) ? null : image;
+  }
+
   @override
   Widget build(BuildContext context) {
     final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
@@ -397,6 +407,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
             children: [
               _BrokerHomeTopBar(
                 greetingName: _greetingName(),
+                profileImage: _profileImage(),
                 onNotificationsTap: () => context.push('/broker/notifications'),
                 onProfileTap: () => context.push('/broker/profile'),
               ),
@@ -510,11 +521,13 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 class _BrokerHomeTopBar extends StatelessWidget {
   const _BrokerHomeTopBar({
     required this.greetingName,
+    required this.profileImage,
     required this.onNotificationsTap,
     required this.onProfileTap,
   });
 
   final String greetingName;
+  final String? profileImage;
   final VoidCallback onNotificationsTap;
   final VoidCallback onProfileTap;
 
@@ -523,38 +536,25 @@ class _BrokerHomeTopBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
+          child: Text.rich(
+            TextSpan(
+              text: 'Hello, ',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
+              children: [
                 TextSpan(
-                  text: 'Hello, ',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: '$greetingName 👋',
-                      style: const TextStyle(color: AppColors.textPrimary),
-                    ),
-                  ],
+                  text: '$greetingName 👋',
+                  style: const TextStyle(color: AppColors.textPrimary),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'Good morning',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         _NotificationButton(onTap: onNotificationsTap, count: 1),
         const SizedBox(width: 12),
-        _AvatarButton(onTap: onProfileTap),
+        _AvatarButton(imageUrl: profileImage, onTap: onProfileTap),
       ],
     );
   }
@@ -1858,25 +1858,76 @@ class _EmptyBookingsState extends StatelessWidget {
 }
 
 class _AvatarButton extends StatelessWidget {
-  const _AvatarButton({required this.onTap});
+  const _AvatarButton({required this.imageUrl, required this.onTap});
 
+  final String? imageUrl;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final photo = imageUrl?.trim() ?? '';
+    final hasPhoto = photo.startsWith('http');
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.line),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFBBF24), Color(0xFFF97316)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.14),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.asset('assets/user.png', fit: BoxFit.cover),
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+          child: Container(
+            decoration: const BoxDecoration(shape: BoxShape.circle),
+            clipBehavior: Clip.antiAlias,
+            child: hasPhoto
+                ? Image.network(
+                    photo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, _, _) =>
+                        const _AvatarPlaceholder(),
+                  )
+                : const _AvatarPlaceholder(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Platform-style placeholder (Uber/Ola/Rapido): neutral slate disc with a
+/// dark person glyph — no brand color, lets the photo be the identity.
+class _AvatarPlaceholder extends StatelessWidget {
+  const _AvatarPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      color: const Color(0xFFE8EDF3),
+      child: const Icon(
+        AppIcons.person_rounded,
+        color: Color(0xFF475569),
+        size: 26,
       ),
     );
   }

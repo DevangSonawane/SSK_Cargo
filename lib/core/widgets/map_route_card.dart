@@ -17,6 +17,7 @@ class MapRouteCard extends StatefulWidget {
     this.isExpress = false,
     this.height = 220,
     this.showRouteLabels = true,
+    this.showMarkers = true,
   });
 
   final String pickup;
@@ -24,6 +25,7 @@ class MapRouteCard extends StatefulWidget {
   final bool isExpress;
   final double height;
   final bool showRouteLabels;
+  final bool showMarkers;
 
   @override
   State<MapRouteCard> createState() => _MapRouteCardState();
@@ -113,20 +115,26 @@ class _MapRouteCardState extends State<MapRouteCard> {
     final drop = _dropLatLng;
     if (pickup == null || drop == null) return;
 
-    _markers = {
-      Marker(
-        markerId: const MarkerId('pickup'),
-        position: pickup,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(title: 'Pickup', snippet: widget.pickup),
-      ),
-      Marker(
-        markerId: const MarkerId('drop'),
-        position: drop,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(title: 'Drop-off', snippet: widget.drop),
-      ),
-    };
+    _markers = widget.showMarkers
+        ? {
+            Marker(
+              markerId: const MarkerId('pickup'),
+              position: pickup,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen,
+              ),
+              infoWindow: InfoWindow(title: 'Pickup', snippet: widget.pickup),
+            ),
+            Marker(
+              markerId: const MarkerId('drop'),
+              position: drop,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueRed,
+              ),
+              infoWindow: InfoWindow(title: 'Drop-off', snippet: widget.drop),
+            ),
+          }
+        : {};
 
     final routePoints = _routePoints.length >= 2
         ? _routePoints

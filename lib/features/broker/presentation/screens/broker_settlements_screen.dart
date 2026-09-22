@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../widgets/broker_flow_widgets.dart';
 
 class BrokerSettlementsScreen extends ConsumerStatefulWidget {
   const BrokerSettlementsScreen({super.key});
@@ -20,7 +21,11 @@ class _BrokerSettlementsScreenState
 
   Future<void> _refresh() async {
     ref.invalidate(_settlementsProvider(_query));
-    await ref.read(_settlementsProvider(_query).future);
+    try {
+      await ref.read(_settlementsProvider(_query).future);
+    } catch (_) {
+      // Error UI is driven by the provider state.
+    }
   }
 
   @override
@@ -29,128 +34,70 @@ class _BrokerSettlementsScreenState
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: settlementsAsync.when(
-          loading: () => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
-              _SettlementsHeader(),
-              SizedBox(height: 120),
-              Center(child: CircularProgressIndicator()),
-            ],
-          ),
-          error: (error, _) => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              const _SettlementsHeader(),
-              const SizedBox(height: 24),
-              _EmptyState(
-                icon: AppIcons.payments_rounded,
-                title: 'Could not load settlements',
-                subtitle: error.toString().replaceFirst('Exception: ', ''),
-              ),
-            ],
-          ),
-          data: (settlements) {
-            if (settlements.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  _SettlementsHeader(),
-                  SizedBox(height: 24),
-                  _EmptyState(
-                    icon: AppIcons.payments_rounded,
-                    title: 'No settlements yet',
-                    subtitle:
-                        'Paid and pending settlement records will appear here.',
-                  ),
-                ],
-              );
-            }
-
-            return ListView.separated(
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: AppColors.brand,
+          onRefresh: _refresh,
+          child: settlementsAsync.when(
+            loading: () => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: settlements.length + 1,
-              separatorBuilder: (context, index) =>
-                  SizedBox(height: index == 0 ? 18 : 12),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return const _SettlementsHeader();
-                }
-                final settlement = settlements[index - 1];
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    0,
-                    20,
-                    index == settlements.length ? 24 : 0,
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () => _showSettlementDetails(context, settlement),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.line),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  settlement.bookingNumber,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                ),
-                              ),
-                              _StatusPill(status: settlement.status),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            settlement.route,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.textSecondary),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Text(
-                                'Gross: ₹${settlement.amount.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Net: ₹${settlement.netEarnings.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: AppColors.accentBlue,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+              children: const [
+                _TopRow(count: null),
+                SizedBox(height: 18),
+                _SettlementsSkeleton(),
+              ],
+            ),
+            error: (error, _) => ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+              children: [
+                const _TopRow(count: null),
+                const SizedBox(height: 24),
+                _EmptyState(
+                  icon: AppIcons.payments_outlined,
+                  title: 'Could not load settlements',
+                  subtitle: error.toString().replaceFirst('Exception: ', ''),
+                ),
+              ],
+            ),
+            data: (settlements) {
+              if (settlements.isEmpty) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+                  children: const [
+                    _TopRow(count: 0),
+                    SizedBox(height: 24),
+                    _EmptyState(
+                      icon: AppIcons.payments_rounded,
+                      title: 'No settlements yet',
+                      subtitle:
+                          'Paid and pending settlement records will appear here.',
                     ),
-                  ),
+                  ],
                 );
-              },
-            );
-          },
+              }
+
+              return ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                itemCount: settlements.length + 1,
+                separatorBuilder: (context, index) =>
+                    SizedBox(height: index == 0 ? 18 : 12),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _TopRow(count: settlements.length);
+                  }
+                  final settlement = settlements[index - 1];
+                  return _SettlementCard(
+                    settlement: settlement,
+                    onTap: () => _showSettlementDetails(context, settlement),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -164,22 +111,28 @@ class _BrokerSettlementsScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.only(
+            left: 14,
+            right: 14,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 14,
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.line),
+              boxShadow: AppShadows.float,
             ),
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Container(
-                    width: 54,
+                    width: 44,
                     height: 5,
                     decoration: BoxDecoration(
                       color: AppColors.line,
@@ -188,41 +141,129 @@ class _BrokerSettlementsScreenState
                   ),
                 ),
                 const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        settlement.bookingNumber,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 19,
+                          letterSpacing: -0.2,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    _StatusPill(status: settlement.status),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  settlement.bookingNumber,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                  settlement.route.isEmpty ? 'Route pending' : settlement.route,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(settlement.route),
+                if (settlement.truck.isNotEmpty ||
+                    settlement.driver.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    [
+                      settlement.truck,
+                      settlement.driver,
+                    ].where((part) => part.isNotEmpty).join(' • '),
+                    style: const TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 _detailLine(
-                  'Amount',
+                  'Gross amount',
                   '₹${settlement.amount.toStringAsFixed(0)}',
                 ),
                 _detailLine(
                   'Platform fee',
                   '₹${settlement.platformFee.toStringAsFixed(2)}',
                 ),
-                _detailLine(
-                  'Net earnings',
-                  '₹${settlement.netEarnings.toStringAsFixed(2)}',
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.brandBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Net earnings',
+                          style: TextStyle(
+                            color: AppColors.brandDark,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${settlement.netEarnings.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: AppColors.brandDark,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 6),
                 _detailLine('Status', settlement.status),
+                _detailLine(
+                  'Settled on',
+                  _prettyDate(settlement.settledAt),
+                ),
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accentBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF2FA56E), Color(0xFF1E7A4C)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x402FA56E),
+                          blurRadius: 16,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
-                    child: const Text('Close'),
                   ),
                 ),
               ],
@@ -234,78 +275,223 @@ class _BrokerSettlementsScreenState
   }
 }
 
-class _SettlementsHeader extends StatelessWidget {
-  const _SettlementsHeader();
+class _TopRow extends StatelessWidget {
+  const _TopRow({required this.count});
+
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 18,
-        20,
-        26,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.brand, AppColors.brandBright],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(
-              AppIcons.arrow_back_rounded,
-              color: Colors.white,
-              size: 24,
+    return Row(
+      children: [
+        BrokerBackButton(onTap: () => Navigator.of(context).maybePop()),
+        const SizedBox(width: 4),
+        const Expanded(
+          child: Text(
+            'Settlements',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.3,
             ),
-            padding: const EdgeInsets.all(8),
-            constraints: const BoxConstraints(),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        if (count != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.brandFill,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.brandBorder),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: AppColors.brandDark,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SettlementCard extends StatelessWidget {
+  const _SettlementCard({required this.settlement, required this.onTap});
+
+  final BrokerSettlement settlement;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = [
+      settlement.truck,
+      settlement.driver,
+    ].where((part) => part.isNotEmpty).join(' • ');
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.line),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  'Settlements',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.brandFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.brandBorder),
+                  ),
+                  child: const Icon(
+                    AppIcons.receipt_long_rounded,
+                    color: AppColors.brandDark,
+                    size: 20,
                   ),
                 ),
-                SizedBox(height: 3),
-                Text(
-                  'View all settlement requests',
-                  style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 13),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        settlement.bookingNumber,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14.5,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        settlement.route.isEmpty
+                            ? 'Route pending'
+                            : settlement.route,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _StatusPill(status: settlement.status),
+              ],
+            ),
+            if (meta.isNotEmpty) ...[
+              const SizedBox(height: 9),
+              Text(
+                meta,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 11),
+              child: Divider(height: 1, thickness: 1, color: AppColors.line),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _MoneyMini(
+                    label: 'Gross',
+                    value: '₹${settlement.amount.toStringAsFixed(0)}',
+                  ),
+                ),
+                Expanded(
+                  child: _MoneyMini(
+                    label: 'Fee',
+                    value: '₹${settlement.platformFee.toStringAsFixed(0)}',
+                  ),
+                ),
+                Expanded(
+                  child: _MoneyMini(
+                    label: 'Net',
+                    value: '₹${settlement.netEarnings.toStringAsFixed(0)}',
+                    highlight: true,
+                  ),
+                ),
+                const Icon(
+                  AppIcons.chevron_right_rounded,
+                  size: 19,
+                  color: AppColors.textTertiary,
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0x26FFFFFF),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              AppIcons.filter_alt_outlined,
-              color: Colors.white,
-              size: 19,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _MoneyMini extends StatelessWidget {
+  const _MoneyMini({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: highlight ? AppColors.brandDark : AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -393,24 +579,31 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalized = status.toLowerCase();
-    final color = switch (normalized) {
-      'paid' || 'settled' => AppColors.brand,
+    final normalized = status.trim().toLowerCase();
+    final fg = switch (normalized) {
+      'paid' || 'settled' => AppColors.brandDark,
       'pending' => AppColors.warningText,
       _ => AppColors.textSecondary,
     };
+    final bg = switch (normalized) {
+      'paid' || 'settled' => AppColors.brandFill,
+      'pending' => AppColors.warningFill,
+      _ => AppColors.fillSubtle,
+    };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        status,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+        status.isEmpty ? 'Pending' : status,
+        style: TextStyle(
+          color: fg,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -442,6 +635,39 @@ double _readDouble(Object? value) {
   return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
+String _prettyDate(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return 'Pending';
+  final parsed = DateTime.tryParse(raw.trim());
+  if (parsed == null) return raw.trim();
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${parsed.day} ${months[parsed.month - 1]} ${parsed.year}';
+}
+
+class _SettlementsSkeleton extends StatelessWidget {
+  const _SettlementsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        4,
+        (_) => Container(
+          height: 148,
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.line),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState({
     required this.icon,
@@ -456,31 +682,45 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppColors.textSecondary, size: 34),
-          const SizedBox(height: 12),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFEAF8EF), Color(0xFFDFF0E5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.brand, size: 34),
+          ),
+          const SizedBox(height: 16),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
