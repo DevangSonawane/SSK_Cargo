@@ -4444,7 +4444,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: FilledButton(
+            child: FilledButton.icon(
               onPressed: _submitting
                   ? null
                   : () => _advanceFromWeightStep(unknown: _weightUnknown),
@@ -4456,7 +4456,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Icon(AppIcons.chevron_right_rounded, size: 22),
+              icon: const Text(
+                'Next',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              label: const Icon(AppIcons.chevron_right_rounded, size: 22),
             ),
           ),
         ],
