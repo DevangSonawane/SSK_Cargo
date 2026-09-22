@@ -269,6 +269,10 @@ class _DriverOrderAcceptedScreenState
     );
     final amountChanged =
         updatedRequest.amount > 0 && updatedRequest.amount != previousAmount;
+    final wasAwaitingClientConfirmation =
+        _latestStatus == 'awaiting_confirmation' &&
+        _currentPendingConfirmationBy == 'client';
+    final previousUpdatedAt = _latestUpdatedAt;
 
     if (!mounted) {
       return;
@@ -305,8 +309,19 @@ class _DriverOrderAcceptedScreenState
       }
     });
 
-    if (_latestStatus != 'awaiting_confirmation' ||
-        _currentPendingConfirmationBy != 'client') {
+    final nowAwaitingClientConfirmation =
+        _latestStatus == 'awaiting_confirmation' &&
+        _currentPendingConfirmationBy == 'client';
+    if (!nowAwaitingClientConfirmation) {
+      _suppressClientConfirmationDialog = false;
+    } else if (!wasAwaitingClientConfirmation ||
+        (updatedAt != null &&
+            (previousUpdatedAt == null ||
+                updatedAt.isAfter(previousUpdatedAt)))) {
+      // A fresh confirmation arrived (state transition or a newer server
+      // update): any latch left over from a previous action round — e.g. the
+      // driver's own counter — belongs to the old round, so release it and
+      // let the prompt show instead of soft-locking the screen.
       _suppressClientConfirmationDialog = false;
     }
 
@@ -1045,6 +1060,13 @@ class _DriverOrderAcceptedScreenState
       }
 
       final responseStatus = request.status.trim().toLowerCase();
+      if (responseStatus == 'awaiting_confirmation' &&
+          _currentPendingConfirmationBy == 'client' &&
+          mounted) {
+        // The response itself carries a live confirmation: drop any latch
+        // left over from this or a previous action so the prompt can show.
+        _suppressClientConfirmationDialog = false;
+      }
       if (responseStatus == 'awaiting_confirmation' && mounted) {
         setState(() {
           _counterLocked = true;

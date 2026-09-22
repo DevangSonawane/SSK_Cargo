@@ -3974,6 +3974,14 @@ class _CancellationReasonDialog extends StatefulWidget {
 class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
   late final TextEditingController _controller;
 
+  static const _quickReasons = [
+    'Driver is delayed',
+    'Booked by mistake',
+    'Found another truck',
+    'Price changed',
+    'Other',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -3988,38 +3996,203 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final reason = _controller.text.trim();
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Cancel booking'),
-      content: TextField(
-        controller: _controller,
-        minLines: 3,
-        maxLines: 5,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          labelText: 'Reason (optional)',
-          hintText: 'You can leave this empty',
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      backgroundColor: colors.surfaceElevated,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDECEC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF7B4B4)),
+                  ),
+                  child: const Icon(
+                    AppIcons.warning_amber_rounded,
+                    color: Color(0xFFE23A4B),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cancel this booking?',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Tell us why — it helps us do better.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final quick in _quickReasons)
+                  GestureDetector(
+                    onTap: () {
+                      _controller.text = quick;
+                      _controller.selection = TextSelection.collapsed(
+                        offset: _controller.text.length,
+                      );
+                      setState(() {});
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 13,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: reason == quick
+                            ? const Color(0xFFFDECEC)
+                            : colors.fillSubtle,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: reason == quick
+                              ? const Color(0xFFE23A4B)
+                              : colors.line,
+                        ),
+                      ),
+                      child: Text(
+                        quick,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: reason == quick
+                              ? const Color(0xFFB42318)
+                              : colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 13),
+            TextField(
+              controller: _controller,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(color: colors.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Add more detail (optional)',
+                hintStyle: TextStyle(color: colors.textTertiary, fontSize: 13),
+                filled: true,
+                fillColor: colors.fillSubtle,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 13,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colors.line),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colors.line),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE23A4B),
+                    width: 1.4,
+                  ),
+                ),
+              ),
+              onChanged: (_) {
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(null),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.textPrimary,
+                      side: BorderSide(color: colors.line),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    child: const Text(
+                      'Keep booking',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF05252), Color(0xFFC81E3A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40E23A4B),
+                          blurRadius: 14,
+                          offset: Offset(0, 7),
+                        ),
+                      ],
+                    ),
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).pop(reason),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: const Text(
+                        'Yes, cancel',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        onChanged: (_) {
-          if (mounted) {
-            setState(() {});
-          }
-        },
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Keep booking'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(reason),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFE23A4B),
-          ),
-          child: const Text('Cancel booking'),
-        ),
-      ],
     );
   }
 }
