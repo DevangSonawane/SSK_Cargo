@@ -185,7 +185,6 @@ class DriverDeliveryDetailsScreen extends ConsumerStatefulWidget {
 class _DriverDeliveryDetailsScreenState
     extends ConsumerState<DriverDeliveryDetailsScreen>
     with WidgetsBindingObserver {
-  double _arrivalSlide = 0;
   bool _showArrivalSwipe = false;
   bool _arrivalFlowActive = false;
   bool _detailsPanelExpanded = true;
@@ -519,6 +518,32 @@ class _DriverDeliveryDetailsScreenState
     }
   }
 
+  /// Publishes a fresh tracking point without ever blocking a trip action.
+  /// The live 3s stream already covers tracking; this is best-effort with a
+  /// deadline so a satellite hunt can never stall the driver's tap.
+  void _publishLocationInBackground() {
+    unawaited(
+      ref
+          .read(driverLocationTrackerProvider)
+          .refreshCurrentLocation()
+          .timeout(const Duration(seconds: 8))
+          .then((String? error) {
+            if (error != null) {
+              developer.log(
+                'Background location publish skipped: $error',
+                name: 'driver.deliveryDetails',
+              );
+            }
+          })
+          .catchError((Object error) {
+            developer.log(
+              'Background location publish failed: $error',
+              name: 'driver.deliveryDetails',
+            );
+          }),
+    );
+  }
+
   Future<void> _advanceTripStatus() async {
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
@@ -560,32 +585,8 @@ class _DriverDeliveryDetailsScreenState
     if (!mounted) return;
     setState(() => _loadingTrip = true);
 
-    developer.log(
-      'Refreshing current location before status update for tripId=$_tripId nextStatus=$nextStatus',
-      name: 'driver.deliveryDetails',
-    );
-    final locationStopwatch = Stopwatch()..start();
-    final locationError = await ref
-        .read(driverLocationTrackerProvider)
-        .refreshCurrentLocation();
-    locationStopwatch.stop();
-    developer.log(
-      locationError == null
-          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
-          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
-      name: 'driver.deliveryDetails',
-    );
-    if (locationError != null) {
-      if (!mounted) return;
-      setState(() => _loadingTrip = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(locationError),
-          backgroundColor: AppColors.dangerIcon,
-        ),
-      );
-      return;
-    }
+    // Fire-and-forget: the status update must not wait on a satellite fix.
+    _publishLocationInBackground();
 
     try {
       developer.log(
@@ -716,20 +717,9 @@ class _DriverDeliveryDetailsScreenState
     }
 
     setState(() => _completingStopIndex = index);
+    // Fire-and-forget: completing a stop must not wait on a satellite fix.
+    _publishLocationInBackground();
     try {
-      final locationError = await ref
-          .read(driverLocationTrackerProvider)
-          .refreshCurrentLocation();
-      if (locationError != null) {
-        if (!mounted) return;
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(locationError),
-            backgroundColor: AppColors.dangerIcon,
-          ),
-        );
-        return;
-      }
       final response = await ref
           .read(apiClientProvider)
           .completeTripStop(
@@ -812,27 +802,8 @@ class _DriverDeliveryDetailsScreenState
 
     setState(() => _loadingTrip = true);
 
-    developer.log(
-      'Refreshing current location before pickup OTP update for tripId=$_tripId',
-      name: 'driver.deliveryDetails',
-    );
-    final locationStopwatch = Stopwatch()..start();
-    final locationError = await ref
-        .read(driverLocationTrackerProvider)
-        .refreshCurrentLocation();
-    locationStopwatch.stop();
-    developer.log(
-      locationError == null
-          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
-          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
-      name: 'driver.deliveryDetails',
-    );
-    if (locationError != null) {
-      if (mounted) {
-        setState(() => _loadingTrip = false);
-      }
-      return locationError;
-    }
+    // Fire-and-forget: OTP verification must not wait on a satellite fix.
+    _publishLocationInBackground();
 
     try {
       developer.log(
@@ -1241,74 +1212,14 @@ class _DriverDeliveryDetailsScreenState
                         ),
                         if (isArrivalFlow) ...[
                           const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 92,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    trackHeight: 52,
-                                    trackShape:
-                                        const RoundedRectSliderTrackShape(),
-                                    thumbShape: const _ArrivalThumbShape(),
-                                    overlayShape: const RoundSliderOverlayShape(
-                                      overlayRadius: 0,
-                                    ),
-                                    activeTrackColor: AppColors.line,
-                                    inactiveTrackColor: AppColors.line,
-                                    thumbColor: Colors.white,
-                                    overlayColor: Colors.transparent,
-                                    trackGap: 6,
-                                  ),
-                                  child: Slider(
-                                    value: _arrivalSlide,
-                                    onChanged: (value) {
-                                      if (_loadingTrip || _confirmingArrival) {
-                                        return;
-                                      }
-                                      setState(() => _arrivalSlide = value);
-                                      if (value >= 0.98) {
-                                        Future.delayed(
-                                          const Duration(milliseconds: 350),
-                                          () {
-                                            if (!context.mounted) {
-                                              return;
-                                            }
-                                            unawaited(_confirmArrival());
-                                            setState(() => _arrivalSlide = 0);
-                                          },
-                                        );
-                                      }
-                                    },
-                                    min: 0,
-                                    max: 1,
-                                    divisions: 100,
-                                  ),
-                                ),
-                                IgnorePointer(
-                                  child: AnimatedOpacity(
-                                    opacity: (1 - (_arrivalSlide * 1.7)).clamp(
-                                      0.18,
-                                      1.0,
-                                    ),
-                                    duration: const Duration(milliseconds: 90),
-                                    child: Text(
-                                      'Swipe to continue',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: AppColors.textSecondary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          _SlideToConfirm(
+                            enabled:
+                                !_loadingTrip && !_confirmingArrival,
+                            label: _confirmingArrival
+                                ? 'Confirming...'
+                                : 'Slide to deliver',
+                            onConfirmed: () =>
+                                unawaited(_confirmArrival()),
                           ),
                         ] else ...[
                           const SizedBox(height: 12),
@@ -1454,32 +1365,8 @@ class _DriverDeliveryDetailsScreenState
     if (!mounted) return;
     setState(() => _confirmingArrival = true);
 
-    developer.log(
-      'Refreshing current location before confirm arrival for tripId=$_tripId',
-      name: 'driver.deliveryDetails',
-    );
-    final locationStopwatch = Stopwatch()..start();
-    final locationError = await ref
-        .read(driverLocationTrackerProvider)
-        .refreshCurrentLocation();
-    locationStopwatch.stop();
-    developer.log(
-      locationError == null
-          ? 'Current location refreshed in ${locationStopwatch.elapsedMilliseconds}ms.'
-          : 'Current location refresh failed in ${locationStopwatch.elapsedMilliseconds}ms: $locationError',
-      name: 'driver.deliveryDetails',
-    );
-    if (locationError != null) {
-      if (!mounted) return;
-      setState(() => _confirmingArrival = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(locationError),
-          backgroundColor: AppColors.dangerIcon,
-        ),
-      );
-      return;
-    }
+    // Fire-and-forget: confirming arrival must not wait on a satellite fix.
+    _publishLocationInBackground();
 
     try {
       developer.log(
@@ -2834,79 +2721,165 @@ class _DeliverySlaCard extends StatelessWidget {
   }
 }
 
-class _ArrivalThumbShape extends SliderComponentShape {
-  const _ArrivalThumbShape();
+class _SlideToConfirm extends StatefulWidget {
+  const _SlideToConfirm({required this.enabled, required this.label, required this.onConfirmed});
+
+  final bool enabled;
+  final String label;
+  final VoidCallback onConfirmed;
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(48, 48);
+  State<_SlideToConfirm> createState() => _SlideToConfirmState();
+}
+
+class _SlideToConfirmState extends State<_SlideToConfirm> {
+  static const _height = 72.0;
+  static const _thumb = 58.0;
+  static const _pad = 7.0;
+
+  double _drag = 0;
+  bool _dragging = false;
+  bool _fired = false;
+
+  double _maxSlide(double trackWidth) =>
+      (trackWidth - _pad * 2 - _thumb).clamp(0.0, double.infinity);
+
+  void _onUpdate(DragUpdateDetails details, double trackWidth) {
+    if (!widget.enabled || _fired) return;
+    setState(() {
+      _dragging = true;
+      _drag = (_drag + details.delta.dx / _maxSlide(trackWidth)).clamp(0.0, 1.0);
+      if (_drag >= 0.94) {
+        _fired = true;
+        _drag = 1;
+        widget.onConfirmed();
+        // If the action fails and we stay on screen, glide back for retry.
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (mounted && widget.enabled) {
+            setState(() {
+              _fired = false;
+              _dragging = false;
+              _drag = 0;
+            });
+          }
+        });
+      }
+    });
+  }
+
+  void _onEnd() {
+    if (_fired) return;
+    setState(() {
+      _dragging = false;
+      _drag = 0;
+    });
+  }
 
   @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    final canvas = context.canvas;
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.14)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    final fillPaint = Paint()
-      ..color = Colors.white
-      ..isAntiAlias = true;
-    final borderPaint = Paint()
-      ..color = AppColors.line
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    final rect = Rect.fromCenter(center: center, width: 48, height: 48);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.shift(const Offset(0, 2)),
-        const Radius.circular(16),
-      ),
-      shadowPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
-      fillPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
-      borderPaint,
-    );
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(AppIcons.chevron_right_rounded.codePoint),
-        style: TextStyle(
-          color: AppColors.brand,
-          fontSize: 28,
-          fontWeight: FontWeight.w800,
-          fontFamily: AppIcons.chevron_right_rounded.fontFamily,
-          package: AppIcons.chevron_right_rounded.fontPackage,
-          height: 1,
-        ),
-      ),
-      textDirection: textDirection,
-      textAlign: TextAlign.center,
-    )..layout();
-
-    textPainter.paint(
-      canvas,
-      Offset(
-        center.dx - textPainter.width / 2,
-        center.dy - textPainter.height / 2,
+  Widget build(BuildContext context) {
+    final disabled = !widget.enabled;
+    return Opacity(
+      opacity: disabled ? 0.55 : 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final trackWidth = constraints.maxWidth;
+          final slide = _drag * _maxSlide(trackWidth);
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: (details) => _onUpdate(details, trackWidth),
+            onHorizontalDragEnd: (_) => _onEnd(),
+            onHorizontalDragCancel: _onEnd,
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: _dragging ? 0 : 220),
+              curve: Curves.easeOutCubic,
+              height: _height,
+              decoration: BoxDecoration(
+                color: AppColors.fillSubtle,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Progress fill.
+                  Positioned(
+                    left: _pad,
+                    top: _pad,
+                    bottom: _pad,
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: _dragging ? 0 : 220),
+                      curve: Curves.easeOutCubic,
+                      width: (_thumb + slide).clamp(_thumb, trackWidth),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF38B47A), Color(0xFF1E7A4C)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  // Label fading as the thumb travels.
+                  Opacity(
+                    opacity: (1 - _drag * 1.6).clamp(0.0, 1.0),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 48),
+                      child: Text(
+                        widget.label,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Thumb.
+                  Positioned(
+                    left: _pad + slide,
+                    top: _pad,
+                    child: Container(
+                      width: _thumb,
+                      height: _height - _pad * 2,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.line),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.16),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                          BoxShadow(
+                            color: AppColors.brand.withValues(
+                              alpha: 0.12 + 0.25 * _drag,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 0),
+                          ),
+                        ],
+                      ),
+                      child: _fired
+                          ? const Icon(
+                              AppIcons.check_rounded,
+                              color: AppColors.brandDark,
+                              size: 26,
+                            )
+                          : const Icon(
+                              AppIcons.chevron_right_rounded,
+                              color: AppColors.brand,
+                              size: 30,
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
