@@ -158,17 +158,10 @@ class _BrokerSettlementsScreenState
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  settlement.route.isEmpty ? 'Route pending' : settlement.route,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                _SettlementRouteRail(route: settlement.route),
                 if (settlement.truck.isNotEmpty ||
                     settlement.driver.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
                   Text(
                     [
                       settlement.truck,
@@ -225,11 +218,6 @@ class _BrokerSettlementsScreenState
                   ),
                 ),
                 const SizedBox(height: 6),
-                _detailLine('Status', settlement.status),
-                _detailLine(
-                  'Settled on',
-                  _prettyDate(settlement.settledAt),
-                ),
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
@@ -610,6 +598,142 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+/// Splits a backend route string ("Mumbai → Pune", "Mumbai - Pune",
+/// "Mumbai to Pune") into pickup / drop. Falls back to the whole string
+/// as pickup when no separator is found.
+({String pickup, String drop}) _splitSettlementRoute(String route) {
+  const separators = ['→', '->', '—', '–', ' to ', ' To ', ' TO '];
+  for (final separator in separators) {
+    final index = route.indexOf(separator);
+    if (index > 0) {
+      final pickup = route.substring(0, index).trim();
+      final drop = route.substring(index + separator.length).trim();
+      if (pickup.isNotEmpty && drop.isNotEmpty) {
+        return (pickup: pickup, drop: drop);
+      }
+    }
+  }
+  // Hyphen last: it also appears inside city names, so only split when
+  // both sides look non-empty.
+  final dash = route.indexOf(' - ');
+  if (dash > 0) {
+    final pickup = route.substring(0, dash).trim();
+    final drop = route.substring(dash + 3).trim();
+    if (pickup.isNotEmpty && drop.isNotEmpty) {
+      return (pickup: pickup, drop: drop);
+    }
+  }
+  final trimmed = route.trim();
+  return (
+    pickup: trimmed.isEmpty ? 'Pickup pending' : trimmed,
+    drop: trimmed.isEmpty ? 'Drop pending' : '',
+  );
+}
+
+class _SettlementRouteRail extends StatelessWidget {
+  const _SettlementRouteRail({required this.route});
+
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    final split = _splitSettlementRoute(route);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _railStop(
+            context,
+            marker: const Icon(
+              AppIcons.radio_button_checked_rounded,
+              color: AppColors.brand,
+              size: 20,
+            ),
+            label: 'PICKUP',
+            value: split.pickup,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 2,
+                height: 22,
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+          _railStop(
+            context,
+            marker: const Icon(
+              AppIcons.location_on_rounded,
+              color: AppColors.dangerIcon,
+              size: 20,
+            ),
+            label: 'DROP',
+            value: split.drop.isEmpty ? 'Drop pending' : split.drop,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _railStop(
+    BuildContext context, {
+    required Widget marker,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 22,
+          height: 22,
+          child: Align(alignment: Alignment.center, child: marker),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 Widget _detailLine(String label, String value) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -633,17 +757,6 @@ Widget _detailLine(String label, String value) {
 double _readDouble(Object? value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '') ?? 0;
-}
-
-String _prettyDate(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return 'Pending';
-  final parsed = DateTime.tryParse(raw.trim());
-  if (parsed == null) return raw.trim();
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  return '${parsed.day} ${months[parsed.month - 1]} ${parsed.year}';
 }
 
 class _SettlementsSkeleton extends StatelessWidget {

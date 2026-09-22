@@ -464,9 +464,17 @@ class _DriverDeliveryDetailsScreenState
       setState(() {
         _shipment = _shipmentFromTrip(trip);
         _tripRaw = trip;
-        _tripStatus = _normalizeTripStatus(
+        final incomingStatus = _normalizeTripStatus(
           _readString(trip, const ['status', 'rawStatus']),
         );
+        if (_mayApplyTripStatus(_tripStatus, incomingStatus)) {
+          _tripStatus = incomingStatus;
+        } else {
+          developer.log(
+            'Ignoring stale trip snapshot status=$incomingStatus current=$_tripStatus.',
+            name: 'driver.deliveryDetails',
+          );
+        }
         _paymentStatus = _readString(trip, const [
           'paymentStatus',
           'payment_status',
@@ -1762,6 +1770,47 @@ class _DriverDeliveryDetailsScreenState
       return '';
     }
     return normalized.replaceAll(RegExp(r'[\s-]+'), '_');
+  }
+
+  /// Forward-only rank of the trip lifecycle. Used to ignore stale snapshots
+  /// (socket echo / lagging refetch) that would otherwise drag a confirmed
+  /// status backwards — e.g. back to pre-pickup, re-popping the OTP dialog
+  /// after a successful verify.
+  static int _tripStatusRank(String status) {
+    switch (status) {
+      case 'picked_up':
+        return 1;
+      case 'in_transit':
+        return 2;
+      case 'delivered':
+        return 3;
+      case 'completed':
+      case 'paid':
+      case 'settled':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
+  static bool _isDeadEndTripStatus(String status) {
+    return const {
+      'cancelled',
+      'canceled',
+      'rejected',
+      'declined',
+    }.contains(status);
+  }
+
+  /// Whether an incoming status snapshot may overwrite the current one.
+  /// Empty snapshots never win; cancel/reject always applies; a dead-end
+  /// state is never left; everything else must move forward (or stay).
+  static bool _mayApplyTripStatus(String current, String incoming) {
+    if (incoming.isEmpty) return false;
+    if (current.isEmpty || incoming == current) return true;
+    if (_isDeadEndTripStatus(incoming)) return true;
+    if (_isDeadEndTripStatus(current)) return false;
+    return _tripStatusRank(incoming) >= _tripStatusRank(current);
   }
 
   Widget _buildHaltingTimer() {

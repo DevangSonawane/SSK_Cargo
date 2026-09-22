@@ -1111,37 +1111,93 @@ class _RazorpayQrView extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 14),
-        Container(
-          width: 220,
-          height: 220,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: imageUrl == null || loading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    color: AppColors.brand,
-                  ),
-                )
-              : ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
-                    imageUrl!,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(
-                          AppIcons.qr_code_rounded,
-                          color: AppColors.textSecondary,
-                          size: 56,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final frameSize = (constraints.maxWidth - 36).clamp(240.0, 300.0);
+            return GestureDetector(
+              onTap: imageUrl == null || loading
+                  ? null
+                  : () => _showQrZoom(context, imageUrl!),
+              child: Stack(
+                children: [
+                  Container(
+                    width: frameSize,
+                    height: frameSize,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
-                      );
-                    },
+                      ],
+                    ),
+                    child: imageUrl == null || loading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: AppColors.brand,
+                            ),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.network(
+                              imageUrl!,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    AppIcons.qr_code_rounded,
+                                    color: AppColors.textSecondary,
+                                    size: 56,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                   ),
-                ),
+                  if (imageUrl != null && !loading)
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.zoom_in_rounded,
+                              size: 13,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Tap to enlarge',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         Container(
@@ -1176,6 +1232,64 @@ class _RazorpayQrView extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Fullscreen QR viewer so the code is unmissable at scan time.
+void _showQrZoom(BuildContext context, String imageUrl) {
+  final side = MediaQuery.of(context).size.width * 0.86;
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.78),
+    builder: (dialogContext) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: side,
+            height: side,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (context, _, _) => const Center(
+                  child: Icon(
+                    AppIcons.qr_code_rounded,
+                    color: AppColors.textSecondary,
+                    size: 64,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.textPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            child: const Text(
+              'Close',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _QrPlaceholder extends StatelessWidget {

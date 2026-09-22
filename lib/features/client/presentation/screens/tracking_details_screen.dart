@@ -1706,6 +1706,7 @@ class _LivePickupOtpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verified = shipment.pickupOtpVerified;
+    final otp = (shipment.pickupOtp ?? '').trim();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -1734,7 +1735,7 @@ class _LivePickupOtpCard extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            verified ? 'Verified' : 'OTP ${shipment.pickupOtp}',
+            verified ? 'OTP $otp ✓' : 'OTP $otp',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: context.colors.textPrimary,
@@ -2260,7 +2261,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
     if (pickupOtpVerified) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: context.colors.brandFill,
           borderRadius: BorderRadius.circular(16),
@@ -2268,20 +2269,73 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              AppIcons.check_circle_rounded,
-              size: 18,
-              color: Color(0xFF2FA56E),
-            ),
-            const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Pickup verified with your code.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Pickup Code',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context.colors.brandEmphasis,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2FA56E),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              AppIcons.check_rounded,
+                              size: 11,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              'Verified',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pickup confirmed with your code.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.textSecondary,
+                      fontSize: 12,
+                      height: 1.25,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              otp,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: const Color(0xFF2FA56E),
+                fontSize: 30,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 5,
               ),
             ),
           ],
