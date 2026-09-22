@@ -32,6 +32,8 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   static const _query = (page: 1, limit: 100);
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   String? _lastNegotiationDialogKey;
+  final TextEditingController _driverSearchController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -161,6 +163,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   @override
   void dispose() {
     _driverRequestSubscription?.cancel();
+    _driverSearchController.dispose();
     super.dispose();
   }
 
@@ -386,41 +389,92 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   ],
                   const SizedBox(height: 18),
                 ],
+                Text(
+                  'Drivers',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Monitor your drivers and live trips',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.field),
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  child: TextField(
+                    controller: _driverSearchController,
+                    onChanged: (_) => setState(() {}),
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                      prefixIcon: const Icon(
+                        AppIcons.search_rounded,
+                        color: AppColors.textTertiary,
+                      ),
+                      hintText: 'Search drivers, phone or vehicle',
+                      hintStyle: const TextStyle(
+                        color: AppColors.textTertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      suffixIcon: _driverSearchController.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: () => setState(
+                                () => _driverSearchController.clear(),
+                              ),
+                              icon: const Icon(
+                                AppIcons.close_rounded,
+                                color: AppColors.textTertiary,
+                                size: 18,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Driver tracking',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w900,
-                            ),
+                    Text(
+                      'Your drivers',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.end,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: () => context.push('/broker/drivers/add'),
-                          icon: const Icon(AppIcons.add_rounded, size: 18),
-                          label: const Text('Add'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.brand,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
+                    Text(
+                      '(${driversAsync.valueOrNull?.length ?? 0})',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/broker/drivers/add'),
+                      icon: const Icon(AppIcons.add),
+                      label: const Text('Add driver'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
-                      ],
+                        shape: const StadiumBorder(),
+                      ),
                     ),
                   ],
                 ),
@@ -431,8 +485,26 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       drivers,
                       trucksAsync.valueOrNull ?? const <BrokerVehicle>[],
                     );
+                    final query = _driverSearchController.text
+                        .trim()
+                        .toLowerCase();
+                    final visibleDrivers = query.isEmpty
+                        ? mergedDrivers
+                        : mergedDrivers.where((driver) {
+                            final haystack = [
+                              driver.name,
+                              driver.phone,
+                              driver.email,
+                              driver.assignedVehicle,
+                              driver.currentLocation,
+                              driver.licenseNo,
+                            ].join(' ').toLowerCase();
+                            return query
+                                .split(RegExp(r'\s+'))
+                                .every(haystack.contains);
+                          }).toList(growable: false);
 
-                    if (mergedDrivers.isEmpty) {
+                    if (visibleDrivers.isEmpty) {
                       return Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
@@ -444,7 +516,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'No drivers yet',
+                              query.isEmpty
+                                  ? 'No drivers yet'
+                                  : 'No drivers match "$query"',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w800,
@@ -453,7 +527,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Create a driver from the + button to start tracking.',
+                              query.isEmpty
+                                  ? 'Create a driver from the + button to start tracking.'
+                                  : 'Try a different name, phone or vehicle number.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
@@ -467,22 +543,22 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       children: [
                         for (
                           var index = 0;
-                          index < mergedDrivers.length;
+                          index < visibleDrivers.length;
                           index++
                         ) ...[
                           DriverListTile(
-                            driver: mergedDrivers[index],
+                            driver: visibleDrivers[index],
                             onEdit: () => context.push(
                               '/broker/drivers/add',
-                              extra: mergedDrivers[index],
+                              extra: visibleDrivers[index],
                             ),
                             onRemove: () => _confirmDeleteDriver(
                               context,
                               ref,
-                              mergedDrivers[index],
+                              visibleDrivers[index],
                             ),
                           ),
-                          if (index != mergedDrivers.length - 1)
+                          if (index != visibleDrivers.length - 1)
                             const SizedBox(height: 10),
                         ],
                       ],
@@ -516,58 +592,48 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   }
 }
 
+/// Roster is API drivers only — like the web app. Trucks are used solely to
+/// fill in a missing assigned-vehicle plate for display. We never invent
+/// phantom drivers from truck assignments: those ghosts survived deletes
+/// (the truck kept the old name, so the row reappeared and "remove" looked
+/// like it did nothing) and showed stale names the web app doesn't have.
 List<BrokerDriver> _brokerDriverRoster(
   List<BrokerDriver> drivers,
   List<BrokerVehicle> trucks,
 ) {
-  final roster = <BrokerDriver>[...drivers];
-  final ids = roster.map((driver) => driver.id).toSet();
-
-  for (final truck in trucks) {
-    final name = truck.assignedDriverName.trim();
-    if (name.isEmpty || name.toLowerCase() == 'unassigned') {
-      continue;
+  final roster = <BrokerDriver>[];
+  for (final driver in drivers) {
+    final truck = _truckForDriver(trucks, driver);
+    if (truck != null && driver.assignedVehicle.trim().isEmpty) {
+      roster.add(
+        BrokerDriver(
+          id: driver.id,
+          name: driver.name,
+          email: driver.email,
+          phone: driver.phone,
+          licenseNo: driver.licenseNo,
+          licenseExpiry: driver.licenseExpiry,
+          aadhaar: driver.aadhaar,
+          avatar: driver.avatar,
+          vehicleType: driver.vehicleType.isNotEmpty
+              ? driver.vehicleType
+              : truck.label,
+          status: driver.status,
+          currentLocation: driver.currentLocation.isNotEmpty
+              ? driver.currentLocation
+              : 'Assigned to ${truck.plateNumber}',
+          currentLatitude: driver.currentLatitude,
+          currentLongitude: driver.currentLongitude,
+          assignedVehicle: truck.plateNumber,
+          onTripSince: driver.onTripSince,
+          currentBookingRef: driver.currentBookingRef,
+          activeTripId: driver.activeTripId,
+          tripStatus: driver.tripStatus,
+        ),
+      );
+    } else {
+      roster.add(driver);
     }
-
-    final driverId = truck.driverId.trim().isNotEmpty
-        ? truck.driverId.trim()
-        : 'truck-${truck.id}';
-    if (ids.contains(driverId)) {
-      continue;
-    }
-    ids.add(driverId);
-    roster.add(
-      BrokerDriver(
-        id: driverId,
-        name: name,
-        email: '',
-        phone: '',
-        licenseNo: '',
-        licenseExpiry: '',
-        aadhaar: '',
-        avatar: '',
-        vehicleType: truck.label,
-        status: truck.status == BrokerVehicleStatus.onTrip
-            ? BrokerDriverStatus.onTrip
-            : truck.status == BrokerVehicleStatus.maintenance
-            ? BrokerDriverStatus.offline
-            : BrokerDriverStatus.idle,
-        currentLocation: truck.status == BrokerVehicleStatus.onTrip
-            ? 'In transit with ${truck.plateNumber}'
-            : 'Assigned to ${truck.plateNumber}',
-        currentLatitude: null,
-        currentLongitude: null,
-        assignedVehicle: truck.plateNumber,
-        onTripSince: '',
-        currentBookingRef: '',
-        activeTripId: truck.id,
-        tripStatus: truck.status == BrokerVehicleStatus.onTrip
-            ? 'in_transit'
-            : truck.status == BrokerVehicleStatus.maintenance
-            ? 'maintenance'
-            : '',
-      ),
-    );
   }
 
   roster.sort((a, b) {
@@ -587,6 +653,33 @@ List<BrokerDriver> _brokerDriverRoster(
   });
 
   return roster;
+}
+
+BrokerVehicle? _truckForDriver(
+  List<BrokerVehicle> trucks,
+  BrokerDriver driver,
+) {
+  final driverId = driver.id.trim();
+  final driverName = driver.name.trim().toLowerCase();
+  final assigned = driver.assignedVehicle.trim();
+  for (final truck in trucks) {
+    if (driverId.isNotEmpty &&
+        truck.driverId.trim().isNotEmpty &&
+        truck.driverId.trim() == driverId) {
+      return truck;
+    }
+    if (assigned.isNotEmpty &&
+        (truck.plateNumber.trim() == assigned || truck.id == assigned)) {
+      return truck;
+    }
+    final truckDriver = truck.assignedDriverName.trim();
+    if (truckDriver.isNotEmpty &&
+        driverName.isNotEmpty &&
+        truckDriver.toLowerCase() == driverName) {
+      return truck;
+    }
+  }
+  return null;
 }
 
 Future<void> _confirmDeleteDriver(

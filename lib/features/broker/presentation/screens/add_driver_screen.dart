@@ -27,7 +27,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _licenseController = TextEditingController();
   final _aadhaarController = TextEditingController();
   final _licenseExpiryController = TextEditingController();
@@ -37,7 +36,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
   String? _selectedTruckId;
   String? _selectedStatus;
   bool _isSubmitting = false;
-  bool _obscurePassword = true;
   Uint8List? _pickedAvatarBytes;
   String? _pickedAvatarDataUrl;
   String? _originalAvatarUrl;
@@ -53,7 +51,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
     _licenseController.dispose();
     _aadhaarController.dispose();
     _licenseExpiryController.dispose();
@@ -64,6 +61,12 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
   @override
   void initState() {
     super.initState();
+    // Always fetch real trucks for the assignment dropdown — never serve
+    // a cached list that could miss newly added vehicles.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
+    });
     final driver = widget.existingDriver;
     if (driver == null) {
       return;
@@ -165,7 +168,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
+    final phone = _normalizeDigits(_phoneController.text);
     final licenseNo = _licenseController.text.trim();
     final aadhaar = _normalizeDigits(_aadhaarController.text);
     final licenseExpiry = _licenseExpiryController.text.trim();
@@ -175,15 +178,6 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
         ? null
         : _truckById(trucks, _selectedTruckId!);
     final truckId = selectedTruck != null ? selectedTruck.id : manualTruckId;
-
-    if (truckId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a truck or enter a truck ID.'),
-        ),
-      );
-      return;
-    }
 
     setState(() {
       _isSubmitting = true;
@@ -210,32 +204,29 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               ),
         );
       } else {
+        // Single register call, same payload shape as the web app — the
+        // server generates the driver's temporary password.
         final registrationResponse = await apiClient.createDriverRegistration(
           accessToken: session.tokens.accessToken,
-          driver:
-              {
-                'name': name,
-                'phone': phone,
-                'email': email,
-                'license_no': licenseNo,
-                'license_expiry': licenseExpiry,
-              }..removeWhere(
-                (key, value) =>
-                    value == null || value.toString().trim().isEmpty,
-              ),
+          driver: {
+            'name': name,
+            'phone': phone,
+            'email': email,
+            if (licenseNo.isNotEmpty) 'license_no': licenseNo,
+            if (licenseExpiry.isNotEmpty) 'license_expiry': licenseExpiry,
+            if (aadhaar.length == 12) 'aadhaar': aadhaar,
+            if (truckId.isNotEmpty) 'truck_id': truckId,
+          },
         );
 
         final driverId = _extractUserId(registrationResponse);
-        if (driverId.isEmpty) {
-          throw StateError('Could not determine the created driver id.');
-        }
-
+        // The register call already succeeded server-side at this point, so
+        // a missing id must never surface as a failure (that phantom "Bad
+        // state" error is what strands brokers into retrying with the same
+        // email). Proceed with the success flow; only the extras update
+        // needs an id and is skipped without one.
         final driverUpdate =
             <String, dynamic>{
-              'license_no': licenseNo,
-              'license_expiry': licenseExpiry,
-              'truck_id': truckId,
-              if (aadhaar.isNotEmpty) 'aadhaar': aadhaar,
               if (avatar.isNotEmpty) 'avatar': avatar,
               if (_selectedStatus != null && _selectedStatus!.isNotEmpty)
                 'status': _selectedStatus,
@@ -243,13 +234,39 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               (key, value) => value == null || value.toString().trim().isEmpty,
             );
 
-        if (driverUpdate.isNotEmpty) {
+        if (driverUpdate.isNotEmpty && driverId.isNotEmpty) {
           await apiClient.updateDriverProfile(
             accessToken: session.tokens.accessToken,
             id: driverId,
             driver: driverUpdate,
           );
         }
+
+        final tempPassword = _extractTempPassword(registrationResponse);
+        if (!mounted) return;
+
+        ref.invalidate(
+          brokerDriversApiProvider((status: null, page: 1, limit: 10)),
+        );
+        ref.invalidate(
+          brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+        );
+        ref.invalidate(
+          brokerDriversApiProvider((status: null, page: 1, limit: 100)),
+        );
+        ref.invalidate(brokerDriversProvider);
+        ref.invalidate(
+          brokerTrucksProvider((status: null, page: 1, limit: 50)),
+        );
+
+        await _showTempPasswordDialog(
+          name: name,
+          email: email,
+          tempPassword: tempPassword,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        return;
       }
 
       if (!mounted) return;
@@ -275,6 +292,13 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       Navigator.of(context).pop();
     } on ApiException catch (error) {
       if (!mounted) return;
+      // A deleted driver's email stays reserved server-side, so recreating
+      // with the same email 409s. Don't dead-end on a snackbar: explain and
+      // offer the way out (the existing record can be edited instead).
+      if (!_isEditing && _isEmailTakenMessage(error.message)) {
+        await _showEmailTakenDialog(email);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
@@ -295,6 +319,285 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
           _isSubmitting = false;
         });
       }
+    }
+  }
+
+  Future<void> _showTempPasswordDialog({
+    required String name,
+    required String email,
+    required String tempPassword,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.brandFill,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.brandBorder),
+                    ),
+                    child: const Icon(
+                      AppIcons.check_circle_rounded,
+                      color: AppColors.brandDark,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Text(
+                      '$name has been registered and added to your fleet.',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.fillSubtle,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Temporary Password',
+                      style: TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            tempPassword.isEmpty
+                                ? 'Shared separately'
+                                : tempPassword,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        if (tempPassword.isNotEmpty)
+                          InkWell(
+                            onTap: () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: tempPassword),
+                              );
+                              if (dialogContext.mounted) {
+                                ScaffoldMessenger.of(
+                                  dialogContext,
+                                ).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Password copied'),
+                                    backgroundColor: AppColors.brand,
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.brand,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'Copy',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'This password is shown only once — the driver can change it from their profile after logging in.',
+                style: TextStyle(
+                  color: AppColors.warningText,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.brand,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Explains the reserved-email dead-end and routes the broker to the
+  /// existing record instead of letting them retry forever.
+  Future<void> _showEmailTakenDialog(String email) async {
+    final openList = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(26),
+        ),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.warningFill,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.warningBorder),
+                    ),
+                    child: const Icon(
+                      AppIcons.email_rounded,
+                      color: AppColors.warningText,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 13),
+                  const Expanded(
+                    child: Text(
+                      'Email already registered',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '$email is already tied to a driver account — a deleted driver keeps their email reserved. Edit the existing driver instead of creating a new one.',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.of(dialogContext).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.line),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: const Text(
+                        'Keep editing',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () =>
+                          Navigator.of(dialogContext).pop(true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: const Text(
+                        'View drivers',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (openList == true && mounted) {
+      Navigator.of(context).pop();
     }
   }
 
@@ -398,11 +701,14 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               prefixIcon: AppIcons.email_rounded,
                             ),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                              final email = value?.trim() ?? '';
+                              if (email.isEmpty) {
                                 return 'Enter email';
                               }
-                              if (!value.contains('@')) {
-                                return 'Enter a valid email';
+                              if (!RegExp(
+                                r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                              ).hasMatch(email)) {
+                                return 'Enter a valid email address — the driver logs in with email + password.';
                               }
                               return null;
                             },
@@ -421,40 +727,14 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               labelText: 'Mobile number',
                               prefixIcon: AppIcons.phone_rounded,
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.next,
-                            decoration:
-                                brokerFieldDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: AppIcons.lock_rounded,
-                                ).copyWith(
-                                  suffixIcon: IconButton(
-                                    onPressed: () {
-                                      setState(
-                                        () => _obscurePassword =
-                                            !_obscurePassword,
-                                      );
-                                    },
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? AppIcons.visibility_off_outlined
-                                          : AppIcons.visibility_outlined,
-                                    ),
-                                    tooltip: _obscurePassword
-                                        ? 'Show password'
-                                        : 'Hide password',
-                                  ),
-                                ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Enter password';
+                              final digits =
+                                  value?.replaceAll(RegExp(r'\D'), '') ?? '';
+                              if (digits.isEmpty) {
+                                return 'Enter mobile number';
                               }
-                              if (value.length < 8) {
-                                return 'Use at least 8 characters';
+                              if (digits.length != 10) {
+                                return 'Enter a valid 10-digit phone number.';
                               }
                               return null;
                             },
@@ -502,10 +782,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           validator: (value) {
                             final digits =
                                 value?.replaceAll(' ', '').trim() ?? '';
-                            if (digits.isEmpty && !_isEditing) {
-                              return 'Enter Aadhaar number';
-                            }
-                            if (digits.isEmpty && _isEditing) {
+                            if (digits.isEmpty) {
                               return null;
                             }
                             if (digits.length != 12) {
@@ -535,11 +812,22 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             suffixIcon: AppIcons.calendar_month_rounded,
                           ),
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Select license expiry';
+                            final text = value?.trim() ?? '';
+                            if (text.isEmpty) {
+                              return null;
                             }
-                            if (DateTime.tryParse(value.trim()) == null) {
+                            final parsed = DateTime.tryParse(text);
+                            if (parsed == null) {
                               return 'Use a valid date';
+                            }
+                            final today = DateTime.now();
+                            final dayStart = DateTime(
+                              today.year,
+                              today.month,
+                              today.day,
+                            );
+                            if (parsed.isBefore(dayStart)) {
+                              return 'License expiry cannot be in the past.';
                             }
                             return null;
                           },
@@ -584,9 +872,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             onChanged: (value) =>
                                 setState(() => _selectedTruckId = value),
                             validator: (value) {
-                              if ((value ?? '').isEmpty) {
-                                return 'Select a truck';
-                              }
+                              // Truck assignment is optional, like the web —
+                              // a driver can be registered first, assigned later.
                               return null;
                             },
                           )
@@ -597,12 +884,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             decoration: brokerFieldDecoration(
                               labelText: 'Truck ID',
                               prefixIcon: AppIcons.local_shipping_rounded,
-                              hintText: 'Enter truck UUID',
+                              hintText: 'Enter truck UUID (optional)',
                             ),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Enter truck ID';
-                              }
                               return null;
                             },
                           ),
@@ -1030,6 +1314,39 @@ String? _truckIdForDriver(List<BrokerVehicle> trucks, String assignedVehicle) {
   return null;
 }
 
+bool _isEmailTakenMessage(String message) {
+  final normalized = message.toLowerCase();
+  return normalized.contains('already exist') ||
+      normalized.contains('already register') ||
+      normalized.contains('duplicate');
+}
+
+String _extractTempPassword(Map<String, dynamic> response) {
+  final candidates = <Object?>[
+    response['tempPassword'],
+    response['temp_password'],
+  ];
+  final data = response['data'];
+  if (data is Map<String, dynamic>) {
+    candidates.addAll([
+      data['tempPassword'],
+      data['temp_password'],
+      data['password'],
+    ]);
+    final user = data['user'];
+    if (user is Map<String, dynamic>) {
+      candidates.addAll([user['tempPassword'], user['temp_password']]);
+    }
+  }
+  for (final candidate in candidates) {
+    final text = candidate?.toString().trim() ?? '';
+    if (text.isNotEmpty && text.toLowerCase() != 'null') {
+      return text;
+    }
+  }
+  return '';
+}
+
 String _extractUserId(Map<String, dynamic> response) {
   final data = response['data'];
   if (data is Map<String, dynamic>) {
@@ -1040,26 +1357,41 @@ String _extractUserId(Map<String, dynamic> response) {
         return userId;
       }
     }
-
-    final dataId = data['id']?.toString().trim();
-    if (dataId != null && dataId.isNotEmpty) {
-      return dataId;
+    final nestedDriver = data['driver'];
+    if (nestedDriver is Map<String, dynamic>) {
+      final driverId = nestedDriver['id']?.toString().trim();
+      if (driverId != null && driverId.isNotEmpty) {
+        return driverId;
+      }
     }
 
-    final userId = data['user_id']?.toString().trim();
+    for (final key in ['id', 'user_id', 'userId', 'driver_id', 'driverId']) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+  }
+
+  final rootUser = response['user'];
+  if (rootUser is Map<String, dynamic>) {
+    final userId = rootUser['id']?.toString().trim();
     if (userId != null && userId.isNotEmpty) {
       return userId;
     }
   }
-
-  final rootId = response['user_id']?.toString().trim();
-  if (rootId != null && rootId.isNotEmpty) {
-    return rootId;
+  final rootDriver = response['driver'];
+  if (rootDriver is Map<String, dynamic>) {
+    final driverId = rootDriver['id']?.toString().trim();
+    if (driverId != null && driverId.isNotEmpty) {
+      return driverId;
+    }
   }
-
-  final rootDataId = response['id']?.toString().trim();
-  if (rootDataId != null && rootDataId.isNotEmpty) {
-    return rootDataId;
+  for (final key in ['user_id', 'userId', 'driver_id', 'driverId', 'id']) {
+    final value = response[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) {
+      return value;
+    }
   }
 
   return '';

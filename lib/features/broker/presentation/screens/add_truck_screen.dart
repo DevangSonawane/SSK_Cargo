@@ -33,6 +33,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
   @override
   void initState() {
     super.initState();
+    // Fresh driver options for the assignment dropdown — never cached.
+    ref.invalidate(
+      brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+    );
     final truck = widget.existingTruck;
     if (truck != null) {
       _registrationController.text = truck.plateNumber;
@@ -69,34 +73,23 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
     final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
     final driver = _selectedDriver;
-    if (driver == null && widget.existingTruck == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please assign a driver.')));
-      return;
-    }
 
-    final year = int.tryParse(_yearController.text.trim());
-    if (year == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid year.')),
-      );
-      return;
-    }
+    final yearText = _yearController.text.trim();
+    final year = yearText.isEmpty ? null : int.tryParse(yearText);
 
     setState(() {
       _submitting = true;
     });
 
     try {
-      final truckPayload = {
+      final truckPayload = <String, dynamic>{
         'type': selectedVehicle.label,
         'category': _truckCategoryForVehicle(selectedVehicle.label),
         'capacity': _capacityController.text.trim(),
         'make': _makeController.text.trim(),
         'year': year,
         'insurance_expiry': _insuranceExpiryController.text.trim(),
-      };
+      }..removeWhere((key, value) => value == null);
 
       if (widget.existingTruck == null) {
         final response = await ref
@@ -109,13 +102,15 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
               },
             );
         final truckId = _extractEntityId(response);
+        // Assignment is optional and goes through the dedicated endpoint,
+        // like the web app — never by writing truck_id onto the driver.
         if (truckId.isNotEmpty && driver != null) {
           await ref
               .read(apiClientProvider)
-              .updateDriverProfile(
+              .assignDriverToTruck(
                 accessToken: session.tokens.accessToken,
-                id: driver.id,
-                driver: {'truck_id': truckId},
+                truckId: truckId,
+                driverId: driver.id,
               );
         }
       } else {
@@ -129,10 +124,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
         if (driver != null) {
           await ref
               .read(apiClientProvider)
-              .updateDriverProfile(
+              .assignDriverToTruck(
                 accessToken: session.tokens.accessToken,
-                id: driver.id,
-                driver: {'truck_id': widget.existingTruck!.id},
+                truckId: widget.existingTruck!.id,
+                driverId: driver.id,
               );
         }
       }
@@ -311,8 +306,18 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       ),
                       enabled: !isEditing,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) {
                           return 'Enter registration number';
+                        }
+                        // Same format check as the web app (create only —
+                        // existing plates are grandfathered in).
+                        if (widget.existingTruck == null &&
+                            !RegExp(
+                              r'^[A-Z]{2}[-\s]?\d{1,2}[-\s]?[A-Z]{1,3}[-\s]?\d{1,4}$',
+                              caseSensitive: false,
+                            ).hasMatch(text)) {
+                          return 'Registration looks invalid, e.g. MH-12-AB-1234.';
                         }
                         return null;
                       },
@@ -376,7 +381,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                             .toList();
                       },
                       decoration: brokerFieldDecoration(
-                        labelText: 'Assign driver',
+                        labelText: 'Assign driver (optional)',
                         prefixIcon: AppIcons.person_rounded,
                       ),
                       items: drivers
@@ -390,9 +395,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       onChanged: (value) =>
                           setState(() => _selectedDriver = value),
                       validator: (value) {
-                        if (value == null && !isEditing) {
-                          return 'Select a driver';
-                        }
+                        // Assignment is optional, like the web — a truck can
+                        // be created first and assigned a driver later.
                         return null;
                       },
                     ),
@@ -401,13 +405,10 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       controller: _makeController,
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Make',
+                        labelText: 'Make (optional)',
                         prefixIcon: AppIcons.precision_manufacturing_rounded,
                       ),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Enter truck make';
-                        }
                         return null;
                       },
                     ),
@@ -418,11 +419,15 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Year',
+                        labelText: 'Year (optional)',
                         prefixIcon: AppIcons.event_rounded,
                       ),
                       validator: (value) {
-                        final parsed = int.tryParse(value?.trim() ?? '');
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) {
+                          return null;
+                        }
+                        final parsed = int.tryParse(text);
                         if (parsed == null || parsed < 1900) {
                           return 'Enter a valid year';
                         }
