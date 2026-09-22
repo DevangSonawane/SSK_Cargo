@@ -30,7 +30,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatMessageSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatEscalatedSubscription;
-  StreamSubscription<void>? _unauthorizedSubscription;
+  StreamSubscription<String?>? _unauthorizedSubscription;
   bool _handlingUnauthorized = false;
   bool _showingLoginAttemptAlert = false;
   OverlayEntry? _loginAttemptAlertEntry;
@@ -52,8 +52,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     );
     // Any authenticated call coming back 401 means the session died
     // server-side (admin/broker reset, all-devices logout, expiry).
-    _unauthorizedSubscription = unauthorizedStream.listen((_) {
-      unawaited(_handleUnauthorized());
+    _unauthorizedSubscription = unauthorizedStream.listen((message) {
+      unawaited(_handleUnauthorized(message));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -87,7 +87,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _handleUnauthorized() async {
+  Future<void> _handleUnauthorized(String? serverMessage) async {
     if (!mounted || _handlingUnauthorized) return;
     // No session (or already logged out): nothing to do, and this also
     // stops loops from in-flight calls racing the logout.
@@ -95,13 +95,13 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     _handlingUnauthorized = true;
     try {
       await ref.read(authSessionProvider.notifier).forceLocalLogout();
+      final message = serverMessage?.trim();
+      ref.read(authExpiredMessageProvider.notifier).state =
+          (message == null || message.isEmpty)
+          ? 'Your session ended. Please log in again.'
+          : message;
       if (!mounted) return;
       ref.read(appRouterProvider).go('/login');
-      _messengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Your session ended. Please log in again.'),
-        ),
-      );
     } finally {
       _handlingUnauthorized = false;
     }

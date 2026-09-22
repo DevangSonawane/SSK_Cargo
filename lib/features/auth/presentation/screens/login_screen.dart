@@ -75,6 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final role = appRoleFromApiRole(session.user.role);
       ref.read(selectedRoleProvider.notifier).state = role;
+      ref.read(authExpiredMessageProvider.notifier).state = null;
       if (role == AppRole.client) {
         ref.read(bottomNavVisibleProvider.notifier).state = true;
       }
@@ -139,6 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final role = appRoleFromApiRole(session.user.role);
       ref.read(selectedRoleProvider.notifier).state = role;
+      ref.read(authExpiredMessageProvider.notifier).state = null;
       if (role == AppRole.client) {
         ref.read(bottomNavVisibleProvider.notifier).state = true;
       }
@@ -184,6 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final expiredMessage = ref.watch(authExpiredMessageProvider);
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -215,7 +218,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 430),
-                  child: Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (expiredMessage != null) ...[
+                        _SessionExpiredBanner(
+                          message: expiredMessage,
+                          onDismiss: () => ref
+                              .read(authExpiredMessageProvider.notifier)
+                              .state = null,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      Container(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.62),
@@ -433,6 +448,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -443,8 +460,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-String _routeForRole(String role) {
-  return switch (role) {
+/// One-shot banner shown after a global 401 logout: carries the server's
+/// own message (session reset vs natural expiry) so the driver knows why.
+class _SessionExpiredBanner extends StatelessWidget {
+  const _SessionExpiredBanner({required this.message, required this.onDismiss});
+
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF0DB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFCD34D)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              AppIcons.warning_amber_rounded,
+              color: Color(0xFFB45309),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Color(0xFF7A4A0A),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: onDismiss,
+            borderRadius: BorderRadius.circular(999),
+            child: const Padding(
+              padding: EdgeInsets.all(6),
+              child: Icon(
+                AppIcons.close_rounded,
+                color: Color(0xFFB45309),
+                size: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _routeForRole(String role) {  return switch (role) {
     'client' => '/client/home',
     'broker' => '/broker/home',
     'driver' => '/driver/home',

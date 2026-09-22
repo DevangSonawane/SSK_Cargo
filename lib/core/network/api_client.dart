@@ -27,11 +27,12 @@ class ApiException implements Exception {
 }
 
 /// Broadcast whenever an authenticated call comes back 401 (revoked/expired
-/// session — e.g. admin/broker reset). Auth endpoints are excluded so a
+/// session — e.g. admin/broker reset). Carries the server's message so the
+/// login screen can show *why*. Auth endpoints are excluded so a
 /// wrong-password login never triggers it. Subscribed once in [SSKApp].
-final _unauthorizedController = StreamController<void>.broadcast();
+final _unauthorizedController = StreamController<String?>.broadcast();
 
-Stream<void> get unauthorizedStream => _unauthorizedController.stream;
+Stream<String?> get unauthorizedStream => _unauthorizedController.stream;
 
 bool _isAuthEndpoint(String path) => path.contains('/api/auth/');
 
@@ -2181,9 +2182,16 @@ class SskApiClient {
       if (error.response?.statusCode == 401 &&
           !_isAuthEndpoint(error.requestOptions.path)) {
         // Fire-and-forget: a 401 here means the session died server-side
-        // (reset/expired). The app subscriber force-logs-out + reroutes.
+        // (reset/expired). The app subscriber force-logs-out + reroutes,
+        // passing the server's message along for the login screen.
         if (!_unauthorizedController.isClosed) {
-          _unauthorizedController.add(null);
+          String? message;
+          try {
+            message = _extractMessage(error);
+          } catch (_) {
+            message = null;
+          }
+          _unauthorizedController.add(message);
         }
       }
       throw ApiException(

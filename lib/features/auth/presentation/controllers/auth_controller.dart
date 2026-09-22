@@ -14,6 +14,10 @@ final authSessionProvider =
       return AuthController(ref, ref.read(apiClientProvider));
     });
 
+/// Last session-death message from the server (force-reset / expiry),
+/// shown once on the login screen after a global 401 logout.
+final authExpiredMessageProvider = StateProvider<String?>((ref) => null);
+
 class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   AuthController(this._ref, this._apiClient)
     : super(const AsyncData<AuthSession?>(null));
