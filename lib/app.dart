@@ -30,6 +30,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _loginAttemptAlertSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatMessageSubscription;
   StreamSubscription<Map<String, dynamic>>? _chatEscalatedSubscription;
+  StreamSubscription<void>? _unauthorizedSubscription;
+  bool _handlingUnauthorized = false;
   bool _showingLoginAttemptAlert = false;
   OverlayEntry? _loginAttemptAlertEntry;
 
@@ -48,6 +50,11 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     _chatEscalatedSubscription = socketService.chatEscalatedStream.listen(
       _handleChatEscalated,
     );
+    // Any authenticated call coming back 401 means the session died
+    // server-side (admin/broker reset, all-devices logout, expiry).
+    _unauthorizedSubscription = unauthorizedStream.listen((_) {
+      unawaited(_handleUnauthorized());
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_syncDriverTracking());
@@ -77,6 +84,26 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       }
     } catch (_) {
       // Chat badges are best-effort and should not interrupt app startup.
+    }
+  }
+
+  Future<void> _handleUnauthorized() async {
+    if (!mounted || _handlingUnauthorized) return;
+    // No session (or already logged out): nothing to do, and this also
+    // stops loops from in-flight calls racing the logout.
+    if (ref.read(authSessionProvider).valueOrNull == null) return;
+    _handlingUnauthorized = true;
+    try {
+      await ref.read(authSessionProvider.notifier).forceLocalLogout();
+      if (!mounted) return;
+      ref.read(appRouterProvider).go('/login');
+      _messengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('Your session ended. Please log in again.'),
+        ),
+      );
+    } finally {
+      _handlingUnauthorized = false;
     }
   }
 
@@ -327,6 +354,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     _loginAttemptAlertSubscription?.cancel();
     _chatMessageSubscription?.cancel();
     _chatEscalatedSubscription?.cancel();
+    _unauthorizedSubscription?.cancel();
     _loginAttemptAlertEntry?.remove();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();

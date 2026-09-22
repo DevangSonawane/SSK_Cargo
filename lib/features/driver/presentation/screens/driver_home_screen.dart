@@ -110,8 +110,24 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     });
   }
 
-  Future<void> _reconcileActiveTripLock() async {
-    if (_reconcilingActiveTrip || !mounted) {
+  /// Mirrors the online toggle to the backend. Best-effort by design: the
+  /// UI already flipped, a 409 just means a trip locked the status.
+  Future<void> _syncOnlineStatus(bool online) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    try {
+      await ref
+          .read(apiClientProvider)
+          .updateDriverStatus(
+            accessToken: session.tokens.accessToken,
+            status: online ? 'available' : 'offline',
+          );
+    } catch (_) {
+      // Local toggle stands; the next location ping / toggle retry resyncs.
+    }
+  }
+
+  Future<void> _reconcileActiveTripLock() async {    if (_reconcilingActiveTrip || !mounted) {
       return;
     }
 
@@ -358,6 +374,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                               }
                               ref.read(driverOnlineProvider.notifier).state =
                                   value;
+                              // Best-effort: tell the server too, so brokers /
+                              // clients stop seeing a stale `available` after
+                              // the driver goes offline. Never blocks the UI.
+                              unawaited(_syncOnlineStatus(value));
                             },
                       activeThumbColor: AppColors.brand,
                       activeTrackColor: AppColors.brand.withValues(alpha: 0.35),

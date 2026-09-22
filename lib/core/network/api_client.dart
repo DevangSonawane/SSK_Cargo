@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'dart:developer' as developer;
 
 final dioProvider = Provider<Dio>((ref) {
@@ -24,6 +25,15 @@ class ApiException implements Exception {
   @override
   String toString() => 'ApiException($statusCode): $message';
 }
+
+/// Broadcast whenever an authenticated call comes back 401 (revoked/expired
+/// session — e.g. admin/broker reset). Auth endpoints are excluded so a
+/// wrong-password login never triggers it. Subscribed once in [SSKApp].
+final _unauthorizedController = StreamController<void>.broadcast();
+
+Stream<void> get unauthorizedStream => _unauthorizedController.stream;
+
+bool _isAuthEndpoint(String path) => path.contains('/api/auth/');
 
 class SskApiClient {
   SskApiClient(this._dio);
@@ -1919,12 +1929,32 @@ class SskApiClient {
     );
   }
 
+  /// Tells the server the driver went available/offline. Best-effort:
+  /// callers must not block UI on it. Only `available`/`offline` are
+  /// accepted — `on_trip` is managed by the trip flow. Returns 409 while a
+  /// trip is active (status locked to the trip).
+  Future<Map<String, dynamic>> updateDriverStatus({
+    required String accessToken,
+    required String status,
+  }) async {
+    developer.log(
+      'PATCH /api/vehicles/drivers/me/status status=$status',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/vehicles/drivers/me/status',
+        data: {'status': status},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateDriverLocation({
     required String accessToken,
     required double lat,
     required double lng,
-  }) async {
-    developer.log(
+  }) async {    developer.log(
       'PATCH /api/vehicles/drivers/me/location lat=$lat lng=$lng',
       name: 'SSK.API',
     );
@@ -2148,6 +2178,14 @@ class SskApiClient {
         'Request failed status=${error.response?.statusCode} path=${error.requestOptions.path} data=${error.response?.data}',
         name: 'SSK.API',
       );
+      if (error.response?.statusCode == 401 &&
+          !_isAuthEndpoint(error.requestOptions.path)) {
+        // Fire-and-forget: a 401 here means the session died server-side
+        // (reset/expired). The app subscriber force-logs-out + reroutes.
+        if (!_unauthorizedController.isClosed) {
+          _unauthorizedController.add(null);
+        }
+      }
       throw ApiException(
         _extractMessage(error),
         statusCode: error.response?.statusCode,
