@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -37,7 +36,6 @@ class _DriverDeliveryHistoryDetailsScreenState
   bool _loading = true;
   bool _downloading = false;
   bool _emailing = false;
-  bool _sharing = false;
   bool _notifying = false;
   String? _error;
   List<_ReassignmentHistoryEntry> _reassignmentHistory = const [];
@@ -314,37 +312,6 @@ class _DriverDeliveryHistoryDetailsScreenState
     }
   }
 
-  Future<void> _shareViaWhatsApp() async {
-    if (_sharing) return;
-
-    final bookingId = _bookingId;
-    if (bookingId.isEmpty) return;
-
-    final shipment = _shipment;
-    final text =
-        'Invoice for $_displayBookingRef (${shipment?.fromLocation ?? 'Pickup'} → ${shipment?.toLocation ?? 'Drop'}).';
-
-    setState(() => _sharing = true);
-    try {
-      final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-      if (!launched && mounted) {
-        _showSnack('Could not open WhatsApp on this device.');
-      }
-    } catch (error) {
-      if (mounted) {
-        _showSnack(error.toString().replaceFirst('Exception: ', ''));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _sharing = false);
-      }
-    }
-  }
-
   Future<void> _notifyClient() async {
     final bookingId = _bookingId;
     if (bookingId.isEmpty || _notifying) return;
@@ -450,11 +417,9 @@ class _DriverDeliveryHistoryDetailsScreenState
                                       ? null
                                       : _downloadInvoice,
                                   onEmail: _emailing ? null : _emailInvoice,
-                                  onShare: _sharing ? null : _shareViaWhatsApp,
                                   onNotify: _notifying ? null : _notifyClient,
                                   downloading: _downloading,
                                   emailing: _emailing,
-                                  sharing: _sharing,
                                   notifying: _notifying,
                                 ),
                                 const SizedBox(height: 16),
@@ -468,6 +433,7 @@ class _DriverDeliveryHistoryDetailsScreenState
                                     expectedDelivery: _expectedDeliveryValue,
                                     deliveredOn: _deliveredOnValue,
                                     distanceTravelled: _distanceTravelledValue,
+                                    sla: _slaSummary(shipment),
                                   ),
                                 ),
                                 if (shipment?.haltingGraceHours != null &&
@@ -486,12 +452,6 @@ class _DriverDeliveryHistoryDetailsScreenState
                                     showNotStarted: false,
                                     tickInterval: const Duration(seconds: 60),
                                   ),
-                                ],
-                                if (shipment != null &&
-                                    (shipment.expectedDeliveryHours != null ||
-                                        shipment.slaOverageCharge > 0)) ...[
-                                  const SizedBox(height: 16),
-                                  _DeliverySlaPanel(shipment: shipment),
                                 ],
                                 if (_reassignmentHistory.isNotEmpty) ...[
                                   const SizedBox(height: 16),
@@ -567,6 +527,28 @@ class _DriverDeliveryHistoryDetailsScreenState
     return distance > 0
         ? '${distance.toStringAsFixed(distance % 1 == 0 ? 0 : 1)} km'
         : '—';
+  }
+
+  /// Inline SLA summary folded into Trip Details (no separate card).
+  /// Returns null when there is nothing meaningful to show.
+  ({String text, bool alert})? _slaSummary(TrackingDemoShipment? shipment) {
+    if (shipment == null) return null;
+    if (shipment.slaOverageCharge > 0) {
+      final charge = shipment.slaOverageCharge;
+      final hours = shipment.slaOverageHours;
+      return (
+        text:
+            'Delayed — ₹${charge.toStringAsFixed(charge % 1 == 0 ? 0 : 2)} charge for ${hours.toStringAsFixed(hours % 1 == 0 ? 0 : 1)}h over expected time.',
+        alert: true,
+      );
+    }
+    final expected = shipment.expectedDeliveryHours;
+    if (expected == null) return null;
+    return (
+      text:
+          'On track — expected within ~${expected.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
+      alert: false,
+    );
   }
 
   String get _earningsValue {
@@ -839,79 +821,56 @@ class _ActionRow extends StatelessWidget {
   const _ActionRow({
     required this.onDownload,
     required this.onEmail,
-    required this.onShare,
     required this.onNotify,
     required this.downloading,
     required this.emailing,
-    required this.sharing,
     required this.notifying,
   });
 
   final VoidCallback? onDownload;
   final VoidCallback? onEmail;
-  final VoidCallback? onShare;
   final VoidCallback? onNotify;
   final bool downloading;
   final bool emailing;
-  final bool sharing;
   final bool notifying;
 
   @override
   Widget build(BuildContext context) {
-    final buttons = [
-      _ActionButton(
-        label: downloading ? 'Downloading...' : 'Invoice',
-        svgIcon: _invoiceSvg,
-        onPressed: onDownload,
-      ),
-      _ActionButton(
-        label: emailing ? 'Sending...' : 'Email',
-        svgIcon: _emailSvg,
-        onPressed: onEmail,
-      ),
-      _ActionButton(
-        label: sharing ? 'Preparing...' : 'WhatsApp',
-        svgIcon: _whatsappSvg,
-        onPressed: onShare,
-      ),
-      _ActionButton(
-        label: notifying ? 'Sending...' : 'Notify',
-        svgIcon: _notifySvg,
-        onPressed: onNotify,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cellWidth = (constraints.maxWidth - 10) / 2;
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(width: cellWidth, child: buttons[0]),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(width: cellWidth, child: buttons[1]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(width: cellWidth, child: buttons[2]),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(width: cellWidth, child: buttons[3]),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
+    return Row(
+      children: [
+        Expanded(
+          child: _ActionButton(
+            label: downloading ? 'Saving...' : 'Invoice',
+            icon: AppIcons.receipt_long_rounded,
+            tint: AppColors.brandFill,
+            border: AppColors.brandBorder,
+            iconColor: AppColors.brandDark,
+            onPressed: onDownload,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _ActionButton(
+            label: emailing ? 'Sending...' : 'Email',
+            icon: AppIcons.mail_rounded,
+            tint: const Color(0xFFEFF6FF),
+            border: const Color(0xFFD7E7F4),
+            iconColor: AppColors.accentBlue,
+            onPressed: onEmail,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _ActionButton(
+            label: notifying ? 'Sending...' : 'Notify',
+            icon: AppIcons.notifications_active_rounded,
+            tint: AppColors.warningFill,
+            border: AppColors.warningBorder,
+            iconColor: AppColors.warningText,
+            onPressed: onNotify,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -946,46 +905,6 @@ class _ReassignmentHistoryEntry {
   final String reason;
   final String reassignedByName;
   final DateTime? createdAt;
-}
-
-class _DeliverySlaPanel extends StatelessWidget {
-  const _DeliverySlaPanel({required this.shipment});
-
-  final TrackingDemoShipment shipment;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasCharge = shipment.slaOverageCharge > 0;
-    final expected = shipment.expectedDeliveryHours;
-    return _SectionCard(
-      title: hasCharge ? 'Delivery Delay' : 'Delivery SLA',
-      accentColor: hasCharge ? AppColors.warningText : AppColors.brand,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            hasCharge
-                ? AppIcons.warning_amber_rounded
-                : AppIcons.schedule_rounded,
-            color: hasCharge ? AppColors.warningText : AppColors.brand,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              hasCharge
-                  ? 'Delay charge ₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)} for ${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h over the expected delivery time.'
-                  : 'Expected delivery within ~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _ReassignmentHistoryPanel extends StatelessWidget {
@@ -1054,58 +973,58 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.label,
+    required this.icon,
+    required this.tint,
+    required this.border,
+    required this.iconColor,
     required this.onPressed,
-    this.svgIcon,
   });
 
   final String label;
+  final IconData icon;
+  final Color tint;
+  final Color border;
+  final Color iconColor;
   final VoidCallback? onPressed;
-  final String? svgIcon;
 
   @override
   Widget build(BuildContext context) {
-    final leading = svgIcon == null
-        ? null
-        : SvgPicture.string(
-            svgIcon!,
-            width: 16,
-            height: 16,
-            colorFilter: ColorFilter.mode(
-              Theme.of(context).colorScheme.primary,
-              BlendMode.srcIn,
-            ),
-          );
-
     return SizedBox(
-      height: 52,
+      height: 76,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.22),
-          ),
-          foregroundColor: Theme.of(context).colorScheme.primary,
+          side: BorderSide(color: border),
+          foregroundColor: AppColors.textPrimary,
           backgroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (leading != null) ...[leading, const SizedBox(width: 8)],
-            Flexible(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: tint,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: border),
+              ),
+              child: Icon(icon, size: 15, color: iconColor),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -1335,134 +1254,178 @@ class _TripDetailsGrid extends StatelessWidget {
     required this.expectedDelivery,
     required this.deliveredOn,
     required this.distanceTravelled,
+    required this.sla,
   });
 
   final String bookingTime;
   final String expectedDelivery;
   final String deliveredOn;
   final String distanceTravelled;
+  final ({String text, bool alert})? sla;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final tiles = [
-          _DetailStatTile(
-            icon: AppIcons.calendar_month_outlined,
-            label: 'Booking Time',
-            value: bookingTime,
-            iconColor: AppColors.brand,
-          ),
-          _DetailStatTile(
-            icon: AppIcons.access_time_rounded,
-            label: 'Expected Delivery',
-            value: expectedDelivery,
-            iconColor: AppColors.brand,
-          ),
-          _DetailStatTile(
-            icon: AppIcons.local_shipping_outlined,
-            label: 'Delivered On',
-            value: deliveredOn,
-            iconColor: AppColors.brand,
-          ),
-          _DetailStatTile(
-            icon: AppIcons.route_outlined,
-            label: 'Distance Travelled',
-            value: distanceTravelled,
-            iconColor: AppColors.brand,
-          ),
-        ];
+    final rows = [
+      _TripRowData(
+        icon: AppIcons.calendar_month_outlined,
+        tint: AppColors.brandFill,
+        border: AppColors.brandBorder,
+        iconColor: AppColors.brandDark,
+        label: 'Booking time',
+        value: bookingTime,
+      ),
+      _TripRowData(
+        icon: AppIcons.access_time_rounded,
+        tint: const Color(0xFFEFF6FF),
+        border: const Color(0xFFD7E7F4),
+        iconColor: AppColors.accentBlue,
+        label: 'Expected delivery',
+        value: expectedDelivery,
+      ),
+      _TripRowData(
+        icon: AppIcons.local_shipping_outlined,
+        tint: AppColors.brandFill,
+        border: AppColors.brandBorder,
+        iconColor: AppColors.brandDark,
+        label: 'Delivered on',
+        value: deliveredOn,
+      ),
+      _TripRowData(
+        icon: AppIcons.route_outlined,
+        tint: AppColors.warningFill,
+        border: AppColors.warningBorder,
+        iconColor: AppColors.warningText,
+        label: 'Distance travelled',
+        value: distanceTravelled,
+      ),
+    ];
 
-        return Column(
-          children: [
-            Row(
+    return Column(
+      children: [
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 11),
+              child: Divider(height: 1, thickness: 1, color: AppColors.line),
+            ),
+          _TripRow(data: rows[i]),
+        ],
+        if (sla != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            decoration: BoxDecoration(
+              color: sla!.alert
+                  ? AppColors.warningFill
+                  : AppColors.brandFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: sla!.alert
+                    ? AppColors.warningBorder
+                    : AppColors.brandBorder,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: tiles[0]),
-                const SizedBox(width: 12),
-                Expanded(child: tiles[1]),
+                Icon(
+                  sla!.alert
+                      ? AppIcons.warning_amber_rounded
+                      : AppIcons.schedule_rounded,
+                  size: 18,
+                  color: sla!.alert
+                      ? AppColors.warningText
+                      : AppColors.brandDark,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    sla!.text,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: sla!.alert
+                          ? AppColors.warningText
+                          : AppColors.brandDark,
+                      height: 1.45,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: tiles[2]),
-                const SizedBox(width: 12),
-                Expanded(child: tiles[3]),
-              ],
-            ),
-          ],
-        );
-      },
+          ),
+        ],
+      ],
     );
   }
 }
 
-class _DetailStatTile extends StatelessWidget {
-  const _DetailStatTile({
+class _TripRowData {
+  const _TripRowData({
     required this.icon,
+    required this.tint,
+    required this.border,
+    required this.iconColor,
     required this.label,
     required this.value,
-    required this.iconColor,
   });
 
   final IconData icon;
+  final Color tint;
+  final Color border;
+  final Color iconColor;
   final String label;
   final String value;
-  final Color iconColor;
+}
+
+class _TripRow extends StatelessWidget {
+  const _TripRow({required this.data});
+
+  final _TripRowData data;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 102,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.fillSubtle,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.fillSubtle),
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: data.tint,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: data.border),
+          ),
+          child: Icon(data.icon, size: 19, color: data.iconColor),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                data.label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.textTertiary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
               ),
-              child: Icon(icon, size: 18, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      height: 1.15,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 3),
+              Text(
+                data.value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1691,35 +1654,6 @@ bool _isPaidStatusText(String status) {
   final normalized = status.trim().toLowerCase();
   return normalized == 'paid' || normalized == 'settled';
 }
-
-const String _invoiceSvg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <path fill="currentColor" d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
-  <path fill="#fff" d="M15 3v5h5"/>
-  <path fill="currentColor" d="M8 12h8v1.5H8zm0 3.5h8V17H8z"/>
-</svg>
-''';
-
-const String _emailSvg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <path fill="currentColor" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>
-  <path fill="#fff" d="m5 7 7 5 7-5v2l-7 5-7-5z"/>
-</svg>
-''';
-
-const String _whatsappSvg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <path fill="#25D366" d="M12 2C6.48 2 2 6.34 2 11.69c0 1.92.58 3.71 1.57 5.22L2.5 22l5.3-1.03A10.2 10.2 0 0 0 12 21.38c5.52 0 10-4.34 10-9.69S17.52 2 12 2z"/>
-  <path fill="#fff" d="M16.84 14.73c-.22-.11-1.29-.64-1.49-.72-.2-.08-.35-.11-.5.11-.15.22-.57.72-.7.87-.13.16-.26.18-.48.06-.22-.11-.93-.35-1.77-1.12-.65-.58-1.09-1.31-1.22-1.53-.13-.22-.01-.34.1-.45.1-.1.22-.26.33-.39.11-.13.15-.22.23-.37.08-.16.04-.3-.02-.42-.06-.11-.5-1.2-.68-1.63-.18-.42-.36-.36-.5-.37h-.43c-.15 0-.39.05-.59.26-.2.22-.76.74-.76 1.8 0 1.06.78 2.08.89 2.22.11.15 1.53 2.33 3.72 3.26.52.22.92.35 1.23.45.52.17.99.15 1.36.09.42-.06 1.29-.53 1.47-1.05.18-.52.18-.96.13-1.05-.05-.08-.2-.13-.42-.24z"/>
-</svg>
-''';
-
-const String _notifySvg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <path fill="currentColor" d="M12 3a6 6 0 0 0-6 6v3.1L4.7 14.4A1 1 0 0 0 5.6 16h12.8a1 1 0 0 0 .9-1.6L18 12.1V9a6 6 0 0 0-6-6z"/>
-  <path fill="currentColor" d="M10 18a2 2 0 0 0 4 0z"/>
-</svg>
-''';
 
 double _readDouble(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {

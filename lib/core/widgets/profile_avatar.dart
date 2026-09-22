@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:ssk/core/theme/app_icons.dart';
 
 class SskProfileAvatar extends StatelessWidget {
   const SskProfileAvatar({
@@ -33,14 +34,42 @@ class SskProfileAvatar extends StatelessWidget {
         child: Container(
           width: size,
           height: size,
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F4F8),
             shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 1.8),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          clipBehavior: Clip.antiAlias,
-          child: child,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F4F8),
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 1.2),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: child,
+          ),
         ),
+      ),
+    );
+  }
+
+  /// Platform-style placeholder (same as broker): neutral slate disc with a
+  /// dark person glyph — no brand color, lets the photo be the identity.
+  Widget _placeholder() {
+    return Container(
+      alignment: Alignment.center,
+      color: const Color(0xFFE8EDF3),
+      child: Icon(
+        AppIcons.person_rounded,
+        color: const Color(0xFF475569),
+        size: size * 0.55,
       ),
     );
   }
@@ -52,7 +81,7 @@ class SskProfileAvatar extends StatelessWidget {
 
     final value = imageUrl?.trim();
     if (value == null || value.isEmpty) {
-      return Image.asset(fallbackAsset, fit: BoxFit.cover);
+      return _placeholder();
     }
 
     if (value.startsWith('data:image/')) {
@@ -62,10 +91,10 @@ class SskProfileAvatar extends StatelessWidget {
           final encoded = value.substring(commaIndex + 1);
           return Image.memory(base64Decode(encoded), fit: BoxFit.cover);
         } catch (_) {
-          return Image.asset(fallbackAsset, fit: BoxFit.cover);
+          return _placeholder();
         }
       }
-      return Image.asset(fallbackAsset, fit: BoxFit.cover);
+      return _placeholder();
     }
 
     if (value.startsWith('http://') || value.startsWith('https://')) {
@@ -73,11 +102,11 @@ class SskProfileAvatar extends StatelessWidget {
         value,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          return Image.asset(fallbackAsset, fit: BoxFit.cover);
+          return _placeholder();
         },
       );
     }
 
-    return Image.asset(fallbackAsset, fit: BoxFit.cover);
+    return _placeholder();
   }
 }

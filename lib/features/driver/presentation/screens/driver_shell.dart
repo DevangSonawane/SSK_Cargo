@@ -34,7 +34,6 @@ class _DriverShellState extends ConsumerState<DriverShell> {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
     final firstName = displayName?.split(' ').first ?? 'Driver';
-    final headerTitle = 'Good ${_timeOfDayLabel()}';
 
     return Theme(
       data: AppTheme.light,
@@ -76,29 +75,20 @@ class _DriverShellState extends ConsumerState<DriverShell> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                headerTitle,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 20,
-                                    ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                firstName,
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 22,
-                                    ),
-                              ),
-                            ],
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '👋 Hello, $firstName',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 22,
+                                    letterSpacing: -0.2,
+                                  ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -144,11 +134,4 @@ class _DriverShellState extends ConsumerState<DriverShell> {
       ),
     );
   }
-}
-
-String _timeOfDayLabel() {
-  final hour = DateTime.now().hour;
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
 }
