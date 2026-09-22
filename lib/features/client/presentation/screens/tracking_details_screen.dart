@@ -1922,7 +1922,9 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Express delivery',
+                                            widget.shipment.isExpress
+                                                ? 'Express delivery'
+                                                : 'Standard delivery',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium
@@ -2755,9 +2757,6 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pickup = _cleanTrackingLocation(shipment.fromLocation, 'Pickup');
-    final drop = _cleanTrackingLocation(shipment.toLocation, 'Drop');
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2771,7 +2770,14 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                TrackingRouteMapView(shipment: shipment, liveMode: true),
+                // Preview only: the platform map view swallows gestures, so
+                // ignore them here and let the card InkWell open live view.
+                IgnorePointer(
+                  child: TrackingRouteMapView(
+                    shipment: shipment,
+                    liveMode: true,
+                  ),
+                ),
                 Positioned.fill(
                   child: IgnorePointer(
                     child: DecoratedBox(
@@ -2782,31 +2788,46 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
                           colors: [
                             Colors.black.withValues(alpha: 0.02),
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.34),
+                            Colors.black.withValues(alpha: 0.18),
                           ],
                         ),
                       ),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Spacer(),
-                      Text(
-                        '$pickup to $drop',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white,
-                          fontSize: 12,
-                          height: 1.25,
-                          fontWeight: FontWeight.w500,
-                        ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: IgnorePointer(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                    ],
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            AppIcons.open_in_full_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Live',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

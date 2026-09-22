@@ -191,13 +191,14 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                   final bookings = page.bookings;
 
                   if (bookings.isEmpty) {
-                    return _EmptyState(
-                      icon: AppIcons.inbox_rounded,
-                      title: 'No bookings found',
+                    return const _EmptyState(
+                      icon: AppIcons.local_shipping_rounded,
+                      iconTint: Color(0xFFEAF8EF),
+                      iconBorder: Color(0xFFD7EBDD),
+                      iconColor: Color(0xFF2FA56E),
+                      title: 'Nothing moving yet',
                       subtitle:
-                          'Once a booking is created, it will show up here.',
-                      actionLabel: 'Refresh',
-                      onAction: _refreshBookings,
+                          'Your trucks, trips and live tracking will land here once you make your first booking.',
                     );
                   }
 
@@ -717,6 +718,9 @@ class _EmptyState extends StatelessWidget {
     required this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.iconTint,
+    this.iconBorder,
+    this.iconColor,
   });
 
   final IconData icon;
@@ -724,12 +728,15 @@ class _EmptyState extends StatelessWidget {
   final String subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Color? iconTint;
+  final Color? iconBorder;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 34, 24, 30),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -745,24 +752,32 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 72,
-            height: 72,
+            width: 84,
+            height: 84,
             decoration: BoxDecoration(
-              color: context.colors.canvas,
-              shape: BoxShape.circle,
+              color: iconTint ?? context.colors.canvas,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: iconBorder ?? context.colors.line,
+              ),
             ),
-            child: Icon(icon, color: context.colors.textSecondary, size: 34),
+            child: Icon(
+              icon,
+              color: iconColor ?? context.colors.textSecondary,
+              size: 38,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
+              fontSize: 19,
               color: context.colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
           Text(
             subtitle,
             textAlign: TextAlign.center,
@@ -771,8 +786,24 @@ class _EmptyState extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
           ),
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onAction,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2FA56E),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
           ],
         ],
       ),
