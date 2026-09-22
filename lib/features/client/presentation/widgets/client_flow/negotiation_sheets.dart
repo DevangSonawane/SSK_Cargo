@@ -4,6 +4,825 @@ enum _DirectNegotiationStage { compose, waiting, payment, confirmed }
 
 enum _FindTruckNegotiationResult { dismissed, payment }
 
+/// Broker-offer negotiation sheet — mirrors the web BrokerNegotiation flow
+/// step by step: live offer card, counter slider (set → sent), Accept /
+/// Counter / Decline on the jobs/requests offer, mutual-confirm states,
+/// counter limits, and payment only after confirmation. Works on
+/// [ClientBrokerOffer] (offers family), never driver-requests.
+class _BrokerOfferNegotiationSheet extends ConsumerStatefulWidget {
+  const _BrokerOfferNegotiationSheet({
+    required this.bookingId,
+    required this.bookingNumber,
+    required this.accessToken,
+    required this.initialOffer,
+    required this.askingPrice,
+  });
+
+  final String bookingId;
+  final String? bookingNumber;
+  final String accessToken;
+  final ClientBrokerOffer initialOffer;
+  final double askingPrice;
+
+  @override
+  ConsumerState<_BrokerOfferNegotiationSheet> createState() =>
+      _BrokerOfferNegotiationSheetState();
+}
+
+class _BrokerOfferNegotiationSheetState
+    extends ConsumerState<_BrokerOfferNegotiationSheet> {
+  static const Duration _refreshInterval = Duration(seconds: 4);
+
+  late ClientBrokerOffer _offer;
+  late double _counterAmount;
+  bool _busy = false;
+  bool _loading = false;
+  bool _counterSent = false;
+  String? _errorMessage;
+  Timer? _pollTimer;
+  StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+
+  double get _baseAmount =>
+      _offer.amount > 0 ? _offer.amount : widget.askingPrice;
+  double get _minCounter => _baseAmount * 0.78;
+  double get _maxCounter => _baseAmount > 0 ? _baseAmount : 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _offer = widget.initialOffer;
+    _counterAmount = _baseAmount;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_startLiveUpdates());
+      unawaited(_loadOffers(silent: true));
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _jobRequestSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startLiveUpdates() async {
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: widget.accessToken);
+
+    await _jobRequestSubscription?.cancel();
+    _jobRequestSubscription = socketService.jobRequestStream.listen((payload) {
+      final payloadMap = _payloadAsMapLoose(payload);
+      if (payloadMap == null) {
+        return;
+      }
+      final payloadBookingId = _readString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      final payloadOfferId = _readString(payloadMap, const [
+        'id',
+        'request_id',
+      ]);
+      if (payloadBookingId == widget.bookingId ||
+          payloadBookingId.isEmpty ||
+          payloadOfferId == _offer.id) {
+        unawaited(_loadOffers(silent: true));
+      }
+    });
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) {
+        unawaited(_loadOffers(silent: true));
+      }
+    });
+  }
+
+  Future<void> _loadOffers({required bool silent}) async {
+    try {
+      if (!silent) {
+        setState(() {
+          _loading = true;
+          _errorMessage = null;
+        });
+      }
+
+      final response = await ref
+          .read(apiClientProvider)
+          .getBookingOffers(
+            accessToken: widget.accessToken,
+            bookingId: widget.bookingId,
+          );
+      final data = response['data'];
+      final payload = data is Map<String, dynamic> ? data : response;
+      final items = payload['offers'];
+      final list = items is List ? items : const <dynamic>[];
+      final offers = list
+          .whereType<Map<String, dynamic>>()
+          .map(ClientBrokerOffer.fromJson)
+          .where((offer) => offer.id.isNotEmpty)
+          .toList(growable: false);
+      final bookingStatus = _readString(payload, const [
+        'bookingStatus',
+        'booking_status',
+        'status',
+      ]).trim().toLowerCase();
+
+      if (!mounted) {
+        return;
+      }
+
+      // Web parity: confirmed booking means a broker locked in.
+      if (bookingStatus == 'confirmed') {
+        Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+        return;
+      }
+
+      final match = offers.where((o) => o.id == _offer.id).toList();
+      final updated = match.isNotEmpty ? match.first : _offer;
+      final wasPending = _offer.normalizedStatus == 'pending';
+      setState(() {
+        _offer = updated;
+        // Web parity: the local "sent" state clears once the broker actually
+        // responds (status moves off pending).
+        if (_counterSent && updated.normalizedStatus != 'pending') {
+          _counterSent = false;
+        }
+        if (wasPending && updated.normalizedStatus != 'pending') {
+          final base = updated.amount > 0 ? updated.amount : _baseAmount;
+          _counterAmount = base.clamp(_minCounter, _maxCounter);
+        }
+      });
+      if (updated.isAccepted) {
+        Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+      }
+    } catch (_) {
+      if (!mounted || silent) {
+        return;
+      }
+      setState(() {
+        _errorMessage = 'Could not refresh the live broker offer.';
+      });
+    } finally {
+      if (mounted && !silent) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _submitCounter() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .clientCounterJobRequest(
+            accessToken: widget.accessToken,
+            id: _offer.id,
+            amount: _counterAmount,
+          );
+      if (!mounted) return;
+      // Web parity: local "sent" panel until the broker responds.
+      setState(() {
+        _counterSent = true;
+      });
+      await _loadOffers(silent: true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _acceptOffer() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .clientAcceptJobRequest(
+            accessToken: widget.accessToken,
+            id: _offer.id,
+          );
+      if (!mounted) return;
+      final data = _payloadAsMapLoose(response['data']);
+      final booking = _payloadAsMapLoose(data?['booking']);
+      if (booking != null) {
+        // Both sides agreed — booking confirmed, move to payment.
+        Navigator.of(context).pop(_FindTruckNegotiationResult.payment);
+        return;
+      }
+      // First mover — refresh so the new awaiting state shows.
+      await _loadOffers(silent: false);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+      await _loadOffers(silent: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _rejectOffer() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .clientRejectJobRequest(
+            accessToken: widget.accessToken,
+            id: _offer.id,
+          );
+      if (!mounted) return;
+      // Web parity: declined — back to the list; another broker's offer may
+      // still arrive via the parent poll.
+      Navigator.of(context).pop(_FindTruckNegotiationResult.dismissed);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final offer = _offer;
+    final brokerName = offer.brokerName.isNotEmpty
+        ? offer.brokerName
+        : 'Broker';
+    final offerAmountText = offer.amount > 0
+        ? _formatRupees(offer.amount)
+        : _formatRupees(widget.askingPrice);
+
+    final String title;
+    final String body;
+    if (offer.isYourTurnToConfirm) {
+      title = 'Broker accepted - confirm now';
+      body =
+          'The broker has committed to this booking. Confirm or decline to finish.';
+    } else if (offer.isWaitingOnBroker) {
+      title = 'Waiting for broker confirmation';
+      body =
+          'You accepted this offer. We are waiting for the broker to complete the handshake.';
+    } else if (_counterSent) {
+      title = 'Offer sent';
+      body =
+          'Your counter is with the broker. We will update automatically when they respond.';
+    } else if (offer.normalizedStatus == 'countered') {
+      title = 'Counter offer received';
+      body = 'Review the live counter offer and respond.';
+    } else {
+      title = 'Broker offer received';
+      body = 'This offer is updating live from the broker side.';
+    }
+
+    final canAct =
+        !offer.isWaitingOnBroker && !_counterSent && offer.isActionableByClient;
+    final showCounter = canAct && !offer.counterLimitReached;
+    final brokerInitial = brokerName.trim().isEmpty
+        ? 'B'
+        : brokerName.trim()[0].toUpperCase();
+
+    final String statusPill;
+    final Color pillFg;
+    final Color pillBg;
+    final Color pillBorder;
+    if (offer.isYourTurnToConfirm) {
+      statusPill = 'ACTION NEEDED';
+      pillFg = const Color(0xFF167247);
+      pillBg = const Color(0xFFEAF8EF);
+      pillBorder = const Color(0xFFB7E4C7);
+    } else if (offer.isWaitingOnBroker) {
+      statusPill = 'WITH BROKER';
+      pillFg = const Color(0xFFB45309);
+      pillBg = const Color(0xFFFFF0DB);
+      pillBorder = const Color(0xFFFCD34D);
+    } else if (offer.normalizedStatus == 'countered') {
+      statusPill = 'NEW COUNTER';
+      pillFg = const Color(0xFFB45309);
+      pillBg = const Color(0xFFFFF0DB);
+      pillBorder = const Color(0xFFFCD34D);
+    } else {
+      statusPill = 'LIVE OFFER';
+      pillFg = const Color(0xFF1F88C9);
+      pillBg = const Color(0xFFEFF6FF);
+      pillBorder = const Color(0xFFD7E7F4);
+    }
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: context.colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 32,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: pillBg,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: pillBorder),
+                            ),
+                            child: Text(
+                              statusPill,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                                color: pillFg,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: context.colors.textPrimary,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                  height: 1.2,
+                                ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            body,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: context.colors.textSecondary,
+                                  height: 1.4,
+                                  fontSize: 13.5,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(_FindTruckNegotiationResult.dismissed),
+                      icon: const Icon(AppIcons.close_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.colors.fillSubtle,
+                        foregroundColor: context.colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        context.colors.brandFill,
+                        context.colors.fillSubtle,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: context.colors.brandBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF38B47A),
+                                Color(0xFF1E7A4C),
+                              ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF2FA56E,
+                              ).withValues(alpha: 0.30),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          brokerInitial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              brokerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: context.colors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Broker offer',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'OFFER',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: context.colors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            offerAmountText,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: context.colors.brandEmphasis,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 21,
+                                  letterSpacing: -0.3,
+                                ),
+                          ),
+                        ],
+                      ),
+                      if (_loading) ...[
+                        const SizedBox(width: 8),
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2.2),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.dangerEmphasis,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                if (offer.isWaitingOnBroker)
+                  Row(
+                    children: [
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Handshake in progress — no action needed.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: context.colors.textSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (_counterSent)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(_FindTruckNegotiationResult.dismissed),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text('Back'),
+                    ),
+                  )
+                else if (offer.isYourTurnToConfirm)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy ? null : _rejectOffer,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: context.colors.dangerEmphasis,
+                            side: BorderSide(
+                              color: context.colors.dangerEmphasis.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Decline'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _busy ? null : _acceptOffer,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2FA56E),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: _busy
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Confirm'),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (canAct) ...[
+                  if (showCounter) ...[
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(15, 13, 15, 9),
+                      decoration: BoxDecoration(
+                        color: context.colors.fillSubtle,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: context.colors.line),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Your counter',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: context.colors.textSecondary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context.colors.brandFill,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: context.colors.brandBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  _formatRupees(_counterAmount),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: context.colors.brandEmphasis,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 15,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 6,
+                              activeTrackColor: const Color(0xFF2FA56E),
+                              inactiveTrackColor: context.colors.line,
+                              thumbColor: const Color(0xFF2FA56E),
+                              overlayColor: const Color(
+                                0xFF2FA56E,
+                              ).withValues(alpha: 0.12),
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 11,
+                              ),
+                            ),
+                            child: Slider(
+                              value: _counterAmount.clamp(
+                                _minCounter,
+                                _maxCounter,
+                              ),
+                              min: _minCounter,
+                              max: _maxCounter > _minCounter
+                                  ? _maxCounter
+                                  : _minCounter + 1,
+                              onChanged: _busy
+                                  ? null
+                                  : (value) => setState(
+                                      () => _counterAmount = value,
+                                    ),
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _formatRupees(_minCounter),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: context.colors.textTertiary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                              Text(
+                                _formatRupees(_maxCounter),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: context.colors.textTertiary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else
+                    Text(
+                      'You have used your counter-offers — accept or decline instead.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy ? null : _rejectOffer,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: context.colors.dangerEmphasis,
+                            side: BorderSide(
+                              color: context.colors.dangerEmphasis.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Decline'),
+                        ),
+                      ),
+                      if (showCounter) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _busy ? null : _submitCounter,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _busy
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                    ),
+                                  )
+                                : const Text('Send counter'),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _busy ? null : _acceptOffer,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2FA56E),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Accept'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DirectNegotiationOutcome {
   const _DirectNegotiationOutcome._(
     this.accepted,

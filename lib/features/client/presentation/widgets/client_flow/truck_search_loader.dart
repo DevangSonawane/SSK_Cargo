@@ -133,6 +133,8 @@ class _FindTruckScreenLoader extends StatefulWidget {
     required this.pickup,
     required this.drop,
     required this.amountText,
+    this.negotiateLabel,
+    this.onNegotiate,
   });
 
   final String? bookingReference;
@@ -144,6 +146,11 @@ class _FindTruckScreenLoader extends StatefulWidget {
   final String pickup;
   final String drop;
   final String amountText;
+
+  /// Broker-mode escape hatch: the broker hasn't acted yet, so nothing
+  /// auto-opens — but the client can still start negotiating manually.
+  final String? negotiateLabel;
+  final VoidCallback? onNegotiate;
 
   @override
   State<_FindTruckScreenLoader> createState() => _FindTruckScreenLoaderState();
@@ -392,6 +399,33 @@ class _FindTruckScreenLoaderState extends State<_FindTruckScreenLoader> {
                             drop: widget.drop,
                             amountText: widget.amountText,
                             bookingReference: widget.bookingReference,
+                          ),
+                        ],
+                        if (widget.onNegotiate != null &&
+                            widget.negotiateLabel != null) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: widget.onNegotiate,
+                              icon: const Icon(
+                                AppIcons.handshake_rounded,
+                                size: 18,
+                              ),
+                              label: Text(widget.negotiateLabel!),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF167247),
+                                side: const BorderSide(
+                                  color: Color(0xFF2FA56E),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                         if (_timedOut) ...[

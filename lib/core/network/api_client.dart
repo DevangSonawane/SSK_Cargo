@@ -1025,6 +1025,60 @@ class SskApiClient {
     );
   }
 
+  /// Client acts on a broker job offer — the same endpoints the web
+  /// BrokerNegotiation flow uses. Offers live in the jobs/requests family
+  /// (NOT driver-requests), so broker-mode negotiation must go through
+  /// these, never the driver-request variants above.
+  Future<Map<String, dynamic>> clientAcceptJobRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'PATCH /api/jobs/requests/$id/client-accept',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/jobs/requests/$id/client-accept',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> clientRejectJobRequest({
+    required String accessToken,
+    required String id,
+  }) async {
+    developer.log(
+      'PATCH /api/jobs/requests/$id/client-reject',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/jobs/requests/$id/client-reject',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> clientCounterJobRequest({
+    required String accessToken,
+    required String id,
+    required num amount,
+  }) async {
+    developer.log(
+      'PATCH /api/jobs/requests/$id/client-counter amount=$amount',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/jobs/requests/$id/client-counter',
+        data: {'amount': amount},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> acceptDriverRequestAsDriver({
     required String accessToken,
     required String id,

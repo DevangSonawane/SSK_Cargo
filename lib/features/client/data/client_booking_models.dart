@@ -578,6 +578,153 @@ class ClientBookingOffer {
   String get displayStatusLabel => _titleCase(status);
 }
 
+/// A broker job offer on a booking — the jobs/requests family the web
+/// BrokerNegotiation flow polls via `GET /api/bookings/{id}/offers`.
+/// Distinct from [ClientBookingOffer] (driver-requests family): broker
+/// counters live here, which is why polling driver-requests never shows
+/// them.
+class ClientBrokerOffer {
+  const ClientBrokerOffer({
+    required this.id,
+    required this.brokerId,
+    required this.brokerName,
+    required this.amount,
+    required this.status,
+    required this.pendingConfirmationBy,
+    required this.clientCountersUsed,
+    required this.maxCountersPerSide,
+    required this.raw,
+  });
+
+  factory ClientBrokerOffer.fromJson(Map<String, dynamic> json) {
+    final broker = _asMap(json['broker']);
+    return ClientBrokerOffer(
+      id: _readString(json, const ['id', 'request_id', 'uuid']),
+      brokerId: _readString(json, const [
+        'broker_id',
+        'brokerId',
+        'broker',
+      ]),
+      brokerName:
+          _readString(json, const ['broker_name', 'brokerName']).isNotEmpty
+          ? _readString(json, const ['broker_name', 'brokerName'])
+          : _readString(broker, const [
+              'name',
+              'full_name',
+              'display_name',
+            ]),
+      amount:
+          _readOptionalDouble(json, const [
+            'amount',
+            'offer_amount',
+            'offerAmount',
+            'counter_amount',
+            'counterAmount',
+            'price',
+            'value',
+          ]) ??
+          0,
+      status: _readString(json, const ['status', 'job_status']).isEmpty
+          ? 'pending'
+          : _readString(json, const ['status', 'job_status']),
+      pendingConfirmationBy: _readString(json, const [
+        'pendingConfirmationBy',
+        'pending_confirmation_by',
+      ]),
+      clientCountersUsed:
+          _readOptionalInt(json, const [
+            'clientCountersUsed',
+            'client_counters_used',
+          ]) ??
+          0,
+      maxCountersPerSide:
+          _readOptionalInt(json, const [
+            'maxCountersPerSide',
+            'max_counters_per_side',
+          ]) ??
+          0,
+      raw: json,
+    );
+  }
+
+  final String id;
+  final String brokerId;
+  final String brokerName;
+  final double amount;
+  final String status;
+  final String pendingConfirmationBy;
+  final int clientCountersUsed;
+  final int maxCountersPerSide;
+  final Map<String, dynamic> raw;
+
+  String get normalizedStatus => _normalizeStatus(status);
+
+  String get normalizedPendingConfirmationBy =>
+      pendingConfirmationBy.trim().toLowerCase();
+
+  /// Web parity: RANK {awaiting_confirmation: 3, countered: 2, pending: 1}.
+  int get negotiationRank => switch (normalizedStatus) {
+    'awaiting_confirmation' => 3,
+    'countered' => 2,
+    'pending' => 1,
+    _ => 0,
+  };
+
+  bool get isDeclined =>
+      const {'declined', 'rejected', 'expired', 'cancelled'}.contains(
+        normalizedStatus,
+      );
+
+  bool get isCountered => normalizedStatus == 'countered';
+
+  bool get isPending => normalizedStatus == 'pending';
+
+  bool get isAccepted =>
+      const {'accepted', 'confirmed', 'assigned'}.contains(normalizedStatus);
+
+  /// Web parity: your turn when awaiting + pendingConfirmationBy == broker.
+  bool get isYourTurnToConfirm =>
+      normalizedStatus == 'awaiting_confirmation' &&
+      normalizedPendingConfirmationBy == 'broker';
+
+  bool get isWaitingOnBroker =>
+      normalizedStatus == 'awaiting_confirmation' &&
+      normalizedPendingConfirmationBy == 'client';
+
+  bool get counterLimitReached =>
+      maxCountersPerSide > 0 && clientCountersUsed >= maxCountersPerSide;
+
+  bool get isActionableByClient =>
+      normalizedStatus == 'countered' ||
+      normalizedStatus == 'pending' ||
+      isYourTurnToConfirm;
+}
+
+/// Picks the sticky primary offer exactly like the web: keep the current
+/// one unless it died (declined); otherwise take the live offer furthest
+/// along the negotiation Rank.
+ClientBrokerOffer? pickPrimaryBrokerOffer(
+  List<ClientBrokerOffer> offers,
+  String? currentId,
+) {
+  if (offers.isEmpty) return null;
+  if (currentId != null && currentId.isNotEmpty) {
+    final current = offers.where((o) => o.id == currentId).toList();
+    if (current.isNotEmpty && !current.first.isDeclined) {
+      return current.first;
+    }
+  }
+  final live = offers.where((o) => !o.isDeclined).toList(growable: false);
+  if (live.isEmpty) return null;
+  var best = live.first;
+  for (final offer in live.skip(1)) {
+    if (offer.negotiationRank > best.negotiationRank) {
+      best = offer;
+    }
+  }
+  return best;
+}
+
 class NearbyTruckPage {
   const NearbyTruckPage({required this.trucks});
 

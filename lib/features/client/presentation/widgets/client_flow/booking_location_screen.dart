@@ -160,6 +160,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Timer? _findTruckZoomTimer;
   StreamSubscription<Map<String, dynamic>>? _findTruckRequestSubscription;
   bool _locationStreamStarted = false;
+  // Broker-mode negotiation (jobs/requests offers family, like the web
+  // BrokerNegotiation flow). Separate from the driver-requests polling above
+  // because broker counters live in offers, never in driver-requests.
+  List<ClientBrokerOffer> _brokerOffers = const [];
+  String? _brokerBookingStatus;
+  String? _primaryBrokerOfferId;
+  bool _brokerNegotiationOpen = false;
+  Timer? _brokerOffersPollTimer;
+  StreamSubscription<Map<String, dynamic>>? _brokerOfferSubscription;
 
   BookingData _freshBookingDraft() {
     return BookingData(
@@ -238,6 +247,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _findTruckPollTimer?.cancel();
     _findTruckZoomTimer?.cancel();
     _findTruckRequestSubscription?.cancel();
+    _brokerOffersPollTimer?.cancel();
+    _brokerOfferSubscription?.cancel();
     _brokerMapController?.dispose();
     _truckSearchSheetController.dispose();
     _fromController.dispose();
@@ -913,10 +924,135 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       );
       return;
     }
+    if (mode == BookingSearchMode.broker) {
+      // Like the web app: choosing a broker only targets the negotiation.
+      // Create the booking for that broker and negotiate first — payment
+      // comes only after mutual confirmation, never straight from here.
+      unawaited(_startBrokerSearch());
+      return;
+    }
     setState(() {
       _draft = _draft.copyWith(searchMode: mode);
       _step = _BookingFlowStep.payment;
     });
+  }
+
+  /// Broker-mode counterpart of [_startFindTruckSearch]: creates the booking
+  /// targeted at the selected broker, then enters the same live-update /
+  /// offer-poll / negotiation loop. Payment happens only when negotiation
+  /// resolves with the payment outcome.
+  Future<void> _startBrokerSearch() async {
+    if (_submitting) {
+      return;
+    }
+    if (_bookingCreated) {
+      if (!_postNegotiationPayment) {
+        return;
+      }
+      _resetUnpaidPaymentBookingForRetry(searchMode: BookingSearchMode.broker);
+    }
+    if (!_validateScheduledDate()) {
+      return;
+    }
+
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again to create a booking.'),
+        ),
+      );
+      return;
+    }
+    if (_draft.selectedBrokerId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose a broker to continue.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _driverRequest = null;
+      _findTruckRequests = const [];
+      _findTruckRequestCount = 0;
+      _findTruckDeclinedCount = 0;
+      _paymentCompletionVisible = false;
+      _draft = _draft.copyWith(searchMode: BookingSearchMode.broker);
+    });
+    _startFindTruckZoomOutLoop();
+
+    try {
+      final hasCoordinates = await _ensureFindTruckCoordinates();
+      if (!hasCoordinates) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _submitting = false;
+        });
+        return;
+      }
+
+      final bookingPayload = _bookingPayload();
+      debugPrint(
+        'SSK.ClientBooking BrokerSearch payload '
+        'search_mode=${bookingPayload['search_mode']} '
+        'broker_id=${bookingPayload['broker_id']} '
+        'pickup_lat=${bookingPayload['pickup_lat']} '
+        'pickup_lng=${bookingPayload['pickup_lng']} '
+        'drop_lat=${bookingPayload['drop_lat']} '
+        'drop_lng=${bookingPayload['drop_lng']}',
+      );
+
+      final response = await ref
+          .read(apiClientProvider)
+          .createBooking(
+            accessToken: session.tokens.accessToken,
+            booking: bookingPayload,
+            idempotencyKey: _buildIdempotencyKey(),
+          );
+      final bookingNumber = _extractBookingNumber(response);
+      final bookingId = _extractBookingId(response);
+      final resolvedBookingNumber = bookingNumber.isNotEmpty
+          ? bookingNumber
+          : await _fetchLatestBookingNumber(session.tokens.accessToken);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _submitting = false;
+        _bookingCreated = true;
+        _bookingReference = resolvedBookingNumber;
+        _activeBookingId = bookingId.isNotEmpty ? bookingId : _activeBookingId;
+        _postNegotiationPayment = false;
+        _brokerOffers = const [];
+        _brokerBookingStatus = null;
+        _primaryBrokerOfferId = null;
+        _brokerNegotiationOpen = false;
+        _step = _BookingFlowStep.brokerSelection;
+      });
+      _startFindTruckZoomOutLoop();
+
+      await _startFindTruckLiveUpdates(session.tokens.accessToken);
+      await _startBrokerOfferUpdates(session.tokens.accessToken);
+      await _loadBrokerOffers(silent: false);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _stopFindTruckZoomOutLoop();
+      setState(() {
+        _submitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('ApiException: ', '')),
+        ),
+      );
+    }
   }
 
   Future<void> _startFindTruckSearch() async {
@@ -1028,8 +1164,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   bool get _isFindTruckSearchActive =>
       _bookingCreated &&
-      !_postNegotiationPayment &&
-      (_draft.searchMode ?? BookingSearchMode.truck) == BookingSearchMode.truck;
+      !_postNegotiationPayment;
 
   void _resetUnpaidPaymentBookingForRetry({
     BookingSearchMode? searchMode,
@@ -1040,6 +1175,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _stopFindTruckZoomOutLoop();
     unawaited(_findTruckRequestSubscription?.cancel() ?? Future<void>.value());
     _findTruckRequestSubscription = null;
+    _stopBrokerOfferUpdates();
 
     setState(() {
       _bookingCreated = false;
@@ -1050,6 +1186,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _findTruckRequestCount = 0;
       _findTruckDeclinedCount = 0;
       _findTruckNegotiationOpen = false;
+      _brokerOffers = const [];
+      _brokerBookingStatus = null;
+      _primaryBrokerOfferId = null;
+      _brokerNegotiationOpen = false;
       _postNegotiationPayment = false;
       _paymentCompletionVisible = false;
       _cancellingFindTruckSearch = false;
@@ -1229,6 +1369,203 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  /// Broker-mode offer loop — mirrors the web BrokerNegotiation flow step by
+  /// step: poll `GET /api/bookings/{id}/offers` every 4s plus live
+  /// `job-request-updated` pushes, keep one sticky primary offer by rank,
+  /// and open negotiation as soon as it is actionable by the client.
+  /// Broker counters live in offers, never in driver-requests, which is why
+  /// the driver-requests polling above can never see them.
+  Future<void> _startBrokerOfferUpdates(String accessToken) async {
+    final bookingId = _activeBookingId;
+    if (bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    final socketService = ref.read(appSocketServiceProvider);
+    await socketService.ensureConnected(accessToken: accessToken);
+
+    await _brokerOfferSubscription?.cancel();
+    _brokerOfferSubscription = socketService.jobRequestStream.listen((payload) {
+      final payloadMap = _payloadAsMapLoose(payload);
+      if (payloadMap == null) {
+        return;
+      }
+      final payloadBookingId = _readString(payloadMap, const [
+        'bookingId',
+        'booking_id',
+      ]);
+      final payloadOfferId = _readString(payloadMap, const [
+        'id',
+        'request_id',
+      ]);
+      if (payloadBookingId == bookingId ||
+          payloadBookingId.isEmpty ||
+          _brokerOffers.any((offer) => offer.id == payloadOfferId)) {
+        unawaited(_loadBrokerOffers(silent: true));
+      }
+    });
+
+    _brokerOffersPollTimer?.cancel();
+    _brokerOffersPollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (mounted) {
+        unawaited(_loadBrokerOffers(silent: true));
+      }
+    });
+  }
+
+  void _stopBrokerOfferUpdates() {
+    _brokerOffersPollTimer?.cancel();
+    _brokerOffersPollTimer = null;
+    unawaited(_brokerOfferSubscription?.cancel() ?? Future<void>.value());
+    _brokerOfferSubscription = null;
+  }
+
+  List<ClientBrokerOffer> _brokerOffersFromResponse(
+    Map<String, dynamic> response,
+  ) {
+    final data = response['data'];
+    final payload = data is Map<String, dynamic> ? data : response;
+    final items =
+        payload['offers'] ??
+        payload['items'] ??
+        payload['results'] ??
+        payload['data'];
+    final list = items is List ? items : const <dynamic>[];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(ClientBrokerOffer.fromJson)
+        .where((offer) => offer.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> _loadBrokerOffers({required bool silent}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getBookingOffers(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+      final data = response['data'];
+      final payload = data is Map<String, dynamic> ? data : response;
+      final offers = _brokerOffersFromResponse(response);
+      final bookingStatus = _readString(payload, const [
+        'bookingStatus',
+        'booking_status',
+        'status',
+      ]).trim().toLowerCase();
+
+      if (!mounted) {
+        return;
+      }
+
+      final primary = pickPrimaryBrokerOffer(offers, _primaryBrokerOfferId);
+      setState(() {
+        _brokerOffers = offers;
+        if (bookingStatus.isNotEmpty) {
+          _brokerBookingStatus = bookingStatus;
+        }
+        if (primary != null) {
+          _primaryBrokerOfferId = primary.id;
+        }
+      });
+
+      // Web parity: booking confirmed means a broker locked in — stop
+      // watching and move to payment.
+      if (_brokerBookingStatus == 'confirmed') {
+        _stopBrokerOfferUpdates();
+        _stopFindTruckZoomOutLoop();
+        if (mounted && !_postNegotiationPayment) {
+          setState(() {
+            _postNegotiationPayment = true;
+            _brokerOffers = const [];
+          });
+          unawaited(_loadAdvanceAmount());
+          _goToPaymentAfterBrokerConfirm();
+        }
+        return;
+      }
+
+      if (primary != null &&
+          !_brokerNegotiationOpen &&
+          (primary.isCountered || primary.isYourTurnToConfirm)) {
+        // Web parity: the sheet opens on broker action (counter / awaiting
+        // your confirm) or your own tap — never on a plain pending offer
+        // the broker hasn't touched yet.
+        unawaited(_openBrokerOfferNegotiation(primary));
+      }
+    } catch (_) {
+      // Silent polls stay silent; the loader keeps waiting for offers.
+      if (!mounted || silent) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load broker offers.')),
+      );
+    }
+  }
+
+  void _goToPaymentAfterBrokerConfirm() {
+    if (!mounted || _step == _BookingFlowStep.payment) {
+      return;
+    }
+    setState(() {
+      _step = _BookingFlowStep.payment;
+    });
+  }
+
+  Future<void> _openBrokerOfferNegotiation(ClientBrokerOffer offer) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+    if (_brokerNegotiationOpen) {
+      return;
+    }
+    _brokerNegotiationOpen = true;
+    final outcome = await showDialog<_FindTruckNegotiationResult>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.46),
+      builder: (context) => _BrokerOfferNegotiationSheet(
+        bookingId: bookingId,
+        bookingNumber: _bookingReference,
+        accessToken: session.tokens.accessToken,
+        initialOffer: offer,
+        askingPrice: _draft.amount,
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    _brokerNegotiationOpen = false;
+
+    if (outcome == _FindTruckNegotiationResult.payment) {
+      _stopBrokerOfferUpdates();
+      _stopFindTruckZoomOutLoop();
+      await _findTruckRequestSubscription?.cancel();
+      setState(() {
+        _postNegotiationPayment = true;
+        _brokerOffers = const [];
+        _step = _BookingFlowStep.payment;
+      });
+      unawaited(_loadAdvanceAmount());
+      return;
+    }
+
+    // Dismissed: keep polling so a broker counter reopens negotiation.
+    if (_bookingCreated && !_postNegotiationPayment) {
+      unawaited(_loadBrokerOffers(silent: true));
+    }
+  }
+
   Future<void> _cancelFindTruckSearch() async {
     if (_cancellingFindTruckSearch) {
       return;
@@ -1246,14 +1583,20 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _stopFindTruckZoomOutLoop();
       await _findTruckRequestSubscription?.cancel();
       _findTruckRequestSubscription = null;
+      _stopBrokerOfferUpdates();
 
       if (session != null && bookingId != null && bookingId.isNotEmpty) {
+        final brokerMode =
+            (_draft.searchMode ?? BookingSearchMode.truck) ==
+            BookingSearchMode.broker;
         await ref
             .read(apiClientProvider)
             .cancelBooking(
               accessToken: session.tokens.accessToken,
               id: bookingId,
-              reason: 'No driver found within the search window',
+              reason: brokerMode
+                  ? 'Broker search cancelled by client'
+                  : 'No driver found within the search window',
             );
       }
 
@@ -1272,10 +1615,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _postNegotiationPayment = false;
         _cancellingFindTruckSearch = false;
         _selectedTruck = null;
-        _draft = _draft.copyWith(
-          searchMode: BookingSearchMode.truck,
-          selectedBrokerId: '',
-        );
         _step = _BookingFlowStep.brokerSelection;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2816,9 +3155,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   Widget _buildBrokerSelectionMapSheetStep(BuildContext context) {
     final mode = _draft.searchMode ?? BookingSearchMode.truck;
     final isFindTruckSearching =
-        _bookingCreated &&
-        !_postNegotiationPayment &&
-        mode == BookingSearchMode.truck;
+        _bookingCreated && !_postNegotiationPayment;
     final hideSearchPanel = _submitting || isFindTruckSearching;
     final dimFindTruckMap = isFindTruckSearching && _findTruckRequestCount > 0;
     return LayoutBuilder(
@@ -2874,16 +3211,52 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 right: 0,
                 top: 0,
                 bottom: 0,
-                child: _FindTruckScreenLoader(
-                  bookingReference: _bookingReference,
-                  requestCount: _findTruckRequestCount,
-                  declinedCount: _findTruckDeclinedCount,
-                  searchRadiusKm: _draft.searchRadiusKm,
-                  isCancelling: _cancellingFindTruckSearch,
-                  onCancel: _cancelFindTruckSearch,
-                  pickup: _draft.from,
-                  drop: _draft.to,
-                  amountText: _draft.amountText,
+                child: Builder(
+                  builder: (context) {
+                    final negotiableOffer = brokerMode
+                        ? pickPrimaryBrokerOffer(
+                            _brokerOffers,
+                            _primaryBrokerOfferId,
+                          )
+                        : null;
+                    final showNegotiate =
+                        negotiableOffer != null &&
+                        !_brokerNegotiationOpen &&
+                        !negotiableOffer.isCountered &&
+                        !negotiableOffer.isYourTurnToConfirm;
+                    // Name the broker you actually chose — the offer row
+                    // itself often carries no name.
+                    String chosenBrokerName = negotiableOffer?.brokerName
+                        .trim() ??
+                        '';
+                    if (chosenBrokerName.isEmpty) {
+                      final selectedId = _draft.selectedBrokerId.trim();
+                      for (final broker in _eligibleBrokers) {
+                        if (broker.id == selectedId &&
+                            broker.name.trim().isNotEmpty) {
+                          chosenBrokerName = broker.name.trim();
+                          break;
+                        }
+                      }
+                    }
+                    return _FindTruckScreenLoader(
+                      bookingReference: _bookingReference,
+                      requestCount: _findTruckRequestCount,
+                      declinedCount: _findTruckDeclinedCount,
+                      searchRadiusKm: _draft.searchRadiusKm,
+                      isCancelling: _cancellingFindTruckSearch,
+                      onCancel: _cancelFindTruckSearch,
+                      pickup: _draft.from,
+                      drop: _draft.to,
+                      amountText: _draft.amountText,
+                      negotiateLabel: showNegotiate
+                          ? 'Negotiate${chosenBrokerName.isNotEmpty ? ' with $chosenBrokerName' : ''}'
+                          : null,
+                      onNegotiate: showNegotiate
+                          ? () => _openBrokerOfferNegotiation(negotiableOffer)
+                          : null,
+                    );
+                  },
                 ),
               ),
             if (!hideSearchPanel)
