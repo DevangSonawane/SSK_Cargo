@@ -202,6 +202,7 @@ abstract final class AppIcons {
   static const IconData send_rounded = LucideIcons.send;
   static const IconData settings_outlined = LucideIcons.settings;
   static const IconData settings_rounded = LucideIcons.settings;
+  static const IconData share_rounded = LucideIcons.share_2;
   static const IconData shield_outlined = LucideIcons.shield;
   static const IconData shield_rounded = LucideIcons.shield;
   static const IconData shopping_bag_outlined = LucideIcons.shopping_bag;

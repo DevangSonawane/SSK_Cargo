@@ -16,6 +16,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/client_map_theme.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/google_places_provider.dart';
+import '../../../../core/providers/user_location_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/services/google_places_service.dart';

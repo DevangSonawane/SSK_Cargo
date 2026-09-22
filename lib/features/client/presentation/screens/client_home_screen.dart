@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../../core/providers/user_location_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../widgets/client_flow_widgets.dart';
 
@@ -16,6 +17,18 @@ class ClientHomeScreen extends ConsumerStatefulWidget {
 
 class _ClientHomeScreenState extends ConsumerState<ClientHomeScreen> {
   TripType _selectedTripType = TripType.interCity;
+
+  @override
+  void initState() {
+    super.initState();
+    // Safety net: if login-time prefetch was skipped/denied, warm the
+    // cache here so the booking flow still opens instantly.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(userLocationProvider.notifier).prefetch();
+      }
+    });
+  }
 
   Future<void> _openBookingLocation({required int vehicleIndex}) async {
     HapticFeedback.lightImpact();

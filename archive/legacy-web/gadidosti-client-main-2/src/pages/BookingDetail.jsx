@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import BottomSheet from "../components/BottomSheet";
 import PaymentSheet from "../components/PaymentSheet";
+import PodGallery from "../components/PodGallery";
+import SelectDropdown from "../components/SelectDropdown";
 import MapView from "../components/MapView";
 import HaltingTimer from "../components/HaltingTimer";
 import ChatWindow from "../components/ChatWindow";
@@ -463,8 +465,17 @@ export default function BookingDetail() {
               </details>
             )}
 
-            {/* Proof of Delivery */}
-            {booking.podUrl && (
+            {/* Proof of Delivery — podMedia is every photo/video the driver uploaded (up to
+                MAX_PHOTOS_PER_TRIP); falls back to the single legacy podUrl only for older
+                trips from before this was tracked per-file. */}
+            {booking.podMedia?.length > 0 ? (
+              <div className="bg-neutral-50 rounded-lg p-3 mb-4">
+                <p className="text-sm font-medium text-neutral-700 mb-2.5 flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-primary" /> Proof of Delivery
+                </p>
+                <PodGallery media={booking.podMedia} token={token} />
+              </div>
+            ) : booking.podUrl && (
               <button
                 onClick={viewProofOfDelivery}
                 disabled={loadingPod}
@@ -890,16 +901,13 @@ function RaiseDisputeSheet({ booking, onSubmit, onCancel }) {
       </p>
 
       <label className="block text-xs font-semibold text-neutral-500 mb-1.5">Issue Type</label>
-      <select
+      <SelectDropdown
+        options={ISSUE_TYPES.map((item) => ({ value: item.value, label: item.label }))}
         value={issueType}
-        onChange={(e) => setIssueType(e.target.value)}
-        className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-4"
-      >
-        <option value="">Select an issue...</option>
-        {ISSUE_TYPES.map((item) => (
-          <option key={item.value} value={item.value}>{item.label}</option>
-        ))}
-      </select>
+        onChange={setIssueType}
+        placeholder="Select an issue..."
+        className="mb-4"
+      />
 
       <label className="block text-xs font-semibold text-neutral-500 mb-1.5">Description</label>
       <textarea

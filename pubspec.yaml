@@ -50,6 +50,7 @@ dependencies:
   razorpay_flutter: ^1.4.6
   firebase_core: ^4.1.0
   firebase_messaging: ^16.1.0
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:

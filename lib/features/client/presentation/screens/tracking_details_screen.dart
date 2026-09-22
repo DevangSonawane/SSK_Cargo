@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 // ignore_for_file: unused_element
 
@@ -65,6 +66,15 @@ String _formatTrackingStatusLabel(String value) {
 bool _isCancelledTrackingStatus(String value) {
   final normalized = value.trim().toLowerCase().replaceAll('-', '_');
   return normalized.contains('cancel');
+}
+
+Uri? _proofOfDeliveryUri(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+  final parsed = Uri.tryParse(trimmed);
+  if (parsed != null && parsed.hasScheme) return parsed;
+  final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+  return Uri.parse('https://apigadidosti.asynk.in$path');
 }
 
 String _cleanTrackingLocation(String value, String fallback) {
@@ -871,28 +881,6 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
   }
 
-  Uri? _proofOfDeliveryUri(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return null;
-    final parsed = Uri.tryParse(trimmed);
-    if (parsed != null && parsed.hasScheme) return parsed;
-    final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
-    return Uri.parse('https://apigadidosti.asynk.in$path');
-  }
-
-  Future<void> _viewProofOfDelivery() async {
-    final uri = _proofOfDeliveryUri(_shipment.podUrl ?? '');
-    if (uri == null) {
-      return;
-    }
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open delivery documents.')),
-      );
-    }
-  }
-
   Future<void> _emailInvoice() async {
     final bookingId = _shipment.bookingId;
     if (bookingId == null || bookingId.isEmpty) {
@@ -1243,6 +1231,8 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final shipment = _shipment;
+    final accessToken =
+        ref.watch(authSessionProvider).valueOrNull?.tokens.accessToken ?? '';
     debugPrint(
       '[TrackingDetails] build live=$_isLiveTracking '
       'bookingId=${shipment.bookingId} '
@@ -1269,17 +1259,28 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        IconButton(
-                          onPressed: () => Navigator.of(context).maybePop(),
-                          icon: const Icon(AppIcons.arrow_back_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: context.colors.surfaceElevated,
-                            foregroundColor: context.colors.textPrimary,
-                            shadowColor: const Color(
-                              0xFF101828,
-                            ).withValues(alpha: 0.10),
-                            elevation: 2,
-                          ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () =>
+                                  Navigator.of(context).maybePop(),
+                              icon: const Icon(AppIcons.arrow_back_rounded),
+                              style: IconButton.styleFrom(
+                                backgroundColor:
+                                    context.colors.surfaceElevated,
+                                foregroundColor: context.colors.textPrimary,
+                                shadowColor: const Color(
+                                  0xFF101828,
+                                ).withValues(alpha: 0.10),
+                                elevation: 2,
+                              ),
+                            ),
+                            const Spacer(),
+                            _PremiumStatusPill(
+                              label: (shipment.bookingStatus ?? shipment.status)
+                                  .trim(),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         _GoogleMapsTrackingCard(
@@ -1309,8 +1310,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                         const SizedBox(height: 14),
                         _QuickStatsRow(shipment: shipment),
                         const SizedBox(height: 14),
-                        if ((shipment.podUrl ?? '').trim().isNotEmpty) ...[
-                          _ProofOfDeliveryCard(onTap: _viewProofOfDelivery),
+                        if (shipment.podMedia.isNotEmpty) ...[
+                          _ProofOfDeliveryCard(
+                            media: shipment.podMedia,
+                            accessToken: accessToken,
+                          ),
                           const SizedBox(height: 14),
                         ],
                         Padding(
@@ -2069,7 +2073,6 @@ class _CompactSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final driverName = shipment.assignedDriverName?.trim() ?? '';
     final truckName = shipment.assignedTruckName?.trim() ?? '';
-    final statusLabel = (shipment.bookingStatus ?? shipment.status).trim();
 
     return Container(
       width: double.infinity,
@@ -2081,11 +2084,12 @@ class _CompactSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Flexible(
+              Expanded(
                 child: Text(
                   shipment.trackingId,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  softWrap: false,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -2093,21 +2097,19 @@ class _CompactSummaryCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
+              if (shipment.isExpress) ...[
+                const SizedBox(width: 8),
+                const _ExpressIconChip(),
+              ],
               if (onShareTracking != null) ...[
+                const SizedBox(width: 8),
                 _CircleIconButton(
                   icon: isSharingTracking
                       ? AppIcons.more_horiz_rounded
-                      : AppIcons.link_rounded,
+                      : AppIcons.share_rounded,
                   onTap: isSharingTracking ? null : onShareTracking,
                 ),
-                const SizedBox(width: 8),
               ],
-              if (shipment.isExpress) ...[
-                const _ExpressIconChip(),
-                const SizedBox(width: 8),
-              ],
-              _PremiumStatusPill(label: statusLabel),
             ],
           ),
           const SizedBox(height: 16),
@@ -2203,40 +2205,39 @@ class _PremiumStatusPill extends StatelessWidget {
         ? const Color(0xFFC62828)
         : context.colors.textPrimary;
 
-    return Flexible(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: Text(
+              displayLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                displayLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: textColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -2407,7 +2408,7 @@ class _ReactRouteRail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _RouteRailStop(marker: const _RoutePickupMarker(), value: pickup),
+          _RouteRailStop(marker: _routeRailPickupMarker, value: pickup),
           const _RouteRailConnector(),
           for (final stop in extraStops) ...[
             _RouteRailStop(
@@ -2423,19 +2424,28 @@ class _ReactRouteRail extends StatelessWidget {
             ),
             const _RouteRailConnector(),
           ],
-          _RouteRailStop(
-            marker: const Icon(
-              AppIcons.location_on_rounded,
-              color: Color(0xFF2FA56E),
-              size: 18,
-            ),
-            value: drop,
-          ),
+          _RouteRailStop(marker: _routeRailDropMarker, value: drop),
         ],
       ),
     );
   }
 }
+
+/// Pickup marker matching the rest of the app: green circle-dot
+/// (same as [_PremiumRouteLine]).
+const Widget _routeRailPickupMarker = Icon(
+  AppIcons.radio_button_checked_rounded,
+  color: Color(0xFF2FA56E),
+  size: 20,
+);
+
+/// Drop marker matching the rest of the app: red pin
+/// (same as [_PremiumRouteLine]).
+const Widget _routeRailDropMarker = Icon(
+  AppIcons.location_on_rounded,
+  color: Color(0xFFE23A4B),
+  size: 20,
+);
 
 class _RouteRailStop extends StatelessWidget {
   const _RouteRailStop({
@@ -2454,9 +2464,9 @@ class _RouteRailStop extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 18,
+          width: 22,
           height: 22,
-          child: Align(alignment: Alignment.topCenter, child: marker),
+          child: Align(alignment: Alignment.center, child: marker),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -2484,28 +2494,6 @@ class _RouteRailStop extends StatelessWidget {
   }
 }
 
-class _RoutePickupMarker extends StatelessWidget {
-  const _RoutePickupMarker();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 12,
-      height: 12,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2FA56E),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2FA56E).withValues(alpha: 0.18),
-            spreadRadius: 3,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RouteStopMarker extends StatelessWidget {
   const _RouteStopMarker({required this.stop});
 
@@ -2529,7 +2517,7 @@ class _RouteRailConnector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: 10),
       child: Container(
         width: 2,
         height: 30,
@@ -2941,22 +2929,22 @@ class _HorizontalTimelineStep extends StatelessWidget {
 }
 
 class _ProofOfDeliveryCard extends StatelessWidget {
-  const _ProofOfDeliveryCard({required this.onTap});
+  const _ProofOfDeliveryCard({required this.media, required this.accessToken});
 
-  final VoidCallback onTap;
+  final List<PodDeliveryMedia> media;
+  final String accessToken;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: _premiumDetailBlockDecoration(context, radius: 18),
-          child: Row(
+    final count = media.length;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: _premiumDetailBlockDecoration(context, radius: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
                 width: 42,
@@ -2977,7 +2965,7 @@ class _ProofOfDeliveryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'View docs',
+                      'Proof of delivery',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: context.colors.textPrimary,
                         fontWeight: FontWeight.w800,
@@ -2985,7 +2973,7 @@ class _ProofOfDeliveryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Proof posted by driver',
+                      '$count ${count == 1 ? 'file' : 'files'} posted by driver',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2998,16 +2986,399 @@ class _ProofOfDeliveryCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Icon(
-                AppIcons.open_in_new_rounded,
+                AppIcons.open_in_full_rounded,
                 color: context.colors.textTertiary,
                 size: 18,
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: media.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemBuilder: (context, index) {
+              return _PodMediaTile(
+                media: media[index],
+                accessToken: accessToken,
+                onTap: () =>
+                    _openPodLightbox(context, media, accessToken, index),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openPodLightbox(
+    BuildContext context,
+    List<PodDeliveryMedia> media,
+    String accessToken,
+    int initialIndex,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _PodMediaLightbox(
+          media: media,
+          accessToken: accessToken,
+          initialIndex: initialIndex,
         ),
       ),
     );
   }
+}
+
+class _PodMediaTile extends StatelessWidget {
+  const _PodMediaTile({
+    required this.media,
+    required this.accessToken,
+    required this.onTap,
+  });
+
+  final PodDeliveryMedia media;
+  final String accessToken;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final uri = _proofOfDeliveryUri(media.url);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: uri == null ? null : onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: context.colors.fillSubtle,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: context.colors.divider),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (uri == null)
+                  ColoredBox(color: context.colors.fillSubtle)
+                else if (media.isVideo)
+                  const ColoredBox(color: Color(0xFF111827))
+                else
+                  Image.network(
+                    uri.toString(),
+                    fit: BoxFit.cover,
+                    headers: _podMediaHeaders(accessToken),
+                    errorBuilder: (context, error, stackTrace) => ColoredBox(
+                      color: context.colors.fillSubtle,
+                      child: Icon(
+                        AppIcons.error_outline_rounded,
+                        color: context.colors.textTertiary,
+                      ),
+                    ),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return ColoredBox(
+                        color: context.colors.fillSubtle,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                if (media.isVideo)
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        AppIcons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PodMediaLightbox extends StatefulWidget {
+  const _PodMediaLightbox({
+    required this.media,
+    required this.accessToken,
+    required this.initialIndex,
+  });
+
+  final List<PodDeliveryMedia> media;
+  final String accessToken;
+  final int initialIndex;
+
+  @override
+  State<_PodMediaLightbox> createState() => _PodMediaLightboxState();
+}
+
+class _PodMediaLightboxState extends State<_PodMediaLightbox> {
+  late final PageController _pageController;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.media.length - 1);
+    _pageController = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _go(int delta) {
+    if (widget.media.length < 2) return;
+    final next = (_index + delta) % widget.media.length;
+    final resolved = next < 0 ? widget.media.length - 1 : next;
+    _pageController.animateToPage(
+      resolved,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.media.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, index) {
+                return _PodMediaPage(
+                  media: widget.media[index],
+                  accessToken: widget.accessToken,
+                );
+              },
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(AppIcons.close_rounded),
+                color: Colors.white,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.35),
+                ),
+              ),
+            ),
+            if (widget.media.length > 1) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => _go(-1),
+                  icon: const Icon(AppIcons.chevron_left_rounded),
+                  color: Colors.white,
+                  iconSize: 34,
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: () => _go(1),
+                  icon: const Icon(AppIcons.chevron_right_rounded),
+                  color: Colors.white,
+                  iconSize: 34,
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 16,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_index + 1} / ${widget.media.length}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PodMediaPage extends StatelessWidget {
+  const _PodMediaPage({required this.media, required this.accessToken});
+
+  final PodDeliveryMedia media;
+  final String accessToken;
+
+  @override
+  Widget build(BuildContext context) {
+    final uri = _proofOfDeliveryUri(media.url);
+    if (uri == null) {
+      return const Center(
+        child: Text(
+          'Could not load delivery proof.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    if (media.isVideo) {
+      return _PodVideoPlayer(uri: uri, accessToken: accessToken);
+    }
+    return Center(
+      child: InteractiveViewer(
+        minScale: 0.8,
+        maxScale: 4,
+        child: Image.network(
+          uri.toString(),
+          fit: BoxFit.contain,
+          headers: _podMediaHeaders(accessToken),
+          errorBuilder: (context, error, stackTrace) => const Text(
+            'Could not load delivery proof.',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PodVideoPlayer extends StatefulWidget {
+  const _PodVideoPlayer({required this.uri, required this.accessToken});
+
+  final Uri uri;
+  final String accessToken;
+
+  @override
+  State<_PodVideoPlayer> createState() => _PodVideoPlayerState();
+}
+
+class _PodVideoPlayerState extends State<_PodVideoPlayer> {
+  late final VideoPlayerController _controller;
+  late final Future<void> _initialize;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(
+      widget.uri,
+      httpHeaders: _podMediaHeaders(widget.accessToken),
+    );
+    _initialize = _controller.initialize().then((_) {
+      if (!mounted) return;
+      setState(() {});
+      _controller.play();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initialize,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text(
+              'Could not play delivery video.',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+        return Center(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _controller.value.isPlaying
+                    ? _controller.pause()
+                    : _controller.play();
+              });
+            },
+            child: AspectRatio(
+              aspectRatio: _controller.value.aspectRatio == 0
+                  ? 16 / 9
+                  : _controller.value.aspectRatio,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  VideoPlayer(_controller),
+                  if (!_controller.value.isPlaying)
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        AppIcons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+Map<String, String> _podMediaHeaders(String accessToken) {
+  final token = accessToken.trim();
+  if (token.isEmpty) return const {};
+  return {'Authorization': 'Bearer $token'};
 }
 
 class _QuickStatsRow extends StatelessWidget {

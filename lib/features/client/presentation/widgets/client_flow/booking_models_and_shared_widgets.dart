@@ -520,6 +520,7 @@ class TrackingDemoShipment {
     this.liveLat,
     this.liveLng,
     this.podUrl,
+    this.podMedia = const [],
     this.ratingStars,
     this.tripId,
     this.bookingId,
@@ -567,6 +568,7 @@ class TrackingDemoShipment {
     double? amountPaid,
     String? paymentStatus,
     String? podUrl,
+    List<PodDeliveryMedia>? podMedia,
     int? ratingStars,
     String? pickupOtp,
     bool? pickupOtpVerified,
@@ -604,6 +606,7 @@ class TrackingDemoShipment {
       liveLat: clearLiveLat ? null : (liveLat ?? this.liveLat),
       liveLng: clearLiveLng ? null : (liveLng ?? this.liveLng),
       podUrl: podUrl ?? this.podUrl,
+      podMedia: podMedia ?? this.podMedia,
       ratingStars: ratingStars ?? this.ratingStars,
       tripId: tripId ?? this.tripId,
       bookingId: bookingId ?? this.bookingId,
@@ -651,6 +654,7 @@ class TrackingDemoShipment {
   final double amountPaid;
   final String paymentStatus;
   final String? podUrl;
+  final List<PodDeliveryMedia> podMedia;
   final int? ratingStars;
   final String? tripId;
   final String? bookingId;
@@ -671,6 +675,15 @@ class TrackingDemoShipment {
   final double haltingHours;
   final double haltingCharge;
   final List<TripRouteStop> stops;
+}
+
+class PodDeliveryMedia {
+  const PodDeliveryMedia({required this.url, required this.type});
+
+  final String url;
+  final String type;
+
+  bool get isVideo => type.trim().toLowerCase() == 'video';
 }
 
 String _readString(Map<String, dynamic> json, List<String> keys) {
@@ -896,6 +909,7 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
           : _readString(raw, const ['payment_status', 'paymentStatus']),
     ),
     podUrl: _readString(raw, const ['podUrl', 'pod_url']),
+    podMedia: _readPodDeliveryMedia(raw),
     ratingStars: _readIntValue(raw, raw, const ['rating_stars', 'stars']),
     tripId: '',
     bookingId: booking.id,
@@ -915,6 +929,35 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
         : _readString(raw, const ['driverPhone', 'driver_phone']),
     timeline: _timelineForStatus(status, booking),
   );
+}
+
+List<PodDeliveryMedia> _readPodDeliveryMedia(Map<String, dynamic> raw) {
+  final media = raw['podMedia'] ?? raw['pod_media'];
+  if (media is Iterable) {
+    final items = media
+        .map((item) {
+          if (item is Map) {
+            final json = item.cast<String, dynamic>();
+            final url = _readString(json, const ['url', 'src', 'path']);
+            if (url.isEmpty) return null;
+            final type = _readString(json, const ['type', 'mediaType']);
+            return PodDeliveryMedia(
+              url: url,
+              type: type.trim().toLowerCase() == 'video' ? 'video' : 'image',
+            );
+          }
+          final url = item.toString().trim();
+          if (url.isEmpty || url.toLowerCase() == 'null') return null;
+          return PodDeliveryMedia(url: url, type: 'image');
+        })
+        .whereType<PodDeliveryMedia>()
+        .toList(growable: false);
+    if (items.isNotEmpty) return items;
+  }
+
+  final podUrl = _readString(raw, const ['podUrl', 'pod_url']);
+  if (podUrl.isEmpty) return const [];
+  return [PodDeliveryMedia(url: podUrl, type: 'image')];
 }
 
 List<TrackingTimelineStep> _timelineForStatus(

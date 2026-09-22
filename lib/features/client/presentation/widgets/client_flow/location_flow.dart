@@ -429,6 +429,24 @@ class _LocationDetailsScreenState
       return;
     }
 
+    // Fast path: reuse the fix prefetched right after login so the
+    // "Fetching your current location..." spinner is skipped entirely.
+    final cached = ref.read(userLocationProvider).valueOrNull;
+    if (cached != null && cached.isFresh && cached.address.isNotEmpty) {
+      _applyLocationSelection(
+        GooglePlaceSelection(
+          placeId: '',
+          formattedAddress: cached.address,
+          latitude: cached.latitude,
+          longitude: cached.longitude,
+          city: '',
+        ),
+      );
+      // Refresh quietly in the background for next time.
+      ref.read(userLocationProvider.notifier).refreshInBackground();
+      return;
+    }
+
     setState(() {
       _resolvingCurrentLocation = true;
     });
@@ -490,6 +508,14 @@ class _LocationDetailsScreenState
           city: '',
         ),
       );
+      ref
+          .read(userLocationProvider.notifier)
+          .cache(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            address: address,
+            accuracy: position.accuracy,
+          );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -923,6 +949,25 @@ class _MapLocationPickerScreenState
   }
 
   Future<LatLng?> _loadCurrentPosition() async {
+    // Fast path: centre the map instantly on the login-prefetched fix.
+    final cached = ref.read(userLocationProvider).valueOrNull;
+    if (cached != null && cached.isFresh) {
+      final center = LatLng(cached.latitude, cached.longitude);
+      if (mounted) {
+        setState(() {
+          _center = center;
+          _ownLocation = center;
+          _locationPermissionGranted = true;
+        });
+      }
+      // Camera may not be ready yet — retry once after first frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 15));
+      });
+      unawaited(_mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 15)));
+      ref.read(userLocationProvider.notifier).refreshInBackground();
+      return center;
+    }
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         return null;
@@ -953,6 +998,16 @@ class _MapLocationPickerScreenState
         _center = center;
         _ownLocation = center;
       });
+      final previousAddress =
+          ref.read(userLocationProvider).valueOrNull?.address ?? '';
+      ref
+          .read(userLocationProvider.notifier)
+          .cache(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            address: previousAddress,
+            accuracy: position.accuracy,
+          );
       await _mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(center, 15),
       );

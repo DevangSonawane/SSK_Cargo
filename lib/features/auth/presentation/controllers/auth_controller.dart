@@ -6,6 +6,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/client_push_notification_service.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../core/providers/user_location_provider.dart';
 import '../../data/auth_models.dart';
 
 final authSessionProvider =
@@ -30,6 +31,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     unawaited(
       _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
     );
+    // Prefetch GPS in the background so client booking / map screens open
+    // instantly. Non-blocking — never delays navigation.
+    unawaited(_ref.read(userLocationProvider.notifier).prefetch());
   }
 
   void debugSetSession(AuthSession session) {
@@ -56,6 +60,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       unawaited(
         _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
+      unawaited(_ref.read(userLocationProvider.notifier).prefetch());
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -83,6 +88,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       unawaited(
         _ref.read(appSocketServiceProvider).connect(session.tokens.accessToken),
       );
+      unawaited(_ref.read(userLocationProvider.notifier).prefetch());
       return session;
     } catch (error, stackTrace) {
       state = AsyncError<AuthSession?>(error, stackTrace);
@@ -126,11 +132,13 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       }
     }
     _ref.read(appSocketServiceProvider).reset();
+    _ref.read(userLocationProvider.notifier).clear();
     state = const AsyncValue.data(null);
   }
 
   Future<void> forceLocalLogout() async {
     _ref.read(appSocketServiceProvider).reset();
+    _ref.read(userLocationProvider.notifier).clear();
     _ref.read(driverOnlineProvider.notifier).state = false;
     _ref.read(driverActiveTripIdProvider.notifier).state = null;
     _ref.read(driverTripSessionProvider.notifier).state = null;

@@ -252,6 +252,30 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    // Fast path: seed the map instantly from the login-prefetched fix so
+    // the user never stares at a loading state.
+    final cached = ref.read(userLocationProvider).valueOrNull;
+    if (cached != null &&
+        cached.isFresh &&
+        mounted &&
+        _step == _BookingFlowStep.location &&
+        _currentPosition == null) {
+      setState(() {
+        _currentPosition = Position(
+          latitude: cached.latitude,
+          longitude: cached.longitude,
+          timestamp: cached.fetchedAt,
+          accuracy: cached.accuracy ?? 0,
+          altitude: 0,
+          altitudeAccuracy: 0,
+          heading: 0,
+          headingAccuracy: 0,
+          speed: 0,
+          speedAccuracy: 0,
+        );
+      });
+    }
+
     if (!await Geolocator.isLocationServiceEnabled()) {
       return;
     }
@@ -293,6 +317,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           _currentPosition = position;
         });
       }
+      final previousAddress =
+          ref.read(userLocationProvider).valueOrNull?.address ?? '';
+      ref
+          .read(userLocationProvider.notifier)
+          .cache(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            address: previousAddress,
+            accuracy: position.accuracy,
+          );
     } catch (_) {
       // The stream can still provide a position after the initial lookup fails.
     }
@@ -1795,6 +1829,23 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
 
+    // Fast path: reuse the login-prefetched fix — no "Locating..." wait.
+    final cached = ref.read(userLocationProvider).valueOrNull;
+    if (cached != null && cached.isFresh && cached.address.isNotEmpty) {
+      setState(() {
+        final city = _deriveCityFromLocation(cached.address, '');
+        _draft = _draft.copyWith(
+          from: cached.address,
+          pickupLat: cached.latitude,
+          pickupLng: cached.longitude,
+          city: city.isNotEmpty ? city : _draft.city,
+        );
+        _fromController.text = cached.address;
+      });
+      ref.read(userLocationProvider.notifier).refreshInBackground();
+      return;
+    }
+
     setState(() {
       _resolvingCurrentLocation = true;
     });
@@ -1857,6 +1908,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         );
         _fromController.text = address;
       });
+      ref
+          .read(userLocationProvider.notifier)
+          .cache(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            address: address,
+            accuracy: position.accuracy,
+          );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
