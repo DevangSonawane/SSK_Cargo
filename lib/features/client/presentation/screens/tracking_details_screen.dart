@@ -5366,65 +5366,151 @@ class _BookingNegotiationSheetState
     String rupees(double v) =>
         '₹${v.toStringAsFixed(v % 1 == 0 ? 0 : 2)}';
     try {
-      final amount = await showDialog<double>(
+      final amount = await showModalBottomSheet<double>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Counter driver request'),
-          content: StatefulBuilder(
-            builder: (dialogContext, setDialogState) => Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Current offer: ${request.amountText.isNotEmpty ? request.amountText : rupees(base)}',
-                  style: Theme.of(dialogContext).textTheme.bodySmall,
+        isScrollControlled: true,
+        useSafeArea: false,
+        backgroundColor: Colors.transparent,
+        builder: (dialogContext) => SafeArea(
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.zero,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.colors.surfaceElevated,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
                 ),
-                Slider(
-                  min: min,
-                  max: max,
-                  value: value,
-                  activeColor: const Color(0xFF2FA56E),
-                  onChanged: (v) => setDialogState(() => value = v),
+                border: Border(
+                  top: BorderSide(color: context.colors.line, width: 1),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 30,
+                    offset: const Offset(0, -10),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      rupees(min),
-                      style: Theme.of(dialogContext).textTheme.labelSmall,
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: context.colors.line,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
                     ),
-                    Text(
-                      rupees(max),
-                      style: Theme.of(dialogContext).textTheme.labelSmall,
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Counter driver request',
+                            style: Theme.of(dialogContext)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).maybePop(),
+                          style: IconButton.styleFrom(
+                            backgroundColor: context.colors.fillSubtle,
+                            foregroundColor: context.colors.textSecondary,
+                          ),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    StatefulBuilder(
+                      builder: (dialogContext, setDialogState) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current offer: ${request.amountText.isNotEmpty ? request.amountText : rupees(base)}',
+                            style: Theme.of(dialogContext).textTheme.bodySmall,
+                          ),
+                          Slider(
+                            min: min,
+                            max: max,
+                            value: value,
+                            activeColor: const Color(0xFF2FA56E),
+                            onChanged: (v) =>
+                                setDialogState(() => value = v),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                rupees(min),
+                                style: Theme.of(
+                                  dialogContext,
+                                ).textTheme.labelSmall,
+                              ),
+                              Text(
+                                rupees(max),
+                                style: Theme.of(
+                                  dialogContext,
+                                ).textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Your counter-offer: ${rupees(value)}',
+                            style: Theme.of(dialogContext).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).maybePop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.of(
+                              dialogContext,
+                            ).pop(value),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(50),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('Send'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your counter-offer: ${rupees(value)}',
-                  style: Theme.of(dialogContext).textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(value),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(132, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              child: const Text('Send', maxLines: 1, softWrap: false),
-            ),
-          ],
         ),
       );
       if (amount == null || amount <= 0) return;
@@ -5520,32 +5606,121 @@ class _BookingNegotiationSheetState
     if (_busy || !_isOfferActionable(offer)) return;
     final amountController = TextEditingController(text: offer.amountText);
     try {
-      final shouldSend = await showDialog<bool>(
+      final shouldSend = await showModalBottomSheet<bool>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Counter offer'),
-          content: TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Amount'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(132, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+        isScrollControlled: true,
+        useSafeArea: false,
+        backgroundColor: Colors.transparent,
+        builder: (dialogContext) => SafeArea(
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.zero,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.colors.surfaceElevated,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                border: Border(
+                  top: BorderSide(color: context.colors.line, width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 30,
+                    offset: const Offset(0, -10),
+                  ),
+                ],
               ),
-              child: const Text('Send', maxLines: 1, softWrap: false),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  8 + MediaQuery.of(dialogContext).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: context.colors.line,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Counter offer',
+                            style: Theme.of(dialogContext)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).maybePop(false),
+                          style: IconButton.styleFrom(
+                            backgroundColor: context.colors.fillSubtle,
+                            foregroundColor: context.colors.textSecondary,
+                          ),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(
+                              dialogContext,
+                            ).maybePop(false),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.of(
+                              dialogContext,
+                            ).pop(true),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(50),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('Send'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       );
       if (shouldSend != true) return;

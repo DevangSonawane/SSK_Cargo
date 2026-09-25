@@ -134,11 +134,29 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   List<ClientBookingOffer> _findTruckRequests = const [];
   int _findTruckRequestCount = 0;
   int _findTruckDeclinedCount = 0;
-  bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
   String? _findTruckActingId;
   bool _searchingFindTruckAgain = false;
   bool _findTruckOffersError = false;
+  // Live feed for the cards-only offers bottom dialog — bumped on every
+  // poll/socket refresh so the open sheet rebuilds with fresh rows.
+  final ValueNotifier<List<ClientBookingOffer>> _findTruckRequestsLive =
+      ValueNotifier(const []);
+  // Mirrors [_findTruckActingId] so the open sheet's buttons disable mid-call.
+  final ValueNotifier<String?> _findTruckActingLive = ValueNotifier(null);
+  // Mirrors [_searchingFindTruckAgain] for the open sheet's Keep Searching.
+  final ValueNotifier<bool> _searchingAgainLive = ValueNotifier(false);
+  // Per-card action errors, shown inline on the card itself — the sheet
+  // covers the screen so parent snackbars would be invisible behind it.
+  final Map<String, String> _findTruckCardErrors = {};
+  bool _findTruckOffersAutoShown = false;
+  bool _findTruckOffersSheetOpen = false;
+
+  /// Re-emits the live feed so the open offers sheet rebuilds (e.g. for
+  /// inline card errors without waiting for the next poll).
+  void _bumpLiveFeed() {
+    _findTruckRequestsLive.value = List.of(_findTruckRequestsLive.value);
+  }
   final DraggableScrollableController _truckSearchSheetController =
       DraggableScrollableController();
   double _truckSearchSheetExtent = 0.44;
@@ -252,6 +270,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     _findTruckRequestSubscription?.cancel();
     _brokerOffersPollTimer?.cancel();
     _brokerOfferSubscription?.cancel();
+    _findTruckRequestsLive.dispose();
+    _findTruckActingLive.dispose();
+    _searchingAgainLive.dispose();
     _brokerMapController?.dispose();
     _truckSearchSheetController.dispose();
     _fromController.dispose();
@@ -1188,7 +1209,6 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _findTruckRequests = const [];
       _findTruckRequestCount = 0;
       _findTruckDeclinedCount = 0;
-      _findTruckNegotiationOpen = false;
       _brokerOffers = const [];
       _brokerBookingStatus = null;
       _primaryBrokerOfferId = null;
@@ -1354,7 +1374,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _findTruckRequestCount = requests.length;
         _findTruckRequests = requests;
+        _findTruckRequestsLive.value = requests;
         _findTruckOffersError = false;
+        // Drop errors for rows that are gone; live ones keep theirs until
+        // the user retries that card.
+        _findTruckCardErrors.removeWhere(
+          (id, _) => requests.every((row) => row.id != id),
+        );
         _findTruckDeclinedCount = requests
             .where((request) => request.normalizedStatus == 'declined')
             .length;
@@ -1363,15 +1389,43 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         }
       });
 
-      if (accepted != null && _shouldOpenFindTruckNegotiation(accepted)) {
+      if (accepted != null) {
         _stopFindTruckZoomOutLoop();
-        unawaited(_openFindTruckNegotiation(accepted));
-      } else if (_isFindTruckSearchActive && _findTruckZoomTimer == null) {
-        _startFindTruckZoomOutLoop(initialFit: false);
+        // Web parity handoff: the offers dialog closes and payment opens —
+        // no stacked sheets, no staying put on the dialog.
+        if (_findTruckOffersSheetOpen && mounted) {
+          _findTruckOffersSheetOpen = false;
+          Navigator.of(context).pop();
+        }
+        _findTruckPollTimer?.cancel();
+        await _findTruckRequestSubscription?.cancel();
+        if (!mounted) return;
+        setState(() {
+          _postNegotiationPayment = true;
+          _findTruckRequests = const [];
+          _findTruckRequestCount = 0;
+          _findTruckDeclinedCount = 0;
+          _step = _BookingFlowStep.payment;
+        });
+        unawaited(_loadAdvanceAmount());
+        return;
+      } else {
+        // The offers dialog opens once per search, right at the start — it
+        // shows searching, then cards, then the oops state, all in place.
+        if (_isFindTruckSearchActive &&
+            !_findTruckOffersAutoShown &&
+            !_findTruckOffersSheetOpen) {
+          _findTruckOffersAutoShown = true;
+          unawaited(_showFindTruckOffersSheet());
+        }
+        if (_isFindTruckSearchActive && _findTruckZoomTimer == null) {
+          _startFindTruckZoomOutLoop(initialFit: false);
+        }
       }
     } catch (error) {
       if (mounted) {
         setState(() => _findTruckOffersError = true);
+        _bumpLiveFeed();
       }
       if (!mounted || silent) {
         return;
@@ -1396,6 +1450,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _searchingFindTruckAgain = true;
       _findTruckOffersError = false;
     });
+    _searchingAgainLive.value = true;
     try {
       await ref
           .read(apiClientProvider)
@@ -1417,6 +1472,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         ),
       );
     } finally {
+      _searchingAgainLive.value = false;
       if (mounted) setState(() => _searchingFindTruckAgain = false);
     }
   }
@@ -1582,10 +1638,14 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       return;
     }
     _brokerNegotiationOpen = true;
-    final outcome = await showDialog<_FindTruckNegotiationResult>(
+    final outcome = await showModalBottomSheet<_FindTruckNegotiationResult>(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.46),
+      enableDrag: false,
+      isDismissible: false,
+      useSafeArea: false,
       builder: (context) => _BrokerOfferNegotiationSheet(
         bookingId: bookingId,
         bookingNumber: _bookingReference,
@@ -1665,7 +1725,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _findTruckDeclinedCount = 0;
         _findTruckOffersError = false;
         _searchingFindTruckAgain = false;
-        _findTruckNegotiationOpen = false;
+        _findTruckOffersAutoShown = false;
+        _findTruckActingId = null;
+        _findTruckRequestsLive.value = const [];
+        _findTruckActingLive.value = null;
+        _searchingAgainLive.value = false;
         _postNegotiationPayment = false;
         _cancellingFindTruckSearch = false;
         _selectedTruck = null;
@@ -1701,58 +1765,59 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
-  /// Web parity (FindTruckSearch.jsx): the fan-out list stays on screen and
-  /// each card negotiates inline. Only a fully `accepted` row promotes to the
-  /// single-target sheet (which owns the confirmed/payment flow) — a mere
-  /// counter/actionable row must NOT pop the dialog over the list.
-  bool _shouldOpenFindTruckNegotiation(ClientBookingOffer request) {
-    if (_findTruckNegotiationOpen) {
-      return false;
-    }
-    return request.normalizedStatus == 'accepted';
+  /// Cards-only bottom dialog for the live driver offers — the swipe deck
+  /// plus a cross button, nothing else. Stays live via [_findTruckRequestsLive]
+  /// so polls and socket pushes refresh the open sheet in place.
+  Future<void> _showFindTruckOffersSheet() async {
+    if (!mounted || _findTruckOffersSheetOpen) return;
+    _findTruckOffersSheetOpen = true;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: false,
+      backgroundColor: Colors.transparent,
+      enableDrag: false,
+      isDismissible: false,
+      builder: (context) =>
+          ValueListenableBuilder<List<ClientBookingOffer>>(
+            valueListenable: _findTruckRequestsLive,
+            builder: (context, requests, _) =>
+                ValueListenableBuilder<String?>(
+                  valueListenable: _findTruckActingLive,
+                  builder: (context, actingId, _) =>
+                      ValueListenableBuilder<bool>(
+                        valueListenable: _searchingAgainLive,
+                        builder: (context, searchingAgain, _) =>
+                            _FindTruckOffersSheet(
+                              requests: requests,
+                              totalCount: _findTruckRequestCount,
+                              actingId: actingId,
+                              onAccept: _acceptFindTruckRequest,
+                              onReject: _rejectFindTruckRequest,
+                              onCounter: _counterFindTruckRequest,
+                              errorFor: (id) => _findTruckCardErrors[id],
+                              onClose: _exitOffersToTrucks,
+                              onKeepSearching: _rebroadcastFindTruckSearch,
+                              searchingAgain: searchingAgain,
+                              offersError: _findTruckOffersError,
+                              onRetryOffers: () =>
+                                  _loadFindTruckDriverRequests(silent: false),
+                            ),
+                      ),
+                ),
+          ),
+    );
+    _findTruckOffersSheetOpen = false;
   }
 
-  Future<void> _openFindTruckNegotiation(ClientBookingOffer request) async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    final bookingId = _activeBookingId;
-    if (session == null || bookingId == null || bookingId.isEmpty) {
-      return;
+  /// Cross button / Go Back from the offers dialog: leave the search and
+  /// land back on the Choose Trucks card.
+  Future<void> _exitOffersToTrucks() async {
+    if (_findTruckOffersSheetOpen) {
+      _findTruckOffersSheetOpen = false;
+      if (mounted) Navigator.of(context).pop();
     }
-
-    _findTruckNegotiationOpen = true;
-    final outcome = await showDialog<_FindTruckNegotiationResult>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.46),
-      builder: (context) => _FindTruckNegotiationSheet(
-        bookingId: bookingId,
-        bookingNumber: _bookingReference,
-        accessToken: session.tokens.accessToken,
-        initialRequest: request,
-        askingPrice: _draft.amount,
-      ),
-    );
-    if (!mounted) {
-      return;
-    }
-    _findTruckNegotiationOpen = false;
-
-    if (outcome == _FindTruckNegotiationResult.payment) {
-      _findTruckPollTimer?.cancel();
-      await _findTruckRequestSubscription?.cancel();
-      setState(() {
-        _postNegotiationPayment = true;
-        _findTruckRequests = const [];
-        _step = _BookingFlowStep.payment;
-      });
-      unawaited(_loadAdvanceAmount());
-      return;
-    }
-
-    if (_isFindTruckSearchActive) {
-      _startFindTruckZoomOutLoop(initialFit: false);
-    }
-    await _loadFindTruckDriverRequests(silent: true);
+    await _cancelFindTruckSearch();
   }
 
   /// Inline fan-out card actions (web parity with DriverOfferCard): each live
@@ -1761,7 +1826,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_findTruckActingId != null || !request.isActionableByClient) return;
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
+    _findTruckCardErrors.remove(request.id);
     setState(() => _findTruckActingId = request.id);
+    _findTruckActingLive.value = request.id;
     try {
       await ref
           .read(apiClientProvider)
@@ -1778,23 +1845,37 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       await _loadFindTruckDriverRequests(silent: true);
     } on ApiException catch (error) {
       if (!mounted) return;
+      _findTruckCardErrors[request.id] = error.message;
+      _bumpLiveFeed();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      final message = error.toString().replaceFirst('Exception: ', '');
+      _findTruckCardErrors[request.id] = message;
+      _bumpLiveFeed();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
+      _findTruckActingLive.value = null;
       if (mounted) setState(() => _findTruckActingId = null);
     }
   }
 
   Future<void> _rejectFindTruckRequest(ClientBookingOffer request) async {
-    if (_findTruckActingId != null || !request.isActionableByClient) {
-      // Declining a pending (non-actionable) card is still valid — the web
-      // card always offers Decline. Only gate on busy.
-      if (_findTruckActingId != null) return;
-    }
+    // Web parity: Decline is valid on every card state — only gate on busy.
+    if (_findTruckActingId != null) return;
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
+    _findTruckCardErrors.remove(request.id);
     setState(() => _findTruckActingId = request.id);
+    _findTruckActingLive.value = request.id;
+    // Optimistic removal: the card drops instantly; the reload confirms.
+    _findTruckRequestsLive.value = _findTruckRequestsLive.value
+        .where((row) => row.id != request.id)
+        .toList();
     try {
       await ref
           .read(apiClientProvider)
@@ -1813,29 +1894,50 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       await _loadFindTruckDriverRequests(silent: true);
     } on ApiException catch (error) {
       if (!mounted) return;
+      _findTruckCardErrors[request.id] = error.message;
+      // Restore the card via reload so the failure is visible inline.
+      await _loadFindTruckDriverRequests(silent: true);
+      _bumpLiveFeed();
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      final message = error.toString().replaceFirst('Exception: ', '');
+      _findTruckCardErrors[request.id] = message;
+      await _loadFindTruckDriverRequests(silent: true);
+      _bumpLiveFeed();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
+      _findTruckActingLive.value = null;
       if (mounted) setState(() => _findTruckActingId = null);
     }
   }
 
-  Future<void> _counterFindTruckRequest(
+  /// Returns true when the counter reached the backend (the card shows its
+  /// "sent" state only then); false keeps the card on its slider for an
+  /// instant inline retry.
+  Future<bool> _counterFindTruckRequest(
     ClientBookingOffer request,
     double amount,
   ) async {
-    if (_findTruckActingId != null) return;
+    if (_findTruckActingId != null) return false;
     if (amount <= 0) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
-      return;
+      return false;
     }
     final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null) return;
+    if (session == null) return false;
+    _findTruckCardErrors.remove(request.id);
     setState(() => _findTruckActingId = request.id);
+    _findTruckActingLive.value = request.id;
     try {
       await ref
           .read(apiClientProvider)
@@ -1844,17 +1946,31 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             id: request.id,
             amount: amount,
           );
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Counter sent.')));
       await _loadFindTruckDriverRequests(silent: true);
+      return true;
     } on ApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
+      _findTruckCardErrors[request.id] = error.message;
+      _bumpLiveFeed();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+      return false;
+    } catch (error) {
+      if (!mounted) return false;
+      final message = error.toString().replaceFirst('Exception: ', '');
+      _findTruckCardErrors[request.id] = message;
+      _bumpLiveFeed();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return false;
     } finally {
+      _findTruckActingLive.value = null;
       if (mounted) setState(() => _findTruckActingId = null);
     }
   }
@@ -3362,7 +3478,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   ),
                 ),
               ),
-            if (isFindTruckSearching)
+            // Truck mode lives entirely in the offers bottom dialog now —
+            // no overlay popup. Broker mode keeps a minimal card with its
+            // manual Negotiate entry point and a way out.
+            if (isFindTruckSearching && brokerMode)
               Positioned(
                 left: 0,
                 right: 0,
@@ -3370,12 +3489,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                 bottom: 0,
                 child: Builder(
                   builder: (context) {
-                    final negotiableOffer = brokerMode
-                        ? pickPrimaryBrokerOffer(
-                            _brokerOffers,
-                            _primaryBrokerOfferId,
-                          )
-                        : null;
+                    final negotiableOffer = pickPrimaryBrokerOffer(
+                      _brokerOffers,
+                      _primaryBrokerOfferId,
+                    );
                     final showNegotiate =
                         negotiableOffer != null &&
                         !_brokerNegotiationOpen &&
@@ -3396,32 +3513,99 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         }
                       }
                     }
-                    return _FindTruckScreenLoader(
-                      bookingReference: _bookingReference,
-                      requestCount: _findTruckRequestCount,
-                      declinedCount: _findTruckDeclinedCount,
-                      searchRadiusKm: _draft.searchRadiusKm,
-                      isCancelling: _cancellingFindTruckSearch,
-                      onCancel: _cancelFindTruckSearch,
-                      pickup: _draft.from,
-                      drop: _draft.to,
-                      amountText: _draft.amountText,
-                      requests: _findTruckRequests,
-                      actingId: _findTruckActingId,
-                      onAccept: _acceptFindTruckRequest,
-                      onReject: _rejectFindTruckRequest,
-                      onCounter: _counterFindTruckRequest,
-                      searchingAgain: _searchingFindTruckAgain,
-                      onSearchAgain: _rebroadcastFindTruckSearch,
-                      offersError: _findTruckOffersError,
-                      onRetryOffers: () =>
-                          _loadFindTruckDriverRequests(silent: false),
-                      negotiateLabel: showNegotiate
-                          ? 'Negotiate${chosenBrokerName.isNotEmpty ? ' with $chosenBrokerName' : ''}'
-                          : null,
-                      onNegotiate: showNegotiate
-                          ? () => _openBrokerOfferNegotiation(negotiableOffer)
-                          : null,
+                    return Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 560),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: context.colors.surfaceElevated.withValues(
+                                alpha: 0.97,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: context.colors.brandBorder,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'Finding brokers',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: context.colors.textPrimary,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Scanning for broker offers on this route.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color:
+                                              context.colors.textSecondary,
+                                        ),
+                                  ),
+                                  if (showNegotiate) ...[
+                                    const SizedBox(height: 12),
+                                    OutlinedButton.icon(
+                                      onPressed: () =>
+                                          _openBrokerOfferNegotiation(
+                                            negotiableOffer,
+                                          ),
+                                      icon: const Icon(
+                                        AppIcons.handshake_rounded,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        'Negotiate${chosenBrokerName.isNotEmpty ? ' with $chosenBrokerName' : ''}',
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xFF167247,
+                                        ),
+                                        side: const BorderSide(
+                                          color: Color(0xFF2FA56E),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 13,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  TextButton(
+                                    onPressed: _cancellingFindTruckSearch
+                                        ? null
+                                        : _cancelFindTruckSearch,
+                                    child: Text(
+                                      _cancellingFindTruckSearch
+                                          ? 'Cancelling...'
+                                          : 'Cancel search',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),

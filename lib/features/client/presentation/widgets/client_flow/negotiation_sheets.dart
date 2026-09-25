@@ -341,40 +341,58 @@ class _BrokerOfferNegotiationSheetState
       pillBorder = const Color(0xFFD7E7F4);
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 430),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colors.surfaceElevated,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 32,
-                offset: const Offset(0, 16),
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Padding(
+        padding: EdgeInsets.zero,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 4,
-                            ),
+              border: Border(
+                top: BorderSide(color: context.colors.line, width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 32,
+                  offset: const Offset(0, -10),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: context.colors.line,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 4,
+                              ),
                             decoration: BoxDecoration(
                               color: pillBg,
                               borderRadius: BorderRadius.circular(999),
@@ -819,6 +837,7 @@ class _BrokerOfferNegotiationSheetState
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -1190,8 +1209,11 @@ class _BrokerNegotiationSheetState
 
     try {
       final initialAmount = _parsePrice(request.amountText);
-      final amount = await showDialog<double>(
+      final amount = await showModalBottomSheet<double>(
         context: context,
+        isScrollControlled: true,
+        useSafeArea: false,
+        backgroundColor: Colors.transparent,
         barrierColor: Colors.black.withValues(alpha: 0.45),
         builder: (dialogContext) =>
             _CounterOfferSliderDialog(initialAmount: initialAmount),
@@ -1919,8 +1941,11 @@ class _FindTruckNegotiationSheetState
       final initialAmount = _request.amountText.isNotEmpty
           ? _parsePrice(_request.amountText)
           : widget.askingPrice;
-      final amount = await showDialog<double>(
+      final amount = await showModalBottomSheet<double>(
         context: context,
+        isScrollControlled: true,
+        useSafeArea: false,
+        backgroundColor: Colors.transparent,
         barrierColor: Colors.black.withValues(alpha: 0.45),
         builder: (dialogContext) =>
             _CounterOfferSliderDialog(initialAmount: initialAmount),
@@ -1996,28 +2021,48 @@ class _FindTruckNegotiationSheetState
         : 'This request is updating live from the driver side.';
     final canAct = request.isActionableByClient;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
+    // Presented as a modal bottom sheet, never a centered popup: a floating
+    // card with a grabber, closed via the cross button or an outcome pop.
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Padding(
+        padding: EdgeInsets.zero,
+        child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 430),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: context.colors.surfaceElevated,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+            border: Border(
+              top: BorderSide(color: context.colors.line, width: 1),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 32,
-                offset: const Offset(0, 16),
+                offset: const Offset(0, -10),
               ),
             ],
           ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: context.colors.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2223,6 +2268,7 @@ class _FindTruckNegotiationSheetState
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -2397,28 +2443,46 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 390),
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Padding(
+        padding: EdgeInsets.zero,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 390),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: context.colors.surfaceElevated,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+            border: Border(
+              top: BorderSide(color: context.colors.line, width: 1),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 30,
-                offset: const Offset(0, 16),
+                offset: const Offset(0, -10),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: context.colors.line,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Container(
@@ -2582,6 +2646,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
