@@ -888,6 +888,7 @@ class _BrokerNegotiationSheetState
   bool _submitting = false;
   bool _paymentSubmitting = false;
   bool _loading = false;
+  bool _historyOpen = false;
   bool _loadingAdvanceAmount = false;
   String? _errorMessage;
   double? _advanceAmount;
@@ -1417,6 +1418,54 @@ class _BrokerNegotiationSheetState
                     color: context.colors.textSecondary,
                   ),
                 ),
+                // Web parity (RequestDriver.jsx): per-request negotiation
+                // history from offer_history.
+                if (request != null && request.offerHistory.length > 1) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () =>
+                        setState(() => _historyOpen = !_historyOpen),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedRotation(
+                            turns: _historyOpen ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16,
+                              color: context.colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Negotiation history (${request.offerHistory.length})',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: context.colors.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_historyOpen)
+                    ...request.offerHistory.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: context.colors.textSecondary,
+                              ),
+                        ),
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
@@ -1663,6 +1712,7 @@ class _FindTruckNegotiationSheetState
   late ClientBookingOffer _request;
   bool _busy = false;
   bool _loading = false;
+  bool _historyOpen = false;
   String? _errorMessage;
   Timer? _pollTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
@@ -2068,6 +2118,54 @@ class _FindTruckNegotiationSheetState
                   const SizedBox(height: 12),
                   const LinearProgressIndicator(minHeight: 3),
                 ],
+                // Web parity (RequestDriver.jsx): per-request negotiation
+                // history from offer_history.
+                if (request.offerHistory.length > 1) ...[
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () =>
+                        setState(() => _historyOpen = !_historyOpen),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedRotation(
+                            turns: _historyOpen ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16,
+                              color: context.colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Negotiation history (${request.offerHistory.length})',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: context.colors.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_historyOpen)
+                    ...request.offerHistory.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: context.colors.textSecondary,
+                              ),
+                        ),
+                      ),
+                    ),
+                ],
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -2284,9 +2382,14 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
   @override
   void initState() {
     super.initState();
+    // Web parity (DriverOfferCard.openNegotiate): counters go down from the
+    // current offer — min 78%, max the offer itself. One shared rule for every
+    // client driver counter so the dialog and inline card sliders agree.
     final baseAmount = widget.initialAmount > 0 ? widget.initialAmount : 1000.0;
-    _minAmount = max(1, baseAmount * 0.75).toDouble();
-    _maxAmount = max(_minAmount + 100, baseAmount * 1.25).toDouble();
+    _minAmount = (baseAmount * 0.78).round().toDouble();
+    _maxAmount = baseAmount < _minAmount + 1
+        ? _minAmount + 1
+        : baseAmount.toDouble();
     _amount = baseAmount.clamp(_minAmount, _maxAmount).toDouble();
   }
 

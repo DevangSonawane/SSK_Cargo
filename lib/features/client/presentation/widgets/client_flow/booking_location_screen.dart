@@ -136,6 +136,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   int _findTruckDeclinedCount = 0;
   bool _findTruckNegotiationOpen = false;
   bool _cancellingFindTruckSearch = false;
+  String? _findTruckActingId;
+  bool _searchingFindTruckAgain = false;
+  bool _findTruckOffersError = false;
   final DraggableScrollableController _truckSearchSheetController =
       DraggableScrollableController();
   double _truckSearchSheetExtent = 0.44;
@@ -1334,7 +1337,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             bookingId: bookingId,
           );
       final requests = _driverRequestsFromResponse(response);
-      final best = _bestFindTruckDriverRequest(requests);
+      // Web parity: only a fully accepted row promotes to the single-target
+      // sheet. Everything else stays in the inline fan-out list.
+      ClientBookingOffer? accepted;
+      for (final request in requests) {
+        if (request.normalizedStatus == 'accepted') {
+          accepted = request;
+          break;
+        }
+      }
 
       if (!mounted) {
         return;
@@ -1343,21 +1354,25 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       setState(() {
         _findTruckRequestCount = requests.length;
         _findTruckRequests = requests;
+        _findTruckOffersError = false;
         _findTruckDeclinedCount = requests
             .where((request) => request.normalizedStatus == 'declined')
             .length;
-        if (best != null) {
-          _driverRequest = best;
+        if (accepted != null) {
+          _driverRequest = accepted;
         }
       });
 
-      if (best != null && _shouldOpenFindTruckNegotiation(best)) {
+      if (accepted != null && _shouldOpenFindTruckNegotiation(accepted)) {
         _stopFindTruckZoomOutLoop();
-        unawaited(_openFindTruckNegotiation(best));
+        unawaited(_openFindTruckNegotiation(accepted));
       } else if (_isFindTruckSearchActive && _findTruckZoomTimer == null) {
         _startFindTruckZoomOutLoop(initialFit: false);
       }
     } catch (error) {
+      if (mounted) {
+        setState(() => _findTruckOffersError = true);
+      }
       if (!mounted || silent) {
         return;
       }
@@ -1366,6 +1381,43 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           content: Text(error.toString().replaceFirst('ApiException: ', '')),
         ),
       );
+    }
+  }
+
+  /// Web parity (FindTruckSearch.jsx "Search Again"): re-notifies nearby
+  /// drivers server-side, then refreshes so fresh 'pending' rows show up
+  /// immediately instead of waiting for the next poll.
+  Future<void> _rebroadcastFindTruckSearch() async {
+    if (_searchingFindTruckAgain) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final bookingId = _activeBookingId;
+    if (session == null || bookingId == null || bookingId.isEmpty) return;
+    setState(() {
+      _searchingFindTruckAgain = true;
+      _findTruckOffersError = false;
+    });
+    try {
+      await ref
+          .read(apiClientProvider)
+          .rebroadcastBooking(
+            accessToken: session.tokens.accessToken,
+            bookingId: bookingId,
+          );
+      await _loadFindTruckDriverRequests(silent: true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _searchingFindTruckAgain = false);
     }
   }
 
@@ -1611,6 +1663,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         _findTruckRequests = const [];
         _findTruckRequestCount = 0;
         _findTruckDeclinedCount = 0;
+        _findTruckOffersError = false;
+        _searchingFindTruckAgain = false;
         _findTruckNegotiationOpen = false;
         _postNegotiationPayment = false;
         _cancellingFindTruckSearch = false;
@@ -1647,16 +1701,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
   }
 
+  /// Web parity (FindTruckSearch.jsx): the fan-out list stays on screen and
+  /// each card negotiates inline. Only a fully `accepted` row promotes to the
+  /// single-target sheet (which owns the confirmed/payment flow) — a mere
+  /// counter/actionable row must NOT pop the dialog over the list.
   bool _shouldOpenFindTruckNegotiation(ClientBookingOffer request) {
     if (_findTruckNegotiationOpen) {
       return false;
     }
-    if (request.normalizedStatus == 'declined' ||
-        request.normalizedStatus == 'expired') {
-      return false;
-    }
-    return request.isActionableByClient ||
-        request.normalizedStatus == 'accepted';
+    return request.normalizedStatus == 'accepted';
   }
 
   Future<void> _openFindTruckNegotiation(ClientBookingOffer request) async {
@@ -1700,6 +1753,110 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _startFindTruckZoomOutLoop(initialFit: false);
     }
     await _loadFindTruckDriverRequests(silent: true);
+  }
+
+  /// Inline fan-out card actions (web parity with DriverOfferCard): each live
+  /// driver_requests row negotiates independently from the search overlay.
+  Future<void> _acceptFindTruckRequest(ClientBookingOffer request) async {
+    if (_findTruckActingId != null || !request.isActionableByClient) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _findTruckActingId = request.id);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .acceptDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Accepted - waiting for the driver to confirm.'),
+        ),
+      );
+      await _loadFindTruckDriverRequests(silent: true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _findTruckActingId = null);
+    }
+  }
+
+  Future<void> _rejectFindTruckRequest(ClientBookingOffer request) async {
+    if (_findTruckActingId != null || !request.isActionableByClient) {
+      // Declining a pending (non-actionable) card is still valid — the web
+      // card always offers Decline. Only gate on busy.
+      if (_findTruckActingId != null) return;
+    }
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _findTruckActingId = request.id);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .rejectDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Declined ${request.brokerName.isNotEmpty ? request.brokerName : 'driver'} — still waiting on the rest.',
+          ),
+        ),
+      );
+      await _loadFindTruckDriverRequests(silent: true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _findTruckActingId = null);
+    }
+  }
+
+  Future<void> _counterFindTruckRequest(
+    ClientBookingOffer request,
+    double amount,
+  ) async {
+    if (_findTruckActingId != null) return;
+    if (amount <= 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+      return;
+    }
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return;
+    setState(() => _findTruckActingId = request.id);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .counterDriverRequest(
+            accessToken: session.tokens.accessToken,
+            id: request.id,
+            amount: amount,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Counter sent.')));
+      await _loadFindTruckDriverRequests(silent: true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _findTruckActingId = null);
+    }
   }
 
   Future<void> _next() async {
@@ -3249,6 +3406,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                       pickup: _draft.from,
                       drop: _draft.to,
                       amountText: _draft.amountText,
+                      requests: _findTruckRequests,
+                      actingId: _findTruckActingId,
+                      onAccept: _acceptFindTruckRequest,
+                      onReject: _rejectFindTruckRequest,
+                      onCounter: _counterFindTruckRequest,
+                      searchingAgain: _searchingFindTruckAgain,
+                      onSearchAgain: _rebroadcastFindTruckSearch,
+                      offersError: _findTruckOffersError,
+                      onRetryOffers: () =>
+                          _loadFindTruckDriverRequests(silent: false),
                       negotiateLabel: showNegotiate
                           ? 'Negotiate${chosenBrokerName.isNotEmpty ? ' with $chosenBrokerName' : ''}'
                           : null,

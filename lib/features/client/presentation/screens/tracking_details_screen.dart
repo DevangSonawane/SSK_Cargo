@@ -5164,7 +5164,7 @@ class _BookingNegotiationSheetState
 
   bool _loading = true;
   bool _loadError = false;
-  ClientBookingOffer? _driverRequest;
+  List<ClientBookingOffer> _driverRequests = const [];
   List<ClientBookingOffer> _offers = const [];
   String? _errorMessage;
   bool _busy = false;
@@ -5239,22 +5239,27 @@ class _BookingNegotiationSheetState
       }
 
       final api = ref.read(apiClientProvider);
-      ClientBookingOffer? driverRequest;
+      // Multi-offer fan-out (web parity with FindTruckSearch.jsx): every live
+      // driver_requests row gets its own card. The plural endpoint returns the
+      // full list; the singular one is only a fallback for older backends and
+      // yields at most one row.
+      List<ClientBookingOffer> driverRequests = const [];
       try {
         final requestResponse = await api.getDriverRequestsForBooking(
           accessToken: widget.accessToken,
           bookingId: widget.bookingId,
         );
-        driverRequest = _bestDriverRequestFromResponse(requestResponse);
+        driverRequests = _driverRequestsFromResponse(requestResponse);
       } catch (_) {
         try {
           final requestResponse = await api.getDriverRequestByBooking(
             accessToken: widget.accessToken,
             bookingId: widget.bookingId,
           );
-          driverRequest = _firstRequestFromResponse(requestResponse);
+          final single = _firstRequestFromResponse(requestResponse);
+          driverRequests = single == null ? const [] : [single];
         } catch (_) {
-          driverRequest = null;
+          driverRequests = const [];
         }
       }
 
@@ -5266,7 +5271,7 @@ class _BookingNegotiationSheetState
 
       if (!mounted) return;
       setState(() {
-        _driverRequest = driverRequest;
+        _driverRequests = driverRequests;
         _offers = offers;
         if (silent) {
           _loadError = false;
@@ -5291,9 +5296,8 @@ class _BookingNegotiationSheetState
     }
   }
 
-  Future<void> _acceptDriverRequest() async {
-    final request = _driverRequest;
-    if (request == null || _busy || !_isClientActionable(request)) return;
+  Future<void> _acceptDriverRequest(ClientBookingOffer request) async {
+    if (_busy || !_isClientActionable(request)) return;
     setState(() => _busy = true);
     try {
       final response = await ref
@@ -5328,9 +5332,8 @@ class _BookingNegotiationSheetState
     }
   }
 
-  Future<void> _rejectDriverRequest() async {
-    final request = _driverRequest;
-    if (request == null || _busy || !_isClientActionable(request)) return;
+  Future<void> _rejectDriverRequest(ClientBookingOffer request) async {
+    if (_busy || !_isClientActionable(request)) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -5351,31 +5354,70 @@ class _BookingNegotiationSheetState
     }
   }
 
-  Future<void> _counterDriverRequest() async {
-    final request = _driverRequest;
-    if (request == null || _busy || !_isClientActionable(request)) return;
+  Future<void> _counterDriverRequest(ClientBookingOffer request) async {
+    if (_busy || !_isClientActionable(request)) return;
 
-    final amountController = TextEditingController(text: request.amountText);
+    // Web parity (DriverOfferCard.openNegotiate): counters go down from the
+    // current offer — min 78%, max the offer itself.
+    final double base = request.amountValue > 0 ? request.amountValue : 1000;
+    final double min = (base * 0.78).round().toDouble();
+    final double max = base < min + 1 ? min + 1 : base;
+    double value = base.clamp(min, max).toDouble();
+    String rupees(double v) =>
+        '₹${v.toStringAsFixed(v % 1 == 0 ? 0 : 2)}';
     try {
-      final shouldSend = await showDialog<bool>(
+      final amount = await showDialog<double>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text('Counter driver request'),
-          content: TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Amount'),
+          content: StatefulBuilder(
+            builder: (dialogContext, setDialogState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current offer: ${request.amountText.isNotEmpty ? request.amountText : rupees(base)}',
+                  style: Theme.of(dialogContext).textTheme.bodySmall,
+                ),
+                Slider(
+                  min: min,
+                  max: max,
+                  value: value,
+                  activeColor: const Color(0xFF2FA56E),
+                  onChanged: (v) => setDialogState(() => value = v),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      rupees(min),
+                      style: Theme.of(dialogContext).textTheme.labelSmall,
+                    ),
+                    Text(
+                      rupees(max),
+                      style: Theme.of(dialogContext).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Your counter-offer: ${rupees(value)}',
+                  style: Theme.of(dialogContext).textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(value),
               style: FilledButton.styleFrom(
                 minimumSize: const Size(132, 40),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -5385,20 +5427,7 @@ class _BookingNegotiationSheetState
           ],
         ),
       );
-      if (shouldSend != true) return;
-
-      final amount =
-          double.tryParse(
-            amountController.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-          ) ??
-          0;
-      if (amount <= 0) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
-        return;
-      }
+      if (amount == null || amount <= 0) return;
 
       setState(() => _busy = true);
       await ref
@@ -5419,7 +5448,6 @@ class _BookingNegotiationSheetState
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
-      amountController.dispose();
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -5619,31 +5647,100 @@ class _BookingNegotiationSheetState
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.only(bottom: 12),
                           children: [
-                            if (_driverRequest != null) ...[
-                              _NegotiationSectionTitle(
-                                title: 'Direct driver request',
-                                subtitle:
-                                    'This is the truck-specific negotiation path.',
-                              ),
-                              const SizedBox(height: 10),
-                              _NegotiationCard(
-                                title: _driverRequest!.brokerName.isNotEmpty
-                                    ? _driverRequest!.brokerName
-                                    : 'Driver request',
-                                subtitle: _driverRequest!.note.isNotEmpty
-                                    ? _driverRequest!.note
-                                    : 'Direct truck request',
-                                amountText: _driverRequest!.amountText,
-                                statusText: _driverRequestStatusText(
-                                  _driverRequest!,
-                                ),
-                                note: _driverRequest!.note,
-                                actions: _clientActionButtonsForDriverRequest(
-                                  _driverRequest!,
-                                ),
-                              ),
-                              const SizedBox(height: 18),
-                            ],
+                            // Multi-offer fan-out (web parity): every live
+                            // (non-declined) nearby driver gets its own
+                            // independently-negotiable card. Accepting one
+                            // backend-auto-declines the rest, so no special
+                            // handling here beyond refresh.
+                            Builder(
+                              builder: (context) {
+                                final liveDriverRequests = _driverRequests
+                                    .where(
+                                      (request) =>
+                                          request.normalizedStatus !=
+                                          'declined',
+                                    )
+                                    .toList()
+                                  ..sort(
+                                    (a, b) => b.negotiationRank.compareTo(
+                                      a.negotiationRank,
+                                    ),
+                                  );
+                                final acceptedRequest =
+                                    liveDriverRequests.isNotEmpty
+                                    ? liveDriverRequests
+                                          .where(
+                                            (request) =>
+                                                request.normalizedStatus ==
+                                                'accepted',
+                                          )
+                                          .cast<ClientBookingOffer?>()
+                                          .followedBy(const [null])
+                                          .first
+                                    : null;
+                                final visibleRequests =
+                                    acceptedRequest != null
+                                    ? [acceptedRequest]
+                                    : liveDriverRequests;
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    _NegotiationSectionTitle(
+                                      title:
+                                          acceptedRequest != null
+                                          ? 'Confirmed driver'
+                                          : 'Nearby driver offers (${visibleRequests.length})',
+                                      subtitle:
+                                          acceptedRequest != null
+                                          ? 'This driver confirmed your booking.'
+                                          : 'Every nearby driver gets their own card — accept, counter, or decline each one separately.',
+                                    ),
+                                    const SizedBox(height: 10),
+                                    if (visibleRequests.isEmpty)
+                                      _NegotiationEmptyState(
+                                        title: 'No driver offers yet',
+                                        subtitle:
+                                            'Once a nearby driver responds, the offers will appear here.',
+                                      )
+                                    else
+                                      ...visibleRequests.map(
+                                        (request) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
+                                          child: _NegotiationCard(
+                                            title:
+                                                request
+                                                        .brokerName
+                                                        .isNotEmpty
+                                                    ? request.brokerName
+                                                    : 'Driver offer',
+                                            subtitle: _driverOfferSubtitle(
+                                              request,
+                                            ),
+                                            amountText:
+                                                request.amountText.isNotEmpty
+                                                ? request.amountText
+                                                : '—',
+                                            statusText:
+                                                _driverRequestStatusText(
+                                                  request,
+                                                ),
+                                            note: request.note,
+                                            offer: request,
+                                            actions:
+                                                _clientActionButtonsForDriverRequests(
+                                                  request,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 18),
                             _NegotiationSectionTitle(
                               title: 'Broker offers',
                               subtitle:
@@ -5670,6 +5767,7 @@ class _BookingNegotiationSheetState
                                     amountText: offer.amountText,
                                     statusText: _offerStatusText(offer),
                                     note: offer.note,
+                                    offer: offer,
                                     actions: _clientActionButtonsForOffer(
                                       offer,
                                     ),
@@ -5735,36 +5833,64 @@ extension on _BookingNegotiationSheetState {
     return 'Waiting for driver response';
   }
 
-  List<Widget> _clientActionButtonsForDriverRequest(
+  String _driverOfferSubtitle(ClientBookingOffer request) {
+    final meta = <String>[
+      if (request.truckReg.isNotEmpty) request.truckReg,
+      if (request.driverPhone.isNotEmpty) request.driverPhone,
+    ].join(' · ');
+    if (request.note.isNotEmpty) {
+      return meta.isNotEmpty ? '${request.note} · $meta' : request.note;
+    }
+    if (meta.isNotEmpty) return meta;
+    return 'Direct truck request';
+  }
+
+  List<Widget> _clientActionButtonsForDriverRequests(
     ClientBookingOffer request,
   ) {
-    if (!_isClientActionable(request)) {
+    if (request.isWaitingForCounterpartyConfirmation) {
       return const [];
     }
 
     if (request.isClientTurnToConfirm) {
       return [
         FilledButton(
-          onPressed: _busy ? null : _acceptDriverRequest,
+          onPressed: _busy ? null : () => _acceptDriverRequest(request),
           child: const Text('Confirm'),
         ),
         OutlinedButton(
-          onPressed: _busy ? null : _rejectDriverRequest,
+          onPressed: _busy ? null : () => _rejectDriverRequest(request),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFE23A4B),
+            side: const BorderSide(color: Color(0xFFF3B4B4)),
+          ),
           child: const Text('Decline'),
         ),
       ];
     }
 
-    return [
-      FilledButton(
-        onPressed: _busy ? null : _acceptDriverRequest,
-        child: const Text('Accept'),
-      ),
-      TextButton(
-        onPressed: _busy ? null : _rejectDriverRequest,
-        child: const Text('Reject'),
-      ),
-    ];
+    if (request.isCountered) {
+      return [
+        FilledButton(
+          onPressed: _busy ? null : () => _acceptDriverRequest(request),
+          child: const Text('Accept'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _rejectDriverRequest(request),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFE23A4B),
+            side: const BorderSide(color: Color(0xFFF3B4B4)),
+          ),
+          child: const Text('Reject'),
+        ),
+        OutlinedButton(
+          onPressed: _busy ? null : () => _counterDriverRequest(request),
+          child: const Text('Counter'),
+        ),
+      ];
+    }
+
+    return const [];
   }
 
   List<Widget> _clientActionButtonsForOffer(ClientBookingOffer offer) {
@@ -5844,13 +5970,14 @@ class _NegotiationSectionTitle extends StatelessWidget {
   }
 }
 
-class _NegotiationCard extends StatelessWidget {
+class _NegotiationCard extends StatefulWidget {
   const _NegotiationCard({
     required this.title,
     required this.subtitle,
     required this.amountText,
     required this.statusText,
     required this.note,
+    required this.offer,
     required this.actions,
   });
 
@@ -5859,7 +5986,15 @@ class _NegotiationCard extends StatelessWidget {
   final String amountText;
   final String statusText;
   final String note;
+  final ClientBookingOffer offer;
   final List<Widget> actions;
+
+  @override
+  State<_NegotiationCard> createState() => _NegotiationCardState();
+}
+
+class _NegotiationCardState extends State<_NegotiationCard> {
+  bool _historyOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -5902,7 +6037,7 @@ class _NegotiationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      widget.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: context.colors.textPrimary,
@@ -5910,7 +6045,7 @@ class _NegotiationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      subtitle,
+                      widget.subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                       ),
@@ -5923,7 +6058,7 @@ class _NegotiationCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    amountText,
+                    widget.amountText,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: context.colors.textPrimary,
@@ -5940,7 +6075,7 @@ class _NegotiationCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      statusText,
+                      widget.statusText,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: const Color(0xFF2FA56E),
                         fontWeight: FontWeight.w800,
@@ -5951,18 +6086,83 @@ class _NegotiationCard extends StatelessWidget {
               ),
             ],
           ),
-          if (note.isNotEmpty) ...[
+          if (widget.note.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              note,
+              widget.note,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: context.colors.textSecondary,
               ),
             ),
           ],
-          if (actions.isNotEmpty) ...[
+          if (widget.actions.isNotEmpty) ...[
             const SizedBox(height: 14),
-            _NegotiationActionLayout(actions: actions),
+            _NegotiationActionLayout(actions: widget.actions),
+          ],
+          // Web parity (DriverOfferCard): collapsible per-card negotiation
+          // history from offer_history.
+          if (widget.offer.offerHistory.length > 1) ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 10),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Color(0xFFF0F2F5)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    onTap: () => setState(
+                      () => _historyOpen = !_historyOpen,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedRotation(
+                            turns: _historyOpen ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16,
+                              color: context.colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Negotiation history (${widget.offer.offerHistory.length})',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: context.colors.textSecondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_historyOpen) ...[
+                    const SizedBox(height: 4),
+                    ...widget.offer.offerHistory.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: context.colors.textSecondary,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ],
       ),
@@ -6068,40 +6268,33 @@ ClientBookingOffer? _firstRequestFromResponse(Map<String, dynamic> response) {
   return _bookingOfferFromMap(request);
 }
 
-ClientBookingOffer? _bestDriverRequestFromResponse(
+/// Full fan-out parser for `GET /api/bookings/:id/driver-requests`
+/// (`{ success, data: { requests: [...] } }`). Returns every row — the caller
+/// filters `declined` at render time (web parity with FindTruckSearch.jsx).
+/// Falls back to the singular shape for older backends.
+List<ClientBookingOffer> _driverRequestsFromResponse(
   Map<String, dynamic> response,
 ) {
   final data = _chatAsMap(response['data']) ?? response;
   final dynamic items =
       data['requests'] ??
       data['driverRequests'] ??
+      data['driver_requests'] ??
       data['items'] ??
       data['results'] ??
       data['rows'] ??
       data['data'];
-  if (items is! List) {
-    return _firstRequestFromResponse(response);
+  if (items is List) {
+    final requests = items
+        .whereType<Map<String, dynamic>>()
+        .map(_bookingOfferFromMap)
+        .where((request) => request.id.isNotEmpty)
+        .toList(growable: false);
+    if (requests.isNotEmpty) return requests;
   }
-  final requests = items
-      .whereType<Map<String, dynamic>>()
-      .map(_bookingOfferFromMap)
-      .where((request) => request.id.isNotEmpty)
-      .toList(growable: false);
-  if (requests.isEmpty) {
-    return null;
-  }
-  for (final request in requests) {
-    if (request.isActionableByClient) {
-      return request;
-    }
-  }
-  for (final request in requests) {
-    if (request.normalizedStatus == 'accepted' ||
-        request.normalizedStatus == 'countered') {
-      return request;
-    }
-  }
-  return requests.first;
+  final single = _firstRequestFromResponse(response);
+  if (single != null && single.id.isNotEmpty) return [single];
+  return const [];
 }
 
 List<ClientBookingOffer> _bookingOffersFromResponse(

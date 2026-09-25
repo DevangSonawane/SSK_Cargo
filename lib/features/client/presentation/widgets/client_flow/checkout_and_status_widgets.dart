@@ -1736,51 +1736,6 @@ List<ClientBookingOffer> _driverRequestsFromResponse(
   return single == null ? const [] : [single];
 }
 
-ClientBookingOffer? _bestFindTruckDriverRequest(
-  List<ClientBookingOffer> requests,
-) {
-  final active =
-      requests
-          .where(
-            (request) =>
-                request.normalizedStatus != 'declined' &&
-                request.normalizedStatus != 'expired',
-          )
-          .toList()
-        ..sort((a, b) {
-          final rankCompare = _findTruckRequestRank(
-            b,
-          ).compareTo(_findTruckRequestRank(a));
-          if (rankCompare != 0) {
-            return rankCompare;
-          }
-          final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return bTime.compareTo(aTime);
-        });
-
-  if (active.isEmpty) {
-    return null;
-  }
-  final best = active.first;
-  return _findTruckRequestRank(best) >= 2 ? best : null;
-}
-
-int _findTruckRequestRank(ClientBookingOffer request) {
-  switch (request.normalizedStatus) {
-    case 'accepted':
-      return 4;
-    case 'awaiting_confirmation':
-      return 3;
-    case 'countered':
-      return 2;
-    case 'pending':
-      return 1;
-    default:
-      return 0;
-  }
-}
-
 class _BookingSummaryCard extends StatelessWidget {
   const _BookingSummaryCard({
     required this.pickupTitle,

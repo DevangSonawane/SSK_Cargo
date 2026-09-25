@@ -1758,6 +1758,26 @@ class SskApiClient {
     );
   }
 
+  /// Web parity (FindTruckSearch.jsx "Search Again"): re-notifies nearby
+  /// drivers server-side — a driver who declined the first round becomes a
+  /// legitimate candidate again. Refresh the request list right after so a
+  /// re-notified driver's fresh 'pending' row shows up immediately.
+  Future<Map<String, dynamic>> rebroadcastBooking({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log(
+      'PATCH /api/bookings/$bookingId/rebroadcast',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/bookings/$bookingId/rebroadcast',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> reportTripIssue({
     required String accessToken,
     required String tripId,

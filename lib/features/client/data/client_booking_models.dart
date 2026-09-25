@@ -427,6 +427,43 @@ class ClientBooking {
   String get displayStatusLabel => _titleCase(status);
 }
 
+class ClientOfferHistoryEntry {
+  const ClientOfferHistoryEntry({required this.by, required this.amount});
+
+  factory ClientOfferHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return ClientOfferHistoryEntry(
+      by: _readString(json, const ['by', 'actor', 'role']).toLowerCase(),
+      amount:
+          _readOptionalDouble(json, const [
+            'amount',
+            'offer_amount',
+            'offerAmount',
+            'counter_amount',
+            'counterAmount',
+            'price',
+            'value',
+          ]) ??
+          0,
+    );
+  }
+
+  final String by;
+  final double amount;
+
+  String get displayBy {
+    switch (by) {
+      case 'client':
+        return 'You';
+      case 'broker':
+        return 'Broker';
+      case 'driver':
+        return 'Driver';
+      default:
+        return by.isEmpty ? 'Driver' : _titleCase(by);
+    }
+  }
+}
+
 class ClientBookingOffer {
   const ClientBookingOffer({
     required this.id,
@@ -441,6 +478,10 @@ class ClientBookingOffer {
     required this.driverTimedOut,
     required this.createdAt,
     required this.raw,
+    this.amountValue = 0,
+    this.truckReg = '',
+    this.driverPhone = '',
+    this.offerHistory = const [],
   });
 
   factory ClientBookingOffer.fromJson(Map<String, dynamic> json) {
@@ -502,6 +543,25 @@ class ClientBookingOffer {
         'pending_confirmation_by',
       ]),
       amountText: _formatAmount(amountValue),
+      amountValue: amountValue is num
+          ? amountValue.toDouble()
+          : double.tryParse(amountValue?.toString() ?? '') ?? 0,
+      truckReg: _readString(json, const [
+        'truckReg',
+        'truck_reg',
+        'truck_number',
+        'truckNumber',
+        'vehicle_number',
+        'vehicleNumber',
+        'registration_number',
+      ]),
+      driverPhone: _readString(json, const [
+        'driverPhone',
+        'driver_phone',
+        'driver_mobile',
+        'phone',
+        'mobile',
+      ]),
       brokerName: driverName.isNotEmpty
           ? driverName
           : nestedDriverName.isNotEmpty
@@ -538,6 +598,9 @@ class ClientBookingOffer {
       createdAt: _parseDateTime(
         json['created_at'] ?? json['createdAt'] ?? json['updated_at'],
       ),
+      offerHistory: _parseOfferHistory(
+        json['offer_history'] ?? json['offerHistory'],
+      ),
       raw: json,
     );
   }
@@ -546,6 +609,9 @@ class ClientBookingOffer {
   final String status;
   final String pendingConfirmationBy;
   final String amountText;
+  final double amountValue;
+  final String truckReg;
+  final String driverPhone;
   final String brokerName;
   final String note;
   final double? driverLat;
@@ -553,7 +619,18 @@ class ClientBookingOffer {
   final double? driverHeading;
   final bool driverTimedOut;
   final DateTime? createdAt;
+  final List<ClientOfferHistoryEntry> offerHistory;
   final Map<String, dynamic> raw;
+
+  /// Web parity (DriverOfferCard): RANK {accepted: 4, awaiting_confirmation: 3,
+  /// countered: 2, pending: 1} — decides display order, most urgent first.
+  int get negotiationRank => switch (normalizedStatus) {
+    'accepted' => 4,
+    'awaiting_confirmation' => 3,
+    'countered' => 2,
+    'pending' => 1,
+    _ => 0,
+  };
 
   String get normalizedStatus => _normalizeStatus(status);
 
@@ -567,8 +644,15 @@ class ClientBookingOffer {
   bool get isAwaitingConfirmation =>
       normalizedStatus == 'awaiting_confirmation';
 
+  /// Web parity: the client's turn is an explicit value, never a default.
+  /// Driver requests use `respondent` (DriverOfferCard/RequestDriver.jsx),
+  /// broker offers use `broker` (ChooseBroker.jsx); `client` means waiting on
+  /// the counterparty. A missing/unknown value shows NO actions rather than
+  /// a Confirm button that may be wrong.
   bool get isClientTurnToConfirm =>
-      isAwaitingConfirmation && normalizedPendingConfirmationBy != 'client';
+      isAwaitingConfirmation &&
+      (normalizedPendingConfirmationBy == 'respondent' ||
+          normalizedPendingConfirmationBy == 'broker');
 
   bool get isWaitingForCounterpartyConfirmation =>
       isAwaitingConfirmation && normalizedPendingConfirmationBy == 'client';
@@ -1026,6 +1110,14 @@ double? _readOptionalDouble(Map<String, dynamic> json, List<String> keys) {
     if (parsed != null) return parsed;
   }
   return null;
+}
+
+List<ClientOfferHistoryEntry> _parseOfferHistory(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<Map<String, dynamic>>()
+      .map(ClientOfferHistoryEntry.fromJson)
+      .toList(growable: false);
 }
 
 int? _readOptionalInt(Map<String, dynamic> json, List<String> keys) {
