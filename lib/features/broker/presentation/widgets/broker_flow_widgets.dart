@@ -1325,8 +1325,14 @@ class _BrokerTruckPage {
 BrokerVehicle _brokerVehicleFromJson(Map<String, dynamic> json) {
   final type = _readString(json, const ['type', 'truck_type', 'vehicle_type']);
   final category = _readString(json, const ['category', 'truck_category']);
-  final label = type.isNotEmpty ? type : _labelFromCategory(category);
-  final assetPath = _assetPathForLabel(label);
+  final label = type.isNotEmpty
+      ? type
+      : labelForTruckCategory(category, category);
+  // Resolve art from the real category first — labels are free text and a
+  // new category must never fall through to the pooling icon.
+  final assetPath = category.isNotEmpty
+      ? assetPathForTruckCategory(category)
+      : _assetPathForLabel(label);
   final registration = _readString(json, const [
     'registration',
     'plate_number',
@@ -1368,30 +1374,43 @@ BrokerVehicle brokerVehicleFromJson(Map<String, dynamic> json) {
   return _brokerVehicleFromJson(json);
 }
 
-String _labelFromCategory(String category) {
-  switch (category.toLowerCase()) {
-    case 'small':
-      return 'Small truck';
-    case 'medium':
-      return 'Medium truck';
-    case 'large':
-    case 'big':
-      return 'Big truck';
-    case 'part':
-      return 'Part load';
-    default:
-      return 'Truck';
-  }
-}
-
 String _assetPathForLabel(String label) {
   final text = label.toLowerCase();
+  // New-type labels first (e.g. a fleet row whose `type` is '17ft Truck').
+  if (text.contains('3 wheeler') || text.contains('3_wheeler')) {
+    return 'assets/trucks/small truck.png';
+  }
+  if (text.contains('tata ace') || text.contains('tata_ace')) {
+    return 'assets/trucks/small truck.png';
+  }
+  if (text.contains('pickup 8') || text.contains('pickup_8')) {
+    return 'assets/trucks/small truck.png';
+  }
+  if (text.contains('pickup 10') || text.contains('pickup_10')) {
+    return 'assets/trucks/medium truck.png';
+  }
+  if (text.contains('22ft') ||
+      text.contains('22 ft') ||
+      text.contains('19ft') ||
+      text.contains('19 ft') ||
+      text.contains('17ft') ||
+      text.contains('17 ft') ||
+      text.contains('14ft') ||
+      text.contains('14 ft')) {
+    return text.contains('14ft') || text.contains('14 ft')
+        ? 'assets/trucks/medium truck.png'
+        : 'assets/trucks/big truck.png';
+  }
   if (text.contains('small')) return 'assets/trucks/small truck.png';
   if (text.contains('medium')) return 'assets/trucks/medium truck.png';
   if (text.contains('big') || text.contains('large')) {
     return 'assets/trucks/big truck.png';
   }
-  return 'assets/trucks/truck pooling.png';
+  if (text.contains('part') || text.contains('pool')) {
+    return 'assets/trucks/truck pooling.png';
+  }
+  // Unknown label — closest large-truck art rather than the pooling icon.
+  return 'assets/trucks/big truck.png';
 }
 
 BrokerVehicleStatus _vehicleStatusFromApi(String status) {

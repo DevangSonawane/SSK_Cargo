@@ -1458,14 +1458,6 @@ class _BookingWaitingCard extends StatelessWidget {
   }
 }
 
-String _truckCategoryForVehicle(String label) {
-  final text = label.toLowerCase();
-  if (text.contains('small')) return 'small';
-  if (text.contains('medium')) return 'medium';
-  if (text.contains('big')) return 'large';
-  return 'pooling';
-}
-
 double _parsePrice(String value) {
   final digits = value.replaceAll(RegExp(r'[^0-9.]'), '');
   return double.tryParse(digits) ?? 0;

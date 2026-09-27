@@ -1,5 +1,86 @@
 import '../../shared/data/trip_route_stop.dart';
 
+/// A single entry from `GET /api/config/vehicle-types` — the backend's live
+/// truck taxonomy + minimum fare per type. Mirrors the web client's
+/// `truckOptions` (BookTruck.jsx) which is built from this same endpoint.
+class VehicleType {
+  const VehicleType({
+    required this.id,
+    required this.name,
+    required this.capacity,
+    this.basePrice,
+    this.featured = false,
+    this.savePercent,
+  });
+
+  factory VehicleType.fromJson(Map<String, dynamic> json) {
+    return VehicleType(
+      id: _readString(json, const ['id', 'value', 'category']),
+      name: _readString(json, const ['name', 'label', 'title']),
+      capacity: _readString(json, const ['capacity', 'load_capacity']),
+      basePrice: _readOptionalDouble(json, const [
+        'basePrice',
+        'base_price',
+        'minimumFare',
+        'minimum_fare',
+      ]),
+      featured:
+          _readBool(json, const ['featured']) ||
+          _readString(json, const ['featured']).toLowerCase() == 'true',
+      savePercent: _readOptionalDouble(json, const [
+        'savePercent',
+        'save_percent',
+      ]),
+    );
+  }
+
+  final String id;
+  final String name;
+  final String capacity;
+  final double? basePrice;
+  final bool featured;
+  final double? savePercent;
+}
+
+/// Last-resort fallback when `/api/config/vehicle-types` is unreachable —
+/// mirrors the web client's `FALLBACK_TRUCKS` (TRUCK_TYPES + part, all with
+/// null prices so no fake fare is ever shown).
+List<VehicleType> fallbackVehicleTypes() => const <VehicleType>[
+  VehicleType(id: '3_wheeler', name: '3 Wheeler', capacity: '500 kg'),
+  VehicleType(id: 'tata_ace', name: 'Tata Ace', capacity: '750 kg'),
+  VehicleType(id: 'pickup_8ft', name: 'Pickup 8ft', capacity: '1 Ton'),
+  VehicleType(id: 'pickup_10ft', name: 'Pickup 10ft', capacity: '1.2 Ton'),
+  VehicleType(id: '14ft', name: '14ft Truck', capacity: '3.7 Ton'),
+  VehicleType(id: '17ft', name: '17ft Truck', capacity: '4.5 Ton'),
+  VehicleType(id: '19ft', name: '19ft Truck', capacity: '6 Ton'),
+  VehicleType(id: '22ft', name: '22ft Truck', capacity: '7 Ton'),
+  VehicleType(id: 'part', name: 'Part Load', capacity: 'Shared Space'),
+];
+
+/// Extracts the vehicle-types list from a `getVehicleTypes()` response,
+/// tolerating the `data`-wrapped and unwrapped shapes.
+List<VehicleType> parseVehicleTypesResponse(Map<String, dynamic> response) {
+  Object? source;
+  final data = response['data'];
+  if (data is Map<String, dynamic>) {
+    source =
+        data['vehicleTypes'] ??
+        data['vehicle_types'] ??
+        data['items'] ??
+        data['data'];
+  }
+  source ??=
+      response['vehicleTypes'] ??
+      response['vehicle_types'] ??
+      response['items'];
+  if (source is! List) return const [];
+  return source
+      .whereType<Map<String, dynamic>>()
+      .map(VehicleType.fromJson)
+      .where((t) => t.id.isNotEmpty)
+      .toList(growable: false);
+}
+
 class ClientBookingPage {
   const ClientBookingPage({
     required this.bookings,

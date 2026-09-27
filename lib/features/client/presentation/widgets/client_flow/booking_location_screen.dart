@@ -200,7 +200,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       vehicle: _vehicle,
       scheduledDate: DateTime.now().add(const Duration(hours: 3)),
       amount: _priceValue(_vehicle.price),
-      truckCategory: _truckCategoryForVehicle(_vehicle.label),
+      truckCategory: categoryForVehicleOption(_vehicle),
       searchMode: BookingSearchMode.truck,
     );
   }
@@ -217,10 +217,13 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     });
     _vehicleIndex = widget.initialVehicleIndex;
     final initialPricingState = ref.read(clientPricingProvider);
+    final initialTypesState = ref.read(vehicleTypesProvider);
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
       pricing: initialPricingState.valueOrNull,
-      isLoading: initialPricingState.isLoading,
+      isLoading:
+          initialTypesState.isLoading || initialPricingState.isLoading,
+      vehicleTypes: initialTypesState.valueOrNull,
     );
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
     _vehicle = vehicles[_vehicleIndex];
@@ -230,7 +233,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       vehicle: initialDraft?.vehicle ?? _vehicle,
       truckCategory: initialDraft?.truckCategory.isNotEmpty == true
           ? initialDraft!.truckCategory
-          : _truckCategoryForVehicle(_vehicle.label),
+          : categoryForVehicleOption(_vehicle),
       amount: initialDraft?.amount ?? _priceValue(_vehicle.price),
     );
     _fromController = TextEditingController(text: _draft.from);
@@ -892,7 +895,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
       pricing: ref.read(clientPricingProvider).valueOrNull,
-      isLoading: ref.read(clientPricingProvider).isLoading,
+      isLoading: ref.read(vehicleTypesProvider).isLoading,
+      vehicleTypes: ref.read(vehicleTypesProvider).valueOrNull,
     );
     if (vehicles.isEmpty) return;
     final safeIndex = index.clamp(0, vehicles.length - 1).toInt();
@@ -902,7 +906,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       _vehicle = vehicle;
       _draft = _draft.copyWith(
         vehicle: vehicle,
-        truckCategory: _truckCategoryForVehicle(vehicle.label),
+        truckCategory: categoryForVehicleOption(vehicle),
         amount: _priceValue(vehicle.price),
         expressSurcharge: 0,
         expressInsuranceIncluded: false,
@@ -2337,7 +2341,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           city: city,
           tripType: resolvedTripType,
           vehicle: _vehicle,
-          truckCategory: _truckCategoryForVehicle(_vehicle.label),
+          truckCategory: categoryForVehicleOption(_vehicle),
           isExpress: resolvedTripType == TripType.intraCity
               ? _draft.isExpress
               : false,
@@ -2553,7 +2557,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     try {
       final payload = <String, dynamic>{
         'distance': distance,
-        'truck_category': _truckCategoryForVehicle(_vehicle.label),
+        'truck_category': categoryForVehicleOption(_vehicle),
         'transport_type': _draft.transportType,
         'truck_type': _vehicle.label,
         'is_express': _draft.transportType == 'intra'
@@ -3012,7 +3016,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             .toList(growable: false),
       'truck_type': _draft.truckType,
       'truck_category': _draft.truckCategory.isEmpty
-          ? _truckCategoryForVehicle(_vehicle.label)
+          ? categoryForVehicleOption(_vehicle)
           : _draft.truckCategory,
       'city': _draft.transportType == 'intra'
           ? _draft.city.isNotEmpty
@@ -3160,11 +3164,46 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    void syncVehicleFromTypes(List<VehicleType>? types) {
+      if (types == null || types.isEmpty || !mounted) return;
+      final vehicles = resolveVehicleOptions(
+        tripType: widget.tripType,
+        pricing: ref.read(clientPricingProvider).valueOrNull,
+        isLoading: false,
+        vehicleTypes: types,
+      );
+      if (vehicles.isEmpty) return;
+      final safeIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
+      final updatedVehicle = vehicles[safeIndex];
+      // Skip no-op syncs so the listener doesn't fight user selection.
+      if (updatedVehicle.id == _vehicle.id &&
+          updatedVehicle.price == _vehicle.price) {
+        return;
+      }
+      setState(() {
+        _vehicleIndex = safeIndex;
+        _vehicle = updatedVehicle;
+        _draft = _draft.copyWith(
+          vehicle: updatedVehicle,
+          truckCategory: categoryForVehicleOption(updatedVehicle),
+          amount: _priceValue(updatedVehicle.price),
+        );
+        _amountController.text = _priceInputText(updatedVehicle.price);
+      });
+    }
+
+    ref.listen(vehicleTypesProvider, (previous, next) {
+      syncVehicleFromTypes(next.valueOrNull);
+    });
     ref.listen(clientPricingProvider, (previous, next) {
       final pricing = next.valueOrNull;
       if (pricing == null || !mounted) {
         return;
       }
+      // Live taxonomy already drives the picker — the legacy pricing tiers
+      // are only a fallback for when vehicle-types is unavailable.
+      final types = ref.read(vehicleTypesProvider).valueOrNull;
+      if (types != null && types.isNotEmpty) return;
       final vehicles = resolveVehicleOptions(
         tripType: widget.tripType,
         pricing: pricing,
@@ -3174,10 +3213,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       final safeIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
       final updatedVehicle = vehicles[safeIndex];
       setState(() {
+        _vehicleIndex = safeIndex;
         _vehicle = updatedVehicle;
         _draft = _draft.copyWith(
           vehicle: updatedVehicle,
-          truckCategory: _truckCategoryForVehicle(updatedVehicle.label),
+          truckCategory: categoryForVehicleOption(updatedVehicle),
           amount: _priceValue(updatedVehicle.price),
         );
         _amountController.text = _priceInputText(updatedVehicle.price);
@@ -4041,10 +4081,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildTruckCategoryPicker(BuildContext context) {
     final pricingState = ref.watch(clientPricingProvider);
+    final typesState = ref.watch(vehicleTypesProvider);
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
       pricing: pricingState.valueOrNull,
-      isLoading: pricingState.isLoading,
+      isLoading: typesState.isLoading,
+      vehicleTypes: typesState.valueOrNull,
     );
     final selectedIndex = vehicles.isEmpty
         ? 0

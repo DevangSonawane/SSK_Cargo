@@ -351,6 +351,7 @@ class TruckSize {
 
 class VehicleOption {
   const VehicleOption({
+    this.id = '',
     required this.label,
     required this.capacity,
     required this.price,
@@ -358,6 +359,10 @@ class VehicleOption {
     required this.assetPath,
   });
 
+  /// The real `truck_category` string sent to the backend (e.g. `14ft`,
+  /// `tata_ace`, `part`). Never derive this back out of [label] — see
+  /// `truckCategoryForVehicleOption` below.
+  final String id;
   final String label;
   final String capacity;
   final String price;
@@ -365,8 +370,202 @@ class VehicleOption {
   final String assetPath;
 }
 
+/// Closest of the 4 bundled artworks for a truck category — no per-type art
+/// exists in this app (same constraint as web's `truckImages.js` fix), so the
+/// 8 new types share the nearest size: small pickups → small art,
+/// 10ft/14ft → medium art, 17ft+ → big art.
+String assetPathForTruckCategory(String category) {
+  switch (category.trim().toLowerCase()) {
+    case '3_wheeler':
+    case '3-wheeler':
+    case '3 wheeler':
+    case 'tata_ace':
+    case 'tata-ace':
+    case 'tata ace':
+    case 'pickup_8ft':
+    case 'pickup-8ft':
+    case 'pickup 8ft':
+    case 'small':
+      return 'assets/trucks/small truck.png';
+    case 'pickup_10ft':
+    case 'pickup-10ft':
+    case 'pickup 10ft':
+    case '14ft':
+    case '14 ft':
+    case 'medium':
+      return 'assets/trucks/medium truck.png';
+    case '17ft':
+    case '17 ft':
+    case '19ft':
+    case '19 ft':
+    case '22ft':
+    case '22 ft':
+    case 'large':
+    case 'big':
+      return 'assets/trucks/big truck.png';
+    case 'part':
+    case 'pooling':
+    case 'truck pooling':
+    case 'part load':
+      return 'assets/trucks/truck pooling.png';
+    default:
+      return 'assets/trucks/big truck.png';
+  }
+}
+
+Color accentColorForTruckCategory(String category) {
+  switch (category.trim().toLowerCase()) {
+    case '3_wheeler':
+    case '3-wheeler':
+    case '3 wheeler':
+    case 'tata_ace':
+    case 'tata-ace':
+    case 'tata ace':
+    case 'pickup_8ft':
+    case 'pickup-8ft':
+    case 'pickup 8ft':
+    case 'small':
+      return const Color(0xFF2FA56E);
+    case 'pickup_10ft':
+    case 'pickup-10ft':
+    case 'pickup 10ft':
+    case '14ft':
+    case '14 ft':
+    case 'medium':
+      return const Color(0xFF1F88C9);
+    case '17ft':
+    case '17 ft':
+    case '19ft':
+    case '19 ft':
+    case '22ft':
+    case '22 ft':
+    case 'large':
+    case 'big':
+      return const Color(0xFF7A5AF8);
+    default:
+      return const Color(0xFFF59E0B);
+  }
+}
+
+/// Human label for a category when the API didn't supply one (fleet rows for
+/// trucks registered via web/admin, old categories, etc.).
+String labelForTruckCategory(String category, [String fallback = '']) {
+  switch (category.trim().toLowerCase()) {
+    case '3_wheeler':
+    case '3-wheeler':
+    case '3 wheeler':
+      return '3 Wheeler';
+    case 'tata_ace':
+    case 'tata-ace':
+    case 'tata ace':
+      return 'Tata Ace';
+    case 'pickup_8ft':
+    case 'pickup-8ft':
+    case 'pickup 8ft':
+      return 'Pickup 8ft';
+    case 'pickup_10ft':
+    case 'pickup-10ft':
+    case 'pickup 10ft':
+      return 'Pickup 10ft';
+    case '14ft':
+    case '14 ft':
+      return '14ft Truck';
+    case '17ft':
+    case '17 ft':
+      return '17ft Truck';
+    case '19ft':
+    case '19 ft':
+      return '19ft Truck';
+    case '22ft':
+    case '22 ft':
+      return '22ft Truck';
+    case 'small':
+      return 'Small truck';
+    case 'medium':
+      return 'Medium truck';
+    case 'large':
+    case 'big':
+      return 'Big truck';
+    case 'part':
+    case 'pooling':
+    case 'truck pooling':
+      return 'Part load';
+    case 'part load':
+      return 'Part load';
+    default:
+      if (fallback.trim().isNotEmpty) return fallback;
+      if (category.trim().isEmpty) return 'Truck';
+      final pretty = category
+          .replaceAll('_', ' ')
+          .replaceAll('-', ' ')
+          .trim()
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+          .join(' ');
+      return pretty.isEmpty ? 'Truck' : pretty;
+  }
+}
+
+/// Builds picker options from live vehicle-types — `id` → category to send,
+/// `name` → display label, `capacity` → subtitle, `basePrice` → card price
+/// (same as web: the response already carries the correct per-type minimum
+/// fare, no separate pricing call needed). Null/zero `basePrice` (e.g.
+/// `part`) shows a non-numeric placeholder so no fake fare is displayed.
+List<VehicleOption> vehicleOptionsFromTypes(List<VehicleType> types) {
+  return types.map((t) {
+    final price = (t.basePrice != null && t.basePrice! > 0)
+        ? _formatRupees(t.basePrice!)
+        : (t.id.trim().toLowerCase() == 'part' ? 'Shared' : 'On request');
+    return VehicleOption(
+      id: t.id,
+      label: t.name.isNotEmpty ? t.name : labelForTruckCategory(t.id),
+      capacity: t.capacity,
+      price: price,
+      accentColor: accentColorForTruckCategory(t.id),
+      assetPath: assetPathForTruckCategory(t.id),
+    );
+  }).toList(growable: false);
+}
+
+/// The category string to send for a picked option — always the option's own
+/// `id`, never guessed back out of its display label.
+String truckCategoryForVehicleOption(VehicleOption? option) {
+  return option?.id.trim() ?? '';
+}
+
+/// Legacy-aware wrapper: prefers the option's own `id`; only falls back to
+/// label matching for options built before `id` existed (old persisted
+/// drafts, old hardcoded entries). Covers both the old 4 labels and the 8
+/// new type labels so nothing ever sends an empty category.
+String categoryForVehicleOption(VehicleOption? option) {
+  final id = truckCategoryForVehicleOption(option);
+  if (id.isNotEmpty) return id;
+  final text = (option?.label ?? '').toLowerCase();
+  if (text.contains('3 wheeler') || text.contains('3_wheeler')) {
+    return '3_wheeler';
+  }
+  if (text.contains('tata ace') || text.contains('tata_ace')) return 'tata_ace';
+  if (text.contains('pickup 8') || text.contains('pickup_8')) {
+    return 'pickup_8ft';
+  }
+  if (text.contains('pickup 10') || text.contains('pickup_10')) {
+    return 'pickup_10ft';
+  }
+  if (text.contains('22ft') || text.contains('22 ft')) return '22ft';
+  if (text.contains('19ft') || text.contains('19 ft')) return '19ft';
+  if (text.contains('17ft') || text.contains('17 ft')) return '17ft';
+  if (text.contains('14ft') || text.contains('14 ft')) return '14ft';
+  if (text.contains('small')) return 'small';
+  if (text.contains('medium')) return 'medium';
+  if (text.contains('big') || text.contains('large')) return 'large';
+  if (text.contains('part') || text.contains('pool')) return 'part';
+  return '';
+}
+
 const vehicleOptions = <VehicleOption>[
   VehicleOption(
+    id: 'small',
     label: 'Small truck',
     capacity: 'Up to 1 Ton',
     price: '₹899',
@@ -374,6 +573,7 @@ const vehicleOptions = <VehicleOption>[
     assetPath: 'assets/trucks/small truck.png',
   ),
   VehicleOption(
+    id: 'medium',
     label: 'Medium truck',
     capacity: '1 - 5 Tons',
     price: '₹1,499',
@@ -381,6 +581,7 @@ const vehicleOptions = <VehicleOption>[
     assetPath: 'assets/trucks/medium truck.png',
   ),
   VehicleOption(
+    id: 'large',
     label: 'Big truck',
     capacity: '5 - 15 Tons',
     price: '₹2,299',
@@ -388,6 +589,7 @@ const vehicleOptions = <VehicleOption>[
     assetPath: 'assets/trucks/big truck.png',
   ),
   VehicleOption(
+    id: 'part',
     label: 'Truck pooling',
     capacity: 'Shared Space',
     price: '₹499',
@@ -400,11 +602,34 @@ List<VehicleOption> resolveVehicleOptions({
   required TripType tripType,
   ClientPricingConfig? pricing,
   required bool isLoading,
+  List<VehicleType>? vehicleTypes,
 }) {
+  // Live taxonomy (web parity: built from GET /api/config/vehicle-types).
+  // Takes precedence over the legacy hardcoded list + admin-pricing tiers —
+  // the response already carries the correct per-type `basePrice`.
+  if (vehicleTypes != null && vehicleTypes.isNotEmpty) {
+    if (isLoading) {
+      return vehicleOptionsFromTypes(vehicleTypes)
+          .map(
+            (vehicle) => VehicleOption(
+              id: vehicle.id,
+              label: vehicle.label,
+              capacity: vehicle.capacity,
+              price: 'Loading...',
+              accentColor: vehicle.accentColor,
+              assetPath: vehicle.assetPath,
+            ),
+          )
+          .toList(growable: false);
+    }
+    return vehicleOptionsFromTypes(vehicleTypes);
+  }
+
   if (isLoading) {
     return vehicleOptions
         .map(
           (vehicle) => VehicleOption(
+            id: vehicle.id,
             label: vehicle.label,
             capacity: vehicle.capacity,
             price: 'Loading...',
@@ -422,6 +647,7 @@ List<VehicleOption> resolveVehicleOptions({
   return vehicleOptions
       .map(
         (vehicle) => VehicleOption(
+          id: vehicle.id,
           label: vehicle.label,
           capacity: vehicle.capacity,
           price: _vehiclePriceLabel(

@@ -50,6 +50,24 @@ final clientPricingProvider = FutureProvider.autoDispose<ClientPricingConfig?>((
   }
 });
 
+/// Live truck taxonomy for pickers — `GET /api/config/vehicle-types`,
+/// same endpoint the web `BookTruck.jsx` picker is built from. Each entry
+/// carries its own `id` (the real `truck_category` string), display `name`,
+/// `capacity`, and `basePrice` minimum fare. Falls back to the static 8-type
+/// + part list when the endpoint is unreachable, so the picker never empties.
+final vehicleTypesProvider = FutureProvider.autoDispose<List<VehicleType>>((
+  ref,
+) async {
+  try {
+    final response = await ref.watch(apiClientProvider).getVehicleTypes();
+    final types = parseVehicleTypesResponse(response);
+    if (types.isNotEmpty) return types;
+  } catch (_) {
+    // Falls through to the static fallback below.
+  }
+  return fallbackVehicleTypes();
+});
+
 final clientBookingOffersProvider = FutureProvider.autoDispose
     .family<List<ClientBookingOffer>, String>((ref, bookingId) async {
       final session = ref.watch(authSessionProvider).valueOrNull;

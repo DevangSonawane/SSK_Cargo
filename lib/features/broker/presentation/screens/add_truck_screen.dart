@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../client/data/client_booking_models.dart';
+import '../../../client/presentation/controllers/client_bookings_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -29,14 +31,24 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
   BrokerDriver? _selectedDriver;
   int _selectedVehicleIndex = 1;
   bool _submitting = false;
+  // Tracks whether the user has tapped a tile yet — before that, an edit
+  // flow highlights by the existing truck's category (stable across the
+  // 4-item fallback → 9-item live list switch), not by a stale index.
+  bool _userPickedVehicle = false;
+  String _editingCategory = '';
 
   @override
   void initState() {
     super.initState();
     // Fresh driver options for the assignment dropdown — never cached.
-    ref.invalidate(
-      brokerDriversApiProvider((status: null, page: 1, limit: 50)),
-    );
+    // Deferred past the first frame: ref.invalidate() touches the provider
+    // container, which isn't reachable from initState itself.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(
+        brokerDriversApiProvider((status: null, page: 1, limit: 50)),
+      );
+    });
     final truck = widget.existingTruck;
     if (truck != null) {
       _registrationController.text = truck.plateNumber;
@@ -44,7 +56,14 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
       _makeController.text = truck.make;
       _yearController.text = truck.year;
       _insuranceExpiryController.text = truck.insuranceExpiry;
-      _selectedVehicleIndex = _vehicleIndexForLabel(truck.label);
+      _editingCategory = _categoryForExistingTruck(
+        label: truck.label,
+        category: truck.category,
+      );
+      _selectedVehicleIndex = _indexForCategory(
+        _optionsFromTypes(null),
+        _editingCategory,
+      );
     }
   }
 
@@ -56,6 +75,28 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     _yearController.dispose();
     _insuranceExpiryController.dispose();
     super.dispose();
+  }
+
+  List<VehicleOption> _resolveOptions() {
+    return _optionsFromTypes(ref.read(vehicleTypesProvider).valueOrNull);
+  }
+
+  /// Builds the grid options from live vehicle-types, falling back to the
+  /// static 9-item list (same as web's FALLBACK_TRUCKS) while loading or on
+  /// error — the grid always shows all 9 types, never the old hardcoded 4.
+  List<VehicleOption> _optionsFromTypes(List<VehicleType>? types) {
+    if (types != null && types.isNotEmpty) {
+      return vehicleOptionsFromTypes(types);
+    }
+    return vehicleOptionsFromTypes(fallbackVehicleTypes());
+  }
+
+  int _effectiveIndex(List<VehicleOption> options) {
+    if (!_userPickedVehicle && widget.existingTruck != null) {
+      return _indexForCategory(options, _editingCategory);
+    }
+    if (options.isEmpty) return 0;
+    return _selectedVehicleIndex.clamp(0, options.length - 1).toInt();
   }
 
   Future<void> _submitTruck() async {
@@ -71,7 +112,11 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final selectedVehicle = vehicleOptions[_selectedVehicleIndex];
+    // Live taxonomy (same endpoint the client picker uses) — falls back to
+    // the hardcoded list while loading so the grid never empties.
+    final options = _resolveOptions();
+    final selectedVehicle =
+        options[_effectiveIndex(options).clamp(0, options.length - 1).toInt()];
     final driver = _selectedDriver;
 
     final yearText = _yearController.text.trim();
@@ -84,7 +129,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     try {
       final truckPayload = <String, dynamic>{
         'type': selectedVehicle.label,
-        'category': _truckCategoryForVehicle(selectedVehicle.label),
+        'category': categoryForVehicleOption(selectedVehicle),
         'capacity': _capacityController.text.trim(),
         'make': _makeController.text.trim(),
         'year': year,
@@ -270,29 +315,42 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                           ),
                     ),
                     const SizedBox(height: 16),
-                    GridView.builder(
-                      itemCount: vehicleOptions.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: 1.08,
-                          ),
-                      itemBuilder: (context, index) {
-                        final vehicle = vehicleOptions[index];
-                        return VehicleSelectionTile(
-                          vehicle: vehicle,
-                          selected: _selectedVehicleIndex == index,
-                          onTap: () => setState(() {
-                            _selectedVehicleIndex = index;
-                            if (!isEditing &&
-                                _capacityController.text.trim().isEmpty) {
-                              _capacityController.text = vehicle.capacity;
-                            }
-                          }),
+                    Builder(
+                      builder: (context) {
+                        // watch (not read): rebuilds the grid when the live
+                        // 9-type list arrives instead of sticking to fallback.
+                        final typesState = ref.watch(vehicleTypesProvider);
+                        final options = _optionsFromTypes(
+                          typesState.valueOrNull,
+                        );
+                        final effectiveIndex =
+                            _effectiveIndex(options).clamp(0, options.length - 1).toInt();
+                        return GridView.builder(
+                          itemCount: options.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 14,
+                                crossAxisSpacing: 14,
+                                childAspectRatio: 1.08,
+                              ),
+                          itemBuilder: (context, index) {
+                            final vehicle = options[index];
+                            return VehicleSelectionTile(
+                              vehicle: vehicle,
+                              selected: effectiveIndex == index,
+                              onTap: () => setState(() {
+                                _userPickedVehicle = true;
+                                _selectedVehicleIndex = index;
+                                if (!isEditing &&
+                                    _capacityController.text.trim().isEmpty) {
+                                  _capacityController.text = vehicle.capacity;
+                                }
+                              }),
+                            );
+                          },
                         );
                       },
                     ),
@@ -530,18 +588,67 @@ String _extractEntityId(Map<String, dynamic> response) {
   return '';
 }
 
-int _vehicleIndexForLabel(String label) {
-  final lower = label.toLowerCase();
-  for (var i = 0; i < vehicleOptions.length; i++) {
-    final option = vehicleOptions[i];
-    if (option.label.toLowerCase() == lower) {
-      return i;
+int _indexForCategory(List<VehicleOption> options, String category) {
+  final want = category.trim().toLowerCase();
+  if (want.isNotEmpty) {
+    for (var i = 0; i < options.length; i++) {
+      if (options[i].id.trim().toLowerCase() == want) return i;
     }
   }
-  if (lower.contains('small')) return 0;
-  if (lower.contains('medium')) return 1;
-  if (lower.contains('big')) return 2;
-  return 3;
+  // Fallback while the live list hasn't loaded (or for legacy labels):
+  // closest size bucket rather than a wrong exact index.
+  if (want.isNotEmpty) {
+    if (const {'3_wheeler', 'tata_ace', 'pickup_8ft', 'small'}.contains(want)) {
+      return _indexForIdOr(options, const ['small'], 0);
+    }
+    if (const {'pickup_10ft', '14ft', 'medium'}.contains(want)) {
+      return _indexForIdOr(options, const ['medium'], 1);
+    }
+    if (const {'17ft', '19ft', '22ft', 'large', 'big'}.contains(want)) {
+      return _indexForIdOr(options, const ['large', 'big'], 2);
+    }
+    if (want == 'part' || want == 'pooling') {
+      return _indexForIdOr(options, const ['part'], options.length - 1);
+    }
+  }
+  return options.isEmpty ? 0 : options.length - 1;
+}
+
+int _indexForIdOr(
+  List<VehicleOption> options,
+  List<String> ids,
+  int fallback,
+) {
+  for (var i = 0; i < options.length; i++) {
+    if (ids.contains(options[i].id.trim().toLowerCase())) return i;
+  }
+  if (options.isEmpty) return 0;
+  return fallback.clamp(0, options.length - 1).toInt();
+}
+
+/// Real category for an existing truck — prefers the stored `category`,
+/// falls back to mapping its free-text label (old trucks predate ids).
+String _categoryForExistingTruck({required String label, String category = ''}) {
+  if (category.trim().isNotEmpty) return category.trim();
+  final text = label.toLowerCase();
+  if (text.contains('3 wheeler') || text.contains('3_wheeler')) {
+    return '3_wheeler';
+  }
+  if (text.contains('tata ace') || text.contains('tata_ace')) return 'tata_ace';
+  if (text.contains('pickup 8') || text.contains('pickup_8')) {
+    return 'pickup_8ft';
+  }
+  if (text.contains('pickup 10') || text.contains('pickup_10')) {
+    return 'pickup_10ft';
+  }
+  if (text.contains('22ft') || text.contains('22 ft')) return '22ft';
+  if (text.contains('19ft') || text.contains('19 ft')) return '19ft';
+  if (text.contains('17ft') || text.contains('17 ft')) return '17ft';
+  if (text.contains('14ft') || text.contains('14 ft')) return '14ft';
+  if (text.contains('small')) return 'small';
+  if (text.contains('medium')) return 'medium';
+  if (text.contains('big') || text.contains('large')) return 'large';
+  return 'part';
 }
 
 BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
@@ -551,14 +658,6 @@ BrokerDriver? _driverForName(List<BrokerDriver> drivers, String name) {
     }
   }
   return null;
-}
-
-String _truckCategoryForVehicle(String label) {
-  final text = label.toLowerCase();
-  if (text.contains('small')) return 'small';
-  if (text.contains('medium')) return 'medium';
-  if (text.contains('big')) return 'large';
-  return 'part';
 }
 
 String _driverInitials(String name) {

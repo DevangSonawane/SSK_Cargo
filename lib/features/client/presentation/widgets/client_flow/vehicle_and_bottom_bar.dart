@@ -27,10 +27,12 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final pricingState = ref.watch(clientPricingProvider);
+    final typesState = ref.watch(vehicleTypesProvider);
     final options = resolveVehicleOptions(
       tripType: widget.bookingData.tripType,
       pricing: pricingState.valueOrNull,
-      isLoading: pricingState.isLoading,
+      isLoading: typesState.isLoading,
+      vehicleTypes: typesState.valueOrNull,
     );
     final safeIndex = options.isEmpty
         ? 0

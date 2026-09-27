@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Fingerprint, Truck, ShieldCheck, UploadCloud, Info, Edit2, FileCheck, CheckCircle2, Eye } from "lucide-react";
+import { FileText, Fingerprint, Building2, CreditCard, FileCheck, UploadCloud, Info, Edit2, CheckCircle2, Eye } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { api } from "../../services/api";
 import KycStatusCard from "../../components/kyc/KycStatusCard";
 import KycSubmitForm from "../../components/kyc/KycSubmitForm";
 import KycDocumentUpload from "../../components/kyc/KycDocumentUpload";
+import KycVerificationPanel from "../../components/kyc/KycVerificationPanel";
 
 const FIELDS = [
-  { key: "license_number", label: "Driving License Number", placeholder: "MH-2020123456789", icon: CreditCard },
+  { key: "pan_number", label: "PAN Number", placeholder: "ABCDE1234F", icon: FileText },
   { key: "aadhaar_number", label: "Aadhaar Number", placeholder: "XXXX-XXXX-1234", icon: Fingerprint },
-  { key: "vehicle_registration_number", label: "Vehicle Registration Number", placeholder: "MH-12-CD-5678", icon: Truck },
-  { key: "vehicle_insurance_number", label: "Vehicle Insurance Number", placeholder: "INS-2024-567890", icon: ShieldCheck },
+  { key: "gst_number", label: "GST Number", placeholder: "27ABCDE1234F1Z5", icon: Building2 },
+  { key: "bank_account_number", label: "Bank Account Number", placeholder: "1234567890123", icon: CreditCard },
+  { key: "business_registration_number", label: "Business Registration Number", placeholder: "U12345MH2020PTC123456", icon: FileCheck },
 ];
 
 // documentKey must equal urlField — POST /api/kyc/documents/upload immediately merges
@@ -19,21 +21,22 @@ const FIELDS = [
 // field fetchKyc reads back, so an uploaded-but-not-yet-submitted photo survives a
 // refresh/tab-switch instead of only "really" saving once Submit is clicked.
 const PHOTO_FIELDS = {
-  license_number: { documentKey: "license_photo_url", urlField: "license_photo_url", label: "Driving License" },
+  pan_number: { documentKey: "pan_photo_url", urlField: "pan_photo_url", label: "PAN Card" },
   aadhaar_number: { documentKey: "aadhaar_photo_url", urlField: "aadhaar_photo_url", label: "Aadhaar Card" },
 };
 
-export default function DriverKYC() {
+export default function KYCStatus() {
   const { user, updateUser } = useAuth();
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [docFiles, setDocFiles] = useState({ license_number: null, aadhaar_number: null });
-  const [docUrls, setDocUrls] = useState({ license_number: null, aadhaar_number: null });
+  const [docFiles, setDocFiles] = useState({ pan_number: null, aadhaar_number: null });
+  const [docUrls, setDocUrls] = useState({ pan_number: null, aadhaar_number: null });
   const [uploadingKey, setUploadingKey] = useState(null);
   const [uploadError, setUploadError] = useState("");
+  const [liveValues, setLiveValues] = useState({});
 
   const token = user?.tokens?.access_token;
   const kycStatus = user?.kyc_status || "pending";
@@ -51,7 +54,7 @@ export default function DriverKYC() {
         if (data.data.kyc_status) updateUser({ kyc_status: data.data.kyc_status }, requestUserId);
         const docs = data.data.submission?.documents || {};
         setDocUrls({
-          license_number: docs[PHOTO_FIELDS.license_number.urlField] || null,
+          pan_number: docs[PHOTO_FIELDS.pan_number.urlField] || null,
           aadhaar_number: docs[PHOTO_FIELDS.aadhaar_number.urlField] || null,
         });
       }
@@ -94,7 +97,7 @@ export default function DriverKYC() {
       Object.entries(PHOTO_FIELDS).forEach(([key, { urlField }]) => {
         if (docUrls[key]) withPhotos[urlField] = docUrls[key];
       });
-      const result = await api.post("/api/kyc/driver", { documents: withPhotos }, token);
+      const result = await api.post("/api/kyc/broker", { documents: withPhotos }, token);
       if (!result.success) throw new Error(result.message || "Submission failed");
       setSubmission(result.data.submission);
       updateUser({ kyc_status: "submitted" }, requestUserId);
@@ -129,6 +132,7 @@ export default function DriverKYC() {
           submitting={submitting}
           buttonLabel={kycStatus === "rejected" || editing ? "Resubmit for Review" : "Submit for Review"}
           onCancel={editing ? () => setEditing(false) : undefined}
+          onValuesChange={setLiveValues}
         >
           <div className="bg-white rounded-2xl border border-slate-100 shadow-card p-6">
             <div className="flex items-center gap-2 mb-1">
@@ -139,13 +143,13 @@ export default function DriverKYC() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <KycDocumentUpload
-                label="Driving License"
-                icon={CreditCard}
-                file={docFiles.license_number}
-                existingUrl={docUrls.license_number}
-                uploading={uploadingKey === "license_number"}
-                onChange={(file) => handleFileChange("license_number", file)}
-                onRemove={() => handleFileRemove("license_number")}
+                label="PAN Card"
+                icon={FileText}
+                file={docFiles.pan_number}
+                existingUrl={docUrls.pan_number}
+                uploading={uploadingKey === "pan_number"}
+                onChange={(file) => handleFileChange("pan_number", file)}
+                onRemove={() => handleFileRemove("pan_number")}
               />
               <KycDocumentUpload
                 label="Aadhaar Card"
@@ -165,6 +169,13 @@ export default function DriverKYC() {
               </div>
             )}
           </div>
+
+          <KycVerificationPanel
+            token={token}
+            userName={user?.name}
+            values={liveValues}
+            initialResults={submission?.verification_results || {}}
+          />
         </KycSubmitForm>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
