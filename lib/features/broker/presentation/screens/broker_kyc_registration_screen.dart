@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/kyc_status_provider.dart';
+import '../../../../core/widgets/digilocker_verification_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
@@ -31,27 +31,15 @@ class _BrokerKycRegistrationScreenState
 
   final _panController = TextEditingController();
   final _aadhaarController = TextEditingController();
-  final _aadhaarOtpController = TextEditingController();
   final _gstController = TextEditingController();
   final _bankAccountController = TextEditingController();
-  final _bankAccountConfirmController = TextEditingController();
   final _businessRegController = TextEditingController();
 
   Timer? _refreshTimer;
-  Timer? _otpCooldownTimer;
 
   _KycStep _step = _KycStep.details;
   bool _initialLoading = true;
   bool _saving = false;
-  bool _panChecking = false;
-  bool _aadhaarChecking = false;
-  String _panVerificationStatus = 'idle';
-  String _aadhaarVerificationStatus = 'idle';
-  String? _panVerificationMessage;
-  String? _aadhaarVerificationMessage;
-  String? _aadhaarRefId;
-  bool _aadhaarOtpSent = false;
-  int _aadhaarCooldown = 0;
   String? _errorMessage;
   String? _statusLabel;
   String? _rejectionReason;
@@ -61,6 +49,50 @@ class _BrokerKycRegistrationScreenState
   bool _hasSubmission = false;
   String? _activeUserId;
   bool _sessionSyncQueued = false;
+  // Live DigiLocker state, mirrored out of DigilockerVerificationCard (see
+  // the driver screen for the full explanation): typed fallback numbers +
+  // per-document statuses. Drives the finish payload and whether the photo
+  // uploads (manual-review fallback only) are shown at all.
+  Map<String, String> _digiValues = {};
+  Map<String, String> _digiStatuses = {};
+
+  /// Web `allVerified` for the broker's required docs.
+  bool get _digiAllVerified => digilockerRequiredDocs(
+    'broker',
+  ).every((key) => _digiStatuses[key] == 'verified');
+
+  /// Web `needsFallback` (any): uploads stay hidden until a document
+  /// actually needs the manual-review fallback.
+  bool get _digiNeedsFallback => digilockerRequiredDocs(
+    'broker',
+  ).any((key) => const {'missing', 'failed', 'error', 'loading'}.contains(_digiStatuses[key]));
+
+  void _onDigiChanged(DigilockerVerificationSnapshot snapshot) {
+    _digiValues = snapshot.values;
+    _digiStatuses = snapshot.statuses;
+    // Mirror typed values into the inline controllers so the review step
+    // shows what was actually entered in the card. Setting .text
+    // programmatically doesn't re-fire onChanged — no loop.
+    _setControllerText(_panController, snapshot.values['pan_number']);
+    _setControllerText(_aadhaarController, snapshot.values['aadhaar_number']);
+    _setControllerText(_gstController, snapshot.values['gst_number']);
+    _setControllerText(
+      _bankAccountController,
+      snapshot.values['bank_account_number'],
+    );
+    _setControllerText(
+      _businessRegController,
+      snapshot.values['business_registration_number'],
+    );
+    if (mounted) setState(() {});
+  }
+
+  void _setControllerText(TextEditingController controller, String? value) {
+    if (value == null) return;
+    if (controller.text != value) {
+      controller.text = value;
+    }
+  }
   final Map<String, _KycAttachment> _attachments = {
     for (final doc in _kycDocuments)
       doc.key: doc.uploadable
@@ -86,14 +118,11 @@ class _BrokerKycRegistrationScreenState
   @override
   void dispose() {
     _refreshTimer?.cancel();
-    _otpCooldownTimer?.cancel();
     _confirmCheckboxController.dispose();
     _panController.dispose();
     _aadhaarController.dispose();
-    _aadhaarOtpController.dispose();
     _gstController.dispose();
     _bankAccountController.dispose();
-    _bankAccountConfirmController.dispose();
     _businessRegController.dispose();
     super.dispose();
   }
@@ -134,27 +163,6 @@ class _BrokerKycRegistrationScreenState
     return status.contains('reject') || status.contains('declin');
   }
 
-  bool _isPanValid(String value) {
-    return RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(value.trim());
-  }
-
-  bool _isAadhaarValid(String value) {
-    return value.replaceAll(' ', '').trim().length == 12 &&
-        RegExp(r'^\d{12}$').hasMatch(value.replaceAll(' ', '').trim());
-  }
-
-  bool _isGstValid(String value) {
-    return value.trim().length >= 10;
-  }
-
-  bool _isBankValid(String value) {
-    return RegExp(r'^\d{9,18}$').hasMatch(value.trim());
-  }
-
-  bool _isBusinessRegValid(String value) {
-    return value.trim().length >= 10;
-  }
-
   String _formatDateTime(DateTime value) {
     final local = value.toLocal();
     return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
@@ -180,6 +188,22 @@ class _BrokerKycRegistrationScreenState
       'bank_account_number': _bankAccountController.text.trim(),
       'business_registration_number': _businessRegController.text.trim(),
     };
+
+    // DigiLocker-card values win, and — web parity — only non-empty numbers
+    // are sent: verified documents need no number at all.
+    _digiValues.forEach((key, value) {
+      final text = value.trim();
+      if (text.isEmpty) {
+        payload.remove(key);
+      } else {
+        payload[key] = key == 'aadhaar_number'
+            ? text.replaceAll(' ', '')
+            : text;
+      }
+    });
+    payload.removeWhere(
+      (key, value) => value is String && value.trim().isEmpty,
+    );
 
     final panAttachment = _attachments['pan_photo_url'];
     final aadhaarAttachment = _attachments['aadhaar_photo_url'];
@@ -245,22 +269,13 @@ class _BrokerKycRegistrationScreenState
     _reviewedAt = null;
     _submissionId = null;
     _hasSubmission = false;
-    _panChecking = false;
-    _aadhaarChecking = false;
-    _panVerificationStatus = 'idle';
-    _aadhaarVerificationStatus = 'idle';
-    _panVerificationMessage = null;
-    _aadhaarVerificationMessage = null;
-    _aadhaarRefId = null;
-    _aadhaarOtpSent = false;
-    _aadhaarCooldown = 0;
+    _digiValues = {};
+    _digiStatuses = {};
     _resetAttachments();
     _panController.clear();
     _aadhaarController.clear();
-    _aadhaarOtpController.clear();
     _gstController.clear();
     _bankAccountController.clear();
-    _bankAccountConfirmController.clear();
     _businessRegController.clear();
   }
 
@@ -333,6 +348,15 @@ class _BrokerKycRegistrationScreenState
           }
           _applyUploadedDocumentsFromSubmission(documents);
 
+          // Prefill already-verified rows so the card shows them instead of
+          // asking again (web prefill effect). First load only.
+          if (_digiStatuses.isEmpty) {
+            _digiStatuses = parseVerificationStatuses(
+              submission?['verification_results'] as Map<String, dynamic>?,
+              digilockerRequiredDocs('broker'),
+            );
+          }
+
           if (!_hasSubmission) {
             _step = _KycStep.details;
           } else if (status != null && _isRejectedStatus(status)) {
@@ -357,150 +381,6 @@ class _BrokerKycRegistrationScreenState
               : error.toString();
         }
       });
-    }
-  }
-
-  void _startAadhaarCooldown() {
-    _otpCooldownTimer?.cancel();
-    setState(() => _aadhaarCooldown = 30);
-    _otpCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        _aadhaarCooldown = (_aadhaarCooldown - 1).clamp(0, 30);
-        if (_aadhaarCooldown == 0) {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  Future<void> _verifyPan() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || !_isPanValid(_panController.text)) return;
-    setState(() {
-      _panChecking = true;
-      _panVerificationStatus = 'loading';
-      _panVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .verifyPan(
-            accessToken: session.tokens.accessToken,
-            pan: _panController.text.trim(),
-            name: session.user.name,
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _panVerificationStatus = data['status']?.toString() ?? 'failed';
-        _panVerificationMessage =
-            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
-      });
-      ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _panVerificationStatus = 'error';
-        _panVerificationMessage = error.message;
-      });
-    } finally {
-      if (mounted) setState(() => _panChecking = false);
-    }
-  }
-
-  Future<void> _sendAadhaarOtp() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null ||
-        !_isAadhaarValid(_aadhaarController.text) ||
-        _aadhaarCooldown > 0) {
-      return;
-    }
-    setState(() {
-      _aadhaarChecking = true;
-      _aadhaarVerificationStatus = 'loading';
-      _aadhaarVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .sendAadhaarOtp(
-            accessToken: session.tokens.accessToken,
-            aadhaarNumber: _aadhaarController.text.replaceAll(' ', '').trim(),
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _aadhaarOtpSent = true;
-        _aadhaarRefId = data['refId']?.toString();
-        _aadhaarOtpController.clear();
-        _aadhaarVerificationStatus = 'idle';
-      });
-      _startAadhaarCooldown();
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      final message = error.message;
-      final alreadySentRecently =
-          message.toLowerCase().contains('otp') &&
-          message.toLowerCase().contains('recent');
-      final hasRef = _aadhaarRefId != null && _aadhaarRefId!.isNotEmpty;
-      setState(() {
-        if (alreadySentRecently && hasRef) {
-          _aadhaarOtpSent = true;
-          _aadhaarVerificationStatus = 'idle';
-          _aadhaarVerificationMessage =
-              'OTP already sent. Enter the latest code below.';
-        } else {
-          _aadhaarVerificationStatus = 'error';
-          _aadhaarVerificationMessage = message;
-        }
-      });
-      _startAadhaarCooldown();
-    } finally {
-      if (mounted) setState(() => _aadhaarChecking = false);
-    }
-  }
-
-  Future<void> _verifyAadhaarOtp() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    final refId = _aadhaarRefId;
-    if (session == null ||
-        refId == null ||
-        _aadhaarOtpController.text.trim().length != 6) {
-      return;
-    }
-    setState(() {
-      _aadhaarChecking = true;
-      _aadhaarVerificationStatus = 'loading';
-      _aadhaarVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .verifyAadhaarOtp(
-            accessToken: session.tokens.accessToken,
-            refId: refId,
-            otp: _aadhaarOtpController.text.trim(),
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _aadhaarVerificationStatus = data['status']?.toString() ?? 'failed';
-        _aadhaarVerificationMessage =
-            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
-      });
-      ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _aadhaarVerificationStatus = 'error';
-        _aadhaarVerificationMessage = error.message;
-      });
-    } finally {
-      if (mounted) setState(() => _aadhaarChecking = false);
     }
   }
 
@@ -915,12 +795,11 @@ class _BrokerKycRegistrationScreenState
   }
 
   Widget _buildDetailsStep(BuildContext context) {
-    final panValid = _isPanValid(_panController.text);
-    final aadhaarValid = _isAadhaarValid(_aadhaarController.text);
-    final gstValid = _isGstValid(_gstController.text);
-    final bankValid = _isBankValid(_bankAccountController.text);
-    final businessValid = _isBusinessRegValid(_businessRegController.text);
-
+    // Verification step: one DigiLocker sign-in covers Aadhaar + PAN, with
+    // number-entry fallbacks only for documents DigiLocker couldn't supply
+    // (web Onboarding.jsx). No OTP anywhere — it isn't enabled on this
+    // account. Business fields live inside the card as optional details.
+    final session = ref.watch(authSessionProvider).valueOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -933,189 +812,19 @@ class _BrokerKycRegistrationScreenState
           ),
         ),
         const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _panController,
-          label: 'PAN Number',
-          hintText: 'ABCDE1234F',
-          textCapitalization: TextCapitalization.characters,
-          valid: panValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _panVerificationStatus = 'idle';
-          }),
-          requiredField: false,
-        ),
-        const SizedBox(height: 8),
-        _VerificationActionCard(
-          label: 'PAN',
-          status: _panVerificationStatus,
-          message: _panVerificationMessage,
-          buttonLabel: 'Verify PAN',
-          loading: _panChecking,
-          onPressed: panValid && !_panChecking ? _verifyPan : null,
-        ),
-        const SizedBox(height: 9),
-        _PremiumTextField(
-          controller: _aadhaarController,
-          label: 'Aadhaar Number',
-          hintText: 'XXXX XXXX XXXX',
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(12),
-            _AadhaarSpacingFormatter(),
-          ],
-          valid: aadhaarValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _aadhaarOtpSent = false;
-            _aadhaarRefId = null;
-            _aadhaarVerificationStatus = 'idle';
-          }),
-          requiredField: false,
-        ),
-        const SizedBox(height: 8),
-        _VerificationActionCard(
-          label: 'Aadhaar',
-          status: _aadhaarVerificationStatus,
-          message: _aadhaarVerificationMessage,
-          buttonLabel: _aadhaarOtpSent
-              ? (_aadhaarCooldown > 0
-                    ? 'Resend in ${_aadhaarCooldown}s'
-                    : 'Resend OTP')
-              : 'Send OTP',
-          loading: _aadhaarChecking,
-          onPressed: aadhaarValid && !_aadhaarChecking && _aadhaarCooldown == 0
-              ? _sendAadhaarOtp
-              : null,
-          child: _aadhaarOtpSent && _aadhaarVerificationStatus != 'verified'
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _aadhaarVerificationMessage ??
-                            'OTP sent. Enter the 6-digit code below.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _aadhaarOtpController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(6),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: '6-digit OTP',
-                          prefixIcon: const Icon(
-                            AppIcons.key_rounded,
-                            size: 18,
-                          ),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 13,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.line),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.line),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.brand,
-                              width: 1.4,
-                            ),
-                          ),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 10),
-                      FilledButton(
-                        onPressed:
-                            _aadhaarRefId != null &&
-                                _aadhaarOtpController.text.length == 6 &&
-                                !_aadhaarChecking
-                            ? _verifyAadhaarOtp
-                            : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Verify OTP'),
-                      ),
-                    ],
-                  ),
-                )
-              : null,
-        ),
-        const SizedBox(height: 9),
-        _PremiumTextField(
-          controller: _gstController,
-          label: 'GST Number',
-          hintText: '27ABCDE1234F1Z5',
-          textCapitalization: TextCapitalization.characters,
-          valid: gstValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-          requiredField: false,
-        ),
-        const SizedBox(height: 9),
-        _PremiumTextField(
-          controller: _bankAccountController,
-          label: 'Bank Account Number',
-          hintText: '1234567890123',
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(18),
-          ],
-          valid: bankValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-          requiredField: false,
-        ),
-        const SizedBox(height: 9),
-        _PremiumTextField(
-          controller: _bankAccountConfirmController,
-          label: 'Confirm Account Number',
-          hintText: 'Optional',
-          requiredField: false,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(18),
-          ],
-          valid:
-              _bankAccountConfirmController.text.trim().isNotEmpty &&
-              _bankAccountConfirmController.text.trim() ==
-                  _bankAccountController.text.trim(),
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 9),
-        _PremiumTextField(
-          controller: _businessRegController,
-          label: 'Business Registration Number',
-          hintText: 'U12345MH2020PTC123456',
-          textCapitalization: TextCapitalization.characters,
-          valid: businessValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-          requiredField: false,
+        DigilockerVerificationCard(
+          role: 'broker',
+          accessToken: session?.tokens.accessToken ?? '',
+          userName: session?.user.name ?? '',
+          initialValues: {
+            'pan_number': _panController.text,
+            'aadhaar_number': _aadhaarController.text,
+            'gst_number': _gstController.text,
+            'bank_account_number': _bankAccountController.text,
+            'business_registration_number': _businessRegController.text,
+          },
+          initialStatuses: _digiStatuses,
+          onChanged: _onDigiChanged,
         ),
         if (_rejectionReason != null) ...[
           const SizedBox(height: 14),
@@ -1130,28 +839,97 @@ class _BrokerKycRegistrationScreenState
   }
 
   Widget _buildDocumentsStep(BuildContext context) {
+    // Document photos are only useful for the manual-review fallback — the
+    // normal DigiLocker path needs none. When everything verified, this step
+    // is just a confirmation to continue through.
+    if (!_digiNeedsFallback) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SectionHeader(
+            title: 'Upload Documents',
+            subtitle:
+                'All your documents are verified through DigiLocker — nothing to upload.',
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.brandTint,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.brandBorder),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  AppIcons.verified_rounded,
+                  color: AppColors.successText,
+                  size: 22,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Aadhaar and PAN verified. Continue to review and finish.',
+                    style: TextStyle(
+                      color: AppColors.successText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 14),
+            _WarningCard(message: _errorMessage!),
+          ],
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(
           title: 'Upload Documents',
-          subtitle: 'Upload clear photos of the following documents.',
+          subtitle:
+              'These photos support manual review for the documents DigiLocker couldn’t confirm.',
         ),
         const SizedBox(height: 12),
-        for (var i = 0; i < _kycDocuments.length; i++) ...[
-          _KycUploadCard(
-            document: _kycDocuments[i],
-            attachment:
-                _attachments[_kycDocuments[i].key] ?? const _KycAttachment(),
-            onUpload: () => _showUploadOptions(_kycDocuments[i]),
-            onCamera: () => _pickDocument(_kycDocuments[i], ImageSource.camera),
-            onGallery: () =>
-                _pickDocument(_kycDocuments[i], ImageSource.gallery),
-            onView: () => _showAttachmentPreview(_kycDocuments[i].key),
-            onReplace: () => _showUploadOptions(_kycDocuments[i]),
-          ),
-          if (i != _kycDocuments.length - 1) const SizedBox(height: 9),
-        ],
+        Builder(
+          builder: (context) {
+            // Web parity: only the documents DigiLocker couldn't confirm
+            // show a photo card — verified ones never show "Not uploaded".
+            final fallbackDocs = _kycDocuments.where((doc) {
+              final key = digiDocKeyForUploadKey(doc.key);
+              return key != null && digiNeedsFallback(_digiStatuses[key]);
+            }).toList(growable: false);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < fallbackDocs.length; i++) ...[
+                  _KycUploadCard(
+                    document: fallbackDocs[i],
+                    attachment:
+                        _attachments[fallbackDocs[i].key] ??
+                        const _KycAttachment(),
+                    onUpload: () => _showUploadOptions(fallbackDocs[i]),
+                    onCamera: () =>
+                        _pickDocument(fallbackDocs[i], ImageSource.camera),
+                    onGallery: () =>
+                        _pickDocument(fallbackDocs[i], ImageSource.gallery),
+                    onView: () =>
+                        _showAttachmentPreview(fallbackDocs[i].key),
+                    onReplace: () => _showUploadOptions(fallbackDocs[i]),
+                  ),
+                  if (i != fallbackDocs.length - 1)
+                    const SizedBox(height: 9),
+                ],
+              ],
+            );
+          },
+        ),
         if (_errorMessage != null) ...[
           const SizedBox(height: 14),
           _WarningCard(message: _errorMessage!),
@@ -1161,7 +939,13 @@ class _BrokerKycRegistrationScreenState
   }
 
   Widget _buildReviewStep(BuildContext context) {
+    // Same filter as the uploads step: review lists only documents that
+    // went through the manual-review fallback.
     final uploadedItems = _kycDocuments
+        .where((doc) {
+          final key = digiDocKeyForUploadKey(doc.key);
+          return key != null && digiNeedsFallback(_digiStatuses[key]);
+        })
         .map(
           (doc) =>
               MapEntry(doc, _attachments[doc.key] ?? const _KycAttachment()),
@@ -1219,25 +1003,28 @@ class _BrokerKycRegistrationScreenState
           ),
         ),
         const SizedBox(height: 10),
-        _CardSection(
-          title: 'Uploaded Documents',
-          child: Column(
-            children: [
-              for (var i = 0; i < uploadedItems.length; i++) ...[
-                _ReviewDocumentRow(
-                  document: uploadedItems[i].key,
-                  title: uploadedItems[i].key.title,
-                  attachment: uploadedItems[i].value,
-                  onView: () =>
-                      _showAttachmentPreview(uploadedItems[i].key.key),
-                  onReplace: () => _showUploadOptions(uploadedItems[i].key),
-                ),
-                if (i != uploadedItems.length - 1) const SizedBox(height: 8),
+        if (uploadedItems.isNotEmpty) ...[
+          _CardSection(
+            title: 'Uploaded Documents',
+            child: Column(
+              children: [
+                for (var i = 0; i < uploadedItems.length; i++) ...[
+                  _ReviewDocumentRow(
+                    document: uploadedItems[i].key,
+                    title: uploadedItems[i].key.title,
+                    attachment: uploadedItems[i].value,
+                    onView: () =>
+                        _showAttachmentPreview(uploadedItems[i].key.key),
+                    onReplace: () => _showUploadOptions(uploadedItems[i].key),
+                  ),
+                  if (i != uploadedItems.length - 1)
+                    const SizedBox(height: 8),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
+        ],
         _WarningCard(
           message:
               'Please verify all information carefully. Incorrect information may delay KYC approval.',
@@ -1690,7 +1477,9 @@ class _BrokerKycRegistrationScreenState
       return const SizedBox.shrink();
     }
 
-    final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
+    final label = _step == _KycStep.review
+        ? (_digiAllVerified ? 'Finish' : 'Submit KYC')
+        : 'Continue';
     final action = _step == _KycStep.details
         ? () {
             setState(() {
@@ -2110,255 +1899,6 @@ class _WarningCard extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VerificationActionCard extends StatelessWidget {
-  const _VerificationActionCard({
-    required this.label,
-    required this.status,
-    required this.buttonLabel,
-    required this.onPressed,
-    this.message,
-    this.loading = false,
-    this.child,
-  });
-
-  final String label;
-  final String status;
-  final String buttonLabel;
-  final VoidCallback? onPressed;
-  final String? message;
-  final bool loading;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalized = status.trim().toLowerCase();
-    final color = switch (normalized) {
-      'verified' => AppColors.successText,
-      'failed' => AppColors.dangerText,
-      'error' => const Color(0xFFD97706),
-      'loading' => AppColors.textTertiary,
-      _ => AppColors.textTertiary,
-    };
-    final icon = switch (normalized) {
-      'verified' => AppIcons.verified_rounded,
-      'failed' || 'error' => AppIcons.error_outline_rounded,
-      'loading' => AppIcons.hourglass_top_rounded,
-      _ => AppIcons.shield_outlined,
-    };
-    final statusText = switch (normalized) {
-      'verified' => 'Verified',
-      'failed' => "Details didn't match",
-      'error' => message ?? "Couldn't verify, try again",
-      'loading' => 'Checking...',
-      _ => 'Not verified yet',
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(icon, size: 15, color: color),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            statusText,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: onPressed,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brand,
-                  side: const BorderSide(color: AppColors.brandBorder),
-                ),
-                child: loading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(buttonLabel),
-              ),
-            ],
-          ),
-          ?child,
-        ],
-      ),
-    );
-  }
-}
-
-class _PremiumTextField extends StatelessWidget {
-  const _PremiumTextField({
-    required this.controller,
-    required this.label,
-    required this.hintText,
-    required this.valid,
-    required this.validator,
-    required this.onChanged,
-    this.requiredField = true,
-    this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
-    this.inputFormatters,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String hintText;
-  final bool valid;
-  final FormFieldValidator<String> validator;
-  final ValueChanged<String> onChanged;
-  final bool requiredField;
-  final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
-  final List<TextInputFormatter>? inputFormatters;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = controller.text.trim().isNotEmpty;
-    final statusIcon = !hasValue
-        ? AppIcons.radio_button_unchecked_rounded
-        : valid
-        ? AppIcons.check_rounded
-        : AppIcons.close_rounded;
-    final statusColor = !hasValue
-        ? AppColors.textTertiary
-        : valid
-        ? AppColors.brand
-        : AppColors.dangerIcon;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      label,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (requiredField) ...[
-                      const SizedBox(width: 4),
-                      const Text(
-                        '*',
-                        style: TextStyle(
-                          color: AppColors.dangerIcon,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: controller,
-                  validator: validator,
-                  keyboardType: keyboardType,
-                  textCapitalization: textCapitalization,
-                  inputFormatters: inputFormatters,
-                  onChanged: onChanged,
-                  cursorColor: AppColors.brand,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 13,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.line),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.line),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.brand,
-                        width: 1.4,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.dangerBorder,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.dangerIcon,
-                        width: 1.4,
-                      ),
-                    ),
-                    hintText: hintText,
-                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(statusIcon, color: statusColor, size: 14),
         ],
       ),
     );
@@ -2805,30 +2345,6 @@ class _SheetAction extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AadhaarSpacingFormatter extends TextInputFormatter {
-  const _AadhaarSpacingFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      buffer.write(digits[i]);
-      if (i == 3 || i == 7) {
-        buffer.write(' ');
-      }
-    }
-    final text = buffer.toString().trimRight();
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

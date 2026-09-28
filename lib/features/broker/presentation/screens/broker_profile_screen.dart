@@ -61,6 +61,12 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     }
   }
 
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() => _loadingKyc = true);
+    await _loadKycStatus();
+  }
+
   void _syncKycStateForSession(String? userId) {
     _sessionSyncQueued = false;
     _activeUserId = userId;
@@ -96,77 +102,80 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
-          children: [
-            BrokerBackButton(onTap: () => context.go('/broker/home')),
-            const SizedBox(height: 10),
-            _ProfileCard(user: user, kycApproved: !_loadingKyc && _kycApproved),
-            const SizedBox(height: 16),
-            _ProfileSection(
-              title: 'Account',
-              children: [
-                _ProfileMenuTile(
-                  title: 'Manage Account',
-                  subtitle: 'Profile details, security, and preferences',
-                  icon: AppIcons.person_outline_rounded,
-                  onTap: () => context.push('/manage-account'),
-                ),
-                _ProfileMenuTile(
-                  title: 'Earnings',
-                  subtitle: 'Revenue and settlement performance',
-                  icon: AppIcons.trending_up_rounded,
-                  accent: AppColors.brand,
-                  onTap: () => context.push('/broker/earnings'),
-                ),
-                _ProfileMenuTile(
-                  title: 'KYC Registration',
-                  subtitle: _loadingKyc
-                      ? 'Checking verification status'
-                      : _kycApproved
-                      ? 'Verified'
-                      : 'Complete your broker verification',
-                  icon: _kycApproved
-                      ? AppIcons.verified_rounded
-                      : AppIcons.verified_user_outlined,
-                  accent: _kycApproved
-                      ? AppColors.brand
-                      : AppColors.warningText,
-                  highlighted: !_loadingKyc && !_kycApproved,
-                  onTap: () => context.push('/broker/kyc-registration'),
-                ),
-                _ProfileMenuTile(
-                  title: 'Change Password',
-                  subtitle: 'Update your sign-in credentials',
-                  icon: AppIcons.lock_outline_rounded,
-                  onTap: () => context.push('/change-password'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _ProfileSection(
-              title: 'Support',
-              children: [
-                _ProfileMenuTile(
-                  title: 'Help & Support',
-                  subtitle: 'Contact support for account or trip issues',
-                  icon: AppIcons.support_agent_rounded,
-                  accent: AppColors.brand,
-                  onTap: () {},
-                ),
-                _ProfileMenuTile(
-                  title: 'Logout',
-                  subtitle: 'Sign out from this device',
-                  icon: AppIcons.logout_rounded,
-                  accent: AppColors.dangerIcon,
-                  onTap: () async {
-                    await ref.read(authSessionProvider.notifier).logout();
-                    if (context.mounted) context.go('/login');
-                  },
-                ),
-              ],
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
+            children: [
+              BrokerBackButton(onTap: () => context.go('/broker/home')),
+              const SizedBox(height: 10),
+              _ProfileCard(user: user, kycApproved: !_loadingKyc && _kycApproved),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: 'Account',
+                children: [
+                  _ProfileMenuTile(
+                    title: 'Manage Account',
+                    subtitle: 'Profile details, security, and preferences',
+                    icon: AppIcons.person_outline_rounded,
+                    onTap: () => context.push('/manage-account'),
+                  ),
+                  _ProfileMenuTile(
+                    title: 'Earnings',
+                    subtitle: 'Revenue and settlement performance',
+                    icon: AppIcons.trending_up_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/broker/earnings'),
+                  ),
+                  _ProfileMenuTile(
+                    title: 'KYC Registration',
+                    subtitle: _loadingKyc
+                        ? 'Checking verification status'
+                        : _kycApproved
+                        ? 'Verified'
+                        : 'Complete your broker verification',
+                    icon: _kycApproved
+                        ? AppIcons.verified_rounded
+                        : AppIcons.verified_user_outlined,
+                    accent: _kycApproved
+                        ? AppColors.brand
+                        : AppColors.warningText,
+                    highlighted: !_loadingKyc && !_kycApproved,
+                    onTap: () => context.push('/broker/kyc-registration'),
+                  ),
+                  _ProfileMenuTile(
+                    title: 'Change Password',
+                    subtitle: 'Update your sign-in credentials',
+                    icon: AppIcons.lock_outline_rounded,
+                    onTap: () => context.push('/change-password'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: 'Support',
+                children: [
+                  _ProfileMenuTile(
+                    title: 'Help & Support',
+                    subtitle: 'Contact support for account or trip issues',
+                    icon: AppIcons.support_agent_rounded,
+                    accent: AppColors.brand,
+                    onTap: () {},
+                  ),
+                  _ProfileMenuTile(
+                    title: 'Logout',
+                    subtitle: 'Sign out from this device',
+                    icon: AppIcons.logout_rounded,
+                    accent: AppColors.dangerIcon,
+                    onTap: () async {
+                      await ref.read(authSessionProvider.notifier).logout();
+                      if (context.mounted) context.go('/login');
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

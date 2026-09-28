@@ -783,6 +783,9 @@ String _driverRequestStatusLabel(DriverRequestItem request) {
     return 'Broker handoff active';
   }
   if (status == 'countered') {
+    if (request.canNegotiate) {
+      return 'Client countered. Open the request to respond.';
+    }
     return 'Waiting for the client response';
   }
   if (status == 'awaiting_confirmation') {

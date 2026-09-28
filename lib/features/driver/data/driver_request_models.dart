@@ -69,14 +69,26 @@ class DriverRequestItem {
   final String tripId;
   final Map<String, dynamic> raw;
 
-  bool get canNegotiate =>
-      !driverTimedOut &&
-      jobRequestId.isEmpty &&
-      (status.toLowerCase().isEmpty ||
-          status.toLowerCase() == 'requested' ||
-          status.toLowerCase() == 'pending' ||
-          (status.toLowerCase() == 'awaiting_confirmation' &&
-              pendingConfirmationBy.toLowerCase() == 'client'));
+  String get latestOfferBy {
+    final history = _asList(raw['offerHistory'] ?? raw['offer_history']);
+    if (history.isEmpty) return '';
+    final last = _asMap(history.last);
+    return _readString(last, const ['by', 'actor', 'from']).toLowerCase();
+  }
+
+  bool get canNegotiate {
+    final normalizedStatus = status.trim().toLowerCase();
+    final latestBy = latestOfferBy;
+    return !driverTimedOut &&
+        jobRequestId.isEmpty &&
+        (normalizedStatus.isEmpty ||
+            normalizedStatus == 'requested' ||
+            normalizedStatus == 'pending' ||
+            (normalizedStatus == 'countered' &&
+                (latestBy.isEmpty || latestBy == 'client')) ||
+            (normalizedStatus == 'awaiting_confirmation' &&
+                pendingConfirmationBy.toLowerCase() == 'client'));
+  }
 
   bool get isBrokerAssigned => jobRequestId.isNotEmpty;
 

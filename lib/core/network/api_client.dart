@@ -2180,6 +2180,34 @@ class SskApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> startDigilockerVerification({
+    required String accessToken,
+    required String redirectUrl,
+  }) async {
+    developer.log('POST /api/kyc/verify/digilocker/start', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/digilocker/start',
+        data: {'redirect_url': redirectUrl},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getDigilockerStatus({
+    required String accessToken,
+    required String verificationId,
+  }) async {
+    developer.log('GET /api/kyc/verify/digilocker/status', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/kyc/verify/digilocker/status',
+        queryParameters: {'verification_id': verificationId},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> sendAadhaarOtp({
     required String accessToken,
     required String aadhaarNumber,
@@ -2341,13 +2369,33 @@ class SskApiClient {
   String _extractMessage(DioException error) {
     final responseData = error.response?.data;
     if (responseData is Map<String, dynamic>) {
+      // Validation (422): the top-level message is just "Validation failed" —
+      // the useful text lives in errors[].msg, joined the way the web app
+      // shows it. Prefer it whenever the top-level message is generic.
+      final errors = responseData['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final parts = <String>[];
+        for (final entry in errors) {
+          if (entry is Map) {
+            final text = (entry['msg'] ?? entry['message'])?.toString().trim();
+            if (text != null && text.isNotEmpty) parts.add(text);
+          } else if (entry != null) {
+            final text = entry.toString().trim();
+            if (text.isNotEmpty) parts.add(text);
+          }
+        }
+        if (parts.isNotEmpty) {
+          final message = responseData['message']?.toString().trim() ?? '';
+          if (message.isEmpty ||
+              message.toLowerCase() == 'validation failed') {
+            return parts.join('; ');
+          }
+          return message;
+        }
+      }
       final message = responseData['message'];
       if (message != null) {
         return message.toString();
-      }
-      final errors = responseData['errors'];
-      if (errors != null) {
-        return errors.toString();
       }
     }
     if (responseData != null) {

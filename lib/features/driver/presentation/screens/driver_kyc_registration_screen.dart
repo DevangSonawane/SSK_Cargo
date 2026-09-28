@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/kyc_status_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/digilocker_verification_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
@@ -33,28 +33,14 @@ class _DriverKycRegistrationScreenState
   final _dobController = TextEditingController();
   final _licenseController = TextEditingController();
   final _aadhaarController = TextEditingController();
-  final _aadhaarOtpController = TextEditingController();
   final _vehicleRegController = TextEditingController();
   final _vehicleInsuranceController = TextEditingController();
 
   Timer? _refreshTimer;
-  Timer? _otpCooldownTimer;
 
   _KycStep _step = _KycStep.details;
   bool _initialLoading = true;
   bool _saving = false;
-  bool _panChecking = false;
-  bool _dlChecking = false;
-  bool _aadhaarChecking = false;
-  String _panVerificationStatus = 'idle';
-  String _dlVerificationStatus = 'idle';
-  String _aadhaarVerificationStatus = 'idle';
-  String? _panVerificationMessage;
-  String? _dlVerificationMessage;
-  String? _aadhaarVerificationMessage;
-  String? _aadhaarRefId;
-  bool _aadhaarOtpSent = false;
-  int _aadhaarCooldown = 0;
   String? _errorMessage;
   String? _statusLabel;
   String? _rejectionReason;
@@ -62,6 +48,12 @@ class _DriverKycRegistrationScreenState
   DateTime? _reviewedAt;
   String? _submissionId;
   bool _hasSubmission = false;
+  // Live DigiLocker state, mirrored out of DigilockerVerificationCard: typed
+  // fallback numbers + per-document result statuses. Drives the finish
+  // payload, the Finish / Submit-for-review label, and whether the photo
+  // uploads (manual-review fallback only) are shown at all.
+  Map<String, String> _digiValues = {};
+  Map<String, String> _digiStatuses = {};
   final Map<String, _KycAttachment> _attachments = {
     for (final doc in _kycDocuments) doc.key: const _KycAttachment(),
   };
@@ -80,13 +72,11 @@ class _DriverKycRegistrationScreenState
   @override
   void dispose() {
     _refreshTimer?.cancel();
-    _otpCooldownTimer?.cancel();
     _confirmCheckboxController.dispose();
     _panController.dispose();
     _dobController.dispose();
     _licenseController.dispose();
     _aadhaarController.dispose();
-    _aadhaarOtpController.dispose();
     _vehicleRegController.dispose();
     _vehicleInsuranceController.dispose();
     super.dispose();
@@ -133,30 +123,44 @@ class _DriverKycRegistrationScreenState
     return status.contains('reject') || status.contains('declin');
   }
 
-  bool _isLicenseValid(String value) {
-    return value.trim().length >= 8;
+  /// Web `allVerified`: every required document verified through DigiLocker
+  /// or a fallback number check.
+  bool get _digiAllVerified => digilockerRequiredDocs(
+    'driver',
+  ).every((key) => _digiStatuses[key] == 'verified');
+
+  /// Web `needsFallback` (any): photo uploads are only useful for the
+  /// manual-review fallback, so the uploads card stays hidden until a
+  /// document actually needs it.
+  bool get _digiNeedsFallback => digilockerRequiredDocs(
+    'driver',
+  ).any((key) => const {'missing', 'failed', 'error', 'loading'}.contains(_digiStatuses[key]));
+
+  void _onDigiChanged(DigilockerVerificationSnapshot snapshot) {
+    _digiValues = snapshot.values;
+    _digiStatuses = snapshot.statuses;
+    // Mirror typed values into the inline controllers (same no-loop note as
+    // the broker screen) so review/submitted cards show live values.
+    _setControllerText(_panController, snapshot.values['pan_number']);
+    _setControllerText(_dobController, snapshot.values['date_of_birth']);
+    _setControllerText(_licenseController, snapshot.values['license_number']);
+    _setControllerText(_aadhaarController, snapshot.values['aadhaar_number']);
+    _setControllerText(
+      _vehicleRegController,
+      snapshot.values['vehicle_registration_number'],
+    );
+    _setControllerText(
+      _vehicleInsuranceController,
+      snapshot.values['vehicle_insurance_number'],
+    );
+    if (mounted) setState(() {});
   }
 
-  bool _isPanValid(String value) {
-    return RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(value.trim());
-  }
-
-  bool _isDobValid(String value) {
-    return RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value.trim()) &&
-        DateTime.tryParse(value.trim()) != null;
-  }
-
-  bool _isAadhaarValid(String value) {
-    final normalized = value.replaceAll(' ', '').trim();
-    return normalized.length == 12 && RegExp(r'^\d{12}$').hasMatch(normalized);
-  }
-
-  bool _isVehicleRegValid(String value) {
-    return value.trim().length >= 6;
-  }
-
-  bool _isInsuranceValid(String value) {
-    return value.trim().length >= 6;
+  void _setControllerText(TextEditingController controller, String? value) {
+    if (value == null) return;
+    if (controller.text != value) {
+      controller.text = value;
+    }
   }
 
   String _formatDateTime(DateTime value) {
@@ -187,6 +191,23 @@ class _DriverKycRegistrationScreenState
       'vehicle_registration_number': _vehicleRegController.text.trim(),
       'vehicle_insurance_number': _vehicleInsuranceController.text.trim(),
     };
+
+    // DigiLocker-card values win over the (now secondary) inline fields, and
+    // — web parity — only non-empty numbers are sent: verified documents
+    // need no number at all, unverified ones 422 without it.
+    _digiValues.forEach((key, value) {
+      final text = value.trim();
+      if (text.isEmpty) {
+        payload.remove(key);
+      } else {
+        payload[key] = key == 'aadhaar_number'
+            ? text.replaceAll(' ', '')
+            : text;
+      }
+    });
+    payload.removeWhere(
+      (key, value) => value is String && value.trim().isEmpty,
+    );
 
     final panAttachment = _attachments['pan_photo_url'];
     final licenseAttachment = _attachments['license_photo_url'];
@@ -307,6 +328,16 @@ class _DriverKycRegistrationScreenState
           }
           _applyUploadedDocumentsFromSubmission(documents);
 
+          // Prefill already-verified rows so the card shows them instead of
+          // asking again (web prefill effect). Only on first load — never
+          // clobber a session the user already interacted with.
+          if (_digiStatuses.isEmpty) {
+            _digiStatuses = parseVerificationStatuses(
+              submission?['verification_results'] as Map<String, dynamic>?,
+              digilockerRequiredDocs('driver'),
+            );
+          }
+
           if (!_hasSubmission) {
             _step = _KycStep.details;
           } else if (status != null && _isRejectedStatus(status)) {
@@ -329,189 +360,6 @@ class _DriverKycRegistrationScreenState
               : error.toString();
         }
       });
-    }
-  }
-
-  void _startAadhaarCooldown() {
-    _otpCooldownTimer?.cancel();
-    setState(() => _aadhaarCooldown = 30);
-    _otpCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        _aadhaarCooldown = (_aadhaarCooldown - 1).clamp(0, 30);
-        if (_aadhaarCooldown == 0) {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  Future<void> _verifyPan() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || !_isPanValid(_panController.text)) return;
-    setState(() {
-      _panChecking = true;
-      _panVerificationStatus = 'loading';
-      _panVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .verifyPan(
-            accessToken: session.tokens.accessToken,
-            pan: _panController.text.trim(),
-            name: session.user.name,
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _panVerificationStatus = data['status']?.toString() ?? 'failed';
-        _panVerificationMessage =
-            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
-      });
-      ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _panVerificationStatus = 'error';
-        _panVerificationMessage = error.message;
-      });
-    } finally {
-      if (mounted) setState(() => _panChecking = false);
-    }
-  }
-
-  Future<void> _verifyDrivingLicense() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null ||
-        !_isLicenseValid(_licenseController.text) ||
-        !_isDobValid(_dobController.text)) {
-      return;
-    }
-    setState(() {
-      _dlChecking = true;
-      _dlVerificationStatus = 'loading';
-      _dlVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .verifyDrivingLicense(
-            accessToken: session.tokens.accessToken,
-            dlNumber: _licenseController.text.trim(),
-            dob: _dobController.text.trim(),
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _dlVerificationStatus = data['status']?.toString() ?? 'failed';
-        _dlVerificationMessage =
-            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
-      });
-      ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _dlVerificationStatus = 'error';
-        _dlVerificationMessage = error.message;
-      });
-    } finally {
-      if (mounted) setState(() => _dlChecking = false);
-    }
-  }
-
-  Future<void> _sendAadhaarOtp() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null ||
-        !_isAadhaarValid(_aadhaarController.text) ||
-        _aadhaarCooldown > 0) {
-      return;
-    }
-    setState(() {
-      _aadhaarChecking = true;
-      _aadhaarVerificationStatus = 'loading';
-      _aadhaarVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .sendAadhaarOtp(
-            accessToken: session.tokens.accessToken,
-            aadhaarNumber: _aadhaarController.text.replaceAll(' ', '').trim(),
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _aadhaarOtpSent = true;
-        _aadhaarRefId = data['refId']?.toString();
-        _aadhaarOtpController.clear();
-        _aadhaarVerificationStatus = 'idle';
-      });
-      _startAadhaarCooldown();
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      final message = error.message;
-      final alreadySentRecently =
-          message.toLowerCase().contains('otp') &&
-          message.toLowerCase().contains('recent');
-      final hasRef = _aadhaarRefId != null && _aadhaarRefId!.isNotEmpty;
-      setState(() {
-        if (alreadySentRecently && hasRef) {
-          _aadhaarOtpSent = true;
-          _aadhaarVerificationStatus = 'idle';
-          _aadhaarVerificationMessage =
-              'OTP already sent. Enter the latest code below.';
-        } else {
-          _aadhaarVerificationStatus = 'error';
-          _aadhaarVerificationMessage = message;
-        }
-      });
-      _startAadhaarCooldown();
-    } finally {
-      if (mounted) setState(() => _aadhaarChecking = false);
-    }
-  }
-
-  Future<void> _verifyAadhaarOtp() async {
-    final session = ref.read(authSessionProvider).valueOrNull;
-    final refId = _aadhaarRefId;
-    if (session == null ||
-        refId == null ||
-        _aadhaarOtpController.text.trim().length != 6) {
-      return;
-    }
-    setState(() {
-      _aadhaarChecking = true;
-      _aadhaarVerificationStatus = 'loading';
-      _aadhaarVerificationMessage = null;
-    });
-    try {
-      final response = await ref
-          .read(apiClientProvider)
-          .verifyAadhaarOtp(
-            accessToken: session.tokens.accessToken,
-            refId: refId,
-            otp: _aadhaarOtpController.text.trim(),
-          );
-      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
-      if (!mounted) return;
-      setState(() {
-        _aadhaarVerificationStatus = data['status']?.toString() ?? 'failed';
-        _aadhaarVerificationMessage =
-            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
-      });
-      ref.invalidate(kycStatusProvider);
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _aadhaarVerificationStatus = 'error';
-        _aadhaarVerificationMessage = error.message;
-      });
-    } finally {
-      if (mounted) setState(() => _aadhaarChecking = false);
     }
   }
 
@@ -892,227 +740,6 @@ class _DriverKycRegistrationScreenState
           ),
         );
       },
-    );
-  }
-
-  Widget _buildDetailsStep(BuildContext context) {
-    final panValid = _isPanValid(_panController.text);
-    final dobValid = _isDobValid(_dobController.text);
-    final licenseValid = _isLicenseValid(_licenseController.text);
-    final aadhaarValid = _isAadhaarValid(_aadhaarController.text);
-    final vehicleRegValid = _isVehicleRegValid(_vehicleRegController.text);
-    final insuranceValid = _isInsuranceValid(_vehicleInsuranceController.text);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Complete your KYC to verify your driver account.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _PremiumTextField(
-          controller: _panController,
-          label: 'PAN Number',
-          hintText: 'ABCDE1234F',
-          textCapitalization: TextCapitalization.characters,
-          valid: panValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _panVerificationStatus = 'idle';
-          }),
-        ),
-        const SizedBox(height: 8),
-        _VerificationActionCard(
-          label: 'PAN',
-          status: _panVerificationStatus,
-          message: _panVerificationMessage,
-          buttonLabel: 'Verify PAN',
-          loading: _panChecking,
-          onPressed: panValid && !_panChecking ? _verifyPan : null,
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _dobController,
-          label: 'Date of Birth',
-          hintText: 'YYYY-MM-DD',
-          keyboardType: TextInputType.datetime,
-          inputFormatters: const [_IsoDateInputFormatter()],
-          valid: dobValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _dlVerificationStatus = 'idle';
-          }),
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _licenseController,
-          label: 'License Number',
-          hintText: 'MH-2020123456789',
-          textCapitalization: TextCapitalization.characters,
-          valid: licenseValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _dlVerificationStatus = 'idle';
-          }),
-        ),
-        const SizedBox(height: 8),
-        _VerificationActionCard(
-          label: 'Driving License',
-          status: _dlVerificationStatus,
-          message: _dlVerificationMessage,
-          buttonLabel: 'Verify License',
-          loading: _dlChecking,
-          helperText: !licenseValid || !dobValid
-              ? 'Fill license number and date of birth first'
-              : null,
-          onPressed: licenseValid && dobValid && !_dlChecking
-              ? _verifyDrivingLicense
-              : null,
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _aadhaarController,
-          label: 'Aadhaar Number',
-          hintText: 'XXXX XXXX XXXX',
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(12),
-            _AadhaarSpacingFormatter(),
-          ],
-          valid: aadhaarValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {
-            _aadhaarOtpSent = false;
-            _aadhaarRefId = null;
-            _aadhaarVerificationStatus = 'idle';
-          }),
-        ),
-        const SizedBox(height: 8),
-        _VerificationActionCard(
-          label: 'Aadhaar',
-          status: _aadhaarVerificationStatus,
-          message: _aadhaarVerificationMessage,
-          buttonLabel: _aadhaarOtpSent
-              ? (_aadhaarCooldown > 0
-                    ? 'Resend in ${_aadhaarCooldown}s'
-                    : 'Resend OTP')
-              : 'Send OTP',
-          loading: _aadhaarChecking,
-          onPressed: aadhaarValid && !_aadhaarChecking && _aadhaarCooldown == 0
-              ? _sendAadhaarOtp
-              : null,
-          child: _aadhaarOtpSent && _aadhaarVerificationStatus != 'verified'
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _aadhaarVerificationMessage ??
-                            'OTP sent. Enter the 6-digit code below.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _aadhaarOtpController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(6),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: '6-digit OTP',
-                          prefixIcon: const Icon(
-                            AppIcons.key_rounded,
-                            size: 18,
-                          ),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 13,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.divider,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.divider,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.brand,
-                              width: 1.4,
-                            ),
-                          ),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 10),
-                      FilledButton(
-                        onPressed:
-                            _aadhaarRefId != null &&
-                                _aadhaarOtpController.text.length == 6 &&
-                                !_aadhaarChecking
-                            ? _verifyAadhaarOtp
-                            : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.brand,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Verify OTP'),
-                      ),
-                    ],
-                  ),
-                )
-              : null,
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _vehicleRegController,
-          label: 'Vehicle Registration Number',
-          hintText: 'MH-12-CD-5678',
-          textCapitalization: TextCapitalization.characters,
-          valid: vehicleRegValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        _PremiumTextField(
-          controller: _vehicleInsuranceController,
-          label: 'Vehicle Insurance Number',
-          hintText: 'INS-2024-567890',
-          textCapitalization: TextCapitalization.characters,
-          valid: insuranceValid,
-          validator: (_) => null,
-          onChanged: (_) => setState(() {}),
-        ),
-        if (_rejectionReason != null) ...[
-          const SizedBox(height: 14),
-          _WarningCard(message: _rejectionReason!),
-        ],
-        if (_errorMessage != null) ...[
-          const SizedBox(height: 14),
-          _WarningCard(message: _errorMessage!),
-        ],
-      ],
     );
   }
 
@@ -1601,10 +1228,13 @@ class _DriverKycRegistrationScreenState
 
   // ignore: unused_element
   Widget _stepBody(BuildContext context) {
+    // Legacy wizard shell (superseded by _buildReactStyleContent below): the
+    // old details step no longer exists — verification lives in the
+    // DigiLocker card — so its arm points at the documents step.
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 220),
       child: switch (_step) {
-        _KycStep.details => _buildDetailsStep(context),
+        _KycStep.details => _buildDocumentsStep(context),
         _KycStep.documents => _buildDocumentsStep(context),
         _KycStep.review => _buildReviewStep(context),
         _KycStep.submitted => _buildSubmittedStep(context),
@@ -1632,37 +1262,83 @@ class _DriverKycRegistrationScreenState
         if (showForm) ...[
           const SizedBox(height: 16),
           _CardSection(
-            title: 'Driver Information',
-            child: _buildDetailsStep(context),
-          ),
-          const SizedBox(height: 16),
-          _CardSection(
-            title: 'Upload Documents',
-            child: Column(
-              children: [
-                for (var i = 0; i < _kycDocuments.length; i++) ...[
-                  _KycUploadCard(
-                    document: _kycDocuments[i],
-                    attachment:
-                        _attachments[_kycDocuments[i].key] ??
-                        const _KycAttachment(),
-                    onUpload: () => _showUploadOptions(_kycDocuments[i]),
-                    onCamera: () =>
-                        _pickDocument(_kycDocuments[i], ImageSource.camera),
-                    onGallery: () =>
-                        _pickDocument(_kycDocuments[i], ImageSource.gallery),
-                    onView: () => _showAttachmentPreview(_kycDocuments[i].key),
-                    onReplace: () => _showUploadOptions(_kycDocuments[i]),
-                  ),
-                  if (i != _kycDocuments.length - 1) const SizedBox(height: 12),
-                ],
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 14),
-                  _WarningCard(message: _errorMessage!),
-                ],
-              ],
+            title: 'Verify Your Identity',
+            child: Builder(
+              builder: (context) {
+                final session = ref.watch(authSessionProvider).valueOrNull;
+                return DigilockerVerificationCard(
+                  role: 'driver',
+                  accessToken: session?.tokens.accessToken ?? '',
+                  userName: session?.user.name ?? '',
+                  initialValues: {
+                    'pan_number': _panController.text,
+                    'date_of_birth': _dobController.text,
+                    'license_number': _licenseController.text,
+                    'aadhaar_number': _aadhaarController.text,
+                    'vehicle_registration_number':
+                        _vehicleRegController.text,
+                    'vehicle_insurance_number':
+                        _vehicleInsuranceController.text,
+                  },
+                  initialStatuses: _digiStatuses,
+                  onChanged: _onDigiChanged,
+                );
+              },
             ),
           ),
+          if (_digiNeedsFallback) ...[
+            const SizedBox(height: 16),
+            _CardSection(
+              title: 'Upload Documents',
+              child: Builder(
+                builder: (context) {
+                  // Web parity: only the documents DigiLocker couldn't
+                  // confirm show a photo card — verified ones never show a
+                  // "Not uploaded" row.
+                  final fallbackDocs = _kycDocuments.where((doc) {
+                    final key = digiDocKeyForUploadKey(doc.key);
+                    return key != null &&
+                        digiNeedsFallback(_digiStatuses[key]);
+                  }).toList(growable: false);
+                  return Column(
+                    children: [
+                      for (var i = 0; i < fallbackDocs.length; i++) ...[
+                        _KycUploadCard(
+                          document: fallbackDocs[i],
+                          attachment:
+                              _attachments[fallbackDocs[i].key] ??
+                              const _KycAttachment(),
+                          onUpload: () =>
+                              _showUploadOptions(fallbackDocs[i]),
+                          onCamera: () => _pickDocument(
+                            fallbackDocs[i],
+                            ImageSource.camera,
+                          ),
+                          onGallery: () => _pickDocument(
+                            fallbackDocs[i],
+                            ImageSource.gallery,
+                          ),
+                          onView: () =>
+                              _showAttachmentPreview(fallbackDocs[i].key),
+                          onReplace: () =>
+                              _showUploadOptions(fallbackDocs[i]),
+                        ),
+                        if (i != fallbackDocs.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 14),
+                        _WarningCard(message: _errorMessage!),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            ),
+          ] else if (_errorMessage != null) ...[
+            const SizedBox(height: 16),
+            _WarningCard(message: _errorMessage!),
+          ],
           const SizedBox(height: 18),
           SizedBox(
             height: 50,
@@ -1684,9 +1360,11 @@ class _DriverKycRegistrationScreenState
                     )
                   : const Icon(AppIcons.file_upload_outlined, size: 18),
               label: Text(
-                _isRejectedStatus(status)
-                    ? 'Resubmit for Review'
-                    : 'Submit for Review',
+                _digiAllVerified
+                    ? 'Finish'
+                    : (_isRejectedStatus(status)
+                          ? 'Resubmit for Review'
+                          : 'Submit for Review'),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brand,
@@ -1700,15 +1378,27 @@ class _DriverKycRegistrationScreenState
           ),
         ] else ...[
           const SizedBox(height: 16),
-          _SubmittedDocumentsCard(
-            licenseNumber: _licenseController.text.trim(),
-            aadhaarNumber: _aadhaarController.text.trim(),
-            vehicleRegistration: _vehicleRegController.text.trim(),
-            insuranceNumber: _vehicleInsuranceController.text.trim(),
-            documents: _kycDocuments,
-            attachments: _attachments,
-            onEdit: () => setState(() => _step = _KycStep.details),
-            onView: _showAttachmentPreview,
+          Builder(
+            builder: (context) {
+              // Web parity: the summary lists only documents that went
+              // through the manual-review fallback — verified ones never
+              // show a "Not uploaded" row.
+              final submittedDocs = _kycDocuments.where((doc) {
+                final key = digiDocKeyForUploadKey(doc.key);
+                return key != null &&
+                    digiNeedsFallback(_digiStatuses[key]);
+              }).toList(growable: false);
+              return _SubmittedDocumentsCard(
+                licenseNumber: _licenseController.text.trim(),
+                aadhaarNumber: _aadhaarController.text.trim(),
+                vehicleRegistration: _vehicleRegController.text.trim(),
+                insuranceNumber: _vehicleInsuranceController.text.trim(),
+                documents: submittedDocs,
+                attachments: _attachments,
+                onEdit: () => setState(() => _step = _KycStep.details),
+                onView: _showAttachmentPreview,
+              );
+            },
           ),
         ],
       ],
@@ -2460,254 +2150,6 @@ class _WarningCard extends StatelessWidget {
   }
 }
 
-class _VerificationActionCard extends StatelessWidget {
-  const _VerificationActionCard({
-    required this.label,
-    required this.status,
-    required this.buttonLabel,
-    required this.onPressed,
-    this.message,
-    this.helperText,
-    this.loading = false,
-    this.child,
-  });
-
-  final String label;
-  final String status;
-  final String buttonLabel;
-  final VoidCallback? onPressed;
-  final String? message;
-  final String? helperText;
-  final bool loading;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalized = status.trim().toLowerCase();
-    final color = switch (normalized) {
-      'verified' => AppColors.successText,
-      'failed' => AppColors.dangerText,
-      'error' => const Color(0xFFD97706),
-      'loading' => AppColors.textTertiary,
-      _ => AppColors.textTertiary,
-    };
-    final icon = switch (normalized) {
-      'verified' => AppIcons.verified_rounded,
-      'failed' || 'error' => AppIcons.error_outline_rounded,
-      'loading' => AppIcons.hourglass_top_rounded,
-      _ => AppIcons.shield_outlined,
-    };
-    final statusText = switch (normalized) {
-      'verified' => 'Verified',
-      'failed' => "Details didn't match",
-      'error' => message ?? "Couldn't verify, try again",
-      'loading' => 'Checking...',
-      _ => 'Not verified yet',
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(icon, size: 15, color: color),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            statusText,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (helperText != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        helperText!,
-                        style: const TextStyle(
-                          color: AppColors.textTertiary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: onPressed,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brand,
-                  side: const BorderSide(color: AppColors.brandBorder),
-                ),
-                child: loading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(buttonLabel),
-              ),
-            ],
-          ),
-          ?child,
-        ],
-      ),
-    );
-  }
-}
-
-class _PremiumTextField extends StatelessWidget {
-  const _PremiumTextField({
-    required this.controller,
-    required this.label,
-    required this.hintText,
-    required this.valid,
-    required this.validator,
-    required this.onChanged,
-    this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
-    this.inputFormatters,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String hintText;
-  final bool valid;
-  final FormFieldValidator<String> validator;
-  final ValueChanged<String> onChanged;
-  final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
-  final List<TextInputFormatter>? inputFormatters;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = controller.text.trim().isNotEmpty;
-    final statusIcon = !hasValue
-        ? AppIcons.radio_button_unchecked_rounded
-        : valid
-        ? AppIcons.check_rounded
-        : AppIcons.close_rounded;
-    final statusColor = !hasValue
-        ? AppColors.textTertiary
-        : valid
-        ? AppColors.brand
-        : AppColors.dangerIcon;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      label,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: controller,
-                  validator: validator,
-                  keyboardType: keyboardType,
-                  textCapitalization: textCapitalization,
-                  inputFormatters: inputFormatters,
-                  onChanged: onChanged,
-                  cursorColor: AppColors.brand,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 13,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.divider),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.divider),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.brand,
-                        width: 1.4,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.dangerBorder,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.dangerIcon,
-                        width: 1.4,
-                      ),
-                    ),
-                    hintText: hintText,
-                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(statusIcon, color: statusColor, size: 14),
-        ],
-      ),
-    );
-  }
-}
-
 class _KycUploadCard extends StatelessWidget {
   const _KycUploadCard({
     required this.document,
@@ -3131,57 +2573,6 @@ class _SheetAction extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AadhaarSpacingFormatter extends TextInputFormatter {
-  const _AadhaarSpacingFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      buffer.write(digits[i]);
-      if (i == 3 || i == 7) {
-        buffer.write(' ');
-      }
-    }
-    final text = buffer.toString().trimRight();
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
-  }
-}
-
-class _IsoDateInputFormatter extends TextInputFormatter {
-  const _IsoDateInputFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    final limited = digits.length > 8 ? digits.substring(0, 8) : digits;
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < limited.length; i++) {
-      if (i == 4 || i == 6) {
-        buffer.write('-');
-      }
-      buffer.write(limited[i]);
-    }
-
-    final text = buffer.toString();
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

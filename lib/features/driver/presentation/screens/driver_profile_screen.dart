@@ -34,6 +34,20 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     });
   }
 
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() => _loadingKyc = true);
+    ref.invalidate(driverDashboardProvider);
+    await _loadKycStatus();
+    // Dashboard refetch surfaces through the watcher; await it so the
+    // spinner doesn't vanish before fresh data lands.
+    try {
+      await ref.read(driverDashboardProvider.future);
+    } catch (_) {
+      // Errors surface through the watcher; the refresh still ends.
+    }
+  }
+
   Future<void> _openBrokerChat() async {
     if (_openingBrokerChat) return;
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -150,21 +164,23 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       backgroundColor: AppColors.canvas,
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => context.go('/driver/home'),
-                icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                label: const Text('Back'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textTertiary,
-                  padding: EdgeInsets.zero,
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => context.go('/driver/home'),
+                  icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
+                  label: const Text('Back'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textTertiary,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 10),
             _ProfileCard(
               user: user,
@@ -253,6 +269,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );
