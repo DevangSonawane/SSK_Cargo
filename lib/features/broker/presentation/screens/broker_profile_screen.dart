@@ -101,7 +101,7 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
           children: [
             BrokerBackButton(onTap: () => context.go('/broker/home')),
             const SizedBox(height: 10),
-            _ProfileCard(user: user),
+            _ProfileCard(user: user, kycApproved: !_loadingKyc && _kycApproved),
             const SizedBox(height: 16),
             _ProfileSection(
               title: 'Account',
@@ -131,7 +131,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                       : AppIcons.verified_user_outlined,
                   accent: _kycApproved
                       ? AppColors.brand
-                      : AppColors.brand,
+                      : AppColors.warningText,
+                  highlighted: !_loadingKyc && !_kycApproved,
                   onTap: () => context.push('/broker/kyc-registration'),
                 ),
                 _ProfileMenuTile(
@@ -173,9 +174,10 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
 }
 
 class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.user});
+  const _ProfileCard({required this.user, required this.kycApproved});
 
   final SskUser? user;
+  final bool kycApproved;
 
   @override
   Widget build(BuildContext context) {
@@ -202,17 +204,21 @@ class _ProfileCard extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.brand.withValues(alpha: 0.25),
+              color: kycApproved
+                  ? AppColors.brand.withValues(alpha: 0.25)
+                  : AppColors.warningFill,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.32),
+                color: kycApproved
+                    ? Colors.white.withValues(alpha: 0.32)
+                    : AppColors.warningBorder,
                 width: 2,
               ),
             ),
             child: Center(
               child: Text(
                 initial,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: kycApproved ? Colors.white : AppColors.warningText,
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
@@ -318,6 +324,7 @@ class _ProfileMenuTile extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.accent = AppColors.brand,
+    this.highlighted = false,
   });
 
   final String title;
@@ -325,13 +332,25 @@ class _ProfileMenuTile extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final Color accent;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        margin: highlighted
+            ? const EdgeInsets.symmetric(horizontal: 8, vertical: 6)
+            : EdgeInsets.zero,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: highlighted ? AppColors.warningFill : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: highlighted
+              ? Border.all(color: AppColors.warningBorder)
+              : null,
+        ),
         child: Row(
           children: [
             Container(

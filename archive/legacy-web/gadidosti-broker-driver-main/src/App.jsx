@@ -45,6 +45,7 @@ import DriverProfile    from "./pages/driver/Profile";
 // Shared
 import Login    from "./pages/Login";
 import Register from "./pages/Register";
+import Onboarding from "./pages/Onboarding";
 import NotificationsPage from "./pages/NotificationsPage";
 import ChatList   from "./pages/ChatList";
 import ChatDetail from "./pages/ChatDetail";
@@ -111,10 +112,24 @@ function DriverAppLayout() {
 }
 
 // ────── Route guards ──────
+// KYC (PAN/Aadhaar/DL auto-verification via Cashfree, see src/pages/Onboarding.jsx) no longer
+// blocks dashboard access at all — a driver/broker with KYC pending, submitted, or rejected can
+// still log in and use the app normally. It only gates the specific job-taking screens (see
+// KycGate usages in driver/Requests.jsx, driver/MyTrip.jsx, broker/JobRequests.jsx,
+// broker/DriverRequests.jsx), not navigation itself. /onboarding stays reachable any time — via
+// the dashboard's KycReminderBanner or the sidebar — it's just no longer forced.
 function PrivateRoute({ children, role }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
+  return children;
+}
+
+function OnboardingRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!["broker", "driver"].includes(user.role)) return <Navigate to="/" replace />;
+  if (user.kyc_status === "verified") return <Navigate to="/" replace />;
   return children;
 }
 
@@ -145,6 +160,7 @@ export default function App() {
             {/* Public */}
             <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
             <Route path="/"         element={<RootRedirect />} />
 
             {/* Broker routes */}

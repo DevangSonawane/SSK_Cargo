@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/providers/kyc_status_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
@@ -30,16 +31,27 @@ class _BrokerKycRegistrationScreenState
 
   final _panController = TextEditingController();
   final _aadhaarController = TextEditingController();
+  final _aadhaarOtpController = TextEditingController();
   final _gstController = TextEditingController();
   final _bankAccountController = TextEditingController();
   final _bankAccountConfirmController = TextEditingController();
   final _businessRegController = TextEditingController();
 
   Timer? _refreshTimer;
+  Timer? _otpCooldownTimer;
 
   _KycStep _step = _KycStep.details;
   bool _initialLoading = true;
   bool _saving = false;
+  bool _panChecking = false;
+  bool _aadhaarChecking = false;
+  String _panVerificationStatus = 'idle';
+  String _aadhaarVerificationStatus = 'idle';
+  String? _panVerificationMessage;
+  String? _aadhaarVerificationMessage;
+  String? _aadhaarRefId;
+  bool _aadhaarOtpSent = false;
+  int _aadhaarCooldown = 0;
   String? _errorMessage;
   String? _statusLabel;
   String? _rejectionReason;
@@ -74,9 +86,11 @@ class _BrokerKycRegistrationScreenState
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _otpCooldownTimer?.cancel();
     _confirmCheckboxController.dispose();
     _panController.dispose();
     _aadhaarController.dispose();
+    _aadhaarOtpController.dispose();
     _gstController.dispose();
     _bankAccountController.dispose();
     _bankAccountConfirmController.dispose();
@@ -231,9 +245,19 @@ class _BrokerKycRegistrationScreenState
     _reviewedAt = null;
     _submissionId = null;
     _hasSubmission = false;
+    _panChecking = false;
+    _aadhaarChecking = false;
+    _panVerificationStatus = 'idle';
+    _aadhaarVerificationStatus = 'idle';
+    _panVerificationMessage = null;
+    _aadhaarVerificationMessage = null;
+    _aadhaarRefId = null;
+    _aadhaarOtpSent = false;
+    _aadhaarCooldown = 0;
     _resetAttachments();
     _panController.clear();
     _aadhaarController.clear();
+    _aadhaarOtpController.clear();
     _gstController.clear();
     _bankAccountController.clear();
     _bankAccountConfirmController.clear();
@@ -336,6 +360,150 @@ class _BrokerKycRegistrationScreenState
     }
   }
 
+  void _startAadhaarCooldown() {
+    _otpCooldownTimer?.cancel();
+    setState(() => _aadhaarCooldown = 30);
+    _otpCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _aadhaarCooldown = (_aadhaarCooldown - 1).clamp(0, 30);
+        if (_aadhaarCooldown == 0) {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  Future<void> _verifyPan() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !_isPanValid(_panController.text)) return;
+    setState(() {
+      _panChecking = true;
+      _panVerificationStatus = 'loading';
+      _panVerificationMessage = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .verifyPan(
+            accessToken: session.tokens.accessToken,
+            pan: _panController.text.trim(),
+            name: session.user.name,
+          );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      if (!mounted) return;
+      setState(() {
+        _panVerificationStatus = data['status']?.toString() ?? 'failed';
+        _panVerificationMessage =
+            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
+      });
+      ref.invalidate(kycStatusProvider);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _panVerificationStatus = 'error';
+        _panVerificationMessage = error.message;
+      });
+    } finally {
+      if (mounted) setState(() => _panChecking = false);
+    }
+  }
+
+  Future<void> _sendAadhaarOtp() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null ||
+        !_isAadhaarValid(_aadhaarController.text) ||
+        _aadhaarCooldown > 0) {
+      return;
+    }
+    setState(() {
+      _aadhaarChecking = true;
+      _aadhaarVerificationStatus = 'loading';
+      _aadhaarVerificationMessage = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .sendAadhaarOtp(
+            accessToken: session.tokens.accessToken,
+            aadhaarNumber: _aadhaarController.text.replaceAll(' ', '').trim(),
+          );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      if (!mounted) return;
+      setState(() {
+        _aadhaarOtpSent = true;
+        _aadhaarRefId = data['refId']?.toString();
+        _aadhaarOtpController.clear();
+        _aadhaarVerificationStatus = 'idle';
+      });
+      _startAadhaarCooldown();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      final message = error.message;
+      final alreadySentRecently =
+          message.toLowerCase().contains('otp') &&
+          message.toLowerCase().contains('recent');
+      final hasRef = _aadhaarRefId != null && _aadhaarRefId!.isNotEmpty;
+      setState(() {
+        if (alreadySentRecently && hasRef) {
+          _aadhaarOtpSent = true;
+          _aadhaarVerificationStatus = 'idle';
+          _aadhaarVerificationMessage =
+              'OTP already sent. Enter the latest code below.';
+        } else {
+          _aadhaarVerificationStatus = 'error';
+          _aadhaarVerificationMessage = message;
+        }
+      });
+      _startAadhaarCooldown();
+    } finally {
+      if (mounted) setState(() => _aadhaarChecking = false);
+    }
+  }
+
+  Future<void> _verifyAadhaarOtp() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final refId = _aadhaarRefId;
+    if (session == null ||
+        refId == null ||
+        _aadhaarOtpController.text.trim().length != 6) {
+      return;
+    }
+    setState(() {
+      _aadhaarChecking = true;
+      _aadhaarVerificationStatus = 'loading';
+      _aadhaarVerificationMessage = null;
+    });
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .verifyAadhaarOtp(
+            accessToken: session.tokens.accessToken,
+            refId: refId,
+            otp: _aadhaarOtpController.text.trim(),
+          );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
+      if (!mounted) return;
+      setState(() {
+        _aadhaarVerificationStatus = data['status']?.toString() ?? 'failed';
+        _aadhaarVerificationMessage =
+            (data['details'] as Map<String, dynamic>?)?['message']?.toString();
+      });
+      ref.invalidate(kycStatusProvider);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _aadhaarVerificationStatus = 'error';
+        _aadhaarVerificationMessage = error.message;
+      });
+    } finally {
+      if (mounted) setState(() => _aadhaarChecking = false);
+    }
+  }
+
   Future<void> _submitKyc() async {
     if (!(_confirmCheckboxController.value)) {
       setState(() {
@@ -362,22 +530,28 @@ class _BrokerKycRegistrationScreenState
     });
 
     try {
-      await ref
+      final response = await ref
           .read(apiClientProvider)
           .submitBrokerKyc(
             accessToken: session.tokens.accessToken,
             documents: _documentsPayload(),
           );
+      final data = (response['data'] as Map<String, dynamic>?) ?? const {};
       _hasSubmission = true;
       _submittedAt = DateTime.now();
-      _statusLabel = 'submitted';
+      _statusLabel = data['kyc_status']?.toString() ?? 'submitted';
       _rejectionReason = null;
       _step = _KycStep.submitted;
+      ref.invalidate(kycStatusProvider);
       await _loadKycStatus(silent: true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('KYC submitted for review.'),
+          SnackBar(
+            content: Text(
+              _statusLabel == 'verified'
+                  ? "You're verified - full access unlocked."
+                  : 'KYC submitted for review.',
+            ),
             backgroundColor: AppColors.brand,
           ),
         );
@@ -766,8 +940,19 @@ class _BrokerKycRegistrationScreenState
           textCapitalization: TextCapitalization.characters,
           valid: panValid,
           validator: (_) => null,
-          onChanged: (_) => setState(() {}),
+          onChanged: (_) => setState(() {
+            _panVerificationStatus = 'idle';
+          }),
           requiredField: false,
+        ),
+        const SizedBox(height: 8),
+        _VerificationActionCard(
+          label: 'PAN',
+          status: _panVerificationStatus,
+          message: _panVerificationMessage,
+          buttonLabel: 'Verify PAN',
+          loading: _panChecking,
+          onPressed: panValid && !_panChecking ? _verifyPan : null,
         ),
         const SizedBox(height: 9),
         _PremiumTextField(
@@ -782,8 +967,100 @@ class _BrokerKycRegistrationScreenState
           ],
           valid: aadhaarValid,
           validator: (_) => null,
-          onChanged: (_) => setState(() {}),
+          onChanged: (_) => setState(() {
+            _aadhaarOtpSent = false;
+            _aadhaarRefId = null;
+            _aadhaarVerificationStatus = 'idle';
+          }),
           requiredField: false,
+        ),
+        const SizedBox(height: 8),
+        _VerificationActionCard(
+          label: 'Aadhaar',
+          status: _aadhaarVerificationStatus,
+          message: _aadhaarVerificationMessage,
+          buttonLabel: _aadhaarOtpSent
+              ? (_aadhaarCooldown > 0
+                    ? 'Resend in ${_aadhaarCooldown}s'
+                    : 'Resend OTP')
+              : 'Send OTP',
+          loading: _aadhaarChecking,
+          onPressed: aadhaarValid && !_aadhaarChecking && _aadhaarCooldown == 0
+              ? _sendAadhaarOtp
+              : null,
+          child: _aadhaarOtpSent && _aadhaarVerificationStatus != 'verified'
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _aadhaarVerificationMessage ??
+                            'OTP sent. Enter the 6-digit code below.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _aadhaarOtpController,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(6),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: '6-digit OTP',
+                          prefixIcon: const Icon(
+                            AppIcons.key_rounded,
+                            size: 18,
+                          ),
+                          isDense: true,
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.line),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.line),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.brand,
+                              width: 1.4,
+                            ),
+                          ),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 10),
+                      FilledButton(
+                        onPressed:
+                            _aadhaarRefId != null &&
+                                _aadhaarOtpController.text.length == 6 &&
+                                !_aadhaarChecking
+                            ? _verifyAadhaarOtp
+                            : null,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Verify OTP'),
+                      ),
+                    ],
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: 9),
         _PremiumTextField(
@@ -1839,6 +2116,117 @@ class _WarningCard extends StatelessWidget {
   }
 }
 
+class _VerificationActionCard extends StatelessWidget {
+  const _VerificationActionCard({
+    required this.label,
+    required this.status,
+    required this.buttonLabel,
+    required this.onPressed,
+    this.message,
+    this.loading = false,
+    this.child,
+  });
+
+  final String label;
+  final String status;
+  final String buttonLabel;
+  final VoidCallback? onPressed;
+  final String? message;
+  final bool loading;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = status.trim().toLowerCase();
+    final color = switch (normalized) {
+      'verified' => AppColors.successText,
+      'failed' => AppColors.dangerText,
+      'error' => const Color(0xFFD97706),
+      'loading' => AppColors.textTertiary,
+      _ => AppColors.textTertiary,
+    };
+    final icon = switch (normalized) {
+      'verified' => AppIcons.verified_rounded,
+      'failed' || 'error' => AppIcons.error_outline_rounded,
+      'loading' => AppIcons.hourglass_top_rounded,
+      _ => AppIcons.shield_outlined,
+    };
+    final statusText = switch (normalized) {
+      'verified' => 'Verified',
+      'failed' => "Details didn't match",
+      'error' => message ?? "Couldn't verify, try again",
+      'loading' => 'Checking...',
+      _ => 'Not verified yet',
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(icon, size: 15, color: color),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            statusText,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: onPressed,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.brand,
+                  side: const BorderSide(color: AppColors.brandBorder),
+                ),
+                child: loading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(buttonLabel),
+              ),
+            ],
+          ),
+          ?child,
+        ],
+      ),
+    );
+  }
+}
+
 class _PremiumTextField extends StatelessWidget {
   const _PremiumTextField({
     required this.controller,
@@ -1878,95 +2266,101 @@ class _PremiumTextField extends StatelessWidget {
         ? AppColors.brand
         : AppColors.dangerIcon;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.line),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          label,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11,
-                                color: AppColors.textPrimary,
-                              ),
-                        ),
-                        if (requiredField) ...[
-                          const SizedBox(width: 4),
-                          const Text(
-                            '*',
-                            style: TextStyle(
-                              color: AppColors.dangerIcon,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    TextFormField(
-                      controller: controller,
-                      validator: validator,
-                      keyboardType: keyboardType,
-                      textCapitalization: textCapitalization,
-                      inputFormatters: inputFormatters,
-                      onChanged: onChanged,
-                      cursorColor: AppColors.brand,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
                         color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.only(
-                          top: 0,
-                          bottom: 0,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        hintText: hintText,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(
-                              color: AppColors.textTertiary,
-                              fontWeight: FontWeight.w500,
-                            ),
                       ),
                     ),
+                    if (requiredField) ...[
+                      const SizedBox(width: 4),
+                      const Text(
+                        '*',
+                        style: TextStyle(
+                          color: AppColors.dangerIcon,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(statusIcon, color: statusColor, size: 13),
-            ],
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: controller,
+                  validator: validator,
+                  keyboardType: keyboardType,
+                  textCapitalization: textCapitalization,
+                  inputFormatters: inputFormatters,
+                  onChanged: onChanged,
+                  cursorColor: AppColors.brand,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.line),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.line),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.brand,
+                        width: 1.4,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.dangerBorder,
+                      ),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.dangerIcon,
+                        width: 1.4,
+                      ),
+                    ),
+                    hintText: hintText,
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Icon(statusIcon, color: statusColor, size: 14),
+        ],
+      ),
     );
   }
 }

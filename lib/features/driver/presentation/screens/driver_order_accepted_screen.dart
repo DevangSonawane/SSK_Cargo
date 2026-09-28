@@ -12,6 +12,7 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/negotiation_timer.dart';
+import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../../core/widgets/map_route_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
@@ -1008,6 +1009,14 @@ class _DriverOrderAcceptedScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please sign in again to continue.')),
       );
+      return;
+    }
+    if (resolveTripOnSuccess &&
+        !await ensureKycVerifiedForAccept(
+          context: context,
+          ref: ref,
+          role: 'driver',
+        )) {
       return;
     }
 

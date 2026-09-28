@@ -21,12 +21,13 @@ const CONFIG = {
     color: "text-primary",
     bg: "bg-primary/10",
     title: "Complete Your KYC First",
-    text: "You need to submit your KYC documents and get verified before you can accept jobs on the platform.",
+    text: "You need to verify your PAN, Aadhaar, and license details before you can accept jobs on the platform. Most checks clear instantly.",
   },
 };
 
-// Full-page block used on trip/job-taking screens until kyc_status === 'verified'
-export default function KycGate({ status, kycPath }) {
+// Full-page block used on trip/job-taking screens only — dashboard navigation itself is never
+// gated on KYC status (see App.jsx's PrivateRoute), just the actual job-taking action.
+export default function KycGate({ status, kycPath = "/onboarding" }) {
   const navigate = useNavigate();
   const cfg = CONFIG[status] || CONFIG.pending;
   const Icon = cfg.icon;

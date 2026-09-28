@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -163,6 +164,17 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   }
 
   Future<void> _acceptRequest(BookingRequest request) {
+    return _acceptRequestWithKycGate(request);
+  }
+
+  Future<void> _acceptRequestWithKycGate(BookingRequest request) async {
+    if (!await ensureKycVerifiedForAccept(
+      context: context,
+      ref: ref,
+      role: 'broker',
+    )) {
+      return;
+    }
     return _runRequestAction(
       request,
       (token) => ref
@@ -1081,33 +1093,33 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: driversAsync.when(
+            loading: () => const _AssignmentLoadingState(),
+            error: (error, _) => _AssignmentErrorState(
+              message: error.toString().replaceFirst('Exception: ', ''),
+              onRetry: () {
+                ref.invalidate(
+                  brokerDriversApiProvider(
+                    _BrokerHomeScreenState._driversQuery,
+                  ),
+                );
+              },
+            ),
+            data: (drivers) => trucksAsync.when(
               loading: () => const _AssignmentLoadingState(),
               error: (error, _) => _AssignmentErrorState(
                 message: error.toString().replaceFirst('Exception: ', ''),
                 onRetry: () {
                   ref.invalidate(
-                    brokerDriversApiProvider(
-                      _BrokerHomeScreenState._driversQuery,
-                    ),
+                    brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),
                   );
                 },
               ),
-              data: (drivers) => trucksAsync.when(
-                loading: () => const _AssignmentLoadingState(),
-                error: (error, _) => _AssignmentErrorState(
-                  message: error.toString().replaceFirst('Exception: ', ''),
-                  onRetry: () {
-                    ref.invalidate(
-                      brokerTrucksProvider(_BrokerHomeScreenState._trucksQuery),
-                    );
-                  },
-                ),
-                data: (trucks) => _buildContent(drivers, trucks),
-              ),
+              data: (trucks) => _buildContent(drivers, trucks),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildContent(List<BrokerDriver> drivers, List<BrokerVehicle> trucks) {
@@ -1241,9 +1253,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                         }
                       }
                     : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.brand,
-                ),
+                style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
                 child: Text(_submitting ? 'Sending...' : 'Send Assignment'),
               ),
             ),
@@ -1387,10 +1397,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
         AppIcons.keyboard_arrow_down_rounded,
         color: AppColors.textSecondary,
       ),
-      decoration: brokerFieldDecoration(
-        labelText: label,
-        prefixIcon: icon,
-      ),
+      decoration: brokerFieldDecoration(labelText: label, prefixIcon: icon),
       hint: Text('Select ${label.toLowerCase()}'),
       selectedItemBuilder: (context) => [
         for (final item in items)
@@ -1499,9 +1506,7 @@ class _AssignmentErrorState extends StatelessWidget {
             onPressed: onRetry,
             icon: const Icon(AppIcons.refresh_rounded),
             label: const Text('Retry'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.brand,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           ),
         ),
       ],
@@ -1903,8 +1908,7 @@ class _AvatarButton extends StatelessWidget {
                 ? Image.network(
                     photo,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, _, _) =>
-                        const _AvatarPlaceholder(),
+                    errorBuilder: (context, _, _) => const _AvatarPlaceholder(),
                   )
                 : const _AvatarPlaceholder(),
           ),

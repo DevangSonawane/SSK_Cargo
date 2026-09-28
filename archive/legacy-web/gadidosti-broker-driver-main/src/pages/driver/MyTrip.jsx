@@ -229,7 +229,7 @@ export default function MyTrip() {
     }
   };
 
-  if (user?.kyc_status !== "verified") return <div className="pt-6"><KycGate status={user?.kyc_status || "pending"} kycPath="/driver/kyc" /></div>;
+  if (user?.kyc_status !== "verified") return <div className="pt-6"><KycGate status={user?.kyc_status || "pending"} kycPath="/onboarding" /></div>;
   if (loading) return <div className="bg-white rounded-xl border border-slate-100 shadow-card p-12 text-center text-slate-400">Loading trip...</div>;
   if (error) return <div className="bg-white rounded-xl border border-slate-100 shadow-card p-12 text-center text-red-500">{error}</div>;
   if (!trip) return <div className="bg-white rounded-xl border border-slate-100 shadow-card p-12 text-center text-slate-400">No active trip assigned.</div>;

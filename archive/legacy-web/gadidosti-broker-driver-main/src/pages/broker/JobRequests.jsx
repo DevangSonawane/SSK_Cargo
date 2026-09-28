@@ -219,7 +219,7 @@ export default function JobRequests() {
   if (user?.kyc_status !== "verified") {
     return (
       <div className="pt-6">
-        <KycGate status={user?.kyc_status || "pending"} kycPath="/kyc" />
+        <KycGate status={user?.kyc_status || "pending"} kycPath="/onboarding" />
       </div>
     );
   }

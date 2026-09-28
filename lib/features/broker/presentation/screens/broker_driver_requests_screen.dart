@@ -6,6 +6,7 @@ import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -63,7 +64,14 @@ class _BrokerDriverRequestsScreenState
     }
   }
 
-  Future<void> _acceptRequest(BrokerDriverRequest request) {
+  Future<void> _acceptRequest(BrokerDriverRequest request) async {
+    if (!await ensureKycVerifiedForAccept(
+      context: context,
+      ref: ref,
+      role: 'broker',
+    )) {
+      return;
+    }
     return _runAction(
       request: request,
       successMessage: 'Request accepted.',

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
@@ -127,7 +128,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     }
   }
 
-  Future<void> _reconcileActiveTripLock() async {    if (_reconcilingActiveTrip || !mounted) {
+  Future<void> _reconcileActiveTripLock() async {
+    if (_reconcilingActiveTrip || !mounted) {
       return;
     }
 
@@ -189,6 +191,14 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _answeringRequestIds.contains(request.id)) {
+      return;
+    }
+    if (accept &&
+        !await ensureKycVerifiedForAccept(
+          context: context,
+          ref: ref,
+          role: 'driver',
+        )) {
       return;
     }
 

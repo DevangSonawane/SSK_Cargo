@@ -2029,7 +2029,8 @@ class SskApiClient {
     required String accessToken,
     required double lat,
     required double lng,
-  }) async {    developer.log(
+  }) async {
+    developer.log(
       'PATCH /api/vehicles/drivers/me/location lat=$lat lng=$lng',
       name: 'SSK.API',
     );
@@ -2141,6 +2142,68 @@ class SskApiClient {
       () => _dio.post<Map<String, dynamic>>(
         '/api/kyc/driver',
         data: {'documents': documents},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyPan({
+    required String accessToken,
+    required String pan,
+    String? name,
+  }) async {
+    developer.log('POST /api/kyc/verify/pan', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/pan',
+        data: {
+          'pan': pan,
+          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        },
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyDrivingLicense({
+    required String accessToken,
+    required String dlNumber,
+    required String dob,
+  }) async {
+    developer.log('POST /api/kyc/verify/driving-license', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/driving-license',
+        data: {'dl_number': dlNumber, 'dob': dob},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> sendAadhaarOtp({
+    required String accessToken,
+    required String aadhaarNumber,
+  }) async {
+    developer.log('POST /api/kyc/verify/aadhaar/send-otp', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/aadhaar/send-otp',
+        data: {'aadhaar_number': aadhaarNumber},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyAadhaarOtp({
+    required String accessToken,
+    required String refId,
+    required String otp,
+  }) async {
+    developer.log('POST /api/kyc/verify/aadhaar/verify-otp', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/kyc/verify/aadhaar/verify-otp',
+        data: {'ref_id': refId, 'otp': otp},
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

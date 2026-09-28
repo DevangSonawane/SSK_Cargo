@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Phone, Check, Truck, MapPin, Clock, AlertTriangle, Package, Hash, PackagePlus, PackageMinus, CheckCircle2, Star, Link2, Zap } from "lucide-react";
+import { Search, Phone, Check, Truck, MapPin, Clock, AlertTriangle, Package, Hash, PackagePlus, PackageMinus, CheckCircle2, Star, Link2, Zap, Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import StatusBadge from "../components/StatusBadge";
 import BottomSheet from "../components/BottomSheet";
 import ChatWindow from "../components/ChatWindow";
 import TripChatFab from "../components/TripChatFab";
 import MapView from "../components/MapView";
 import HaltingTimer from "../components/HaltingTimer";
+import PodGallery from "../components/PodGallery";
+import RejectPodSheet from "../components/RejectPodSheet";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { api, getToken } from "../services/api";
@@ -77,12 +79,22 @@ export default function TrackShipment() {
   const [searchId, setSearchId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeBooking, setActiveBooking] = useState(null);
+  // Every currently-ongoing booking (not just one) — lets a client with more than one shipment
+  // in flight at once switch between them instead of only ever seeing whichever one happened to
+  // be picked first. activeIndex is which of these activeBooking currently mirrors; slideDir
+  // drives the direction of the switch animation, reset back to null right after it plays.
+  const [liveBookings, setLiveBookings] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState(null);
   const [incident, setIncident] = useState(null);
   const [tracking, setTracking] = useState(null);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [noBookingsYet, setNoBookingsYet] = useState(false);
+  const [showRejectPodSheet, setShowRejectPodSheet] = useState(false);
+  const [verifyingPod, setVerifyingPod] = useState(false);
+  const [loadingPod, setLoadingPod] = useState(false);
   // Shown once the live socket push (below) actually catches a transition into "Delivered" —
   // not just because the booking happens to already be delivered on load, which would nudge for
   // a rating every time this page is revisited for an old delivered shipment.
@@ -111,14 +123,71 @@ export default function TrackShipment() {
     }
   };
 
+  // Applies a partial update to whichever booking is currently shown — both to activeBooking
+  // itself and to its entry inside liveBookings, so switching away (via the </> nav) and back
+  // doesn't lose it and re-show stale data until the next poll.
+  const patchActiveBooking = (patch) => {
+    setActiveBooking((current) => (current ? { ...current, ...patch } : current));
+    setLiveBookings((current) => current.map((b) => (b.id === activeBooking?.id ? { ...b, ...patch } : b)));
+  };
+
+  // Same POD approve/reject flow as BookingDetail.jsx — duplicated here rather than shared since
+  // each page keeps its own booking state (activeBooking vs. booking) and updates it locally on
+  // success instead of a full re-fetch.
+  const handleVerifyPod = async () => {
+    if (!activeBooking?.tripId) return;
+    setVerifyingPod(true);
+    try {
+      const res = await api.patch(`/api/trips/${activeBooking.tripId}/pod/verify`, {}, token);
+      if (!res?.success) throw new Error(res?.message || "Failed to approve proof of delivery");
+      patchActiveBooking({ podStatus: "verified" });
+      toast.success("Proof of delivery approved");
+    } catch (err) {
+      toast.error(err?.message || "Failed to approve proof of delivery");
+    } finally {
+      setVerifyingPod(false);
+    }
+  };
+
+  const handleRejectPod = async (reason) => {
+    if (!activeBooking?.tripId) return;
+    const res = await api.patch(`/api/trips/${activeBooking.tripId}/pod/reject`, { reason }, token);
+    if (!res?.success) throw new Error(res?.message || "Failed to reject proof of delivery");
+    patchActiveBooking({ podStatus: "rejected", podRejectionReason: reason });
+    setShowRejectPodSheet(false);
+    toast.success("Asked the driver to re-upload proof of delivery");
+  };
+
+  const viewProofOfDelivery = async () => {
+    if (!activeBooking?.podUrl || loadingPod) return;
+    setLoadingPod(true);
+    try {
+      const blobUrl = await api.getFileBlobUrl(activeBooking.podUrl, token);
+      window.open(blobUrl, "_blank");
+    } catch (err) {
+      toast.error(err?.message || "Failed to load proof of delivery");
+    } finally {
+      setLoadingPod(false);
+    }
+  };
+
   useEffect(() => {
     const loadLatest = async () => {
       try {
         const response = await api.get("/api/bookings?limit=100", token);
         const list = response?.data?.bookings || response?.data || [];
-        const live = list.find((b) => ["assigned", "en_route_pickup", "picked_up", "in_transit"].includes(b.status)) || list[0];
-        if (live) {
-          setActiveBooking(adaptBooking(live));
+        const live = list.filter((b) => ["assigned", "en_route_pickup", "picked_up", "in_transit"].includes(b.status)).map(adaptBooking);
+        if (live.length > 0) {
+          setLiveBookings(live);
+          setActiveIndex(0);
+          setActiveBooking(live[0]);
+        } else if (list.length > 0) {
+          // Nothing currently in flight — fall back to the most recent booking overall (e.g. a
+          // just-delivered trip), same as before this supported more than one at a time.
+          const fallback = adaptBooking(list[0]);
+          setLiveBookings([fallback]);
+          setActiveIndex(0);
+          setActiveBooking(fallback);
         } else {
           setNoBookingsYet(true);
         }
@@ -175,34 +244,43 @@ export default function TrackShipment() {
     return () => { cancelled = true; if (interval) clearInterval(interval); };
   }, [activeBooking?.id, activeBooking?.status, token, refreshTick]);
 
-  // Live push — the moment the driver's trip status changes (picked up, delivered, etc.), this
-  // updates the status badge/labels instantly instead of waiting up to 7s for the next poll,
-  // and immediately triggers a fresh poll (above) to pick up the location/ETA fields that go
-  // with the new status. No reload needed.
+  // Live push — the moment ANY of the client's ongoing trips changes status (picked up,
+  // delivered, etc.), this updates that booking's badge/timeline wherever it's held — in
+  // liveBookings always, and in activeBooking too if it's the one currently shown — instead of
+  // only ever reacting when it happens to match whichever trip is on screen. Without this, a
+  // second/third in-flight trip sitting in the background (see the </> nav below) would show a
+  // stale status the moment you switched to it, until the next full page load.
   useTripStatusSocket((trip) => {
-    if (!trip?.bookingId || trip.bookingId !== activeBooking?.id) return;
+    if (!trip?.bookingId) return;
     const newStatus = formatBookingStatus(trip.status);
-    setActiveBooking((current) => {
-      if (!current) return current;
-      // Compared against the value already in state (not a separate ref) so this only ever
-      // fires on the actual transition — the functional updater sees the pre-update status.
-      if (current.status !== "Delivered" && newStatus === "Delivered") {
-        toast.success("Delivery complete! Please rate your trip.");
-        setShowRateNudge(true);
-      }
-      // currentStep drives the Shipment Timeline card below — without recomputing it here too,
-      // the timeline stayed stuck on whatever step it loaded at while the status badge (which
-      // reads `status` directly) kept updating live, the two visibly disagreeing on-screen.
-      // Same lookup adaptBooking itself uses, so this can never compute a different step than a
-      // fresh load of the same status would.
+    const isActiveTrip = trip.bookingId === activeBooking?.id;
+
+    // Compared against the value already in the outer closure (kept fresh every render by
+    // useTripStatusSocket's own ref — see that hook) so this only ever fires on the actual
+    // transition, not on every push.
+    if (isActiveTrip && activeBooking.status !== "Delivered" && newStatus === "Delivered") {
+      toast.success("Delivery complete! Please rate your trip.");
+      setShowRateNudge(true);
+    }
+
+    // currentStep drives the Shipment Timeline card below — without recomputing it here too,
+    // the timeline stayed stuck on whatever step it loaded at while the status badge (which
+    // reads `status` directly) kept updating live, the two visibly disagreeing on-screen. Same
+    // lookup adaptBooking itself uses, so this can never compute a different step than a fresh
+    // load of the same status would.
+    const applyStatus = (b) => {
+      if (!b || b.id !== trip.bookingId) return b;
       const newStep = Math.max(
-        current.timeline.findIndex((step) => step === newStatus),
+        b.timeline.findIndex((step) => step === newStatus),
         TIMELINE_STEPS.findIndex((step) => step === newStatus),
         0
       );
-      return { ...current, status: newStatus, currentStep: newStep };
-    });
-    setRefreshTick((n) => n + 1);
+      return { ...b, status: newStatus, currentStep: newStep };
+    };
+
+    setLiveBookings((current) => current.map(applyStatus));
+    setActiveBooking((current) => applyStatus(current));
+    if (isActiveTrip) setRefreshTick((n) => n + 1);
   });
 
   // A fresh booking (new search, or the initial load) starts this nudge hidden again — it's
@@ -265,6 +343,18 @@ export default function TrackShipment() {
     if (e.key === "Enter") handleSearch();
   };
 
+  // </> navigation between simultaneously ongoing trips — searchQuery being set means a booking
+  // was pulled up by manual search instead, so the nav stays hidden in that case (see the JSX
+  // below) rather than trying to reconcile it with whichever index that search result would be.
+  const goToTrip = (newIndex, direction) => {
+    if (newIndex < 0 || newIndex >= liveBookings.length) return;
+    setSlideDir(direction);
+    setActiveIndex(newIndex);
+    setActiveBooking(liveBookings[newIndex]);
+  };
+  const goPrevTrip = () => goToTrip(activeIndex - 1, "left");
+  const goNextTrip = () => goToTrip(activeIndex + 1, "right");
+
   // Extra loading/unloading stops (Ola/Uber-style add-stop) between pickup and drop — empty
   // for the vast majority of bookings, which keeps the rail exactly as it always looked.
   const routeStops = (activeBooking?.stops || []).filter((s) => s.type === "loading" || s.type === "unloading");
@@ -302,13 +392,51 @@ export default function TrackShipment() {
         </button>
       </div>
 
+      {/* Multi-trip nav — only ever shown for the live carousel, never over a manual search
+          result (which stands alone, see handleSearch). Hidden entirely with 0-1 ongoing trips. */}
+      {!searchQuery && liveBookings.length > 1 && (
+        <div className="flex items-center gap-3 mb-5 w-full max-w-xl">
+          <button
+            onClick={goPrevTrip}
+            disabled={activeIndex === 0}
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-white border border-neutral-200 shadow-card text-neutral-500 hover:text-primary hover:border-primary/30 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Previous shipment"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex-1 flex items-center justify-center gap-1.5">
+            {liveBookings.map((b, i) => (
+              <button
+                key={b.id}
+                onClick={() => goToTrip(i, i > activeIndex ? "right" : "left")}
+                className={`h-1.5 rounded-full transition-all ${i === activeIndex ? "w-6 bg-primary" : "w-1.5 bg-neutral-200 hover:bg-neutral-300"}`}
+                aria-label={`Shipment ${i + 1} of ${liveBookings.length}`}
+              />
+            ))}
+          </div>
+          <span className="text-xs font-medium text-neutral-400 flex-shrink-0 tabular-nums">{activeIndex + 1} / {liveBookings.length}</span>
+          <button
+            onClick={goNextTrip}
+            disabled={activeIndex === liveBookings.length - 1}
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-white border border-neutral-200 shadow-card text-neutral-500 hover:text-primary hover:border-primary/30 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Next shipment"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 md:py-32 bg-white rounded-xl shadow-card">
           <span className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin mb-3" />
           <p className="text-sm text-neutral-400">Loading your shipments...</p>
         </div>
       ) : activeBooking ? (
-        <>
+        <div
+          key={activeBooking.id}
+          className={slideDir === "right" ? "animate-trip-slide-in-right" : slideDir === "left" ? "animate-trip-slide-in-left" : ""}
+          onAnimationEnd={() => setSlideDir(null)}
+        >
           {showRateNudge && (
             <div className="bg-primary-50 border border-primary/20 rounded-xl p-4 mb-5 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3">
@@ -519,6 +647,60 @@ export default function TrackShipment() {
               })()}
             </div>
 
+            {/* Proof of Delivery — same gallery + approve/reject flow as BookingDetail.jsx,
+                surfaced here too so it doesn't only show up after navigating away from tracking. */}
+            {activeBooking.podMedia?.length > 0 ? (
+              <div className="bg-white rounded-xl shadow-card p-4">
+                <p className="text-sm font-medium text-neutral-700 mb-2.5 flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-primary" /> Proof of Delivery
+                </p>
+                <PodGallery media={activeBooking.podMedia} token={token} />
+
+                {activeBooking.podStatus === "pending_verification" && (
+                  <div className="mt-3 pt-3 border-t border-neutral-100">
+                    <p className="text-xs text-neutral-500 mb-2.5">Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleVerifyPod}
+                        disabled={verifyingPod}
+                        className="flex-1 py-2 bg-success text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
+                      >
+                        {verifyingPod ? "Approving..." : "Approve"}
+                      </button>
+                      <button
+                        onClick={() => setShowRejectPodSheet(true)}
+                        disabled={verifyingPod}
+                        className="flex-1 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-60"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {activeBooking.podStatus === "verified" && (
+                  <p className="mt-3 pt-3 border-t border-neutral-100 flex items-center gap-1.5 text-xs font-medium text-success">
+                    <Check className="w-3.5 h-3.5" /> Approved
+                  </p>
+                )}
+                {activeBooking.podStatus === "rejected" && (
+                  <p className="mt-3 pt-3 border-t border-neutral-100 text-xs text-neutral-500">
+                    You asked the driver to re-upload{activeBooking.podRejectionReason ? `: "${activeBooking.podRejectionReason}"` : "."} Waiting for new photos.
+                  </p>
+                )}
+              </div>
+            ) : activeBooking.podUrl && (
+              <button
+                onClick={viewProofOfDelivery}
+                disabled={loadingPod}
+                className="w-full flex items-center gap-2.5 bg-white shadow-card rounded-xl p-4 hover:bg-neutral-50 transition-colors disabled:opacity-60"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary flex items-center justify-center flex-shrink-0">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium text-neutral-700">{loadingPod ? "Loading..." : "View Proof of Delivery"}</span>
+              </button>
+            )}
+
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl shadow-card p-4">
@@ -646,7 +828,7 @@ export default function TrackShipment() {
             </div>
           </div>
           </div>
-        </>
+        </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-24 md:py-32 bg-white rounded-xl shadow-card">
           <MapPin className="w-16 h-16 text-neutral-200 mb-4" />
@@ -670,6 +852,10 @@ export default function TrackShipment() {
             <ChatWindow bookingId={activeBooking.id} currentUserId={user?.id} />
           </div>
         )}
+      </BottomSheet>
+
+      <BottomSheet isOpen={showRejectPodSheet} onClose={() => setShowRejectPodSheet(false)}>
+        <RejectPodSheet onSubmit={handleRejectPod} onCancel={() => setShowRejectPodSheet(false)} />
       </BottomSheet>
     </div>
   );

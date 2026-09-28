@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../../core/widgets/map_route_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
@@ -671,6 +672,13 @@ class _BrokerRequestDetailScreenState
     required List<BrokerVehicle> trucks,
   }) async {
     if (!_canTakeAction) return;
+    if (!await ensureKycVerifiedForAccept(
+      context: context,
+      ref: ref,
+      role: 'broker',
+    )) {
+      return;
+    }
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) return;
 
@@ -1049,6 +1057,13 @@ class _BrokerRequestDetailScreenState
 
   Future<void> _acceptTimedOutDriverRequest() async {
     if (!_canTakeAction) return;
+    if (!await ensureKycVerifiedForAccept(
+      context: context,
+      ref: ref,
+      role: 'broker',
+    )) {
+      return;
+    }
     final session = ref.read(authSessionProvider).valueOrNull;
     final request = _driverRequest;
     if (session == null || request == null) return;
@@ -1951,9 +1966,7 @@ class _OverviewDetailRow extends StatelessWidget {
           child: Icon(
             icon,
             size: 17,
-            color: highlight
-                ? AppColors.warningText
-                : const Color(0xFF2FA56E),
+            color: highlight ? AppColors.warningText : const Color(0xFF2FA56E),
           ),
         ),
         const SizedBox(width: 10),
