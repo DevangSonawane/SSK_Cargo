@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../data/client_booking_models.dart';
@@ -55,6 +57,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
     );
     final bookings = bookingsState.valueOrNull?.bookings ?? const [];
     final stats = _ProfileStats.fromBookings(bookings);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.canvas,
@@ -69,7 +72,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate.fixed([
                     Text(
-                      'My Profile',
+                      l10n.myProfile,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             color: colors.textPrimary,
@@ -94,62 +97,61 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                     ),
                     const SizedBox(height: 22),
                     _ProfileSection(
-                      title: 'Shipments',
+                      title: l10n.shipments,
                       children: [
                         _ProfileMenuTile(
                           icon: AppIcons.inventory_2_outlined,
-                          title: 'My Bookings',
+                          title: l10n.myBookings,
                           onTap: () => context.go('/client/delivery'),
                         ),
                         _ProfileMenuTile(
                           icon: AppIcons.calendar_month_outlined,
-                          title: 'Monthly Vehicle Hiring',
-                          subtitle: 'Hire a truck on a monthly basis',
-                          onTap: () =>
-                              context.push('/client/monthly-hiring'),
+                          title: l10n.monthlyVehicleHiring,
+                          subtitle: l10n.monthlyVehicleHiringSubtitle,
+                          onTap: () => context.push('/client/monthly-hiring'),
                         ),
                       ],
                     ),
                     const SizedBox(height: 18),
                     _ProfileSection(
-                      title: 'Account',
+                      title: l10n.account,
                       children: [
                         _ProfileMenuTile(
                           icon: AppIcons.location_on_outlined,
-                          title: 'Saved Addresses',
+                          title: l10n.savedAddresses,
                           onTap: () => context.push('/client/saved-addresses'),
                         ),
                         _ProfileMenuTile(
                           icon: AppIcons.notifications_active_outlined,
-                          title: 'Notifications',
+                          title: l10n.notifications,
                           onTap: () => context.push('/client/notifications'),
                         ),
                         _ProfileMenuTile(
                           icon: AppIcons.key_rounded,
-                          title: 'Change Password',
+                          title: l10n.changePasswordTitleCase,
                           onTap: () => context.push('/change-password'),
                         ),
                       ],
                     ),
                     const SizedBox(height: 18),
                     _ProfileSection(
-                      title: 'Preferences',
-                      children: const [_AppearanceTile()],
+                      title: l10n.preferences,
+                      children: const [_AppearanceTile(), _LanguageTile()],
                     ),
                     const SizedBox(height: 18),
                     _ProfileSection(
-                      title: 'Help',
+                      title: l10n.help,
                       children: [
                         _ProfileMenuTile(
                           icon: AppIcons.headset_mic_outlined,
-                          title: 'Help & Support',
-                          subtitle: 'Coming soon',
+                          title: l10n.helpSupport,
+                          subtitle: l10n.comingSoon,
                           onTap: () => _showComingSoon(context),
                         ),
                         _ProfileMenuTile(
                           icon: AppIcons.description_outlined,
-                          title: 'Terms & Privacy',
-                          subtitle: 'Coming soon',
+                          title: l10n.termsPrivacy,
+                          subtitle: l10n.comingSoon,
                           onTap: () => _showComingSoon(context),
                         ),
                       ],
@@ -159,7 +161,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
-                        'SSK Logistics v1.0.0',
+                        l10n.sskVersion,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: colors.textTertiary,
                           fontWeight: FontWeight.w700,
@@ -178,7 +180,7 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
 
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('This feature is coming soon.')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.featureComingSoon)),
     );
   }
 }
@@ -241,7 +243,8 @@ class _ProfileHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = user?.displayName ?? 'Client';
+    final l10n = AppLocalizations.of(context)!;
+    final name = user?.displayName ?? l10n.client;
     final initials = _initials(name);
 
     return Container(
@@ -315,12 +318,12 @@ class _ProfileHeroCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     _HeroContactLine(
                       icon: AppIcons.phone_rounded,
-                      value: _fallback(user?.phone, 'Not provided'),
+                      value: _fallback(user?.phone, l10n.notProvided),
                     ),
                     const SizedBox(height: 4),
                     _HeroContactLine(
                       icon: AppIcons.mail_rounded,
-                      value: _fallback(user?.email, 'Not provided'),
+                      value: _fallback(user?.email, l10n.notProvided),
                     ),
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
@@ -336,7 +339,7 @@ class _ProfileHeroCard extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(AppIcons.edit_rounded, size: 16),
-                      label: const Text('Edit Profile'),
+                      label: Text(l10n.editProfile),
                     ),
                   ],
                 ),
@@ -361,7 +364,7 @@ class _ProfileHeroCard extends StatelessWidget {
                           value: loadingStats
                               ? '--'
                               : stats.totalBookings.toString(),
-                          label: 'Bookings',
+                          label: l10n.bookings,
                         ),
                       ),
                       _HeroDivider(),
@@ -370,7 +373,7 @@ class _ProfileHeroCard extends StatelessWidget {
                           value: loadingStats
                               ? '--'
                               : _compactCurrency(stats.totalSpent),
-                          label: 'Spent',
+                          label: l10n.spent,
                         ),
                       ),
                       _HeroDivider(),
@@ -379,7 +382,7 @@ class _ProfileHeroCard extends StatelessWidget {
                           value: loadingStats
                               ? '--'
                               : stats.delivered.toString(),
-                          label: 'Delivered',
+                          label: l10n.delivered,
                         ),
                       ),
                     ],
@@ -481,6 +484,7 @@ class _AccountInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -489,7 +493,7 @@ class _AccountInfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Account Info',
+            l10n.accountInfo,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: context.colors.textSecondary,
               fontWeight: FontWeight.w900,
@@ -502,28 +506,28 @@ class _AccountInfoCard extends StatelessWidget {
             Center(
               child: TextButton(
                 onPressed: onRetry,
-                child: const Text('Retry account stats'),
+                child: Text(l10n.retryAccountStats),
               ),
             )
           else ...[
             _InfoRow(
               icon: AppIcons.calendar_month_rounded,
               iconColor: const Color(0xFF2FA56E),
-              label: 'Member Since',
-              value: _formatDate(user?.createdAt),
+              label: l10n.memberSince,
+              value: _formatDate(user?.createdAt, l10n),
             ),
             const SizedBox(height: 13),
             _InfoRow(
               icon: AppIcons.inventory_2_rounded,
               iconColor: const Color(0xFF1F88C9),
-              label: 'Active Shipments',
+              label: l10n.activeShipments,
               value: stats.activeShipments.toString(),
             ),
             const SizedBox(height: 13),
             _InfoRow(
               icon: AppIcons.account_balance_wallet_rounded,
               iconColor: const Color(0xFFE6A700),
-              label: 'Lifetime Value',
+              label: l10n.lifetimeValue,
               value: _formatCurrency(stats.totalSpent),
             ),
           ],
@@ -718,6 +722,7 @@ class _AppearanceTile extends ConsumerWidget {
     final colors = context.colors;
     final mode = ref.watch(themeModeProvider);
     final isDark = mode == ThemeMode.dark;
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
@@ -733,7 +738,7 @@ class _AppearanceTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Appearance',
+                  l10n.appearance,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.textSecondary,
                     fontWeight: FontWeight.w800,
@@ -741,7 +746,9 @@ class _AppearanceTile extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isDark ? 'Liquid glass dark mode' : 'Liquid glass light mode',
+                  isDark
+                      ? l10n.appearanceDarkSubtitle
+                      : l10n.appearanceLightSubtitle,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.textTertiary,
                     fontWeight: FontWeight.w600,
@@ -764,6 +771,103 @@ class _AppearanceTile extends ConsumerWidget {
   }
 }
 
+class _LanguageTile extends ConsumerWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Icon(AppIcons.language_rounded, size: 21, color: colors.textTertiary),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.language,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.languageSubtitle,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 132,
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.line.withValues(alpha: 0.75)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  blurRadius: 1,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButtonFormField<String>(
+                initialValue: locale.languageCode,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(16),
+                dropdownColor: colors.surface,
+                icon: Icon(
+                  AppIcons.keyboard_arrow_down_rounded,
+                  color: colors.brandEmphasis,
+                  size: 20,
+                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.fromLTRB(14, 11, 10, 11),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                items: [
+                  DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                  DropdownMenuItem(value: 'hi', child: Text(l10n.hindi)),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  ref.read(localeProvider.notifier).setLanguageCode(value);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LiquidGlassAppearanceSwitch extends StatelessWidget {
   const _LiquidGlassAppearanceSwitch({
     required this.value,
@@ -777,7 +881,7 @@ class _LiquidGlassAppearanceSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Semantics(
-      label: 'Liquid glass appearance',
+      label: AppLocalizations.of(context)!.liquidGlassAppearance,
       toggled: value,
       button: true,
       child: GestureDetector(
@@ -892,7 +996,7 @@ class _SignOutTile extends StatelessWidget {
             const Icon(AppIcons.logout_rounded, color: Color(0xFFE23A4B)),
             const SizedBox(width: 9),
             Text(
-              'Sign Out',
+              AppLocalizations.of(context)!.signOut,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFFE23A4B),
                 fontWeight: FontWeight.w900,
@@ -966,21 +1070,21 @@ String _compactCurrency(double amount) {
   return _formatCurrency(amount);
 }
 
-String _formatDate(DateTime? value) {
+String _formatDate(DateTime? value, AppLocalizations l10n) {
   if (value == null) return '—';
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = [
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   return '${months[value.month - 1]} ${value.day}, ${value.year}';
 }

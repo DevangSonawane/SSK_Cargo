@@ -112,6 +112,7 @@ abstract final class AppIcons {
   static const IconData key_rounded = LucideIcons.key_round;
   static const IconData keyboard_arrow_down_rounded = LucideIcons.chevron_down;
   static const IconData keyboard_arrow_up_rounded = LucideIcons.chevron_up;
+  static const IconData language_rounded = LucideIcons.languages;
   static const IconData link_off_rounded = LucideIcons.unlink;
   static const IconData link_rounded = LucideIcons.link;
   static const IconData local_gas_station_rounded = LucideIcons.fuel;
@@ -129,7 +130,8 @@ abstract final class AppIcons {
   static const IconData logout_rounded = LucideIcons.log_out;
   static const IconData light_mode_rounded = LucideIcons.sun;
   static const IconData dark_mode_rounded = LucideIcons.moon;
-  static const IconData settings_suggest_rounded = LucideIcons.monitor_smartphone;
+  static const IconData settings_suggest_rounded =
+      LucideIcons.monitor_smartphone;
   static const IconData mail_outline_rounded = LucideIcons.mail;
   static const IconData mail_rounded = LucideIcons.mail;
   static const IconData manage_accounts_rounded = LucideIcons.user_cog;

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/providers/app_providers.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -15,6 +16,7 @@ class BrokerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(
       brokerJobRequestsProvider((page: 1, limit: 100)),
     );
@@ -41,23 +43,21 @@ class BrokerShell extends ConsumerWidget {
         location != '/broker/earnings' &&
         !location.startsWith('/broker/history/');
     final currentTab = navigationShell.currentIndex;
+    final brokerName = displayName?.split(' ').first ?? 'Aman';
     final headerTitle = switch (currentTab) {
-      0 =>
-        displayName == null
-            ? 'Good morning, Aman'
-            : 'Good morning, ${displayName.split(' ').first}',
-      1 => 'Active Jobs',
-      2 => 'Vehicles',
-      3 => 'Tracking',
-      4 => 'History',
-      _ => 'Broker',
+      0 => l10n.goodMorningName(brokerName),
+      1 => l10n.activeJobs,
+      2 => l10n.navVehicles,
+      3 => l10n.navTracking,
+      4 => l10n.navHistory,
+      _ => l10n.broker,
     };
     final headerSubtitle = switch (currentTab) {
-      0 => 'New bookings waiting for you',
-      1 => 'Jobs currently in progress',
-      2 => 'Manage your fleet at a glance',
-      3 => 'Monitor driver movement',
-      4 => 'Review recent bookings',
+      0 => l10n.newBookingsWaiting,
+      1 => l10n.jobsInProgress,
+      2 => l10n.manageFleetAtGlance,
+      3 => l10n.monitorDriverMovement,
+      4 => l10n.reviewRecentBookings,
       _ => null,
     };
 

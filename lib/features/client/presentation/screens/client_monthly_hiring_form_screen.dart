@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -58,20 +59,20 @@ class _ClientMonthlyHiringFormScreenState
     }
   }
 
-  String _formatDate(DateTime value) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+  String _formatDate(DateTime value, AppLocalizations l10n) {
+    final months = [
+      l10n.monthJan,
+      l10n.monthFeb,
+      l10n.monthMar,
+      l10n.monthApr,
+      l10n.monthMay,
+      l10n.monthJun,
+      l10n.monthJul,
+      l10n.monthAug,
+      l10n.monthSep,
+      l10n.monthOct,
+      l10n.monthNov,
+      l10n.monthDec,
     ];
     return '${value.day} ${months[value.month - 1]} ${value.year}';
   }
@@ -113,28 +114,29 @@ class _ClientMonthlyHiringFormScreenState
 
   Future<void> _submit() async {
     if (_submitting) return;
+    final l10n = AppLocalizations.of(context)!;
     final location = _locationController.text.trim();
     if (location.isEmpty) {
-      _snack('Please tell us where you need the vehicle');
+      _snack(l10n.monthlyHiringLocationRequired);
       return;
     }
     if (_startDate == null || _endDate == null) {
-      _snack('Please select both a start and end date');
+      _snack(l10n.monthlyHiringDatesRequired);
       return;
     }
     if (!_endDate!.isAfter(_startDate!)) {
-      _snack('End date must be after the start date');
+      _snack(l10n.monthlyHiringEndDateAfterStart);
       return;
     }
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      _snack('Please sign in again to submit.');
+      _snack(l10n.signInAgainToSubmit);
       return;
     }
     final budgetText = _budgetController.text.trim();
     final budget = budgetText.isEmpty ? null : double.tryParse(budgetText);
     if (budgetText.isNotEmpty && budget == null) {
-      _snack('Please enter a valid budget amount');
+      _snack(l10n.validBudgetRequired);
       return;
     }
     setState(() => _submitting = true);
@@ -154,11 +156,9 @@ class _ClientMonthlyHiringFormScreenState
                 : _descriptionController.text.trim(),
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enquiry submitted — our team will get in touch soon'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.enquirySubmitted)));
       context.pop(true);
     } on ApiException catch (error) {
       _snack(error.message);
@@ -172,6 +172,7 @@ class _ClientMonthlyHiringFormScreenState
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
@@ -181,7 +182,7 @@ class _ClientMonthlyHiringFormScreenState
           onPressed: () => context.pop(),
           icon: const Icon(AppIcons.arrow_back_rounded),
         ),
-        title: const Text('New Enquiry'),
+        title: Text(l10n.newEnquiry),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -190,7 +191,7 @@ class _ClientMonthlyHiringFormScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Tell us what you need — our team will get back to you with options.',
+                l10n.monthlyHiringFormIntro,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colors.textSecondary,
                   height: 1.4,
@@ -216,20 +217,20 @@ class _ClientMonthlyHiringFormScreenState
                   children: [
                     _Label(
                       icon: AppIcons.location_on_outlined,
-                      text: 'Location / Route',
+                      text: l10n.locationRoute,
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _locationController,
-                      decoration: const InputDecoration(
-                        hintText: 'e.g. Pune, or Pune to Mumbai corridor',
+                      decoration: InputDecoration(
+                        hintText: l10n.monthlyHiringLocationHint,
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     _Label(
                       icon: AppIcons.local_shipping_outlined,
-                      text: 'Truck Category',
+                      text: l10n.truckCategory,
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
@@ -240,8 +241,8 @@ class _ClientMonthlyHiringFormScreenState
                         border: OutlineInputBorder(),
                       ),
                       selectedItemBuilder: (context) => [
-                        const Text(
-                          'Any category',
+                        Text(
+                          l10n.anyCategory,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -255,10 +256,10 @@ class _ClientMonthlyHiringFormScreenState
                           ),
                       ],
                       items: [
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           value: '',
                           child: Text(
-                            'Any category',
+                            l10n.anyCategory,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -283,17 +284,17 @@ class _ClientMonthlyHiringFormScreenState
                       builder: (context, constraints) {
                         final stackDates = constraints.maxWidth < 360;
                         final startField = _DateField(
-                          label: 'Start Date',
+                          label: l10n.startDate,
                           text: _startDate == null
-                              ? 'Select start date'
-                              : _formatDate(_startDate!),
+                              ? l10n.selectStartDate
+                              : _formatDate(_startDate!, l10n),
                           onTap: () => _pickDate(isStart: true),
                         );
                         final endField = _DateField(
-                          label: 'End Date',
+                          label: l10n.endDate,
                           text: _endDate == null
-                              ? 'Select end date'
-                              : _formatDate(_endDate!),
+                              ? l10n.selectEndDate
+                              : _formatDate(_endDate!, l10n),
                           onTap: () => _pickDate(isStart: false),
                         );
                         if (stackDates) {
@@ -316,7 +317,7 @@ class _ClientMonthlyHiringFormScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Pricing Preference',
+                      l10n.pricingPreference,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: colors.textSecondary,
@@ -325,9 +326,9 @@ class _ClientMonthlyHiringFormScreenState
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        for (final opt in const [
-                          ('fixed', 'Fixed Rate'),
-                          ('per_km', 'Per KM Rate'),
+                        for (final opt in [
+                          ('fixed', l10n.fixedRate),
+                          ('per_km', l10n.perKmRate),
                         ])
                           Expanded(
                             child: Padding(
@@ -372,8 +373,8 @@ class _ClientMonthlyHiringFormScreenState
                     _Label(
                       icon: AppIcons.payments_outlined,
                       text: _pricingType == 'per_km'
-                          ? 'Budget (₹ per km) (optional)'
-                          : 'Monthly Budget (₹) (optional)',
+                          ? l10n.budgetPerKmOptional
+                          : l10n.monthlyBudgetOptional,
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -381,15 +382,15 @@ class _ClientMonthlyHiringFormScreenState
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Your expected budget',
+                      decoration: InputDecoration(
+                        hintText: l10n.expectedBudgetHint,
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     _Label(
                       icon: AppIcons.description_outlined,
-                      text: 'Additional Details (optional)',
+                      text: l10n.additionalDetailsOptional,
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -397,9 +398,8 @@ class _ClientMonthlyHiringFormScreenState
                       minLines: 3,
                       maxLines: 5,
                       maxLength: 2000,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Anything else that would help — cargo type, expected daily runs, etc.',
+                      decoration: InputDecoration(
+                        hintText: l10n.monthlyHiringDetailsHint,
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -420,7 +420,7 @@ class _ClientMonthlyHiringFormScreenState
                           ),
                           side: BorderSide(color: colors.line),
                         ),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                     ),
                   ),
@@ -433,7 +433,7 @@ class _ClientMonthlyHiringFormScreenState
                         onPressed: _submitting ? null : _submit,
                         icon: const Icon(AppIcons.send_rounded, size: 18),
                         label: Text(
-                          _submitting ? 'Submitting...' : 'Submit Enquiry',
+                          _submitting ? l10n.submitting : l10n.submitEnquiry,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

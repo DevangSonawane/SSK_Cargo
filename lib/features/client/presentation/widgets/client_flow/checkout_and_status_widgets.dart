@@ -17,13 +17,14 @@ class _CheckoutChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final fullSelected =
         selectedMethod != PaymentMethod.advance &&
         selectedMethod != PaymentMethod.payLater &&
         selectedMethod != PaymentMethod.toBeBilled;
     final advanceSubtitle = advanceAmount == null
-        ? 'Fetching configured advance amount'
-        : '${_formatRupees(advanceAmount!)} now, balance on delivery';
+        ? l10n.fetchingAdvanceAmount
+        : l10n.advanceAmountNowBalanceOnDelivery(_formatRupees(advanceAmount!));
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -41,14 +42,14 @@ class _CheckoutChoiceCard extends StatelessWidget {
       child: Column(
         children: [
           _CheckoutChoiceTile(
-            title: 'Pay Now',
-            subtitle: 'Full amount now through secure checkout',
+            title: l10n.paymentPayNow,
+            subtitle: l10n.paymentPayNowSubtitle,
             icon: AppIcons.lock_outline_rounded,
             selected: fullSelected,
             onTap: () => onSelect(PaymentMethod.googlePay),
           ),
           _CheckoutChoiceTile(
-            title: 'Advance',
+            title: l10n.advance,
             subtitle: advanceSubtitle,
             icon: loadingAdvanceAmount
                 ? AppIcons.hourglass_top_rounded
@@ -58,17 +59,17 @@ class _CheckoutChoiceCard extends StatelessWidget {
             onTap: () => onSelect(PaymentMethod.advance),
           ),
           _CheckoutChoiceTile(
-            title: 'To Pay',
-            subtitle: 'Full amount collected by the driver on delivery',
+            title: l10n.toPay,
+            subtitle: l10n.toPaySubtitle,
             icon: AppIcons.local_shipping_outlined,
             selected: selectedMethod == PaymentMethod.payLater,
             onTap: () => onSelect(PaymentMethod.payLater),
           ),
           _CheckoutChoiceTile(
-            title: 'To Be Billed',
+            title: l10n.toBeBilled,
             subtitle: allowToBeBilled
-                ? 'Nothing collected now or on delivery'
-                : 'Available after a driver is confirmed',
+                ? l10n.toBeBilledSubtitle
+                : l10n.toBeBilledUnavailableSubtitle,
             icon: AppIcons.receipt_long_outlined,
             selected: selectedMethod == PaymentMethod.toBeBilled,
             enabled: allowToBeBilled,
@@ -910,7 +911,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                 if (!_isValid) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Choose a future pickup time.',
+                    AppLocalizations.of(context)!.chooseFuturePickupTime,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: const Color(0xFFE23A4B),
                       fontWeight: FontWeight.w700,
@@ -932,7 +933,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                         borderRadius: BorderRadius.circular(17),
                       ),
                     ),
-                    child: const Text('Set Time'),
+                    child: Text(AppLocalizations.of(context)!.setTime),
                   ),
                 ),
               ],
@@ -1161,6 +1162,14 @@ class _BookingSuccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final displayTitle = title == 'Booking confirmed'
+        ? l10n.bookingConfirmed
+        : title;
+    final displayMessage =
+        message == 'Your booking has been successfully placed.'
+        ? l10n.bookingPlacedSuccessfully
+        : message;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -1195,7 +1204,7 @@ class _BookingSuccessCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            title,
+            displayTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               color: context.colors.textPrimary,
@@ -1204,7 +1213,7 @@ class _BookingSuccessCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            message,
+            displayMessage,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: context.colors.textSecondary,
             ),
@@ -1213,8 +1222,8 @@ class _BookingSuccessCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             bookingReference == null || bookingReference!.isEmpty
-                ? 'Booking Number: Pending'
-                : 'Booking Number: $bookingReference',
+                ? l10n.bookingNumberPending
+                : l10n.bookingNumberValue(bookingReference!),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: context.colors.textPrimary,
@@ -1227,14 +1236,14 @@ class _BookingSuccessCard extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   onPressed: onTrack,
-                  child: const Text('Track booking'),
+                  child: Text(l10n.trackBooking),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
                   onPressed: onHome,
-                  child: const Text('Go to home'),
+                  child: Text(l10n.goToHome),
                 ),
               ),
             ],
@@ -1268,6 +1277,7 @@ class _BookingWaitingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final request = driverRequest;
     final actionable = request?.isActionableByClient == true;
     final waitingForDriverConfirmation =
@@ -1321,10 +1331,10 @@ class _BookingWaitingCard extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             actionable
-                ? 'Driver offer received'
+                ? l10n.driverOfferReceived
                 : waitingForDriverConfirmation
-                ? 'Confirming with driver'
-                : 'Finding nearby trucks',
+                ? l10n.confirmingWithDriver
+                : l10n.findingNearbyTrucks,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
               color: context.colors.textPrimary,
@@ -1334,12 +1344,12 @@ class _BookingWaitingCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             actionable
-                ? 'Opening the live offer popup so you can accept, reject, or change fare.'
+                ? l10n.driverOfferReceivedSubtitle
                 : waitingForDriverConfirmation
-                ? 'You accepted the offer. We are waiting for the driver to complete the handshake.'
+                ? l10n.confirmingWithDriverSubtitle
                 : requestCount > 0
-                ? 'Drivers inside ${searchRadiusKm.round()} km have been notified. We will show the offer popup when one responds.'
-                : 'Your booking is live. We are notifying drivers inside ${searchRadiusKm.round()} km.',
+                ? l10n.driversNotifiedRadius(searchRadiusKm.round())
+                : l10n.bookingLiveNotifyingDrivers(searchRadiusKm.round()),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: context.colors.textSecondary,
             ),
@@ -1348,8 +1358,8 @@ class _BookingWaitingCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             bookingReference == null || bookingReference!.isEmpty
-                ? 'Booking Number: Pending'
-                : 'Booking Number: $bookingReference',
+                ? l10n.bookingNumberPending
+                : l10n.bookingNumberValue(bookingReference!),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: context.colors.textPrimary,
@@ -1372,7 +1382,7 @@ class _BookingWaitingCard extends StatelessWidget {
                   Text(
                     request.brokerName.isNotEmpty
                         ? request.brokerName
-                        : 'Driver response',
+                        : l10n.driverResponse,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: context.colors.textPrimary,
@@ -1381,12 +1391,12 @@ class _BookingWaitingCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     waitingForDriverConfirmation
-                        ? 'Waiting for the driver to confirm your acceptance.'
+                        ? l10n.waitingForDriverAcceptance
                         : request.isCountered
-                        ? 'Fare change: ${request.amountText}'
+                        ? l10n.fareChangeAmount(request.amountText)
                         : request.driverTimedOut
-                        ? 'Driver response timed out.'
-                        : 'Latest amount: ${request.amountText}',
+                        ? l10n.driverResponseTimedOut
+                        : l10n.latestAmount(request.amountText),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                     ),
@@ -1415,8 +1425,8 @@ class _BookingWaitingCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     requestCount == 0
-                        ? 'Searching live'
-                        : '$activeCount active request${activeCount == 1 ? '' : 's'} nearby',
+                        ? l10n.searchingLive
+                        : l10n.activeRequestsNearby(activeCount),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
@@ -1425,7 +1435,7 @@ class _BookingWaitingCard extends StatelessWidget {
                 ),
                 if (declinedCount > 0)
                   Text(
-                    '$declinedCount declined',
+                    l10n.declinedCount(declinedCount),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textTertiary,
                       fontWeight: FontWeight.w700,
@@ -1441,14 +1451,14 @@ class _BookingWaitingCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton(
                     onPressed: onTrack,
-                    child: const Text('Open tracking'),
+                    child: Text(l10n.openTracking),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: onHome,
-                    child: const Text('Go to home'),
+                    child: Text(l10n.goToHome),
                   ),
                 ),
               ],

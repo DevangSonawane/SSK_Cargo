@@ -4,6 +4,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:ssk/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -116,10 +117,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   Timer? _refreshTimer;
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   StreamSubscription<Map<String, dynamic>>? _tripStatusSubscription;
+  late final StateController<bool> _bottomNavVisibleController;
   List<_ReassignmentHistoryEntry> _reassignmentHistory = const [];
 
   void _setBottomNavVisible(bool visible) {
-    ref.read(bottomNavVisibleProvider.notifier).state = visible;
+    _bottomNavVisibleController.state = visible;
   }
 
   void _openLiveTracking() {
@@ -132,11 +134,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   Future<void> _callDriver(String? phone) async {
+    final l10n = AppLocalizations.of(context)!;
     final number = phone?.trim() ?? '';
     if (number.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Driver phone number is not available.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.driverPhoneUnavailable)));
       return;
     }
     final launched = await launchUrl(
@@ -144,9 +147,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       mode: LaunchMode.externalApplication,
     );
     if (!launched && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the phone app.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.couldNotOpenPhoneApp)));
     }
   }
 
@@ -155,6 +158,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _bottomNavVisibleController = ref.read(bottomNavVisibleProvider.notifier);
     _resolvedShipment = widget.shipment;
     _refreshShipment();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -520,6 +524,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       (_shipment.amount - _shipment.amountPaid).clamp(0, double.infinity);
 
   Future<void> _cancelBooking() async {
+    final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
     if (bookingId == null || _isCancelling || !_canCancelBooking) {
       return;
@@ -527,11 +532,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to cancel this booking.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.signInAgainToCancelBooking)));
       return;
     }
 
@@ -545,7 +548,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         return;
       }
       final cancellationReason = reason.trim().isEmpty
-          ? 'Cancelled by client'
+          ? l10n.cancelledByClient
           : reason.trim();
       await ref
           .read(apiClientProvider)
@@ -556,7 +559,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking cancelled successfully.')),
+        SnackBar(content: Text(l10n.bookingCancelledSuccessfully)),
       );
       setState(() {
         _isBookingCancelled = true;
@@ -644,6 +647,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   Future<void> _payBooking() async {
+    final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
     if (bookingId == null || bookingId.isEmpty) {
       return;
@@ -657,9 +661,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     final amount = _remainingAmount;
     if (amount <= 0) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment amount is unavailable.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.paymentAmountUnavailable)));
       return;
     }
 
@@ -667,18 +671,20 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Continue to payment?'),
+        title: Text(l10n.continueToPayment),
         content: Text(
-          'This will open secure checkout for ₹${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}.',
+          l10n.paymentCheckoutMessage(
+            amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Pay now'),
+            child: Text(l10n.payNow),
           ),
         ],
       ),
@@ -699,13 +705,13 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         payType: 'full',
         contact: session.user.phone,
         email: session.user.email,
-        description: 'Booking payment',
+        description: l10n.bookingPaymentDescription,
         context: context,
       );
       if (!mounted) return;
       unawaited(_refreshShipment());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment completed successfully.')),
+        SnackBar(content: Text(l10n.paymentCompletedSuccessfully)),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -723,6 +729,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   Future<void> _shareTracking() async {
+    final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
     if (bookingId == null || bookingId.isEmpty || _isSharingTracking) {
       return;
@@ -730,11 +737,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to share tracking.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.signInAgainToShareTracking)));
       return;
     }
 
@@ -749,16 +754,20 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       final data = _asMap(response['data']);
       final shareUrl = _readText(data, const ['shareUrl', 'share_url', 'url']);
       if (shareUrl.isEmpty) {
-        throw const ApiException('Tracking link is unavailable.');
+        throw ApiException(l10n.trackingLinkUnavailable);
       }
 
-      final text =
-          'Track ${_shipment.trackingId} (${_shipment.fromLocation} to ${_shipment.toLocation})\n$shareUrl';
+      final text = l10n.trackingShareText(
+        _shipment.trackingId,
+        _shipment.fromLocation,
+        _shipment.toLocation,
+        shareUrl,
+      );
       var shared = false;
       try {
         await _shareChannel.invokeMethod<void>('share', <String, dynamic>{
           'text': text,
-          'subject': 'Track your shipment',
+          'subject': l10n.trackYourShipment,
         });
         shared = true;
       } catch (_) {
@@ -772,9 +781,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            shared
-                ? 'Tracking link is ready to share.'
-                : 'Tracking link copied to clipboard.',
+            shared ? l10n.trackingLinkReadyToShare : l10n.trackingLinkCopied,
           ),
           backgroundColor: const Color(0xFF2FA56E),
         ),
@@ -799,6 +806,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
   }
 
   Future<void> _downloadInvoice() async {
+    final l10n = AppLocalizations.of(context)!;
     final bookingId = _shipment.bookingId;
     if (bookingId == null || bookingId.isEmpty) {
       return;
@@ -821,7 +829,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Invoice file is empty.')));
+        ).showSnackBar(SnackBar(content: Text(l10n.invoiceFileEmpty)));
         return;
       }
       final fileName =
@@ -859,10 +867,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         SnackBar(
           content: Text(
             savedPath != null && savedPath.isNotEmpty
-                ? 'Invoice downloaded to $savedPath.'
+                ? l10n.invoiceDownloadedTo(savedPath)
                 : sharedFallback
-                ? 'Invoice ready to save or share.'
-                : 'Failed to download invoice. Please restart the app and try again.',
+                ? l10n.invoiceReadyToSaveOrShare
+                : l10n.invoiceDownloadFailed,
           ),
         ),
       );
@@ -891,15 +899,15 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     if (session == null) {
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
 
     final defaultEmail = session.user.email;
     final toController = TextEditingController(text: defaultEmail);
     final subjectController = TextEditingController(
-      text: 'Invoice for booking ${_shipment.trackingId}',
+      text: l10n.invoiceForBooking(_shipment.trackingId),
     );
     final messageController = TextEditingController(
-      text:
-          'Please find attached the invoice for booking ${_shipment.trackingId}.',
+      text: l10n.invoiceEmailMessage(_shipment.trackingId),
     );
 
     try {
@@ -912,7 +920,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                title: const Text('Email invoice'),
+                title: Text(l10n.emailInvoice),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -920,22 +928,22 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       TextField(
                         controller: toController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'To',
+                        decoration: InputDecoration(
+                          labelText: l10n.to,
                           hintText: 'recipient@example.com',
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: subjectController,
-                        decoration: const InputDecoration(labelText: 'Subject'),
+                        decoration: InputDecoration(labelText: l10n.subject),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: messageController,
                         minLines: 3,
                         maxLines: 5,
-                        decoration: const InputDecoration(labelText: 'Message'),
+                        decoration: InputDecoration(labelText: l10n.message),
                       ),
                     ],
                   ),
@@ -943,11 +951,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const Text('Send'),
+                    child: Text(l10n.send),
                   ),
                 ],
               );
@@ -970,9 +978,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
             message: messageController.text.trim(),
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invoice emailed successfully.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.invoiceEmailedSuccessfully)));
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1004,6 +1012,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     if (session == null) {
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
 
     final reviewController = TextEditingController();
     var stars = 5;
@@ -1018,7 +1027,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                title: const Text('Rate booking'),
+                title: Text(l10n.rateBooking),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1052,9 +1061,9 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                       controller: reviewController,
                       minLines: 2,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Review',
-                        hintText: 'Tell us how the delivery went',
+                      decoration: InputDecoration(
+                        labelText: l10n.review,
+                        hintText: l10n.reviewHint,
                       ),
                     ),
                   ],
@@ -1062,11 +1071,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const Text('Submit'),
+                    child: Text(l10n.submit),
                   ),
                 ],
               );
@@ -1113,7 +1122,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Thanks for your rating.')));
+      ).showSnackBar(SnackBar(content: Text(l10n.thanksForYourRating)));
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1141,6 +1150,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     if (session == null) {
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
 
     final descriptionController = TextEditingController();
     var issueType = 'billing';
@@ -1155,29 +1165,29 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                title: const Text('Raise dispute'),
+                title: Text(l10n.raiseDispute),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DropdownButtonFormField<String>(
                         initialValue: issueType,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'billing',
-                            child: Text('Billing'),
+                            child: Text(l10n.billing),
                           ),
                           DropdownMenuItem(
                             value: 'damage',
-                            child: Text('Damage'),
+                            child: Text(l10n.damage),
                           ),
                           DropdownMenuItem(
                             value: 'delay',
-                            child: Text('Delay'),
+                            child: Text(l10n.delay),
                           ),
                           DropdownMenuItem(
                             value: 'other',
-                            child: Text('Other'),
+                            child: Text(l10n.other),
                           ),
                         ],
                         onChanged: (value) {
@@ -1185,18 +1195,16 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                             setState(() => issueType = value);
                           }
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Issue type',
-                        ),
+                        decoration: InputDecoration(labelText: l10n.issueType),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: descriptionController,
                         minLines: 3,
                         maxLines: 5,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Describe the issue in a few words',
+                        decoration: InputDecoration(
+                          labelText: l10n.description,
+                          hintText: l10n.disputeDescriptionHint,
                         ),
                       ),
                     ],
@@ -1205,11 +1213,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const Text('Submit'),
+                    child: Text(l10n.submit),
                   ),
                 ],
               );
@@ -1233,7 +1241,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Dispute submitted.')));
+      ).showSnackBar(SnackBar(content: Text(l10n.disputeSubmitted)));
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1468,7 +1476,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                               AppIcons.download_rounded,
                                               size: 18,
                                             ),
-                                            label: const Text('Invoice'),
+                                            label: Text(
+                                              AppLocalizations.of(
+                                                context,
+                                              )!.invoice,
+                                            ),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor:
                                                   context.colors.textPrimary,
@@ -1516,8 +1528,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                     ),
                                     child: Text(
                                       _isCancelling
-                                          ? 'Cancelling...'
-                                          : 'Cancel booking',
+                                          ? AppLocalizations.of(
+                                              context,
+                                            )!.cancelling
+                                          : AppLocalizations.of(
+                                              context,
+                                            )!.cancelBooking,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -1605,6 +1621,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     debugPrint(
       '[LiveTracking] build bookingId=${widget.shipment.bookingId} '
       'pickup=${widget.shipment.pickupLat},${widget.shipment.pickupLng} '
@@ -1667,7 +1684,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                 right: 0,
                 child: Center(
                   child: Text(
-                    'Live Tracking',
+                    l10n.liveTracking,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -1684,7 +1701,7 @@ class _LiveTrackingViewState extends State<_LiveTrackingView> {
                       ? null
                       : _openInGoogleMaps,
                   icon: const Icon(AppIcons.map_outlined, size: 16),
-                  label: const Text('Maps'),
+                  label: Text(l10n.maps),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -3068,7 +3085,9 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to approve.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToApprove),
+        ),
       );
       return;
     }
@@ -3082,7 +3101,9 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Proof of delivery approved.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.proofOfDeliveryApproved),
+        ),
       );
       await widget.onChanged?.call();
     } on ApiException catch (error) {
@@ -3108,29 +3129,29 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
     final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
+        final l10n = AppLocalizations.of(context)!;
         final controller = TextEditingController();
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text('Reject proof of delivery?'),
+          title: Text(l10n.rejectProofOfDelivery),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'The driver will be asked to upload new photos before the trip can be completed.',
-                style: TextStyle(fontSize: 13),
+              Text(
+                l10n.rejectProofOfDeliveryDescription,
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText:
-                      'e.g. Photos are blurry, doesn\'t show delivered cargo...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: l10n.rejectPodReasonHint,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -3138,13 +3159,13 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () =>
                   Navigator.of(dialogContext).pop(controller.text.trim()),
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Reject'),
+              child: Text(l10n.reject),
             ),
           ],
         );
@@ -3155,7 +3176,9 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to reject.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToReject),
+        ),
       );
       return;
     }
@@ -3170,8 +3193,8 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Asked the driver to re-upload proof of delivery.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.driverAskedToReuploadPod),
         ),
       );
       await widget.onChanged?.call();

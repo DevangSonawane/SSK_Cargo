@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -60,11 +61,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final l10n = AppLocalizations.of(context)!;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter both email and password.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.enterEmailAndPassword)));
       return;
     }
 
@@ -124,6 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isGoogleSubmitting = true);
     try {
       await _googleSignInInitialization;
@@ -133,7 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final auth = account.authentication;
       final idToken = auth.idToken;
       if (idToken == null || idToken.isEmpty) {
-        throw StateError('Google did not return an ID token.');
+        throw StateError(l10n.googleNoIdToken);
       }
 
       final session = await ref
@@ -163,8 +166,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on GoogleSignInException catch (error) {
       if (!mounted) return;
       final message = error.code == GoogleSignInExceptionCode.canceled
-          ? 'Google sign-in was cancelled.'
-          : error.description ?? 'Google sign-in failed.';
+          ? l10n.googleSignInCancelled
+          : error.description ?? l10n.googleSignInFailed;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -191,7 +194,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open registration link.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotOpenRegistration),
+        ),
       );
     }
   }
@@ -199,6 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final expiredMessage = ref.watch(authExpiredMessageProvider);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -298,7 +304,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                       cursorColor: Color(0xFF2FA56E),
                                       decoration: _pillDecoration(
-                                        label: 'Email',
+                                        label: l10n.email,
                                         icon: AppIcons.email_rounded,
                                       ),
                                     ),
@@ -318,7 +324,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                       cursorColor: Color(0xFF2FA56E),
                                       decoration: _pillDecoration(
-                                        label: 'Password',
+                                        label: l10n.password,
                                         icon: AppIcons.lock_rounded,
                                         suffixIcon: IconButton(
                                           onPressed: () {
@@ -334,8 +340,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                 : AppIcons.visibility_outlined,
                                           ),
                                           tooltip: _obscurePassword
-                                              ? 'Show password'
-                                              : 'Hide password',
+                                              ? l10n.showPassword
+                                              : l10n.hidePassword,
                                         ),
                                       ),
                                     ),
@@ -374,10 +380,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                         color: Colors.white,
                                                       ),
                                                 )
-                                              : const Text(
-                                                  'Login',
-                                                  key: ValueKey('label'),
-                                                  style: TextStyle(
+                                              : Text(
+                                                  l10n.login,
+                                                  key: const ValueKey('label'),
+                                                  style: const TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w800,
                                                   ),
@@ -447,9 +453,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             ScaffoldMessenger.of(
                                               context,
                                             ).showSnackBar(
-                                              const SnackBar(
+                                              SnackBar(
                                                 content: Text(
-                                                  'Apple sign-in is coming soon.',
+                                                  l10n.appleSignInComingSoon,
                                                 ),
                                               ),
                                             );
@@ -486,9 +492,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           WrapCrossAlignment.center,
                                       spacing: 6,
                                       children: [
-                                        const Text(
-                                          "Don't have an account?",
-                                          style: TextStyle(
+                                        Text(
+                                          l10n.dontHaveAccount,
+                                          style: const TextStyle(
                                             color: Color(0xFF1B2A3A),
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -505,9 +511,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               0xFF2FA56E,
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Create account',
-                                            style: TextStyle(
+                                          child: Text(
+                                            l10n.createAccount,
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.w800,
                                             ),
                                           ),
@@ -556,12 +562,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            child: const Text(
-                              'Register as Broker/Driver',
+                            child: Text(
+                              l10n.registerAsBrokerDriver,
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),

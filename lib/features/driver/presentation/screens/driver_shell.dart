@@ -8,6 +8,7 @@ import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/driver_flow_widgets.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class DriverShell extends ConsumerStatefulWidget {
   const DriverShell({super.key, required this.navigationShell});
@@ -31,9 +32,10 @@ class _DriverShellState extends ConsumerState<DriverShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final displayName = session?.user.displayName;
-    final firstName = displayName?.split(' ').first ?? 'Driver';
+    final firstName = displayName?.split(' ').first ?? l10n.driver;
 
     return Theme(
       data: AppTheme.light,
@@ -78,7 +80,7 @@ class _DriverShellState extends ConsumerState<DriverShell> {
                           child: Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              '👋 Hello, $firstName',
+                              l10n.helloName(firstName),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.headlineSmall

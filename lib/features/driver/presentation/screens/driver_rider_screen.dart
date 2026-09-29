@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart'
@@ -47,6 +48,7 @@ class DriverAllTripsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return Scaffold(
@@ -94,10 +96,10 @@ class DriverAllTripsScreen extends ConsumerWidget {
                   _AllTripsHeader(onBack: () => context.pop()),
                   const SizedBox(height: 14),
                   if (trips.isEmpty)
-                    const _EmptyCard(
+                    _EmptyCard(
                       icon: AppIcons.route_rounded,
-                      title: 'No trips yet',
-                      subtitle: 'Your full trip history will appear here.',
+                      title: l10n.noTripsYet,
+                      subtitle: l10n.fullTripHistoryAppearsHere,
                     )
                   else ...[
                     _TripsStatsStrip(trips: trips),
@@ -279,6 +281,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final dashboardAsync = ref.watch(driverDashboardProvider);
 
     return SafeArea(
@@ -293,16 +296,16 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
               parent: BouncingScrollPhysics(),
             ),
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: const [
+            children: [
               _EmptyCard(
                 icon: AppIcons.route_rounded,
-                title: 'No active delivery',
-                subtitle: 'Accepted deliveries will appear here live.',
+                title: l10n.noActiveDelivery,
+                subtitle: l10n.acceptedDeliveriesAppearLive,
               ),
-              SizedBox(height: 18),
-              _SegmentBarPlaceholder(),
-              SizedBox(height: 12),
-              _InlineEmptyMessage(message: 'Loading trips...'),
+              const SizedBox(height: 18),
+              const _SegmentBarPlaceholder(),
+              const SizedBox(height: 12),
+              _InlineEmptyMessage(message: l10n.loadingTrips),
             ],
           ),
         ),
@@ -359,16 +362,15 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _SectionHeader(
-                          title: 'Active delivery',
-                          subtitle: 'Your live trip appears here first',
+                          title: l10n.activeDelivery,
+                          subtitle: l10n.liveTripAppearsFirst,
                         ),
                         const SizedBox(height: 12),
                         if (currentTrip == null)
-                          const _EmptyCard(
+                          _EmptyCard(
                             icon: AppIcons.route_rounded,
-                            title: 'No active delivery',
-                            subtitle:
-                                'Accepted deliveries will appear here live.',
+                            title: l10n.noActiveDelivery,
+                            subtitle: l10n.acceptedDeliveriesAppearLive,
                           )
                         else
                           _ActiveTripCard(
@@ -744,6 +746,7 @@ class _TripsStatsStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totalEarned = trips
         .where((trip) => trip.amount > 0)
         .fold<double>(0, (sum, trip) => sum + trip.amount);
@@ -762,7 +765,7 @@ class _TripsStatsStrip extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _StatCell(value: '${trips.length}', label: 'Total trips'),
+            child: _StatCell(value: '${trips.length}', label: l10n.totalTrips),
           ),
           const SizedBox(width: 16),
           Container(width: 1, height: 34, color: Colors.white24),
@@ -770,14 +773,14 @@ class _TripsStatsStrip extends StatelessWidget {
           Expanded(
             child: _StatCell(
               value: '₹${totalEarned.round()}',
-              label: 'Total earned',
+              label: l10n.totalEarned,
             ),
           ),
           const SizedBox(width: 16),
           Container(width: 1, height: 34, color: Colors.white24),
           const SizedBox(width: 16),
           Expanded(
-            child: _StatCell(value: '$completed', label: 'Completed'),
+            child: _StatCell(value: '$completed', label: l10n.completed),
           ),
         ],
       ),

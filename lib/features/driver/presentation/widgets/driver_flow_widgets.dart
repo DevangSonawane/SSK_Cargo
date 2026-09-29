@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class DriverBottomBar extends StatelessWidget {
   const DriverBottomBar({
@@ -16,10 +17,11 @@ class DriverBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = <_DriverNavItem>[
-      const _DriverNavItem(label: 'New travel', icon: LucideIcons.truck),
-      const _DriverNavItem(label: 'Active', icon: LucideIcons.book_open_text),
-      const _DriverNavItem(label: 'Earnings', icon: LucideIcons.wallet),
+      _DriverNavItem(label: l10n.navNewTravel, icon: LucideIcons.truck),
+      _DriverNavItem(label: l10n.navActive, icon: LucideIcons.book_open_text),
+      _DriverNavItem(label: l10n.navEarnings, icon: LucideIcons.wallet),
     ];
 
     return SafeArea(

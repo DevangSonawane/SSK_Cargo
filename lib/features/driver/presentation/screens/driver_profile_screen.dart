@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/data/auth_models.dart';
@@ -151,6 +153,8 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final dashboard = ref.watch(driverDashboardProvider).valueOrNull;
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context)!;
     final user = session?.user;
     final currentUserId = user?.id;
     if (currentUserId != _activeUserId && !_sessionSyncQueued) {
@@ -174,102 +178,116 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                 child: TextButton.icon(
                   onPressed: () => context.go('/driver/home'),
                   icon: const Icon(AppIcons.arrow_back_rounded, size: 18),
-                  label: const Text('Back'),
+                  label: Text(l10n.back),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.textTertiary,
                     padding: EdgeInsets.zero,
                   ),
                 ),
               ),
-            const SizedBox(height: 10),
-            _ProfileCard(
-              user: user,
-              kycApproved: !_loadingKyc && _kycApproved,
-              truckType: _truckTypeLabel(dashboard?.assignedTruck),
-            ),
-            const SizedBox(height: 16),
-            _ProfileSection(
-              title: 'Account',
-              children: [
-                _ProfileMenuTile(
-                  title: 'Manage Account',
-                  subtitle: 'Profile details, security, and preferences',
-                  icon: AppIcons.person_outline_rounded,
-                  onTap: () => context.push('/manage-account'),
-                ),
-                _ProfileMenuTile(
-                  title: 'KYC Registration',
-                  subtitle: _loadingKyc
-                      ? 'Checking verification status'
-                      : _kycApproved
-                      ? 'Verified'
-                      : 'Complete your driver verification',
-                  icon: _kycApproved
-                      ? AppIcons.verified_rounded
-                      : AppIcons.verified_user_outlined,
-                  accent: _kycApproved
-                      ? AppColors.brand
-                      : AppColors.warningText,
-                  highlighted: !_loadingKyc && !_kycApproved,
-                  onTap: () => context.push('/driver/kyc-registration'),
-                ),
-                _ProfileMenuTile(
-                  title: 'Earnings',
-                  subtitle: 'Trip payouts and completed delivery earnings',
-                  icon: AppIcons.trending_up_rounded,
-                  accent: AppColors.brand,
-                  onTap: () => context.go('/driver/earnings'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _ProfileSection(
-              title: 'Communication',
-              children: [
-                _ProfileMenuTile(
-                  title: _openingBrokerChat
-                      ? 'Opening chat...'
-                      : 'Message My Broker',
-                  subtitle: 'Open your direct broker conversation',
-                  icon: AppIcons.chat_bubble_outline_rounded,
-                  accent: AppColors.brand,
-                  onTap: _openingBrokerChat ? null : _openBrokerChat,
-                ),
-                _ProfileMenuTile(
-                  title: 'All Chats',
-                  subtitle: 'View every driver conversation',
-                  icon: AppIcons.forum_outlined,
-                  accent: AppColors.brand,
-                  onTap: () => context.push('/driver/chats'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _ProfileSection(
-              title: 'Security',
-              children: [
-                _ProfileMenuTile(
-                  title: 'Change Password',
-                  subtitle: 'Update your sign-in credentials',
-                  icon: AppIcons.lock_outline_rounded,
-                  onTap: () => context.push('/change-password'),
-                ),
-                _ProfileMenuTile(
-                  title: 'Logout',
-                  subtitle: 'Sign out from this device',
-                  icon: AppIcons.logout_rounded,
-                  accent: AppColors.dangerIcon,
-                  onTap: () async {
-                    await ref.read(authSessionProvider.notifier).logout();
-                    if (context.mounted) {
-                      context.go('/login');
-                    }
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
+              const SizedBox(height: 10),
+              _ProfileCard(
+                user: user,
+                kycApproved: !_loadingKyc && _kycApproved,
+                truckType: _truckTypeLabel(dashboard?.assignedTruck),
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: l10n.preferences,
+                children: [
+                  _LanguageTile(
+                    selected: locale.languageCode,
+                    onChanged: (languageCode) {
+                      ref
+                          .read(localeProvider.notifier)
+                          .setLanguageCode(languageCode);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: l10n.account,
+                children: [
+                  _ProfileMenuTile(
+                    title: l10n.manageAccountTitleCase,
+                    subtitle: l10n.driverManageAccountSubtitle,
+                    icon: AppIcons.person_outline_rounded,
+                    onTap: () => context.push('/manage-account'),
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.kycRegistration,
+                    subtitle: _loadingKyc
+                        ? l10n.checkingVerificationStatus
+                        : _kycApproved
+                        ? l10n.verified
+                        : l10n.completeDriverVerification,
+                    icon: _kycApproved
+                        ? AppIcons.verified_rounded
+                        : AppIcons.verified_user_outlined,
+                    accent: _kycApproved
+                        ? AppColors.brand
+                        : AppColors.warningText,
+                    highlighted: !_loadingKyc && !_kycApproved,
+                    onTap: () => context.push('/driver/kyc-registration'),
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.earnings,
+                    subtitle: l10n.driverEarningsSubtitle,
+                    icon: AppIcons.trending_up_rounded,
+                    accent: AppColors.brand,
+                    onTap: () => context.go('/driver/earnings'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: l10n.communication,
+                children: [
+                  _ProfileMenuTile(
+                    title: _openingBrokerChat
+                        ? l10n.openingChat
+                        : l10n.messageMyBroker,
+                    subtitle: l10n.messageMyBrokerSubtitle,
+                    icon: AppIcons.chat_bubble_outline_rounded,
+                    accent: AppColors.brand,
+                    onTap: _openingBrokerChat ? null : _openBrokerChat,
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.allChats,
+                    subtitle: l10n.allChatsSubtitle,
+                    icon: AppIcons.forum_outlined,
+                    accent: AppColors.brand,
+                    onTap: () => context.push('/driver/chats'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: l10n.security,
+                children: [
+                  _ProfileMenuTile(
+                    title: l10n.changePasswordTitleCase,
+                    subtitle: l10n.driverChangePasswordSubtitle,
+                    icon: AppIcons.lock_outline_rounded,
+                    onTap: () => context.push('/change-password'),
+                  ),
+                  _ProfileMenuTile(
+                    title: l10n.logout,
+                    subtitle: l10n.logoutSubtitle,
+                    icon: AppIcons.logout_rounded,
+                    accent: AppColors.dangerIcon,
+                    onTap: () async {
+                      await ref.read(authSessionProvider.notifier).logout();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -289,9 +307,10 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final displayName = user?.displayName.trim().isNotEmpty == true
         ? user!.displayName.trim()
-        : 'Driver account';
+        : l10n.driverAccount;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -350,7 +369,7 @@ class _ProfileCard extends StatelessWidget {
           Text(
             user?.phone.trim().isNotEmpty == true
                 ? user!.phone
-                : user?.email ?? 'No account connected',
+                : user?.email ?? l10n.noAccountConnected,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -370,11 +389,11 @@ class _ProfileCard extends StatelessWidget {
                 icon: kycApproved
                     ? AppIcons.verified_rounded
                     : AppIcons.hourglass_top_rounded,
-                label: kycApproved ? 'Verified' : 'KYC Pending',
+                label: kycApproved ? l10n.verified : l10n.kycPending,
               ),
-              const _ProfileChip(
+              _ProfileChip(
                 icon: AppIcons.local_shipping_outlined,
-                label: 'Driver',
+                label: l10n.driver,
               ),
               if (truckType.isNotEmpty)
                 _ProfileChip(
@@ -382,6 +401,111 @@ class _ProfileCard extends StatelessWidget {
                   label: truckType,
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile({required this.selected, required this.onChanged});
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      child: Row(
+        children: [
+          const Icon(
+            AppIcons.language_rounded,
+            size: 21,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.language,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.languageSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 132,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line.withValues(alpha: 0.75)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  blurRadius: 1,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButtonFormField<String>(
+                initialValue: selected,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(16),
+                dropdownColor: Colors.white,
+                icon: const Icon(
+                  AppIcons.keyboard_arrow_down_rounded,
+                  color: AppColors.brand,
+                  size: 20,
+                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.fromLTRB(14, 11, 10, 11),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                items: [
+                  DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                  DropdownMenuItem(value: 'hi', child: Text(l10n.hindi)),
+                ],
+                onChanged: (value) {
+                  if (value != null) onChanged(value);
+                },
+              ),
+            ),
           ),
         ],
       ),

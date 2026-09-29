@@ -1,0 +1,551 @@
+{
+  "@@locale": "hi",
+  "settings": "सेटिंग्स",
+  "language": "भाषा",
+  "languageSubtitle": "इस डिवाइस के लिए भाषा चुनें",
+  "english": "English",
+  "hindi": "हिंदी",
+  "appearance": "दिखावट",
+  "appearanceSubtitle": "इस डिवाइस पर ऐप कैसा दिखेगा चुनें",
+  "light": "लाइट",
+  "auto": "ऑटो",
+  "dark": "डार्क",
+  "chats": "चैट्स",
+  "chatsSubtitle": "अपनी सभी बुकिंग की बातचीत देखें",
+  "notifications": "नोटिफिकेशन",
+  "clientNotificationsSubtitle": "बुकिंग अपडेट और इनवॉइस अलर्ट देखें",
+  "changePassword": "पासवर्ड बदलें",
+  "changePasswordSubtitle": "इस अकाउंट का पासवर्ड अपडेट करें",
+  "manageAccount": "अकाउंट मैनेज करें",
+  "manageAccountSubtitle": "अपना नाम, ईमेल, फोन और फोटो अपडेट करें",
+  "savedAddresses": "सेव किए गए पते",
+  "savedAddressesSubtitle": "पिकअप और ड्रॉप लोकेशन मैनेज करें",
+  "monthlyVehicleHiring": "मासिक वाहन हायरिंग",
+  "monthlyVehicleHiringSubtitle": "मासिक आधार पर ट्रक हायर करें",
+  "finance": "फाइनेंस",
+  "financeSubtitle": "इनवॉइस, सेटलमेंट और कमाई की जानकारी।",
+  "invoices": "इनवॉइस",
+  "invoicesSubtitle": "बुकिंग और इनवॉइस एक्शन देखें",
+  "settlements": "सेटलमेंट",
+  "settlementsSubtitle": "पेआउट और सेटलमेंट स्थिति देखें",
+  "analytics": "एनालिटिक्स",
+  "analyticsSubtitle": "इस महीने और पिछले महीने को ट्रैक करें",
+  "brokerNotificationsSectionSubtitle": "अपना नोटिफिकेशन इनबॉक्स खोलें।",
+  "brokerNotificationsSubtitle": "अपना नोटिफिकेशन इनबॉक्स खोलें",
+  "back": "वापस",
+  "account": "अकाउंट",
+  "manageAccountTitleCase": "अकाउंट मैनेज करें",
+  "driverManageAccountSubtitle": "प्रोफाइल जानकारी, सुरक्षा और पसंद",
+  "kycRegistration": "KYC रजिस्ट्रेशन",
+  "checkingVerificationStatus": "वेरिफिकेशन स्थिति जांच रहे हैं",
+  "verified": "वेरिफाइड",
+  "completeDriverVerification": "अपना ड्राइवर वेरिफिकेशन पूरा करें",
+  "earnings": "कमाई",
+  "driverEarningsSubtitle": "ट्रिप पेआउट और पूरी हुई डिलीवरी की कमाई",
+  "communication": "कम्युनिकेशन",
+  "openingChat": "चैट खोल रहे हैं...",
+  "messageMyBroker": "मेरे ब्रोकर को मैसेज करें",
+  "messageMyBrokerSubtitle": "अपनी डायरेक्ट ब्रोकर बातचीत खोलें",
+  "allChats": "सभी चैट्स",
+  "allChatsSubtitle": "हर ड्राइवर बातचीत देखें",
+  "security": "सुरक्षा",
+  "changePasswordTitleCase": "पासवर्ड बदलें",
+  "driverChangePasswordSubtitle": "अपनी साइन-इन जानकारी अपडेट करें",
+  "logout": "लॉगआउट",
+  "logoutSubtitle": "इस डिवाइस से साइन आउट करें",
+  "driverAccount": "ड्राइवर अकाउंट",
+  "noAccountConnected": "कोई अकाउंट कनेक्ट नहीं है",
+  "kycPending": "KYC पेंडिंग",
+  "driver": "ड्राइवर",
+  "enterEmailAndPassword": "ईमेल और पासवर्ड दोनों दर्ज करें।",
+  "googleNoIdToken": "Google ने ID टोकन वापस नहीं किया।",
+  "googleSignInCancelled": "Google साइन-इन कैंसिल कर दिया गया।",
+  "googleSignInFailed": "Google साइन-इन असफल रहा।",
+  "couldNotOpenRegistration": "रजिस्ट्रेशन लिंक नहीं खुल सका।",
+  "email": "ईमेल",
+  "password": "पासवर्ड",
+  "showPassword": "पासवर्ड दिखाएं",
+  "hidePassword": "पासवर्ड छिपाएं",
+  "login": "लॉगिन",
+  "appleSignInComingSoon": "Apple साइन-इन जल्द आ रहा है।",
+  "dontHaveAccount": "अकाउंट नहीं है?",
+  "createAccount": "अकाउंट बनाएं",
+  "registerAsBrokerDriver": "ब्रोकर/ड्राइवर के रूप में रजिस्टर करें",
+  "newEnquiry": "नई पूछताछ",
+  "signInToManageEnquiries": "पूछताछ मैनेज करने के लिए साइन इन करें",
+  "signInToManageEnquiriesSubtitle": "मासिक हायरिंग अनुरोध लोड करने से पहले हमें एक सक्रिय क्लाइंट सेशन चाहिए।",
+  "retry": "फिर कोशिश करें",
+  "couldNotLoadEnquiries": "पूछताछ लोड नहीं हो सकी",
+  "couldNotLoadEnquiriesSubtitle": "रिफ्रेश करने के लिए खींचें या थोड़ी देर बाद फिर कोशिश करें।",
+  "noEnquiriesYet": "अभी कोई पूछताछ नहीं है",
+  "noEnquiriesYetSubtitle": "हमें बताएं कि आपको कहां और कितने समय के लिए ट्रक चाहिए, हमारी टीम संपर्क करेगी।",
+  "noEnquiriesMatchSearch": "आपकी खोज से कोई पूछताछ मेल नहीं खाती",
+  "noEnquiriesMatchSearchSubtitle": "दूसरी लोकेशन, ट्रक प्रकार या स्थिति आजमाएं।",
+  "searchMonthlyEnquiries": "मासिक पूछताछ खोजें...",
+  "monthlyTruckHiring": "मासिक ट्रक हायरिंग",
+  "contacted": "संपर्क किया गया",
+  "closed": "बंद",
+  "open": "खुला",
+  "perKm": "प्रति KM",
+  "fixedRate": "फिक्स्ड रेट",
+  "locationNotSpecified": "लोकेशन नहीं दी गई",
+  "submittedRecently": "हाल ही में सबमिट किया गया",
+  "submittedOn": "{date} को सबमिट किया गया",
+  "@submittedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "monthJan": "जन",
+  "monthFeb": "फर",
+  "monthMar": "मार्च",
+  "monthApr": "अप्रै",
+  "monthMay": "मई",
+  "monthJun": "जून",
+  "monthJul": "जुल",
+  "monthAug": "अग",
+  "monthSep": "सित",
+  "monthOct": "अक्टू",
+  "monthNov": "नवं",
+  "monthDec": "दिसं",
+  "monthlyHiringFormIntro": "हमें बताएं कि आपको क्या चाहिए — हमारी टीम विकल्पों के साथ आपसे संपर्क करेगी।",
+  "locationRoute": "लोकेशन / रूट",
+  "monthlyHiringLocationHint": "जैसे Pune, या Pune to Mumbai corridor",
+  "truckCategory": "ट्रक कैटेगरी",
+  "anyCategory": "कोई भी कैटेगरी",
+  "startDate": "शुरू तारीख",
+  "endDate": "अंत तारीख",
+  "selectStartDate": "शुरू तारीख चुनें",
+  "selectEndDate": "अंत तारीख चुनें",
+  "pricingPreference": "प्राइसिंग पसंद",
+  "perKmRate": "प्रति KM रेट",
+  "budgetPerKmOptional": "बजट (₹ प्रति km) (वैकल्पिक)",
+  "monthlyBudgetOptional": "मासिक बजट (₹) (वैकल्पिक)",
+  "expectedBudgetHint": "आपका अपेक्षित बजट",
+  "additionalDetailsOptional": "अतिरिक्त जानकारी (वैकल्पिक)",
+  "monthlyHiringDetailsHint": "कुछ और जो मदद करे — कार्गो प्रकार, अपेक्षित दैनिक ट्रिप आदि।",
+  "cancel": "कैंसल",
+  "submitting": "सबमिट हो रहा है...",
+  "submitEnquiry": "पूछताछ सबमिट करें",
+  "monthlyHiringLocationRequired": "कृपया बताएं कि आपको वाहन कहां चाहिए",
+  "monthlyHiringDatesRequired": "कृपया शुरू और अंत दोनों तारीखें चुनें",
+  "monthlyHiringEndDateAfterStart": "अंत तारीख शुरू तारीख के बाद होनी चाहिए",
+  "signInAgainToSubmit": "सबमिट करने के लिए कृपया फिर से साइन इन करें।",
+  "validBudgetRequired": "कृपया सही बजट राशि दर्ज करें",
+  "enquirySubmitted": "पूछताछ सबमिट हो गई — हमारी टीम जल्द संपर्क करेगी",
+  "driverPhoneUnavailable": "ड्राइवर का फोन नंबर उपलब्ध नहीं है।",
+  "couldNotOpenPhoneApp": "फोन ऐप नहीं खुल सका।",
+  "signInAgainToCancelBooking": "इस बुकिंग को कैंसल करने के लिए कृपया फिर से साइन इन करें।",
+  "cancelledByClient": "क्लाइंट द्वारा कैंसल",
+  "bookingCancelledSuccessfully": "बुकिंग सफलतापूर्वक कैंसल हो गई।",
+  "paymentAmountUnavailable": "पेमेंट राशि उपलब्ध नहीं है।",
+  "continueToPayment": "पेमेंट पर आगे बढ़ें?",
+  "paymentCheckoutMessage": "यह ₹{amount} के लिए सुरक्षित चेकआउट खोलेगा।",
+  "@paymentCheckoutMessage": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payNow": "अभी भुगतान करें",
+  "bookingPaymentDescription": "बुकिंग पेमेंट",
+  "paymentCompletedSuccessfully": "पेमेंट सफलतापूर्वक पूरा हुआ।",
+  "signInAgainToShareTracking": "ट्रैकिंग शेयर करने के लिए कृपया फिर से साइन इन करें।",
+  "trackingLinkUnavailable": "ट्रैकिंग लिंक उपलब्ध नहीं है।",
+  "trackYourShipment": "अपना शिपमेंट ट्रैक करें",
+  "trackingShareText": "{trackingId} ट्रैक करें ({fromLocation} से {toLocation})\n{shareUrl}",
+  "@trackingShareText": {
+    "placeholders": {
+      "trackingId": {},
+      "fromLocation": {},
+      "toLocation": {},
+      "shareUrl": {}
+    }
+  },
+  "trackingLinkReadyToShare": "ट्रैकिंग लिंक शेयर करने के लिए तैयार है।",
+  "trackingLinkCopied": "ट्रैकिंग लिंक क्लिपबोर्ड में कॉपी हो गया।",
+  "invoiceFileEmpty": "इनवॉइस फाइल खाली है।",
+  "invoiceDownloadedTo": "इनवॉइस {path} पर डाउनलोड हो गया।",
+  "@invoiceDownloadedTo": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "invoiceReadyToSaveOrShare": "इनवॉइस सेव या शेयर करने के लिए तैयार है।",
+  "invoiceDownloadFailed": "इनवॉइस डाउनलोड नहीं हो सका। कृपया ऐप रीस्टार्ट करके फिर कोशिश करें।",
+  "invoiceDownloadFailedTryAgain": "इनवॉइस डाउनलोड नहीं हो सका। कृपया फिर कोशिश करें।",
+  "myProfile": "मेरा प्रोफाइल",
+  "shipments": "शिपमेंट्स",
+  "myBookings": "मेरी बुकिंग्स",
+  "preferences": "पसंद",
+  "help": "मदद",
+  "helpSupport": "मदद और सपोर्ट",
+  "termsPrivacy": "नियम और गोपनीयता",
+  "comingSoon": "जल्द आ रहा है",
+  "featureComingSoon": "यह फीचर जल्द आ रहा है।",
+  "sskVersion": "SSK Logistics v1.0.0",
+  "appearanceLightSubtitle": "लिक्विड ग्लास लाइट मोड",
+  "appearanceDarkSubtitle": "लिक्विड ग्लास डार्क मोड",
+  "liquidGlassAppearance": "लिक्विड ग्लास दिखावट",
+  "client": "क्लाइंट",
+  "notProvided": "उपलब्ध नहीं",
+  "editProfile": "प्रोफाइल एडिट करें",
+  "bookings": "बुकिंग्स",
+  "spent": "खर्च",
+  "delivered": "डिलीवर",
+  "accountInfo": "अकाउंट जानकारी",
+  "retryAccountStats": "अकाउंट आंकड़े फिर लोड करें",
+  "memberSince": "मेंबर बने",
+  "activeShipments": "सक्रिय शिपमेंट्स",
+  "lifetimeValue": "कुल वैल्यू",
+  "signOut": "साइन आउट",
+  "support": "सपोर्ट",
+  "brokerAccount": "ब्रोकर अकाउंट",
+  "noEmailConnected": "कोई ईमेल कनेक्ट नहीं है",
+  "standardPlan": "स्टैंडर्ड प्लान",
+  "brokerEarningsSubtitle": "रेवेन्यू और सेटलमेंट प्रदर्शन",
+  "completeBrokerVerification": "अपना ब्रोकर वेरिफिकेशन पूरा करें",
+  "brokerHelpSubtitle": "अकाउंट या ट्रिप समस्याओं के लिए सपोर्ट से संपर्क करें",
+  "removeFromMyList": "मेरी सूची से हटाएं?",
+  "removeFromMyListDescription": "यह केवल आपकी सूची से हटेगा। इसे वापस नहीं किया जा सकेगा।",
+  "remove": "हटाएं",
+  "bookingRemovedFromList": "बुकिंग आपकी सूची से हटा दी गई।",
+  "invoiceForBooking": "बुकिंग {bookingRef} के लिए इनवॉइस",
+  "@invoiceForBooking": {
+    "placeholders": {
+      "bookingRef": {}
+    }
+  },
+  "invoiceEmailDefaultMessage": "कृपया बुकिंग {bookingRef} का इनवॉइस संलग्न देखें।",
+  "@invoiceEmailDefaultMessage": {
+    "placeholders": {
+      "bookingRef": {}
+    }
+  },
+  "invoiceEmailedSuccessfully": "इनवॉइस सफलतापूर्वक ईमेल किया गया।",
+  "clientNotifiedInvoiceShared": "क्लाइंट को सूचित कर दिया गया — इनवॉइस उनके पोर्टल पर शेयर हो गया।",
+  "stopMarkedComplete": "स्टॉप पूरा मार्क कर दिया गया।",
+  "forceTripStatus": "ट्रिप स्थिति फोर्स करें?",
+  "forceTripStatusDescription": "यह ड्राइवर की ओर से ट्रिप को \"{status}\" पर ले जाएगा। केवल तब उपयोग करें जब ड्राइवर उपलब्ध न हो।",
+  "@forceTripStatusDescription": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "apply": "लागू करें",
+  "tripStatusUpdated": "ट्रिप स्थिति अपडेट हो गई।",
+  "paymentRecorded": "पेमेंट रिकॉर्ड हो गया।",
+  "tripNotFound": "ट्रिप नहीं मिली",
+  "couldNotLoadJobDetails": "जॉब डिटेल्स लोड नहीं हो सकीं",
+  "completeDelivery": "डिलीवरी पूरी करें",
+  "chat": "चैट",
+  "saving": "सेव हो रहा है...",
+  "invoice": "इनवॉइस",
+  "emailAction": "ईमेल",
+  "sending": "भेज रहे हैं...",
+  "notify": "सूचित करें",
+  "removing": "हटा रहे हैं...",
+  "jobDetails": "जॉब डिटेल्स",
+  "truck": "ट्रक",
+  "date": "तारीख",
+  "distance": "दूरी",
+  "cargo": "कार्गो",
+  "earningsPayment": "कमाई और पेमेंट",
+  "amount": "राशि",
+  "platformFee": "प्लेटफॉर्म फीस",
+  "netEarnings": "नेट कमाई",
+  "payment": "पेमेंट",
+  "mode": "मोड",
+  "timeTaken": "लगा समय",
+  "recording": "रिकॉर्ड हो रहा है...",
+  "cash": "कैश",
+  "routeTo": "{from} से {to}",
+  "@routeTo": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "driverTakeoverTitle": "ड्राइवर उपलब्ध नहीं? इस ट्रिप को संभालें",
+  "hide": "छिपाएं",
+  "show": "दिखाएं",
+  "driverTakeoverDescription": "इसे केवल तब उपयोग करें जब ड्राइवर का फोन बंद हो, ऐप क्रैश हो गया हो, या सिग्नल न हो। एक्शन सीधे ड्राइवर की ओर से होंगे।",
+  "retryLoadingTrip": "ट्रिप फिर लोड करें",
+  "loadingUnloadingStops": "लोडिंग और अनलोडिंग स्टॉप्स",
+  "forceStatus": "स्थिति फोर्स करें",
+  "applying": "लागू हो रहा है...",
+  "done": "पूरा",
+  "pending": "पेंडिंग",
+  "markLoaded": "लोडेड मार्क करें",
+  "markUnloaded": "अनलोडेड मार्क करें",
+  "loadingUnloadingStopsTitle": "लोडिंग और अनलोडिंग स्टॉप्स",
+  "proofOfDelivery": "डिलीवरी प्रूफ",
+  "awaitingClientReview": "क्लाइंट रिव्यू का इंतजार",
+  "clientApproved": "क्लाइंट ने मंजूर किया",
+  "clientRejectedReuploading": "क्लाइंट ने रिजेक्ट किया — ड्राइवर फिर अपलोड कर रहा है",
+  "sendInvoiceByEmail": "ईमेल से इनवॉइस भेजें",
+  "to": "किसे",
+  "subject": "विषय",
+  "message": "मैसेज",
+  "send": "भेजें",
+  "reassignmentHistory": "रीअसाइनमेंट हिस्ट्री",
+  "unassigned": "अनअसाइन्ड",
+  "unknown": "अज्ञात",
+  "reassignedBy": "{name} द्वारा · {date}",
+  "@reassignedBy": {
+    "placeholders": {
+      "name": {},
+      "date": {}
+    }
+  },
+  "locationPending": "लोकेशन पेंडिंग",
+  "includedHaltingCharge": "हॉल्टिंग शामिल ({hours}h): {amount}",
+  "@includedHaltingCharge": {
+    "placeholders": {
+      "hours": {},
+      "amount": {}
+    }
+  },
+  "includedDelayCharge": "देरी शामिल ({hours}h): {amount}",
+  "@includedDelayCharge": {
+    "placeholders": {
+      "hours": {},
+      "amount": {}
+    }
+  },
+  "clientReason": "क्लाइंट का कारण: {reason}",
+  "@clientReason": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "online": "ऑनलाइन",
+  "navHome": "होम",
+  "navActivity": "गतिविधि",
+  "navProfile": "प्रोफाइल",
+  "navNewBooking": "नई बुकिंग",
+  "navActive": "सक्रिय",
+  "navVehicles": "वाहन",
+  "navTracking": "ट्रैकिंग",
+  "navHistory": "हिस्ट्री",
+  "navNewTravel": "नई यात्रा",
+  "navEarnings": "कमाई",
+  "broker": "ब्रोकर",
+  "goodMorningName": "सुप्रभात, {name}",
+  "@goodMorningName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "helloName": "नमस्ते, {name}",
+  "@helloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "activeJobs": "सक्रिय जॉब्स",
+  "newBookingsWaiting": "नई बुकिंग आपका इंतजार कर रही हैं",
+  "jobsInProgress": "जॉब्स अभी प्रगति में हैं",
+  "manageFleetAtGlance": "अपनी फ्लीट को एक नजर में मैनेज करें",
+  "monitorDriverMovement": "ड्राइवर की मूवमेंट मॉनिटर करें",
+  "reviewRecentBookings": "हाल की बुकिंग देखें"
+  ,
+  "bookingId": "बुकिंग ID",
+  "pickup": "पिकअप",
+  "drop": "ड्रॉप",
+  "dropOff": "ड्रॉप-ऑफ",
+  "truckType": "ट्रक टाइप",
+  "status": "स्थिति",
+  "bookingsCsvCopied": "बुकिंग CSV क्लिपबोर्ड पर कॉपी हो गई।",
+  "signInToViewBookings": "बुकिंग देखने के लिए साइन इन करें",
+  "signInToViewBookingsSubtitle": "आपकी एक्टिविटी फीड लोड करने से पहले हमें एक एक्टिव क्लाइंट सेशन चाहिए।",
+  "couldNotLoadBookings": "बुकिंग लोड नहीं हो सकीं",
+  "tryAgain": "फिर कोशिश करें",
+  "nothingMovingYet": "अभी कोई मूवमेंट नहीं",
+  "nothingMovingYetSubtitle": "आपकी पहली बुकिंग के बाद आपके ट्रक, ट्रिप और लाइव ट्रैकिंग यहां दिखेंगे।",
+  "myBookingsSubtitle": "अपनी फ्लीट ट्रांसपोर्टेशन शेड्यूल मैनेज और रिव्यू करें।",
+  "export": "एक्सपोर्ट",
+  "newBooking": "नई बुकिंग",
+  "fromLabel": "कहां से:",
+  "shippingToLabel": "कहां तक:",
+  "pickupLocationNotProvided": "पिकअप लोकेशन उपलब्ध नहीं",
+  "dropOffLocationNotProvided": "ड्रॉप-ऑफ लोकेशन उपलब्ध नहीं",
+  "express": "एक्सप्रेस",
+  "invoiceForBooking": "बुकिंग {trackingId} के लिए इनवॉइस",
+  "@invoiceForBooking": {
+    "placeholders": {
+      "trackingId": {}
+    }
+  },
+  "invoiceEmailMessage": "कृपया बुकिंग {trackingId} के लिए अटैच की गई इनवॉइस देखें।",
+  "@invoiceEmailMessage": {
+    "placeholders": {
+      "trackingId": {}
+    }
+  },
+  "emailInvoice": "ईमेल इनवॉइस",
+  "rateBooking": "बुकिंग रेट करें",
+  "review": "रिव्यू",
+  "reviewHint": "बताएं डिलीवरी कैसी रही",
+  "submit": "सबमिट",
+  "thanksForYourRating": "आपकी रेटिंग के लिए धन्यवाद।",
+  "raiseDispute": "डिस्प्यूट उठाएं",
+  "billing": "बिलिंग",
+  "damage": "नुकसान",
+  "delay": "देरी",
+  "other": "अन्य",
+  "issueType": "समस्या का प्रकार",
+  "description": "विवरण",
+  "disputeDescriptionHint": "समस्या को कुछ शब्दों में बताएं",
+  "disputeSubmitted": "डिस्प्यूट सबमिट हो गया।",
+  "cancelling": "कैंसल हो रहा है...",
+  "cancelBooking": "बुकिंग कैंसल करें",
+  "liveTracking": "लाइव ट्रैकिंग",
+  "maps": "मैप्स",
+  "signInAgainToApprove": "मंजूर करने के लिए फिर साइन इन करें।",
+  "proofOfDeliveryApproved": "डिलीवरी प्रूफ मंजूर हो गया।",
+  "rejectProofOfDelivery": "डिलीवरी प्रूफ रिजेक्ट करें?",
+  "rejectProofOfDeliveryDescription": "ट्रिप पूरी होने से पहले ड्राइवर से नई फोटो अपलोड करने को कहा जाएगा।",
+  "rejectPodReasonHint": "जैसे फोटो धुंधली हैं, डिलीवर किया गया कार्गो नहीं दिख रहा...",
+  "reject": "रिजेक्ट",
+  "signInAgainToReject": "रिजेक्ट करने के लिए फिर साइन इन करें।",
+  "driverAskedToReuploadPod": "ड्राइवर से डिलीवरी प्रूफ फिर अपलोड करने को कहा गया।",
+  "fetchingAdvanceAmount": "कॉन्फिगर की गई एडवांस राशि ला रहे हैं",
+  "advanceAmountNowBalanceOnDelivery": "{amount} अभी, बाकी डिलीवरी पर",
+  "@advanceAmountNowBalanceOnDelivery": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "paymentPayNow": "अभी पे करें",
+  "paymentPayNowSubtitle": "पूरी राशि अभी सुरक्षित चेकआउट से",
+  "advance": "एडवांस",
+  "toPay": "टू पे",
+  "toPaySubtitle": "पूरी राशि डिलीवरी पर ड्राइवर द्वारा ली जाएगी",
+  "toBeBilled": "बाद में बिल होगा",
+  "toBeBilledSubtitle": "अभी या डिलीवरी पर कुछ भी नहीं लिया जाएगा",
+  "toBeBilledUnavailableSubtitle": "ड्राइवर कन्फर्म होने के बाद उपलब्ध",
+  "chooseFuturePickupTime": "भविष्य का पिकअप समय चुनें।",
+  "setTime": "समय सेट करें",
+  "bookingNumberPending": "बुकिंग नंबर: पेंडिंग",
+  "bookingNumberValue": "बुकिंग नंबर: {bookingReference}",
+  "@bookingNumberValue": {
+    "placeholders": {
+      "bookingReference": {}
+    }
+  },
+  "trackBooking": "बुकिंग ट्रैक करें",
+  "goToHome": "होम पर जाएं",
+  "driverOfferReceived": "ड्राइवर ऑफर मिला",
+  "confirmingWithDriver": "ड्राइवर से कन्फर्म हो रहा है",
+  "findingNearbyTrucks": "नजदीकी ट्रक खोज रहे हैं",
+  "driverOfferReceivedSubtitle": "लाइव ऑफर पॉपअप खुल रहा है ताकि आप स्वीकार, रिजेक्ट या किराया बदल सकें।",
+  "confirmingWithDriverSubtitle": "आपने ऑफर स्वीकार किया है। हम ड्राइवर द्वारा हैंडशेक पूरा करने का इंतजार कर रहे हैं।",
+  "driversNotifiedRadius": "{radius} km के अंदर ड्राइवरों को सूचित किया गया है। कोई जवाब देगा तो ऑफर पॉपअप दिखेगा।",
+  "@driversNotifiedRadius": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "bookingLiveNotifyingDrivers": "आपकी बुकिंग लाइव है। हम {radius} km के अंदर ड्राइवरों को सूचित कर रहे हैं।",
+  "@bookingLiveNotifyingDrivers": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "driverResponse": "ड्राइवर जवाब",
+  "waitingForDriverAcceptance": "ड्राइवर द्वारा आपकी स्वीकृति कन्फर्म करने का इंतजार है।",
+  "fareChangeAmount": "किराया बदलाव: {amount}",
+  "@fareChangeAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverResponseTimedOut": "ड्राइवर जवाब का समय समाप्त हो गया।",
+  "latestAmount": "लेटेस्ट राशि: {amount}",
+  "@latestAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "searchingLive": "लाइव खोज रहे हैं",
+  "activeRequestsNearby": "{count, plural, =1{1 सक्रिय रिक्वेस्ट नजदीक} other{{count} सक्रिय रिक्वेस्ट नजदीक}}",
+  "@activeRequestsNearby": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "declinedCount": "{count} रिजेक्टेड",
+  "@declinedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "openTracking": "ट्रैकिंग खोलें",
+  "bookingConfirmed": "बुकिंग कन्फर्म हुई",
+  "bookingPlacedSuccessfully": "आपकी बुकिंग सफलतापूर्वक हो गई है।",
+  "couldNotResolveMapPoint": "इस मैप पॉइंट का पता नहीं मिल सका।",
+  "loadingPointNumber": "लोडिंग पॉइंट {number}",
+  "@loadingPointNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "unloadingPointNumber": "अनलोडिंग पॉइंट {number}",
+  "@unloadingPointNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "youAreHere": "आप यहां हैं",
+  "tapMapToSet": "सेट करने के लिए मैप टैप करें",
+  "chooseBrokerToContinue": "जारी रखने के लिए ब्रोकर चुनें।",
+  "signInAgainToCreateBooking": "बुकिंग बनाने के लिए फिर साइन इन करें।",
+  "selectPickupDropOnMap": "कृपया मैप पर पिकअप और ड्रॉप लोकेशन चुनें।",
+  "couldNotResolvePickupDropCoordinates": "सटीक पिकअप/ड्रॉप कोऑर्डिनेट नहीं मिल सके। कृपया सुझावों या मैप से चुनें।",
+  "couldNotLoadBrokerOffers": "ब्रोकर ऑफर लोड नहीं हो सके।",
+  "acceptedWaitingForDriverConfirm": "स्वीकार किया - ड्राइवर के कन्फर्म करने का इंतजार है।",
+  "declinedDriverStillWaiting": "{name} को रिजेक्ट किया - बाकी का अभी इंतजार है।",
+  "@declinedDriverStillWaiting": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "enterValidAmount": "मान्य राशि दर्ज करें।",
+  "fareChangeSent": "किराया बदलाव भेज दिया गया।",
+  "continueAction": "जारी रखें",
+  "negotiate": "नेगोशिएट करें",
+  "signInAgainToContinue": "जारी रखने के लिए फिर साइन इन करें।",
+  "enterPickupAndDropLocations": "कृपया पिकअप और ड्रॉप दोनों लोकेशन दर्ज करें।",
+  "turnOnLocationServices": "पिकअप ऑटोफिल करने के लिए लोकेशन सर्विस चालू करें।",
+  "locationPermissionNeeded": "पिकअप ऑटोफिल करने के लिए लोकेशन अनुमति जरूरी है।",
+  "couldNotResolveCurrentAddress": "आपका वर्तमान पता अभी नहीं मिल सका।",
+  "expressAvailableForIntraCity": "एक्सप्रेस डिलीवरी इंट्रा-सिटी बुकिंग के लिए उपलब्ध है।",
+  "enterDropLocation": "कृपया ड्रॉप लोकेशन दर्ज करें।",
+  "findTruck": "ट्रक खोजें",
+  "brokers": "ब्रोकर",
+  "searchRadius": "सर्च रेडियस",
+  "couldNotLoadBrokers": "ब्रोकर लोड नहीं हो सके",
+  "noBrokerNearby": "नजदीक कोई ब्रोकर नहीं",
+  "noEligibleBrokersForRoute": "इस रूट के लिए अभी कोई योग्य ब्रोकर नहीं मिला।",
+  "secureCheckout": "सुरक्षित चेकआउट",
+  "payOnDelivery": "डिलीवरी पर पे करें",
+  "noCollectionNow": "अभी कोई कलेक्शन नहीं",
+  "afterDriverConfirm": "ड्राइवर कन्फर्म के बाद",
+  "skip": "स्किप",
+  "deliveries": "डिलीवरी",
+  "refreshRequests": "रिक्वेस्ट रिफ्रेश करें",
+  "goOnlineToReceiveRequests": "रिक्वेस्ट पाने के लिए ऑनलाइन जाएं",
+  "negotiationCardsAppearWhenAvailable": "आप उपलब्ध होंगे तो नेगोशिएशन कार्ड यहां दिखेंगे।",
+  "pleaseSignInAgain": "कृपया फिर साइन इन करें",
+  "activeSessionNeededForRequests": "रिक्वेस्ट लोड करने से पहले हमें एक्टिव सेशन चाहिए।",
+  "loadingRequests": "रिक्वेस्ट लोड हो रही हैं",
+  "fetchingDriverRequests": "सर्वर से ड्राइवर रिक्वेस्ट ला रहे हैं।",
+  "couldNotLoadRequests": "रिक्वेस्ट लोड नहीं हो सकीं",
+  "noNewDeliveries": "कोई नई डिलीवरी नहीं",
+  "newClientRequestsAppearHere": "नई क्लाइंट रिक्वेस्ट आने पर यहां दिखेंगी।",
+  "requestTimedOutBrokerHandoff": "यह रिक्वेस्ट ड्राइवर के लिए टाइम आउट हो गई। ब्रोकर हैंडऑफ सक्रिय है।",
+  "swipeToAccept": "स्वीकार करने के लिए स्वाइप करें",
+  "alreadyAgreedWithBroker": "ब्रोकर से पहले ही सहमति है - स्वीकार या अस्वीकार करें।",
+  "decline": "अस्वीकार करें",
+  "accept": "स्वीकार करें"
+}

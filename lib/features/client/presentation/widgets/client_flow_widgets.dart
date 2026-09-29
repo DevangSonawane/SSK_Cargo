@@ -22,6 +22,7 @@ import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/services/booking_payment_gateway.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';

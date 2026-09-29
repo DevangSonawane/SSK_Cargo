@@ -9,6 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
@@ -310,6 +311,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isOnline = ref.watch(driverOnlineProvider);
     final session = ref.watch(authSessionProvider).valueOrNull;
     final tripSession = ref.watch(driverTripSessionProvider);
@@ -441,7 +443,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Deliveries',
+                    l10n.deliveries,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -453,35 +455,33 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     ref.read(driverRequestFeedProvider.notifier).refresh();
                   },
                   icon: const Icon(AppIcons.refresh_rounded),
-                  tooltip: 'Refresh requests',
+                  tooltip: l10n.refreshRequests,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             if (!isOnline)
-              const _EmptyStateCard(
+              _EmptyStateCard(
                 icon: AppIcons.wifi_off_rounded,
-                title: 'Go online to receive requests',
-                subtitle:
-                    'Negotiation cards will appear here once you are available.',
+                title: l10n.goOnlineToReceiveRequests,
+                subtitle: l10n.negotiationCardsAppearWhenAvailable,
               )
             else if (session == null)
-              const _EmptyStateCard(
+              _EmptyStateCard(
                 icon: AppIcons.lock_outline_rounded,
-                title: 'Please sign in again',
-                subtitle:
-                    'We need an active session before we can load requests.',
+                title: l10n.pleaseSignInAgain,
+                subtitle: l10n.activeSessionNeededForRequests,
               )
             else
               requestsAsync.when(
-                loading: () => const _EmptyStateCard(
+                loading: () => _EmptyStateCard(
                   icon: AppIcons.hourglass_top_rounded,
-                  title: 'Loading requests',
-                  subtitle: 'Fetching driver requests from the server.',
+                  title: l10n.loadingRequests,
+                  subtitle: l10n.fetchingDriverRequests,
                 ),
                 error: (error, _) => _EmptyStateCard(
                   icon: AppIcons.error_outline_rounded,
-                  title: 'Could not load requests',
+                  title: l10n.couldNotLoadRequests,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (requests) {
@@ -490,11 +490,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       .toList();
 
                   if (newRequests.isEmpty) {
-                    return const _EmptyStateCard(
+                    return _EmptyStateCard(
                       icon: AppIcons.inbox_rounded,
-                      title: 'No new deliveries',
-                      subtitle:
-                          'New client requests will appear here when they arrive.',
+                      title: l10n.noNewDeliveries,
+                      subtitle: l10n.newClientRequestsAppearHere,
                     );
                   }
 
@@ -714,13 +713,13 @@ class _DeliveryOrderCard extends StatelessWidget {
           Column(
             children: [
               _RoutePointCard(
-                label: 'Pickup',
+                label: AppLocalizations.of(context)!.pickup,
                 value: request.pickup,
                 accentColor: AppColors.brand,
               ),
               const SizedBox(height: 10),
               _RoutePointCard(
-                label: 'Drop',
+                label: AppLocalizations.of(context)!.drop,
                 value: request.drop,
                 accentColor: AppColors.dangerIcon,
               ),
@@ -737,7 +736,7 @@ class _DeliveryOrderCard extends StatelessWidget {
                 border: Border.all(color: AppColors.warningBorder),
               ),
               child: Text(
-                'This request timed out for the driver. Broker handoff is active.',
+                AppLocalizations.of(context)!.requestTimedOutBrokerHandoff,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.warningText,
                   fontWeight: FontWeight.w600,
@@ -759,7 +758,7 @@ class _DeliveryOrderCard extends StatelessWidget {
             )
           else if (canOpen)
             SlideToAction(
-              label: 'Swipe to accept',
+              label: AppLocalizations.of(context)!.swipeToAccept,
               onCompleted: onOpenNegotiation,
             )
           else
@@ -887,13 +886,13 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
           Column(
             children: [
               _RoutePointCard(
-                label: 'Pickup',
+                label: AppLocalizations.of(context)!.pickup,
                 value: request.pickup,
                 accentColor: AppColors.brand,
               ),
               const SizedBox(height: 10),
               _RoutePointCard(
-                label: 'Drop',
+                label: AppLocalizations.of(context)!.drop,
                 value: request.drop,
                 accentColor: AppColors.dangerIcon,
               ),
@@ -921,7 +920,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
                 border: Border.all(color: AppColors.warningBorder),
               ),
               child: Text(
-                'This request timed out for the driver. Broker handoff is active.',
+                AppLocalizations.of(context)!.requestTimedOutBrokerHandoff,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.warningText,
                   fontWeight: FontWeight.w600,
@@ -943,7 +942,7 @@ class _DriverRequestCardState extends State<_DriverRequestCard> {
             ),
           ] else if (canOpen) ...[
             SlideToAction(
-              label: 'Swipe to accept',
+              label: AppLocalizations.of(context)!.swipeToAccept,
               onCompleted: () => widget.onOpenNegotiation(request),
             ),
           ] else ...[
@@ -974,11 +973,12 @@ class _BrokerAssignedActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Already agreed with the broker - accept or decline.',
+          l10n.alreadyAgreedWithBroker,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppColors.textTertiary,
             fontWeight: FontWeight.w700,
@@ -991,7 +991,7 @@ class _BrokerAssignedActions extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: busy ? null : onDecline,
                 icon: const Icon(AppIcons.close_rounded, size: 17),
-                label: const Text('Decline'),
+                label: Text(l10n.decline),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.dangerText,
                   side: const BorderSide(color: AppColors.dangerBorder),
@@ -1016,7 +1016,7 @@ class _BrokerAssignedActions extends StatelessWidget {
                         ),
                       )
                     : const Icon(AppIcons.check_rounded, size: 17),
-                label: Text(busy ? 'Saving...' : 'Accept'),
+                label: Text(busy ? l10n.saving : l10n.accept),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.brand,
                   foregroundColor: AppColors.textOnBrand,

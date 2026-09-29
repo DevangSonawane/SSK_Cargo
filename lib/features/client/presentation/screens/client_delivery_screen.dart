@@ -15,6 +15,7 @@ import '../controllers/client_bookings_controller.dart';
 import 'tracking_details_screen.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class ClientDeliveryScreen extends ConsumerStatefulWidget {
   const ClientDeliveryScreen({super.key});
@@ -64,8 +65,16 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   }
 
   Future<void> _exportBookings(List<ClientBooking> bookings) async {
+    final l10n = AppLocalizations.of(context)!;
     final rows = [
-      ['Booking ID', 'Date', 'Pickup', 'Drop-off', 'Truck Type', 'Status'],
+      [
+        l10n.bookingId,
+        l10n.date,
+        l10n.pickup,
+        l10n.dropOff,
+        l10n.truckType,
+        l10n.status,
+      ],
       ...bookings.map(
         (booking) => [
           _bookingRef(booking),
@@ -81,9 +90,9 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
     await Clipboard.setData(ClipboardData(text: csv));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Bookings CSV copied to clipboard.'),
-        backgroundColor: Color(0xFF2FA56E),
+      SnackBar(
+        content: Text(l10n.bookingsCsvCopied),
+        backgroundColor: const Color(0xFF2FA56E),
       ),
     );
   }
@@ -138,6 +147,7 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => _restoreBottomNav());
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final query = _currentQuery;
     final bookingsAsync = session == null
@@ -166,11 +176,10 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
             ),
             const SizedBox(height: 16),
             if (session == null)
-              const _EmptyState(
+              _EmptyState(
                 icon: AppIcons.lock_outline_rounded,
-                title: 'Sign in to view bookings',
-                subtitle:
-                    'We need an active client session before we can load your activity feed.',
+                title: l10n.signInToViewBookings,
+                subtitle: l10n.signInToViewBookingsSubtitle,
               )
             else if (bookingsAsync == null)
               const SizedBox.shrink()
@@ -182,23 +191,22 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
                 ),
                 error: (error, _) => _EmptyState(
                   icon: AppIcons.error_outline_rounded,
-                  title: 'Could not load bookings',
+                  title: l10n.couldNotLoadBookings,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
-                  actionLabel: 'Try again',
+                  actionLabel: l10n.tryAgain,
                   onAction: _refreshBookings,
                 ),
                 data: (page) {
                   final bookings = page.bookings;
 
                   if (bookings.isEmpty) {
-                    return const _EmptyState(
+                    return _EmptyState(
                       icon: AppIcons.local_shipping_rounded,
-                      iconTint: Color(0xFFEAF8EF),
-                      iconBorder: Color(0xFFD7EBDD),
-                      iconColor: Color(0xFF2FA56E),
-                      title: 'Nothing moving yet',
-                      subtitle:
-                          'Your trucks, trips and live tracking will land here once you make your first booking.',
+                      iconTint: const Color(0xFFEAF8EF),
+                      iconBorder: const Color(0xFFD7EBDD),
+                      iconColor: const Color(0xFF2FA56E),
+                      title: l10n.nothingMovingYet,
+                      subtitle: l10n.nothingMovingYetSubtitle,
                     );
                   }
 
@@ -228,6 +236,7 @@ class _BookingsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Wrap(
       alignment: WrapAlignment.spaceBetween,
       runSpacing: 14,
@@ -239,7 +248,7 @@ class _BookingsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Bookings',
+                l10n.myBookings,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: context.colors.textPrimary,
                   fontSize: 20,
@@ -248,7 +257,7 @@ class _BookingsHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Manage and review your fleet transportation schedules.',
+                l10n.myBookingsSubtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: context.colors.textTertiary,
                   fontSize: 13,
@@ -263,14 +272,14 @@ class _BookingsHeader extends StatelessWidget {
           children: [
             _HeaderActionButton(
               icon: AppIcons.download_rounded,
-              label: 'Export',
+              label: l10n.export,
               onPressed: onExport,
               filled: false,
             ),
             const SizedBox(width: 8),
             _HeaderActionButton(
               icon: AppIcons.add_rounded,
-              label: 'New Booking',
+              label: l10n.newBooking,
               onPressed: onNewBooking,
               filled: true,
             ),
@@ -362,8 +371,11 @@ class _MyBookingMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor =
-        _statusColor(booking.status, info: context.colors.infoEmphasis);
+    final l10n = AppLocalizations.of(context)!;
+    final statusColor = _statusColor(
+      booking.status,
+      info: context.colors.infoEmphasis,
+    );
     final vehicleType = _truckTypeLabel(booking);
     final amount = booking.amountText.trim().isEmpty ? '-' : booking.amountText;
 
@@ -454,8 +466,8 @@ class _MyBookingMobileCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(13, 10, 13, 11),
               child: _CompactRouteBlock(
-                pickup: _locationLabel(booking.pickupLocation, 'Pickup'),
-                drop: _locationLabel(booking.dropoffLocation, 'Drop'),
+                pickup: _locationLabel(booking.pickupLocation, l10n.pickup),
+                drop: _locationLabel(booking.dropoffLocation, l10n.drop),
                 stops: booking.stops,
               ),
             ),
@@ -757,9 +769,7 @@ class _EmptyState extends StatelessWidget {
             decoration: BoxDecoration(
               color: iconTint ?? context.colors.canvas,
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: iconBorder ?? context.colors.line,
-              ),
+              border: Border.all(color: iconBorder ?? context.colors.line),
             ),
             child: Icon(
               icon,
@@ -781,9 +791,9 @@ class _EmptyState extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 20),
@@ -819,8 +829,11 @@ class ClientBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor =
-        _statusColor(booking.status, info: context.colors.infoEmphasis);
+    final l10n = AppLocalizations.of(context)!;
+    final statusColor = _statusColor(
+      booking.status,
+      info: context.colors.infoEmphasis,
+    );
 
     final card = Container(
       width: double.infinity,
@@ -951,7 +964,7 @@ class ClientBookingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'From:',
+                      l10n.fromLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                         fontSize: 10,
@@ -961,7 +974,7 @@ class ClientBookingCard extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       booking.pickupLocation.isEmpty
-                          ? 'Pickup location not provided'
+                          ? l10n.pickupLocationNotProvided
                           : booking.pickupLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -973,7 +986,7 @@ class ClientBookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Shipping to:',
+                      l10n.shippingToLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
                         fontSize: 10,
@@ -983,7 +996,7 @@ class ClientBookingCard extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       booking.dropoffLocation.isEmpty
-                          ? 'Drop-off location not provided'
+                          ? l10n.dropOffLocationNotProvided
                           : booking.dropoffLocation,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1098,6 +1111,7 @@ class _ExpressBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
@@ -1111,7 +1125,7 @@ class _ExpressBadge extends StatelessWidget {
           const Icon(AppIcons.bolt_rounded, size: 13, color: Color(0xFFEA580C)),
           const SizedBox(width: 3),
           Text(
-            'Express',
+            l10n.express,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: const Color(0xFFC2410C),
               fontWeight: FontWeight.w800,

@@ -391,7 +391,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return;
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not resolve this map point.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.couldNotResolveMapPoint,
+            ),
+          ),
         );
         return;
       }
@@ -432,6 +436,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Set<Marker> _buildLocationMapMarkers() {
+    final l10n = AppLocalizations.of(context)!;
     final markers = <Marker>{};
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
@@ -444,7 +449,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueGreen,
           ),
-          infoWindow: const InfoWindow(title: 'Pickup'),
+          infoWindow: InfoWindow(title: l10n.pickup),
         ),
       );
     }
@@ -457,7 +462,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueYellow,
           ),
-          infoWindow: InfoWindow(title: 'Loading point ${index + 1}'),
+          infoWindow: InfoWindow(title: l10n.loadingPointNumber(index + 1)),
         ),
       );
     }
@@ -470,7 +475,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueOrange,
           ),
-          infoWindow: InfoWindow(title: 'Unloading point ${index + 1}'),
+          infoWindow: InfoWindow(title: l10n.unloadingPointNumber(index + 1)),
         ),
       );
     }
@@ -480,7 +485,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           markerId: const MarkerId('booking-drop'),
           position: drop,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: const InfoWindow(title: 'Drop-off'),
+          infoWindow: InfoWindow(title: l10n.dropOff),
         ),
       );
     }
@@ -493,7 +498,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             BitmapDescriptor.hueAzure,
           ),
           anchor: const Offset(0.5, 0.5),
-          infoWindow: const InfoWindow(title: 'You are here'),
+          infoWindow: InfoWindow(title: l10n.youAreHere),
         ),
       );
     }
@@ -501,6 +506,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildLocationMap(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
     final current = _currentPosition;
@@ -517,10 +523,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       children: [
         Row(
           children: [
-            const Text('Tap map to set'),
+            Text(l10n.tapMapToSet),
             const SizedBox(width: 8),
             ChoiceChip(
-              label: const Text('Pickup'),
+              label: Text(l10n.pickup),
               selected: _mapPinTarget == _MapPinTarget.pickup,
               onSelected: (_) => setState(() {
                 _mapPinTarget = _MapPinTarget.pickup;
@@ -528,7 +534,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             ),
             const SizedBox(width: 6),
             ChoiceChip(
-              label: const Text('Drop-off'),
+              label: Text(l10n.dropOff),
               selected: _mapPinTarget == _MapPinTarget.drop,
               onSelected: (_) => setState(() {
                 _mapPinTarget = _MapPinTarget.drop;
@@ -867,7 +873,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
     if (!scheduled.isAfter(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a future pickup time.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.chooseFuturePickupTime),
+        ),
       );
       return;
     }
@@ -982,7 +990,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (mode == BookingSearchMode.broker &&
         _draft.selectedBrokerId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a broker to continue.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.chooseBrokerToContinue),
+        ),
       );
       return;
     }
@@ -1020,15 +1030,19 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to create a booking.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.signInAgainToCreateBooking,
+          ),
         ),
       );
       return;
     }
     if (_draft.selectedBrokerId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a broker to continue.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.chooseBrokerToContinue),
+        ),
       );
       return;
     }
@@ -1134,8 +1148,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to create a booking.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.signInAgainToCreateBooking,
+          ),
         ),
       );
       return;
@@ -1317,8 +1333,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final drop = _toController.text.trim();
     if (pickup.isEmpty || drop.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select pickup and drop locations on the map.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.selectPickupDropOnMap),
         ),
       );
       return false;
@@ -1336,9 +1352,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Could not resolve exact pickup/drop coordinates. Please choose them from suggestions or the map.',
+          AppLocalizations.of(context)!.couldNotResolvePickupDropCoordinates,
         ),
       ),
     );
@@ -1651,7 +1667,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load broker offers.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotLoadBrokerOffers),
+        ),
       );
     }
   }
@@ -1870,8 +1888,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Accepted - waiting for the driver to confirm.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.acceptedWaitingForDriverConfirm,
+          ),
         ),
       );
       await _loadFindTruckDriverRequests(silent: true);
@@ -1919,7 +1939,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Declined ${request.brokerName.isNotEmpty ? request.brokerName : 'driver'} — still waiting on the rest.',
+            AppLocalizations.of(context)!.declinedDriverStillWaiting(
+              request.brokerName.isNotEmpty
+                  ? request.brokerName
+                  : AppLocalizations.of(context)!.driver,
+            ),
           ),
         ),
       );
@@ -1960,9 +1984,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_findTruckActingId != null) return false;
     if (amount <= 0) {
       if (!mounted) return false;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.enterValidAmount)),
+      );
       return false;
     }
     final session = ref.read(authSessionProvider).valueOrNull;
@@ -1979,9 +2003,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             amount: amount,
           );
       if (!mounted) return false;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.fareChangeSent)),
+      );
       await _loadFindTruckDriverRequests(silent: true);
       return true;
     } on ApiException catch (error) {
@@ -2012,7 +2036,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       case _BookingFlowStep.location:
         if (_toController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enter the drop location.')),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.enterDropLocation),
+            ),
           );
           return;
         }
@@ -2239,7 +2265,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF2FA56E),
                     ),
-                    child: const Text('Continue'),
+                    child: Text(AppLocalizations.of(context)!.continueAction),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -2247,7 +2273,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   child: OutlinedButton(
                     onPressed: () =>
                         Navigator.of(dialogContext).pop(_TruckAction.negotiate),
-                    child: const Text('Negotiate'),
+                    child: Text(AppLocalizations.of(context)!.negotiate),
                   ),
                 ),
               ],
@@ -2266,7 +2292,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToContinue),
+        ),
       );
       return;
     }
@@ -2275,8 +2303,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final drop = _toController.text.trim();
     if (pickup.isEmpty || drop.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter both pickup and drop locations.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.enterPickupAndDropLocations,
+          ),
         ),
       );
       return;
@@ -2499,8 +2529,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!serviceEnabled) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Turn on location services to autofill pickup.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.turnOnLocationServices),
           ),
         );
         return;
@@ -2514,8 +2544,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location permission is needed to autofill pickup.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.locationPermissionNeeded,
+            ),
           ),
         );
         return;
@@ -2535,8 +2567,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not resolve your current address yet.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.couldNotResolveCurrentAddress,
+            ),
           ),
         );
         return;
@@ -2685,7 +2719,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToContinue),
+        ),
       );
       return;
     }
@@ -2696,9 +2732,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (!canUseExpress) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Express delivery is available for intra-city bookings.',
+            AppLocalizations.of(context)!.expressAvailableForIntraCity,
           ),
         ),
       );
@@ -2792,8 +2828,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to create a booking.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.signInAgainToCreateBooking,
+          ),
         ),
       );
       return;
@@ -3085,7 +3123,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final scheduled = _draft.scheduledDate;
     if (scheduled == null || !scheduled.isAfter(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a future pickup time.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.chooseFuturePickupTime),
+        ),
       );
       return false;
     }
@@ -3814,7 +3854,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           child: _SearchModeCard(
                             selected: mode == BookingSearchMode.truck,
                             icon: AppIcons.local_shipping_rounded,
-                            title: 'Find Truck',
+                            title: AppLocalizations.of(context)!.findTruck,
                             onTap: () {
                               setState(() {
                                 _draft = _draft.copyWith(
@@ -3835,7 +3875,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                           child: _SearchModeCard(
                             selected: mode == BookingSearchMode.broker,
                             icon: AppIcons.person_rounded,
-                            title: 'Brokers',
+                            title: AppLocalizations.of(context)!.brokers,
                             onTap: () {
                               setState(() {
                                 _draft = _draft.copyWith(
@@ -3885,7 +3925,11 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
-                                  child: const Text('Continue'),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.continueAction,
+                                  ),
                                 ),
                               ],
                             )
@@ -3901,7 +3945,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                     AppIcons.search_rounded,
                                     size: 19,
                                   ),
-                                  label: const Text('Find Truck'),
+                                  label: Text(
+                                    AppLocalizations.of(context)!.findTruck,
+                                  ),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: const Color(0xFF2FA56E),
                                     foregroundColor: Colors.white,
@@ -3985,7 +4031,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                               child: _SearchModeCard(
                                 selected: mode == BookingSearchMode.truck,
                                 icon: AppIcons.local_shipping_rounded,
-                                title: 'Find Truck',
+                                title: AppLocalizations.of(context)!.findTruck,
                                 onTap: () {
                                   setState(() {
                                     _draft = _draft.copyWith(
@@ -4002,7 +4048,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                               child: _SearchModeCard(
                                 selected: mode == BookingSearchMode.broker,
                                 icon: AppIcons.person_rounded,
-                                title: 'Brokers',
+                                title: AppLocalizations.of(context)!.brokers,
                                 onTap: () {
                                   setState(() {
                                     _draft = _draft.copyWith(
@@ -4035,6 +4081,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildFindTruckOptions(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final radius = _draft.searchRadiusKm.clamp(0.5, 200).toDouble();
     final radiusText = radius.toStringAsFixed(radius % 1 == 0 ? 0 : 1);
     return Column(
@@ -4050,7 +4097,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Search Radius',
+                l10n.searchRadius,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -4150,7 +4197,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_eligibleBrokersError != null) {
       return _BrokerEmptyCard(
         icon: AppIcons.wifi_off_rounded,
-        title: 'Could not load brokers',
+        title: AppLocalizations.of(context)!.couldNotLoadBrokers,
         message: _eligibleBrokersError!,
         onRetry: _loadEligibleBrokers,
       );
@@ -4158,8 +4205,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (_eligibleBrokers.isEmpty) {
       return _BrokerEmptyCard(
         icon: AppIcons.manage_search_rounded,
-        title: 'No broker nearby',
-        message: 'No eligible brokers found for this route yet.',
+        title: AppLocalizations.of(context)!.noBrokerNearby,
+        message: AppLocalizations.of(context)!.noEligibleBrokersForRoute,
         onRetry: _loadEligibleBrokers,
       );
     }
@@ -4292,7 +4339,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           icon: pickupIcon,
           anchor: const Offset(0.5, 0.5),
           zIndexInt: 3,
-          infoWindow: const InfoWindow(title: 'Pickup'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.pickup),
         ),
       );
     }
@@ -4323,7 +4370,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           flat: true,
           zIndexInt: 2,
           infoWindow: InfoWindow(
-            title: request.brokerName.isEmpty ? 'Driver' : request.brokerName,
+            title: request.brokerName.isEmpty
+                ? AppLocalizations.of(context)!.driver
+                : request.brokerName,
             snippet: request.displayStatusLabel,
           ),
         ),
@@ -4338,7 +4387,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           icon: dropIcon,
           anchor: const Offset(0.5, 0.5),
           zIndexInt: 3,
-          infoWindow: const InfoWindow(title: 'Drop'),
+          infoWindow: InfoWindow(title: AppLocalizations.of(context)!.drop),
         ),
       );
     }
@@ -4855,7 +4904,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text('Skip'),
+              child: Text(AppLocalizations.of(context)!.skip),
             ),
           ),
           const SizedBox(width: 12),
@@ -5131,8 +5180,12 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                               padding: EdgeInsets.zero,
                               children: [
                                 _CheckoutMethodCard(
-                                  title: 'Pay Now',
-                                  subtitle: 'Secure checkout',
+                                  title: AppLocalizations.of(
+                                    context,
+                                  )!.paymentPayNow,
+                                  subtitle: AppLocalizations.of(
+                                    context,
+                                  )!.secureCheckout,
                                   icon: AppIcons.lock_outline_rounded,
                                   selected: fullSelected,
                                   enabled: true,
@@ -5142,7 +5195,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   ),
                                 ),
                                 _CheckoutMethodCard(
-                                  title: 'Advance',
+                                  title: AppLocalizations.of(context)!.advance,
                                   subtitle: advanceSubtitle,
                                   icon: _loadingAdvanceAmount
                                       ? AppIcons.hourglass_top_rounded
@@ -5158,8 +5211,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   ),
                                 ),
                                 _CheckoutMethodCard(
-                                  title: 'To Pay',
-                                  subtitle: 'Pay on delivery',
+                                  title: AppLocalizations.of(context)!.toPay,
+                                  subtitle: AppLocalizations.of(
+                                    context,
+                                  )!.payOnDelivery,
                                   icon: AppIcons.local_shipping_outlined,
                                   selected:
                                       selectedMethod == PaymentMethod.payLater,
@@ -5170,10 +5225,16 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   ),
                                 ),
                                 _CheckoutMethodCard(
-                                  title: 'To Be Billed',
+                                  title: AppLocalizations.of(
+                                    context,
+                                  )!.toBeBilled,
                                   subtitle: allowToBeBilled
-                                      ? 'No collection now'
-                                      : 'After driver confirm',
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.noCollectionNow
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.afterDriverConfirm,
                                   icon: AppIcons.receipt_long_outlined,
                                   selected:
                                       selectedMethod ==

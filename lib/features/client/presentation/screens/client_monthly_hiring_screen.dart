@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -181,6 +182,7 @@ class _ClientMonthlyHiringScreenState
     final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final filtered = _filteredEnquiries;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
@@ -190,14 +192,14 @@ class _ClientMonthlyHiringScreenState
           onPressed: () => context.pop(),
           icon: const Icon(AppIcons.arrow_back_rounded),
         ),
-        title: const Text('Monthly Vehicle Hiring'),
+        title: Text(l10n.monthlyVehicleHiring),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNew,
         backgroundColor: AppColors.brand,
         foregroundColor: Colors.white,
         icon: const Icon(AppIcons.add_rounded),
-        label: const Text('New Enquiry'),
+        label: Text(l10n.newEnquiry),
       ),
       body: RefreshIndicator(
         color: AppColors.brand,
@@ -209,10 +211,9 @@ class _ClientMonthlyHiringScreenState
             if (session == null)
               _MonthlyEmptyState(
                 icon: AppIcons.lock_outline_rounded,
-                title: 'Sign in to manage enquiries',
-                subtitle:
-                    'We need an active client session before we can load monthly hiring requests.',
-                actionLabel: 'Retry',
+                title: l10n.signInToManageEnquiries,
+                subtitle: l10n.signInToManageEnquiriesSubtitle,
+                actionLabel: l10n.retry,
                 onAction: _load,
               )
             else if (_loading)
@@ -226,17 +227,16 @@ class _ClientMonthlyHiringScreenState
             else if (_error)
               _MonthlyEmptyState(
                 icon: AppIcons.error_outline_rounded,
-                title: 'Could not load enquiries',
-                subtitle: 'Pull to refresh or try again in a moment.',
-                actionLabel: 'Retry',
+                title: l10n.couldNotLoadEnquiries,
+                subtitle: l10n.couldNotLoadEnquiriesSubtitle,
+                actionLabel: l10n.retry,
                 onAction: _load,
               )
             else if (_enquiries.isEmpty)
-              const _MonthlyEmptyState(
+              _MonthlyEmptyState(
                 icon: AppIcons.local_shipping_outlined,
-                title: 'No enquiries yet',
-                subtitle:
-                    'Tell us where and for how long you need a truck, and our team will follow up.',
+                title: l10n.noEnquiriesYet,
+                subtitle: l10n.noEnquiriesYetSubtitle,
               )
             else ...[
               _MonthlyHiringSearchField(
@@ -246,10 +246,10 @@ class _ClientMonthlyHiringScreenState
               ),
               const SizedBox(height: 12),
               if (filtered.isEmpty)
-                const _MonthlyEmptyState(
+                _MonthlyEmptyState(
                   icon: AppIcons.search_off_rounded,
-                  title: 'No enquiries match your search',
-                  subtitle: 'Try another location, truck type, or status.',
+                  title: l10n.noEnquiriesMatchSearch,
+                  subtitle: l10n.noEnquiriesMatchSearchSubtitle,
                 )
               else
                 _EnquiryList(enquiries: filtered, onAdd: _openNew),
@@ -274,6 +274,7 @@ class _MonthlyHiringSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -293,8 +294,8 @@ class _MonthlyHiringSearchField extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onQueryChanged,
-              decoration: const InputDecoration(
-                hintText: 'Search monthly enquiries...',
+              decoration: InputDecoration(
+                hintText: l10n.searchMonthlyEnquiries,
                 filled: false,
                 fillColor: Colors.transparent,
                 border: InputBorder.none,
@@ -304,7 +305,7 @@ class _MonthlyHiringSearchField extends StatelessWidget {
                 focusedErrorBorder: InputBorder.none,
                 disabledBorder: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
@@ -368,6 +369,7 @@ class _AddEnquiryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -398,7 +400,7 @@ class _AddEnquiryTile extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'New Enquiry',
+              l10n.newEnquiry,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 fontSize: 14.5,
@@ -407,7 +409,7 @@ class _AddEnquiryTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Monthly Truck Hiring',
+              l10n.monthlyTruckHiring,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontSize: 12,
@@ -441,14 +443,14 @@ class _EnquiryCard extends StatelessWidget {
 
   final MonthlyHiringEnquiry enquiry;
 
-  String get _statusLabel {
+  String _statusLabel(AppLocalizations l10n) {
     switch (enquiry.status.toLowerCase()) {
       case 'contacted':
-        return 'Contacted';
+        return l10n.contacted;
       case 'closed':
-        return 'Closed';
+        return l10n.closed;
       default:
-        return 'Open';
+        return l10n.open;
     }
   }
 
@@ -474,20 +476,20 @@ class _EnquiryCard extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime value) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+  String _formatDate(DateTime value, AppLocalizations l10n) {
+    final months = [
+      l10n.monthJan,
+      l10n.monthFeb,
+      l10n.monthMar,
+      l10n.monthApr,
+      l10n.monthMay,
+      l10n.monthJun,
+      l10n.monthJul,
+      l10n.monthAug,
+      l10n.monthSep,
+      l10n.monthOct,
+      l10n.monthNov,
+      l10n.monthDec,
     ];
     return '${value.day} ${months[value.month - 1]} ${value.year}';
   }
@@ -495,14 +497,15 @@ class _EnquiryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final subtitle = [
       if (enquiry.truckCategoryLabel.isNotEmpty)
         enquiry.truckCategoryLabel
       else if (enquiry.truckCategory.isNotEmpty)
         enquiry.truckCategory,
       if (enquiry.startDate != null && enquiry.endDate != null)
-        '${_formatDate(enquiry.startDate!)} – ${_formatDate(enquiry.endDate!)}',
-      enquiry.pricingType == 'per_km' ? 'Per KM' : 'Fixed Rate',
+        '${_formatDate(enquiry.startDate!, l10n)} – ${_formatDate(enquiry.endDate!, l10n)}',
+      enquiry.pricingType == 'per_km' ? l10n.perKm : l10n.fixedRate,
       if (enquiry.budgetAmount != null)
         '₹${enquiry.budgetAmount!.toStringAsFixed(enquiry.budgetAmount! % 1 == 0 ? 0 : 2)}',
     ].join(' · ');
@@ -547,7 +550,7 @@ class _EnquiryCard extends StatelessWidget {
                       child: Text(
                         enquiry.location.isNotEmpty
                             ? enquiry.location
-                            : 'Location not specified',
+                            : l10n.locationNotSpecified,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -558,7 +561,7 @@ class _EnquiryCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     _StatusChip(
-                      label: _statusLabel,
+                      label: _statusLabel(l10n),
                       background: _statusBg(context),
                       foreground: _statusFg(context),
                     ),
@@ -592,8 +595,8 @@ class _EnquiryCard extends StatelessWidget {
                 const Spacer(),
                 Text(
                   enquiry.createdAt == null
-                      ? 'Submitted recently'
-                      : 'Submitted ${_formatDate(enquiry.createdAt!)}',
+                      ? l10n.submittedRecently
+                      : l10n.submittedOn(_formatDate(enquiry.createdAt!, l10n)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

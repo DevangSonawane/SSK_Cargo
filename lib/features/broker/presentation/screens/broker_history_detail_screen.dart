@@ -6,6 +6,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
@@ -166,24 +167,23 @@ class _BrokerHistoryDetailScreenState
   Future<void> _deleteBooking(ClientBooking booking) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _deleting) return;
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove from my list?'),
-        content: const Text(
-          "This only removes it from your own list. There's no undo.",
-        ),
+        title: Text(l10n.removeFromMyList),
+        content: Text(l10n.removeFromMyListDescription),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.dangerIcon,
             ),
-            child: const Text('Remove'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -200,8 +200,8 @@ class _BrokerHistoryDetailScreenState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Booking removed from your list.'),
+        SnackBar(
+          content: Text(l10n.bookingRemovedFromList),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -232,6 +232,7 @@ class _BrokerHistoryDetailScreenState
   Future<void> _downloadInvoice(ClientBooking booking) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _downloading) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _downloading = true);
     try {
       final response = await ref
@@ -242,7 +243,7 @@ class _BrokerHistoryDetailScreenState
           );
       final bytes = response.data ?? const <int>[];
       if (bytes.isEmpty) {
-        _snack('Invoice file is empty.', error: true);
+        _snack(l10n.invoiceFileEmpty, error: true);
         return;
       }
       final refText = _bookingRef(booking).replaceFirst('#', '');
@@ -268,7 +269,7 @@ class _BrokerHistoryDetailScreenState
                 'bytes': Uint8List.fromList(bytes),
                 'fileName': fileName,
                 'mimeType': 'application/pdf',
-                'subject': 'Invoice $refText',
+                'subject': l10n.invoiceForBooking(refText),
               }) ??
               false;
         } catch (_) {
@@ -276,11 +277,11 @@ class _BrokerHistoryDetailScreenState
         }
       }
       if (savedPath.isNotEmpty) {
-        _snack('Invoice downloaded to $savedPath.');
+        _snack(l10n.invoiceDownloadedTo(savedPath));
       } else if (sharedFallback) {
-        _snack('Invoice ready to save or share.');
+        _snack(l10n.invoiceReadyToSaveOrShare);
       } else {
-        _snack('Failed to download invoice. Please try again.', error: true);
+        _snack(l10n.invoiceDownloadFailedTryAgain, error: true);
       }
     } on ApiException catch (error) {
       _snack(error.message, error: true);
@@ -294,6 +295,7 @@ class _BrokerHistoryDetailScreenState
   Future<void> _emailInvoice(ClientBooking booking) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _emailing) return;
+    final l10n = AppLocalizations.of(context)!;
     final refText = booking.bookingNumber.isNotEmpty
         ? booking.bookingNumber
         : booking.id;
@@ -301,9 +303,8 @@ class _BrokerHistoryDetailScreenState
       context: context,
       builder: (dialogContext) => _InvoiceEmailDialog(
         initialTo: session.user.email ?? '',
-        defaultSubject: 'Invoice for booking $refText',
-        defaultMessage:
-            'Please find attached the invoice for booking $refText.',
+        defaultSubject: l10n.invoiceForBooking(refText),
+        defaultMessage: l10n.invoiceEmailDefaultMessage(refText),
       ),
     );
     if (draft == null || !mounted) return;
@@ -318,7 +319,7 @@ class _BrokerHistoryDetailScreenState
             subject: draft.subject,
             message: draft.message,
           );
-      _snack('Invoice emailed successfully.');
+      _snack(l10n.invoiceEmailedSuccessfully);
     } on ApiException catch (error) {
       _snack(error.message, error: true);
     } catch (error) {
@@ -331,6 +332,7 @@ class _BrokerHistoryDetailScreenState
   Future<void> _notifyClient(ClientBooking booking) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _notifying) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _notifying = true);
     try {
       await ref
@@ -339,7 +341,7 @@ class _BrokerHistoryDetailScreenState
             accessToken: session.tokens.accessToken,
             id: booking.id,
           );
-      _snack('Client notified — invoice shared to their portal.');
+      _snack(l10n.clientNotifiedInvoiceShared);
     } on ApiException catch (error) {
       _snack(error.message, error: true);
     } catch (error) {
@@ -411,9 +413,7 @@ class _BrokerHistoryDetailScreenState
   Future<void> _completeOverrideStop(int index) async {
     final trip = _trip;
     final session = ref.read(authSessionProvider).valueOrNull;
-    if (trip == null ||
-        session == null ||
-        _completingStopIndex != null) {
+    if (trip == null || session == null || _completingStopIndex != null) {
       return;
     }
     final tripId = _tripString(trip, const ['id']);
@@ -430,7 +430,7 @@ class _BrokerHistoryDetailScreenState
       final updated = _tripFromResponse(response);
       if (!mounted) return;
       if (updated != null) setState(() => _trip = updated);
-      _snack('Stop marked complete.');
+      _snack(AppLocalizations.of(context)!.stopMarkedComplete);
     } on ApiException catch (error) {
       _snack(error.message, error: true);
     } finally {
@@ -445,7 +445,10 @@ class _BrokerHistoryDetailScreenState
     final effective = _forceStatus.isNotEmpty
         ? _forceStatus
         : (options.isNotEmpty ? options.first : '');
-    if (trip == null || session == null || effective.isEmpty || _applyingForce) {
+    if (trip == null ||
+        session == null ||
+        effective.isEmpty ||
+        _applyingForce) {
       return;
     }
     final tripId = _tripString(trip, const ['id']);
@@ -453,24 +456,22 @@ class _BrokerHistoryDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text('Force trip status?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(AppLocalizations.of(context)!.forceTripStatus),
         content: Text(
-          'This moves the trip to "$effective" on the driver\'s behalf. Use only if the driver is unreachable.',
+          AppLocalizations.of(context)!.forceTripStatusDescription(effective),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.warningText,
             ),
-            child: const Text('Apply'),
+            child: Text(AppLocalizations.of(context)!.apply),
           ),
         ],
       ),
@@ -493,7 +494,7 @@ class _BrokerHistoryDetailScreenState
           _forceStatus = '';
         });
       }
-      _snack('Trip status updated.');
+      _snack(AppLocalizations.of(context)!.tripStatusUpdated);
       unawaited(_refresh(silent: true));
     } on ApiException catch (error) {
       _snack(error.message, error: true);
@@ -505,6 +506,9 @@ class _BrokerHistoryDetailScreenState
   Future<void> _collectPayment(String mode) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null || _collecting) return;
+    final paymentRecordedMessage = AppLocalizations.of(
+      context,
+    )!.paymentRecorded;
     setState(() => _collecting = true);
     try {
       final tripResponse = await ref
@@ -523,7 +527,7 @@ class _BrokerHistoryDetailScreenState
             tripId: tripId,
             mode: mode,
           );
-      _snack('Payment recorded.');
+      _snack(paymentRecordedMessage);
       unawaited(_refresh(silent: true));
     } on ApiException catch (error) {
       _snack(error.message, error: true);
@@ -538,7 +542,7 @@ class _BrokerHistoryDetailScreenState
     final loaded = await _loadTrip();
     if (!mounted) return;
     if (!loaded) {
-      _snack('Trip not found', error: true);
+      _snack(AppLocalizations.of(context)!.tripNotFound, error: true);
       return;
     }
     setState(() => _takeoverOpen = true);
@@ -546,6 +550,7 @@ class _BrokerHistoryDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bookingAsync = ref.watch(
       _historyBookingDetailProvider(widget.bookingId),
     );
@@ -576,7 +581,7 @@ class _BrokerHistoryDetailScreenState
                     : _buildContent(context, booking, reassignments),
                 error: (error, _) => booking == null
                     ? _DetailEmptyState(
-                        title: 'Could not load job details',
+                        title: l10n.couldNotLoadJobDetails,
                         subtitle: error.toString().replaceFirst(
                           'Exception: ',
                           '',
@@ -733,6 +738,7 @@ class _DetailTopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -765,7 +771,10 @@ class _DetailTopCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '${_lead(booking.pickupLocation)} to ${_lead(booking.dropoffLocation)}',
+            l10n.routeTo(
+              _lead(booking.pickupLocation, l10n),
+              _lead(booking.dropoffLocation, l10n),
+            ),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
@@ -778,8 +787,11 @@ class _DetailTopCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: onCompleteDelivery,
-                icon: const Icon(AppIcons.assignment_turned_in_rounded, size: 17),
-                label: const Text('Complete Delivery'),
+                icon: const Icon(
+                  AppIcons.assignment_turned_in_rounded,
+                  size: 17,
+                ),
+                label: Text(l10n.completeDelivery),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.brand,
                   padding: const EdgeInsets.symmetric(vertical: 11),
@@ -797,27 +809,27 @@ class _DetailTopCard extends StatelessWidget {
             children: [
               _WrapAction(
                 icon: AppIcons.chat_bubble_outline_rounded,
-                label: 'Chat',
+                label: l10n.chat,
                 onTap: onChat,
               ),
               _WrapAction(
                 icon: AppIcons.download_rounded,
-                label: downloading ? 'Saving...' : 'Invoice',
+                label: downloading ? l10n.saving : l10n.invoice,
                 onTap: downloading ? null : onDownloadInvoice,
               ),
               _WrapAction(
                 icon: AppIcons.mail_outline_rounded,
-                label: emailing ? 'Sending...' : 'Email',
+                label: emailing ? l10n.sending : l10n.emailAction,
                 onTap: emailing ? null : onEmailInvoice,
               ),
               _WrapAction(
                 icon: AppIcons.send_rounded,
-                label: notifying ? 'Sending...' : 'Notify',
+                label: notifying ? l10n.sending : l10n.notify,
                 onTap: notifying ? null : onNotifyClient,
               ),
               _WrapAction(
                 icon: AppIcons.delete_outline_rounded,
-                label: deleting ? 'Removing...' : 'Remove',
+                label: deleting ? l10n.removing : l10n.remove,
                 color: AppColors.dangerIcon,
                 onTap: deleting ? null : onDelete,
               ),
@@ -884,32 +896,33 @@ class _DetailInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _DetailSection(
-      title: 'Job Details',
+      title: l10n.jobDetails,
       children: [
         _DetailRow(
           icon: AppIcons.local_shipping_rounded,
-          label: 'Truck',
+          label: l10n.truck,
           value: _truckReg(booking).isEmpty ? '-' : _truckReg(booking),
         ),
         _DetailRow(
           icon: AppIcons.person_rounded,
-          label: 'Driver',
+          label: l10n.driver,
           value: _driverName(booking).isEmpty ? '-' : _driverName(booking),
         ),
         _DetailRow(
           icon: AppIcons.calendar_today_rounded,
-          label: 'Date',
+          label: l10n.date,
           value: _formatDate(booking.requestedAt),
         ),
         _DetailRow(
           icon: AppIcons.route_rounded,
-          label: 'Distance',
+          label: l10n.distance,
           value: _distance(booking),
         ),
         _DetailRow(
           icon: AppIcons.inventory_2_rounded,
-          label: 'Cargo',
+          label: l10n.cargo,
           value: _cargo(booking),
         ),
       ],
@@ -934,6 +947,7 @@ class _PaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final paymentStatus = _paymentStatus(booking);
     final bookingStatus = _statusKey(booking.status);
     final showCollect =
@@ -942,34 +956,36 @@ class _PaymentCard extends StatelessWidget {
     final haltingCharge = booking.haltingCharge;
     final slaCharge = booking.slaOverageCharge ?? 0;
     return _DetailSection(
-      title: 'Earnings & Payment',
+      title: l10n.earningsPayment,
       children: [
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
             _MoneyTile(
-              label: 'Amount',
+              label: l10n.amount,
               value: _formatRupees(amount),
-              footnote: _overageFootnote(booking, haltingCharge, slaCharge),
+              footnote: _overageFootnote(
+                booking,
+                haltingCharge,
+                slaCharge,
+                l10n,
+              ),
             ),
             _MoneyTile(
-              label: 'Platform Fee',
+              label: l10n.platformFee,
               value: _formatRupees(fee),
               color: AppColors.dangerIcon,
             ),
             _MoneyTile(
-              label: 'Net Earnings',
+              label: l10n.netEarnings,
               value: _formatRupees(amount - fee),
               color: AppColors.brandInk,
               background: AppColors.brandFill,
             ),
-            _MoneyTile(label: 'Payment', value: _paymentStatus(booking)),
-            _MoneyTile(
-              label: 'Mode',
-              value: _paymentMode(booking),
-            ),
-            _MoneyTile(label: 'Time Taken', value: _duration(booking)),
+            _MoneyTile(label: l10n.payment, value: _paymentStatus(booking)),
+            _MoneyTile(label: l10n.mode, value: _paymentMode(booking, l10n)),
+            _MoneyTile(label: l10n.timeTaken, value: _duration(booking)),
           ],
         ),
         if (showCollect) ...[
@@ -987,7 +1003,7 @@ class _PaymentCard extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
-                  child: Text(collecting ? 'Recording...' : 'UPI'),
+                  child: Text(collecting ? l10n.recording : 'UPI'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1002,7 +1018,7 @@ class _PaymentCard extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
-                  child: Text(collecting ? 'Recording...' : 'Cash'),
+                  child: Text(collecting ? l10n.recording : l10n.cash),
                 ),
               ),
             ],
@@ -1017,16 +1033,23 @@ String? _overageFootnote(
   ClientBooking booking,
   double haltingCharge,
   double slaCharge,
+  AppLocalizations l10n,
 ) {
   final parts = <String>[];
   if (haltingCharge > 0) {
     parts.add(
-      'Incl. halting (${booking.haltingHours}h): ${_formatRupees(haltingCharge)}',
+      l10n.includedHaltingCharge(
+        booking.haltingHours.toString(),
+        _formatRupees(haltingCharge),
+      ),
     );
   }
   if (slaCharge > 0) {
     parts.add(
-      'Incl. delay (${booking.slaOverageHours ?? 0}h): ${_formatRupees(slaCharge)}',
+      l10n.includedDelayCharge(
+        (booking.slaOverageHours ?? 0).toString(),
+        _formatRupees(slaCharge),
+      ),
     );
   }
   if (parts.isEmpty) return null;
@@ -1080,6 +1103,7 @@ class _TakeoverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final effectiveForce = forceStatus.isNotEmpty
         ? forceStatus
         : (forwardStatuses.isNotEmpty ? forwardStatuses.first : '');
@@ -1104,10 +1128,10 @@ class _TakeoverCard extends StatelessWidget {
                     size: 18,
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Driver unreachable? Take over this trip',
-                      style: TextStyle(
+                      l10n.driverTakeoverTitle,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -1115,7 +1139,7 @@ class _TakeoverCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    open ? 'Hide' : 'Show',
+                    open ? l10n.hide : l10n.show,
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -1143,7 +1167,7 @@ class _TakeoverCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Use this only if the driver\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the driver\'s behalf.',
+                    l10n.driverTakeoverDescription,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -1160,12 +1184,12 @@ class _TakeoverCard extends StatelessWidget {
                   else if (trip == null)
                     TextButton(
                       onPressed: onToggle,
-                      child: const Text('Retry loading trip'),
+                      child: Text(l10n.retryLoadingTrip),
                     )
                   else ...[
                     if (_stops.isNotEmpty) ...[
                       Text(
-                        'LOADING & UNLOADING STOPS',
+                        l10n.loadingUnloadingStops,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.textTertiary,
                           fontSize: 10,
@@ -1191,7 +1215,7 @@ class _TakeoverCard extends StatelessWidget {
                       const SizedBox(height: 10),
                     ],
                     Text(
-                      'FORCE STATUS',
+                      l10n.forceStatus,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.textTertiary,
                         fontSize: 10,
@@ -1225,8 +1249,7 @@ class _TakeoverCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         FilledButton(
-                          onPressed:
-                              (effectiveForce.isEmpty || applyingForce)
+                          onPressed: (effectiveForce.isEmpty || applyingForce)
                               ? null
                               : onApplyForceStatus,
                           style: FilledButton.styleFrom(
@@ -1240,7 +1263,7 @@ class _TakeoverCard extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            applyingForce ? 'Applying...' : 'Apply',
+                            applyingForce ? l10n.applying : l10n.apply,
                           ),
                         ),
                       ],
@@ -1271,12 +1294,11 @@ class _TakeoverStopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: stop.isDone
-            ? AppColors.brandFill
-            : AppColors.fillSubtle,
+        color: stop.isDone ? AppColors.brandFill : AppColors.fillSubtle,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -1288,9 +1310,7 @@ class _TakeoverStopRow extends StatelessWidget {
                 ? AppIcons.inventory_2_rounded
                 : AppIcons.inventory_2_outlined,
             size: 16,
-            color: stop.isDone
-                ? AppColors.brandInk
-                : AppColors.textTertiary,
+            color: stop.isDone ? AppColors.brandInk : AppColors.textTertiary,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1306,9 +1326,9 @@ class _TakeoverStopRow extends StatelessWidget {
             ),
           ),
           if (stop.isDone)
-            const Text(
-              'Done',
-              style: TextStyle(
+            Text(
+              l10n.done,
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: AppColors.brandInk,
@@ -1332,8 +1352,8 @@ class _TakeoverStopRow extends StatelessWidget {
                 busy
                     ? '...'
                     : stop.isLoading
-                    ? 'Mark Loaded'
-                    : 'Mark Unloaded',
+                    ? l10n.markLoaded
+                    : l10n.markUnloaded,
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -1354,8 +1374,9 @@ class _StopsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _DetailSection(
-      title: 'Loading & Unloading Stops',
+      title: l10n.loadingUnloadingStopsTitle,
       children: [
         for (final stop in stops)
           Padding(
@@ -1363,9 +1384,7 @@ class _StopsCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: stop.isDone
-                    ? AppColors.brandFill
-                    : AppColors.fillSubtle,
+                color: stop.isDone ? AppColors.brandFill : AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -1393,7 +1412,7 @@ class _StopsCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    stop.isDone ? 'Done' : 'Pending',
+                    stop.isDone ? l10n.done : l10n.pending,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -1423,24 +1442,25 @@ class _BrokerPodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _DetailSection(
-      title: 'Proof of Delivery',
+      title: l10n.proofOfDelivery,
       children: [
         if (_status == 'pending_verification')
-          const _PodBadge(
-            label: 'Awaiting client review',
+          _PodBadge(
+            label: l10n.awaitingClientReview,
             background: AppColors.warningFill,
             foreground: AppColors.warningText,
           ),
         if (_status == 'verified')
-          const _PodBadge(
-            label: 'Client approved',
+          _PodBadge(
+            label: l10n.clientApproved,
             background: AppColors.brandFill,
             foreground: AppColors.brandInk,
           ),
         if (_status == 'rejected')
-          const _PodBadge(
-            label: 'Client rejected — driver re-uploading',
+          _PodBadge(
+            label: l10n.clientRejectedReuploading,
             background: AppColors.dangerFill,
             foreground: AppColors.dangerText,
           ),
@@ -1468,25 +1488,22 @@ class _BrokerPodCard extends StatelessWidget {
               onTap: media.isVideo
                   ? null
                   : () => showDialog<void>(
-                        context: context,
-                        builder: (dialogContext) => Dialog(
-                          backgroundColor: Colors.transparent,
-                          insetPadding: const EdgeInsets.all(16),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              media.url,
-                              fit: BoxFit.contain,
-                              headers: accessToken != null
-                                  ? {
-                                      'Authorization':
-                                          'Bearer $accessToken',
-                                    }
-                                  : null,
-                            ),
+                      context: context,
+                      builder: (dialogContext) => Dialog(
+                        backgroundColor: Colors.transparent,
+                        insetPadding: const EdgeInsets.all(16),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            media.url,
+                            fit: BoxFit.contain,
+                            headers: accessToken != null
+                                ? {'Authorization': 'Bearer $accessToken'}
+                                : null,
                           ),
                         ),
                       ),
+                    ),
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 decoration: BoxDecoration(
@@ -1529,7 +1546,7 @@ class _BrokerPodCard extends StatelessWidget {
             (shipment.podRejectionReason ?? '').trim().isNotEmpty) ...[
           const SizedBox(height: 10),
           Text(
-            'Client\'s reason: ${shipment.podRejectionReason!.trim()}',
+            l10n.clientReason(shipment.podRejectionReason!.trim()),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
               height: 1.4,
@@ -1622,9 +1639,10 @@ class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Send invoice by email'),
+      title: Text(l10n.sendInvoiceByEmail),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1632,17 +1650,17 @@ class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
             TextField(
               controller: _toController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'To',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.to,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _subjectController,
-              decoration: const InputDecoration(
-                labelText: 'Subject',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.subject,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -1650,9 +1668,9 @@ class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
               controller: _messageController,
               minLines: 3,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Message',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.message,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -1661,7 +1679,7 @@ class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -1675,7 +1693,7 @@ class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
               ),
             );
           },
-          child: const Text('Send'),
+          child: Text(l10n.send),
         ),
       ],
     );
@@ -1689,8 +1707,9 @@ class _ReassignmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _DetailSection(
-      title: 'Reassignment History',
+      title: l10n.reassignmentHistory,
       children: [
         for (final entry in entries) ...[
           Row(
@@ -1707,7 +1726,7 @@ class _ReassignmentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${entry.fromDriverName.isEmpty ? 'Unassigned' : entry.fromDriverName} → ${entry.toDriverName.isEmpty ? 'Unknown' : entry.toDriverName}',
+                      '${entry.fromDriverName.isEmpty ? l10n.unassigned : entry.fromDriverName} → ${entry.toDriverName.isEmpty ? l10n.unknown : entry.toDriverName}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
@@ -1721,7 +1740,12 @@ class _ReassignmentCard extends StatelessWidget {
                         ),
                       ),
                     Text(
-                      'By ${entry.reassignedByName.isEmpty ? '-' : entry.reassignedByName} · ${_formatDate(entry.createdAt)}',
+                      l10n.reassignedBy(
+                        entry.reassignedByName.isEmpty
+                            ? '-'
+                            : entry.reassignedByName,
+                        _formatDate(entry.createdAt),
+                      ),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.textTertiary,
                         fontWeight: FontWeight.w700,
@@ -1949,7 +1973,10 @@ class _DetailEmptyState extends StatelessWidget {
             ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Retry')),
+          FilledButton(
+            onPressed: onRetry,
+            child: Text(AppLocalizations.of(context)!.retry),
+          ),
         ],
       ),
     );
@@ -2002,9 +2029,9 @@ String _bookingRef(ClientBooking booking) {
   return '#${ref.toUpperCase()}';
 }
 
-String _lead(String value) {
+String _lead(String value, AppLocalizations l10n) {
   final trimmed = value.trim();
-  if (trimmed.isEmpty) return 'Location pending';
+  if (trimmed.isEmpty) return l10n.locationPending;
   final index = trimmed.indexOf(',');
   if (index <= 0) return trimmed;
   return trimmed.substring(0, index).trim();
@@ -2085,7 +2112,7 @@ String _paymentStatus(ClientBooking booking) {
   ]).toLowerCase();
 }
 
-String _paymentMode(ClientBooking booking) {
+String _paymentMode(ClientBooking booking, AppLocalizations l10n) {
   final mode = _firstNonEmpty([
     _readString(booking.raw, const ['paymentMode', 'payment_mode']),
   ]).toLowerCase();
@@ -2093,11 +2120,11 @@ String _paymentMode(ClientBooking booking) {
     case 'upi':
       return 'UPI';
     case 'cash':
-      return 'Cash';
+      return l10n.cash;
     case 'razorpay':
       return 'Razorpay';
     case 'fake':
-      return 'Online';
+      return l10n.online;
     case '':
       return '—';
     default:

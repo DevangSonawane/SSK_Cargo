@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../shared/data/trip_route_stop.dart';
@@ -2542,23 +2543,24 @@ class BrokerBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = <_BrokerNavItem>[
       _BrokerNavItem(
         icon: AppIcons.inbox_rounded,
-        label: 'New Booking',
+        label: l10n.navNewBooking,
         showDot: pendingRequestsCount > 0,
       ),
       _BrokerNavItem(
         icon: AppIcons.assignment_turned_in_rounded,
-        label: 'Active',
+        label: l10n.navActive,
         showDot: activeJobsCount > 0,
       ),
-      const _BrokerNavItem(
+      _BrokerNavItem(
         icon: AppIcons.local_shipping_rounded,
-        label: 'Vehicles',
+        label: l10n.navVehicles,
       ),
-      const _BrokerNavItem(icon: AppIcons.gps_fixed_rounded, label: 'Tracking'),
-      const _BrokerNavItem(icon: AppIcons.history_rounded, label: 'History'),
+      _BrokerNavItem(icon: AppIcons.gps_fixed_rounded, label: l10n.navTracking),
+      _BrokerNavItem(icon: AppIcons.history_rounded, label: l10n.navHistory),
     ];
 
     return SafeArea(

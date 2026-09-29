@@ -1,0 +1,551 @@
+{
+  "@@locale": "en",
+  "settings": "Settings",
+  "language": "Language",
+  "languageSubtitle": "Choose the language for this device",
+  "english": "English",
+  "hindi": "Hindi",
+  "appearance": "Appearance",
+  "appearanceSubtitle": "Choose how the app looks on this device",
+  "light": "Light",
+  "auto": "Auto",
+  "dark": "Dark",
+  "chats": "Chats",
+  "chatsSubtitle": "View conversations from all your bookings",
+  "notifications": "Notifications",
+  "clientNotificationsSubtitle": "Review booking updates and invoice alerts",
+  "changePassword": "Change password",
+  "changePasswordSubtitle": "Update the password for this account",
+  "manageAccount": "Manage account",
+  "manageAccountSubtitle": "Update your name, email, phone, and photo",
+  "savedAddresses": "Saved Addresses",
+  "savedAddressesSubtitle": "Manage pickup and drop locations",
+  "monthlyVehicleHiring": "Monthly Vehicle Hiring",
+  "monthlyVehicleHiringSubtitle": "Hire a truck on a monthly basis",
+  "finance": "Finance",
+  "financeSubtitle": "Invoices, settlements, and earnings insights.",
+  "invoices": "Invoices",
+  "invoicesSubtitle": "Review bookings and invoice actions",
+  "settlements": "Settlements",
+  "settlementsSubtitle": "View payouts and settlement status",
+  "analytics": "Analytics",
+  "analyticsSubtitle": "Track this month vs last month",
+  "brokerNotificationsSectionSubtitle": "Open your notification inbox.",
+  "brokerNotificationsSubtitle": "Open your notification inbox",
+  "back": "Back",
+  "account": "Account",
+  "manageAccountTitleCase": "Manage Account",
+  "driverManageAccountSubtitle": "Profile details, security, and preferences",
+  "kycRegistration": "KYC Registration",
+  "checkingVerificationStatus": "Checking verification status",
+  "verified": "Verified",
+  "completeDriverVerification": "Complete your driver verification",
+  "earnings": "Earnings",
+  "driverEarningsSubtitle": "Trip payouts and completed delivery earnings",
+  "communication": "Communication",
+  "openingChat": "Opening chat...",
+  "messageMyBroker": "Message My Broker",
+  "messageMyBrokerSubtitle": "Open your direct broker conversation",
+  "allChats": "All Chats",
+  "allChatsSubtitle": "View every driver conversation",
+  "security": "Security",
+  "changePasswordTitleCase": "Change Password",
+  "driverChangePasswordSubtitle": "Update your sign-in credentials",
+  "logout": "Logout",
+  "logoutSubtitle": "Sign out from this device",
+  "driverAccount": "Driver account",
+  "noAccountConnected": "No account connected",
+  "kycPending": "KYC Pending",
+  "driver": "Driver",
+  "enterEmailAndPassword": "Enter both email and password.",
+  "googleNoIdToken": "Google did not return an ID token.",
+  "googleSignInCancelled": "Google sign-in was cancelled.",
+  "googleSignInFailed": "Google sign-in failed.",
+  "couldNotOpenRegistration": "Could not open registration link.",
+  "email": "Email",
+  "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "login": "Login",
+  "appleSignInComingSoon": "Apple sign-in is coming soon.",
+  "dontHaveAccount": "Don't have an account?",
+  "createAccount": "Create account",
+  "registerAsBrokerDriver": "Register as Broker/Driver",
+  "newEnquiry": "New Enquiry",
+  "signInToManageEnquiries": "Sign in to manage enquiries",
+  "signInToManageEnquiriesSubtitle": "We need an active client session before we can load monthly hiring requests.",
+  "retry": "Retry",
+  "couldNotLoadEnquiries": "Could not load enquiries",
+  "couldNotLoadEnquiriesSubtitle": "Pull to refresh or try again in a moment.",
+  "noEnquiriesYet": "No enquiries yet",
+  "noEnquiriesYetSubtitle": "Tell us where and for how long you need a truck, and our team will follow up.",
+  "noEnquiriesMatchSearch": "No enquiries match your search",
+  "noEnquiriesMatchSearchSubtitle": "Try another location, truck type, or status.",
+  "searchMonthlyEnquiries": "Search monthly enquiries...",
+  "monthlyTruckHiring": "Monthly Truck Hiring",
+  "contacted": "Contacted",
+  "closed": "Closed",
+  "open": "Open",
+  "perKm": "Per KM",
+  "fixedRate": "Fixed Rate",
+  "locationNotSpecified": "Location not specified",
+  "submittedRecently": "Submitted recently",
+  "submittedOn": "Submitted {date}",
+  "@submittedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "monthJan": "Jan",
+  "monthFeb": "Feb",
+  "monthMar": "Mar",
+  "monthApr": "Apr",
+  "monthMay": "May",
+  "monthJun": "Jun",
+  "monthJul": "Jul",
+  "monthAug": "Aug",
+  "monthSep": "Sep",
+  "monthOct": "Oct",
+  "monthNov": "Nov",
+  "monthDec": "Dec",
+  "monthlyHiringFormIntro": "Tell us what you need — our team will get back to you with options.",
+  "locationRoute": "Location / Route",
+  "monthlyHiringLocationHint": "e.g. Pune, or Pune to Mumbai corridor",
+  "truckCategory": "Truck Category",
+  "anyCategory": "Any category",
+  "startDate": "Start Date",
+  "endDate": "End Date",
+  "selectStartDate": "Select start date",
+  "selectEndDate": "Select end date",
+  "pricingPreference": "Pricing Preference",
+  "perKmRate": "Per KM Rate",
+  "budgetPerKmOptional": "Budget (₹ per km) (optional)",
+  "monthlyBudgetOptional": "Monthly Budget (₹) (optional)",
+  "expectedBudgetHint": "Your expected budget",
+  "additionalDetailsOptional": "Additional Details (optional)",
+  "monthlyHiringDetailsHint": "Anything else that would help — cargo type, expected daily runs, etc.",
+  "cancel": "Cancel",
+  "submitting": "Submitting...",
+  "submitEnquiry": "Submit Enquiry",
+  "monthlyHiringLocationRequired": "Please tell us where you need the vehicle",
+  "monthlyHiringDatesRequired": "Please select both a start and end date",
+  "monthlyHiringEndDateAfterStart": "End date must be after the start date",
+  "signInAgainToSubmit": "Please sign in again to submit.",
+  "validBudgetRequired": "Please enter a valid budget amount",
+  "enquirySubmitted": "Enquiry submitted — our team will get in touch soon",
+  "driverPhoneUnavailable": "Driver phone number is not available.",
+  "couldNotOpenPhoneApp": "Could not open the phone app.",
+  "signInAgainToCancelBooking": "Please sign in again to cancel this booking.",
+  "cancelledByClient": "Cancelled by client",
+  "bookingCancelledSuccessfully": "Booking cancelled successfully.",
+  "paymentAmountUnavailable": "Payment amount is unavailable.",
+  "continueToPayment": "Continue to payment?",
+  "paymentCheckoutMessage": "This will open secure checkout for ₹{amount}.",
+  "@paymentCheckoutMessage": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payNow": "Pay now",
+  "bookingPaymentDescription": "Booking payment",
+  "paymentCompletedSuccessfully": "Payment completed successfully.",
+  "signInAgainToShareTracking": "Please sign in again to share tracking.",
+  "trackingLinkUnavailable": "Tracking link is unavailable.",
+  "trackYourShipment": "Track your shipment",
+  "trackingShareText": "Track {trackingId} ({fromLocation} to {toLocation})\n{shareUrl}",
+  "@trackingShareText": {
+    "placeholders": {
+      "trackingId": {},
+      "fromLocation": {},
+      "toLocation": {},
+      "shareUrl": {}
+    }
+  },
+  "trackingLinkReadyToShare": "Tracking link is ready to share.",
+  "trackingLinkCopied": "Tracking link copied to clipboard.",
+  "invoiceFileEmpty": "Invoice file is empty.",
+  "invoiceDownloadedTo": "Invoice downloaded to {path}.",
+  "@invoiceDownloadedTo": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "invoiceReadyToSaveOrShare": "Invoice ready to save or share.",
+  "invoiceDownloadFailed": "Failed to download invoice. Please restart the app and try again.",
+  "invoiceDownloadFailedTryAgain": "Failed to download invoice. Please try again.",
+  "myProfile": "My Profile",
+  "shipments": "Shipments",
+  "myBookings": "My Bookings",
+  "preferences": "Preferences",
+  "help": "Help",
+  "helpSupport": "Help & Support",
+  "termsPrivacy": "Terms & Privacy",
+  "comingSoon": "Coming soon",
+  "featureComingSoon": "This feature is coming soon.",
+  "sskVersion": "SSK Logistics v1.0.0",
+  "appearanceLightSubtitle": "Liquid glass light mode",
+  "appearanceDarkSubtitle": "Liquid glass dark mode",
+  "liquidGlassAppearance": "Liquid glass appearance",
+  "client": "Client",
+  "notProvided": "Not provided",
+  "editProfile": "Edit Profile",
+  "bookings": "Bookings",
+  "spent": "Spent",
+  "delivered": "Delivered",
+  "accountInfo": "Account Info",
+  "retryAccountStats": "Retry account stats",
+  "memberSince": "Member Since",
+  "activeShipments": "Active Shipments",
+  "lifetimeValue": "Lifetime Value",
+  "signOut": "Sign Out",
+  "support": "Support",
+  "brokerAccount": "Broker account",
+  "noEmailConnected": "No email connected",
+  "standardPlan": "Standard Plan",
+  "brokerEarningsSubtitle": "Revenue and settlement performance",
+  "completeBrokerVerification": "Complete your broker verification",
+  "brokerHelpSubtitle": "Contact support for account or trip issues",
+  "removeFromMyList": "Remove from my list?",
+  "removeFromMyListDescription": "This only removes it from your own list. There's no undo.",
+  "remove": "Remove",
+  "bookingRemovedFromList": "Booking removed from your list.",
+  "invoiceForBooking": "Invoice for booking {bookingRef}",
+  "@invoiceForBooking": {
+    "placeholders": {
+      "bookingRef": {}
+    }
+  },
+  "invoiceEmailDefaultMessage": "Please find attached the invoice for booking {bookingRef}.",
+  "@invoiceEmailDefaultMessage": {
+    "placeholders": {
+      "bookingRef": {}
+    }
+  },
+  "invoiceEmailedSuccessfully": "Invoice emailed successfully.",
+  "clientNotifiedInvoiceShared": "Client notified — invoice shared to their portal.",
+  "stopMarkedComplete": "Stop marked complete.",
+  "forceTripStatus": "Force trip status?",
+  "forceTripStatusDescription": "This moves the trip to \"{status}\" on the driver's behalf. Use only if the driver is unreachable.",
+  "@forceTripStatusDescription": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "apply": "Apply",
+  "tripStatusUpdated": "Trip status updated.",
+  "paymentRecorded": "Payment recorded.",
+  "tripNotFound": "Trip not found",
+  "couldNotLoadJobDetails": "Could not load job details",
+  "completeDelivery": "Complete Delivery",
+  "chat": "Chat",
+  "saving": "Saving...",
+  "invoice": "Invoice",
+  "emailAction": "Email",
+  "sending": "Sending...",
+  "notify": "Notify",
+  "removing": "Removing...",
+  "jobDetails": "Job Details",
+  "truck": "Truck",
+  "date": "Date",
+  "distance": "Distance",
+  "cargo": "Cargo",
+  "earningsPayment": "Earnings & Payment",
+  "amount": "Amount",
+  "platformFee": "Platform Fee",
+  "netEarnings": "Net Earnings",
+  "payment": "Payment",
+  "mode": "Mode",
+  "timeTaken": "Time Taken",
+  "recording": "Recording...",
+  "cash": "Cash",
+  "routeTo": "{from} to {to}",
+  "@routeTo": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "driverTakeoverTitle": "Driver unreachable? Take over this trip",
+  "hide": "Hide",
+  "show": "Show",
+  "driverTakeoverDescription": "Use this only if the driver's phone is dead, their app crashed, or they've lost signal. Actions happen directly on the driver's behalf.",
+  "retryLoadingTrip": "Retry loading trip",
+  "loadingUnloadingStops": "LOADING & UNLOADING STOPS",
+  "forceStatus": "FORCE STATUS",
+  "applying": "Applying...",
+  "done": "Done",
+  "pending": "Pending",
+  "markLoaded": "Mark Loaded",
+  "markUnloaded": "Mark Unloaded",
+  "loadingUnloadingStopsTitle": "Loading & Unloading Stops",
+  "proofOfDelivery": "Proof of Delivery",
+  "awaitingClientReview": "Awaiting client review",
+  "clientApproved": "Client approved",
+  "clientRejectedReuploading": "Client rejected — driver re-uploading",
+  "sendInvoiceByEmail": "Send invoice by email",
+  "to": "To",
+  "subject": "Subject",
+  "message": "Message",
+  "send": "Send",
+  "reassignmentHistory": "Reassignment History",
+  "unassigned": "Unassigned",
+  "unknown": "Unknown",
+  "reassignedBy": "By {name} · {date}",
+  "@reassignedBy": {
+    "placeholders": {
+      "name": {},
+      "date": {}
+    }
+  },
+  "locationPending": "Location pending",
+  "includedHaltingCharge": "Incl. halting ({hours}h): {amount}",
+  "@includedHaltingCharge": {
+    "placeholders": {
+      "hours": {},
+      "amount": {}
+    }
+  },
+  "includedDelayCharge": "Incl. delay ({hours}h): {amount}",
+  "@includedDelayCharge": {
+    "placeholders": {
+      "hours": {},
+      "amount": {}
+    }
+  },
+  "clientReason": "Client's reason: {reason}",
+  "@clientReason": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "online": "Online",
+  "navHome": "Home",
+  "navActivity": "Activity",
+  "navProfile": "Profile",
+  "navNewBooking": "New Booking",
+  "navActive": "Active",
+  "navVehicles": "Vehicles",
+  "navTracking": "Tracking",
+  "navHistory": "History",
+  "navNewTravel": "New travel",
+  "navEarnings": "Earnings",
+  "broker": "Broker",
+  "goodMorningName": "Good morning, {name}",
+  "@goodMorningName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "helloName": "Hello, {name}",
+  "@helloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "activeJobs": "Active Jobs",
+  "newBookingsWaiting": "New bookings waiting for you",
+  "jobsInProgress": "Jobs currently in progress",
+  "manageFleetAtGlance": "Manage your fleet at a glance",
+  "monitorDriverMovement": "Monitor driver movement",
+  "reviewRecentBookings": "Review recent bookings"
+  ,
+  "bookingId": "Booking ID",
+  "pickup": "Pickup",
+  "drop": "Drop",
+  "dropOff": "Drop-off",
+  "truckType": "Truck Type",
+  "status": "Status",
+  "bookingsCsvCopied": "Bookings CSV copied to clipboard.",
+  "signInToViewBookings": "Sign in to view bookings",
+  "signInToViewBookingsSubtitle": "We need an active client session before we can load your activity feed.",
+  "couldNotLoadBookings": "Could not load bookings",
+  "tryAgain": "Try again",
+  "nothingMovingYet": "Nothing moving yet",
+  "nothingMovingYetSubtitle": "Your trucks, trips and live tracking will land here once you make your first booking.",
+  "myBookingsSubtitle": "Manage and review your fleet transportation schedules.",
+  "export": "Export",
+  "newBooking": "New Booking",
+  "fromLabel": "From:",
+  "shippingToLabel": "Shipping to:",
+  "pickupLocationNotProvided": "Pickup location not provided",
+  "dropOffLocationNotProvided": "Drop-off location not provided",
+  "express": "Express",
+  "invoiceForBooking": "Invoice for booking {trackingId}",
+  "@invoiceForBooking": {
+    "placeholders": {
+      "trackingId": {}
+    }
+  },
+  "invoiceEmailMessage": "Please find attached the invoice for booking {trackingId}.",
+  "@invoiceEmailMessage": {
+    "placeholders": {
+      "trackingId": {}
+    }
+  },
+  "emailInvoice": "Email invoice",
+  "rateBooking": "Rate booking",
+  "review": "Review",
+  "reviewHint": "Tell us how the delivery went",
+  "submit": "Submit",
+  "thanksForYourRating": "Thanks for your rating.",
+  "raiseDispute": "Raise dispute",
+  "billing": "Billing",
+  "damage": "Damage",
+  "delay": "Delay",
+  "other": "Other",
+  "issueType": "Issue type",
+  "description": "Description",
+  "disputeDescriptionHint": "Describe the issue in a few words",
+  "disputeSubmitted": "Dispute submitted.",
+  "cancelling": "Cancelling...",
+  "cancelBooking": "Cancel booking",
+  "liveTracking": "Live Tracking",
+  "maps": "Maps",
+  "signInAgainToApprove": "Please sign in again to approve.",
+  "proofOfDeliveryApproved": "Proof of delivery approved.",
+  "rejectProofOfDelivery": "Reject proof of delivery?",
+  "rejectProofOfDeliveryDescription": "The driver will be asked to upload new photos before the trip can be completed.",
+  "rejectPodReasonHint": "e.g. Photos are blurry, doesn't show delivered cargo...",
+  "reject": "Reject",
+  "signInAgainToReject": "Please sign in again to reject.",
+  "driverAskedToReuploadPod": "Asked the driver to re-upload proof of delivery.",
+  "fetchingAdvanceAmount": "Fetching configured advance amount",
+  "advanceAmountNowBalanceOnDelivery": "{amount} now, balance on delivery",
+  "@advanceAmountNowBalanceOnDelivery": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "paymentPayNow": "Pay Now",
+  "paymentPayNowSubtitle": "Full amount now through secure checkout",
+  "advance": "Advance",
+  "toPay": "To Pay",
+  "toPaySubtitle": "Full amount collected by the driver on delivery",
+  "toBeBilled": "To Be Billed",
+  "toBeBilledSubtitle": "Nothing collected now or on delivery",
+  "toBeBilledUnavailableSubtitle": "Available after a driver is confirmed",
+  "chooseFuturePickupTime": "Choose a future pickup time.",
+  "setTime": "Set Time",
+  "bookingNumberPending": "Booking Number: Pending",
+  "bookingNumberValue": "Booking Number: {bookingReference}",
+  "@bookingNumberValue": {
+    "placeholders": {
+      "bookingReference": {}
+    }
+  },
+  "trackBooking": "Track booking",
+  "goToHome": "Go to home",
+  "driverOfferReceived": "Driver offer received",
+  "confirmingWithDriver": "Confirming with driver",
+  "findingNearbyTrucks": "Finding nearby trucks",
+  "driverOfferReceivedSubtitle": "Opening the live offer popup so you can accept, reject, or change fare.",
+  "confirmingWithDriverSubtitle": "You accepted the offer. We are waiting for the driver to complete the handshake.",
+  "driversNotifiedRadius": "Drivers inside {radius} km have been notified. We will show the offer popup when one responds.",
+  "@driversNotifiedRadius": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "bookingLiveNotifyingDrivers": "Your booking is live. We are notifying drivers inside {radius} km.",
+  "@bookingLiveNotifyingDrivers": {
+    "placeholders": {
+      "radius": {}
+    }
+  },
+  "driverResponse": "Driver response",
+  "waitingForDriverAcceptance": "Waiting for the driver to confirm your acceptance.",
+  "fareChangeAmount": "Fare change: {amount}",
+  "@fareChangeAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverResponseTimedOut": "Driver response timed out.",
+  "latestAmount": "Latest amount: {amount}",
+  "@latestAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "searchingLive": "Searching live",
+  "activeRequestsNearby": "{count, plural, =1{1 active request nearby} other{{count} active requests nearby}}",
+  "@activeRequestsNearby": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "declinedCount": "{count} declined",
+  "@declinedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "openTracking": "Open tracking",
+  "bookingConfirmed": "Booking confirmed",
+  "bookingPlacedSuccessfully": "Your booking has been successfully placed.",
+  "couldNotResolveMapPoint": "Could not resolve this map point.",
+  "loadingPointNumber": "Loading point {number}",
+  "@loadingPointNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "unloadingPointNumber": "Unloading point {number}",
+  "@unloadingPointNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "youAreHere": "You are here",
+  "tapMapToSet": "Tap map to set",
+  "chooseBrokerToContinue": "Choose a broker to continue.",
+  "signInAgainToCreateBooking": "Please sign in again to create a booking.",
+  "selectPickupDropOnMap": "Please select pickup and drop locations on the map.",
+  "couldNotResolvePickupDropCoordinates": "Could not resolve exact pickup/drop coordinates. Please choose them from suggestions or the map.",
+  "couldNotLoadBrokerOffers": "Could not load broker offers.",
+  "acceptedWaitingForDriverConfirm": "Accepted - waiting for the driver to confirm.",
+  "declinedDriverStillWaiting": "Declined {name} - still waiting on the rest.",
+  "@declinedDriverStillWaiting": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "enterValidAmount": "Enter a valid amount.",
+  "fareChangeSent": "Fare change sent.",
+  "continueAction": "Continue",
+  "negotiate": "Negotiate",
+  "signInAgainToContinue": "Please sign in again to continue.",
+  "enterPickupAndDropLocations": "Please enter both pickup and drop locations.",
+  "turnOnLocationServices": "Turn on location services to autofill pickup.",
+  "locationPermissionNeeded": "Location permission is needed to autofill pickup.",
+  "couldNotResolveCurrentAddress": "Could not resolve your current address yet.",
+  "expressAvailableForIntraCity": "Express delivery is available for intra-city bookings.",
+  "enterDropLocation": "Please enter the drop location.",
+  "findTruck": "Find Truck",
+  "brokers": "Brokers",
+  "searchRadius": "Search Radius",
+  "couldNotLoadBrokers": "Could not load brokers",
+  "noBrokerNearby": "No broker nearby",
+  "noEligibleBrokersForRoute": "No eligible brokers found for this route yet.",
+  "secureCheckout": "Secure checkout",
+  "payOnDelivery": "Pay on delivery",
+  "noCollectionNow": "No collection now",
+  "afterDriverConfirm": "After driver confirm",
+  "skip": "Skip",
+  "deliveries": "Deliveries",
+  "refreshRequests": "Refresh requests",
+  "goOnlineToReceiveRequests": "Go online to receive requests",
+  "negotiationCardsAppearWhenAvailable": "Negotiation cards will appear here once you are available.",
+  "pleaseSignInAgain": "Please sign in again",
+  "activeSessionNeededForRequests": "We need an active session before we can load requests.",
+  "loadingRequests": "Loading requests",
+  "fetchingDriverRequests": "Fetching driver requests from the server.",
+  "couldNotLoadRequests": "Could not load requests",
+  "noNewDeliveries": "No new deliveries",
+  "newClientRequestsAppearHere": "New client requests will appear here when they arrive.",
+  "requestTimedOutBrokerHandoff": "This request timed out for the driver. Broker handoff is active.",
+  "swipeToAccept": "Swipe to accept",
+  "alreadyAgreedWithBroker": "Already agreed with the broker - accept or decline.",
+  "decline": "Decline",
+  "accept": "Accept"
+}

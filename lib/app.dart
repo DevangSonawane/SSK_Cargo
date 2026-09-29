@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import 'core/router/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/providers/app_providers.dart';
+import 'core/providers/locale_provider.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/app_socket_service.dart';
 import 'core/providers/driver_location_tracker_provider.dart';
@@ -105,7 +108,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       // Only the real "session expired" case pops the inline re-login sheet
       // over the current page — deliberately no logout/redirect, so the
       // user never loses their place.
-      final navigatorContext = ref.read(rootNavigatorKeyProvider).currentContext;
+      final navigatorContext = ref
+          .read(rootNavigatorKeyProvider)
+          .currentContext;
       if (navigatorContext == null || !navigatorContext.mounted) return;
       final signedIn = await showSessionExpiredSheet(
         navigatorContext,
@@ -412,10 +417,19 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'SSK Cargo',
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
@@ -428,8 +442,9 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
           statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
           systemNavigationBarColor: Colors.transparent,
           systemNavigationBarDividerColor: Colors.transparent,
-          systemNavigationBarIconBrightness:
-              isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
           systemNavigationBarContrastEnforced: false,
         );
         return AnnotatedRegion<SystemUiOverlayStyle>(

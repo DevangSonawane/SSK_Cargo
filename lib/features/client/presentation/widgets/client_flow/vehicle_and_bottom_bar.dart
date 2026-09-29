@@ -152,10 +152,9 @@ class _VehicleOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Per-vehicle accent brightened slightly on dark surfaces so the
     // selected border + label keep their identity without going muddy.
-    final accent =
-        Theme.of(context).brightness == Brightness.dark
-            ? Color.lerp(option.accentColor, Colors.white, 0.3)!
-            : option.accentColor;
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? Color.lerp(option.accentColor, Colors.white, 0.3)!
+        : option.accentColor;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -255,10 +254,11 @@ class ClientBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = <_ClientNavItem>[
-      const _ClientNavItem(label: 'Home', icon: LucideIcons.house),
-      const _ClientNavItem(label: 'Activity', icon: LucideIcons.map),
-      const _ClientNavItem(label: 'Profile', icon: LucideIcons.user),
+      _ClientNavItem(label: l10n.navHome, icon: LucideIcons.house),
+      _ClientNavItem(label: l10n.navActivity, icon: LucideIcons.map),
+      _ClientNavItem(label: l10n.navProfile, icon: LucideIcons.user),
     ];
 
     return SafeArea(

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 
@@ -13,12 +15,14 @@ class ClientSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colors.canvas,
       appBar: AppBar(
         backgroundColor: colors.canvas,
         elevation: 0,
-        title: const Text('Settings'),
+        title: Text(l10n.settings),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -29,6 +33,15 @@ class ClientSettingsScreen extends ConsumerWidget {
                 selected: themeMode,
                 onChanged: (mode) =>
                     ref.read(themeModeProvider.notifier).state = mode,
+              ),
+              const SizedBox(height: 16),
+              _LanguageCard(
+                selected: locale.languageCode,
+                onChanged: (languageCode) {
+                  ref
+                      .read(localeProvider.notifier)
+                      .setLanguageCode(languageCode);
+                },
               ),
               const SizedBox(height: 16),
               Container(
@@ -48,58 +61,58 @@ class ClientSettingsScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     _SettingsMenuTile(
-                  title: 'Chats',
-                  subtitle: 'View conversations from all your bookings',
-                  icon: AppIcons.chat_bubble_outline_rounded,
-                  iconBackgroundColor: const Color(0xFFDDEBFF),
-                  iconColor: const Color(0xFF1F88C9),
-                  onTap: () => context.push('/chats'),
-                ),
-                const SizedBox(height: 12),
-                _SettingsMenuTile(
-                  title: 'Notifications',
-                  subtitle: 'Review booking updates and invoice alerts',
-                  icon: AppIcons.notifications_active_outlined,
-                  iconBackgroundColor: const Color(0xFFE0F4E8),
-                  iconColor: const Color(0xFF2FA56E),
-                  onTap: () => context.push('/client/notifications'),
-                ),
-                const SizedBox(height: 12),
-                _SettingsMenuTile(
-                  title: 'Change password',
-                  subtitle: 'Update the password for this account',
-                  icon: AppIcons.password_rounded,
-                  iconBackgroundColor: const Color(0xFFDDEBFF),
-                  iconColor: const Color(0xFF2D6EF2),
-                  onTap: () => context.push('/change-password'),
-                ),
-                const SizedBox(height: 12),
-                _SettingsMenuTile(
-                  title: 'Manage account',
-                  subtitle: 'Update your name, email, phone, and photo',
-                  icon: AppIcons.manage_accounts_rounded,
-                  iconBackgroundColor: const Color(0xFFF2E8FF),
-                  iconColor: const Color(0xFF7A4FD6),
-                  onTap: () => context.push('/manage-account'),
-                ),
-                const SizedBox(height: 12),
-                _SettingsMenuTile(
-                  title: 'Saved Addresses',
-                  subtitle: 'Manage pickup and drop locations',
-                  icon: AppIcons.location_on_outlined,
-                  iconBackgroundColor: const Color(0xFFE0F4E8),
-                  iconColor: const Color(0xFF2FA56E),
-                  onTap: () => context.push('/client/saved-addresses'),
-                ),
-                const SizedBox(height: 12),
-                _SettingsMenuTile(
-                  title: 'Monthly Vehicle Hiring',
-                  subtitle: 'Hire a truck on a monthly basis',
-                  icon: AppIcons.calendar_month_outlined,
-                  iconBackgroundColor: const Color(0xFFFFF0DB),
-                  iconColor: const Color(0xFFB45309),
-                  onTap: () => context.push('/client/monthly-hiring'),
-                ),
+                      title: l10n.chats,
+                      subtitle: l10n.chatsSubtitle,
+                      icon: AppIcons.chat_bubble_outline_rounded,
+                      iconBackgroundColor: const Color(0xFFDDEBFF),
+                      iconColor: const Color(0xFF1F88C9),
+                      onTap: () => context.push('/chats'),
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsMenuTile(
+                      title: l10n.notifications,
+                      subtitle: l10n.clientNotificationsSubtitle,
+                      icon: AppIcons.notifications_active_outlined,
+                      iconBackgroundColor: const Color(0xFFE0F4E8),
+                      iconColor: const Color(0xFF2FA56E),
+                      onTap: () => context.push('/client/notifications'),
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsMenuTile(
+                      title: l10n.changePassword,
+                      subtitle: l10n.changePasswordSubtitle,
+                      icon: AppIcons.password_rounded,
+                      iconBackgroundColor: const Color(0xFFDDEBFF),
+                      iconColor: const Color(0xFF2D6EF2),
+                      onTap: () => context.push('/change-password'),
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsMenuTile(
+                      title: l10n.manageAccount,
+                      subtitle: l10n.manageAccountSubtitle,
+                      icon: AppIcons.manage_accounts_rounded,
+                      iconBackgroundColor: const Color(0xFFF2E8FF),
+                      iconColor: const Color(0xFF7A4FD6),
+                      onTap: () => context.push('/manage-account'),
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsMenuTile(
+                      title: l10n.savedAddresses,
+                      subtitle: l10n.savedAddressesSubtitle,
+                      icon: AppIcons.location_on_outlined,
+                      iconBackgroundColor: const Color(0xFFE0F4E8),
+                      iconColor: const Color(0xFF2FA56E),
+                      onTap: () => context.push('/client/saved-addresses'),
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsMenuTile(
+                      title: l10n.monthlyVehicleHiring,
+                      subtitle: l10n.monthlyVehicleHiringSubtitle,
+                      icon: AppIcons.calendar_month_outlined,
+                      iconBackgroundColor: const Color(0xFFFFF0DB),
+                      iconColor: const Color(0xFFB45309),
+                      onTap: () => context.push('/client/monthly-hiring'),
+                    ),
                   ],
                 ),
               ),
@@ -175,10 +188,7 @@ class _SettingsMenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              AppIcons.chevron_right_rounded,
-              color: colors.textTertiary,
-            ),
+            Icon(AppIcons.chevron_right_rounded, color: colors.textTertiary),
           ],
         ),
       ),
@@ -195,6 +205,7 @@ class _AppearanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -206,7 +217,7 @@ class _AppearanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Appearance',
+            l10n.appearance,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -215,28 +226,28 @@ class _AppearanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose how the app looks on this device',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colors.textSecondary,
-            ),
+            l10n.appearanceSubtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 12),
           SegmentedButton<ThemeMode>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: ThemeMode.light,
-                label: Text('Light'),
-                icon: Icon(AppIcons.light_mode_rounded, size: 16),
+                label: Text(l10n.light),
+                icon: const Icon(AppIcons.light_mode_rounded, size: 16),
               ),
               ButtonSegment(
                 value: ThemeMode.system,
-                label: Text('Auto'),
-                icon: Icon(AppIcons.settings_suggest_rounded, size: 16),
+                label: Text(l10n.auto),
+                icon: const Icon(AppIcons.settings_suggest_rounded, size: 16),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
-                label: Text('Dark'),
-                icon: Icon(AppIcons.dark_mode_rounded, size: 16),
+                label: Text(l10n.dark),
+                icon: const Icon(AppIcons.dark_mode_rounded, size: 16),
               ),
             ],
             selected: {selected},
@@ -247,6 +258,109 @@ class _AppearanceCard extends StatelessWidget {
               selectedBackgroundColor: colors.brandFill,
               selectedForegroundColor: colors.textPrimary,
               side: BorderSide(color: colors.line),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard({required this.selected, required this.onChanged});
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.language,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.languageSubtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.line.withValues(alpha: 0.75)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color:
+                      (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : colors.surface)
+                          .withValues(
+                            alpha:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? 0.08
+                                : 0.7,
+                          ),
+                  blurRadius: 1,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButtonFormField<String>(
+                initialValue: selected,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(16),
+                dropdownColor: colors.surface,
+                icon: Icon(
+                  AppIcons.keyboard_arrow_down_rounded,
+                  color: colors.brandEmphasis,
+                  size: 20,
+                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.fromLTRB(14, 12, 10, 12),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                items: [
+                  DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                  DropdownMenuItem(value: 'hi', child: Text(l10n.hindi)),
+                ],
+                onChanged: (value) {
+                  if (value != null) onChanged(value);
+                },
+              ),
             ),
           ),
         ],

@@ -4,8 +4,10 @@ import 'package:ssk/core/theme/app_tokens.dart';
 import '../widgets/broker_flow_widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/providers/locale_provider.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
@@ -90,6 +92,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context)!;
     final currentUserId = user?.id;
     if (currentUserId != _activeUserId && !_sessionSyncQueued) {
       _sessionSyncQueued = true;
@@ -109,31 +113,48 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
             children: [
               BrokerBackButton(onTap: () => context.go('/broker/home')),
               const SizedBox(height: 10),
-              _ProfileCard(user: user, kycApproved: !_loadingKyc && _kycApproved),
+              _ProfileCard(
+                user: user,
+                kycApproved: !_loadingKyc && _kycApproved,
+              ),
               const SizedBox(height: 16),
               _ProfileSection(
-                title: 'Account',
+                title: l10n.preferences,
+                children: [
+                  _LanguageTile(
+                    selected: locale.languageCode,
+                    onChanged: (languageCode) {
+                      ref
+                          .read(localeProvider.notifier)
+                          .setLanguageCode(languageCode);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _ProfileSection(
+                title: l10n.account,
                 children: [
                   _ProfileMenuTile(
-                    title: 'Manage Account',
-                    subtitle: 'Profile details, security, and preferences',
+                    title: l10n.manageAccountTitleCase,
+                    subtitle: l10n.driverManageAccountSubtitle,
                     icon: AppIcons.person_outline_rounded,
                     onTap: () => context.push('/manage-account'),
                   ),
                   _ProfileMenuTile(
-                    title: 'Earnings',
-                    subtitle: 'Revenue and settlement performance',
+                    title: l10n.earnings,
+                    subtitle: l10n.brokerEarningsSubtitle,
                     icon: AppIcons.trending_up_rounded,
                     accent: AppColors.brand,
                     onTap: () => context.push('/broker/earnings'),
                   ),
                   _ProfileMenuTile(
-                    title: 'KYC Registration',
+                    title: l10n.kycRegistration,
                     subtitle: _loadingKyc
-                        ? 'Checking verification status'
+                        ? l10n.checkingVerificationStatus
                         : _kycApproved
-                        ? 'Verified'
-                        : 'Complete your broker verification',
+                        ? l10n.verified
+                        : l10n.completeBrokerVerification,
                     icon: _kycApproved
                         ? AppIcons.verified_rounded
                         : AppIcons.verified_user_outlined,
@@ -144,8 +165,8 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
                     onTap: () => context.push('/broker/kyc-registration'),
                   ),
                   _ProfileMenuTile(
-                    title: 'Change Password',
-                    subtitle: 'Update your sign-in credentials',
+                    title: l10n.changePasswordTitleCase,
+                    subtitle: l10n.driverChangePasswordSubtitle,
                     icon: AppIcons.lock_outline_rounded,
                     onTap: () => context.push('/change-password'),
                   ),
@@ -153,18 +174,18 @@ class _BrokerProfileScreenState extends ConsumerState<BrokerProfileScreen> {
               ),
               const SizedBox(height: 16),
               _ProfileSection(
-                title: 'Support',
+                title: l10n.support,
                 children: [
                   _ProfileMenuTile(
-                    title: 'Help & Support',
-                    subtitle: 'Contact support for account or trip issues',
+                    title: l10n.helpSupport,
+                    subtitle: l10n.brokerHelpSubtitle,
                     icon: AppIcons.support_agent_rounded,
                     accent: AppColors.brand,
                     onTap: () {},
                   ),
                   _ProfileMenuTile(
-                    title: 'Logout',
-                    subtitle: 'Sign out from this device',
+                    title: l10n.logout,
+                    subtitle: l10n.logoutSubtitle,
                     icon: AppIcons.logout_rounded,
                     accent: AppColors.dangerIcon,
                     onTap: () async {
@@ -190,9 +211,10 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final displayName = user?.displayName.trim().isNotEmpty == true
         ? user!.displayName.trim()
-        : 'Broker account';
+        : l10n.brokerAccount;
     final initial = displayName.isEmpty ? 'B' : displayName[0].toUpperCase();
 
     return Container(
@@ -248,7 +270,7 @@ class _ProfileCard extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            user?.email ?? 'No email connected',
+            user?.email ?? l10n.noEmailConnected,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -266,12 +288,125 @@ class _ProfileCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
             ),
-            child: const Text(
-              'Standard Plan',
-              style: TextStyle(
+            child: Text(
+              l10n.standardPlan,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile({required this.selected, required this.onChanged});
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.brand.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              AppIcons.language_rounded,
+              color: AppColors.brand,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.language,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  l10n.languageSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 132,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line.withValues(alpha: 0.75)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  blurRadius: 1,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButtonFormField<String>(
+                initialValue: selected,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(16),
+                dropdownColor: Colors.white,
+                icon: const Icon(
+                  AppIcons.keyboard_arrow_down_rounded,
+                  color: AppColors.brand,
+                  size: 20,
+                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.fromLTRB(14, 11, 10, 11),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                items: [
+                  DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                  DropdownMenuItem(value: 'hi', child: Text(l10n.hindi)),
+                ],
+                onChanged: (value) {
+                  if (value != null) onChanged(value);
+                },
               ),
             ),
           ),

@@ -205,10 +205,11 @@ class _IntermediateStopsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final children = <Widget>[
       for (var index = 0; index < loadingStops.length; index++)
         _IntermediateStopTile(
-          label: 'Loading point ${index + 1}',
+          label: l10n.loadingPointNumber(index + 1),
           location: loadingStops[index].location,
           icon: AppIcons.inventory_2_outlined,
           color: context.colors.warningEmphasis,
@@ -216,7 +217,7 @@ class _IntermediateStopsList extends StatelessWidget {
         ),
       for (var index = 0; index < unloadingStops.length; index++)
         _IntermediateStopTile(
-          label: 'Unloading point ${index + 1}',
+          label: l10n.unloadingPointNumber(index + 1),
           location: unloadingStops[index].location,
           icon: AppIcons.inventory_2_rounded,
           color: const Color(0xFFE35A62),
@@ -513,19 +514,21 @@ String labelForTruckCategory(String category, [String fallback = '']) {
 /// fare, no separate pricing call needed). Null/zero `basePrice` (e.g.
 /// `part`) shows a non-numeric placeholder so no fake fare is displayed.
 List<VehicleOption> vehicleOptionsFromTypes(List<VehicleType> types) {
-  return types.map((t) {
-    final price = (t.basePrice != null && t.basePrice! > 0)
-        ? _formatRupees(t.basePrice!)
-        : (t.id.trim().toLowerCase() == 'part' ? 'Shared' : 'On request');
-    return VehicleOption(
-      id: t.id,
-      label: t.name.isNotEmpty ? t.name : labelForTruckCategory(t.id),
-      capacity: t.capacity,
-      price: price,
-      accentColor: accentColorForTruckCategory(t.id),
-      assetPath: assetPathForTruckCategory(t.id),
-    );
-  }).toList(growable: false);
+  return types
+      .map((t) {
+        final price = (t.basePrice != null && t.basePrice! > 0)
+            ? _formatRupees(t.basePrice!)
+            : (t.id.trim().toLowerCase() == 'part' ? 'Shared' : 'On request');
+        return VehicleOption(
+          id: t.id,
+          label: t.name.isNotEmpty ? t.name : labelForTruckCategory(t.id),
+          capacity: t.capacity,
+          price: price,
+          accentColor: accentColorForTruckCategory(t.id),
+          assetPath: assetPathForTruckCategory(t.id),
+        );
+      })
+      .toList(growable: false);
 }
 
 /// The category string to send for a picked option — always the option's own
@@ -1170,16 +1173,17 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
 String? _readPodStatus(Map<String, dynamic> raw) {
   final trip = raw['trip'];
   if (trip is Map) {
-    final fromTrip = _readString(
-      trip.cast<String, dynamic>(),
-      const ['podStatus', 'pod_status'],
-    );
+    final fromTrip = _readString(trip.cast<String, dynamic>(), const [
+      'podStatus',
+      'pod_status',
+    ]);
     if (fromTrip.isNotEmpty) return fromTrip.toLowerCase();
   }
-  final direct = _readString(
-    raw,
-    const ['podStatus', 'pod_status', 'pod_status_string'],
-  );
+  final direct = _readString(raw, const [
+    'podStatus',
+    'pod_status',
+    'pod_status_string',
+  ]);
   if (direct.isEmpty) return null;
   return direct.toLowerCase();
 }
@@ -1187,21 +1191,19 @@ String? _readPodStatus(Map<String, dynamic> raw) {
 String? _readPodRejectionReason(Map<String, dynamic> raw) {
   final trip = raw['trip'];
   if (trip is Map) {
-    final fromTrip = _readString(
-      trip.cast<String, dynamic>(),
-      const ['podRejectionReason', 'pod_rejection_reason', 'podRejectReason'],
-    );
-    if (fromTrip.isNotEmpty) return fromTrip;
-  }
-  final direct = _readString(
-    raw,
-    const [
+    final fromTrip = _readString(trip.cast<String, dynamic>(), const [
       'podRejectionReason',
       'pod_rejection_reason',
       'podRejectReason',
-      'pod_reject_reason',
-    ],
-  );
+    ]);
+    if (fromTrip.isNotEmpty) return fromTrip;
+  }
+  final direct = _readString(raw, const [
+    'podRejectionReason',
+    'pod_rejection_reason',
+    'podRejectReason',
+    'pod_reject_reason',
+  ]);
   if (direct.isEmpty) return null;
   return direct;
 }
@@ -1209,10 +1211,11 @@ String? _readPodRejectionReason(Map<String, dynamic> raw) {
 String _readTripId(Map<String, dynamic> raw) {
   final trip = raw['trip'];
   if (trip is Map) {
-    final nested = _readString(
-      trip.cast<String, dynamic>(),
-      const ['id', 'tripId', 'trip_id'],
-    );
+    final nested = _readString(trip.cast<String, dynamic>(), const [
+      'id',
+      'tripId',
+      'trip_id',
+    ]);
     if (nested.isNotEmpty) return nested;
   }
   return _readString(raw, const [
@@ -1292,10 +1295,10 @@ List<PodDeliveryMedia> _readPodDeliveryMedia(Map<String, dynamic> raw) {
   final podUrl = _readString(raw, const ['podUrl', 'pod_url']);
   if (podUrl.isEmpty) {
     if (trip is Map) {
-      final tripPodUrl = _readString(
-        trip.cast<String, dynamic>(),
-        const ['podUrl', 'pod_url'],
-      );
+      final tripPodUrl = _readString(trip.cast<String, dynamic>(), const [
+        'podUrl',
+        'pod_url',
+      ]);
       if (tripPodUrl.isEmpty) return const [];
       return [PodDeliveryMedia(url: tripPodUrl, type: 'image')];
     }
