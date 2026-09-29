@@ -14,6 +14,7 @@ import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/services/driver_external_navigation_service.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
@@ -542,6 +543,7 @@ class _DriverDeliveryDetailsScreenState
   }
 
   Future<void> _advanceTripStatus() async {
+    final l10n = AppLocalizations.of(context)!;
     final nextStatus = _nextStatusForCurrentTrip();
     if (nextStatus == null) return;
     if (nextStatus == 'picked_up') {
@@ -561,11 +563,7 @@ class _DriverDeliveryDetailsScreenState
       );
       await _loadTrip();
       if (!mounted || _tripId.isEmpty) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Trip is still syncing. Please try again.'),
-          ),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(l10n.tripStillSyncing)));
         return;
       }
     }
@@ -573,9 +571,9 @@ class _DriverDeliveryDetailsScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.signInAgainToContinue)));
       return;
     }
 
@@ -689,6 +687,7 @@ class _DriverDeliveryDetailsScreenState
   }
 
   Future<void> _completeStop(int index) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_completingStopIndex != null) {
       return;
     }
@@ -697,18 +696,14 @@ class _DriverDeliveryDetailsScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(content: Text(l10n.signInAgainToContinue)),
       );
       return;
     }
     if (_tripId.isEmpty) {
       await _loadTrip();
       if (!mounted || _tripId.isEmpty) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Trip is still syncing. Please try again.'),
-          ),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(l10n.tripStillSyncing)));
         return;
       }
     }
@@ -742,8 +737,8 @@ class _DriverDeliveryDetailsScreenState
         }
       });
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Stop marked complete.'),
+        SnackBar(
+          content: Text(l10n.stopMarkedComplete),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -1210,26 +1205,30 @@ class _DriverDeliveryDetailsScreenState
                         if (isArrivalFlow) ...[
                           const SizedBox(height: 16),
                           SlideToConfirm(
-                            enabled:
-                                !_loadingTrip && !_confirmingArrival,
+                            enabled: !_loadingTrip && !_confirmingArrival,
                             label: _confirmingArrival
-                                ? 'Confirming...'
-                                : 'Slide to deliver',
-                            onConfirmed: () =>
-                                unawaited(_confirmArrival()),
+                                ? AppLocalizations.of(context)!.confirming
+                                : AppLocalizations.of(context)!.slideToDeliver,
+                            onConfirmed: () => unawaited(_confirmArrival()),
                           ),
                         ] else ...[
                           const SizedBox(height: 12),
-                          _DetailRow(label: 'Customer', value: _customerName),
+                          _DetailRow(
+                            label: AppLocalizations.of(context)!.customer,
+                            value: _customerName,
+                          ),
                           const SizedBox(height: 10),
                           _DetailRow(
-                            label: 'Phone',
+                            label: AppLocalizations.of(context)!.phone,
                             value: _customerPhone.isNotEmpty
                                 ? _customerPhone
                                 : '—',
                           ),
                           const SizedBox(height: 10),
-                          _DetailRow(label: 'Address', value: _dropLocation),
+                          _DetailRow(
+                            label: AppLocalizations.of(context)!.address,
+                            value: _dropLocation,
+                          ),
                           if (_readDouble(_tripRaw, const [
                                 'haltingGraceHours',
                                 'halting_grace_hours',
@@ -1356,24 +1355,20 @@ class _DriverDeliveryDetailsScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text('Decline this trip?'),
-        content: const Text(
-          'You will be freed from this trip and your broker can assign another driver. This cannot be undone.',
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(AppLocalizations.of(context)!.declineThisTrip),
+        content: Text(AppLocalizations.of(context)!.declineTripDescription),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Keep trip'),
+            child: Text(AppLocalizations.of(context)!.keepTrip),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.dangerText,
             ),
-            child: const Text('Decline trip'),
+            child: Text(AppLocalizations.of(context)!.declineTrip),
           ),
         ],
       ),
@@ -1383,7 +1378,9 @@ class _DriverDeliveryDetailsScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToContinue),
+        ),
       );
       return;
     }
@@ -1404,7 +1401,7 @@ class _DriverDeliveryDetailsScreenState
       ref.read(driverActiveTripIdProvider.notifier).state = null;
       ref.read(driverTripSessionProvider.notifier).state = null;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Trip declined.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.tripDeclined)),
       );
       context.go('/driver/home');
     } on ApiException catch (error) {
@@ -1430,15 +1427,16 @@ class _DriverDeliveryDetailsScreenState
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _decliningTrip = false);
     }
   }
 
   Future<void> _confirmArrival() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_confirmingArrival) return;
     final messenger = ScaffoldMessenger.of(context);
     final stopwatch = Stopwatch()..start();
@@ -1453,11 +1451,7 @@ class _DriverDeliveryDetailsScreenState
       );
       await _loadTrip();
       if (!mounted || _tripId.isEmpty) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Trip is still syncing. Please try again.'),
-          ),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(l10n.tripStillSyncing)));
         return;
       }
     }
@@ -1465,9 +1459,9 @@ class _DriverDeliveryDetailsScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.signInAgainToContinue)));
       return;
     }
 
@@ -1860,23 +1854,16 @@ class _DriverDeliveryDetailsScreenState
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Allow display over other apps'),
-        content: const Text(
-          'This opens SSK\u2019s page in system Settings.\n\n'
-          '1. Turn ON \u201cAllow display over other apps\u201d.\n'
-          '2. Press back \u2014 Maps opens automatically with the '
-          'floating SSK button.\n\n'
-          '(On Xiaomi/Redmi/Poco the toggle may be called '
-          '\u201cDisplay pop-up windows\u201d.)',
-        ),
+        title: Text(AppLocalizations.of(context)!.allowDisplayOverApps),
+        content: Text(AppLocalizations.of(context)!.allowDisplayOverAppsText),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Skip'),
+            child: Text(AppLocalizations.of(context)!.skip),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Open Settings'),
+            child: Text(AppLocalizations.of(context)!.openSettings),
           ),
         ],
       ),
@@ -1894,12 +1881,9 @@ class _DriverDeliveryDetailsScreenState
     if (!opened) {
       _awaitingOverlayPermission = false;
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not open Settings. Open it manually: Settings > '
-            'Apps > SSK > Display over other apps.',
-          ),
-          duration: Duration(seconds: 4),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotOpenSettings),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -1917,12 +1901,11 @@ class _DriverDeliveryDetailsScreenState
       if (!mounted) return;
       if (!bubbleShown) {
         messenger.showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Could not show the floating button on this device. '
-              'Opening Maps anyway.',
+              AppLocalizations.of(context)!.couldNotShowFloatingButton,
             ),
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -1944,9 +1927,9 @@ class _DriverDeliveryDetailsScreenState
       messenger.showSnackBar(SnackBar(content: Text(error)));
     } else if (bubbleShown) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Tap the SSK bubble over Maps to return.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.tapBubbleToReturn),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -2027,7 +2010,7 @@ class _DriverDeliveryDetailsScreenState
                               ? 'Navigate to pickup'
                               : _navPickupAddress)
                         : (_dropLocation.isEmpty
-                              ? 'Navigate to drop'
+                              ? AppLocalizations.of(context)!.navigateToDrop
                               : _dropLocation),
                     onTap: () {
                       Navigator.of(sheetContext).pop();
@@ -2039,13 +2022,15 @@ class _DriverDeliveryDetailsScreenState
                     backgroundColor: AppColors.dangerFill,
                     iconColor: AppColors.dangerIcon,
                     icon: AppIcons.local_police_rounded,
-                    title: 'Call Police',
-                    subtitle: 'Emergency: 112',
+                    title: AppLocalizations.of(context)!.callPolice,
+                    subtitle: AppLocalizations.of(context)!.emergency112,
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Calling police support soon.'),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.callingPoliceSoon,
+                          ),
                         ),
                       );
                     },
@@ -2055,13 +2040,15 @@ class _DriverDeliveryDetailsScreenState
                     backgroundColor: AppColors.dangerFill,
                     iconColor: AppColors.dangerIcon,
                     icon: AppIcons.local_hospital_rounded,
-                    title: 'Call Ambulance',
-                    subtitle: 'Emergency: 108',
+                    title: AppLocalizations.of(context)!.callAmbulance,
+                    subtitle: AppLocalizations.of(context)!.emergency108,
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Calling ambulance support soon.'),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.callingAmbulanceSoon,
+                          ),
                         ),
                       );
                     },
@@ -2071,12 +2058,16 @@ class _DriverDeliveryDetailsScreenState
                     backgroundColor: AppColors.brandTint,
                     iconColor: AppColors.brand,
                     icon: AppIcons.call_rounded,
-                    title: 'Call Broker',
+                    title: AppLocalizations.of(context)!.callBroker,
                     subtitle: '9000000003',
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Calling broker soon.')),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.callingBrokerSoon,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -2085,8 +2076,12 @@ class _DriverDeliveryDetailsScreenState
                     backgroundColor: AppColors.warningFill,
                     iconColor: AppColors.warningText,
                     icon: AppIcons.report_outlined,
-                    title: 'Report Incident to Support',
-                    subtitle: 'Notify our support team immediately',
+                    title: AppLocalizations.of(
+                      context,
+                    )!.reportIncidentToSupport,
+                    subtitle: AppLocalizations.of(
+                      context,
+                    )!.notifySupportImmediately,
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       _showIncidentReport(context, _tripId);
@@ -2097,8 +2092,8 @@ class _DriverDeliveryDetailsScreenState
                     backgroundColor: AppColors.brandTint,
                     iconColor: AppColors.brand,
                     icon: AppIcons.build_circle_outlined,
-                    title: 'View Mechanic Status',
-                    subtitle: 'See breakdown and repair progress',
+                    title: AppLocalizations.of(context)!.viewMechanicStatus,
+                    subtitle: AppLocalizations.of(context)!.seeRepairProgress,
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       _showMechanicStatus(context, _tripId);
@@ -2128,8 +2123,10 @@ class _DriverDeliveryDetailsScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to view mechanic status.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.signInAgainToViewMechanicStatus,
+          ),
         ),
       );
       return;
@@ -2154,8 +2151,8 @@ class _DriverDeliveryDetailsScreenState
         : (_shipment?.bookingId ?? '').trim();
     if (session == null || bookingId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Chat is not available for this trip yet.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.chatUnavailableForTrip),
         ),
       );
       return;
@@ -2177,8 +2174,8 @@ class _DriverDeliveryDetailsScreenState
     final number = _customerPhone.trim();
     if (number.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Customer phone number is not available.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.customerPhoneUnavailable),
         ),
       );
       return;
@@ -2189,7 +2186,9 @@ class _DriverDeliveryDetailsScreenState
     );
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the phone app.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotOpenPhoneApp),
+        ),
       );
     }
   }
@@ -2850,31 +2849,31 @@ class _IncidentReportDialog extends ConsumerStatefulWidget {
 class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
   static const _incidentTypes = <_IncidentTypeOption>[
     _IncidentTypeOption(
-      label: 'Accident',
+      label: 'accident',
       icon: AppIcons.warning_amber_rounded,
       accent: AppColors.warningText,
       background: AppColors.warningFill,
     ),
     _IncidentTypeOption(
-      label: 'Breakdown',
+      label: 'breakdown',
       icon: AppIcons.build_rounded,
       accent: AppColors.textTertiary,
       background: AppColors.fillSubtle,
     ),
     _IncidentTypeOption(
-      label: 'Traffic Block',
+      label: 'traffic_block',
       icon: AppIcons.traffic_rounded,
       accent: AppColors.brand,
       background: AppColors.brandTint,
     ),
     _IncidentTypeOption(
-      label: 'Medical',
+      label: 'medical',
       icon: AppIcons.favorite_border_rounded,
       accent: AppColors.dangerIcon,
       background: AppColors.dangerFill,
     ),
     _IncidentTypeOption(
-      label: 'Other',
+      label: 'other',
       icon: AppIcons.chat_bubble_outline_rounded,
       accent: AppColors.textTertiary,
       background: AppColors.fillSubtle,
@@ -2902,8 +2901,8 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in again to report the issue.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.signInAgainToReportIssue),
         ),
       );
       return;
@@ -2925,7 +2924,11 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
       Navigator.of(context).pop();
       messenger.showSnackBar(
         SnackBar(
-          content: Text('$_selectedType report submitted to support.'),
+          content: Text(
+            AppLocalizations.of(context)!.incidentReportSubmitted(
+              _incidentDisplayLabel(context, _selectedType),
+            ),
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -2995,7 +2998,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Report Incident',
+                        AppLocalizations.of(context)!.reportIncident,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w900,
@@ -3006,13 +3009,13 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(AppIcons.close_rounded),
                       color: AppColors.textTertiary,
-                      tooltip: 'Close',
+                      tooltip: AppLocalizations.of(context)!.close,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'What\'s going on? Your broker and the client will be notified right away.',
+                  AppLocalizations.of(context)!.incidentDialogSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                     height: 1.4,
@@ -3041,7 +3044,7 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                   cursorColor: AppColors.brand,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Add any details (optional)',
+                    hintText: AppLocalizations.of(context)!.addDetailsOptional,
                     hintStyle: const TextStyle(
                       color: AppColors.textTertiary,
                       fontWeight: FontWeight.w600,
@@ -3091,10 +3094,10 @@ class _IncidentReportDialogState extends ConsumerState<_IncidentReportDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Submit Report',
-                              key: ValueKey('submit-label'),
-                              style: TextStyle(
+                          : Text(
+                              AppLocalizations.of(context)!.submitReport,
+                              key: const ValueKey('submit-label'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
                               ),
@@ -3322,9 +3325,11 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                   ).textTheme.bodyMedium?.copyWith(color: AppColors.dangerText),
                 )
               else if (_incidents.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 18),
-                  child: Text('No incidents reported for this trip yet.'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  child: Text(
+                    AppLocalizations.of(context)!.noIncidentsReported,
+                  ),
                 )
               else
                 Column(
@@ -3341,7 +3346,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                 height: 48,
                 child: OutlinedButton(
                   onPressed: _loading ? null : _loadIncidents,
-                  child: const Text('Refresh'),
+                  child: Text(AppLocalizations.of(context)!.refresh),
                 ),
               ),
             ],
@@ -3457,11 +3462,22 @@ class _IncidentTypeOption {
 
 String _incidentReasonFor(String label) {
   return switch (label) {
-    'Accident' => 'accident',
-    'Breakdown' => 'breakdown',
-    'Traffic Block' => 'traffic_block',
-    'Medical' => 'medical',
+    'accident' => 'accident',
+    'breakdown' => 'breakdown',
+    'traffic_block' => 'traffic_block',
+    'medical' => 'medical',
     _ => 'other',
+  };
+}
+
+String _incidentDisplayLabel(BuildContext context, String label) {
+  final l10n = AppLocalizations.of(context)!;
+  return switch (label) {
+    'accident' => l10n.accident,
+    'breakdown' => l10n.breakdown,
+    'traffic_block' => l10n.trafficBlock,
+    'medical' => l10n.medical,
+    _ => l10n.other,
   };
 }
 
@@ -3519,7 +3535,7 @@ class _IncidentTypeChip extends StatelessWidget {
               Icon(option.icon, color: option.accent, size: 22),
               const SizedBox(height: 6),
               Text(
-                option.label,
+                _incidentDisplayLabel(context, option.label),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,

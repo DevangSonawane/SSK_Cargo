@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
@@ -146,7 +147,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.brand,
                         ),
-                        child: const Text('Negotiate'),
+                        child: Text(AppLocalizations.of(context)!.negotiate),
                       ),
                     ),
                   ],
@@ -311,7 +312,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.brand,
                               ),
-                              child: const Text('Negotiate'),
+                              child: Text(
+                                AppLocalizations.of(context)!.negotiate,
+                              ),
                             ),
                           ),
                         ],
@@ -377,7 +380,9 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.brand,
                               ),
-                              child: const Text('Negotiate'),
+                              child: Text(
+                                AppLocalizations.of(context)!.negotiate,
+                              ),
                             ),
                           ),
                         ],
@@ -464,7 +469,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     FilledButton.icon(
                       onPressed: () => context.push('/broker/drivers/add'),
                       icon: const Icon(AppIcons.add),
-                      label: const Text('Add driver'),
+                      label: Text(AppLocalizations.of(context)!.addDriver),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.brand,
                         foregroundColor: Colors.white,
@@ -692,19 +697,21 @@ Future<void> _confirmDeleteDriver(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('Remove driver?'),
-        content: Text('This will delete ${driver.name} from the broker fleet.'),
+        title: Text(AppLocalizations.of(context)!.removeDriverQuestion),
+        content: Text(
+          AppLocalizations.of(context)!.deleteDriverFromFleet(driver.name),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.dangerIcon,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       );
@@ -716,7 +723,9 @@ Future<void> _confirmDeleteDriver(
   final session = ref.read(authSessionProvider).valueOrNull;
   if (session == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please sign in again to delete a driver.')),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.signInAgainToDeleteDriver),
+      ),
     );
     return;
   }
@@ -729,9 +738,9 @@ Future<void> _confirmDeleteDriver(
     ref.invalidate(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Driver removed from fleet.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.driverRemoved)),
+    );
   } catch (error) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -809,9 +818,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
       await action(ref.read(apiClientProvider), session.tokens.accessToken);
       ref.invalidate(brokerDriverRequestsProvider(_query));
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Request updated.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.requestUpdated)),
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -855,7 +864,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
               Row(
                 children: [
                   Text(
-                    'Driver requests',
+                    AppLocalizations.of(context)!.driverRequests,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -886,8 +895,10 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                   ),
                   data: (requests) {
                     if (requests.isEmpty) {
-                      return const Center(
-                        child: Text('No driver requests yet.'),
+                      return Center(
+                        child: Text(
+                          AppLocalizations.of(context)!.noDriverRequestsYet,
+                        ),
                       );
                     }
 
@@ -963,7 +974,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                               id: request.id,
                                             ),
                                       ),
-                                      child: const Text('Accept'),
+                                      child: Text(
+                                        AppLocalizations.of(context)!.accept,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -977,7 +990,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                               id: request.id,
                                             ),
                                       ),
-                                      child: const Text('Decline'),
+                                      child: Text(
+                                        AppLocalizations.of(context)!.decline,
+                                      ),
                                     ),
                                   ),
                                   if (!brokerAssigned) ...[
@@ -1178,13 +1193,15 @@ class _BrokerDriverTripSheetState
   }
 
   Future<_BrokerDriverTripSnapshot> _loadSnapshot() async {
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.read(authSessionProvider).valueOrNull;
     final tripId = _resolveTripId();
     if (session == null) {
       return _BrokerDriverTripSnapshot.fromDriver(
         driver: widget.driver,
         tripId: tripId,
-        statusLabel: 'Sign in to load trip progress',
+        statusLabel: l10n.signInToLoadTripProgress,
+        l10n: l10n,
       );
     }
 
@@ -1193,8 +1210,9 @@ class _BrokerDriverTripSheetState
         driver: widget.driver,
         tripId: tripId,
         statusLabel: widget.driver.hasCompletedTrip
-            ? 'Trip completed'
-            : 'Driver location only',
+            ? l10n.tripCompleted
+            : l10n.driverLocationOnly,
+        l10n: l10n,
       );
     }
 
@@ -1231,6 +1249,7 @@ class _BrokerDriverTripSheetState
           driver: widget.driver,
           tripId: tripId,
           tripData: tripPayload,
+          l10n: l10n,
         ),
         incidents: incidents,
         statusLabel: _tripString(tripPayload, const [
@@ -1296,7 +1315,8 @@ class _BrokerDriverTripSheetState
         tripId: tripId,
         statusLabel: widget.driver.tripStatus.isNotEmpty
             ? widget.driver.tripStatus
-            : 'Live details unavailable',
+            : l10n.liveDetailsUnavailable,
+        l10n: l10n,
       );
     }
   }
@@ -1357,9 +1377,9 @@ class _BrokerDriverTripSheetState
             reason: draft.reason,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Driver reassigned.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.driverReassigned)),
+      );
       ref.invalidate(
         brokerDriversApiProvider((status: null, page: 1, limit: 100)),
       );
@@ -1398,7 +1418,7 @@ class _BrokerDriverTripSheetState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Report incident'),
+          title: Text(AppLocalizations.of(context)!.reportIncident),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1406,14 +1426,18 @@ class _BrokerDriverTripSheetState
                 controller: reasonController,
                 cursorColor: AppColors.brand,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Reason'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.reason,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: notesController,
                 cursorColor: AppColors.brand,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.notes,
+                ),
                 minLines: 2,
                 maxLines: 4,
               ),
@@ -1422,7 +1446,7 @@ class _BrokerDriverTripSheetState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -1433,7 +1457,7 @@ class _BrokerDriverTripSheetState
                   ),
                 );
               },
-              child: const Text('Send'),
+              child: Text(AppLocalizations.of(context)!.send),
             ),
           ],
         );
@@ -1455,7 +1479,7 @@ class _BrokerDriverTripSheetState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incident reported successfully.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.incidentReported)),
       );
       await _refresh();
     } catch (error) {
@@ -1479,20 +1503,20 @@ class _BrokerDriverTripSheetState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Collect settlement'),
-          content: const Text('Choose the settlement mode for this trip.'),
+          title: Text(AppLocalizations.of(context)!.collectSettlement),
+          content: Text(AppLocalizations.of(context)!.chooseSettlementMode),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop('cash'),
-              child: const Text('Cash'),
+              child: Text(AppLocalizations.of(context)!.cash),
             ),
             FilledButton.tonal(
               onPressed: () => Navigator.of(dialogContext).pop('online'),
-              child: const Text('Online'),
+              child: Text(AppLocalizations.of(context)!.online),
             ),
           ],
         );
@@ -1512,9 +1536,11 @@ class _BrokerDriverTripSheetState
             mode: mode,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Settlement updated.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.settlementUpdated),
+        ),
+      );
       await _refresh();
     } catch (error) {
       if (!mounted) return;
@@ -1542,7 +1568,9 @@ class _BrokerDriverTripSheetState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Trip marked as completed.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.tripMarkedCompleted),
+        ),
       );
       await _refresh();
     } catch (error) {
@@ -1575,9 +1603,15 @@ class _BrokerDriverTripSheetState
             index: stop.index,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${stop.label} marked complete.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(
+              context,
+            )!.stopMarkedCompleteWithLabel(stop.label),
+          ),
+        ),
+      );
       await _refresh();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -1616,7 +1650,7 @@ class _BrokerDriverTripSheetState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Update mechanic'),
+          title: Text(AppLocalizations.of(context)!.updateMechanic),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1624,32 +1658,38 @@ class _BrokerDriverTripSheetState
                 controller: mechanicNameController,
                 cursorColor: AppColors.brand,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Mechanic name'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.mechanicName,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: mechanicPhoneController,
                 cursorColor: AppColors.brand,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Mechanic phone'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.mechanicPhone,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: notesController,
                 cursorColor: AppColors.brand,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.notes,
+                ),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Save'),
+              child: Text(AppLocalizations.of(context)!.save),
             ),
           ],
         );
@@ -1674,7 +1714,9 @@ class _BrokerDriverTripSheetState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mechanic details updated.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.mechanicDetailsUpdated),
+        ),
       );
       await _refresh();
     } catch (error) {
@@ -1706,9 +1748,9 @@ class _BrokerDriverTripSheetState
             incidentId: incident.id,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Incident resolved.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.incidentResolved)),
+      );
       await _refresh();
     } catch (error) {
       if (!mounted) return;
@@ -1739,7 +1781,8 @@ class _BrokerDriverTripSheetState
                 _BrokerDriverTripSnapshot.fromDriver(
                   driver: widget.driver,
                   tripId: _resolveTripId(),
-                  statusLabel: 'Loading...',
+                  statusLabel: AppLocalizations.of(context)!.loading,
+                  l10n: AppLocalizations.of(context)!,
                 );
 
             return SafeArea(
@@ -1788,15 +1831,19 @@ class _BrokerDriverTripSheetState
                             Navigator.of(context).pop();
                             this.context.push('/broker/settings/settlements');
                           },
-                          child: const Text('Settlements'),
+                          child: Text(
+                            AppLocalizations.of(context)!.settlements,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Text(
                       data.tripId.isEmpty
-                          ? 'Driver location and activity overview'
-                          : 'Trip ${data.tripId}',
+                          ? AppLocalizations.of(
+                              context,
+                            )!.driverLocationActivityOverview
+                          : AppLocalizations.of(context)!.tripId(data.tripId),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -1818,18 +1865,20 @@ class _BrokerDriverTripSheetState
                         _TripInfoChip(
                           icon: AppIcons.route_rounded,
                           label: data.statusLabel.isEmpty
-                              ? 'Live'
+                              ? AppLocalizations.of(context)!.live
                               : data.statusLabel,
                         ),
                         _TripInfoChip(
                           icon: AppIcons.payments_rounded,
                           label: data.paymentStatus.isEmpty
-                              ? 'Payment pending'
+                              ? AppLocalizations.of(context)!.paymentPending
                               : data.paymentStatus,
                         ),
                         _TripInfoChip(
                           icon: AppIcons.report_problem_rounded,
-                          label: '${data.incidents.length} incidents',
+                          label: AppLocalizations.of(
+                            context,
+                          )!.incidentsCount(data.incidents.length),
                         ),
                         if (data.shipment.expectedDeliveryHours != null)
                           _TripInfoChip(
@@ -1860,7 +1909,7 @@ class _BrokerDriverTripSheetState
                     ],
                     const SizedBox(height: 16),
                     Text(
-                      'Trip progress',
+                      AppLocalizations.of(context)!.tripProgress,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -1885,7 +1934,9 @@ class _BrokerDriverTripSheetState
                                 ? null
                                 : () => _reportIncident(data),
                             icon: const Icon(AppIcons.warning_amber_rounded),
-                            label: const Text('Report issue'),
+                            label: Text(
+                              AppLocalizations.of(context)!.reportIssue,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -1895,7 +1946,7 @@ class _BrokerDriverTripSheetState
                                 ? null
                                 : () => _collectSettlement(data),
                             icon: const Icon(AppIcons.payments_rounded),
-                            label: const Text('Settle'),
+                            label: Text(AppLocalizations.of(context)!.settle),
                           ),
                         ),
                       ],
@@ -1909,7 +1960,9 @@ class _BrokerDriverTripSheetState
                                 ? null
                                 : () => _completeTrip(data),
                             icon: const Icon(AppIcons.check_circle_outline),
-                            label: const Text('Mark complete'),
+                            label: Text(
+                              AppLocalizations.of(context)!.markComplete,
+                            ),
                           ),
                         ),
                       ],
@@ -2010,24 +2063,25 @@ class _BrokerDriverTripSnapshot {
     required BrokerDriver driver,
     required String tripId,
     required String statusLabel,
+    required AppLocalizations l10n,
   }) {
     final shipment = TrackingDemoShipment(
       packageName: driver.name,
       trackingId: tripId.isEmpty ? driver.id : tripId,
       fromLocation: driver.currentLocation.isEmpty
-          ? 'Driver location'
+          ? l10n.driverLocation
           : driver.currentLocation,
       toLocation: driver.assignedVehicle.isEmpty
-          ? 'Trip destination not available'
+          ? l10n.tripDestinationNotAvailable
           : driver.assignedVehicle,
       status: statusLabel,
       customerName: driver.name,
       weight: driver.vehicleType.isEmpty
-          ? 'Vehicle tracking'
+          ? l10n.vehicleTracking
           : driver.vehicleType,
       liveLat: driver.currentLatitude,
       liveLng: driver.currentLongitude,
-      timeline: _driverTimelineFromStatus(statusLabel, driver),
+      timeline: _driverTimelineFromStatus(statusLabel, driver, l10n),
       bookingId: tripId.isEmpty ? null : tripId,
       bookingStatus: statusLabel,
       assignedDriverName: driver.name,
@@ -2330,13 +2384,17 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
     final truckOptions = widget.trucks;
 
     return AlertDialog(
-      title: const Text('Reassign driver'),
+      title: Text(AppLocalizations.of(context)!.reassignDriver),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Currently assigned: ${widget.currentDriverName.isEmpty ? 'Driver' : widget.currentDriverName}',
+            AppLocalizations.of(context)!.currentlyAssigned(
+              widget.currentDriverName.isEmpty
+                  ? AppLocalizations.of(context)!.driver
+                  : widget.currentDriverName,
+            ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -2356,7 +2414,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
               color: AppColors.textSecondary,
             ),
             decoration: brokerFieldDecoration(
-              labelText: 'Reassign to',
+              labelText: AppLocalizations.of(context)!.reassignTo,
               prefixIcon: AppIcons.person_rounded,
             ),
             items: [
@@ -2391,7 +2449,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
               color: AppColors.textSecondary,
             ),
             decoration: brokerFieldDecoration(
-              labelText: 'Truck',
+              labelText: AppLocalizations.of(context)!.truck,
               prefixIcon: AppIcons.local_shipping_rounded,
             ),
             items: [
@@ -2403,7 +2461,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
                           if (truck.label.isNotEmpty) truck.label,
                           if (truck.plateNumber.isNotEmpty) truck.plateNumber,
                         ].join(' • ').isEmpty
-                        ? 'Truck'
+                        ? AppLocalizations.of(context)!.truck
                         : [
                             if (truck.label.isNotEmpty) truck.label,
                             if (truck.plateNumber.isNotEmpty) truck.plateNumber,
@@ -2425,9 +2483,9 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
             controller: _reasonController,
             cursorColor: AppColors.brand,
             style: const TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(
-              labelText: 'Reason (optional)',
-              hintText: 'Driver unavailable, breakdown, better route fit...',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.reasonOptional,
+              hintText: AppLocalizations.of(context)!.reassignReasonHint,
             ),
             minLines: 2,
             maxLines: 3,
@@ -2437,7 +2495,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         FilledButton(
           onPressed: _driverId.isEmpty || _truckId.isEmpty
@@ -2449,7 +2507,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
                     reason: _reasonController.text.trim(),
                   ),
                 ),
-          child: const Text('Reassign'),
+          child: Text(AppLocalizations.of(context)!.reassign),
         ),
       ],
     );
@@ -2648,14 +2706,14 @@ class _TripIncidentCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: onMechanic,
-                  child: const Text('Mechanic'),
+                  child: Text(AppLocalizations.of(context)!.mechanic),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
                   onPressed: onResolve,
-                  child: const Text('Resolve'),
+                  child: Text(AppLocalizations.of(context)!.resolve),
                 ),
               ),
             ],
@@ -2669,53 +2727,58 @@ class _TripIncidentCard extends StatelessWidget {
 List<TrackingTimelineStep> _driverTimelineFromStatus(
   String status,
   BrokerDriver driver,
+  AppLocalizations l10n,
 ) {
   final text = status.trim().toLowerCase();
   final origin = driver.currentLocation.isEmpty
-      ? 'Driver location'
+      ? l10n.driverLocation
       : driver.currentLocation;
   final destination = driver.assignedVehicle.isEmpty
-      ? 'Trip destination'
+      ? l10n.tripDestination
       : driver.assignedVehicle;
   if (const {'completed', 'delivered', 'closed', 'settled'}.contains(text)) {
     return [
       TrackingTimelineStep(
-        title: 'Assigned',
+        title: l10n.assigned,
         subtitle: origin,
         completed: true,
       ),
       TrackingTimelineStep(
-        title: 'In transit',
+        title: l10n.inTransit,
         subtitle: destination,
         completed: true,
       ),
       TrackingTimelineStep(
-        title: 'Delivered',
-        subtitle: 'Trip completed',
+        title: l10n.delivered,
+        subtitle: l10n.tripCompleted,
         completed: true,
       ),
       TrackingTimelineStep(
-        title: 'Settled',
-        subtitle: 'Broker updated the payout',
+        title: l10n.settled,
+        subtitle: l10n.brokerUpdatedPayout,
         completed: true,
       ),
     ];
   }
   return [
-    TrackingTimelineStep(title: 'Assigned', subtitle: origin, completed: true),
     TrackingTimelineStep(
-      title: 'In transit',
+      title: l10n.assigned,
+      subtitle: origin,
+      completed: true,
+    ),
+    TrackingTimelineStep(
+      title: l10n.inTransit,
       subtitle: destination,
       completed: true,
     ),
     TrackingTimelineStep(
-      title: 'Delivered',
-      subtitle: 'Pending',
+      title: l10n.delivered,
+      subtitle: l10n.pending,
       completed: false,
     ),
     TrackingTimelineStep(
-      title: 'Settled',
-      subtitle: 'Pending',
+      title: l10n.settled,
+      subtitle: l10n.pending,
       completed: false,
     ),
   ];
@@ -2725,6 +2788,7 @@ TrackingDemoShipment _shipmentFromTripData({
   required BrokerDriver driver,
   required String tripId,
   required Map<String, dynamic> tripData,
+  required AppLocalizations l10n,
 }) {
   final status = _tripString(tripData, const [
     'status',
@@ -2870,6 +2934,7 @@ TrackingDemoShipment _shipmentFromTripData({
     timeline: _driverTimelineFromStatus(
       status.isEmpty ? driver.tripStatus : status,
       driver,
+      l10n,
     ),
     bookingId: tripId,
     bookingStatus: status,

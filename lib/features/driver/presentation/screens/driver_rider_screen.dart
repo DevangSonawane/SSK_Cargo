@@ -376,8 +376,7 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                           _ActiveTripCard(
                             shipment: currentTrip,
                             onTap: () {
-                              final tripId =
-                                  currentTrip.tripId?.trim() ?? '';
+                              final tripId = currentTrip.tripId?.trim() ?? '';
                               final bookingId =
                                   currentTrip.bookingId?.trim() ?? '';
                               final effectiveTripId = tripId.isNotEmpty
@@ -465,14 +464,10 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                           switchInCurve: Curves.easeOutCubic,
                           switchOutCurve: Curves.easeInCubic,
                           transitionBuilder: (child, animation) {
-                            final offset =
-                                Tween<Offset>(
-                                  begin: Offset(
-                                    showCompleted ? 0.05 : -0.05,
-                                    0,
-                                  ),
-                                  end: Offset.zero,
-                                ).animate(animation);
+                            final offset = Tween<Offset>(
+                              begin: Offset(showCompleted ? 0.05 : -0.05, 0),
+                              end: Offset.zero,
+                            ).animate(animation);
                             return FadeTransition(
                               opacity: animation,
                               child: SlideTransition(
@@ -484,7 +479,9 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                           child: visibleTrips.isEmpty
                               ? Column(
                                   key: ValueKey(
-                                    showCompleted ? 'empty-done' : 'empty-upcoming',
+                                    showCompleted
+                                        ? 'empty-done'
+                                        : 'empty-upcoming',
                                   ),
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -498,7 +495,9 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                                 )
                               : Column(
                                   key: ValueKey(
-                                    showCompleted ? 'list-done' : 'list-upcoming',
+                                    showCompleted
+                                        ? 'list-done'
+                                        : 'list-upcoming',
                                   ),
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -509,9 +508,8 @@ class _DriverRiderScreenState extends ConsumerState<DriverRiderScreen> {
                                           trip: entry.value,
                                           onTap: () {
                                             final trip = entry.value;
-                                            final bookingId = trip
-                                                    .bookingId
-                                                    .isNotEmpty
+                                            final bookingId =
+                                                trip.bookingId.isNotEmpty
                                                 ? trip.bookingId
                                                 : trip.bookingNumber;
                                             if (bookingId.isEmpty) {

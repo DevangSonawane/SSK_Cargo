@@ -1333,4 +1333,476 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get accept => 'स्वीकार करें';
+
+  @override
+  String get noTripsYet => 'अभी कोई ट्रिप नहीं';
+
+  @override
+  String get fullTripHistoryAppearsHere =>
+      'आपकी पूरी ट्रिप हिस्ट्री यहां दिखेगी।';
+
+  @override
+  String get noActiveDelivery => 'कोई सक्रिय डिलीवरी नहीं';
+
+  @override
+  String get acceptedDeliveriesAppearLive =>
+      'स्वीकार की गई डिलीवरी यहां लाइव दिखेंगी।';
+
+  @override
+  String get loadingTrips => 'ट्रिप लोड हो रही हैं...';
+
+  @override
+  String get activeDelivery => 'सक्रिय डिलीवरी';
+
+  @override
+  String get liveTripAppearsFirst => 'आपकी लाइव ट्रिप सबसे पहले यहां दिखेगी';
+
+  @override
+  String get totalTrips => 'कुल ट्रिप';
+
+  @override
+  String get totalEarned => 'कुल कमाई';
+
+  @override
+  String get completed => 'पूरी हुई';
+
+  @override
+  String get addDriver => 'ड्राइवर जोड़ें';
+
+  @override
+  String get removeDriverQuestion => 'ड्राइवर हटाएं?';
+
+  @override
+  String deleteDriverFromFleet(Object name) {
+    return 'यह $name को ब्रोकर फ्लीट से हटा देगा।';
+  }
+
+  @override
+  String get delete => 'डिलीट';
+
+  @override
+  String get signInAgainToDeleteDriver =>
+      'ड्राइवर हटाने के लिए फिर साइन इन करें।';
+
+  @override
+  String get driverRemoved => 'ड्राइवर फ्लीट से हटा दिया गया।';
+
+  @override
+  String get reportIncident => 'इंसिडेंट रिपोर्ट करें';
+
+  @override
+  String get reason => 'कारण';
+
+  @override
+  String get notes => 'नोट्स';
+
+  @override
+  String get incidentReported => 'इंसिडेंट सफलतापूर्वक रिपोर्ट हुआ।';
+
+  @override
+  String get collectSettlement => 'सेटलमेंट कलेक्ट करें';
+
+  @override
+  String get chooseSettlementMode => 'इस ट्रिप के लिए सेटलमेंट मोड चुनें।';
+
+  @override
+  String get settlementUpdated => 'सेटलमेंट अपडेट हो गया।';
+
+  @override
+  String get updateMechanic => 'मैकेनिक अपडेट करें';
+
+  @override
+  String get mechanicName => 'मैकेनिक नाम';
+
+  @override
+  String get mechanicPhone => 'मैकेनिक फोन';
+
+  @override
+  String get save => 'सेव';
+
+  @override
+  String get mechanicDetailsUpdated => 'मैकेनिक डिटेल्स अपडेट हो गईं।';
+
+  @override
+  String get driverLocationActivityOverview =>
+      'ड्राइवर लोकेशन और एक्टिविटी ओवरव्यू';
+
+  @override
+  String tripId(Object id) {
+    return 'ट्रिप $id';
+  }
+
+  @override
+  String get live => 'लाइव';
+
+  @override
+  String get paymentPending => 'पेमेंट पेंडिंग';
+
+  @override
+  String incidentsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count इंसिडेंट',
+      one: '1 इंसिडेंट',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tripProgress => 'ट्रिप प्रोग्रेस';
+
+  @override
+  String get reportIssue => 'समस्या रिपोर्ट करें';
+
+  @override
+  String get settle => 'सेटल करें';
+
+  @override
+  String get markComplete => 'पूरा मार्क करें';
+
+  @override
+  String get reassignDriver => 'ड्राइवर रीअसाइन करें';
+
+  @override
+  String currentlyAssigned(Object name) {
+    return 'अभी असाइन: $name';
+  }
+
+  @override
+  String get reassignTo => 'किसे रीअसाइन करें';
+
+  @override
+  String get reasonOptional => 'कारण (वैकल्पिक)';
+
+  @override
+  String get reassignReasonHint =>
+      'ड्राइवर उपलब्ध नहीं, ब्रेकडाउन, बेहतर रूट फिट...';
+
+  @override
+  String get reassign => 'रीअसाइन';
+
+  @override
+  String get mechanic => 'मैकेनिक';
+
+  @override
+  String get resolve => 'रिजॉल्व';
+
+  @override
+  String get requestUpdated => 'रिक्वेस्ट अपडेट हो गई।';
+
+  @override
+  String get driverRequests => 'ड्राइवर रिक्वेस्ट';
+
+  @override
+  String get noDriverRequestsYet => 'अभी कोई ड्राइवर रिक्वेस्ट नहीं।';
+
+  @override
+  String get driverReassigned => 'ड्राइवर रीअसाइन हो गया।';
+
+  @override
+  String get tripMarkedCompleted => 'ट्रिप पूरी मार्क हो गई।';
+
+  @override
+  String stopMarkedCompleteWithLabel(Object label) {
+    return '$label पूरा मार्क हो गया।';
+  }
+
+  @override
+  String get incidentResolved => 'इंसिडेंट रिजॉल्व हो गया।';
+
+  @override
+  String get driverLocation => 'ड्राइवर लोकेशन';
+
+  @override
+  String get tripDestination => 'ट्रिप डेस्टिनेशन';
+
+  @override
+  String get assigned => 'असाइन्ड';
+
+  @override
+  String get inTransit => 'रास्ते में';
+
+  @override
+  String get tripCompleted => 'ट्रिप पूरी हुई';
+
+  @override
+  String get settled => 'सेटल्ड';
+
+  @override
+  String get brokerUpdatedPayout => 'ब्रोकर ने पेआउट अपडेट किया';
+
+  @override
+  String get loading => 'लोड हो रहा है...';
+
+  @override
+  String get signInToLoadTripProgress =>
+      'ट्रिप प्रोग्रेस लोड करने के लिए साइन इन करें';
+
+  @override
+  String get driverLocationOnly => 'केवल ड्राइवर लोकेशन';
+
+  @override
+  String get liveDetailsUnavailable => 'लाइव डिटेल्स उपलब्ध नहीं';
+
+  @override
+  String get tripDestinationNotAvailable => 'ट्रिप डेस्टिनेशन उपलब्ध नहीं';
+
+  @override
+  String get vehicleTracking => 'वाहन ट्रैकिंग';
+
+  @override
+  String get tripStillSyncing =>
+      'ट्रिप अभी सिंक हो रही है। कृपया फिर कोशिश करें।';
+
+  @override
+  String get declineThisTrip => 'इस ट्रिप को अस्वीकार करें?';
+
+  @override
+  String get declineTripDescription =>
+      'आप इस ट्रिप से मुक्त हो जाएंगे और आपका ब्रोकर दूसरा ड्राइवर असाइन कर सकेगा। इसे वापस नहीं किया जा सकता।';
+
+  @override
+  String get keepTrip => 'ट्रिप रखें';
+
+  @override
+  String get declineTrip => 'ट्रिप अस्वीकार करें';
+
+  @override
+  String get tripDeclined => 'ट्रिप अस्वीकार हो गई।';
+
+  @override
+  String get confirming => 'कन्फर्म हो रहा है...';
+
+  @override
+  String get slideToDeliver => 'डिलीवर करने के लिए स्लाइड करें';
+
+  @override
+  String get customer => 'ग्राहक';
+
+  @override
+  String get phone => 'फोन';
+
+  @override
+  String get address => 'पता';
+
+  @override
+  String get allowDisplayOverApps => 'अन्य ऐप्स के ऊपर दिखाने की अनुमति दें';
+
+  @override
+  String get allowDisplayOverAppsText =>
+      'यह सिस्टम सेटिंग्स में SSK का पेज खोलेगा।\n\n1. \"Allow display over other apps\" चालू करें।\n2. वापस दबाएं - मैप्स अपने-आप floating SSK button के साथ खुलेंगे।\n\n(Xiaomi/Redmi/Poco पर यह विकल्प \"Display pop-up windows\" कहलाता हो सकता है।)';
+
+  @override
+  String get openSettings => 'सेटिंग्स खोलें';
+
+  @override
+  String get couldNotOpenSettings =>
+      'सेटिंग्स नहीं खुल सकीं। मैन्युअली खोलें: Settings > Apps > SSK > Display over other apps.';
+
+  @override
+  String get couldNotShowFloatingButton =>
+      'इस डिवाइस पर floating button नहीं दिख सका। फिर भी मैप्स खोल रहे हैं।';
+
+  @override
+  String get tapBubbleToReturn =>
+      'वापस आने के लिए मैप्स पर SSK bubble टैप करें।';
+
+  @override
+  String get navigateToDrop => 'ड्रॉप तक नेविगेट करें';
+
+  @override
+  String get callPolice => 'पुलिस को कॉल करें';
+
+  @override
+  String get emergency112 => 'इमरजेंसी: 112';
+
+  @override
+  String get callingPoliceSoon => 'पुलिस सपोर्ट को जल्द कॉल करेंगे।';
+
+  @override
+  String get callAmbulance => 'एम्बुलेंस को कॉल करें';
+
+  @override
+  String get emergency108 => 'इमरजेंसी: 108';
+
+  @override
+  String get callingAmbulanceSoon => 'एम्बुलेंस सपोर्ट को जल्द कॉल करेंगे।';
+
+  @override
+  String get callBroker => 'ब्रोकर को कॉल करें';
+
+  @override
+  String get callingBrokerSoon => 'ब्रोकर को जल्द कॉल करेंगे।';
+
+  @override
+  String get reportIncidentToSupport => 'सपोर्ट को इंसिडेंट रिपोर्ट करें';
+
+  @override
+  String get notifySupportImmediately => 'हमारी सपोर्ट टीम को तुरंत सूचित करें';
+
+  @override
+  String get viewMechanicStatus => 'मैकेनिक स्थिति देखें';
+
+  @override
+  String get seeRepairProgress => 'ब्रेकडाउन और रिपेयर प्रोग्रेस देखें';
+
+  @override
+  String get signInAgainToViewMechanicStatus =>
+      'मैकेनिक स्थिति देखने के लिए फिर साइन इन करें।';
+
+  @override
+  String get chatUnavailableForTrip =>
+      'इस ट्रिप के लिए चैट अभी उपलब्ध नहीं है।';
+
+  @override
+  String get customerPhoneUnavailable => 'ग्राहक का फोन नंबर उपलब्ध नहीं है।';
+
+  @override
+  String get close => 'बंद करें';
+
+  @override
+  String get incidentDialogSubtitle =>
+      'क्या हो रहा है? आपके ब्रोकर और क्लाइंट को तुरंत सूचित किया जाएगा।';
+
+  @override
+  String get addDetailsOptional => 'कोई भी डिटेल जोड़ें (वैकल्पिक)';
+
+  @override
+  String get submitReport => 'रिपोर्ट सबमिट करें';
+
+  @override
+  String get accident => 'एक्सीडेंट';
+
+  @override
+  String get breakdown => 'ब्रेकडाउन';
+
+  @override
+  String get trafficBlock => 'ट्रैफिक ब्लॉक';
+
+  @override
+  String get medical => 'मेडिकल';
+
+  @override
+  String incidentReportSubmitted(Object type) {
+    return '$type रिपोर्ट सपोर्ट को भेज दी गई।';
+  }
+
+  @override
+  String get signInAgainToReportIssue =>
+      'समस्या रिपोर्ट करने के लिए फिर लॉग इन करें।';
+
+  @override
+  String get noIncidentsReported =>
+      'इस ट्रिप के लिए अभी कोई इंसिडेंट रिपोर्ट नहीं हुआ।';
+
+  @override
+  String get refresh => 'रिफ्रेश';
+
+  @override
+  String get weight => 'वजन';
+
+  @override
+  String get pickupPending => 'पिकअप पेंडिंग';
+
+  @override
+  String get dropPending => 'ड्रॉप पेंडिंग';
+
+  @override
+  String get trackingActionsSubtitle =>
+      'चैट, इनवॉइस, रेटिंग, पेमेंट और डिस्प्यूट के लिए लाइव APIs उपयोग करें।';
+
+  @override
+  String get openChat => 'चैट खोलें';
+
+  @override
+  String get openChatSubtitle => 'बुकिंग थ्रेड पर मैसेज करें';
+
+  @override
+  String get negotiationOffers => 'नेगोशिएशन और ऑफर';
+
+  @override
+  String get negotiationOffersSubtitle =>
+      'ड्राइवर रिक्वेस्ट और ब्रोकर ऑफर देखें';
+
+  @override
+  String get downloadInvoice => 'इनवॉइस डाउनलोड करें';
+
+  @override
+  String get downloadInvoiceSubtitle => 'PDF इनवॉइस स्ट्रीम लाएं';
+
+  @override
+  String get emailInvoiceSubtitle => 'PDF इनवॉइस ईमेल से भेजें';
+
+  @override
+  String get payBooking => 'बुकिंग पे करें';
+
+  @override
+  String get openSecureCheckout => 'सुरक्षित चेकआउट खोलें';
+
+  @override
+  String get submitDeliveryFeedback => 'डिलीवरी फीडबैक सबमिट करें';
+
+  @override
+  String get raiseDisputeSubtitle => 'बैकएंड डिस्प्यूट रिकॉर्ड खोलें';
+
+  @override
+  String get messageCouldNotBeSent => 'मैसेज भेजा नहीं जा सका।';
+
+  @override
+  String get driverRequestAccepted => 'ड्राइवर रिक्वेस्ट स्वीकार हुई।';
+
+  @override
+  String get driverRequestDeclined => 'ड्राइवर रिक्वेस्ट अस्वीकार हुई।';
+
+  @override
+  String get offerAccepted => 'ऑफर स्वीकार हुआ।';
+
+  @override
+  String get acceptedWaitingForBrokerConfirm =>
+      'स्वीकार किया - ब्रोकर के कन्फर्म करने का इंतजार है।';
+
+  @override
+  String get offerDeclined => 'ऑफर अस्वीकार हुआ।';
+
+  @override
+  String get changeFare => 'किराया बदलें';
+
+  @override
+  String nearbyDriverOffers(Object count) {
+    return 'नजदीकी ड्राइवर ऑफर ($count)';
+  }
+
+  @override
+  String get driverConfirmedBooking => 'इस ड्राइवर ने आपकी बुकिंग कन्फर्म की।';
+
+  @override
+  String get nearbyDriverOffersSubtitle =>
+      'हर नजदीकी ड्राइवर का अपना कार्ड होता है - हर एक को अलग से स्वीकार, किराया बदलें या अस्वीकार करें।';
+
+  @override
+  String get noDriverOffersYet => 'अभी कोई ड्राइवर ऑफर नहीं';
+
+  @override
+  String get driverOffersAppearHere =>
+      'नजदीकी ड्राइवर जवाब देगा तो ऑफर यहां दिखेंगे।';
+
+  @override
+  String get driverOffer => 'ड्राइवर ऑफर';
+
+  @override
+  String get brokerOffers => 'ब्रोकर ऑफर';
+
+  @override
+  String get brokerOffersSubtitle =>
+      'बुकिंग ब्रॉडकास्ट होने के बाद भेजे गए किराया बदलाव।';
+
+  @override
+  String get noBrokerOffersYet => 'अभी कोई ब्रोकर ऑफर नहीं';
+
+  @override
+  String get brokerOffersAppearHere => 'ब्रोकर जवाब देगा तो ऑफर यहां दिखेंगे।';
+
+  @override
+  String get confirm => 'कन्फर्म';
 }

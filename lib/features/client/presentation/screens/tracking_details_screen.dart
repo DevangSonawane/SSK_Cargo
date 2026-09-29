@@ -3339,7 +3339,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                               foregroundColor: Colors.red,
                               side: const BorderSide(color: Color(0xFFF1B0B0)),
                             ),
-                            child: const Text('Reject'),
+                            child: Text(AppLocalizations.of(context)!.reject),
                           ),
                         ),
                       ),
@@ -3767,15 +3767,16 @@ class _QuickStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
-          child: _QuickStatCard(label: 'Weight', value: shipment.weight),
+          child: _QuickStatCard(label: l10n.weight, value: shipment.weight),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _QuickStatCard(
-            label: 'Amount',
+            label: l10n.amount,
             value: _formatTrackingMoney(shipment.amount),
             highlight: true,
           ),
@@ -3842,15 +3843,16 @@ class _PremiumRouteLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pickup = _cleanTrackingLocation(fromLocation, 'Pickup pending');
-    final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
+    final l10n = AppLocalizations.of(context)!;
+    final pickup = _cleanTrackingLocation(fromLocation, l10n.pickupPending);
+    final drop = _cleanTrackingLocation(toLocation, l10n.dropPending);
 
     return Column(
       children: [
         _RouteStop(
           icon: AppIcons.radio_button_checked_rounded,
           iconColor: const Color(0xFF2FA56E),
-          label: 'Pickup',
+          label: l10n.pickup,
           value: pickup,
         ),
         Padding(
@@ -3870,7 +3872,7 @@ class _PremiumRouteLine extends StatelessWidget {
         _RouteStop(
           icon: AppIcons.location_on_rounded,
           iconColor: const Color(0xFFE23A4B),
-          label: 'Drop',
+          label: l10n.drop,
           value: drop,
         ),
       ],
@@ -4712,7 +4714,7 @@ class _BookingActionsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Use the live APIs for chat, invoice, rating, payment, and disputes.',
+                AppLocalizations.of(context)!.trackingActionsSubtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -4720,50 +4722,52 @@ class _BookingActionsSheet extends StatelessWidget {
               const SizedBox(height: 16),
               _ActionSheetTile(
                 icon: AppIcons.chat_bubble_outline_rounded,
-                title: 'Open chat',
-                subtitle: 'Message the booking thread over Socket.IO',
+                title: AppLocalizations.of(context)!.openChat,
+                subtitle: AppLocalizations.of(context)!.openChatSubtitle,
                 onTap: () => onChat(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.handshake_outlined,
-                title: 'Negotiation & offers',
-                subtitle: 'Review driver requests and broker offers',
+                title: AppLocalizations.of(context)!.negotiationOffers,
+                subtitle: AppLocalizations.of(
+                  context,
+                )!.negotiationOffersSubtitle,
                 onTap: () => onNegotiation(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.receipt_long_rounded,
-                title: 'Download invoice',
-                subtitle: 'Fetch the PDF invoice stream',
+                title: AppLocalizations.of(context)!.downloadInvoice,
+                subtitle: AppLocalizations.of(context)!.downloadInvoiceSubtitle,
                 onTap: () => onDownloadInvoice(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.mail_outline_rounded,
-                title: 'Email invoice',
-                subtitle: 'Send the invoice PDF by email',
+                title: AppLocalizations.of(context)!.emailInvoice,
+                subtitle: AppLocalizations.of(context)!.emailInvoiceSubtitle,
                 onTap: () => onEmailInvoice(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.payments_outlined,
-                title: 'Pay booking',
-                subtitle: 'Open secure checkout',
+                title: AppLocalizations.of(context)!.payBooking,
+                subtitle: AppLocalizations.of(context)!.openSecureCheckout,
                 onTap: () => onPay(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.star_outline_rounded,
-                title: 'Rate booking',
-                subtitle: 'Submit delivery feedback',
+                title: AppLocalizations.of(context)!.rateBooking,
+                subtitle: AppLocalizations.of(context)!.submitDeliveryFeedback,
                 onTap: () => onRate(),
               ),
               const SizedBox(height: 10),
               _ActionSheetTile(
                 icon: AppIcons.report_gmailerrorred_outlined,
-                title: 'Raise dispute',
-                subtitle: 'Open a backend dispute record',
+                title: AppLocalizations.of(context)!.raiseDispute,
+                subtitle: AppLocalizations.of(context)!.raiseDisputeSubtitle,
                 onTap: () => onDispute(),
                 destructive: true,
               ),
@@ -5146,7 +5150,11 @@ class _LegacyClientBookingChatSheetState
           _messageController.clear();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Message could not be sent.')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.messageCouldNotBeSent,
+              ),
+            ),
           );
         }
       },
@@ -5615,13 +5623,17 @@ class _BookingNegotiationSheetState
       if (booking != null ||
           _chatReadString(updatedRequest, const ['status']) == 'accepted') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Driver request accepted.')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.driverRequestAccepted),
+          ),
         );
         if (mounted) Navigator.of(context).maybePop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Accepted - waiting for the driver to confirm.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.acceptedWaitingForDriverConfirm,
+            ),
           ),
         );
         await _loadNegotiation();
@@ -5644,9 +5656,11 @@ class _BookingNegotiationSheetState
           .read(apiClientProvider)
           .rejectDriverRequest(accessToken: widget.accessToken, id: request.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Driver request declined.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.driverRequestDeclined),
+        ),
+      );
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -5783,7 +5797,7 @@ class _BookingNegotiationSheetState
                           child: TextButton(
                             onPressed: () =>
                                 Navigator.of(dialogContext).maybePop(),
-                            child: const Text('Cancel'),
+                            child: Text(AppLocalizations.of(context)!.cancel),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -5800,7 +5814,7 @@ class _BookingNegotiationSheetState
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text('Send'),
+                            child: Text(AppLocalizations.of(context)!.send),
                           ),
                         ),
                       ],
@@ -5823,9 +5837,9 @@ class _BookingNegotiationSheetState
             amount: amount,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.fareChangeSent)),
+      );
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -5854,14 +5868,16 @@ class _BookingNegotiationSheetState
       if (!mounted) return;
       if (booking != null ||
           _chatReadString(updatedRequest, const ['status']) == 'accepted') {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Offer accepted.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.offerAccepted)),
+        );
         if (mounted) Navigator.of(context).maybePop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Accepted - waiting for the broker to confirm.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.acceptedWaitingForBrokerConfirm,
+            ),
           ),
         );
         await _loadNegotiation();
@@ -5887,9 +5903,9 @@ class _BookingNegotiationSheetState
             id: offer.id,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Offer declined.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.offerDeclined)),
+      );
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -5958,7 +5974,7 @@ class _BookingNegotiationSheetState
                       children: [
                         Expanded(
                           child: Text(
-                            'Change fare',
+                            AppLocalizations.of(context)!.changeFare,
                             style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
@@ -5978,7 +5994,9 @@ class _BookingNegotiationSheetState
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Amount'),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.amount,
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -5987,7 +6005,7 @@ class _BookingNegotiationSheetState
                           child: TextButton(
                             onPressed: () =>
                                 Navigator.of(dialogContext).maybePop(false),
-                            child: const Text('Cancel'),
+                            child: Text(AppLocalizations.of(context)!.cancel),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -6004,7 +6022,7 @@ class _BookingNegotiationSheetState
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text('Send'),
+                            child: Text(AppLocalizations.of(context)!.send),
                           ),
                         ),
                       ],
@@ -6025,9 +6043,11 @@ class _BookingNegotiationSheetState
           0;
       if (amount <= 0) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.enterValidAmount),
+          ),
+        );
         return;
       }
 
@@ -6040,9 +6060,9 @@ class _BookingNegotiationSheetState
             amount: amount,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.fareChangeSent)),
+      );
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -6156,17 +6176,28 @@ class _BookingNegotiationSheetState
                                     _NegotiationSectionTitle(
                                       title: acceptedRequest != null
                                           ? 'Confirmed driver'
-                                          : 'Nearby driver offers (${visibleRequests.length})',
+                                          : AppLocalizations.of(
+                                              context,
+                                            )!.nearbyDriverOffers(
+                                              visibleRequests.length,
+                                            ),
                                       subtitle: acceptedRequest != null
-                                          ? 'This driver confirmed your booking.'
-                                          : 'Every nearby driver gets their own card — accept, change fare, or decline each one separately.',
+                                          ? AppLocalizations.of(
+                                              context,
+                                            )!.driverConfirmedBooking
+                                          : AppLocalizations.of(
+                                              context,
+                                            )!.nearbyDriverOffersSubtitle,
                                     ),
                                     const SizedBox(height: 10),
                                     if (visibleRequests.isEmpty)
                                       _NegotiationEmptyState(
-                                        title: 'No driver offers yet',
-                                        subtitle:
-                                            'Once a nearby driver responds, the offers will appear here.',
+                                        title: AppLocalizations.of(
+                                          context,
+                                        )!.noDriverOffersYet,
+                                        subtitle: AppLocalizations.of(
+                                          context,
+                                        )!.driverOffersAppearHere,
                                       )
                                     else
                                       ...visibleRequests.map(
@@ -6177,7 +6208,9 @@ class _BookingNegotiationSheetState
                                           child: _NegotiationCard(
                                             title: request.brokerName.isNotEmpty
                                                 ? request.brokerName
-                                                : 'Driver offer',
+                                                : AppLocalizations.of(
+                                                    context,
+                                                  )!.driverOffer,
                                             subtitle: _driverOfferSubtitle(
                                               request,
                                             ),
@@ -6204,16 +6237,20 @@ class _BookingNegotiationSheetState
                             ),
                             const SizedBox(height: 18),
                             _NegotiationSectionTitle(
-                              title: 'Broker offers',
-                              subtitle:
-                                  'Fare changes sent after the booking was broadcast.',
+                              title: AppLocalizations.of(context)!.brokerOffers,
+                              subtitle: AppLocalizations.of(
+                                context,
+                              )!.brokerOffersSubtitle,
                             ),
                             const SizedBox(height: 10),
                             if (_offers.isEmpty)
                               _NegotiationEmptyState(
-                                title: 'No broker offers yet',
-                                subtitle:
-                                    'Once a broker responds, the offers will appear here.',
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.noBrokerOffersYet,
+                                subtitle: AppLocalizations.of(
+                                  context,
+                                )!.brokerOffersAppearHere,
                               )
                             else
                               ..._offers.map(
@@ -6318,7 +6355,7 @@ extension on _BookingNegotiationSheetState {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptDriverRequest(request),
-          child: const Text('Confirm'),
+          child: Text(AppLocalizations.of(context)!.confirm),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _rejectDriverRequest(request),
@@ -6326,7 +6363,7 @@ extension on _BookingNegotiationSheetState {
             foregroundColor: const Color(0xFFE23A4B),
             side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
-          child: const Text('Decline'),
+          child: Text(AppLocalizations.of(context)!.decline),
         ),
       ];
     }
@@ -6335,7 +6372,7 @@ extension on _BookingNegotiationSheetState {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptDriverRequest(request),
-          child: const Text('Accept'),
+          child: Text(AppLocalizations.of(context)!.accept),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _rejectDriverRequest(request),
@@ -6343,12 +6380,12 @@ extension on _BookingNegotiationSheetState {
             foregroundColor: const Color(0xFFE23A4B),
             side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
-          child: const Text('Reject'),
+          child: Text(AppLocalizations.of(context)!.reject),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _counterDriverRequest(request),
-          child: const Text(
-            'Change Fare',
+          child: Text(
+            AppLocalizations.of(context)!.changeFare,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -6368,7 +6405,7 @@ extension on _BookingNegotiationSheetState {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptOffer(offer),
-          child: const Text('Confirm'),
+          child: Text(AppLocalizations.of(context)!.confirm),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _rejectOffer(offer),
@@ -6376,7 +6413,7 @@ extension on _BookingNegotiationSheetState {
             foregroundColor: const Color(0xFFE23A4B),
             side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
-          child: const Text('Decline'),
+          child: Text(AppLocalizations.of(context)!.decline),
         ),
       ];
     }
@@ -6385,7 +6422,7 @@ extension on _BookingNegotiationSheetState {
       return [
         FilledButton(
           onPressed: _busy ? null : () => _acceptOffer(offer),
-          child: const Text('Accept'),
+          child: Text(AppLocalizations.of(context)!.accept),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _rejectOffer(offer),
@@ -6393,12 +6430,12 @@ extension on _BookingNegotiationSheetState {
             foregroundColor: const Color(0xFFE23A4B),
             side: const BorderSide(color: Color(0xFFF3B4B4)),
           ),
-          child: const Text('Reject'),
+          child: Text(AppLocalizations.of(context)!.reject),
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _counterOffer(offer),
-          child: const Text(
-            'Change Fare',
+          child: Text(
+            AppLocalizations.of(context)!.changeFare,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

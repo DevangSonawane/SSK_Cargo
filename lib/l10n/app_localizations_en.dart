@@ -1333,4 +1333,475 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accept => 'Accept';
+
+  @override
+  String get noTripsYet => 'No trips yet';
+
+  @override
+  String get fullTripHistoryAppearsHere =>
+      'Your full trip history will appear here.';
+
+  @override
+  String get noActiveDelivery => 'No active delivery';
+
+  @override
+  String get acceptedDeliveriesAppearLive =>
+      'Accepted deliveries will appear here live.';
+
+  @override
+  String get loadingTrips => 'Loading trips...';
+
+  @override
+  String get activeDelivery => 'Active delivery';
+
+  @override
+  String get liveTripAppearsFirst => 'Your live trip appears here first';
+
+  @override
+  String get totalTrips => 'Total trips';
+
+  @override
+  String get totalEarned => 'Total earned';
+
+  @override
+  String get completed => 'Completed';
+
+  @override
+  String get addDriver => 'Add driver';
+
+  @override
+  String get removeDriverQuestion => 'Remove driver?';
+
+  @override
+  String deleteDriverFromFleet(Object name) {
+    return 'This will delete $name from the broker fleet.';
+  }
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get signInAgainToDeleteDriver =>
+      'Please sign in again to delete a driver.';
+
+  @override
+  String get driverRemoved => 'Driver removed from fleet.';
+
+  @override
+  String get reportIncident => 'Report incident';
+
+  @override
+  String get reason => 'Reason';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get incidentReported => 'Incident reported successfully.';
+
+  @override
+  String get collectSettlement => 'Collect settlement';
+
+  @override
+  String get chooseSettlementMode =>
+      'Choose the settlement mode for this trip.';
+
+  @override
+  String get settlementUpdated => 'Settlement updated.';
+
+  @override
+  String get updateMechanic => 'Update mechanic';
+
+  @override
+  String get mechanicName => 'Mechanic name';
+
+  @override
+  String get mechanicPhone => 'Mechanic phone';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get mechanicDetailsUpdated => 'Mechanic details updated.';
+
+  @override
+  String get driverLocationActivityOverview =>
+      'Driver location and activity overview';
+
+  @override
+  String tripId(Object id) {
+    return 'Trip $id';
+  }
+
+  @override
+  String get live => 'Live';
+
+  @override
+  String get paymentPending => 'Payment pending';
+
+  @override
+  String incidentsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count incidents',
+      one: '1 incident',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tripProgress => 'Trip progress';
+
+  @override
+  String get reportIssue => 'Report issue';
+
+  @override
+  String get settle => 'Settle';
+
+  @override
+  String get markComplete => 'Mark complete';
+
+  @override
+  String get reassignDriver => 'Reassign driver';
+
+  @override
+  String currentlyAssigned(Object name) {
+    return 'Currently assigned: $name';
+  }
+
+  @override
+  String get reassignTo => 'Reassign to';
+
+  @override
+  String get reasonOptional => 'Reason (optional)';
+
+  @override
+  String get reassignReasonHint =>
+      'Driver unavailable, breakdown, better route fit...';
+
+  @override
+  String get reassign => 'Reassign';
+
+  @override
+  String get mechanic => 'Mechanic';
+
+  @override
+  String get resolve => 'Resolve';
+
+  @override
+  String get requestUpdated => 'Request updated.';
+
+  @override
+  String get driverRequests => 'Driver requests';
+
+  @override
+  String get noDriverRequestsYet => 'No driver requests yet.';
+
+  @override
+  String get driverReassigned => 'Driver reassigned.';
+
+  @override
+  String get tripMarkedCompleted => 'Trip marked as completed.';
+
+  @override
+  String stopMarkedCompleteWithLabel(Object label) {
+    return '$label marked complete.';
+  }
+
+  @override
+  String get incidentResolved => 'Incident resolved.';
+
+  @override
+  String get driverLocation => 'Driver location';
+
+  @override
+  String get tripDestination => 'Trip destination';
+
+  @override
+  String get assigned => 'Assigned';
+
+  @override
+  String get inTransit => 'In transit';
+
+  @override
+  String get tripCompleted => 'Trip completed';
+
+  @override
+  String get settled => 'Settled';
+
+  @override
+  String get brokerUpdatedPayout => 'Broker updated the payout';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get signInToLoadTripProgress => 'Sign in to load trip progress';
+
+  @override
+  String get driverLocationOnly => 'Driver location only';
+
+  @override
+  String get liveDetailsUnavailable => 'Live details unavailable';
+
+  @override
+  String get tripDestinationNotAvailable => 'Trip destination not available';
+
+  @override
+  String get vehicleTracking => 'Vehicle tracking';
+
+  @override
+  String get tripStillSyncing => 'Trip is still syncing. Please try again.';
+
+  @override
+  String get declineThisTrip => 'Decline this trip?';
+
+  @override
+  String get declineTripDescription =>
+      'You will be freed from this trip and your broker can assign another driver. This cannot be undone.';
+
+  @override
+  String get keepTrip => 'Keep trip';
+
+  @override
+  String get declineTrip => 'Decline trip';
+
+  @override
+  String get tripDeclined => 'Trip declined.';
+
+  @override
+  String get confirming => 'Confirming...';
+
+  @override
+  String get slideToDeliver => 'Slide to deliver';
+
+  @override
+  String get customer => 'Customer';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get allowDisplayOverApps => 'Allow display over other apps';
+
+  @override
+  String get allowDisplayOverAppsText =>
+      'This opens SSK\'s page in system Settings.\n\n1. Turn ON \"Allow display over other apps\".\n2. Press back - Maps opens automatically with the floating SSK button.\n\n(On Xiaomi/Redmi/Poco the toggle may be called \"Display pop-up windows\".)';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get couldNotOpenSettings =>
+      'Could not open Settings. Open it manually: Settings > Apps > SSK > Display over other apps.';
+
+  @override
+  String get couldNotShowFloatingButton =>
+      'Could not show the floating button on this device. Opening Maps anyway.';
+
+  @override
+  String get tapBubbleToReturn => 'Tap the SSK bubble over Maps to return.';
+
+  @override
+  String get navigateToDrop => 'Navigate to drop';
+
+  @override
+  String get callPolice => 'Call Police';
+
+  @override
+  String get emergency112 => 'Emergency: 112';
+
+  @override
+  String get callingPoliceSoon => 'Calling police support soon.';
+
+  @override
+  String get callAmbulance => 'Call Ambulance';
+
+  @override
+  String get emergency108 => 'Emergency: 108';
+
+  @override
+  String get callingAmbulanceSoon => 'Calling ambulance support soon.';
+
+  @override
+  String get callBroker => 'Call Broker';
+
+  @override
+  String get callingBrokerSoon => 'Calling broker soon.';
+
+  @override
+  String get reportIncidentToSupport => 'Report Incident to Support';
+
+  @override
+  String get notifySupportImmediately => 'Notify our support team immediately';
+
+  @override
+  String get viewMechanicStatus => 'View Mechanic Status';
+
+  @override
+  String get seeRepairProgress => 'See breakdown and repair progress';
+
+  @override
+  String get signInAgainToViewMechanicStatus =>
+      'Please sign in again to view mechanic status.';
+
+  @override
+  String get chatUnavailableForTrip =>
+      'Chat is not available for this trip yet.';
+
+  @override
+  String get customerPhoneUnavailable =>
+      'Customer phone number is not available.';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get incidentDialogSubtitle =>
+      'What\'s going on? Your broker and the client will be notified right away.';
+
+  @override
+  String get addDetailsOptional => 'Add any details (optional)';
+
+  @override
+  String get submitReport => 'Submit Report';
+
+  @override
+  String get accident => 'Accident';
+
+  @override
+  String get breakdown => 'Breakdown';
+
+  @override
+  String get trafficBlock => 'Traffic Block';
+
+  @override
+  String get medical => 'Medical';
+
+  @override
+  String incidentReportSubmitted(Object type) {
+    return '$type report submitted to support.';
+  }
+
+  @override
+  String get signInAgainToReportIssue =>
+      'Please log in again to report the issue.';
+
+  @override
+  String get noIncidentsReported => 'No incidents reported for this trip yet.';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String get pickupPending => 'Pickup pending';
+
+  @override
+  String get dropPending => 'Drop pending';
+
+  @override
+  String get trackingActionsSubtitle =>
+      'Use the live APIs for chat, invoice, rating, payment, and disputes.';
+
+  @override
+  String get openChat => 'Open chat';
+
+  @override
+  String get openChatSubtitle => 'Message the booking thread over Socket.IO';
+
+  @override
+  String get negotiationOffers => 'Negotiation & offers';
+
+  @override
+  String get negotiationOffersSubtitle =>
+      'Review driver requests and broker offers';
+
+  @override
+  String get downloadInvoice => 'Download invoice';
+
+  @override
+  String get downloadInvoiceSubtitle => 'Fetch the PDF invoice stream';
+
+  @override
+  String get emailInvoiceSubtitle => 'Send the invoice PDF by email';
+
+  @override
+  String get payBooking => 'Pay booking';
+
+  @override
+  String get openSecureCheckout => 'Open secure checkout';
+
+  @override
+  String get submitDeliveryFeedback => 'Submit delivery feedback';
+
+  @override
+  String get raiseDisputeSubtitle => 'Open a backend dispute record';
+
+  @override
+  String get messageCouldNotBeSent => 'Message could not be sent.';
+
+  @override
+  String get driverRequestAccepted => 'Driver request accepted.';
+
+  @override
+  String get driverRequestDeclined => 'Driver request declined.';
+
+  @override
+  String get offerAccepted => 'Offer accepted.';
+
+  @override
+  String get acceptedWaitingForBrokerConfirm =>
+      'Accepted - waiting for the broker to confirm.';
+
+  @override
+  String get offerDeclined => 'Offer declined.';
+
+  @override
+  String get changeFare => 'Change Fare';
+
+  @override
+  String nearbyDriverOffers(Object count) {
+    return 'Nearby driver offers ($count)';
+  }
+
+  @override
+  String get driverConfirmedBooking => 'This driver confirmed your booking.';
+
+  @override
+  String get nearbyDriverOffersSubtitle =>
+      'Every nearby driver gets their own card - accept, change fare, or decline each one separately.';
+
+  @override
+  String get noDriverOffersYet => 'No driver offers yet';
+
+  @override
+  String get driverOffersAppearHere =>
+      'Once a nearby driver responds, the offers will appear here.';
+
+  @override
+  String get driverOffer => 'Driver offer';
+
+  @override
+  String get brokerOffers => 'Broker offers';
+
+  @override
+  String get brokerOffersSubtitle =>
+      'Fare changes sent after the booking was broadcast.';
+
+  @override
+  String get noBrokerOffersYet => 'No broker offers yet';
+
+  @override
+  String get brokerOffersAppearHere =>
+      'Once a broker responds, the offers will appear here.';
+
+  @override
+  String get confirm => 'Confirm';
 }
