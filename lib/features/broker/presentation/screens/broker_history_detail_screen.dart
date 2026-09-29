@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_socket_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
+import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
 
@@ -77,13 +82,85 @@ class BrokerHistoryDetailScreen extends ConsumerStatefulWidget {
 
 class _BrokerHistoryDetailScreenState
     extends ConsumerState<BrokerHistoryDetailScreen> {
-  bool _deleting = false;
-  bool _invoiceBusy = false;
+  static const MethodChannel _shareChannel = MethodChannel(
+    'plugins.flutter.io/share',
+  );
+  static const _tripStatusOrder = [
+    'confirmed',
+    'en_route_pickup',
+    'picked_up',
+    'in_transit',
+    'delivered',
+    'completed',
+  ];
 
-  Future<void> _refresh() async {
+  bool _deleting = false;
+  bool _downloading = false;
+  bool _emailing = false;
+  bool _notifying = false;
+  bool _collecting = false;
+
+  // Take-over panel state (web `JobDetail.jsx` override parity).
+  bool _takeoverOpen = false;
+  bool _tripLoading = false;
+  Map<String, dynamic>? _trip;
+  String _forceStatus = '';
+  int? _completingStopIndex;
+  bool _applyingForce = false;
+
+  StreamSubscription<Map<String, dynamic>>? _tripSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_connectTripSocket());
+    });
+  }
+
+  @override
+  void dispose() {
+    _tripSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Live push when this job's trip status changes (web `useTripStatusSocket`
+  /// parity) — silent refresh, no spinner.
+  Future<void> _connectTripSocket() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) return;
+    final sockets = ref.read(appSocketServiceProvider);
+    await sockets.ensureConnected(accessToken: session.tokens.accessToken);
+    if (!mounted) return;
+    await _tripSubscription?.cancel();
+    _tripSubscription = sockets.tripStatusStream.listen((payload) {
+      if (!mounted) return;
+      final bookingId = _payloadBookingId(payload);
+      if (bookingId.isNotEmpty && bookingId == widget.bookingId) {
+        unawaited(_refresh(silent: true));
+      }
+    });
+  }
+
+  String _payloadBookingId(Map<String, dynamic> payload) {
+    for (final key in const ['bookingId', 'booking_id']) {
+      final value = payload[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty && value.toLowerCase() != 'null') return value;
+    }
+    return '';
+  }
+
+  Future<void> _refresh({bool silent = false}) async {
     ref.invalidate(_historyBookingDetailProvider(widget.bookingId));
     ref.invalidate(_historyReassignmentProvider(widget.bookingId));
-    await ref.read(_historyBookingDetailProvider(widget.bookingId).future);
+    try {
+      await ref.read(_historyBookingDetailProvider(widget.bookingId).future);
+    } catch (_) {
+      // Error UI is handled by the provider watcher.
+    }
+    if (_trip != null && mounted) {
+      await _loadTrip(silent: silent);
+    }
   }
 
   Future<void> _deleteBooking(ClientBooking booking) async {
@@ -142,35 +219,329 @@ class _BrokerHistoryDetailScreenState
     }
   }
 
-  Future<void> _fetchInvoice(ClientBooking booking) async {
+  void _snack(String message, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: error ? AppColors.dangerIcon : null,
+      ),
+    );
+  }
+
+  Future<void> _downloadInvoice(ClientBooking booking) async {
     final session = ref.read(authSessionProvider).valueOrNull;
-    if (session == null || _invoiceBusy) return;
-    setState(() => _invoiceBusy = true);
+    if (session == null || _downloading) return;
+    setState(() => _downloading = true);
     try {
-      await ref
+      final response = await ref
           .read(apiClientProvider)
           .getBookingInvoice(
             accessToken: session.tokens.accessToken,
             id: booking.id,
           );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Invoice fetched for ${_bookingRef(booking)}.'),
-          backgroundColor: AppColors.brand,
-        ),
-      );
-    } on Object catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-          backgroundColor: AppColors.dangerIcon,
-        ),
-      );
+      final bytes = response.data ?? const <int>[];
+      if (bytes.isEmpty) {
+        _snack('Invoice file is empty.', error: true);
+        return;
+      }
+      final refText = _bookingRef(booking).replaceFirst('#', '');
+      final fileName =
+          'invoice-${refText.replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '-')}.pdf';
+      String savedPath = '';
+      try {
+        savedPath =
+            await _shareChannel.invokeMethod<String>('downloadFile', {
+              'bytes': Uint8List.fromList(bytes),
+              'fileName': fileName,
+              'mimeType': 'application/pdf',
+            }) ??
+            '';
+      } catch (_) {
+        savedPath = '';
+      }
+      var sharedFallback = false;
+      if (savedPath.isEmpty) {
+        try {
+          sharedFallback =
+              await _shareChannel.invokeMethod<bool>('shareFile', {
+                'bytes': Uint8List.fromList(bytes),
+                'fileName': fileName,
+                'mimeType': 'application/pdf',
+                'subject': 'Invoice $refText',
+              }) ??
+              false;
+        } catch (_) {
+          sharedFallback = false;
+        }
+      }
+      if (savedPath.isNotEmpty) {
+        _snack('Invoice downloaded to $savedPath.');
+      } else if (sharedFallback) {
+        _snack('Invoice ready to save or share.');
+      } else {
+        _snack('Failed to download invoice. Please try again.', error: true);
+      }
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } catch (error) {
+      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
     } finally {
-      if (mounted) setState(() => _invoiceBusy = false);
+      if (mounted) setState(() => _downloading = false);
     }
+  }
+
+  Future<void> _emailInvoice(ClientBooking booking) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _emailing) return;
+    final refText = booking.bookingNumber.isNotEmpty
+        ? booking.bookingNumber
+        : booking.id;
+    final draft = await showDialog<_InvoiceEmailDraft>(
+      context: context,
+      builder: (dialogContext) => _InvoiceEmailDialog(
+        initialTo: session.user.email ?? '',
+        defaultSubject: 'Invoice for booking $refText',
+        defaultMessage:
+            'Please find attached the invoice for booking $refText.',
+      ),
+    );
+    if (draft == null || !mounted) return;
+    setState(() => _emailing = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .emailBookingInvoice(
+            accessToken: session.tokens.accessToken,
+            id: booking.id,
+            to: draft.to,
+            subject: draft.subject,
+            message: draft.message,
+          );
+      _snack('Invoice emailed successfully.');
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } catch (error) {
+      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
+    } finally {
+      if (mounted) setState(() => _emailing = false);
+    }
+  }
+
+  Future<void> _notifyClient(ClientBooking booking) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _notifying) return;
+    setState(() => _notifying = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .notifyBookingInvoice(
+            accessToken: session.tokens.accessToken,
+            id: booking.id,
+          );
+      _snack('Client notified — invoice shared to their portal.');
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } catch (error) {
+      _snack(error.toString().replaceFirst('Exception: ', ''), error: true);
+    } finally {
+      if (mounted) setState(() => _notifying = false);
+    }
+  }
+
+  Map<String, dynamic>? _tripFromResponse(Map<String, dynamic> response) {
+    final data = _asMap(response['data']);
+    final trip = _asMap(data['trip']);
+    if (trip.isNotEmpty) return trip;
+    if (data['id'] != null) return data;
+    return null;
+  }
+
+  String _tripString(Map<String, dynamic>? trip, List<String> keys) {
+    if (trip == null) return '';
+    for (final key in keys) {
+      final value = trip[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty && value.toLowerCase() != 'null') return value;
+    }
+    return '';
+  }
+
+  Future<bool> _loadTrip({bool silent = false}) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) return false;
+    if (!silent && mounted) setState(() => _tripLoading = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getTripForBooking(
+            accessToken: session.tokens.accessToken,
+            bookingId: widget.bookingId,
+          );
+      final trip = _tripFromResponse(response);
+      if (!mounted) return trip != null;
+      setState(() => _trip = trip);
+      return trip != null;
+    } on ApiException catch (error) {
+      if (!silent) _snack(error.message, error: true);
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      if (!silent && mounted) setState(() => _tripLoading = false);
+    }
+  }
+
+  Future<void> _toggleTakeover() async {
+    final next = !_takeoverOpen;
+    setState(() => _takeoverOpen = next);
+    if (next && _trip == null && !_tripLoading) {
+      await _loadTrip();
+    }
+  }
+
+  List<String> _forwardStatuses() {
+    final raw = _tripString(_trip, const ['status']).toLowerCase();
+    final index = _tripStatusOrder.indexOf(raw);
+    final forward = index == -1
+        ? <String>[]
+        : _tripStatusOrder.sublist(index + 1);
+    return [...forward, 'cancelled'];
+  }
+
+  Future<void> _completeOverrideStop(int index) async {
+    final trip = _trip;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (trip == null ||
+        session == null ||
+        _completingStopIndex != null) {
+      return;
+    }
+    final tripId = _tripString(trip, const ['id']);
+    if (tripId.isEmpty) return;
+    setState(() => _completingStopIndex = index);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .completeTripStop(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            index: index,
+          );
+      final updated = _tripFromResponse(response);
+      if (!mounted) return;
+      if (updated != null) setState(() => _trip = updated);
+      _snack('Stop marked complete.');
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } finally {
+      if (mounted) setState(() => _completingStopIndex = null);
+    }
+  }
+
+  Future<void> _applyForceStatus() async {
+    final trip = _trip;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final options = _forwardStatuses();
+    final effective = _forceStatus.isNotEmpty
+        ? _forceStatus
+        : (options.isNotEmpty ? options.first : '');
+    if (trip == null || session == null || effective.isEmpty || _applyingForce) {
+      return;
+    }
+    final tripId = _tripString(trip, const ['id']);
+    if (tripId.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text('Force trip status?'),
+        content: Text(
+          'This moves the trip to "$effective" on the driver\'s behalf. Use only if the driver is unreachable.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.warningText,
+            ),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _applyingForce = true);
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .updateTripStatus(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            status: effective,
+          );
+      final updated = _tripFromResponse(response);
+      if (!mounted) return;
+      if (updated != null) {
+        setState(() {
+          _trip = updated;
+          _forceStatus = '';
+        });
+      }
+      _snack('Trip status updated.');
+      unawaited(_refresh(silent: true));
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } finally {
+      if (mounted) setState(() => _applyingForce = false);
+    }
+  }
+
+  Future<void> _collectPayment(String mode) async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || _collecting) return;
+    setState(() => _collecting = true);
+    try {
+      final tripResponse = await ref
+          .read(apiClientProvider)
+          .getTripForBooking(
+            accessToken: session.tokens.accessToken,
+            bookingId: widget.bookingId,
+          );
+      final trip = _tripFromResponse(tripResponse);
+      final tripId = _tripString(trip, const ['id']);
+      if (tripId.isEmpty) throw const ApiException('Trip not found');
+      await ref
+          .read(apiClientProvider)
+          .collectTripPayment(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            mode: mode,
+          );
+      _snack('Payment recorded.');
+      unawaited(_refresh(silent: true));
+    } on ApiException catch (error) {
+      _snack(error.message, error: true);
+    } finally {
+      if (mounted) setState(() => _collecting = false);
+    }
+  }
+
+  Future<void> _openCompletion() async {
+    // On-behalf completion runs through the same guarded take-over actions:
+    // load the trip and open the panel so the broker finishes it there.
+    final loaded = await _loadTrip();
+    if (!mounted) return;
+    if (!loaded) {
+      _snack('Trip not found', error: true);
+      return;
+    }
+    setState(() => _takeoverOpen = true);
   }
 
   @override
@@ -233,6 +604,14 @@ class _BrokerHistoryDetailScreenState
         : AppColors.dangerIcon;
     final amount = _amount(booking);
     final fee = _platformFee(booking);
+    final statusKey = _statusKey(booking.status);
+    final showTakeover = !const {
+      'delivered',
+      'completed',
+      'cancelled',
+    }.contains(statusKey);
+    final extraStops = booking.stops.where((s) => s.isExtraStop).toList();
+    final session = ref.read(authSessionProvider).valueOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -241,10 +620,16 @@ class _BrokerHistoryDetailScreenState
           booking: booking,
           statusColor: statusColor,
           onChat: () => context.push('/broker/chats/${booking.id}'),
-          onInvoice: () => _fetchInvoice(booking),
-          invoiceBusy: _invoiceBusy,
+          onDownloadInvoice: () => _downloadInvoice(booking),
+          downloading: _downloading,
+          onEmailInvoice: () => _emailInvoice(booking),
+          emailing: _emailing,
+          onNotifyClient: () => _notifyClient(booking),
+          notifying: _notifying,
           onDelete: () => _deleteBooking(booking),
           deleting: _deleting,
+          showCompleteDelivery: statusKey == 'delivered',
+          onCompleteDelivery: _openCompletion,
         ),
         const SizedBox(height: 14),
         Container(
@@ -259,8 +644,42 @@ class _BrokerHistoryDetailScreenState
         ),
         const SizedBox(height: 14),
         _DetailInfoCard(booking: booking),
+        if (showTakeover) ...[
+          const SizedBox(height: 14),
+          _TakeoverCard(
+            open: _takeoverOpen,
+            loadingTrip: _tripLoading,
+            trip: _trip,
+            forceStatus: _forceStatus,
+            forwardStatuses: _forwardStatuses(),
+            completingStopIndex: _completingStopIndex,
+            applyingForce: _applyingForce,
+            onToggle: _toggleTakeover,
+            onForceStatusChanged: (value) =>
+                setState(() => _forceStatus = value ?? ''),
+            onCompleteStop: _completeOverrideStop,
+            onApplyForceStatus: _applyForceStatus,
+          ),
+        ],
+        if (extraStops.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _StopsCard(stops: extraStops),
+        ],
         const SizedBox(height: 14),
-        _PaymentCard(booking: booking, amount: amount, fee: fee),
+        _PaymentCard(
+          booking: booking,
+          amount: amount,
+          fee: fee,
+          collecting: _collecting,
+          onCollect: _collectPayment,
+        ),
+        if (shipment.podMedia.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _BrokerPodCard(
+            shipment: shipment,
+            accessToken: session?.tokens.accessToken,
+          ),
+        ],
         if (reassignments.isNotEmpty) ...[
           const SizedBox(height: 14),
           _ReassignmentCard(entries: reassignments),
@@ -286,19 +705,31 @@ class _DetailTopCard extends StatelessWidget {
     required this.booking,
     required this.statusColor,
     required this.onChat,
-    required this.onInvoice,
-    required this.invoiceBusy,
+    required this.onDownloadInvoice,
+    required this.downloading,
+    required this.onEmailInvoice,
+    required this.emailing,
+    required this.onNotifyClient,
+    required this.notifying,
     required this.onDelete,
     required this.deleting,
+    required this.showCompleteDelivery,
+    required this.onCompleteDelivery,
   });
 
   final ClientBooking booking;
   final Color statusColor;
   final VoidCallback onChat;
-  final VoidCallback onInvoice;
-  final bool invoiceBusy;
+  final VoidCallback onDownloadInvoice;
+  final bool downloading;
+  final VoidCallback onEmailInvoice;
+  final bool emailing;
+  final VoidCallback onNotifyClient;
+  final bool notifying;
   final VoidCallback onDelete;
   final bool deleting;
+  final bool showCompleteDelivery;
+  final VoidCallback onCompleteDelivery;
 
   @override
   Widget build(BuildContext context) {
@@ -341,36 +772,106 @@ class _DetailTopCard extends StatelessWidget {
               height: 1.22,
             ),
           ),
+          if (showCompleteDelivery) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onCompleteDelivery,
+                icon: const Icon(AppIcons.assignment_turned_in_rounded, size: 17),
+                label: const Text('Complete Delivery'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.brand,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: _IconAction(
-                  icon: AppIcons.chat_bubble_outline_rounded,
-                  label: 'Chat',
-                  onTap: onChat,
-                ),
+              _WrapAction(
+                icon: AppIcons.chat_bubble_outline_rounded,
+                label: 'Chat',
+                onTap: onChat,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _IconAction(
-                  icon: AppIcons.receipt_long_rounded,
-                  label: invoiceBusy ? 'Fetching...' : 'Invoice',
-                  onTap: invoiceBusy ? null : onInvoice,
-                ),
+              _WrapAction(
+                icon: AppIcons.download_rounded,
+                label: downloading ? 'Saving...' : 'Invoice',
+                onTap: downloading ? null : onDownloadInvoice,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _IconAction(
-                  icon: AppIcons.delete_outline_rounded,
-                  label: deleting ? 'Removing...' : 'Remove',
-                  color: AppColors.dangerIcon,
-                  onTap: deleting ? null : onDelete,
-                ),
+              _WrapAction(
+                icon: AppIcons.mail_outline_rounded,
+                label: emailing ? 'Sending...' : 'Email',
+                onTap: emailing ? null : onEmailInvoice,
+              ),
+              _WrapAction(
+                icon: AppIcons.send_rounded,
+                label: notifying ? 'Sending...' : 'Notify',
+                onTap: notifying ? null : onNotifyClient,
+              ),
+              _WrapAction(
+                icon: AppIcons.delete_outline_rounded,
+                label: deleting ? 'Removing...' : 'Remove',
+                color: AppColors.dangerIcon,
+                onTap: deleting ? null : onDelete,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WrapAction extends StatelessWidget {
+  const _WrapAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color = AppColors.brand,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            border: Border.all(color: color.withValues(alpha: 0.20)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -421,14 +922,25 @@ class _PaymentCard extends StatelessWidget {
     required this.booking,
     required this.amount,
     required this.fee,
+    required this.collecting,
+    required this.onCollect,
   });
 
   final ClientBooking booking;
   final double amount;
   final double fee;
+  final bool collecting;
+  final ValueChanged<String> onCollect;
 
   @override
   Widget build(BuildContext context) {
+    final paymentStatus = _paymentStatus(booking);
+    final bookingStatus = _statusKey(booking.status);
+    final showCollect =
+        const {'pending', 'partial'}.contains(paymentStatus) &&
+        !const {'requested', 'confirmed', 'cancelled'}.contains(bookingStatus);
+    final haltingCharge = booking.haltingCharge;
+    final slaCharge = booking.slaOverageCharge ?? 0;
     return _DetailSection(
       title: 'Earnings & Payment',
       children: [
@@ -436,7 +948,11 @@ class _PaymentCard extends StatelessWidget {
           spacing: 10,
           runSpacing: 10,
           children: [
-            _MoneyTile(label: 'Amount', value: _formatRupees(amount)),
+            _MoneyTile(
+              label: 'Amount',
+              value: _formatRupees(amount),
+              footnote: _overageFootnote(booking, haltingCharge, slaCharge),
+            ),
             _MoneyTile(
               label: 'Platform Fee',
               value: _formatRupees(fee),
@@ -449,8 +965,717 @@ class _PaymentCard extends StatelessWidget {
               background: AppColors.brandFill,
             ),
             _MoneyTile(label: 'Payment', value: _paymentStatus(booking)),
+            _MoneyTile(
+              label: 'Mode',
+              value: _paymentMode(booking),
+            ),
             _MoneyTile(label: 'Time Taken', value: _duration(booking)),
           ],
+        ),
+        if (showCollect) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: collecting ? null : () => onCollect('upi'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.brandInk,
+                    side: const BorderSide(color: AppColors.successBorder),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  child: Text(collecting ? 'Recording...' : 'UPI'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: collecting ? null : () => onCollect('cash'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    side: const BorderSide(color: AppColors.line),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  child: Text(collecting ? 'Recording...' : 'Cash'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String? _overageFootnote(
+  ClientBooking booking,
+  double haltingCharge,
+  double slaCharge,
+) {
+  final parts = <String>[];
+  if (haltingCharge > 0) {
+    parts.add(
+      'Incl. halting (${booking.haltingHours}h): ${_formatRupees(haltingCharge)}',
+    );
+  }
+  if (slaCharge > 0) {
+    parts.add(
+      'Incl. delay (${booking.slaOverageHours ?? 0}h): ${_formatRupees(slaCharge)}',
+    );
+  }
+  if (parts.isEmpty) return null;
+  return parts.join('\n');
+}
+
+/// Driver-unreachable take-over panel (web `JobDetail.jsx` override parity):
+/// complete loading/unloading stops and force the trip status forward, all
+/// on the driver's behalf.
+class _TakeoverCard extends StatelessWidget {
+  const _TakeoverCard({
+    required this.open,
+    required this.loadingTrip,
+    required this.trip,
+    required this.forceStatus,
+    required this.forwardStatuses,
+    required this.completingStopIndex,
+    required this.applyingForce,
+    required this.onToggle,
+    required this.onForceStatusChanged,
+    required this.onCompleteStop,
+    required this.onApplyForceStatus,
+  });
+
+  final bool open;
+  final bool loadingTrip;
+  final Map<String, dynamic>? trip;
+  final String forceStatus;
+  final List<String> forwardStatuses;
+  final int? completingStopIndex;
+  final bool applyingForce;
+  final VoidCallback onToggle;
+  final ValueChanged<String?> onForceStatusChanged;
+  final ValueChanged<int> onCompleteStop;
+  final VoidCallback onApplyForceStatus;
+
+  List<TripRouteStop> get _stops {
+    if (trip == null) return const [];
+    return TripRouteStop.extraStopsFromJson(trip!['stops']);
+  }
+
+  String _statusLabel(String status) {
+    final cleaned = status.trim().replaceAll(RegExp(r'[_-]+'), ' ');
+    if (cleaned.isEmpty) return status;
+    return cleaned
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveForce = forceStatus.isNotEmpty
+        ? forceStatus
+        : (forwardStatuses.isNotEmpty ? forwardStatuses.first : '');
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(
+                    AppIcons.warning_amber_rounded,
+                    color: AppColors.warningText,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Driver unreachable? Take over this trip',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    open ? 'Hide' : 'Show',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: open ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      AppIcons.keyboard_arrow_down_rounded,
+                      color: AppColors.textTertiary,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (open) ...[
+            Container(height: 1, color: AppColors.line),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Use this only if the driver\'s phone is dead, their app crashed, or they\'ve lost signal. Actions happen directly on the driver\'s behalf.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (loadingTrip)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (trip == null)
+                    TextButton(
+                      onPressed: onToggle,
+                      child: const Text('Retry loading trip'),
+                    )
+                  else ...[
+                    if (_stops.isNotEmpty) ...[
+                      Text(
+                        'LOADING & UNLOADING STOPS',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.textTertiary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      for (final stop in _stops)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: _TakeoverStopRow(
+                            stop: stop,
+                            actionable:
+                                stop.index ==
+                                TripRouteStop.nextActionableIndex(
+                                  _stops,
+                                  stop.type,
+                                ),
+                            busy: completingStopIndex == stop.index,
+                            onComplete: () => onCompleteStop(stop.index),
+                          ),
+                        ),
+                      const SizedBox(height: 10),
+                    ],
+                    Text(
+                      'FORCE STATUS',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.textTertiary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: effectiveForce.isEmpty
+                                ? null
+                                : effectiveForce,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                            ),
+                            items: [
+                              for (final status in forwardStatuses)
+                                DropdownMenuItem(
+                                  value: status,
+                                  child: Text(_statusLabel(status)),
+                                ),
+                            ],
+                            onChanged: onForceStatusChanged,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          onPressed:
+                              (effectiveForce.isEmpty || applyingForce)
+                              ? null
+                              : onApplyForceStatus,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.warningText,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 13,
+                            ),
+                          ),
+                          child: Text(
+                            applyingForce ? 'Applying...' : 'Apply',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TakeoverStopRow extends StatelessWidget {
+  const _TakeoverStopRow({
+    required this.stop,
+    required this.actionable,
+    required this.busy,
+    required this.onComplete,
+  });
+
+  final TripRouteStop stop;
+  final bool actionable;
+  final bool busy;
+  final VoidCallback onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: stop.isDone
+            ? AppColors.brandFill
+            : AppColors.fillSubtle,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            stop.isDone
+                ? AppIcons.check_circle_rounded
+                : stop.isLoading
+                ? AppIcons.inventory_2_rounded
+                : AppIcons.inventory_2_outlined,
+            size: 16,
+            color: stop.isDone
+                ? AppColors.brandInk
+                : AppColors.textTertiary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              stop.location.isEmpty ? '—' : stop.location,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          if (stop.isDone)
+            const Text(
+              'Done',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: AppColors.brandInk,
+              ),
+            )
+          else
+            TextButton(
+              onPressed: (!actionable || busy) ? null : onComplete,
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                busy
+                    ? '...'
+                    : stop.isLoading
+                    ? 'Mark Loaded'
+                    : 'Mark Unloaded',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Read-only loading/unloading stops (web `JobDetail.jsx` parity).
+class _StopsCard extends StatelessWidget {
+  const _StopsCard({required this.stops});
+
+  final List<TripRouteStop> stops;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DetailSection(
+      title: 'Loading & Unloading Stops',
+      children: [
+        for (final stop in stops)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: stop.isDone
+                    ? AppColors.brandFill
+                    : AppColors.fillSubtle,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    stop.isDone
+                        ? AppIcons.check_circle_rounded
+                        : AppIcons.radio_button_unchecked_rounded,
+                    size: 16,
+                    color: stop.isDone
+                        ? AppColors.brandInk
+                        : AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      stop.location.isEmpty ? '—' : stop.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    stop.isDone ? 'Done' : 'Pending',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: stop.isDone
+                          ? AppColors.brandInk
+                          : AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Read-only POD gallery with client-review badges (web `JobDetail.jsx`
+/// parity — brokers review, never approve).
+class _BrokerPodCard extends StatelessWidget {
+  const _BrokerPodCard({required this.shipment, required this.accessToken});
+
+  final TrackingDemoShipment shipment;
+  final String? accessToken;
+
+  String get _status => (shipment.podStatus ?? '').trim().toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    return _DetailSection(
+      title: 'Proof of Delivery',
+      children: [
+        if (_status == 'pending_verification')
+          const _PodBadge(
+            label: 'Awaiting client review',
+            background: AppColors.warningFill,
+            foreground: AppColors.warningText,
+          ),
+        if (_status == 'verified')
+          const _PodBadge(
+            label: 'Client approved',
+            background: AppColors.brandFill,
+            foreground: AppColors.brandInk,
+          ),
+        if (_status == 'rejected')
+          const _PodBadge(
+            label: 'Client rejected — driver re-uploading',
+            background: AppColors.dangerFill,
+            foreground: AppColors.dangerText,
+          ),
+        if (_status.isNotEmpty &&
+            _status != 'pending_verification' &&
+            _status != 'verified' &&
+            _status != 'rejected')
+          const SizedBox(height: 10),
+        if (_status == 'pending_verification' ||
+            _status == 'verified' ||
+            _status == 'rejected')
+          const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: shipment.podMedia.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final media = shipment.podMedia[index];
+            return InkWell(
+              onTap: media.isVideo
+                  ? null
+                  : () => showDialog<void>(
+                        context: context,
+                        builder: (dialogContext) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.all(16),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              media.url,
+                              fit: BoxFit.contain,
+                              headers: accessToken != null
+                                  ? {
+                                      'Authorization':
+                                          'Bearer $accessToken',
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.fillSubtle,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.line),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: media.isVideo
+                      ? const ColoredBox(
+                          color: Color(0xFF111827),
+                          child: Center(
+                            child: Icon(
+                              AppIcons.play_circle_fill_rounded,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        )
+                      : Image.network(
+                          media.url,
+                          fit: BoxFit.cover,
+                          headers: accessToken != null
+                              ? {'Authorization': 'Bearer $accessToken'}
+                              : null,
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Icon(
+                              AppIcons.error_outline_rounded,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            );
+          },
+        ),
+        if (_status == 'rejected' &&
+            (shipment.podRejectionReason ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            'Client\'s reason: ${shipment.podRejectionReason!.trim()}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PodBadge extends StatelessWidget {
+  const _PodBadge({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+class _InvoiceEmailDraft {
+  const _InvoiceEmailDraft({
+    required this.to,
+    required this.subject,
+    required this.message,
+  });
+
+  final String to;
+  final String subject;
+  final String message;
+}
+
+class _InvoiceEmailDialog extends StatefulWidget {
+  const _InvoiceEmailDialog({
+    required this.initialTo,
+    required this.defaultSubject,
+    required this.defaultMessage,
+  });
+
+  final String initialTo;
+  final String defaultSubject;
+  final String defaultMessage;
+
+  @override
+  State<_InvoiceEmailDialog> createState() => _InvoiceEmailDialogState();
+}
+
+class _InvoiceEmailDialogState extends State<_InvoiceEmailDialog> {
+  late final TextEditingController _toController;
+  late final TextEditingController _subjectController;
+  late final TextEditingController _messageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _toController = TextEditingController(text: widget.initialTo);
+    _subjectController = TextEditingController(text: widget.defaultSubject);
+    _messageController = TextEditingController(text: widget.defaultMessage);
+  }
+
+  @override
+  void dispose() {
+    _toController.dispose();
+    _subjectController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Send invoice by email'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _toController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'To',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _subjectController,
+              decoration: const InputDecoration(
+                labelText: 'Subject',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _messageController,
+              minLines: 3,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: 'Message',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final to = _toController.text.trim();
+            if (to.isEmpty) return;
+            Navigator.of(context).pop(
+              _InvoiceEmailDraft(
+                to: to,
+                subject: _subjectController.text.trim(),
+                message: _messageController.text.trim(),
+              ),
+            );
+          },
+          child: const Text('Send'),
         ),
       ],
     );
@@ -605,12 +1830,14 @@ class _MoneyTile extends StatelessWidget {
     required this.value,
     this.color = AppColors.textPrimary,
     this.background = AppColors.fillSubtle,
+    this.footnote,
   });
 
   final String label;
   final String value;
   final Color color;
   final Color background;
+  final String? footnote;
 
   @override
   Widget build(BuildContext context) {
@@ -640,60 +1867,19 @@ class _MoneyTile extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IconAction extends StatelessWidget {
-  const _IconAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color = AppColors.brand,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = color;
-    final canTap = onTap != null;
-    return Material(
-      color: accent.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(AppRadius.button),
-      child: InkWell(
-        onTap: canTap ? onTap : null,
-        borderRadius: BorderRadius.circular(AppRadius.button),
-        child: Container(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: accent.withValues(alpha: 0.20)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 17, color: accent),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+          if (footnote != null && footnote!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              footnote!,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AppColors.warningText,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
               ),
-            ],
-          ),
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -897,6 +2083,26 @@ String _paymentStatus(ClientBooking booking) {
     _readString(booking.raw, const ['paymentStatus', 'payment_status']),
     'pending',
   ]).toLowerCase();
+}
+
+String _paymentMode(ClientBooking booking) {
+  final mode = _firstNonEmpty([
+    _readString(booking.raw, const ['paymentMode', 'payment_mode']),
+  ]).toLowerCase();
+  switch (mode) {
+    case 'upi':
+      return 'UPI';
+    case 'cash':
+      return 'Cash';
+    case 'razorpay':
+      return 'Razorpay';
+    case 'fake':
+      return 'Online';
+    case '':
+      return '—';
+    default:
+      return mode[0].toUpperCase() + mode.substring(1);
+  }
 }
 
 Map<String, dynamic> _asMap(Object? value) {

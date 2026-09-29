@@ -320,6 +320,23 @@ String _stringFrom(Map<String, dynamic> value, List<String> keys) {
   return '';
 }
 
+/// Returns the value only when it is a plain (non-map/list) string — for
+/// APIs that send `pickup`/`drop` as bare address strings instead of
+/// `{location, lat, lng}` objects.
+String _plainString(Object? value) {
+  if (value is! String) return '';
+  final trimmed = value.trim();
+  if (trimmed.isEmpty || trimmed.toLowerCase() == 'null') return '';
+  return trimmed;
+}
+
+String _firstNonEmpty(List<String> values) {
+  for (final value in values) {
+    if (value.trim().isNotEmpty) return value.trim();
+  }
+  return '';
+}
+
 double _doubleFrom(Map<String, dynamic> value, List<String> keys) {
   for (final key in keys) {
     final raw = value[key];
@@ -430,6 +447,8 @@ class DriverTripSummary {
   });
 
   factory DriverTripSummary.fromJson(Map<String, dynamic> json) {
+    final trip = _mapFrom(json['trip']);
+    final booking = _mapFrom(json['booking']);
     final pickup = _mapFrom(json['pickup']);
     final drop = _mapFrom(json['drop']);
     final createdAt = _stringFrom(json, const ['createdAt', 'created_at']);
@@ -457,14 +476,106 @@ class DriverTripSummary {
       bookingNumber: _stringFrom(json, const [
         'bookingNumber',
         'booking_number',
+        'booking_no',
+        'bookingNo',
       ]),
-      fromLocation: _stringFrom(pickup, const ['location', 'address']),
-      toLocation: _stringFrom(drop, const ['location', 'address']),
+      // The trips list shape varies: nested pickup/drop objects, nested
+      // trip/booking envelopes, or flat address strings. Try them all so
+      // cards show real addresses instead of ids/coordinates.
+      fromLocation: _firstNonEmpty([
+        _stringFrom(pickup, const [
+          'location',
+          'address',
+          'name',
+          'formattedAddress',
+          'formatted_address',
+        ]),
+        _plainString(json['pickup']),
+        _plainString(trip['pickup']),
+        _plainString(trip['pickupLocation']),
+        _plainString(booking['pickup']),
+        _stringFrom(trip, const [
+          'pickupLocation',
+          'pickup_location',
+          'pickupAddress',
+          'pickup_address',
+        ]),
+        _stringFrom(booking, const [
+          'pickup',
+          'pickupLocation',
+          'pickup_location',
+          'pickupAddress',
+          'pickup_address',
+        ]),
+        _stringFrom(json, const [
+          'pickup_location',
+          'pickupLocation',
+          'pickupAddress',
+          'pickup_address',
+          'from',
+          'origin',
+          'source',
+          'sourceLocation',
+          'source_location',
+        ]),
+      ]),
+      toLocation: _firstNonEmpty([
+        _stringFrom(drop, const [
+          'location',
+          'address',
+          'name',
+          'formattedAddress',
+          'formatted_address',
+        ]),
+        _plainString(json['drop']),
+        _plainString(json['dropoff']),
+        _plainString(trip['drop']),
+        _plainString(trip['dropoffLocation']),
+        _plainString(booking['drop']),
+        _stringFrom(trip, const [
+          'dropLocation',
+          'drop_location',
+          'dropoff',
+          'dropoffLocation',
+          'dropoff_location',
+          'dropAddress',
+          'drop_address',
+        ]),
+        _stringFrom(booking, const [
+          'drop',
+          'dropLocation',
+          'drop_location',
+          'dropoff',
+          'dropoffLocation',
+          'dropoff_location',
+          'dropAddress',
+          'drop_address',
+        ]),
+        _stringFrom(json, const [
+          'drop_location',
+          'dropLocation',
+          'dropoff_location',
+          'dropoffLocation',
+          'dropAddress',
+          'drop_address',
+          'dropoffAddress',
+          'dropoff_address',
+          'to',
+          'destination',
+          'destinationLocation',
+          'destination_location',
+        ]),
+      ]),
       distanceKm: _readTripDistance(json),
       status: _stringFrom(json, const ['status', 'rawStatus']).isNotEmpty
           ? _stringFrom(json, const ['status', 'rawStatus'])
           : 'pending',
-      bookingTime: deliveredAt.isNotEmpty ? deliveredAt : createdAt,
+      bookingTime: _firstNonEmpty([
+        deliveredAt,
+        _stringFrom(json, const ['completedAt', 'completed_at']),
+        _stringFrom(json, const ['updatedAt', 'updated_at']),
+        createdAt,
+      ]),
       activityTime: activityTime,
       amount: _doubleFrom(json, const [
         'earnings',

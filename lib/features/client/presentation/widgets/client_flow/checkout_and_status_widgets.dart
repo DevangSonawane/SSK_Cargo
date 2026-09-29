@@ -311,7 +311,9 @@ class _CheckoutChoiceTile extends StatelessWidget {
       title: Text(
         title,
         style: TextStyle(
-          color: enabled ? context.colors.textPrimary : context.colors.textTertiary,
+          color: enabled
+              ? context.colors.textPrimary
+              : context.colors.textTertiary,
         ),
       ),
       subtitle: Text(subtitle),
@@ -676,12 +678,12 @@ class _HeaderScheduleIconButton extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF2FA56E) : context.colors.fillSubtle,
+            color: selected
+                ? const Color(0xFF2FA56E)
+                : context.colors.fillSubtle,
             shape: BoxShape.circle,
             border: Border.all(
-              color: selected
-                  ? const Color(0xFF2FA56E)
-                  : context.colors.line,
+              color: selected ? const Color(0xFF2FA56E) : context.colors.line,
             ),
           ),
           child: Icon(
@@ -1203,9 +1205,9 @@ class _BookingSuccessCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -1332,15 +1334,15 @@ class _BookingWaitingCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             actionable
-                ? 'Opening the live offer popup so you can accept, reject, or counter.'
+                ? 'Opening the live offer popup so you can accept, reject, or change fare.'
                 : waitingForDriverConfirmation
                 ? 'You accepted the offer. We are waiting for the driver to complete the handshake.'
                 : requestCount > 0
                 ? 'Drivers inside ${searchRadiusKm.round()} km have been notified. We will show the offer popup when one responds.'
                 : 'Your booking is live. We are notifying drivers inside ${searchRadiusKm.round()} km.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
@@ -1381,7 +1383,7 @@ class _BookingWaitingCard extends StatelessWidget {
                     waitingForDriverConfirmation
                         ? 'Waiting for the driver to confirm your acceptance.'
                         : request.isCountered
-                        ? 'Counter offer: ${request.amountText}'
+                        ? 'Fare change: ${request.amountText}'
                         : request.driverTimedOut
                         ? 'Driver response timed out.'
                         : 'Latest amount: ${request.amountText}',

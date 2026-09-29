@@ -32,8 +32,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
   static const _query = (page: 1, limit: 100);
   StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
   String? _lastNegotiationDialogKey;
-  final TextEditingController _driverSearchController =
-      TextEditingController();
+  final TextEditingController _driverSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -490,19 +489,21 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         .toLowerCase();
                     final visibleDrivers = query.isEmpty
                         ? mergedDrivers
-                        : mergedDrivers.where((driver) {
-                            final haystack = [
-                              driver.name,
-                              driver.phone,
-                              driver.email,
-                              driver.assignedVehicle,
-                              driver.currentLocation,
-                              driver.licenseNo,
-                            ].join(' ').toLowerCase();
-                            return query
-                                .split(RegExp(r'\s+'))
-                                .every(haystack.contains);
-                          }).toList(growable: false);
+                        : mergedDrivers
+                              .where((driver) {
+                                final haystack = [
+                                  driver.name,
+                                  driver.phone,
+                                  driver.email,
+                                  driver.assignedVehicle,
+                                  driver.currentLocation,
+                                  driver.licenseNo,
+                                ].join(' ').toLowerCase();
+                                return query
+                                    .split(RegExp(r'\s+'))
+                                    .every(haystack.contains);
+                              })
+                              .toList(growable: false);
 
                     if (visibleDrivers.isEmpty) {
                       return Container(
@@ -998,7 +999,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                   builder: (dialogContext) {
                                                     return AlertDialog(
                                                       title: const Text(
-                                                        'Counter request',
+                                                        'Change fare request',
                                                       ),
                                                       content: Column(
                                                         mainAxisSize:
@@ -1094,7 +1095,11 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                   }
                                                 }
                                               },
-                                        child: const Text('Counter'),
+                                        child: const Text(
+                                          'Change Fare',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1129,7 +1134,7 @@ class _BrokerAssignedInlineBadge extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
-        'Broker-assigned - no counter',
+        'Broker-assigned - no fare change',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.brand,
           fontWeight: FontWeight.w900,

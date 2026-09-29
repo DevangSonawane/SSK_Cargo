@@ -992,9 +992,11 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
     }
   }
 
+  bool _isRatingSubmitting = false;
+
   Future<void> _rateBooking() async {
     final bookingId = _shipment.bookingId;
-    if (bookingId == null || bookingId.isEmpty) {
+    if (bookingId == null || bookingId.isEmpty || _isRatingSubmitting) {
       return;
     }
 
@@ -1077,16 +1079,37 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
         return;
       }
 
-      await ref
-          .read(apiClientProvider)
-          .rateBooking(
-            accessToken: session.tokens.accessToken,
-            id: bookingId,
-            stars: stars,
-            review: reviewController.text.trim().isEmpty
-                ? null
-                : reviewController.text.trim(),
-          );
+      setState(() => _isRatingSubmitting = true);
+      try {
+        await ref
+            .read(apiClientProvider)
+            .rateBooking(
+              accessToken: session.tokens.accessToken,
+              id: bookingId,
+              stars: stars,
+              review: reviewController.text.trim().isEmpty
+                  ? null
+                  : reviewController.text.trim(),
+            );
+      } on ApiException catch (error) {
+        // Tapping twice (or a stale "not rated" flag) returns an
+        // already-rated 409 — treat it as rated instead of an error.
+        final message = error.message.toLowerCase();
+        final alreadyRated =
+            error.statusCode == 409 ||
+            message.contains('already') ||
+            message.contains('rated');
+        if (!alreadyRated) rethrow;
+      } finally {
+        if (mounted) setState(() => _isRatingSubmitting = false);
+      }
+      if (!mounted) return;
+      // Web parity (BookingDetail.jsx): flip to rated locally right away so
+      // the button disappears, then re-fetch to confirm server state.
+      setState(() {
+        _resolvedShipment = _shipment.copyWith(ratingStars: stars);
+      });
+      unawaited(_refreshShipment());
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -1262,12 +1285,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                         Row(
                           children: [
                             IconButton(
-                              onPressed: () =>
-                                  Navigator.of(context).maybePop(),
+                              onPressed: () => Navigator.of(context).maybePop(),
                               icon: const Icon(AppIcons.arrow_back_rounded),
                               style: IconButton.styleFrom(
-                                backgroundColor:
-                                    context.colors.surfaceElevated,
+                                backgroundColor: context.colors.surfaceElevated,
                                 foregroundColor: context.colors.textPrimary,
                                 shadowColor: const Color(
                                   0xFF101828,
@@ -1314,6 +1335,10 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                           _ProofOfDeliveryCard(
                             media: shipment.podMedia,
                             accessToken: accessToken,
+                            podStatus: shipment.podStatus,
+                            podRejectionReason: shipment.podRejectionReason,
+                            tripId: shipment.tripId,
+                            onChanged: _refreshShipment,
                           ),
                           const SizedBox(height: 14),
                         ],
@@ -1404,12 +1429,18 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                         child: SizedBox(
                                           height: 48,
                                           child: OutlinedButton.icon(
-                                            onPressed: _rateBooking,
+                                            onPressed: _isRatingSubmitting
+                                                ? null
+                                                : _rateBooking,
                                             icon: const Icon(
                                               AppIcons.star_outline_rounded,
                                               size: 18,
                                             ),
-                                            label: const Text('Rate delivery'),
+                                            label: Text(
+                                              _isRatingSubmitting
+                                                  ? 'Submitting...'
+                                                  : 'Rate delivery',
+                                            ),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: const Color(
                                                 0xFFB88900,
@@ -2221,10 +2252,7 @@ class _PremiumStatusPill extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -3003,15 +3031,172 @@ class _HorizontalTimelineStep extends StatelessWidget {
   }
 }
 
-class _ProofOfDeliveryCard extends StatelessWidget {
-  const _ProofOfDeliveryCard({required this.media, required this.accessToken});
+class _ProofOfDeliveryCard extends ConsumerStatefulWidget {
+  const _ProofOfDeliveryCard({
+    required this.media,
+    required this.accessToken,
+    this.podStatus,
+    this.podRejectionReason,
+    this.tripId,
+    this.onChanged,
+  });
 
   final List<PodDeliveryMedia> media;
   final String accessToken;
+  final String? podStatus;
+  final String? podRejectionReason;
+  final String? tripId;
+  final Future<void> Function()? onChanged;
+
+  @override
+  ConsumerState<_ProofOfDeliveryCard> createState() =>
+      _ProofOfDeliveryCardState();
+}
+
+class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
+  bool _verifying = false;
+
+  String get _status => (widget.podStatus ?? '').trim().toLowerCase();
+  bool get _isPending => _status == 'pending_verification';
+  bool get _isVerified => _status == 'verified';
+  bool get _isRejected => _status == 'rejected';
+
+  Future<void> _approve() async {
+    final tripId = (widget.tripId ?? '').trim();
+    if (tripId.isEmpty || _verifying) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to approve.')),
+      );
+      return;
+    }
+    setState(() => _verifying = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .verifyTripPod(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Proof of delivery approved.')),
+      );
+      await widget.onChanged?.call();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
+
+  Future<void> _reject() async {
+    final tripId = (widget.tripId ?? '').trim();
+    if (tripId.isEmpty || _verifying) return;
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Reject proof of delivery?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'The driver will be asked to upload new photos before the trip can be completed.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText:
+                      'e.g. Photos are blurry, doesn\'t show delivered cargo...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text.trim()),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Reject'),
+            ),
+          ],
+        );
+      },
+    );
+    if (reason == null || reason.trim().isEmpty) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to reject.')),
+      );
+      return;
+    }
+    setState(() => _verifying = true);
+    try {
+      await ref
+          .read(apiClientProvider)
+          .rejectTripPod(
+            accessToken: session.tokens.accessToken,
+            tripId: tripId,
+            reason: reason.trim(),
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Asked the driver to re-upload proof of delivery.'),
+        ),
+      );
+      await widget.onChanged?.call();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final count = media.length;
+    final count = widget.media.length;
+    final tripId = (widget.tripId ?? '').trim();
+    final canReview = _isPending && tripId.isNotEmpty;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -3071,7 +3256,7 @@ class _ProofOfDeliveryCard extends StatelessWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: media.length,
+            itemCount: widget.media.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               crossAxisSpacing: 8,
@@ -3079,13 +3264,109 @@ class _ProofOfDeliveryCard extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               return _PodMediaTile(
-                media: media[index],
-                accessToken: accessToken,
-                onTap: () =>
-                    _openPodLightbox(context, media, accessToken, index),
+                media: widget.media[index],
+                accessToken: widget.accessToken,
+                onTap: () => _openPodLightbox(
+                  context,
+                  widget.media,
+                  widget.accessToken,
+                  index,
+                ),
               );
             },
           ),
+          if (canReview) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.colors.divider)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.colors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 42,
+                          child: FilledButton(
+                            onPressed: _verifying ? null : _approve,
+                            child: Text(
+                              _verifying ? 'Approving...' : 'Approve',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: SizedBox(
+                          height: 42,
+                          child: OutlinedButton(
+                            onPressed: _verifying ? null : _reject,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Color(0xFFF1B0B0)),
+                            ),
+                            child: const Text('Reject'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (_isVerified) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.colors.divider)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check, size: 16, color: Color(0xFF2FA56E)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Approved',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2FA56E),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (_isRejected) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.colors.divider)),
+              ),
+              child: Text(
+                (widget.podRejectionReason ?? '').trim().isNotEmpty
+                    ? 'You asked the driver to re-upload: "${widget.podRejectionReason!.trim()}." Waiting for new photos.'
+                    : 'You asked the driver to re-upload. Waiting for new photos.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.colors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -5363,8 +5644,7 @@ class _BookingNegotiationSheetState
     final double min = (base * 0.78).round().toDouble();
     final double max = base < min + 1 ? min + 1 : base;
     double value = base.clamp(min, max).toDouble();
-    String rupees(double v) =>
-        '₹${v.toStringAsFixed(v % 1 == 0 ? 0 : 2)}';
+    String rupees(double v) => '₹${v.toStringAsFixed(v % 1 == 0 ? 0 : 2)}';
     try {
       final amount = await showModalBottomSheet<double>(
         context: context,
@@ -5414,10 +5694,8 @@ class _BookingNegotiationSheetState
                       children: [
                         Expanded(
                           child: Text(
-                            'Counter driver request',
-                            style: Theme.of(dialogContext)
-                                .textTheme
-                                .titleLarge
+                            'Change driver fare',
+                            style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
@@ -5447,8 +5725,7 @@ class _BookingNegotiationSheetState
                             max: max,
                             value: value,
                             activeColor: const Color(0xFF2FA56E),
-                            onChanged: (v) =>
-                                setDialogState(() => value = v),
+                            onChanged: (v) => setDialogState(() => value = v),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -5469,7 +5746,7 @@ class _BookingNegotiationSheetState
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Your counter-offer: ${rupees(value)}',
+                            'Your fare change: ${rupees(value)}',
                             style: Theme.of(dialogContext).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
@@ -5489,9 +5766,8 @@ class _BookingNegotiationSheetState
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
-                            onPressed: () => Navigator.of(
-                              dialogContext,
-                            ).pop(value),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(value),
                             style: FilledButton.styleFrom(
                               minimumSize: const Size.fromHeight(50),
                               padding: const EdgeInsets.symmetric(
@@ -5526,7 +5802,7 @@ class _BookingNegotiationSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Counter sent.')));
+      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -5659,10 +5935,8 @@ class _BookingNegotiationSheetState
                       children: [
                         Expanded(
                           child: Text(
-                            'Counter offer',
-                            style: Theme.of(dialogContext)
-                                .textTheme
-                                .titleLarge
+                            'Change fare',
+                            style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
@@ -5681,27 +5955,23 @@ class _BookingNegotiationSheetState
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Amount',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Amount'),
                     ),
                     const SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () => Navigator.of(
-                              dialogContext,
-                            ).maybePop(false),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).maybePop(false),
                             child: const Text('Cancel'),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
-                            onPressed: () => Navigator.of(
-                              dialogContext,
-                            ).pop(true),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
                             style: FilledButton.styleFrom(
                               minimumSize: const Size.fromHeight(50),
                               padding: const EdgeInsets.symmetric(
@@ -5749,7 +6019,7 @@ class _BookingNegotiationSheetState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Counter sent.')));
+      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
       await _loadNegotiation();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -5829,18 +6099,19 @@ class _BookingNegotiationSheetState
                             // handling here beyond refresh.
                             Builder(
                               builder: (context) {
-                                final liveDriverRequests = _driverRequests
-                                    .where(
-                                      (request) =>
-                                          request.normalizedStatus !=
-                                          'declined',
-                                    )
-                                    .toList()
-                                  ..sort(
-                                    (a, b) => b.negotiationRank.compareTo(
-                                      a.negotiationRank,
-                                    ),
-                                  );
+                                final liveDriverRequests =
+                                    _driverRequests
+                                        .where(
+                                          (request) =>
+                                              request.normalizedStatus !=
+                                              'declined',
+                                        )
+                                        .toList()
+                                      ..sort(
+                                        (a, b) => b.negotiationRank.compareTo(
+                                          a.negotiationRank,
+                                        ),
+                                      );
                                 final acceptedRequest =
                                     liveDriverRequests.isNotEmpty
                                     ? liveDriverRequests
@@ -5853,23 +6124,19 @@ class _BookingNegotiationSheetState
                                           .followedBy(const [null])
                                           .first
                                     : null;
-                                final visibleRequests =
-                                    acceptedRequest != null
+                                final visibleRequests = acceptedRequest != null
                                     ? [acceptedRequest]
                                     : liveDriverRequests;
                                 return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _NegotiationSectionTitle(
-                                      title:
-                                          acceptedRequest != null
+                                      title: acceptedRequest != null
                                           ? 'Confirmed driver'
                                           : 'Nearby driver offers (${visibleRequests.length})',
-                                      subtitle:
-                                          acceptedRequest != null
+                                      subtitle: acceptedRequest != null
                                           ? 'This driver confirmed your booking.'
-                                          : 'Every nearby driver gets their own card — accept, counter, or decline each one separately.',
+                                          : 'Every nearby driver gets their own card — accept, change fare, or decline each one separately.',
                                     ),
                                     const SizedBox(height: 10),
                                     if (visibleRequests.isEmpty)
@@ -5885,12 +6152,9 @@ class _BookingNegotiationSheetState
                                             bottom: 12,
                                           ),
                                           child: _NegotiationCard(
-                                            title:
-                                                request
-                                                        .brokerName
-                                                        .isNotEmpty
-                                                    ? request.brokerName
-                                                    : 'Driver offer',
+                                            title: request.brokerName.isNotEmpty
+                                                ? request.brokerName
+                                                : 'Driver offer',
                                             subtitle: _driverOfferSubtitle(
                                               request,
                                             ),
@@ -5919,7 +6183,7 @@ class _BookingNegotiationSheetState
                             _NegotiationSectionTitle(
                               title: 'Broker offers',
                               subtitle:
-                                  'Counter-offers sent after the booking was broadcast.',
+                                  'Fare changes sent after the booking was broadcast.',
                             ),
                             const SizedBox(height: 10),
                             if (_offers.isEmpty)
@@ -6060,7 +6324,11 @@ extension on _BookingNegotiationSheetState {
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _counterDriverRequest(request),
-          child: const Text('Counter'),
+          child: const Text(
+            'Change Fare',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ];
     }
@@ -6106,7 +6374,11 @@ extension on _BookingNegotiationSheetState {
         ),
         OutlinedButton(
           onPressed: _busy ? null : () => _counterOffer(offer),
-          child: const Text('Counter'),
+          child: const Text(
+            'Change Fare',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ];
     }
@@ -6282,17 +6554,13 @@ class _NegotiationCardState extends State<_NegotiationCard> {
               width: double.infinity,
               padding: const EdgeInsets.only(top: 10),
               decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Color(0xFFF0F2F5)),
-                ),
+                border: Border(top: BorderSide(color: Color(0xFFF0F2F5))),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   InkWell(
-                    onTap: () => setState(
-                      () => _historyOpen = !_historyOpen,
-                    ),
+                    onTap: () => setState(() => _historyOpen = !_historyOpen),
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -6312,9 +6580,7 @@ class _NegotiationCardState extends State<_NegotiationCard> {
                           Text(
                             'Negotiation history (${widget.offer.offerHistory.length})',
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                ),
+                                ?.copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -6328,9 +6594,7 @@ class _NegotiationCardState extends State<_NegotiationCard> {
                         child: Text(
                           '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
                           style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       ),
                     ),

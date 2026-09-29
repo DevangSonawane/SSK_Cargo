@@ -2217,7 +2217,7 @@ TrackingDemoShipment brokerDriverRequestToShipment(
   final status = request.status.trim().toLowerCase();
   final shipmentStatus = switch (status) {
     'accepted' => 'Accepted',
-    'countered' => 'Countered',
+    'countered' => 'Fare changed',
     'declined' || 'rejected' => 'Rejected',
     _ when request.driverTimedOut => 'Driver timed out',
     _ => request.status.isEmpty ? 'Pending' : request.status,
@@ -3129,8 +3129,8 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
       );
     case 'countered':
       return const _BookingRequestStatusVisual(
-        label: 'Countered',
-        description: 'Countered - waiting for the next response',
+        label: 'Fare changed',
+        description: 'Fare changed - waiting for the next response',
         backgroundColor: Color(0xFFFEF3C7),
         borderColor: Color(0xFFFCD34D),
         textColor: Color(0xFFB45309),

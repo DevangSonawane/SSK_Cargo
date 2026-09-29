@@ -101,6 +101,13 @@ class _ClientProfileScreenState extends ConsumerState<ClientProfileScreen> {
                           title: 'My Bookings',
                           onTap: () => context.go('/client/delivery'),
                         ),
+                        _ProfileMenuTile(
+                          icon: AppIcons.calendar_month_outlined,
+                          title: 'Monthly Vehicle Hiring',
+                          subtitle: 'Hire a truck on a monthly basis',
+                          onTap: () =>
+                              context.push('/client/monthly-hiring'),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 18),

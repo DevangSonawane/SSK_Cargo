@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/app_providers.dart';
@@ -22,6 +23,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const String _googleWebClientId =
       '567655647497-ukofai8a0hq0hr5pg1ppr1no0bvsp14k.apps.googleusercontent.com';
+  static const String _registerUrl = 'https://gadidostbroker.asynk.in/register';
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -184,6 +186,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _openRegister() async {
+    final uri = Uri.parse(_registerUrl);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open registration link.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final expiredMessage = ref.watch(authExpiredMessageProvider);
@@ -213,245 +225,354 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 430),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (expiredMessage != null) ...[
-                        _SessionExpiredBanner(
-                          message: expiredMessage,
-                          onDismiss: () => ref
-                              .read(authExpiredMessageProvider.notifier)
-                              .state = null,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      Container(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.62),
-                      borderRadius: BorderRadius.circular(34),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.66),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          height: 48,
-                          child: Center(
-                            child: Transform.translate(
-                              offset: const Offset(0, -8),
-                              child: Transform.scale(
-                                scale: 5.30,
-                                child: Image.asset(
-                                  'assets/Logo.png',
-                                  width: 200,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        TextField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          style: const TextStyle(color: Color(0xFF1B2A3A)),
-                          cursorColor: Color(0xFF2FA56E),
-                          decoration: _pillDecoration(
-                            label: 'Email',
-                            icon: AppIcons.email_rounded,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submit(),
-                          style: const TextStyle(color: Color(0xFF1B2A3A)),
-                          cursorColor: Color(0xFF2FA56E),
-                          decoration: _pillDecoration(
-                            label: 'Password',
-                            icon: AppIcons.lock_rounded,
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                );
-                              },
-                              icon: Icon(
-                                _obscurePassword
-                                    ? AppIcons.visibility_off_outlined
-                                    : AppIcons.visibility_outlined,
-                              ),
-                              tooltip: _obscurePassword
-                                  ? 'Show password'
-                                  : 'Hide password',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: const StadiumBorder(),
-                              backgroundColor: const Color(0xFF2FA56E),
-                            ),
-                            onPressed: _isSubmitting ? null : _submit,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      key: ValueKey('loading'),
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Login',
-                                      key: ValueKey('label'),
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 430),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _isGoogleSubmitting
-                                    ? null
-                                    : _submitWithGoogle,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1B2A3A),
-                                  side: const BorderSide(
-                                    color: Color(0xFFD7DDE5),
-                                  ),
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.82,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  minimumSize: const Size(double.infinity, 0),
-                                  shape: const StadiumBorder(),
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 180),
-                                  child: _isGoogleSubmitting
-                                      ? const SizedBox(
-                                          key: ValueKey('google-loading'),
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Color(0xFF1B2A3A),
-                                          ),
-                                        )
-                                      : SvgPicture.asset(
-                                          'assets/google_logo.svg',
-                                          key: const ValueKey('google-icon'),
-                                          width: 20,
-                                          height: 20,
-                                        ),
-                                ),
+                            if (expiredMessage != null) ...[
+                              _SessionExpiredBanner(
+                                message: expiredMessage,
+                                onDismiss: () =>
+                                    ref
+                                            .read(
+                                              authExpiredMessageProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        null,
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Apple sign-in is coming soon.',
+                              const SizedBox(height: 12),
+                            ],
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.62),
+                                borderRadius: BorderRadius.circular(34),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.66),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.18),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SizedBox(
+                                    height: 48,
+                                    child: Center(
+                                      child: Transform.translate(
+                                        offset: const Offset(0, -8),
+                                        child: Transform.scale(
+                                          scale: 5.30,
+                                          child: Image.asset(
+                                            'assets/Logo.png',
+                                            width: 200,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  );
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1B2A3A),
-                                  side: const BorderSide(
-                                    color: Color(0xFFD7DDE5),
                                   ),
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.82,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: TextField(
+                                      controller: _emailController,
+                                      keyboardType: TextInputType.emailAddress,
+                                      textInputAction: TextInputAction.next,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1B2A3A),
+                                      ),
+                                      cursorColor: Color(0xFF2FA56E),
+                                      decoration: _pillDecoration(
+                                        label: 'Email',
+                                        icon: AppIcons.email_rounded,
+                                      ),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: TextField(
+                                      controller: _passwordController,
+                                      obscureText: _obscurePassword,
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: (_) => _submit(),
+                                      style: const TextStyle(
+                                        color: Color(0xFF1B2A3A),
+                                      ),
+                                      cursorColor: Color(0xFF2FA56E),
+                                      decoration: _pillDecoration(
+                                        label: 'Password',
+                                        icon: AppIcons.lock_rounded,
+                                        suffixIcon: IconButton(
+                                          onPressed: () {
+                                            setState(
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
+                                            );
+                                          },
+                                          icon: Icon(
+                                            _obscurePassword
+                                                ? AppIcons
+                                                      .visibility_off_outlined
+                                                : AppIcons.visibility_outlined,
+                                          ),
+                                          tooltip: _obscurePassword
+                                              ? 'Show password'
+                                              : 'Hide password',
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  minimumSize: const Size(double.infinity, 0),
-                                  shape: const StadiumBorder(),
-                                ),
-                                child: SvgPicture.asset(
-                                  'assets/apple_logo.svg',
-                                  width: 20,
-                                  height: 20,
-                                ),
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      height: 52,
+                                      child: FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          shape: const StadiumBorder(),
+                                          backgroundColor: const Color(
+                                            0xFF2FA56E,
+                                          ),
+                                        ),
+                                        onPressed: _isSubmitting
+                                            ? null
+                                            : _submit,
+                                        child: AnimatedSwitcher(
+                                          duration: const Duration(
+                                            milliseconds: 180,
+                                          ),
+                                          child: _isSubmitting
+                                              ? const SizedBox(
+                                                  key: ValueKey('loading'),
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2.2,
+                                                        color: Colors.white,
+                                                      ),
+                                                )
+                                              : const Text(
+                                                  'Login',
+                                                  key: ValueKey('label'),
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: _isGoogleSubmitting
+                                              ? null
+                                              : _submitWithGoogle,
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFF1B2A3A,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFD7DDE5),
+                                            ),
+                                            backgroundColor: Colors.white
+                                                .withValues(alpha: 0.82),
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: const Size(
+                                              double.infinity,
+                                              52,
+                                            ),
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(
+                                              milliseconds: 180,
+                                            ),
+                                            child: _isGoogleSubmitting
+                                                ? const SizedBox(
+                                                    key: ValueKey(
+                                                      'google-loading',
+                                                    ),
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Color(
+                                                            0xFF1B2A3A,
+                                                          ),
+                                                        ),
+                                                  )
+                                                : SvgPicture.asset(
+                                                    'assets/google_logo.svg',
+                                                    key: const ValueKey(
+                                                      'google-icon',
+                                                    ),
+                                                    width: 20,
+                                                    height: 20,
+                                                  ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Apple sign-in is coming soon.',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFF1B2A3A,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFD7DDE5),
+                                            ),
+                                            backgroundColor: Colors.white
+                                                .withValues(alpha: 0.82),
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: const Size(
+                                              double.infinity,
+                                              52,
+                                            ),
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          child: SvgPicture.asset(
+                                            'assets/apple_logo.svg',
+                                            width: 20,
+                                            height: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Center(
+                                    child: Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 6,
+                                      children: [
+                                        const Text(
+                                          "Don't have an account?",
+                                          style: TextStyle(
+                                            color: Color(0xFF1B2A3A),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              context.go('/signup'),
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                            foregroundColor: const Color(
+                                              0xFF2FA56E,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Create account',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 18),
-                        Center(
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 6,
-                            children: [
-                              const Text(
-                                "Don't have an account?",
-                                style: TextStyle(
-                                  color: Color(0xFF1B2A3A),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => context.go('/signup'),
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  foregroundColor: const Color(0xFF2FA56E),
-                                ),
-                                child: const Text(
-                                  'Create account',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                    ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 430),
+                      child: Container(
+                        height: 52,
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.66),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.14),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: _openRegister,
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF2FA56E),
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              'Register as Broker/Driver',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -525,7 +646,8 @@ class _SessionExpiredBanner extends StatelessWidget {
   }
 }
 
-String _routeForRole(String role) {  return switch (role) {
+String _routeForRole(String role) {
+  return switch (role) {
     'client' => '/client/home',
     'broker' => '/broker/home',
     'driver' => '/driver/home',
@@ -541,26 +663,27 @@ InputDecoration _pillDecoration({
 }) {
   return InputDecoration(
     labelText: label,
-    prefixIcon: Icon(icon),
+    prefixIcon: Icon(icon, size: 20),
     prefixIconColor: const Color(0xFF667085),
     suffixIconColor: const Color(0xFF667085),
     suffixIcon: suffixIcon,
     filled: true,
     fillColor: const Color(0xFFF7FAFD),
-    labelStyle: const TextStyle(color: Color(0xFF667085)),
+    isDense: true,
+    labelStyle: const TextStyle(color: Color(0xFF667085), fontSize: 14),
     floatingLabelStyle: const TextStyle(color: Color(0xFF2FA56E)),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(15),
       borderSide: BorderSide.none,
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(15),
       borderSide: const BorderSide(color: Color(0xFFE5ECF3)),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(15),
       borderSide: const BorderSide(color: Color(0xFF2FA56E), width: 1.4),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
   );
 }

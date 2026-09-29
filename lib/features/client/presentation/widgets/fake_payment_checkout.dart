@@ -6,22 +6,35 @@ Future<bool> showFakePaymentCheckout({
   required BuildContext context,
   required double amount,
   required String description,
+  String? initialMethod,
+  String? defaultMethodLabel,
 }) async {
   final completed = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) =>
-        _FakePaymentCheckout(amount: amount, description: description),
+    builder: (context) => _FakePaymentCheckout(
+      amount: amount,
+      description: description,
+      initialMethod: initialMethod,
+      defaultMethodLabel: defaultMethodLabel,
+    ),
   );
   return completed == true;
 }
 
 class _FakePaymentCheckout extends StatefulWidget {
-  const _FakePaymentCheckout({required this.amount, required this.description});
+  const _FakePaymentCheckout({
+    required this.amount,
+    required this.description,
+    this.initialMethod,
+    this.defaultMethodLabel,
+  });
 
   final double amount;
   final String description;
+  final String? initialMethod;
+  final String? defaultMethodLabel;
 
   @override
   State<_FakePaymentCheckout> createState() => _FakePaymentCheckoutState();
@@ -39,6 +52,17 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
   String _selectedMethod = methods.first;
   String _pin = '';
   bool _processing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Checkout remembers the default saved method (web PaymentMethods
+    // parity): preselect its chip when it matches a known category.
+    final initial = widget.initialMethod;
+    if (initial != null && methods.contains(initial)) {
+      _selectedMethod = initial;
+    }
+  }
 
   String get _amountLabel =>
       '₹${widget.amount.toStringAsFixed(widget.amount % 1 == 0 ? 0 : 2)}';
@@ -119,6 +143,39 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                     color: context.colors.textSecondary,
                   ),
                 ),
+                if ((widget.defaultMethodLabel ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.brandFill,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          AppIcons.check_circle_rounded,
+                          size: 16,
+                          color: context.colors.brandEmphasis,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Default method: ${widget.defaultMethodLabel}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: context.colors.brandEmphasis,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 18),
                 Text(
                   'Choose a payment method',

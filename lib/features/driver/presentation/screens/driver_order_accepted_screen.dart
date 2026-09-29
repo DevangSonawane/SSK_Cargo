@@ -1419,13 +1419,13 @@ class _DriverOrderAcceptedScreenState
             _buildStatusPanel(
               showSpinner: true,
               icon: AppIcons.send_rounded,
-              title: 'Counter sent. Waiting for client response...',
+              title: 'Fare change sent. Waiting for client response...',
               subtitle:
                   'We will unlock the tracking button once the client accepts the offer.',
             ),
           ] else if (counterLimitReached) ...[
             Text(
-              'You have used your counter-offers - accept or decline instead.',
+              'You have used your fare changes - accept or decline instead.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -1516,7 +1516,9 @@ class _DriverOrderAcceptedScreenState
                   ),
                 ),
                 child: Text(
-                  _submitting ? 'Saving...' : 'Send counter',
+                  _submitting ? 'Saving...' : 'Change Fare',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -1559,7 +1561,7 @@ class _DriverOrderAcceptedScreenState
     } else if (_handoffInProgress) {
       heroTitle = 'Finalizing the trip';
     } else if (showCounterControls) {
-      heroTitle = 'Set your counter offer';
+      heroTitle = 'Set your fare change';
     } else {
       heroTitle = 'Negotiating with the client';
     }
@@ -1599,7 +1601,7 @@ class _DriverOrderAcceptedScreenState
                 icon: AppIcons.assignment_turned_in_rounded,
                 title: 'Broker-assigned trip',
                 subtitle:
-                    'Already agreed with the broker - accept or decline, no counter-offers.',
+                    'Already agreed with the broker - accept or decline, no fare changes.',
                 chipLabel: 'Fixed price',
               ),
               const SizedBox(height: 14),
@@ -1778,10 +1780,7 @@ class _DriverOrderAcceptedScreenState
                       text: 'Client responded',
                     )
                   else if (showCounterControls)
-                    _MetaChip(
-                      icon: AppIcons.bolt_rounded,
-                      text: 'Counter window',
-                    )
+                    _MetaChip(icon: AppIcons.bolt_rounded, text: 'Fare window')
                   else
                     _MetaChip(
                       icon: AppIcons.timer_outlined,

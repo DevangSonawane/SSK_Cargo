@@ -278,6 +278,12 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       context.go('/driver/thank-you/${widget.tripId}');
     } on ApiException catch (error) {
       if (!mounted) return;
+      // Backend gates `completed` on client POD approval — park the driver
+      // on the waiting screen instead of showing a raw 409.
+      if (_isVerificationError(error.message)) {
+        context.go('/driver/pod-waiting/${widget.tripId}');
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
@@ -297,6 +303,14 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
         setState(() => _finalizingTrip = false);
       }
     }
+  }
+
+  bool _isVerificationError(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('verif') ||
+        normalized.contains('approv') ||
+        normalized.contains('pending_verification') ||
+        normalized.contains('rejected');
   }
 
   String _formatCurrency(double amount) {
@@ -545,6 +559,10 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       context.go('/driver/thank-you/${widget.tripId}');
     } on ApiException catch (error) {
       if (!mounted) return;
+      if (_isVerificationError(error.message)) {
+        context.go('/driver/pod-waiting/${widget.tripId}');
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),

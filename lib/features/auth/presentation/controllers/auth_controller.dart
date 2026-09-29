@@ -149,6 +149,41 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     state = const AsyncValue.data(null);
   }
 
+  /// Silently exchanges the refresh token for fresh tokens (web
+  /// `AuthContext.refreshTokens` parity). Deliberately does NOT clear the
+  /// session on failure — the caller (session-expired sheet) needs the stale
+  /// session left in place so the user keeps their place while re-logging
+  /// in inline. Returns true when the session was refreshed.
+  Future<bool> refreshTokens() async {
+    final currentSession = session;
+    final refreshToken = currentSession?.tokens.refreshToken ?? '';
+    if (refreshToken.isEmpty) return false;
+    try {
+      final response = await _apiClient.refreshSession(
+        refreshToken: refreshToken,
+      );
+      final data = response['data'];
+      final map = data is Map<String, dynamic> ? data : response;
+      final tokensJson = map['tokens'];
+      if (tokensJson is! Map<String, dynamic>) return false;
+      final tokens = AuthTokens.fromJson(tokensJson);
+      if (tokens.accessToken.isEmpty) return false;
+      final refreshed = AuthSession(
+        user: currentSession!.user,
+        tokens: tokens,
+      );
+      state = AsyncData<AuthSession?>(refreshed);
+      unawaited(
+        _ref
+            .read(appSocketServiceProvider)
+            .ensureConnected(accessToken: tokens.accessToken),
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<AuthSession> refreshProfile() async {
     final currentSession = session;
     if (currentSession == null) {

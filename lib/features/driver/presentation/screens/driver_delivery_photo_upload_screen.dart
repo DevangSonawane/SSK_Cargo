@@ -42,9 +42,35 @@ class _DriverDeliveryPhotoUploadScreenState
   bool _resumingFromRemoteState = false;
   String? _tripPaymentStatus;
   List<dynamic> _remotePodMedia = const [];
+  String _podStatus = '';
+  String _podRejectionReason = '';
+  int _podMinRequired = _minMedia;
 
+  int get _effectiveRemoteCount =>
+      _podStatus == 'rejected' ? 0 : _remotePodMedia.length;
   int get _remoteMediaCount => _remotePodMedia.length;
-  int get _totalMediaCount => _remoteMediaCount + _media.length;
+  int get _effectiveMin => _podMinRequired >= _minMedia
+      ? _podMinRequired
+      : _minMedia;
+  int get _totalMediaCount => _effectiveRemoteCount + _media.length;
+
+  bool get _isRejected => _podStatus == 'rejected';
+  bool get _isPendingVerification => _podStatus == 'pending_verification';
+
+  void _goToWaiting() {
+    if (!mounted) return;
+    context.go('/driver/pod-waiting/${widget.tripId}');
+  }
+
+  String _readTripString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
 
   void _setTripSession({required String tripId, String? paymentStatus}) {
     final resolvedTripId = tripId.trim();
@@ -78,7 +104,7 @@ class _DriverDeliveryPhotoUploadScreenState
     });
   }
 
-  Future<void> _loadRemoteTripState() async {
+  Future<void> _loadRemoteTripState({bool allowNavigate = true}) async {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       if (!mounted) return;
@@ -100,6 +126,22 @@ class _DriverDeliveryPhotoUploadScreenState
           .toLowerCase();
       final podMedia = trip['podMedia'];
       final podPhotos = trip['podPhotos'];
+      final podStatus = _readTripString(trip, const [
+        'podStatus',
+        'pod_status',
+      ]).toLowerCase();
+      final podRejectionReason = _readTripString(trip, const [
+        'podRejectionReason',
+        'pod_rejection_reason',
+        'podRejectReason',
+      ]);
+      final podMinRequired =
+          int.tryParse(
+            trip['podMinRequired']?.toString() ??
+                trip['pod_min_required']?.toString() ??
+                '',
+          ) ??
+          _minMedia;
 
       if (!mounted) return;
       setState(() {
@@ -109,15 +151,32 @@ class _DriverDeliveryPhotoUploadScreenState
             : podPhotos is List
             ? podPhotos
             : const [];
+        _podStatus = podStatus;
+        _podRejectionReason = podRejectionReason;
+        _podMinRequired = podMinRequired >= _minMedia
+            ? podMinRequired
+            : _minMedia;
         _loadingTrip = false;
       });
       _setTripSession(tripId: widget.tripId, paymentStatus: paymentStatus);
 
+      // Auto-advance only on the initial load — never from the post-upload
+      // refresh below, which decides the next screen itself. (Double `go`
+      // calls raced and left a stale payment screen behind.)
+      if (!allowNavigate) return;
+      // A rejected batch doesn't count toward the minimum — stay on this
+      // screen so the driver uploads a fresh batch (mirrors web).
+      if (_isRejected) return;
+      // Already under client review — wait there instead of re-uploading.
+      if (_isPendingVerification) {
+        _goToWaiting();
+        return;
+      }
       if (_remoteMediaCount >= _minMedia && !_resumingFromRemoteState) {
         _resumingFromRemoteState = true;
         if (!mounted) return;
         if (!const {'pending', 'partial'}.contains(paymentStatus)) {
-          context.go('/driver/thank-you/${widget.tripId}');
+          _goToWaiting();
         } else {
           context.go('/driver/payment/${widget.tripId}');
         }
@@ -214,11 +273,11 @@ class _DriverDeliveryPhotoUploadScreenState
   }
 
   Future<void> _submitPhotos() async {
-    if (_totalMediaCount < _minMedia) {
+    if (_totalMediaCount < _effectiveMin) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Add at least ${_minMedia - _totalMediaCount} more proof-of-delivery item(s).',
+            'Add at least ${_effectiveMin - _totalMediaCount} more proof-of-delivery item(s).',
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -237,14 +296,28 @@ class _DriverDeliveryPhotoUploadScreenState
     }
     if (_media.isEmpty) {
       if (_tripPaymentStatus == 'paid') {
-        await ref
-            .read(apiClientProvider)
-            .completeTrip(
-              accessToken: session.tokens.accessToken,
-              tripId: widget.tripId,
-            );
-        if (!mounted) return;
-        context.go('/driver/thank-you/${widget.tripId}');
+        try {
+          await ref
+              .read(apiClientProvider)
+              .completeTrip(
+                accessToken: session.tokens.accessToken,
+                tripId: widget.tripId,
+              );
+          if (!mounted) return;
+          context.go('/driver/thank-you/${widget.tripId}');
+        } on ApiException catch (error) {
+          if (!mounted) return;
+          if (_isVerificationError(error.message)) {
+            _goToWaiting();
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error.message),
+              backgroundColor: AppColors.dangerIcon,
+            ),
+          );
+        }
       } else {
         context.go('/driver/payment/${widget.tripId}');
       }
@@ -279,18 +352,45 @@ class _DriverDeliveryPhotoUploadScreenState
         ),
       );
 
-      await _loadRemoteTripState();
+      await _loadRemoteTripState(allowNavigate: false);
       if (!mounted) return;
 
+      // Freshly uploaded POD lands in `pending_verification` — the client
+      // must approve before the trip can close (mirrors web). Payment still
+      // comes first when money is due; otherwise wait for review.
+      if (_isPendingVerification) {
+        if (_tripPaymentStatus == 'paid') {
+          _goToWaiting();
+        } else {
+          context.go('/driver/payment/${widget.tripId}');
+        }
+        return;
+      }
+      if (_isRejected) return;
+
       if (_tripPaymentStatus == 'paid') {
-        await ref
-            .read(apiClientProvider)
-            .completeTrip(
-              accessToken: session.tokens.accessToken,
-              tripId: widget.tripId,
-            );
-        if (!mounted) return;
-        context.go('/driver/thank-you/${widget.tripId}');
+        try {
+          await ref
+              .read(apiClientProvider)
+              .completeTrip(
+                accessToken: session.tokens.accessToken,
+                tripId: widget.tripId,
+              );
+          if (!mounted) return;
+          context.go('/driver/thank-you/${widget.tripId}');
+        } on ApiException catch (error) {
+          if (!mounted) return;
+          if (_isVerificationError(error.message)) {
+            _goToWaiting();
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error.message),
+              backgroundColor: AppColors.dangerIcon,
+            ),
+          );
+        }
       } else {
         context.go('/driver/payment/${widget.tripId}');
       }
@@ -317,9 +417,17 @@ class _DriverDeliveryPhotoUploadScreenState
     }
   }
 
+  bool _isVerificationError(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('verif') ||
+        normalized.contains('approv') ||
+        normalized.contains('pending_verification') ||
+        normalized.contains('rejected');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _totalMediaCount >= _minMedia && !_uploading;
+    final canSubmit = _totalMediaCount >= _effectiveMin && !_uploading;
     final progress = _totalMediaCount / _maxMedia;
 
     return Scaffold(
@@ -475,8 +583,8 @@ class _DriverDeliveryPhotoUploadScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _totalMediaCount < _minMedia
-                        ? 'Add at least ${_minMedia - _totalMediaCount} more to continue'
+                    _totalMediaCount < _effectiveMin
+                        ? 'Add at least ${_effectiveMin - _totalMediaCount} more to continue'
                         : 'Ready to submit',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -498,9 +606,57 @@ class _DriverDeliveryPhotoUploadScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_isRejected) ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerFill,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.dangerBorder),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            AppIcons.warning_amber_rounded,
+                            color: AppColors.dangerIcon,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'The customer rejected your last upload',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.dangerText,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _podRejectionReason.isNotEmpty
+                                      ? _podRejectionReason
+                                      : 'Please upload fresh photos of the delivered cargo.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.dangerText,
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   _PhotoGrid(
                     media: _media,
-                    remoteCount: _remoteMediaCount,
+                    remoteCount: _effectiveRemoteCount,
                     maxMedia: _maxMedia,
                     onAddFromGallery: _uploading
                         ? null
@@ -520,12 +676,12 @@ class _DriverDeliveryPhotoUploadScreenState
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: _totalMediaCount >= _minMedia
+                          color: _totalMediaCount >= _effectiveMin
                               ? AppColors.brandTint
                               : AppColors.warningFill,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
-                            color: _totalMediaCount >= _minMedia
+                            color: _totalMediaCount >= _effectiveMin
                                 ? AppColors.brandBorder
                                 : AppColors.warningBorder,
                           ),
@@ -534,11 +690,11 @@ class _DriverDeliveryPhotoUploadScreenState
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _totalMediaCount >= _minMedia
+                              _totalMediaCount >= _effectiveMin
                                   ? AppIcons.check_circle_outline_rounded
                                   : AppIcons.add_rounded,
                               size: 14,
-                              color: _totalMediaCount >= _minMedia
+                              color: _totalMediaCount >= _effectiveMin
                                   ? AppColors.brand
                                   : AppColors.warningText,
                             ),
@@ -548,7 +704,7 @@ class _DriverDeliveryPhotoUploadScreenState
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
-                                color: _totalMediaCount >= _minMedia
+                                color: _totalMediaCount >= _effectiveMin
                                     ? AppColors.brand
                                     : AppColors.warningText,
                               ),
@@ -567,7 +723,7 @@ class _DriverDeliveryPhotoUploadScreenState
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          'Min $_minMedia · Max $_maxMedia',
+                          'Min $_effectiveMin · Max $_maxMedia',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,

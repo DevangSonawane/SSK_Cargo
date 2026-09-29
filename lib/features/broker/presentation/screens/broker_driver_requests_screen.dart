@@ -108,7 +108,7 @@ class _BrokerDriverRequestsScreenState
 
     await _runAction(
       request: request,
-      successMessage: 'Counter sent.',
+      successMessage: 'Fare change sent.',
       action: (api, token) {
         return api.counterDriverRequest(
           accessToken: token,
@@ -498,7 +498,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: 'Counter',
+                    label: 'Change Fare',
                     icon: AppIcons.payments_rounded,
                     color: AppColors.accentBlue,
                     backgroundColor: AppColors.brandFill,
@@ -677,10 +677,14 @@ class _ActionButton extends StatelessWidget {
             Icon(icon, size: 16),
             const SizedBox(width: 6),
             Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
           ],
@@ -746,7 +750,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Counter offer',
+              'Change fare',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: AppColors.textPrimary,
@@ -775,7 +779,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Set counter amount',
+                    'Set fare amount',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -832,7 +836,11 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(clamped),
-                    child: const Text('Send counter'),
+                    child: const Text(
+                      'Change Fare',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],

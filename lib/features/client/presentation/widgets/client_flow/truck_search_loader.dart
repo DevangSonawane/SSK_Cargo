@@ -1,4 +1,5 @@
 part of '../client_flow_widgets.dart';
+
 class _FindTruckOfferCard extends StatefulWidget {
   const _FindTruckOfferCard({
     super.key,
@@ -146,7 +147,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
       pillBg = const Color(0xFFF0F2F5);
       pillFg = const Color(0xFF667085);
     } else if (request.isCountered) {
-      statusLabel = 'Countered — your turn';
+      statusLabel = 'New fare — your turn';
       pillBg = const Color(0xFFFFF4E0);
       pillFg = const Color(0xFFB54708);
     } else if (request.normalizedStatus == 'accepted') {
@@ -179,9 +180,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: actionable
-              ? const Color(0xFF2FA56E)
-              : context.colors.line,
+          color: actionable ? const Color(0xFF2FA56E) : context.colors.line,
           width: actionable ? 1.4 : 1,
         ),
         boxShadow: [
@@ -249,10 +248,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
               onTap: () => _callDriver(request.driverPhone),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -267,11 +263,10 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                         request.driverPhone,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(
-                              color: const Color(0xFF167247),
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF167247),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
@@ -299,10 +294,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
           if (!_negotiating)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: context.colors.fillSubtle,
                 borderRadius: BorderRadius.circular(14),
@@ -313,7 +305,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                     isConfirmTurn
                         ? 'FINAL PRICE'
                         : request.isCountered
-                        ? 'COUNTER OFFER'
+                        ? 'NEW FARE'
                         : 'DRIVER ASK',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: context.colors.textTertiary,
@@ -358,7 +350,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
           ] else if (_negotiating) ...[
             const SizedBox(height: 10),
             Text(
-              'SET YOUR COUNTER',
+              'SET NEW FARE',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: context.colors.textTertiary,
                 fontWeight: FontWeight.w800,
@@ -370,9 +362,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: const Color(0xFF2FA56E),
                 thumbColor: const Color(0xFF2FA56E),
-                overlayColor: const Color(
-                  0xFF2FA56E,
-                ).withValues(alpha: 0.15),
+                overlayColor: const Color(0xFF2FA56E).withValues(alpha: 0.15),
               ),
               child: Slider(
                 min: _min,
@@ -402,7 +392,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your Counter-Offer: ${_rupees(_offerAmount)}',
+              'Your New Fare: ${_rupees(_offerAmount)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: const Color(0xFFB54708),
                 fontWeight: FontWeight.w800,
@@ -432,10 +422,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                 ),
                 TextButton(
                   onPressed: _sending ? null : _closeNegotiate,
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -462,7 +449,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
             // driver — no Confirm/Counter/Decline until they move.
             const SizedBox(height: 4),
             Text(
-              'Your counter of ${_rupees(_myCounterAmount > 0 ? _myCounterAmount : _sentAmount)} was sent — waiting for ${driverName == 'Driver' ? 'the driver' : driverName} to respond.',
+              'Your new fare of ${_rupees(_myCounterAmount > 0 ? _myCounterAmount : _sentAmount)} was sent — waiting for ${driverName == 'Driver' ? 'the driver' : driverName} to respond.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
@@ -504,24 +491,28 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: widget.busy
-                          ? null
-                          : _openNegotiate,
+                      onPressed: widget.busy ? null : _openNegotiate,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF167247),
-                        side: const BorderSide(
-                          color: Color(0xFF2FA56E),
+                        side: const BorderSide(color: Color(0xFF2FA56E)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 12,
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
-                        'Counter',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Change Fare',
+                          maxLines: 1,
+                          softWrap: false,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ),
@@ -683,11 +674,11 @@ class _FindTruckOffersPagerState extends State<_FindTruckOffersPager> {
                 ),
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
-                    child: _FindTruckOfferCard(
-                      key: ValueKey(request.id),
-                      request: request,
-                      busy: widget.actingId == request.id,
-                      errorText: widget.errorFor?.call(request.id),
+                  child: _FindTruckOfferCard(
+                    key: ValueKey(request.id),
+                    request: request,
+                    busy: widget.actingId == request.id,
+                    errorText: widget.errorFor?.call(request.id),
                     onAccept: widget.onAccept == null
                         ? null
                         : () => widget.onAccept!(request),
@@ -701,48 +692,48 @@ class _FindTruckOffersPagerState extends State<_FindTruckOffersPager> {
             },
           ),
         ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ...List.generate(
-                requests.length.clamp(0, 12),
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                  width: index == _page ? 18 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: index == _page
-                        ? const Color(0xFF2FA56E)
-                        : context.colors.line,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              if (requests.length > 1) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '${(_page + 1).clamp(1, requests.length)} of ${requests.length}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: context.colors.textSecondary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (requests.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                'Swipe to compare drivers',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context.colors.textTertiary,
-                  fontSize: 10,
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ...List.generate(
+              requests.length.clamp(0, 12),
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                width: index == _page ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: index == _page
+                      ? const Color(0xFF2FA56E)
+                      : context.colors.line,
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
+            if (requests.length > 1) ...[
+              const SizedBox(width: 8),
+              Text(
+                '${(_page + 1).clamp(1, requests.length)} of ${requests.length}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: context.colors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (requests.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'Swipe to compare drivers',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: context.colors.textTertiary,
+                fontSize: 10,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -797,9 +788,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: context.colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(28),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             border: Border(
               top: BorderSide(color: context.colors.line, width: 1),
             ),
@@ -843,7 +832,8 @@ class _FindTruckOffersSheet extends StatelessWidget {
                     ),
                     IconButton(
                       tooltip: 'Close',
-                      onPressed: onClose ?? () => Navigator.of(context).maybePop(),
+                      onPressed:
+                          onClose ?? () => Navigator.of(context).maybePop(),
                       style: IconButton.styleFrom(
                         backgroundColor: context.colors.fillSubtle,
                         foregroundColor: context.colors.textSecondary,
@@ -904,9 +894,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                           'Notifying drivers — their offers will appear here.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                         if (offersError) ...[
                           const SizedBox(height: 10),
@@ -960,9 +948,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                           'Every nearby driver declined or timed out. Keep searching to notify them again, or go back to choose trucks.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                         const SizedBox(height: 14),
                         Row(

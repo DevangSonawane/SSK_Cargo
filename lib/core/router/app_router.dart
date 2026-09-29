@@ -49,6 +49,8 @@ import '../../features/driver/presentation/screens/driver_delivery_details_scree
 import '../../features/driver/presentation/screens/driver_delivery_history_details_screen.dart';
 import '../../features/driver/presentation/screens/driver_payment_screen.dart';
 import '../../features/driver/presentation/screens/driver_delivery_photo_upload_screen.dart';
+import '../../features/driver/presentation/screens/driver_delivery_completion_flow_screen.dart';
+import '../../features/driver/presentation/screens/driver_pod_waiting_screen.dart';
 import '../../features/driver/presentation/screens/driver_thank_you_screen.dart';
 import '../../features/driver/presentation/screens/driver_kyc_registration_screen.dart';
 import '../../features/driver/presentation/screens/driver_profile_screen.dart';
@@ -63,6 +65,8 @@ import '../../features/client/presentation/screens/client_payment_method_add_scr
 import '../../features/client/presentation/screens/client_payment_methods_screen.dart';
 import '../../features/client/presentation/screens/client_saved_addresses_screen.dart';
 import '../../features/client/presentation/screens/client_settings_screen.dart';
+import '../../features/client/presentation/screens/client_monthly_hiring_screen.dart';
+import '../../features/client/presentation/screens/client_monthly_hiring_form_screen.dart';
 import '../../features/client/presentation/screens/client_shell.dart';
 import '../../features/client/presentation/screens/client_tracking_screen.dart';
 import '../../features/client/presentation/screens/public_tracking_screen.dart';
@@ -241,6 +245,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/driver/complete/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          return NoTransitionPage(
+            child: _lightFlow(
+              DriverDeliveryCompletionFlowScreen(tripId: tripId),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/driver/pod-waiting/:tripId',
+        pageBuilder: (context, state) {
+          final tripId = state.pathParameters['tripId'] ?? '';
+          return NoTransitionPage(
+            child: _lightFlow(DriverPodWaitingScreen(tripId: tripId)),
+          );
+        },
+      ),
+      GoRoute(
         path: '/driver/thank-you/:tripId',
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId'] ?? '';
@@ -320,6 +344,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/client/settings',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: ClientSettingsScreen()),
+      ),
+      GoRoute(
+        path: '/client/monthly-hiring',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientMonthlyHiringScreen()),
+      ),
+      GoRoute(
+        path: '/client/monthly-hiring/new',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ClientMonthlyHiringFormScreen()),
       ),
       GoRoute(
         path: '/client/saved-addresses',

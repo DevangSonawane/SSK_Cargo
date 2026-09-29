@@ -34,9 +34,16 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   );
   final TextEditingController _searchController = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _jobRequestSubscription;
+  StreamSubscription<Map<String, dynamic>>? _driverRequestSubscription;
 
   bool _sortNewestFirst = true;
   final Set<String> _busyRequestIds = <String>{};
+
+  /// Driver offers sent from this inbox via assign-driver, keyed by job
+  /// request id (web `JobRequests.jsx` `pendingAssignments` parity). Keeps
+  /// each card showing "waiting on driver / countered / timed-out" instead
+  /// of going silent after assignment.
+  final Map<String, _PendingDriverOffer> _pendingAssignments = {};
 
   @override
   void initState() {
@@ -52,6 +59,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
   void dispose() {
     _searchController.dispose();
     _jobRequestSubscription?.cancel();
+    _driverRequestSubscription?.cancel();
     super.dispose();
   }
 
@@ -76,6 +84,162 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       if (!mounted) return;
       ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
     });
+
+    // Driver responses to assign-driver offers arrive live here (web
+    // `useDriverRequestSocket` parity) — only relevant for job requests
+    // this inbox assigned (matched on jobRequestId).
+    await _driverRequestSubscription?.cancel();
+    _driverRequestSubscription = socketService.driverRequestStream.listen(
+      _handleDriverRequestEvent,
+    );
+    unawaited(_seedPendingAssignments());
+  }
+
+  String _payloadString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key]?.toString().trim();
+      if (value != null && value.isNotEmpty && value.toLowerCase() != 'null') {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  bool _payloadBool(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final text = value?.toString().trim().toLowerCase();
+      if (text == 'true' || text == '1') return true;
+    }
+    return false;
+  }
+
+  _PendingDriverOffer? _offerFromPayload(Map<String, dynamic> payload) {
+    final jobRequestId = _payloadString(payload, const [
+      'jobRequestId',
+      'job_request_id',
+    ]);
+    if (jobRequestId.isEmpty) return null;
+    final status = _payloadString(payload, const ['status']).toLowerCase();
+    return _PendingDriverOffer(
+      jobRequestId: jobRequestId,
+      driverName: _payloadString(payload, const ['driverName', 'driver_name']),
+      status: status.isEmpty ? 'pending' : status,
+      driverTimedOut: _payloadBool(payload, const [
+        'driverTimedOut',
+        'driver_timed_out',
+      ]),
+    );
+  }
+
+  /// Seeds pending assignments from the broker's driver-requests so cards
+  /// assigned in a previous session still show their live state on load.
+  Future<void> _seedPendingAssignments() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null || !mounted) return;
+    try {
+      final response = await ref
+          .read(apiClientProvider)
+          .getDriverRequests(
+            accessToken: session.tokens.accessToken,
+            page: 1,
+            limit: 100,
+          );
+      final data = response['data'];
+      final map = data is Map<String, dynamic> ? data : response;
+      Object? raw;
+      for (final key in const [
+        'requests',
+        'driverRequests',
+        'driver_requests',
+        'items',
+        'rows',
+        'results',
+      ]) {
+        raw = map[key] ?? response[key];
+        if (raw is List) break;
+        raw = null;
+      }
+      if (raw is! List || !mounted) return;
+      var changed = false;
+      for (final item in raw) {
+        if (item is! Map<String, dynamic>) continue;
+        final offer = _offerFromPayload(item);
+        if (offer == null || !_isLiveOfferStatus(offer.status)) continue;
+        _pendingAssignments[offer.jobRequestId] = offer;
+        changed = true;
+      }
+      if (changed && mounted) setState(() {});
+    } catch (_) {
+      // Best-effort seeding; live socket events still keep cards fresh.
+    }
+  }
+
+  bool _isLiveOfferStatus(String status) {
+    return const {
+      'pending',
+      'countered',
+      'awaiting_confirmation',
+      'requested',
+    }.contains(status);
+  }
+
+  void _handleDriverRequestEvent(Map<String, dynamic> payload) {
+    if (!mounted) return;
+    final offer = _offerFromPayload(payload);
+    if (offer == null) return;
+    final tracked =
+        _pendingAssignments.containsKey(offer.jobRequestId) ||
+        _isVisibleJobRequest(offer.jobRequestId);
+    if (!tracked) return;
+    if (offer.status == 'declined' || offer.status == 'expired') {
+      final removed = _pendingAssignments.remove(offer.jobRequestId) != null;
+      final name = offer.driverName.isNotEmpty
+          ? offer.driverName
+          : 'The driver';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$name declined — pick a different driver for this job.',
+          ),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+      if (removed && mounted) setState(() {});
+      return;
+    }
+    if (offer.status == 'accepted') {
+      _pendingAssignments.remove(offer.jobRequestId);
+      final name = offer.driverName.isNotEmpty
+          ? offer.driverName
+          : 'The driver';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$name confirmed — trip created.'),
+          backgroundColor: AppColors.brand,
+        ),
+      );
+      ref.invalidate(brokerJobRequestsProvider(_requestsQuery));
+      if (mounted) setState(() {});
+      return;
+    }
+    _pendingAssignments[offer.jobRequestId] = offer;
+    if (mounted) setState(() {});
+  }
+
+  bool _isVisibleJobRequest(String jobRequestId) {
+    try {
+      final requests = ref
+          .read(brokerJobRequestsProvider(_requestsQuery))
+          .valueOrNull;
+      if (requests == null) return false;
+      return requests.any((request) => request.id == jobRequestId);
+    } catch (_) {
+      return false;
+    }
   }
 
   List<BookingRequest> _visibleRequests(List<BookingRequest> requests) {
@@ -207,7 +371,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           .read(apiClientProvider)
           .counterJobRequest(accessToken: token, id: request.id, amount: amount)
           .then((_) {}),
-      successMessage: 'Counter sent.',
+      successMessage: 'Fare change sent.',
     );
   }
 
@@ -235,6 +399,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ref.invalidate(brokerDriverRequestsProvider((page: 1, limit: 100)));
       ref.invalidate(brokerDriversApiProvider(_driversQuery));
       ref.invalidate(brokerTrucksProvider(_trucksQuery));
+      // Card stays in the list showing "waiting on driver" (web parity) —
+      // seed from the fresh driver-requests so the banner shows immediately.
+      unawaited(_seedPendingAssignments());
 
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +472,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Send counter-offer',
+                    'Change fare',
                     style: Theme.of(sheetContext).textTheme.titleLarge
                         ?.copyWith(
                           color: AppColors.textPrimary,
@@ -359,7 +526,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.brand,
                           ),
-                          child: const Text('Send counter'),
+                          child: const Text(
+                            'Change Fare',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],
@@ -485,6 +656,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                               child: _BookingRequestCard(
                                 request: request,
                                 busy: _busyRequestIds.contains(request.id),
+                                pendingOffer: _pendingAssignments[request.id],
+                                onOpenDriverRequests: () =>
+                                    context.push('/broker/driver-requests'),
                                 onTap: () async {
                                   final changed = await context.push<bool>(
                                     '/broker/request',
@@ -706,6 +880,86 @@ class _SearchField extends StatelessWidget {
   }
 }
 
+/// A driver offer sent via assign-driver that hasn't resolved yet (web
+/// `JobRequests.jsx` `pendingAssignments[id]` parity).
+class _PendingDriverOffer {
+  const _PendingDriverOffer({
+    required this.jobRequestId,
+    required this.driverName,
+    required this.status,
+    required this.driverTimedOut,
+  });
+
+  final String jobRequestId;
+  final String driverName;
+  final String status;
+  final bool driverTimedOut;
+}
+
+/// Tappable "waiting on driver / countered / timed-out" banner (web
+/// `JobRequests.jsx` parity) that routes to Driver Requests to respond.
+class _PendingAssignmentBanner extends StatelessWidget {
+  const _PendingAssignmentBanner({required this.offer, required this.onTap});
+
+  final _PendingDriverOffer offer;
+  final VoidCallback? onTap;
+
+  String get _text {
+    final name = offer.driverName.isNotEmpty ? offer.driverName : 'Driver';
+    if (offer.status == 'countered') {
+      return '$name changed fare — respond from Driver Requests';
+    }
+    if (offer.driverTimedOut) {
+      return '$name hasn\'t responded — respond on their behalf from Driver Requests';
+    }
+    return 'Waiting for $name to respond';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDFA),
+          border: Border.all(color: const Color(0xFF99F6E4)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              AppIcons.schedule_rounded,
+              size: 14,
+              color: Color(0xFF0F766E),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F766E),
+                ),
+              ),
+            ),
+            const Icon(
+              AppIcons.arrow_forward_rounded,
+              size: 14,
+              color: Color(0xFF0F766E),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BookingRequestCard extends StatelessWidget {
   const _BookingRequestCard({
     required this.request,
@@ -715,6 +969,8 @@ class _BookingRequestCard extends StatelessWidget {
     required this.onCounter,
     required this.onDecline,
     required this.onAssign,
+    this.pendingOffer,
+    this.onOpenDriverRequests,
   });
 
   final BookingRequest request;
@@ -724,6 +980,8 @@ class _BookingRequestCard extends StatelessWidget {
   final VoidCallback onCounter;
   final VoidCallback onDecline;
   final VoidCallback onAssign;
+  final _PendingDriverOffer? pendingOffer;
+  final VoidCallback? onOpenDriverRequests;
 
   @override
   Widget build(BuildContext context) {
@@ -891,7 +1149,12 @@ class _BookingRequestCard extends StatelessWidget {
               _NegotiationHistory(entries: request.offerHistory),
             ],
             const SizedBox(height: 12),
-            if (showAssignAction) ...[
+            if (pendingOffer != null) ...[
+              _PendingAssignmentBanner(
+                offer: pendingOffer!,
+                onTap: onOpenDriverRequests,
+              ),
+            ] else if (showAssignAction) ...[
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -971,7 +1234,7 @@ class _BookingRequestCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _JobActionButton(
-                        label: 'Counter',
+                        label: 'Change Fare',
                         icon: AppIcons.currency_rupee_rounded,
                         color: AppColors.accentBlue,
                         borderColor: AppColors.accentBlueBorder,
@@ -994,8 +1257,8 @@ class _BookingRequestCard extends StatelessWidget {
               const SizedBox(height: 6),
               _ActionHint(
                 text: counterLimitReached
-                    ? 'You have used your counter-offers - accept or decline instead.'
-                    : 'Your offer of $amountText is live - accept to lock it in, or counter/decline.',
+                    ? 'You have used your fare changes - accept or decline instead.'
+                    : 'Your offer of $amountText is live - accept to lock it in, or change fare/decline.',
               ),
             ] else ...[
               SizedBox(
@@ -1732,7 +1995,10 @@ class _JobActionButton extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: color),
             )
           : Icon(icon, size: 15),
-      label: Text(label),
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: borderColor),

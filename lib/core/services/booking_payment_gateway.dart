@@ -43,10 +43,19 @@ class BookingPaymentGateway {
     if (provider != 'razorpay') {
       final checkoutContext = context;
       if (checkoutContext != null && checkoutContext.mounted) {
+        // Web parity ("checkout remembers it next time"): preselect the
+        // sheet with the user's default saved method. Best-effort — a
+        // failure here must never block payment.
+        final remembered = await _defaultSavedMethod(accessToken);
+        if (!checkoutContext.mounted) {
+          throw const ApiException('Payment cancelled.');
+        }
         final completed = await showFakePaymentCheckout(
           context: checkoutContext,
           amount: _readDouble(order, const ['amount']),
           description: description,
+          initialMethod: remembered?.chip,
+          defaultMethodLabel: remembered?.label,
         );
         if (!completed) {
           throw const ApiException('Payment cancelled.');
@@ -166,6 +175,37 @@ class BookingPaymentGateway {
     return data;
   }
 
+  /// Best-effort lookup of the user's default saved payment method so
+  /// checkout can preselect it. Never throws — callers fall back to the
+  /// generic sheet when this returns null.
+  Future<_RememberedMethod?> _defaultSavedMethod(String accessToken) async {
+    try {
+      final response = await _apiClient.getSavedPaymentMethods(
+        accessToken: accessToken,
+      );
+      final payload = _asMap(response['data']);
+      final data = payload.isNotEmpty ? payload : response;
+      final raw =
+          data['paymentMethods'] ??
+          data['items'] ??
+          data['results'] ??
+          data['rows'];
+      if (raw is! List) return null;
+      final methods = raw
+          .whereType<Map<String, dynamic>>()
+          .map(_RememberedMethod.fromJson)
+          .where((m) => m.chip != null)
+          .toList(growable: false);
+      if (methods.isEmpty) return null;
+      return methods.firstWhere(
+        (m) => m.isDefault,
+        orElse: () => methods.first,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Map<String, dynamic> _extractBooking(Map<String, dynamic> response) {
     final data = _asMap(response['data']);
     final booking = _asMap(data['booking']);
@@ -219,4 +259,63 @@ class BookingPaymentGateway {
     }
     return ApiException(error.toString().replaceFirst('Exception: ', ''));
   }
+}
+
+/// A saved payment method distilled to what checkout needs: which demo
+/// sheet chip to preselect and which label to show.
+class _RememberedMethod {
+  const _RememberedMethod({
+    required this.type,
+    required this.label,
+    required this.isDefault,
+  });
+
+  factory _RememberedMethod.fromJson(Map<String, dynamic> json) {
+    String str(Object? value) {
+      final text = value?.toString().trim() ?? '';
+      return text.toLowerCase() == 'null' ? '' : text;
+    }
+
+    final details = json['details'];
+    final detailMap = details is Map<String, dynamic> ? details : null;
+    var label = str(json['label']);
+    final type = str(json['methodType'] ?? json['method_type']);
+    if (label.isEmpty && detailMap != null) {
+      label = switch (type) {
+        'upi' => str(detailMap['upi_id']),
+        'card' =>
+          '${str(detailMap['brand'])} •••• ${str(detailMap['last4'])}'.trim(),
+        'netbanking' => str(detailMap['bank']),
+        'wallet' => str(detailMap['wallet']),
+        _ => '',
+      };
+    }
+    bool isDefault = false;
+    final rawDefault = json['isDefault'] ?? json['is_default'];
+    if (rawDefault is bool) {
+      isDefault = rawDefault;
+    } else if (rawDefault is num) {
+      isDefault = rawDefault != 0;
+    } else if (rawDefault is String) {
+      isDefault = rawDefault.toLowerCase() == 'true';
+    }
+    return _RememberedMethod(
+      type: type,
+      label: label.isEmpty ? type : label,
+      isDefault: isDefault,
+    );
+  }
+
+  final String type;
+  final String label;
+  final bool isDefault;
+
+  /// Demo-sheet chip matching this saved type, or null when unknown.
+  String? get chip => switch (type) {
+    'upi' => 'UPI',
+    'card' => 'Cards',
+    'netbanking' => 'Netbanking',
+    'wallet' => 'Wallet',
+    _ => null,
+  };
 }

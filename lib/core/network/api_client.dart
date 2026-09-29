@@ -77,6 +77,24 @@ class SskApiClient {
     );
   }
 
+  /// Exchanges the refresh token for fresh tokens (web `AuthContext`
+  /// `refreshTokens` parity: `POST /api/auth/refresh-token`). Unauthenticated
+  /// call, and `/api/auth/` paths never broadcast 401s.
+  Future<Map<String, dynamic>> refreshSession({
+    required String refreshToken,
+  }) async {
+    developer.log(
+      'POST /api/auth/refresh-token refreshTokenLength=${refreshToken.length}',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/auth/refresh-token',
+        data: {'refresh_token': refreshToken},
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
@@ -820,6 +838,58 @@ class SskApiClient {
     );
   }
 
+  /// Monthly vehicle hiring enquiries (web `MonthlyHiring.jsx` parity).
+  Future<Map<String, dynamic>> getMonthlyHiringEnquiries({
+    required String accessToken,
+  }) async {
+    developer.log(
+      'GET /api/monthly-hiring/enquiries/mine',
+      name: 'SSK.API',
+    );
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/monthly-hiring/enquiries/mine',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Raises a monthly-hiring enquiry (web `MonthlyHiringForm.jsx` parity).
+  Future<Map<String, dynamic>> createMonthlyHiringEnquiry({
+    required String accessToken,
+    required String location,
+    String? truckCategory,
+    required String startDate,
+    required String endDate,
+    required String pricingType,
+    double? budgetAmount,
+    String? description,
+  }) async {
+    developer.log('POST /api/monthly-hiring/enquiries', name: 'SSK.API');
+    final data = <String, dynamic>{
+      'location': location,
+      'start_date': startDate,
+      'end_date': endDate,
+      'pricing_type': pricingType,
+    };
+    if (truckCategory != null && truckCategory.isNotEmpty) {
+      data['truck_category'] = truckCategory;
+    }
+    if (budgetAmount != null) {
+      data['budget_amount'] = budgetAmount;
+    }
+    if (description != null && description.isNotEmpty) {
+      data['description'] = description;
+    }
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/monthly-hiring/enquiries',
+        data: data,
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getSavedPaymentMethods({
     required String accessToken,
   }) async {
@@ -1131,6 +1201,22 @@ class SskApiClient {
     return _request(
       () => _dio.get<Map<String, dynamic>>(
         '/api/trips/$tripId',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Loads the trip behind a booking (web `JobDetail.jsx`
+  /// `GET /api/trips/booking/:id` parity) for broker take-over, on-behalf
+  /// completion and payment collection.
+  Future<Map<String, dynamic>> getTripForBooking({
+    required String accessToken,
+    required String bookingId,
+  }) async {
+    developer.log('GET /api/trips/booking/$bookingId', name: 'SSK.API');
+    return _request(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/trips/booking/$bookingId',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );
@@ -1874,6 +1960,42 @@ class SskApiClient {
     );
   }
 
+  /// Client approves the driver's proof of delivery. Mirrors the web client
+  /// (`BookingDetail.jsx` handleVerifyPod): only meaningful while the trip's
+  /// `podStatus` is `pending_verification`. The driver can only close the
+  /// trip (`PATCH status=completed`) once this has happened.
+  Future<Map<String, dynamic>> verifyTripPod({
+    required String accessToken,
+    required String tripId,
+  }) async {
+    developer.log('PATCH /api/trips/$tripId/pod/verify', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/trips/$tripId/pod/verify',
+        data: const <String, dynamic>{},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Client rejects the driver's proof of delivery and asks for a re-upload.
+  /// Mirrors the web client (`BookingDetail.jsx` handleRejectPod +
+  /// `RejectPodSheet.jsx`): `reason` is shown to the driver.
+  Future<Map<String, dynamic>> rejectTripPod({
+    required String accessToken,
+    required String tripId,
+    required String reason,
+  }) async {
+    developer.log('PATCH /api/trips/$tripId/pod/reject', name: 'SSK.API');
+    return _request(
+      () => _dio.patch<Map<String, dynamic>>(
+        '/api/trips/$tripId/pod/reject',
+        data: {'reason': reason},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> uploadDriverPaymentQr({
     required String accessToken,
     required String filePath,
@@ -1907,6 +2029,23 @@ class SskApiClient {
       () => _dio.patch<Map<String, dynamic>>(
         '/api/trips/$tripId/collect-payment',
         data: {'mode': mode},
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+      ),
+    );
+  }
+
+  /// Driver backs out of an assigned trip before starting it (web
+  /// `MyTrip.jsx` handleDeclineTrip parity: `POST /api/trips/:id/decline`
+  /// with a null body). Only valid while the trip is still `confirmed`;
+  /// frees the driver/truck for broker reassignment.
+  Future<Map<String, dynamic>> declineTrip({
+    required String accessToken,
+    required String tripId,
+  }) async {
+    developer.log('POST /api/trips/$tripId/decline', name: 'SSK.API');
+    return _request(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/trips/$tripId/decline',
         options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       ),
     );

@@ -6,12 +6,12 @@ import 'package:ssk/features/driver/presentation/widgets/trip_summary_card.dart'
 DriverTripSummary _fakeTrip({
   String status = 'delivered',
   double amount = 1450,
-  String bookingId = 'BK-2481',
+  String bookingId = '8f3a2b1c-4d2e-4f6a-9c1d-2e3f4a5b6c7d',
 }) {
   return DriverTripSummary(
     id: 'trip-1',
     bookingId: bookingId,
-    bookingNumber: '2481',
+    bookingNumber: 'BKG-2481',
     fromLocation: 'Andheri East, Mumbai',
     toLocation: 'Bandra West, Mumbai',
     distanceKm: 12.5,
@@ -36,7 +36,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('BK-2481'), findsOneWidget);
+    expect(find.textContaining('BKG-2481'), findsOneWidget);
     expect(find.text('Andheri East'), findsOneWidget);
     expect(find.text('Bandra West'), findsOneWidget);
     expect(find.text('₹1450'), findsOneWidget);

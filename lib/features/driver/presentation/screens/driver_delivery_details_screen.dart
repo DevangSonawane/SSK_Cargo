@@ -23,6 +23,7 @@ import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 import '../../../chat/presentation/widgets/booking_chat_view.dart';
+import '../widgets/slide_to_confirm.dart';
 
 class _TripStop {
   const _TripStop({
@@ -190,9 +191,9 @@ class _DriverDeliveryDetailsScreenState
   bool _detailsPanelExpanded = true;
   bool _loadingTrip = true;
   bool _confirmingArrival = false;
+  bool _decliningTrip = false;
   int? _completingStopIndex;
   String _tripStatus = 'confirmed';
-  String _paymentStatus = 'pending';
   String _customerName = 'Customer';
   String _customerPhone = '';
   String _dropLocation = 'Drop location not provided';
@@ -474,10 +475,6 @@ class _DriverDeliveryDetailsScreenState
             name: 'driver.deliveryDetails',
           );
         }
-        _paymentStatus = _readString(trip, const [
-          'paymentStatus',
-          'payment_status',
-        ]).toLowerCase();
         final loadedCustomerName = _readString(trip, const [
           'clientName',
           'customerName',
@@ -1212,7 +1209,7 @@ class _DriverDeliveryDetailsScreenState
                         ),
                         if (isArrivalFlow) ...[
                           const SizedBox(height: 16),
-                          _SlideToConfirm(
+                          SlideToConfirm(
                             enabled:
                                 !_loadingTrip && !_confirmingArrival,
                             label: _confirmingArrival
@@ -1318,6 +1315,31 @@ class _DriverDeliveryDetailsScreenState
                               ),
                             ),
                           ),
+                          // Web `MyTrip.jsx` parity: back out before starting
+                          // (only while still `confirmed`). Frees the trip
+                          // for broker reassignment.
+                          if (_tripStatus == 'confirmed' &&
+                              !_loadingTrip &&
+                              _tripId.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextButton(
+                                onPressed: _decliningTrip
+                                    ? null
+                                    : _confirmDeclineTrip,
+                                child: Text(
+                                  _decliningTrip
+                                      ? 'Declining...'
+                                      : 'Decline trip',
+                                  style: const TextStyle(
+                                    color: AppColors.dangerText,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ],
                     )
@@ -1327,6 +1349,93 @@ class _DriverDeliveryDetailsScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeclineTrip() async {
+    if (_decliningTrip || _tripId.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text('Decline this trip?'),
+        content: const Text(
+          'You will be freed from this trip and your broker can assign another driver. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Keep trip'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.dangerText,
+            ),
+            child: const Text('Decline trip'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final session = ref.read(authSessionProvider).valueOrNull;
+    if (session == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in again to continue.')),
+      );
+      return;
+    }
+    setState(() => _decliningTrip = true);
+    try {
+      developer.log(
+        'Declining trip. tripId=$_tripId status=$_tripStatus',
+        name: 'driver.deliveryDetails',
+      );
+      await ref
+          .read(apiClientProvider)
+          .declineTrip(
+            accessToken: session.tokens.accessToken,
+            tripId: _tripId,
+          );
+      if (!mounted) return;
+      ref.invalidate(driverDashboardProvider);
+      ref.read(driverActiveTripIdProvider.notifier).state = null;
+      ref.read(driverTripSessionProvider.notifier).state = null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Trip declined.')),
+      );
+      context.go('/driver/home');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      developer.log(
+        'Decline trip failed. tripId=$_tripId message=${error.message}',
+        name: 'driver.deliveryDetails',
+      );
+      // The button only shows while locally `confirmed` — a 409 means the
+      // local snapshot was stale (trip already started). Reload so the UI
+      // reflects the real status instead of a dead button.
+      if ((error.statusCode == 409 ||
+              error.message.toLowerCase().contains('already')) &&
+          mounted) {
+        unawaited(_loadTrip());
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: AppColors.dangerIcon,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _decliningTrip = false);
+    }
   }
 
   Future<void> _confirmArrival() async {
@@ -1388,17 +1497,14 @@ class _DriverDeliveryDetailsScreenState
       );
       if (!mounted) return;
       ref.invalidate(driverDashboardProvider);
-      final requiresPayment = const {
-        'pending',
-        'partial',
-      }.contains(_paymentStatus.trim().toLowerCase());
       developer.log(
-        'Navigating to delivery proof. tripId=$_tripId requiresPayment=$requiresPayment totalElapsedMs=${stopwatch.elapsedMilliseconds}',
+        'Navigating to delivery completion flow. tripId=$_tripId totalElapsedMs=${stopwatch.elapsedMilliseconds}',
         name: 'driver.deliveryDetails',
       );
-      context.go(
-        '/driver/delivery-proof/$_tripId?payment=${requiresPayment ? 'pending' : 'paid'}',
-      );
+      // Single-screen wizard (web `DeliveryCompletionFlow` parity): arrival,
+      // POD upload, payment and client-approval waiting all stay on one
+      // screen derived from server state — no route-hopping.
+      context.go('/driver/complete/$_tripId');
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1665,16 +1771,22 @@ class _DriverDeliveryDetailsScreenState
   /// after a successful verify.
   static int _tripStatusRank(String status) {
     switch (status) {
-      case 'picked_up':
+      case 'confirmed':
+      case 'assigned':
+        return 0;
+      case 'en_route_pickup':
+      case 'en_route':
         return 1;
-      case 'in_transit':
+      case 'picked_up':
         return 2;
-      case 'delivered':
+      case 'in_transit':
         return 3;
+      case 'delivered':
+        return 4;
       case 'completed':
       case 'paid':
       case 'settled':
-        return 4;
+        return 5;
       default:
         return 0;
     }
@@ -2716,170 +2828,6 @@ class _DeliverySlaCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SlideToConfirm extends StatefulWidget {
-  const _SlideToConfirm({required this.enabled, required this.label, required this.onConfirmed});
-
-  final bool enabled;
-  final String label;
-  final VoidCallback onConfirmed;
-
-  @override
-  State<_SlideToConfirm> createState() => _SlideToConfirmState();
-}
-
-class _SlideToConfirmState extends State<_SlideToConfirm> {
-  static const _height = 72.0;
-  static const _thumb = 58.0;
-  static const _pad = 7.0;
-
-  double _drag = 0;
-  bool _dragging = false;
-  bool _fired = false;
-
-  double _maxSlide(double trackWidth) =>
-      (trackWidth - _pad * 2 - _thumb).clamp(0.0, double.infinity);
-
-  void _onUpdate(DragUpdateDetails details, double trackWidth) {
-    if (!widget.enabled || _fired) return;
-    setState(() {
-      _dragging = true;
-      _drag = (_drag + details.delta.dx / _maxSlide(trackWidth)).clamp(0.0, 1.0);
-      if (_drag >= 0.94) {
-        _fired = true;
-        _drag = 1;
-        widget.onConfirmed();
-        // If the action fails and we stay on screen, glide back for retry.
-        Future.delayed(const Duration(milliseconds: 900), () {
-          if (mounted && widget.enabled) {
-            setState(() {
-              _fired = false;
-              _dragging = false;
-              _drag = 0;
-            });
-          }
-        });
-      }
-    });
-  }
-
-  void _onEnd() {
-    if (_fired) return;
-    setState(() {
-      _dragging = false;
-      _drag = 0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final disabled = !widget.enabled;
-    return Opacity(
-      opacity: disabled ? 0.55 : 1,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final trackWidth = constraints.maxWidth;
-          final slide = _drag * _maxSlide(trackWidth);
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onHorizontalDragUpdate: (details) => _onUpdate(details, trackWidth),
-            onHorizontalDragEnd: (_) => _onEnd(),
-            onHorizontalDragCancel: _onEnd,
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: _dragging ? 0 : 220),
-              curve: Curves.easeOutCubic,
-              height: _height,
-              decoration: BoxDecoration(
-                color: AppColors.fillSubtle,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Progress fill.
-                  Positioned(
-                    left: _pad,
-                    top: _pad,
-                    bottom: _pad,
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: _dragging ? 0 : 220),
-                      curve: Curves.easeOutCubic,
-                      width: (_thumb + slide).clamp(_thumb, trackWidth),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF38B47A), Color(0xFF1E7A4C)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                  // Label fading as the thumb travels.
-                  Opacity(
-                    opacity: (1 - _drag * 1.6).clamp(0.0, 1.0),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 48),
-                      child: Text(
-                        widget.label,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13.5,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Thumb.
-                  Positioned(
-                    left: _pad + slide,
-                    top: _pad,
-                    child: Container(
-                      width: _thumb,
-                      height: _height - _pad * 2,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.line),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.16),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: AppColors.brand.withValues(
-                              alpha: 0.12 + 0.25 * _drag,
-                            ),
-                            blurRadius: 14,
-                            offset: const Offset(0, 0),
-                          ),
-                        ],
-                      ),
-                      child: _fired
-                          ? const Icon(
-                              AppIcons.check_rounded,
-                              color: AppColors.brandDark,
-                              size: 26,
-                            )
-                          : const Icon(
-                              AppIcons.chevron_right_rounded,
-                              color: AppColors.brand,
-                              size: 30,
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }

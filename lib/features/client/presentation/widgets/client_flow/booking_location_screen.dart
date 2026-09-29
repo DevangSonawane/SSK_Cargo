@@ -157,6 +157,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   void _bumpLiveFeed() {
     _findTruckRequestsLive.value = List.of(_findTruckRequestsLive.value);
   }
+
   final DraggableScrollableController _truckSearchSheetController =
       DraggableScrollableController();
   double _truckSearchSheetExtent = 0.44;
@@ -221,8 +222,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     final vehicles = resolveVehicleOptions(
       tripType: widget.tripType,
       pricing: initialPricingState.valueOrNull,
-      isLoading:
-          initialTypesState.isLoading || initialPricingState.isLoading,
+      isLoading: initialTypesState.isLoading || initialPricingState.isLoading,
       vehicleTypes: initialTypesState.valueOrNull,
     );
     _vehicleIndex = _vehicleIndex.clamp(0, vehicles.length - 1).toInt();
@@ -709,6 +709,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           : _draft.copyWith(unloadingStops: [..._draft.unloadingStops, stop]);
     });
     _scheduleBrokerRouteRefresh();
+    unawaited(_refreshStopsPricing());
   }
 
   void _removeIntermediateStop({required bool loading, required int index}) {
@@ -721,6 +722,39 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           : _draft.copyWith(unloadingStops: updated);
     });
     _scheduleBrokerRouteRefresh();
+    unawaited(_refreshStopsPricing());
+  }
+
+  /// Stops are added on the item-details step, *after* distance + price were
+  /// quoted on the location step (web re-quotes on every form change via its
+  /// quote effect). Recompute the chained pickup → stops → drop distance and
+  /// re-quote so the amount the client confirms includes the extra legs.
+  Future<void> _refreshStopsPricing() async {
+    final session = ref.read(authSessionProvider).valueOrNull;
+    final accessToken = session?.tokens.accessToken ?? '';
+    if (accessToken.isEmpty || !mounted) return;
+    final chainDistance = _routeDistanceKm(_bookingRoutePoints());
+    if (chainDistance == null || chainDistance <= 0) return;
+    try {
+      final amount = await _estimateBookingAmount(
+        accessToken: accessToken,
+        distance: chainDistance,
+        durationMin: _draft.durationMin,
+        durationInTrafficMin: _draft.durationInTrafficMin,
+      );
+      if (!mounted) return;
+      setState(() {
+        _draft = _draft.copyWith(
+          distance: chainDistance,
+          amount: amount ?? _draft.amount,
+        );
+        if (amount != null) {
+          _amountController.text = _priceInputText(amount.toString());
+        }
+      });
+    } catch (_) {
+      // Keep the previously quoted price rather than blocking the flow.
+    }
   }
 
   Future<void> _runAutoLocationFlow() async {
@@ -1191,8 +1225,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   bool get _isFindTruckSearchActive =>
-      _bookingCreated &&
-      !_postNegotiationPayment;
+      _bookingCreated && !_postNegotiationPayment;
 
   void _resetUnpaidPaymentBookingForRetry({
     BookingSearchMode? searchMode,
@@ -1782,34 +1815,29 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       backgroundColor: Colors.transparent,
       enableDrag: false,
       isDismissible: false,
-      builder: (context) =>
-          ValueListenableBuilder<List<ClientBookingOffer>>(
-            valueListenable: _findTruckRequestsLive,
-            builder: (context, requests, _) =>
-                ValueListenableBuilder<String?>(
-                  valueListenable: _findTruckActingLive,
-                  builder: (context, actingId, _) =>
-                      ValueListenableBuilder<bool>(
-                        valueListenable: _searchingAgainLive,
-                        builder: (context, searchingAgain, _) =>
-                            _FindTruckOffersSheet(
-                              requests: requests,
-                              totalCount: _findTruckRequestCount,
-                              actingId: actingId,
-                              onAccept: _acceptFindTruckRequest,
-                              onReject: _rejectFindTruckRequest,
-                              onCounter: _counterFindTruckRequest,
-                              errorFor: (id) => _findTruckCardErrors[id],
-                              onClose: _exitOffersToTrucks,
-                              onKeepSearching: _rebroadcastFindTruckSearch,
-                              searchingAgain: searchingAgain,
-                              offersError: _findTruckOffersError,
-                              onRetryOffers: () =>
-                                  _loadFindTruckDriverRequests(silent: false),
-                            ),
-                      ),
-                ),
+      builder: (context) => ValueListenableBuilder<List<ClientBookingOffer>>(
+        valueListenable: _findTruckRequestsLive,
+        builder: (context, requests, _) => ValueListenableBuilder<String?>(
+          valueListenable: _findTruckActingLive,
+          builder: (context, actingId, _) => ValueListenableBuilder<bool>(
+            valueListenable: _searchingAgainLive,
+            builder: (context, searchingAgain, _) => _FindTruckOffersSheet(
+              requests: requests,
+              totalCount: _findTruckRequestCount,
+              actingId: actingId,
+              onAccept: _acceptFindTruckRequest,
+              onReject: _rejectFindTruckRequest,
+              onCounter: _counterFindTruckRequest,
+              errorFor: (id) => _findTruckCardErrors[id],
+              onClose: _exitOffersToTrucks,
+              onKeepSearching: _rebroadcastFindTruckSearch,
+              searchingAgain: searchingAgain,
+              offersError: _findTruckOffersError,
+              onRetryOffers: () => _loadFindTruckDriverRequests(silent: false),
+            ),
           ),
+        ),
+      ),
     );
     _findTruckOffersSheetOpen = false;
   }
@@ -1953,7 +1981,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       if (!mounted) return false;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Counter sent.')));
+      ).showSnackBar(const SnackBar(content: Text('Fare change sent.')));
       await _loadFindTruckDriverRequests(silent: true);
       return true;
     } on ApiException catch (error) {
@@ -1969,9 +1997,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       final message = error.toString().replaceFirst('Exception: ', '');
       _findTruckCardErrors[request.id] = message;
       _bumpLiveFeed();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return false;
     } finally {
       _findTruckActingLive.value = null;
@@ -3431,7 +3459,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             .textTheme
                                             .labelLarge
                                             ?.copyWith(
-                                              color: context.colors.textSecondary,
+                                              color:
+                                                  context.colors.textSecondary,
                                               fontWeight: FontWeight.w700,
                                             ),
                                       ),
@@ -3467,8 +3496,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
 
   Widget _buildBrokerSelectionMapSheetStep(BuildContext context) {
     final mode = _draft.searchMode ?? BookingSearchMode.truck;
-    final isFindTruckSearching =
-        _bookingCreated && !_postNegotiationPayment;
+    final isFindTruckSearching = _bookingCreated && !_postNegotiationPayment;
     final hideSearchPanel = _submitting || isFindTruckSearching;
     final dimFindTruckMap = isFindTruckSearching && _findTruckRequestCount > 0;
     return LayoutBuilder(
@@ -3540,9 +3568,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                         !negotiableOffer.isYourTurnToConfirm;
                     // Name the broker you actually chose — the offer row
                     // itself often carries no name.
-                    String chosenBrokerName = negotiableOffer?.brokerName
-                        .trim() ??
-                        '';
+                    String chosenBrokerName =
+                        negotiableOffer?.brokerName.trim() ?? '';
                     if (chosenBrokerName.isEmpty) {
                       final selectedId = _draft.selectedBrokerId.trim();
                       for (final broker in _eligibleBrokers) {
@@ -3573,8 +3600,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                               padding: const EdgeInsets.all(16),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
                                     'Finding brokers',
@@ -3589,12 +3615,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Scanning for broker offers on this route.',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color:
-                                              context.colors.textSecondary,
+                                          color: context.colors.textSecondary,
                                         ),
                                   ),
                                   if (showNegotiate) ...[
@@ -4851,10 +4874,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
               ),
               icon: const Text(
                 'Next',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
               label: const Icon(AppIcons.chevron_right_rounded, size: 22),
             ),
@@ -4983,7 +5003,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                     },
                     icon: Icon(AppIcons.arrow_back_rounded),
                     style: IconButton.styleFrom(
-                      backgroundColor: context.colors.surface.withValues(alpha: 0.94),
+                      backgroundColor: context.colors.surface.withValues(
+                        alpha: 0.94,
+                      ),
                       foregroundColor: context.colors.textPrimary,
                     ),
                   ),
@@ -5070,7 +5092,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                              color: context.colors.textSecondary,
+                                              color:
+                                                  context.colors.textSecondary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                       ),

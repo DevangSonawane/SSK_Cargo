@@ -16,6 +16,7 @@ import 'core/providers/driver_tracking_state_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/auth_models.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
+import 'features/auth/presentation/screens/session_expired_sheet.dart';
 
 class SSKApp extends ConsumerStatefulWidget {
   const SSKApp({super.key});
@@ -94,14 +95,29 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     if (ref.read(authSessionProvider).valueOrNull == null) return;
     _handlingUnauthorized = true;
     try {
-      await ref.read(authSessionProvider.notifier).forceLocalLogout();
-      final message = serverMessage?.trim();
-      ref.read(authExpiredMessageProvider.notifier).state =
-          (message == null || message.isEmpty)
-          ? 'Your session ended. Please log in again.'
-          : message;
-      if (!mounted) return;
-      ref.read(appRouterProvider).go('/login');
+      // Web parity (SessionExpiredModal): the access token expiring is
+      // routine — silently refresh first and keep the user exactly where
+      // they are (socket reconnects on the fresh token inside refreshTokens).
+      final refreshed = await ref
+          .read(authSessionProvider.notifier)
+          .refreshTokens();
+      if (refreshed) return;
+      // Only the real "session expired" case pops the inline re-login sheet
+      // over the current page — deliberately no logout/redirect, so the
+      // user never loses their place.
+      final navigatorContext = ref.read(rootNavigatorKeyProvider).currentContext;
+      if (navigatorContext == null || !navigatorContext.mounted) return;
+      final signedIn = await showSessionExpiredSheet(
+        navigatorContext,
+        message: serverMessage,
+      );
+      if (signedIn && mounted) {
+        _messengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('Signed in — please retry your last action.'),
+          ),
+        );
+      }
     } finally {
       _handlingUnauthorized = false;
     }

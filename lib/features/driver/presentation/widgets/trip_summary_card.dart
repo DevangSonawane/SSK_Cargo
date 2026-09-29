@@ -16,9 +16,10 @@ class TripSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bookingId = trip.bookingId.isNotEmpty
-        ? trip.bookingId
-        : trip.bookingNumber;
+    // Prefer the human booking ref (BKG-…) over the raw UUID.
+    final bookingRef = trip.bookingNumber.isNotEmpty
+        ? trip.bookingNumber
+        : trip.bookingId;
     final status = trip.status.trim().toLowerCase();
     final statusLabel = tripStatusLabel(trip.status);
     final isCompleted =
@@ -67,7 +68,7 @@ class TripSummaryCard extends StatelessWidget {
       _formatTripTimestamp(
         trip.bookingTime.isNotEmpty ? trip.bookingTime : '—',
       ),
-      if (bookingId.isNotEmpty) bookingId,
+      if (bookingRef.isNotEmpty) bookingRef,
     ].join(' • ');
     final metaLine = [
       trip.truckReg.isEmpty ? 'Cargo' : trip.truckReg,

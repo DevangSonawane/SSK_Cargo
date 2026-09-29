@@ -747,6 +747,8 @@ class TrackingDemoShipment {
     this.liveLng,
     this.podUrl,
     this.podMedia = const [],
+    this.podStatus,
+    this.podRejectionReason,
     this.ratingStars,
     this.tripId,
     this.bookingId,
@@ -795,6 +797,8 @@ class TrackingDemoShipment {
     String? paymentStatus,
     String? podUrl,
     List<PodDeliveryMedia>? podMedia,
+    String? podStatus,
+    String? podRejectionReason,
     int? ratingStars,
     String? pickupOtp,
     bool? pickupOtpVerified,
@@ -833,6 +837,8 @@ class TrackingDemoShipment {
       liveLng: clearLiveLng ? null : (liveLng ?? this.liveLng),
       podUrl: podUrl ?? this.podUrl,
       podMedia: podMedia ?? this.podMedia,
+      podStatus: podStatus ?? this.podStatus,
+      podRejectionReason: podRejectionReason ?? this.podRejectionReason,
       ratingStars: ratingStars ?? this.ratingStars,
       tripId: tripId ?? this.tripId,
       bookingId: bookingId ?? this.bookingId,
@@ -881,6 +887,8 @@ class TrackingDemoShipment {
   final String paymentStatus;
   final String? podUrl;
   final List<PodDeliveryMedia> podMedia;
+  final String? podStatus;
+  final String? podRejectionReason;
   final int? ratingStars;
   final String? tripId;
   final String? bookingId;
@@ -1136,8 +1144,10 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
     ),
     podUrl: _readString(raw, const ['podUrl', 'pod_url']),
     podMedia: _readPodDeliveryMedia(raw),
-    ratingStars: _readIntValue(raw, raw, const ['rating_stars', 'stars']),
-    tripId: '',
+    podStatus: _readPodStatus(raw),
+    podRejectionReason: _readPodRejectionReason(raw),
+    ratingStars: _readRatingStars(raw),
+    tripId: _readTripId(raw),
     bookingId: booking.id,
     bookingStatus: status,
     stops: tripRouteStopsFromSource(raw),
@@ -1157,32 +1167,140 @@ TrackingDemoShipment trackingShipmentFromBooking(ClientBooking booking) {
   );
 }
 
+String? _readPodStatus(Map<String, dynamic> raw) {
+  final trip = raw['trip'];
+  if (trip is Map) {
+    final fromTrip = _readString(
+      trip.cast<String, dynamic>(),
+      const ['podStatus', 'pod_status'],
+    );
+    if (fromTrip.isNotEmpty) return fromTrip.toLowerCase();
+  }
+  final direct = _readString(
+    raw,
+    const ['podStatus', 'pod_status', 'pod_status_string'],
+  );
+  if (direct.isEmpty) return null;
+  return direct.toLowerCase();
+}
+
+String? _readPodRejectionReason(Map<String, dynamic> raw) {
+  final trip = raw['trip'];
+  if (trip is Map) {
+    final fromTrip = _readString(
+      trip.cast<String, dynamic>(),
+      const ['podRejectionReason', 'pod_rejection_reason', 'podRejectReason'],
+    );
+    if (fromTrip.isNotEmpty) return fromTrip;
+  }
+  final direct = _readString(
+    raw,
+    const [
+      'podRejectionReason',
+      'pod_rejection_reason',
+      'podRejectReason',
+      'pod_reject_reason',
+    ],
+  );
+  if (direct.isEmpty) return null;
+  return direct;
+}
+
+String _readTripId(Map<String, dynamic> raw) {
+  final trip = raw['trip'];
+  if (trip is Map) {
+    final nested = _readString(
+      trip.cast<String, dynamic>(),
+      const ['id', 'tripId', 'trip_id'],
+    );
+    if (nested.isNotEmpty) return nested;
+  }
+  return _readString(raw, const [
+    'tripId',
+    'trip_id',
+    'tripID',
+    'activeTripId',
+    'active_trip_id',
+  ]);
+}
+
+int? _readRatingStars(Map<String, dynamic> raw) {
+  // Backend (web parity: BookingDetail.jsx `booking.rating`) returns the
+  // rating as a nested object `{ stars, review }`, not a top-level int.
+  for (final key in const ['rating', 'userRating', 'user_rating']) {
+    final nested = raw[key];
+    if (nested is Map) {
+      final stars = _readIntValue(
+        nested.cast<String, dynamic>(),
+        const <String, dynamic>{},
+        const ['stars', 'rating', 'value', 'score'],
+      );
+      if (stars != null) return stars;
+    } else if (nested is num) {
+      return nested.toInt();
+    }
+  }
+  final trip = raw['trip'];
+  if (trip is Map) {
+    final fromTrip = _readRatingStars(trip.cast<String, dynamic>());
+    if (fromTrip != null) return fromTrip;
+  }
+  return _readIntValue(raw, raw, const [
+    'ratingStars',
+    'rating_stars',
+    'stars',
+    'ratingValue',
+    'rating_value',
+  ]);
+}
+
 List<PodDeliveryMedia> _readPodDeliveryMedia(Map<String, dynamic> raw) {
-  final media = raw['podMedia'] ?? raw['pod_media'];
-  if (media is Iterable) {
-    final items = media
-        .map((item) {
-          if (item is Map) {
-            final json = item.cast<String, dynamic>();
-            final url = _readString(json, const ['url', 'src', 'path']);
-            if (url.isEmpty) return null;
-            final type = _readString(json, const ['type', 'mediaType']);
-            return PodDeliveryMedia(
-              url: url,
-              type: type.trim().toLowerCase() == 'video' ? 'video' : 'image',
-            );
-          }
-          final url = item.toString().trim();
-          if (url.isEmpty || url.toLowerCase() == 'null') return null;
-          return PodDeliveryMedia(url: url, type: 'image');
-        })
-        .whereType<PodDeliveryMedia>()
-        .toList(growable: false);
-    if (items.isNotEmpty) return items;
+  final trip = raw['trip'];
+  final candidates = <Object?>[
+    raw['podMedia'],
+    raw['pod_media'],
+    if (trip is Map) trip.cast<String, dynamic>()['podMedia'],
+    if (trip is Map) trip.cast<String, dynamic>()['pod_media'],
+    if (trip is Map) trip.cast<String, dynamic>()['podPhotos'],
+    raw['podPhotos'],
+    raw['pod_photos'],
+  ];
+  for (final media in candidates) {
+    if (media is Iterable) {
+      final items = media
+          .map((item) {
+            if (item is Map) {
+              final json = item.cast<String, dynamic>();
+              final url = _readString(json, const ['url', 'src', 'path']);
+              if (url.isEmpty) return null;
+              final type = _readString(json, const ['type', 'mediaType']);
+              return PodDeliveryMedia(
+                url: url,
+                type: type.trim().toLowerCase() == 'video' ? 'video' : 'image',
+              );
+            }
+            final url = item.toString().trim();
+            if (url.isEmpty || url.toLowerCase() == 'null') return null;
+            return PodDeliveryMedia(url: url, type: 'image');
+          })
+          .whereType<PodDeliveryMedia>()
+          .toList(growable: false);
+      if (items.isNotEmpty) return items;
+    }
   }
 
   final podUrl = _readString(raw, const ['podUrl', 'pod_url']);
-  if (podUrl.isEmpty) return const [];
+  if (podUrl.isEmpty) {
+    if (trip is Map) {
+      final tripPodUrl = _readString(
+        trip.cast<String, dynamic>(),
+        const ['podUrl', 'pod_url'],
+      );
+      if (tripPodUrl.isEmpty) return const [];
+      return [PodDeliveryMedia(url: tripPodUrl, type: 'image')];
+    }
+    return const [];
+  }
   return [PodDeliveryMedia(url: podUrl, type: 'image')];
 }
 

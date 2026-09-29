@@ -650,7 +650,7 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Counter sent.'),
+          content: Text('Fare change sent.'),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -1126,7 +1126,7 @@ class _BrokerRequestDetailScreenState
       icon: AppIcons.schedule_rounded,
       title: 'Waiting for client confirmation',
       subtitle:
-          'Your accept has been saved. Countering is locked until the client confirms or declines.',
+          'Your accept has been saved. Fare changes are locked until the client confirms or declines.',
       backgroundColor: Color(0xFFEAF4FB),
       borderColor: AppColors.accentBlueBorder,
       iconColor: AppColors.accentBlue,
@@ -1143,7 +1143,7 @@ class _BrokerRequestDetailScreenState
         icon: AppIcons.schedule_rounded,
         title: 'Waiting for client confirmation',
         subtitle:
-            'Your accept has been saved. No more countering is available until the client responds.',
+            'Your accept has been saved. No more fare changes are available until the client responds.',
         backgroundColor: Color(0xFFEAF4FB),
         borderColor: AppColors.accentBlueBorder,
         iconColor: AppColors.accentBlue,
@@ -1205,7 +1205,7 @@ class _BrokerRequestDetailScreenState
             ),
             const SizedBox(height: 4),
             Text(
-              'This price was already agreed with the broker. Accept or decline only - no counter-offers.',
+              'This price was already agreed with the broker. Accept or decline only - no fare changes.',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -1262,15 +1262,15 @@ class _BrokerRequestDetailScreenState
           const SizedBox(height: 4),
           Text(
             _normalizedStatus == 'countered'
-                ? 'Counter sent. Waiting for the client to respond before the broker can assign this booking.'
-                : 'Counter or reject the timed-out driver request, then accept to assign this truck.',
+                ? 'Fare change sent. Waiting for the client to respond before the broker can assign this booking.'
+                : 'Change fare or reject the timed-out driver request, then accept to assign this truck.',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 14),
           _CounterAmountSlider(
-            label: 'Counter amount',
+            label: 'Fare amount',
             amount: _counterAmount,
             minAmount: (_driverRequest!.amount * 0.75)
                 .clamp(1, double.infinity)
@@ -1306,7 +1306,11 @@ class _BrokerRequestDetailScreenState
                       width: 1.4,
                     ),
                   ),
-                  child: const Text('Counter'),
+                  child: const Text(
+                    'Change Fare',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
@@ -1463,7 +1467,7 @@ class _BrokerRequestDetailScreenState
           if (!negotiationLocked) ...[
             const SizedBox(height: 12),
             _CounterAmountSlider(
-              label: 'Counter amount',
+              label: 'Fare amount',
               amount: _counterAmount,
               minAmount: (_readAmount(_request.value) * 0.75)
                   .clamp(1, double.infinity)
@@ -1510,7 +1514,11 @@ class _BrokerRequestDetailScreenState
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Counter'),
+                      child: const Text(
+                        'Change Fare',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],
@@ -2593,8 +2601,8 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
       );
     case 'countered':
       return const _DetailRequestStatusVisual(
-        label: 'Countered',
-        description: 'Counter sent. Waiting for the client to respond.',
+        label: 'Fare changed',
+        description: 'Fare change sent. Waiting for the client to respond.',
         backgroundColor: Color(0xFFFEF3C7),
         textColor: AppColors.warningText,
         icon: AppIcons.payments_rounded,
@@ -2699,7 +2707,7 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
             ),
             const SizedBox(height: 16),
             _CounterAmountSlider(
-              label: 'Set counter amount',
+              label: 'Set fare amount',
               amount: value,
               minAmount: min,
               maxAmount: max,
@@ -2718,7 +2726,11 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(value),
-                    child: const Text('Send counter'),
+                    child: const Text(
+                      'Change Fare',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],

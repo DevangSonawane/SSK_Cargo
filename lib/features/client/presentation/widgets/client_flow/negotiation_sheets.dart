@@ -299,10 +299,10 @@ class _BrokerOfferNegotiationSheetState
     } else if (_counterSent) {
       title = 'Offer sent';
       body =
-          'Your counter is with the broker. We will update automatically when they respond.';
+          'Your fare change is with the broker. We will update automatically when they respond.';
     } else if (offer.normalizedStatus == 'countered') {
-      title = 'Counter offer received';
-      body = 'Review the live counter offer and respond.';
+      title = 'Fare change received';
+      body = 'Review the live fare change and respond.';
     } else {
       title = 'Broker offer received';
       body = 'This offer is updating live from the broker side.';
@@ -393,411 +393,250 @@ class _BrokerOfferNegotiationSheetState
                                 horizontal: 9,
                                 vertical: 4,
                               ),
-                            decoration: BoxDecoration(
-                              color: pillBg,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: pillBorder),
-                            ),
-                            child: Text(
-                              statusPill,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.1,
-                                color: pillFg,
+                              decoration: BoxDecoration(
+                                color: pillBg,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: pillBorder),
+                              ),
+                              child: Text(
+                                statusPill,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.1,
+                                  color: pillFg,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: context.colors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 20,
-                                  height: 1.2,
-                                ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            body,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                  height: 1.4,
-                                  fontSize: 13.5,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _busy
-                          ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(_FindTruckNegotiationResult.dismissed),
-                      icon: const Icon(AppIcons.close_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.colors.fillSubtle,
-                        foregroundColor: context.colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        context.colors.brandFill,
-                        context.colors.fillSubtle,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: context.colors.brandBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF38B47A),
-                                Color(0xFF1E7A4C),
-                              ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF2FA56E,
-                              ).withValues(alpha: 0.30),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          brokerInitial,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                            const SizedBox(height: 8),
                             Text(
-                              brokerName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
+                              title,
+                              style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     color: context.colors.textPrimary,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 15,
+                                    fontSize: 20,
+                                    height: 1.2,
                                   ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 5),
                             Text(
-                              'Broker offer',
-                              style: Theme.of(context).textTheme.bodySmall
+                              body,
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: context.colors.textSecondary,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
+                                    height: 1.4,
+                                    fontSize: 13.5,
                                   ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'OFFER',
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                              color: context.colors.textTertiary,
+                      IconButton(
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(
+                                context,
+                              ).pop(_FindTruckNegotiationResult.dismissed),
+                        icon: const Icon(AppIcons.close_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: context.colors.fillSubtle,
+                          foregroundColor: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          context.colors.brandFill,
+                          context.colors.fillSubtle,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: context.colors.brandBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF38B47A), Color(0xFF1E7A4C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF2FA56E,
+                                ).withValues(alpha: 0.30),
+                                blurRadius: 12,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            brokerInitial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            offerAmountText,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: context.colors.brandEmphasis,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 21,
-                                  letterSpacing: -0.3,
-                                ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                brokerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: context.colors.textPrimary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Broker offer',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: context.colors.textSecondary,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'OFFER',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
+                                color: context.colors.textTertiary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              offerAmountText,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: context.colors.brandEmphasis,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 21,
+                                    letterSpacing: -0.3,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        if (_loading) ...[
+                          const SizedBox(width: 8),
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2.2),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _errorMessage!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.dangerEmphasis,
+                        fontWeight: FontWeight.w700,
                       ),
-                      if (_loading) ...[
-                        const SizedBox(width: 8),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  if (offer.isWaitingOnBroker)
+                    Row(
+                      children: [
                         const SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2.2),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    _errorMessage!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context.colors.dangerEmphasis,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                if (offer.isWaitingOnBroker)
-                  Row(
-                    children: [
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Handshake in progress — no action needed.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                    ],
-                  )
-                else if (_counterSent)
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _busy
-                          ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(_FindTruckNegotiationResult.dismissed),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('Back'),
-                    ),
-                  )
-                else if (offer.isYourTurnToConfirm)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _busy ? null : _rejectOffer,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: context.colors.dangerEmphasis,
-                            side: BorderSide(
-                              color: context.colors.dangerEmphasis.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text('Decline'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _busy ? null : _acceptOffer,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2FA56E),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: _busy
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Confirm'),
-                        ),
-                      ),
-                    ],
-                  )
-                else if (canAct) ...[
-                  if (showCounter) ...[
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(15, 13, 15, 9),
-                      decoration: BoxDecoration(
-                        color: context.colors.fillSubtle,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: context.colors.line),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Your counter',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: context.colors.textSecondary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
-                                    ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 11,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: context.colors.brandFill,
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: context.colors.brandBorder,
-                                  ),
-                                ),
-                                child: Text(
-                                  _formatRupees(_counterAmount),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        color: context.colors.brandEmphasis,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 15,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              trackHeight: 6,
-                              activeTrackColor: const Color(0xFF2FA56E),
-                              inactiveTrackColor: context.colors.line,
-                              thumbColor: const Color(0xFF2FA56E),
-                              overlayColor: const Color(
-                                0xFF2FA56E,
-                              ).withValues(alpha: 0.12),
-                              thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 11,
-                              ),
-                            ),
-                            child: Slider(
-                              value: _counterAmount.clamp(
-                                _minCounter,
-                                _maxCounter,
-                              ),
-                              min: _minCounter,
-                              max: _maxCounter > _minCounter
-                                  ? _maxCounter
-                                  : _minCounter + 1,
-                              onChanged: _busy
-                                  ? null
-                                  : (value) => setState(
-                                      () => _counterAmount = value,
-                                    ),
-                            ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _formatRupees(_minCounter),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: context.colors.textTertiary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11,
-                                    ),
-                              ),
-                              Text(
-                                _formatRupees(_maxCounter),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: context.colors.textTertiary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else
-                    Text(
-                      'You have used your counter-offers — accept or decline instead.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.colors.textSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _busy ? null : _rejectOffer,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: context.colors.dangerEmphasis,
-                            side: BorderSide(
-                              color: context.colors.dangerEmphasis.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text('Decline'),
-                        ),
-                      ),
-                      if (showCounter) ...[
                         const SizedBox(width: 10),
                         Expanded(
+                          child: Text(
+                            'Handshake in progress — no action needed.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: context.colors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (_counterSent)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(
+                                context,
+                              ).pop(_FindTruckNegotiationResult.dismissed),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('Back'),
+                      ),
+                    )
+                  else if (offer.isYourTurnToConfirm)
+                    Row(
+                      children: [
+                        Expanded(
                           child: OutlinedButton(
-                            onPressed: _busy ? null : _submitCounter,
+                            onPressed: _busy ? null : _rejectOffer,
                             style: OutlinedButton.styleFrom(
+                              foregroundColor: context.colors.dangerEmphasis,
+                              side: BorderSide(
+                                color: context.colors.dangerEmphasis.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('Decline'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _busy ? null : _acceptOffer,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF2FA56E),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -809,34 +648,198 @@ class _BrokerOfferNegotiationSheetState
                                     height: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.2,
+                                      color: Colors.white,
                                     ),
                                   )
-                                : const Text('Send counter'),
+                                : const Text('Confirm'),
                           ),
                         ),
                       ],
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _busy ? null : _acceptOffer,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2FA56E),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                    )
+                  else if (canAct) ...[
+                    if (showCounter) ...[
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(15, 13, 15, 9),
+                        decoration: BoxDecoration(
+                          color: context.colors.fillSubtle,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: context.colors.line),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Your fare',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: context.colors.textSecondary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 11,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: context.colors.brandFill,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: context.colors.brandBorder,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _formatRupees(_counterAmount),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: context.colors.brandEmphasis,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 15,
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          child: const Text('Accept'),
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 6,
+                                activeTrackColor: const Color(0xFF2FA56E),
+                                inactiveTrackColor: context.colors.line,
+                                thumbColor: const Color(0xFF2FA56E),
+                                overlayColor: const Color(
+                                  0xFF2FA56E,
+                                ).withValues(alpha: 0.12),
+                                thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 11,
+                                ),
+                              ),
+                              child: Slider(
+                                value: _counterAmount.clamp(
+                                  _minCounter,
+                                  _maxCounter,
+                                ),
+                                min: _minCounter,
+                                max: _maxCounter > _minCounter
+                                    ? _maxCounter
+                                    : _minCounter + 1,
+                                onChanged: _busy
+                                    ? null
+                                    : (value) => setState(
+                                        () => _counterAmount = value,
+                                      ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatRupees(_minCounter),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: context.colors.textTertiary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                      ),
+                                ),
+                                Text(
+                                  _formatRupees(_maxCounter),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: context.colors.textTertiary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ] else
+                      Text(
+                        'You have used your fare changes — accept or decline instead.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.colors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _busy ? null : _rejectOffer,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: context.colors.dangerEmphasis,
+                              side: BorderSide(
+                                color: context.colors.dangerEmphasis.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('Decline'),
+                          ),
+                        ),
+                        if (showCounter) ...[
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _busy ? null : _submitCounter,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: _busy
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Change Fare',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _busy ? null : _acceptOffer,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF2FA56E),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('Accept'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -1363,7 +1366,7 @@ class _BrokerNegotiationSheetState
         : request?.isWaitingForCounterpartyConfirmation == true
         ? 'Waiting for driver confirmation'
         : request?.isCountered == true
-        ? 'Counter offer received'
+        ? 'Fare change received'
         : 'Waiting for driver response';
     final body = request?.normalizedStatus == 'accepted'
         ? 'The driver accepted your request. You can confirm the booking and continue to payment.'
@@ -1372,7 +1375,7 @@ class _BrokerNegotiationSheetState
         : request?.isWaitingForCounterpartyConfirmation == true
         ? 'You already confirmed this offer. We are waiting for the driver to confirm now.'
         : request?.isCountered == true
-        ? 'The driver sent a counter. Review it here and respond instantly.'
+        ? 'The driver changed the fare. Review it here and respond instantly.'
         : request?.driverTimedOut == true
         ? 'The driver did not respond in time. The broker can step in now.'
         : 'Your request is live. We will update this popup as soon as the truck responds.';
@@ -1434,7 +1437,7 @@ class _BrokerNegotiationSheetState
                   request == null
                       ? 'Live updates will appear here.'
                       : request.isCountered
-                      ? 'Counter offer: ${request.amountText}'
+                      ? 'Fare change: ${request.amountText}'
                       : 'Current amount: ${request.amountText}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
@@ -1445,8 +1448,7 @@ class _BrokerNegotiationSheetState
                 if (request != null && request.offerHistory.length > 1) ...[
                   const SizedBox(height: 8),
                   InkWell(
-                    onTap: () =>
-                        setState(() => _historyOpen = !_historyOpen),
+                    onTap: () => setState(() => _historyOpen = !_historyOpen),
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1466,9 +1468,7 @@ class _BrokerNegotiationSheetState
                           Text(
                             'Negotiation history (${request.offerHistory.length})',
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                ),
+                                ?.copyWith(color: context.colors.textSecondary),
                           ),
                         ],
                       ),
@@ -1481,9 +1481,7 @@ class _BrokerNegotiationSheetState
                         child: Text(
                           '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
                           style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       ),
                     ),
@@ -1531,7 +1529,7 @@ class _BrokerNegotiationSheetState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Waiting for a live counter offer...',
+                    'Waiting for a live fare change...',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: context.colors.textSecondary,
                       fontWeight: FontWeight.w600,
@@ -2010,14 +2008,14 @@ class _FindTruckNegotiationSheetState
         : request.isWaitingForCounterpartyConfirmation
         ? 'Waiting for driver confirmation'
         : request.isCountered
-        ? 'Counter offer received'
+        ? 'Fare change received'
         : 'Driver response received';
     final body = request.isClientTurnToConfirm
         ? 'The driver has committed to this booking. Confirm or decline to finish.'
         : request.isWaitingForCounterpartyConfirmation
         ? 'You accepted this offer. We are waiting for the driver to complete the handshake.'
         : request.isCountered
-        ? 'Review the live counter offer and respond.'
+        ? 'Review the live fare change and respond.'
         : 'This request is updating live from the driver side.';
     final canAct = request.isActionableByClient;
 
@@ -2029,245 +2027,242 @@ class _FindTruckNegotiationSheetState
       child: Padding(
         padding: EdgeInsets.zero,
         child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 430),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(28),
-            ),
-            border: Border(
-              top: BorderSide(color: context.colors.line, width: 1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 32,
-                offset: const Offset(0, -10),
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: context.colors.line,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+              border: Border(
+                top: BorderSide(color: context.colors.line, width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 32,
+                  offset: const Offset(0, -10),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: context.colors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            body,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
+              ],
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: context.colors.line,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    IconButton(
-                      onPressed: _busy
-                          ? null
-                          : () => Navigator.of(
-                              context,
-                            ).pop(_FindTruckNegotiationResult.dismissed),
-                      icon: Icon(AppIcons.close_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.colors.fillSubtle,
-                        foregroundColor: context.colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: context.colors.fillSubtle,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: context.colors.line),
                   ),
-                  child: Row(
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: context.colors.brandFill,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          AppIcons.local_shipping_rounded,
-                          color: Color(0xFF2FA56E),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              driverName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
+                              title,
+                              style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     color: context.colors.textPrimary,
                                     fontWeight: FontWeight.w800,
                                   ),
                             ),
-                            if (request.isCountered) ...[
-                              const SizedBox(height: 3),
-                              Text(
-                                'Counter offer: $offerAmountText',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: const Color(0xFF2FA56E),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                            ],
+                            const SizedBox(height: 5),
+                            Text(
+                              body,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                    height: 1.35,
+                                  ),
+                            ),
                           ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(
+                                context,
+                              ).pop(_FindTruckNegotiationResult.dismissed),
+                        icon: Icon(AppIcons.close_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: context.colors.fillSubtle,
+                          foregroundColor: context.colors.textSecondary,
                         ),
                       ),
                     ],
                   ),
-                ),
-                if (_loading) ...[
-                  const SizedBox(height: 12),
-                  const LinearProgressIndicator(minHeight: 3),
-                ],
-                // Web parity (RequestDriver.jsx): per-request negotiation
-                // history from offer_history.
-                if (request.offerHistory.length > 1) ...[
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () =>
-                        setState(() => _historyOpen = !_historyOpen),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedRotation(
-                            turns: _historyOpen ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: context.colors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'Negotiation history (${request.offerHistory.length})',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_historyOpen)
-                    ...request.offerHistory.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
-                        ),
-                      ),
-                    ),
-                ],
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _errorMessage!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context.colors.dangerEmphasis,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                if (canAct)
-                  _NegotiationActionButtons(
-                    acceptLabel: request.isClientTurnToConfirm
-                        ? 'Confirm'
-                        : 'Accept',
-                    canCounter: request.isCountered,
-                    isBusy: _busy,
-                    onAccept: _acceptRequest,
-                    onCounter: _counterRequest,
-                    onReject: _rejectRequest,
-                  )
-                else
+                  const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: context.colors.fillSubtle,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: context.colors.line),
                     ),
                     child: Row(
                       children: [
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: context.colors.brandFill,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            AppIcons.local_shipping_rounded,
+                            color: Color(0xFF2FA56E),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            'Waiting for the next driver update...',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: context.colors.textSecondary,
-                                  fontWeight: FontWeight.w600,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                driverName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: context.colors.textPrimary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              if (request.isCountered) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Fare change: $offerAmountText',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF2FA56E),
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                 ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-              ],
+                  if (_loading) ...[
+                    const SizedBox(height: 12),
+                    const LinearProgressIndicator(minHeight: 3),
+                  ],
+                  // Web parity (RequestDriver.jsx): per-request negotiation
+                  // history from offer_history.
+                  if (request.offerHistory.length > 1) ...[
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => setState(() => _historyOpen = !_historyOpen),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedRotation(
+                              turns: _historyOpen ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 16,
+                                color: context.colors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'Negotiation history (${request.offerHistory.length})',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_historyOpen)
+                      ...request.offerHistory.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: context.colors.textSecondary),
+                          ),
+                        ),
+                      ),
+                  ],
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _errorMessage!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.dangerEmphasis,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (canAct)
+                    _NegotiationActionButtons(
+                      acceptLabel: request.isClientTurnToConfirm
+                          ? 'Confirm'
+                          : 'Accept',
+                      canCounter: request.isCountered,
+                      isBusy: _busy,
+                      onAccept: _acceptRequest,
+                      onCounter: _counterRequest,
+                      onReject: _rejectRequest,
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: context.colors.fillSubtle,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.colors.line),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Waiting for the next driver update...',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -2450,203 +2445,203 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
         padding: EdgeInsets.zero,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 390),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(28),
-            ),
-            border: Border(
-              top: BorderSide(color: context.colors.line, width: 1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 30,
-                offset: const Offset(0, -10),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colors.surfaceElevated,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: context.colors.line,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+              border: Border(
+                top: BorderSide(color: context.colors.line, width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 30,
+                  offset: const Offset(0, -10),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: context.colors.brandFill,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        AppIcons.swap_horiz_rounded,
-                        color: Color(0xFF2FA56E),
+                        color: context.colors.line,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Counter offer',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: context.colors.textPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Drag to set your price',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: context.colors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(AppIcons.close_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.colors.fillSubtle,
-                        foregroundColor: context.colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
                   ),
-                  decoration: BoxDecoration(
-                    color: context.colors.fillSubtle,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: context.colors.line),
-                  ),
-                  child: Column(
+                  const SizedBox(height: 12),
+                  Row(
                     children: [
-                      Text(
-                        _formatRupees(_amount),
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.w900,
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: context.colors.brandFill,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          AppIcons.swap_horiz_rounded,
+                          color: Color(0xFF2FA56E),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 7,
-                          activeTrackColor: const Color(0xFF2FA56E),
-                          inactiveTrackColor: context.colors.line,
-                          thumbColor: Colors.white,
-                          overlayColor: const Color(
-                            0xFF2FA56E,
-                          ).withValues(alpha: 0.14),
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 13,
-                            elevation: 4,
-                            pressedElevation: 7,
-                          ),
-                        ),
-                        child: Slider(
-                          value: _amount,
-                          min: _minAmount,
-                          max: _maxAmount,
-                          divisions: 100,
-                          label: _formatRupees(_amount),
-                          onChanged: (value) {
-                            setState(() {
-                              _amount = value;
-                            });
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _formatRupees(_minAmount),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: context.colors.textTertiary,
-                                fontWeight: FontWeight.w700,
+                              'Change fare',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: context.colors.textPrimary,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            Icon(
-                              AppIcons.drag_indicator_rounded,
-                              color: context.colors.textTertiary,
-                              size: 18,
-                            ),
+                            const SizedBox(height: 2),
                             Text(
-                              _formatRupees(_maxAmount),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: context.colors.textTertiary,
-                                fontWeight: FontWeight.w700,
+                              'Drag to set your price',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: context.colors.textSecondary,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(AppIcons.close_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: context.colors.fillSubtle,
+                          foregroundColor: context.colors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 22),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.fillSubtle,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: context.colors.line),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _formatRupees(_amount),
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: context.colors.textPrimary,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(_amount),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF2FA56E),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                        const SizedBox(height: 14),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 7,
+                            activeTrackColor: const Color(0xFF2FA56E),
+                            inactiveTrackColor: context.colors.line,
+                            thumbColor: Colors.white,
+                            overlayColor: const Color(
+                              0xFF2FA56E,
+                            ).withValues(alpha: 0.14),
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 13,
+                              elevation: 4,
+                              pressedElevation: 7,
+                            ),
+                          ),
+                          child: Slider(
+                            value: _amount,
+                            min: _minAmount,
+                            max: _maxAmount,
+                            divisions: 100,
+                            label: _formatRupees(_amount),
+                            onChanged: (value) {
+                              setState(() {
+                                _amount = value;
+                              });
+                            },
                           ),
                         ),
-                        child: const Text('Send'),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _formatRupees(_minAmount),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: context.colors.textTertiary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Icon(
+                                AppIcons.drag_indicator_rounded,
+                                color: context.colors.textTertiary,
+                                size: 18,
+                              ),
+                              Text(
+                                _formatRupees(_maxAmount),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: context.colors.textTertiary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size.fromHeight(50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.of(context).pop(_amount),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2FA56E),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Send'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -2746,7 +2741,11 @@ class _NegotiationActionButtons extends StatelessWidget {
                     minimumSize: const Size.fromHeight(50),
                     shape: buttonShape,
                   ),
-                  child: const Text('Counter'),
+                  child: const Text(
+                    'Change Fare',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
