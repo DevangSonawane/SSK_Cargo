@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/chat_models.dart';
 import '../widgets/booking_chat_view.dart';
@@ -51,13 +52,14 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isClient = widget.audience == ChatAudience.client;
     return Theme(
       data: AppTheme.light,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7FB),
         appBar: AppBar(
-          title: const Text('Chats'),
+          title: Text(l10n.chatListTitle),
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
           elevation: 0,
@@ -71,18 +73,18 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             if (snapshot.hasError) {
               return _EmptyState(
                 icon: AppIcons.refresh_rounded,
-                message: "Couldn't load your chats",
+                message: l10n.chatListLoadError,
                 action: TextButton(
                   onPressed: _retry,
-                  child: const Text('Retry'),
+                  child: Text(l10n.chatListRetry),
                 ),
               );
             }
             final threads = snapshot.data ?? const <ChatThreadSummary>[];
             if (threads.isEmpty) {
-              return const _EmptyState(
+              return _EmptyState(
                 icon: AppIcons.chat_bubble_outline_rounded,
-                message: 'No chats yet',
+                message: l10n.chatListEmpty,
               );
             }
             return RefreshIndicator(
@@ -140,6 +142,7 @@ class ChatDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.watch(authSessionProvider).valueOrNull;
     if (session == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -157,8 +160,8 @@ class ChatDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           title: Text(
             isDirect
-                ? 'Direct chat'
-                : (isClient ? 'Booking chat' : 'Client chat'),
+                ? l10n.chatDetailDirectTitle
+                : (isClient ? l10n.chatDetailBookingTitle : l10n.chatDetailClientTitle),
           ),
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
@@ -175,8 +178,9 @@ class ChatDetailScreen extends ConsumerWidget {
                     future: summaryFuture,
                     builder: (context, snapshot) {
                       final summary = snapshot.data;
+                      final l10n2 = AppLocalizations.of(context)!;
                       final displayName = summary == null
-                          ? 'Direct message'
+                          ? l10n2.chatDirectMessageFallback
                           : summary.displayNameFor(audience);
                       return _DirectChatHeader(
                         displayName: displayName,
@@ -238,6 +242,7 @@ class _DirectChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -273,11 +278,11 @@ class _DirectChatHeader extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    const _StatusChip(label: 'Direct message'),
-                    if (isLocked) const _StatusChip(label: 'Closed'),
+                    _StatusChip(label: l10n.chatDirectMessageChip),
+                    if (isLocked) _StatusChip(label: l10n.chatClosedChip),
                     if (stage == 'bot')
-                      const _StatusChip(
-                        label: 'Not yet connected',
+                      _StatusChip(
+                        label: l10n.chatNotConnectedChip,
                         amber: true,
                       ),
                   ],
@@ -304,6 +309,7 @@ class _ChatThreadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
@@ -348,9 +354,9 @@ class _ChatThreadTile extends StatelessWidget {
                     Text(
                       thread.isDirect
                           ? (thread.lastMessage.isEmpty
-                                ? 'No messages yet'
+                                ? l10n.chatNoMessagesYet
                                 : thread.lastMessage)
-                          : '${thread.bookingLabel}  •  ${thread.lastMessage.isEmpty ? 'No messages yet' : thread.lastMessage}',
+                          : '${thread.bookingLabel}  •  ${thread.lastMessage.isEmpty ? l10n.chatNoMessagesYet : thread.lastMessage}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -364,10 +370,10 @@ class _ChatThreadTile extends StatelessWidget {
                         spacing: 6,
                         children: [
                           if (thread.isLocked)
-                            const _StatusChip(label: 'Closed'),
+                            _StatusChip(label: l10n.chatClosedChip),
                           if (thread.stage == 'bot')
-                            const _StatusChip(
-                              label: 'Not yet connected',
+                            _StatusChip(
+                              label: l10n.chatNotConnectedChip,
                               amber: true,
                             ),
                         ],

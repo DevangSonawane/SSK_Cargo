@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerInvoicesScreen extends ConsumerStatefulWidget {
   const BrokerInvoicesScreen({super.key});
@@ -49,7 +50,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               messenger.showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Invoice fetched for ${booking.bookingNumber}.',
+                    AppLocalizations.of(context)!.brokerInvoicesInvoiceFetchedFor(booking.bookingNumber),
                   ),
                 ),
               );
@@ -74,7 +75,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               messenger.showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Invoice emailed for ${booking.bookingNumber}.',
+                    AppLocalizations.of(context)!.brokerInvoicesInvoiceEmailedFor(booking.bookingNumber),
                   ),
                 ),
               );
@@ -90,6 +91,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bookingsAsync = ref.watch(_bookingsProvider(_query));
 
     return Scaffold(
@@ -99,7 +101,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
         child: bookingsAsync.when(
           loading: () => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
+            children: [
               _InvoicesHeader(),
               SizedBox(height: 180),
               Center(child: CircularProgressIndicator()),
@@ -108,11 +110,11 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              const _InvoicesHeader(),
+              _InvoicesHeader(),
               const SizedBox(height: 24),
               _EmptyState(
                 icon: AppIcons.receipt_long_rounded,
-                title: 'Could not load invoices',
+                title: l10n.brokerInvoicesCouldNotLoadInvoices,
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
             ],
@@ -123,15 +125,15 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                children: const [
+                children: [
                   _InvoicesHeader(),
                   Padding(
                     padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
                     child: _EmptyState(
                       icon: AppIcons.receipt_long_rounded,
-                      title: 'No invoice-ready bookings yet',
+                      title: l10n.brokerInvoicesNoInvoiceReadyBookingsYet,
                       subtitle:
-                          'Completed or delivered bookings will appear here.',
+                          l10n.brokerInvoicesCompletedOrDeliveredBookingsWillAppearHere,
                     ),
                   ),
                 ],
@@ -142,7 +144,7 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.zero,
               children: [
-                const _InvoicesHeader(),
+                _InvoicesHeader(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
                   child: Column(
@@ -170,10 +172,11 @@ class _BrokerInvoicesScreenState extends ConsumerState<BrokerInvoicesScreen> {
 }
 
 class _InvoicesHeader extends StatelessWidget {
-  const _InvoicesHeader();
+  _InvoicesHeader();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -206,8 +209,8 @@ class _InvoicesHeader extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Invoices',
+          Text(
+            l10n.brokerInvoicesInvoices,
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -230,6 +233,7 @@ class _InvoiceBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusColor = _isCompleted
         ? AppColors.brandInk
         : AppColors.brand;
@@ -290,7 +294,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '#Tracking ID: ${shipment.trackingId}',
+                        l10n.brokerInvoicesTrackingID(shipment.trackingId),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -334,8 +338,8 @@ class _InvoiceBookingCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'From:',
+                      Text(
+                        AppLocalizations.of(context)!.brokerInvoicesFrom,
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -352,8 +356,8 @@ class _InvoiceBookingCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                        'Shipping to:',
+                      Text(
+                        AppLocalizations.of(context)!.brokerInvoicesShippingTo,
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -395,7 +399,7 @@ class _InvoiceBookingCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Status:',
+                    AppLocalizations.of(context)!.brokerInvoicesStatus,
                     style: TextStyle(
                       color: statusColor,
                       fontSize: 12,
@@ -428,6 +432,7 @@ class _InvoiceRouteDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 18,
       height: 18,
@@ -480,14 +485,15 @@ class _InvoiceActionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
         ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,7 +525,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -534,10 +540,10 @@ class _InvoiceActionsSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Fetch invoice'),
+                child: Text(l10n.brokerInvoicesFetchInvoice),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -551,7 +557,7 @@ class _InvoiceActionsSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Email invoice'),
+                child: Text(l10n.brokerInvoicesEmailInvoice),
               ),
             ),
           ],
@@ -574,6 +580,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

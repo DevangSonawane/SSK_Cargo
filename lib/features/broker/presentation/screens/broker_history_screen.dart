@@ -10,6 +10,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 enum _HistoryTab { all, completed, cancelled }
 
@@ -95,21 +96,21 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove from my list?'),
-        content: const Text(
-          "This only removes it from your own list. There's no undo.",
+        title: Text(AppLocalizations.of(context)!.brokerHistoryRemoveFromMyList),
+        content: Text(
+          AppLocalizations.of(context)!.brokerHistoryThisOnlyRemovesItFromYourOwn,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.brokerHistoryCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.dangerIcon,
             ),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context)!.brokerHistoryRemove),
           ),
         ],
       ),
@@ -127,8 +128,8 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
       ref.invalidate(_brokerHistoryBookingsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Booking removed from your list.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerHistoryBookingRemovedFromYourList),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -148,6 +149,7 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bookingsAsync = ref.watch(_brokerHistoryBookingsProvider);
     final bookings = bookingsAsync.valueOrNull ?? const <ClientBooking>[];
     final visibleBookings = _visibleBookings(bookings);
@@ -195,19 +197,19 @@ class _BrokerHistoryScreenState extends ConsumerState<BrokerHistoryScreen> {
               _NetEarningsCard(amount: totalNet),
               const SizedBox(height: 14),
               bookingsAsync.when(
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.only(top: 60),
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _HistoryEmptyState(
-                  title: 'Could not load job history',
+                  title: l10n.brokerHistoryCouldNotLoadJobHistory,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (_) {
                   if (visibleBookings.isEmpty) {
-                    return const _HistoryEmptyState(
-                      title: 'No bookings found',
-                      subtitle: 'Completed and cancelled bookings appear here.',
+                    return _HistoryEmptyState(
+                      title: l10n.brokerHistoryNoBookingsFound,
+                      subtitle: l10n.brokerHistoryCompletedAndCancelledBookingsAppearHere,
                     );
                   }
                   return LayoutBuilder(
@@ -253,6 +255,7 @@ class _HistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -260,7 +263,7 @@ class _HistoryHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Job History',
+                l10n.brokerHistoryJobHistory,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -268,7 +271,7 @@ class _HistoryHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '$count completed and cancelled bookings',
+                l10n.brokerHistoryCompletedAndCancelledBookings(count),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -293,6 +296,7 @@ class _HistorySearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 54,
       decoration: BoxDecoration(
@@ -303,11 +307,11 @@ class _HistorySearchField extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 15),
           prefixIcon: Icon(AppIcons.search_rounded, color: AppColors.textTertiary),
-          hintText: 'Search bookings, routes, drivers...',
+          hintText: l10n.brokerHistorySearchBookingsRoutesDrivers,
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontWeight: FontWeight.w600,
@@ -343,6 +347,7 @@ class _HistoryTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final entries = [
       (_HistoryTab.all, 'All', allCount),
       (_HistoryTab.completed, 'Completed', completedCount),
@@ -447,6 +452,7 @@ class _HistorySegmentLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -492,6 +498,7 @@ class _NetEarningsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
@@ -508,7 +515,7 @@ class _NetEarningsCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Total Net Earnings (filtered)',
+              l10n.brokerHistoryTotalNetEarningsFiltered,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.brandInk,
                 fontWeight: FontWeight.w900,
@@ -543,6 +550,7 @@ class _HistoryBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final status = _statusKey(booking.status);
     final statusColor = status == 'completed'
         ? AppColors.brandInk
@@ -600,7 +608,7 @@ class _HistoryBookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 11),
             Text(
-              '${_lead(booking.pickupLocation)} to ${_lead(booking.dropoffLocation)}',
+              l10n.brokerHistoryTo(_lead(booking.pickupLocation), _lead(booking.dropoffLocation)),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -611,7 +619,7 @@ class _HistoryBookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _HistoryRouteLine(
-              label: 'Pickup',
+              label: l10n.brokerHistoryPickup,
               value: booking.pickupLocation.isEmpty
                   ? 'Pickup location not available'
                   : booking.pickupLocation,
@@ -619,7 +627,7 @@ class _HistoryBookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _HistoryRouteLine(
-              label: 'Drop',
+              label: l10n.brokerHistoryDrop,
               value: booking.dropoffLocation.isEmpty
                   ? 'Drop location not available'
                   : booking.dropoffLocation,
@@ -630,7 +638,7 @@ class _HistoryBookingCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _HistoryMetric(
-                    label: 'Truck',
+                    label: AppLocalizations.of(context)!.brokerHistoryTruck,
                     value: _truckReg(booking).isEmpty
                         ? '-'
                         : _truckReg(booking),
@@ -639,7 +647,7 @@ class _HistoryBookingCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _HistoryMetric(
-                    label: 'Driver',
+                    label: AppLocalizations.of(context)!.brokerHistoryDriver,
                     value: _driverName(booking).isEmpty
                         ? '-'
                         : _driverName(booking),
@@ -661,7 +669,7 @@ class _HistoryBookingCard extends StatelessWidget {
                   onPressed: deleting ? null : onOpen,
                   icon: const Icon(AppIcons.visibility_rounded),
                   color: AppColors.brand,
-                  tooltip: 'View details',
+                  tooltip: AppLocalizations.of(context)!.brokerHistoryViewDetails,
                 ),
                 IconButton(
                   onPressed: deleting ? null : onDelete,
@@ -673,7 +681,7 @@ class _HistoryBookingCard extends StatelessWidget {
                         )
                       : const Icon(AppIcons.delete_outline_rounded),
                   color: AppColors.dangerIcon,
-                  tooltip: 'Remove',
+                  tooltip: AppLocalizations.of(context)!.brokerHistoryRemove,
                 ),
               ],
             ),
@@ -697,6 +705,7 @@ class _HistoryRouteLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -741,6 +750,7 @@ class _HistoryMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
@@ -787,20 +797,21 @@ class _HistoryAmountLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Wrap(
       spacing: 8,
       runSpacing: 5,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          'Fee ${_formatRupees(fee)}',
+          l10n.brokerHistoryFee(_formatRupees(fee)),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: AppColors.dangerIcon,
             fontWeight: FontWeight.w800,
           ),
         ),
         Text(
-          'Net ${_formatRupees(net)}',
+          l10n.brokerHistoryNet(_formatRupees(net)),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: AppColors.brandInk,
             fontWeight: FontWeight.w900,
@@ -825,6 +836,7 @@ class _HistoryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -851,6 +863,7 @@ class _HistoryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(top: 38),
       padding: const EdgeInsets.all(28),

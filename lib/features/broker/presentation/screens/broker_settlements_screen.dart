@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerSettlementsScreen extends ConsumerStatefulWidget {
   const BrokerSettlementsScreen({super.key});
@@ -30,6 +31,7 @@ class _BrokerSettlementsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final settlementsAsync = ref.watch(_settlementsProvider(_query));
 
     return Scaffold(
@@ -42,7 +44,7 @@ class _BrokerSettlementsScreenState
             loading: () => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
-              children: const [
+              children: [
                 _TopRow(count: null),
                 SizedBox(height: 18),
                 _SettlementsSkeleton(),
@@ -52,11 +54,11 @@ class _BrokerSettlementsScreenState
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
               children: [
-                const _TopRow(count: null),
+                _TopRow(count: null),
                 const SizedBox(height: 24),
                 _EmptyState(
                   icon: AppIcons.payments_outlined,
-                  title: 'Could not load settlements',
+                  title: l10n.brokerSettlementsCouldNotLoadSettlements,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
               ],
@@ -66,14 +68,14 @@ class _BrokerSettlementsScreenState
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
-                  children: const [
+                  children: [
                     _TopRow(count: 0),
                     SizedBox(height: 24),
                     _EmptyState(
                       icon: AppIcons.payments_rounded,
-                      title: 'No settlements yet',
-                      subtitle:
-                          'Paid and pending settlement records will appear here.',
+                      title: l10n.brokerSettlementsNoSettlementsYet,
+                      subtitle: l10n
+                          .brokerSettlementsPaidAndPendingSettlementRecordsWillAppear,
                     ),
                   ],
                 );
@@ -125,7 +127,7 @@ class _BrokerSettlementsScreenState
               border: Border.all(color: AppColors.line),
               boxShadow: AppShadows.float,
             ),
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
+            padding: EdgeInsets.fromLTRB(20, 14, 20, 22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +176,7 @@ class _BrokerSettlementsScreenState
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _detailLine(
                   'Gross amount',
                   '₹${settlement.amount.toStringAsFixed(0)}',
@@ -184,10 +186,7 @@ class _BrokerSettlementsScreenState
                   '₹${settlement.platformFee.toStringAsFixed(2)}',
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.brandFill,
                     borderRadius: BorderRadius.circular(14),
@@ -195,9 +194,11 @@ class _BrokerSettlementsScreenState
                   ),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Net earnings',
+                          AppLocalizations.of(
+                            context,
+                          )!.brokerSettlementsNetEarnings,
                           style: TextStyle(
                             color: AppColors.brandDark,
                             fontWeight: FontWeight.w800,
@@ -223,13 +224,13 @@ class _BrokerSettlementsScreenState
                   width: double.infinity,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [Color(0xFF2FA56E), Color(0xFF1E7A4C)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(999),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
                           color: Color(0x402FA56E),
                           blurRadius: 16,
@@ -242,13 +243,13 @@ class _BrokerSettlementsScreenState
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        padding: EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'Close',
+                      child: Text(
+                        AppLocalizations.of(context)!.brokerSettlementsClose,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -270,13 +271,14 @@ class _TopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         BrokerBackButton(onTap: () => Navigator.of(context).maybePop()),
         const SizedBox(width: 4),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Settlements',
+            l10n.brokerSettlementsSettlements,
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22,
@@ -315,6 +317,7 @@ class _SettlementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final meta = [
       settlement.truck,
       settlement.driver,
@@ -403,7 +406,7 @@ class _SettlementCard extends StatelessWidget {
                 ),
               ),
             ],
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 11),
               child: Divider(height: 1, thickness: 1, color: AppColors.line),
             ),
@@ -411,19 +414,19 @@ class _SettlementCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MoneyMini(
-                    label: 'Gross',
+                    label: AppLocalizations.of(context)!.brokerSettlementsGross,
                     value: '₹${settlement.amount.toStringAsFixed(0)}',
                   ),
                 ),
                 Expanded(
                   child: _MoneyMini(
-                    label: 'Fee',
+                    label: AppLocalizations.of(context)!.brokerSettlementsFee,
                     value: '₹${settlement.platformFee.toStringAsFixed(0)}',
                   ),
                 ),
                 Expanded(
                   child: _MoneyMini(
-                    label: 'Net',
+                    label: AppLocalizations.of(context)!.brokerSettlementsNet,
                     value: '₹${settlement.netEarnings.toStringAsFixed(0)}',
                     highlight: true,
                   ),
@@ -455,6 +458,7 @@ class _MoneyMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -567,6 +571,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final normalized = status.trim().toLowerCase();
     final fg = switch (normalized) {
       'paid' || 'settled' => AppColors.brandDark,
@@ -637,6 +642,7 @@ class _SettlementRouteRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final split = _splitSettlementRoute(route);
     return Container(
       padding: const EdgeInsets.all(14),
@@ -653,7 +659,7 @@ class _SettlementRouteRail extends StatelessWidget {
               color: AppColors.brand,
               size: 20,
             ),
-            label: 'PICKUP',
+            label: l10n.brokerSettlementsPICKUP,
             value: split.pickup,
           ),
           Padding(
@@ -678,7 +684,7 @@ class _SettlementRouteRail extends StatelessWidget {
               color: AppColors.dangerIcon,
               size: 20,
             ),
-            label: 'DROP',
+            label: l10n.brokerSettlementsDROP,
             value: split.drop.isEmpty ? 'Drop pending' : split.drop,
           ),
         ],
@@ -736,11 +742,11 @@ class _SettlementRouteRail extends StatelessWidget {
 
 Widget _detailLine(String label, String value) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: EdgeInsets.only(bottom: 10),
     child: Row(
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          child: Text(label, style: TextStyle(color: AppColors.textSecondary)),
         ),
         Text(
           value,
@@ -760,10 +766,11 @@ double _readDouble(Object? value) {
 }
 
 class _SettlementsSkeleton extends StatelessWidget {
-  const _SettlementsSkeleton();
+  _SettlementsSkeleton();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: List.generate(
         4,
@@ -794,6 +801,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
       decoration: BoxDecoration(

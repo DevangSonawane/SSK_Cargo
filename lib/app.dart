@@ -116,10 +116,11 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
         navigatorContext,
         message: serverMessage,
       );
-      if (signedIn && mounted) {
+      if (signedIn && mounted && navigatorContext.mounted) {
+        final l10n = AppLocalizations.of(navigatorContext)!;
         _messengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('Signed in — please retry your last action.'),
+          SnackBar(
+            content: Text(l10n.appSignedInRetry),
           ),
         );
       }
@@ -130,24 +131,48 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
   void _handleChatMessage(Map<String, dynamic> payload) {
     _incrementChatUnreadCount(payload);
+    final messengerContext = _messengerKey.currentContext;
+    final l10n = messengerContext == null
+        ? null
+        : AppLocalizations.of(messengerContext);
+    final senderFallback = l10n?.appChatSupportFallback ?? 'Support';
     final text = _chatPreview(payload['message']?.toString() ?? '');
+    final title = l10n == null
+        ? 'New message from ${payload['senderName']?.toString() ?? senderFallback}'
+        : l10n.appNewMessageFrom(
+            payload['senderName']?.toString() ?? senderFallback,
+          );
     _showChatMessage(
-      title:
-          'New message from ${payload['senderName']?.toString() ?? 'Support'}',
+      title: title,
       message: text,
     );
   }
 
   void _handleChatEscalated(Map<String, dynamic> payload) {
     _incrementChatUnreadCount(payload);
+    final messengerContext = _messengerKey.currentContext;
+    final l10n = messengerContext == null
+        ? null
+        : AppLocalizations.of(messengerContext);
     final booking = payload['bookingNumber']?.toString();
+    final byFallback = l10n?.appChatClientFallback ?? 'a client';
+    final byName = payload['byName']?.toString() ?? byFallback;
+    if (l10n == null) {
+      final suffix = booking == null || booking.isEmpty
+          ? ''
+          : ' - Booking #$booking';
+      _showChatMessage(
+        title: 'New chat request',
+        message: 'New chat request from $byName$suffix',
+      );
+      return;
+    }
     final suffix = booking == null || booking.isEmpty
         ? ''
-        : ' - Booking #$booking';
+        : l10n.appNewChatBookingSuffix(booking);
     _showChatMessage(
-      title: 'New chat request',
-      message:
-          'New chat request from ${payload['byName']?.toString() ?? 'a client'}$suffix',
+      title: l10n.appNewChatRequestTitle,
+      message: '${l10n.appNewChatRequestFrom(byName)}$suffix',
     );
   }
 
@@ -235,16 +260,21 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
 
     _showingLoginAttemptAlert = true;
     try {
-      final message = _loginAttemptAlertMessage(payload);
       final navigatorState = ref.read(rootNavigatorKeyProvider).currentState;
       final overlay = navigatorState?.overlay;
       if (overlay == null) {
         return;
       }
+      final overlayContext = navigatorState?.context;
+      final l10n = overlayContext == null
+          ? null
+          : AppLocalizations.of(overlayContext);
+      final message = _loginAttemptAlertMessage(payload, l10n);
 
       _loginAttemptAlertEntry?.remove();
       _loginAttemptAlertEntry = OverlayEntry(
         builder: (overlayContext) {
+          final dialogL10n = AppLocalizations.of(overlayContext)!;
           return Material(
             color: Colors.black.withValues(alpha: 0.42),
             child: SafeArea(
@@ -284,7 +314,7 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            'Login attempt blocked',
+                            dialogL10n.appLoginAttemptBlockedTitle,
                             textAlign: TextAlign.center,
                             style: Theme.of(overlayContext).textTheme.titleLarge
                                 ?.copyWith(
@@ -321,8 +351,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              child: const Text(
-                                'OK',
+                              child: Text(
+                                dialogL10n.appOkButton,
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                             ),
@@ -345,7 +375,8 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
     }
   }
 
-  String _loginAttemptAlertMessage(Map<String, dynamic> payload) {
+  String _loginAttemptAlertMessage(
+      Map<String, dynamic> payload, AppLocalizations? l10n) {
     final message = payload['message']?.toString().trim();
     if (message != null &&
         message.isNotEmpty &&
@@ -353,17 +384,22 @@ class _SSKAppState extends ConsumerState<SSKApp> with WidgetsBindingObserver {
       return message;
     }
 
-    return "Someone just tried to log in to your account from another device. If this wasn't you, please contact support.";
+    return l10n?.appLoginAttemptBlockedBody ??
+        "Someone just tried to log in to your account from another device. If this wasn't you, please contact support.";
   }
 
   void _showTrackingMessage(String message) {
     final messenger = _messengerKey.currentState;
     if (messenger == null) return;
+    final actionLabel = messenger.context.mounted
+        ? AppLocalizations.of(messenger.context)?.appTrackingSettingsAction ??
+            'Settings'
+        : 'Settings';
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         action: SnackBarAction(
-          label: 'Settings',
+          label: actionLabel,
           onPressed: () => Geolocator.openLocationSettings(),
         ),
       ),

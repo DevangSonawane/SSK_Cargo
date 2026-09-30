@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Liquid-glass Pending / Completed switcher with count badges
 /// (Rapido "My Rides" style). A glossy thumb glides fluidly between the
@@ -24,6 +25,7 @@ class HistorySegmentBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: BackdropFilter(
@@ -89,7 +91,7 @@ class HistorySegmentBar extends StatelessWidget {
                               height: innerHeight,
                               alignment: Alignment.center,
                               child: _SegmentLabel(
-                                label: 'Pending',
+                                label: l10n.historySegmentPending,
                                 count: upcomingCount,
                                 selected: selectedIndex == 0,
                               ),
@@ -104,7 +106,7 @@ class HistorySegmentBar extends StatelessWidget {
                               height: innerHeight,
                               alignment: Alignment.center,
                               child: _SegmentLabel(
-                                label: 'Completed',
+                                label: l10n.historySegmentCompleted,
                                 count: completedCount,
                                 selected: selectedIndex == 1,
                               ),

@@ -222,7 +222,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(accept ? 'Trip accepted.' : 'Trip declined.'),
+          content: Text(accept
+              ? AppLocalizations.of(context)!.driverHomeTripAccepted
+              : AppLocalizations.of(context)!.driverHomeTripDeclined),
           backgroundColor: accept ? AppColors.brand : AppColors.dangerIcon,
         ),
       );

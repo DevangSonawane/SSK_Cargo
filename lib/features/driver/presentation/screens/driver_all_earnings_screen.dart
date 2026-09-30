@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../widgets/driver_currency.dart';
 
@@ -49,7 +50,7 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   _EmptyHistory(
                     icon: AppIcons.payments_outlined,
-                    title: 'Could not load earnings',
+                    title: AppLocalizations.of(context)!.allEarningsLoadFailed,
                     subtitle: error
                         .toString()
                         .replaceFirst('Exception: ', ''),
@@ -101,8 +102,8 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                       _TrendCard(monthlyTotals: monthlyTotals),
                     ],
                     const SizedBox(height: 18),
-                    const Text(
-                      'Breakdown by month',
+                    Text(
+                      AppLocalizations.of(context)!.allEarningsBreakdown,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 16,
@@ -112,11 +113,12 @@ class DriverAllEarningsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     if (grouped.isEmpty)
-                      const _EmptyHistory(
+                      _EmptyHistory(
                         icon: AppIcons.payments_rounded,
-                        title: 'No completed trips yet',
-                        subtitle:
-                            'Settled earnings will show up here once trips are completed.',
+                        title: AppLocalizations.of(context)!
+                            .allEarningsEmptyTitle,
+                        subtitle: AppLocalizations.of(context)!
+                            .allEarningsEmptySubtitle,
                       )
                     else
                       for (final entry in grouped.entries) ...[
@@ -164,9 +166,9 @@ class _TopBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Text(
-            'All earnings',
+            AppLocalizations.of(context)!.allEarningsTitle,
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22,
@@ -241,8 +243,8 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 7),
-                      const Text(
-                        'TOTAL EARNED',
+                      Text(
+                        AppLocalizations.of(context)!.allEarningsTotalEarned,
                         style: TextStyle(
                           color: AppColors.brandDark,
                           fontSize: 11,
@@ -277,7 +279,8 @@ class _HeroCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _HeroMeta(
-                            label: 'Per delivery',
+                            label: AppLocalizations.of(context)!
+                                .allEarningsPerDelivery,
                             value: formatDriverCurrency(average),
                           ),
                         ),
@@ -288,7 +291,8 @@ class _HeroCard extends StatelessWidget {
                         ),
                         Expanded(
                           child: _HeroMeta(
-                            label: 'Deliveries',
+                            label: AppLocalizations.of(context)!
+                                .allEarningsDeliveries,
                             value: '$deliveries',
                           ),
                         ),
@@ -298,7 +302,10 @@ class _HeroCard extends StatelessWidget {
                           color: AppColors.line,
                         ),
                         Expanded(
-                          child: _HeroMeta(label: 'Months', value: '$months'),
+                          child: _HeroMeta(
+                              label: AppLocalizations.of(context)!
+                                  .allEarningsMonths,
+                              value: '$months'),
                         ),
                       ],
                     ),
@@ -361,11 +368,12 @@ class _KpiRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _KpiCard(
-            label: 'Active months',
+            label: l10n.allEarningsActiveMonths,
             value: '$months',
             icon: AppIcons.calendar_month_outlined,
             tint: AppColors.brandFill,
@@ -376,7 +384,7 @@ class _KpiRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _KpiCard(
-            label: 'Trips done',
+            label: l10n.allEarningsTripsDone,
             value: '$deliveries',
             icon: AppIcons.local_shipping_outlined,
             tint: const Color(0xFFEFF6FF),
@@ -387,7 +395,7 @@ class _KpiRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _KpiCard(
-            label: 'Avg / trip',
+            label: l10n.allEarningsAvgTrip,
             value: formatDriverCurrency(average),
             icon: AppIcons.trending_up_rounded,
             tint: AppColors.warningFill,
@@ -504,8 +512,8 @@ class _TrendCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Monthly trend',
+          Text(
+            AppLocalizations.of(context)!.allEarningsMonthlyTrend,
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15,
@@ -513,8 +521,8 @@ class _TrendCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Net earnings per month',
+          Text(
+            AppLocalizations.of(context)!.allEarningsNetPerMonth,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
@@ -652,7 +660,8 @@ class _MonthlyEarningsSection extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${deliveries.length} trip${deliveries.length == 1 ? '' : 's'}',
+                      AppLocalizations.of(context)!
+                          .allEarningsTripCount(deliveries.length),
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

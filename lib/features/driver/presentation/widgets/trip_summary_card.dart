@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_dashboard_models.dart';
 import 'driver_currency.dart';
 
@@ -16,12 +17,18 @@ class TripSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Prefer the human booking ref (BKG-…) over the raw UUID.
     final bookingRef = trip.bookingNumber.isNotEmpty
         ? trip.bookingNumber
         : trip.bookingId;
     final status = trip.status.trim().toLowerCase();
-    final statusLabel = tripStatusLabel(trip.status);
+    final rawStatusLabel = tripStatusLabel(trip.status);
+    final statusLabel = rawStatusLabel == 'In Progress'
+        ? l10n.tripSummaryInProgress
+        : rawStatusLabel == 'Delivered'
+        ? l10n.tripSummaryDelivered
+        : rawStatusLabel;
     final isCompleted =
         status == 'completed' ||
         status == 'delivered' ||
@@ -60,10 +67,10 @@ class TripSummaryCard extends StatelessWidget {
         : '₹0';
     final from = trip.fromLocation.isNotEmpty
         ? _locationLead(trip.fromLocation)
-        : 'Location unavailable';
+        : l10n.tripSummaryLocationUnavailable;
     final to = trip.toLocation.isNotEmpty
         ? _locationLead(trip.toLocation)
-        : 'Location unavailable';
+        : l10n.tripSummaryLocationUnavailable;
     final dateLine = [
       _formatTripTimestamp(
         trip.bookingTime.isNotEmpty ? trip.bookingTime : '—',
@@ -71,7 +78,7 @@ class TripSummaryCard extends StatelessWidget {
       if (bookingRef.isNotEmpty) bookingRef,
     ].join(' • ');
     final metaLine = [
-      trip.truckReg.isEmpty ? 'Cargo' : trip.truckReg,
+      trip.truckReg.isEmpty ? l10n.tripSummaryCargo : trip.truckReg,
       trip.distanceLabel,
     ].join(' • ');
 

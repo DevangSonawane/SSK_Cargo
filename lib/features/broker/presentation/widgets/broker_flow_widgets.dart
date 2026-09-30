@@ -2179,12 +2179,12 @@ TrackingDemoShipment bookingRequestToShipment(
         subtitle: 'Assignment pending',
         completed: true,
       ),
-      const TrackingTimelineStep(
+      TrackingTimelineStep(
         title: 'In transit',
         subtitle: 'Vehicle assignment pending',
         completed: false,
       ),
-      const TrackingTimelineStep(
+      TrackingTimelineStep(
         title: 'Delivered',
         subtitle: 'Awaiting pickup',
         completed: false,
@@ -2357,7 +2357,7 @@ bool _isCancelledRequestStatus(String status) {
 }
 
 class BrokerHeader extends StatelessWidget {
-  const BrokerHeader({
+  BrokerHeader({
     super.key,
     required this.highlighted,
     required this.title,
@@ -2380,6 +2380,7 @@ class BrokerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final backgroundColor = highlighted
         ? AppColors.surface
         : Colors.transparent;
@@ -2486,6 +2487,7 @@ class _HeaderIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -2528,7 +2530,7 @@ class _HeaderIconButton extends StatelessWidget {
 }
 
 class BrokerBottomBar extends StatelessWidget {
-  const BrokerBottomBar({
+  BrokerBottomBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -2659,6 +2661,7 @@ class _BrokerBottomBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final iconColor = selected ? Colors.white : const Color(0xFF64748B);
 
     return Tooltip(
@@ -2711,7 +2714,7 @@ class _BrokerBottomBarItem extends StatelessWidget {
 }
 
 class StatusPill extends StatelessWidget {
-  const StatusPill({
+  StatusPill({
     super.key,
     required this.label,
     required this.backgroundColor,
@@ -2726,6 +2729,7 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -2753,19 +2757,16 @@ class StatusPill extends StatelessWidget {
 }
 
 class BrokerRequestCard extends StatelessWidget {
-  const BrokerRequestCard({
-    super.key,
-    required this.request,
-    required this.onTap,
-  });
+  BrokerRequestCard({super.key, required this.request, required this.onTap});
 
   final BookingRequest request;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final status = _normalizeRequestStatus(request.status);
-    final statusVisual = _bookingRequestStatusVisual(status);
+    final statusVisual = _bookingRequestStatusVisual(status, l10n);
     final pickupText = _bookingRequestLocationText(
       request.from,
       'Pickup location unavailable',
@@ -2798,7 +2799,7 @@ class BrokerRequestCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Load ID: #${request.id.toUpperCase()}',
+                        l10n.brokerFlowLoadID(request.id.toUpperCase()),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 11,
@@ -2863,14 +2864,14 @@ class BrokerRequestCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const SizedBox(width: 28, child: _RouteLine()),
+                SizedBox(width: 28, child: _RouteLine()),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _LoadPoint(
-                        label: 'Pickup',
+                        label: AppLocalizations.of(context)!.brokerFlowPickup,
                         icon: AppIcons.location_on_rounded,
                         iconColor: AppColors.brandBright,
                         place: pickupText,
@@ -2878,7 +2879,7 @@ class BrokerRequestCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       _LoadPoint(
-                        label: 'Drop-off',
+                        label: AppLocalizations.of(context)!.brokerFlowDropOff,
                         icon: AppIcons.near_me_rounded,
                         iconColor: AppColors.dangerIcon,
                         place: dropText,
@@ -2931,8 +2932,8 @@ class BrokerRequestCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.button),
                     ),
                   ),
-                  child: const Text(
-                    'Review request',
+                  child: Text(
+                    AppLocalizations.of(context)!.brokerFlowReviewRequest,
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -2978,10 +2979,11 @@ class BrokerRequestCard extends StatelessWidget {
 }
 
 class _RouteLine extends StatelessWidget {
-  const _RouteLine();
+  _RouteLine();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Container(
@@ -3051,6 +3053,7 @@ class _LoadPoint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3116,32 +3119,35 @@ class _BookingRequestStatusVisual {
   final IconData icon;
 }
 
-_BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
+_BookingRequestStatusVisual _bookingRequestStatusVisual(
+  String status,
+  AppLocalizations l10n,
+) {
   switch (status) {
     case 'accepted':
     case 'confirmed':
     case 'assigned':
-      return const _BookingRequestStatusVisual(
-        label: 'Accepted',
-        description: 'Accepted - booking confirmed',
+      return _BookingRequestStatusVisual(
+        label: l10n.brokerStatusAccepted,
+        description: l10n.brokerStatusAcceptedBookingConfirmed,
         backgroundColor: Color(0xFFEAF8EF),
         borderColor: Color(0xFFB7E4C7),
         textColor: Color(0xFF136F3E),
         icon: AppIcons.check_circle_rounded,
       );
     case 'countered':
-      return const _BookingRequestStatusVisual(
-        label: 'Fare changed',
-        description: 'Fare changed - waiting for the next response',
+      return _BookingRequestStatusVisual(
+        label: l10n.brokerStatusFareChanged,
+        description: l10n.brokerStatusFareChangedWaiting,
         backgroundColor: Color(0xFFFEF3C7),
         borderColor: Color(0xFFFCD34D),
         textColor: Color(0xFFB45309),
         icon: AppIcons.payments_rounded,
       );
     case 'awaiting_confirmation':
-      return const _BookingRequestStatusVisual(
-        label: 'Awaiting confirmation',
-        description: 'Waiting for the other side to confirm.',
+      return _BookingRequestStatusVisual(
+        label: l10n.brokerStatusAwaitingConfirmation,
+        description: l10n.brokerStatusWaitingOtherSideConfirm,
         backgroundColor: Color(0xFFEAF4FB),
         borderColor: Color(0xFFC7DAFF),
         textColor: AppColors.accentBlue,
@@ -3150,18 +3156,18 @@ _BookingRequestStatusVisual _bookingRequestStatusVisual(String status) {
     case 'declined':
     case 'rejected':
     case 'expired':
-      return const _BookingRequestStatusVisual(
-        label: 'Declined',
-        description: 'Declined - no longer available',
+      return _BookingRequestStatusVisual(
+        label: l10n.brokerStatusDeclined,
+        description: l10n.brokerStatusDeclinedUnavailable,
         backgroundColor: Color(0xFFFDECEC),
         borderColor: Color(0xFFF7B4B4),
         textColor: Color(0xFFB42318),
         icon: AppIcons.cancel_rounded,
       );
     default:
-      return const _BookingRequestStatusVisual(
-        label: 'Pending',
-        description: 'Review request',
+      return _BookingRequestStatusVisual(
+        label: l10n.brokerStatusPending,
+        description: l10n.brokerStatusReviewRequest,
         backgroundColor: Color(0xFFEAF8EF),
         borderColor: Color(0xFFB7E4C7),
         textColor: Color(0xFF136F3E),
@@ -3195,6 +3201,7 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final meta = _vehicleCardMeta(vehicle.status);
     return InkWell(
       onTap: onTap,
@@ -3311,7 +3318,7 @@ class VehicleCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _VehicleStatBlock(
-                    label: 'Capacity',
+                    label: AppLocalizations.of(context)!.brokerFlowCapacity,
                     value: vehicle.capacity,
                     icon: AppIcons.shopping_bag_outlined,
                   ),
@@ -3321,7 +3328,7 @@ class VehicleCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _VehicleStatBlock(
-                    label: 'Location',
+                    label: AppLocalizations.of(context)!.brokerFlowLocation,
                     value: meta.secondaryValue,
                     icon: AppIcons.location_on_outlined,
                     valueColor: meta.secondaryValueColor,
@@ -3349,6 +3356,7 @@ class _VehicleStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       constraints: const BoxConstraints(minWidth: 56),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -3386,6 +3394,7 @@ class _VehicleStatBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3462,7 +3471,7 @@ _VehicleCardMeta _vehicleCardMeta(BrokerVehicleStatus status) {
         secondaryValueColor: AppColors.textPrimary,
       );
     case BrokerVehicleStatus.maintenance:
-      return const _VehicleCardMeta(
+      return _VehicleCardMeta(
         iconBackground: Color(0xFFFFF1F1),
         badgeBackground: Color(0xFFFDECEC),
         badgeText: Color(0xFFD92D20),
@@ -3487,6 +3496,7 @@ class DriverListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final meta = _driverCardMeta(driver);
     final visuals = _driverCardVisuals(driver);
     final canCall = driver.phone.trim().isNotEmpty;
@@ -3548,7 +3558,7 @@ class DriverListTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'ID: ${driver.id.toUpperCase()}',
+                          l10n.brokerFlowID(driver.id.toUpperCase()),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
@@ -3620,7 +3630,7 @@ class DriverListTile extends StatelessWidget {
                     Expanded(
                       child: _DriverFooterButton(
                         icon: AppIcons.edit_rounded,
-                        label: 'Edit',
+                        label: AppLocalizations.of(context)!.brokerFlowEdit,
                         iconColor: AppColors.brand,
                         onTap: onEdit,
                       ),
@@ -3630,7 +3640,7 @@ class DriverListTile extends StatelessWidget {
                   Expanded(
                     child: _DriverFooterButton(
                       icon: AppIcons.call_rounded,
-                      label: 'Call',
+                      label: AppLocalizations.of(context)!.brokerFlowCall,
                       iconColor: AppColors.brand,
                       onTap: canCall
                           ? () async {
@@ -3647,7 +3657,7 @@ class DriverListTile extends StatelessWidget {
                   Expanded(
                     child: _DriverFooterButton(
                       icon: AppIcons.delete_outline_rounded,
-                      label: 'Remove',
+                      label: AppLocalizations.of(context)!.brokerFlowRemove,
                       iconColor: AppColors.dangerIcon,
                       onTap: onRemove,
                     ),
@@ -3705,6 +3715,7 @@ class _DriverAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: 52,
       height: 52,
@@ -3752,6 +3763,7 @@ class _DriverCardMetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -3785,6 +3797,7 @@ class _DriverFooterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -3968,7 +3981,7 @@ String _prettyTripStatus(String value) {
 }
 
 class BrokerProfileActionCard extends StatelessWidget {
-  const BrokerProfileActionCard({
+  BrokerProfileActionCard({
     super.key,
     required this.title,
     this.subtitle,
@@ -3987,6 +4000,7 @@ class BrokerProfileActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -4031,7 +4045,7 @@ class BrokerProfileActionCard extends StatelessWidget {
 }
 
 class BrokerMenuTile extends StatelessWidget {
-  const BrokerMenuTile({
+  BrokerMenuTile({
     super.key,
     required this.title,
     this.subtitle,
@@ -4052,6 +4066,7 @@ class BrokerMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -4138,6 +4153,7 @@ class SheetContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -4166,6 +4182,7 @@ class OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedColor = AppColors.brand;
     return InkWell(
       onTap: onTap,
@@ -4244,6 +4261,7 @@ class VehicleSelectionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final accent = selected ? AppColors.brand : AppColors.textTertiary;
     return InkWell(
       onTap: onTap,
@@ -4497,11 +4515,12 @@ InputDecoration brokerFieldDecoration({
 }
 
 class BrokerBackButton extends StatelessWidget {
-  const BrokerBackButton({super.key, required this.onTap});
+  BrokerBackButton({super.key, required this.onTap});
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return IconButton(
       onPressed: onTap,
       icon: const Icon(

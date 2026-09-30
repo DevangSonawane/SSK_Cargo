@@ -8,6 +8,7 @@ import 'package:ssk/core/theme/app_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/profile_avatar.dart';
@@ -168,6 +169,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() => _saving = true);
     try {
@@ -214,8 +216,8 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully.'),
+        SnackBar(
+          content: Text(l10n.manageAccountProfileUpdated),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -244,6 +246,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final user = session?.user;
     final isBroker = user?.role.toLowerCase() == 'broker';
@@ -255,7 +258,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         ? _nameController.text.trim()
         : (user?.displayName.trim().isNotEmpty == true
               ? user!.displayName.trim()
-              : 'Your name');
+              : l10n.manageAccountYourNameFallback);
     final email = _emailController.text.trim().isNotEmpty
         ? _emailController.text.trim()
         : (user?.email?.trim().isNotEmpty == true ? user!.email! : '');
@@ -307,38 +310,38 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const _SectionLabel(text: 'Basic details'),
+                              _SectionLabel(text: l10n.manageAccountBasicDetails),
                               const SizedBox(height: 14),
                               _ProfileTextField(
-                                label: 'Full name',
+                                label: l10n.manageAccountFullNameLabel,
                                 icon: AppIcons.person_rounded,
                                 controller: _nameController,
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Enter a name';
+                                    return l10n.manageAccountEnterName;
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 14),
                               _ProfileTextField(
-                                label: 'Email',
+                                label: l10n.manageAccountEmailLabel,
                                 icon: AppIcons.email_rounded,
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Enter an email';
+                                    return l10n.manageAccountEnterEmail;
                                   }
                                   if (!value.contains('@')) {
-                                    return 'Enter a valid email';
+                                    return l10n.manageAccountEnterValidEmail;
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 14),
                               _ProfileTextField(
-                                label: 'Phone',
+                                label: l10n.manageAccountPhoneLabel,
                                 icon: AppIcons.phone_rounded,
                                 controller: _phoneController,
                                 keyboardType: TextInputType.phone,
@@ -346,10 +349,10 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                               ),
                               if (isBroker) ...[
                                 const SizedBox(height: 20),
-                                const _SectionLabel(text: 'Business details'),
+                                _SectionLabel(text: l10n.manageAccountBusinessDetails),
                                 const SizedBox(height: 14),
                                 _ProfileTextField(
-                                  label: 'Business address',
+                                  label: l10n.manageAccountBusinessAddressLabel,
                                   icon: AppIcons.location_on_rounded,
                                   controller: _addressController,
                                   minLines: 2,
@@ -357,13 +360,13 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                 ),
                                 const SizedBox(height: 14),
                                 _ProfileTextField(
-                                  label: 'Service city',
+                                  label: l10n.manageAccountServiceCityLabel,
                                   icon: AppIcons.location_city_rounded,
                                   controller: _serviceCityController,
                                   textCapitalization: TextCapitalization.words,
                                   validator: (value) {
                                     if ((value ?? '').trim().isEmpty) {
-                                      return 'Enter the city you serve';
+                                      return l10n.manageAccountEnterServiceCity;
                                     }
                                     return null;
                                   },
@@ -397,7 +400,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                               strokeWidth: 2,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
@@ -408,7 +411,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                                               ),
                                               SizedBox(width: 10),
                                               Text(
-                                                'Save Changes',
+                                                l10n.manageAccountSaveChanges,
                                                 style: TextStyle(
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w800,
@@ -440,6 +443,7 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 20, 0),
       child: Row(
@@ -459,7 +463,7 @@ class _ProfileHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Edit Profile',
+                l10n.manageAccountEditProfileTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 20,
@@ -468,7 +472,7 @@ class _ProfileHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Account details & photo',
+                l10n.manageAccountEditProfileSubtitle,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -586,7 +590,7 @@ class _IdentityCard extends StatelessWidget {
             child: InkWell(
               onTap: onPick,
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -599,7 +603,7 @@ class _IdentityCard extends StatelessWidget {
                     ),
                     SizedBox(width: 7),
                     Text(
-                      'Change Photo',
+                      AppLocalizations.of(context)!.manageAccountChangePhoto,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -690,8 +694,8 @@ class _ProfileTextField extends StatelessWidget {
             ),
             if (optional) ...[
               const SizedBox(width: 6),
-              const Text(
-                '(optional)',
+              Text(
+                AppLocalizations.of(context)!.manageAccountOptionalTag,
                 style: TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: 12,
@@ -811,6 +815,7 @@ class _ActiveStatusToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isActive = status.trim().toLowerCase() == 'active';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -840,8 +845,8 @@ class _ActiveStatusToggle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Active',
+                Text(
+                  l10n.manageAccountActiveLabel,
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -849,7 +854,7 @@ class _ActiveStatusToggle extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  isActive ? 'Account is active' : 'Account is inactive',
+                  isActive ? l10n.manageAccountActiveYes : l10n.manageAccountActiveNo,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 15,

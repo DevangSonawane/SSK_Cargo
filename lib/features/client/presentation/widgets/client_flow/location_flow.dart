@@ -393,25 +393,25 @@ class _LocationDetailsScreenState
   }
 
   String get _hintText => widget.kind == _LocationFieldKind.pickup
-      ? 'Enter your loading address'
-      : 'Enter your unloading address';
+      ? AppLocalizations.of(context)!.locationFlowPickupHint
+      : AppLocalizations.of(context)!.locationFlowDropHint;
 
   String get _title =>
       widget.title ??
       (widget.kind == _LocationFieldKind.pickup
-          ? 'Loading location'
-          : 'Unloading location');
+          ? AppLocalizations.of(context)!.locationFlowPickupTitle
+          : AppLocalizations.of(context)!.locationFlowDropTitle);
 
   String get _subtitle =>
       widget.subtitle ??
       (widget.kind == _LocationFieldKind.pickup
-          ? 'Search, use current location, or select the pickup point on map.'
-          : 'Search or select the drop point on map.');
+          ? AppLocalizations.of(context)!.locationFlowPickupSubtitle
+          : AppLocalizations.of(context)!.locationFlowDropSubtitle);
 
   String get _useCurrentLocationLabel =>
       widget.kind == _LocationFieldKind.pickup
-      ? 'Use your current location'
-      : 'Use current location';
+      ? AppLocalizations.of(context)!.locationFlowUseCurrentPickup
+      : AppLocalizations.of(context)!.locationFlowUseCurrent;
 
   IconData get _fieldIcon => widget.kind == _LocationFieldKind.pickup
       ? AppIcons.arrow_upward_rounded
@@ -456,8 +456,8 @@ class _LocationDetailsScreenState
       if (!serviceEnabled) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Turn on location services to autofill pickup.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.locationFlowTurnOnLocation),
           ),
         );
         return;
@@ -471,8 +471,8 @@ class _LocationDetailsScreenState
           permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location permission is needed to autofill pickup.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.locationFlowPermissionNeeded),
           ),
         );
         return;
@@ -492,8 +492,8 @@ class _LocationDetailsScreenState
 
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not resolve your current address yet.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.locationFlowResolveCurrent),
           ),
         );
         return;
@@ -763,7 +763,7 @@ class _LocationDetailsScreenState
                       if (_resolvingCurrentLocation) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'Fetching your current location...',
+                          AppLocalizations.of(context)!.locationFlowFetching,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: context.colors.textSecondary,
@@ -777,7 +777,7 @@ class _LocationDetailsScreenState
                     if (_matchingSavedAddresses.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
-                        'Saved addresses',
+                        AppLocalizations.of(context)!.locationFlowSavedTitle,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: context.colors.textTertiary,
@@ -818,7 +818,7 @@ class _LocationDetailsScreenState
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Could not load suggestions',
+                        AppLocalizations.of(context)!.locationFlowSuggestionsError,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.colors.dangerEmphasis,
                           fontWeight: FontWeight.w600,
@@ -904,14 +904,15 @@ class _IntermediateStopDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _LocationDetailsScreen(
       kind: loading ? _LocationFieldKind.pickup : _LocationFieldKind.drop,
       initialValue: '',
-      title: loading ? 'Add loading point' : 'Add unloading point',
+      title: loading ? l10n.locationFlowAddLoading : l10n.locationFlowAddUnloading,
       subtitle: loading
-          ? 'Add another pickup stop before the main route continues.'
-          : 'Add another drop stop before the final delivery.',
-      mapButtonLabel: loading ? 'Pin loading point' : 'Pin unloading point',
+          ? l10n.locationFlowAddLoadingHint
+          : l10n.locationFlowAddUnloadingHint,
+      mapButtonLabel: loading ? l10n.locationFlowPinLoading : l10n.locationFlowPinUnloading,
       showCurrentLocation: loading,
     );
   }
@@ -1033,7 +1034,7 @@ class _MapLocationPickerScreenState
       if (ownLocation == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your location is not available yet.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.locationFlowOwnUnavailable)),
         );
         return;
       }
@@ -1069,7 +1070,7 @@ class _MapLocationPickerScreenState
       if (!mounted) return;
       if (address.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not resolve this map point.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.locationFlowResolvePoint)),
         );
         return;
       }
@@ -1254,7 +1255,7 @@ class _MapLocationPickerScreenState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Move the map to position the pin',
+                                      AppLocalizations.of(context)!.locationFlowMovePin,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleSmall
@@ -1266,7 +1267,7 @@ class _MapLocationPickerScreenState
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
-                                      'The exact address will be detected after you confirm.',
+                                      AppLocalizations.of(context)!.locationFlowPinHint,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)

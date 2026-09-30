@@ -10,6 +10,7 @@ import '../controllers/client_notifications_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 enum _InboxFilter { all, unread }
 
@@ -65,7 +66,7 @@ class _ClientNotificationsScreenState
       ref.invalidate(clientNotificationsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All caught up — inbox marked as read.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.clientNotificationsMarkedRead)),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -164,7 +165,7 @@ class _ClientNotificationsScreenState
                               border: Border.all(color: tint.border),
                             ),
                             child: Text(
-                              kind.label.toUpperCase(),
+                              kind.labelOf(sheetContext).toUpperCase(),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -187,7 +188,7 @@ class _ClientNotificationsScreenState
                 const SizedBox(height: 14),
                 Text(
                   notification.title.isEmpty
-                      ? 'Notification'
+                      ? AppLocalizations.of(context)!.clientNotificationsFallbackTitle
                       : notification.title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontSize: 20,
@@ -199,7 +200,7 @@ class _ClientNotificationsScreenState
                 const SizedBox(height: 10),
                 Text(
                   notification.message.isEmpty
-                      ? 'No message available.'
+                      ? AppLocalizations.of(context)!.clientNotificationsFallbackMessage
                       : notification.message,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.textSecondary,
@@ -235,8 +236,8 @@ class _ClientNotificationsScreenState
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'Got it',
+                      child: Text(
+                        AppLocalizations.of(sheetContext)!.clientNotificationsGotIt,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -331,30 +332,30 @@ class _ClientNotificationsScreenState
       return [
         _StateCard(
           icon: AppIcons.notifications_off_outlined,
-          title: 'Could not load notifications',
+          title: AppLocalizations.of(context)!.clientNotificationsLoadError,
           subtitle: async.error.toString().replaceFirst('Exception: ', ''),
-          actionLabel: 'Try again',
+          actionLabel: AppLocalizations.of(context)!.clientNotificationsTryAgain,
           onAction: _refresh,
         ),
       ];
     }
     if (visible.isEmpty) {
       if (_filter == _InboxFilter.unread && unreadCount == 0) {
-        return const [
+        return [
           _StateCard(
             icon: AppIcons.notifications_none_rounded,
-            title: 'All caught up',
+            title: AppLocalizations.of(context)!.clientNotificationsAllCaughtUp,
             subtitle:
-                'No unread updates. New booking, payment and trip alerts will land here.',
+                AppLocalizations.of(context)!.clientNotificationsAllCaughtUpHint,
           ),
         ];
       }
-      return const [
+      return [
         _StateCard(
           icon: AppIcons.notifications_none_rounded,
-          title: 'No notifications yet',
+          title: AppLocalizations.of(context)!.clientNotificationsEmpty,
           subtitle:
-              'Updates about bookings, invoices, and activity will appear here.',
+              AppLocalizations.of(context)!.clientNotificationsEmptyHint,
         ),
       ];
     }
@@ -431,6 +432,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Row(
       children: [
@@ -454,9 +456,9 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Notifications',
+            l10n.clientNotificationsTitle,
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
         ),
@@ -472,7 +474,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           child: Text(
-            markingAllRead ? 'Saving…' : 'Mark all read',
+            markingAllRead ? l10n.clientNotificationsSaving : l10n.clientNotificationsMarkAllRead,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5),
           ),
         ),
@@ -563,7 +565,7 @@ class _FilterRow extends StatelessWidget {
                               height: innerHeight,
                               alignment: Alignment.center,
                               child: _SegmentLabel(
-                                label: 'All',
+                                label: AppLocalizations.of(context)!.clientNotificationsFilterAll,
                                 count: allCount,
                                 selected: filter == _InboxFilter.all,
                               ),
@@ -578,7 +580,7 @@ class _FilterRow extends StatelessWidget {
                               height: innerHeight,
                               alignment: Alignment.center,
                               child: _SegmentLabel(
-                                label: 'Unread',
+                                label: AppLocalizations.of(context)!.clientNotificationsFilterUnread,
                                 count: unreadCount,
                                 selected: filter == _InboxFilter.unread,
                               ),
@@ -611,6 +613,7 @@ class _SegmentLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -771,7 +774,7 @@ class _NotificationCard extends StatelessWidget {
                           border: Border.all(color: tint.border),
                         ),
                         child: Text(
-                          kind.label,
+                          kind.labelOf(context),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -992,6 +995,20 @@ _KindTint _tintFor(_NotifKind kind, AppColorScheme colors) {
 }
 
 extension on _NotifKind {
+  String labelOf(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (this) {
+      case _NotifKind.booking:
+        return l10n.clientNotificationsKindBooking;
+      case _NotifKind.payment:
+        return l10n.clientNotificationsKindPayment;
+      case _NotifKind.offer:
+        return l10n.clientNotificationsKindOffer;
+      case _NotifKind.system:
+        return l10n.clientNotificationsKindUpdate;
+    }
+  }
+
   String get label {
     switch (this) {
       case _NotifKind.booking:

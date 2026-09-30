@@ -43,7 +43,7 @@ class _CollapsedTruckSearchBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Choose trucks',
+              AppLocalizations.of(context)!.clientChooseTrucks,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -92,7 +92,9 @@ class _SearchModeCard extends StatelessWidget {
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
+          color: selected
+              ? context.colors.brandFill
+              : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? const Color(0xFF2FA56E) : context.colors.line,
@@ -192,7 +194,10 @@ class _ChooseTruckCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    vehicle.label,
+                    localizedVehicleOptionLabel(
+                      AppLocalizations.of(context)!,
+                      vehicle,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -260,9 +265,7 @@ class _SearchMethodSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(
-          top: BorderSide(color: context.colors.line, width: 1),
-        ),
+        border: Border(top: BorderSide(color: context.colors.line, width: 1)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0B1F3A).withValues(alpha: 0.14),
@@ -342,7 +345,9 @@ class _EligibleBrokerTile extends StatelessWidget {
                 child: Text(
                   initials,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: selected ? Colors.white : context.colors.textSecondary,
+                    color: selected
+                        ? Colors.white
+                        : context.colors.textSecondary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -421,7 +426,9 @@ class _EligibleBrokerTile extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: selected ? const Color(0xFF2FA56E) : context.colors.surface,
+                color: selected
+                    ? const Color(0xFF2FA56E)
+                    : context.colors.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: selected
@@ -500,7 +507,9 @@ class _BrokerMetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: highlighted ? context.colors.brandFill : context.colors.fillSubtle,
+        color: highlighted
+            ? context.colors.brandFill
+            : context.colors.fillSubtle,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -553,7 +562,7 @@ class _BrokerLoadingCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Finding verified brokers for this route...',
+              AppLocalizations.of(context)!.clientFindingBrokers,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontWeight: FontWeight.w700,
@@ -623,7 +632,10 @@ class _BrokerEmptyCard extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(AppLocalizations.of(context)!.clientSearchRetry),
+          ),
         ],
       ),
     );

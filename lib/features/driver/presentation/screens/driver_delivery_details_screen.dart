@@ -1993,7 +1993,8 @@ class _DriverDeliveryDetailsScreenState
                         onPressed: () => Navigator.of(sheetContext).pop(),
                         icon: const Icon(AppIcons.close_rounded),
                         color: AppColors.textTertiary,
-                        tooltip: 'Close',
+                        tooltip:
+                            AppLocalizations.of(sheetContext)!.close,
                       ),
                     ],
                   ),
@@ -3299,7 +3300,7 @@ class _MechanicStatusDialogState extends ConsumerState<_MechanicStatusDialog> {
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(AppIcons.close_rounded),
                     color: AppColors.textTertiary,
-                    tooltip: 'Close',
+                    tooltip: AppLocalizations.of(context)!.close,
                   ),
                 ],
               ),

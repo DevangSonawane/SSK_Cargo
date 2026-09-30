@@ -1,5 +1,4 @@
 {
-  "@@locale": "en",
   "settings": "Settings",
   "language": "Language",
   "languageSubtitle": "Choose the language for this device",
@@ -209,10 +208,10 @@
   "removeFromMyListDescription": "This only removes it from your own list. There's no undo.",
   "remove": "Remove",
   "bookingRemovedFromList": "Booking removed from your list.",
-  "invoiceForBooking": "Invoice for booking {bookingRef}",
+  "invoiceForBooking": "Invoice for booking {trackingId}",
   "@invoiceForBooking": {
     "placeholders": {
-      "bookingRef": {}
+      "trackingId": {}
     }
   },
   "invoiceEmailDefaultMessage": "Please find attached the invoice for booking {bookingRef}.",
@@ -347,8 +346,7 @@
   "jobsInProgress": "Jobs currently in progress",
   "manageFleetAtGlance": "Manage your fleet at a glance",
   "monitorDriverMovement": "Monitor driver movement",
-  "reviewRecentBookings": "Review recent bookings"
-  ,
+  "reviewRecentBookings": "Review recent bookings",
   "bookingId": "Booking ID",
   "pickup": "Pickup",
   "drop": "Drop",
@@ -370,12 +368,6 @@
   "pickupLocationNotProvided": "Pickup location not provided",
   "dropOffLocationNotProvided": "Drop-off location not provided",
   "express": "Express",
-  "invoiceForBooking": "Invoice for booking {trackingId}",
-  "@invoiceForBooking": {
-    "placeholders": {
-      "trackingId": {}
-    }
-  },
   "invoiceEmailMessage": "Please find attached the invoice for booking {trackingId}.",
   "@invoiceEmailMessage": {
     "placeholders": {
@@ -725,5 +717,1576 @@
   "brokerOffersSubtitle": "Fare changes sent after the booking was broadcast.",
   "noBrokerOffersYet": "No broker offers yet",
   "brokerOffersAppearHere": "Once a broker responds, the offers will appear here.",
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "photo": "Photo",
+  "video": "Video",
+  "gallery": "Gallery",
+  "brokerReqDetailRequestRejected": "Request rejected.",
+  "brokerReqDetailFareChangeSent": "Fare change sent.",
+  "brokerReqDetailAcceptedWaitingForTheClientToConfirm": "Accepted - waiting for the client to confirm.",
+  "brokerReqDetailOfferSentToTheDriverWaitingFor": "Offer sent to the driver - waiting for response.",
+  "brokerReqDetailAssignDriverTruck": "Assign Driver & Truck",
+  "brokerReqDetailBookingPickAnAvailableDriverAndTruck": "Booking #{id} - pick an available driver and truck.",
+  "@brokerReqDetailBookingPickAnAvailableDriverAndTruck": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerReqDetailDriver": "Driver",
+  "brokerReqDetailTruck": "Truck",
+  "brokerReqDetailSelectOneIdleDriverAndOneIdle": "Select one idle driver and one idle truck to continue.",
+  "brokerReqDetailCancel": "Cancel",
+  "brokerReqDetailConfirmAssignment": "Confirm Assignment",
+  "brokerReqDetailSelectDriver": "Select driver",
+  "brokerReqDetailSelectTruck": "Select truck",
+  "brokerReqDetailNegotiationAccepted": "Negotiation accepted.",
+  "brokerReqDetailWaitingForClientConfirmation": "Waiting for client confirmation",
+  "brokerReqDetailYourAcceptHasBeenSavedFareChanges": "Your accept has been saved. Fare changes are locked until the client confirms or declines.",
+  "brokerReqDetailYourAcceptHasBeenSavedNoMore": "Your accept has been saved. No more fare changes are available until the client responds.",
+  "brokerReqDetailYourAcceptHasBeenSavedTheRequest": "Your accept has been saved. The request is locked until the client confirms or declines.",
+  "brokerReqDetailBrokerAssigned": "Broker-assigned",
+  "brokerReqDetailAssignedDriverRequest": "Assigned driver request",
+  "brokerReqDetailThisPriceWasAlreadyAgreedWithThe": "This price was already agreed with the broker. Accept or decline only - no fare changes.",
+  "brokerReqDetailReject": "Reject",
+  "brokerReqDetailBrokerNegotiation": "Broker negotiation",
+  "brokerReqDetailFareAmount": "Fare amount",
+  "brokerReqDetailChangeFare": "Change Fare",
+  "brokerReqDetailAutoSelectedAssignment": "Auto-selected assignment",
+  "brokerReqDetailNoExactMatchFoundAFallbackDriver": "No exact match found — a fallback driver or truck will be used when you accept.",
+  "brokerReqDetailBookingDetails": "Booking Details",
+  "brokerReqDetailOverview": "Overview",
+  "brokerReqDetailRequestedOn": "Requested on",
+  "brokerReqDetailRequestedBy": "Requested by",
+  "brokerReqDetailLoadType": "Load type",
+  "brokerReqDetailPayment": "Payment",
+  "brokerReqDetailRouteInformation": "Route Information",
+  "brokerReqDetailPickup": "Pickup",
+  "brokerReqDetailDropOff": "Drop-off",
+  "brokerReqDetailWeight": "Weight",
+  "brokerReqDetailVehicle": "Vehicle",
+  "brokerReqDetailETA": "ETA: {eta}",
+  "@brokerReqDetailETA": {
+    "placeholders": {
+      "eta": {}
+    }
+  },
+  "brokerReqDetailSetFareAmount": "Set fare amount",
+  "brokerHomeDeclinedPickADifferentDriverForThis": "{name} declined. Pick a different driver for this request.",
+  "@brokerHomeDeclinedPickADifferentDriverForThis": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeConfirmedTripCreated": "Confirmed. Trip created for {name}.",
+  "@brokerHomeConfirmedTripCreated": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeOfferSentToTheDriverWaitingFor": "Offer sent to the driver - waiting for response.",
+  "brokerHomeChangeFare": "Change fare",
+  "brokerHomeBookingProposeADifferentAmount": "Booking #{id}: propose a different amount.",
+  "@brokerHomeBookingProposeADifferentAmount": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerHomeEnterAmount": "Enter amount",
+  "brokerHomeCancel": "Cancel",
+  "brokerHomeChangeFare2": "Change Fare",
+  "brokerHomeSearchBookingIDLocation": "Search booking ID, location...",
+  "brokerHomeBookingRequests": "Booking Requests",
+  "brokerHomeSort": "Sort",
+  "brokerHomeNoBookingsFound": "No bookings found",
+  "brokerHomeCouldNotLoadBookings": "Could not load bookings",
+  "brokerHomeReloadRequests": "Reload requests",
+  "brokerHomeNewBookings": "New bookings",
+  "brokerHomeTo": "{pickup} to {drop}",
+  "@brokerHomeTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerHomePickup": "Pickup",
+  "brokerHomeDrop": "Drop",
+  "brokerHomeDistance": "Distance",
+  "brokerHomeWeight": "Weight",
+  "brokerHomeClient": "Client",
+  "brokerHomeAssignDriverTruck": "Assign Driver & Truck",
+  "brokerHomeConfirm": "Confirm",
+  "brokerHomeDecline": "Decline",
+  "brokerHomeAccept": "Accept",
+  "brokerHomeReviewRequest": "Review request",
+  "brokerHomeChooseAnIdleDriverAndTruck": "Choose an idle driver and truck for {booking}.",
+  "@brokerHomeChooseAnIdleDriverAndTruck": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerHomeDriver": "Driver",
+  "brokerHomeTruck": "Truck",
+  "brokerHomeSelectOneIdleDriverAndOneIdle": "Select one idle driver and one idle truck to continue.",
+  "brokerHomeSelect": "Select {label}",
+  "@brokerHomeSelect": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "brokerHomeCouldNotLoadAssignmentOptions": "Could not load assignment options",
+  "brokerHomeRetry": "Retry",
+  "brokerHomeNEGOTIATIONHISTORY": "NEGOTIATION HISTORY",
+  "brokerKycPleaseSignInAgainToSubmitKYC": "Please sign in again to submit KYC.",
+  "brokerKycIsProvidedInTheDetailsSection": "{document} is provided in the details section.",
+  "@brokerKycIsProvidedInTheDetailsSection": {
+    "placeholders": {
+      "document": {}
+    }
+  },
+  "brokerKycPleaseSignInAgainToUploadDocuments": "Please sign in again to upload documents.",
+  "brokerKycUnableToPickDocumentRightNow": "Unable to pick document right now.",
+  "brokerKycChooseHowYouWantToUploadThis": "Choose how you want to upload this document.",
+  "brokerKycCamera": "Camera",
+  "brokerKycGallery": "Gallery",
+  "brokerKycCancel": "Cancel",
+  "brokerKycDocumentPreview": "Document preview",
+  "brokerKycClose": "Close",
+  "brokerKycCompleteYourKYCToVerifyYourBrokerage": "Complete your KYC to verify your brokerage account.",
+  "brokerKycUploadDocuments": "Upload Documents",
+  "brokerKycAllYourDocumentsAreVerifiedThroughDigiLocker": "All your documents are verified through DigiLocker — nothing to upload.",
+  "brokerKycAadhaarAndPANVerifiedContinueToReview": "Aadhaar and PAN verified. Continue to review and finish.",
+  "brokerKycThesePhotosSupportManualReviewForThe": "These photos support manual review for the documents DigiLocker couldn’t confirm.",
+  "brokerKycReviewYourInformation": "Review Your Information",
+  "brokerKycPleaseVerifyEverythingBeforeSubmitting": "Please verify everything before submitting.",
+  "brokerKycBusinessInformation": "Business Information",
+  "brokerKycPANNumber": "PAN Number",
+  "brokerKycAadhaarNumber": "Aadhaar Number",
+  "brokerKycGSTNumber": "GST Number",
+  "brokerKycBankAccountNumber": "Bank Account Number",
+  "brokerKycBusinessRegistrationNumber": "Business Registration Number",
+  "brokerKycUploadedDocuments": "Uploaded Documents",
+  "brokerKycIConfirmThatAllTheInformationProvided": "I confirm that all the information provided is accurate.",
+  "brokerKycVerificationDetails": "Verification Details",
+  "brokerKycCurrentStatus": "Current Status",
+  "brokerKycSubmittedDate": "Submitted Date",
+  "brokerKycSubmissionID": "Submission ID",
+  "brokerKycReviewedAt": "Reviewed At",
+  "brokerKycViewMyDocuments": "View My Documents",
+  "brokerKycGoBack": "Go Back",
+  "brokerKycMyDocuments": "My documents",
+  "brokerKycKYCRegistration": "KYC Registration",
+  "brokerKycVerifyYourBrokerAccount": "Verify your broker account",
+  "brokerKycSupportedFormats": "Supported formats: {formats}",
+  "@brokerKycSupportedFormats": {
+    "placeholders": {
+      "formats": {}
+    }
+  },
+  "brokerKycThisItemIsCoveredInTheDetails": "This item is covered in the details section.",
+  "brokerActiveJobsCouldNotLoadActiveJobs": "Could not load active jobs",
+  "brokerActiveJobsNoActiveJobsFound": "No active jobs found",
+  "brokerActiveJobsAssignedAndInTransitJobsWillAppear": "Assigned and in-transit jobs will appear here.",
+  "brokerActiveJobsReportAProblem": "Report a Problem",
+  "brokerActiveJobsTo": "{pickup} to {drop}",
+  "@brokerActiveJobsTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerActiveJobsIssueType": "Issue Type",
+  "brokerActiveJobsDescribeWhatWentWrong": "Describe what went wrong...",
+  "brokerActiveJobsCancel": "Cancel",
+  "brokerActiveJobsDisputeRaisedOurTeamWillReviewIt": "Dispute raised - our team will review it shortly.",
+  "brokerActiveJobsReassignDriver": "Reassign Driver",
+  "brokerActiveJobsCurrentlyAssigned": "Currently Assigned",
+  "brokerActiveJobsReassignTo": "Reassign to",
+  "brokerActiveJobsOptionalReasonForReassignment": "Optional reason for reassignment",
+  "brokerActiveJobsCanTFindTheOriginalJobRequest": "Can't find the original job request for this booking.",
+  "brokerActiveJobsDriverReassigned": "Driver reassigned.",
+  "brokerActiveJobsActiveJobs": "Active Jobs",
+  "brokerActiveJobsJobsCurrentlyInProgress": "{count} jobs currently in progress",
+  "@brokerActiveJobsJobsCurrentlyInProgress": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerActiveJobsPickup": "Pickup",
+  "brokerActiveJobsDrop": "Drop",
+  "brokerActiveJobsTruck": "Truck",
+  "brokerActiveJobsDriver": "Driver",
+  "brokerActiveJobsTRIPPROGRESS": "TRIP PROGRESS",
+  "brokerActiveJobsTrackLive": "Track Live",
+  "brokerActiveJobsChat": "Chat",
+  "addDriverPleaseSignInAgainToCreateA": "Please sign in again to create a driver.",
+  "addDriverDriverProfileSavedSuccessfully": "Driver profile saved successfully.",
+  "addDriverHasBeenRegisteredAndAddedToYour": "{name} has been registered and added to your drivers.",
+  "@addDriverHasBeenRegisteredAndAddedToYour": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addDriverTemporaryPassword": "Temporary Password",
+  "addDriverPasswordCopied": "Password copied",
+  "addDriverCopy": "Copy",
+  "addDriverThisPasswordIsShownOnlyOnceThe": "This password is shown only once — the driver can change it from their profile after logging in.",
+  "addDriverDone": "Done",
+  "addDriverEmailAlreadyRegistered": "Email already registered",
+  "addDriverIsAlreadyTiedToADriverAccount": "{email} is already tied to a driver account.",
+  "@addDriverIsAlreadyTiedToADriverAccount": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "addDriverKeepEditing": "Keep editing",
+  "addDriverViewDrivers": "View drivers",
+  "addDriverAccountDetails": "Account Details",
+  "addDriverFullName": "Full name",
+  "addDriverEmail": "Email",
+  "addDriverMobileNumber": "Mobile number",
+  "addDriverLicenseDocuments": "License & Documents",
+  "addDriverLicenseNumber": "License number",
+  "addDriverAadhaarNumber": "Aadhaar number",
+  "addDriverLeaveBlankToKeepTheCurrentAadhaar": "Leave blank to keep the current Aadhaar on file.",
+  "addDriverLicenseExpiry": "License expiry",
+  "addDriverYYYYMMDD": "YYYY-MM-DD",
+  "addDriverVehicleAssignment": "Vehicle Assignment",
+  "addDriverAssignTruck": "Assign truck",
+  "addDriverTruckID": "Truck ID",
+  "addDriverEnterTruckUUIDOptional": "Enter truck UUID (optional)",
+  "addDriverStatus": "Status",
+  "addDriverAvailable": "Available",
+  "addDriverOnTrip": "On trip",
+  "addDriverOffline": "Offline",
+  "addDriverTruckListCouldNotBeLoadedYou": "Truck list could not be loaded. You can still enter a truck ID manually.",
+  "addDriverChangePhoto": "Change Photo",
+  "brokerHistoryRemoveFromMyList": "Remove from my list?",
+  "brokerHistoryThisOnlyRemovesItFromYourOwn": "This only removes it from your own list. There's no undo.",
+  "brokerHistoryCancel": "Cancel",
+  "brokerHistoryRemove": "Remove",
+  "brokerHistoryBookingRemovedFromYourList": "Booking removed from your list.",
+  "brokerHistoryCouldNotLoadJobHistory": "Could not load job history",
+  "brokerHistoryNoBookingsFound": "No bookings found",
+  "brokerHistoryCompletedAndCancelledBookingsAppearHere": "Completed and cancelled bookings appear here.",
+  "brokerHistoryJobHistory": "Job History",
+  "brokerHistoryCompletedAndCancelledBookings": "{count} completed and cancelled bookings",
+  "@brokerHistoryCompletedAndCancelledBookings": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHistorySearchBookingsRoutesDrivers": "Search bookings, routes, drivers...",
+  "brokerHistoryTotalNetEarningsFiltered": "Total Net Earnings (filtered)",
+  "brokerHistoryTo": "{pickup} to {drop}",
+  "@brokerHistoryTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerHistoryPickup": "Pickup",
+  "brokerHistoryDrop": "Drop",
+  "brokerHistoryTruck": "Truck",
+  "brokerHistoryDriver": "Driver",
+  "brokerHistoryViewDetails": "View details",
+  "brokerHistoryFee": "Fee: {amount}",
+  "@brokerHistoryFee": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHistoryNet": "Net: {amount}",
+  "@brokerHistoryNet": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerDriverReqDriverRequests": "Driver requests",
+  "brokerDriverReqCouldNotLoadDriverRequests": "Could not load driver requests",
+  "brokerDriverReqNegotiationCards": "Negotiation cards",
+  "brokerDriverReqReload": "Reload",
+  "brokerDriverReqNoDriverRequestsYet": "No driver requests yet",
+  "brokerDriverReqWhenADriverTimesOutTheRequest": "When a driver times out, the request will appear here for broker takeover.",
+  "brokerDriverReqBookingID": "Booking ID",
+  "brokerDriverReqPickup": "Pickup",
+  "brokerDriverReqDrop": "Drop",
+  "brokerDriverReqAcceptedWaitingForTheClientToConfirm": "Accepted - waiting for the client to confirm",
+  "brokerDriverReqConfirm": "Confirm",
+  "brokerDriverReqDecline": "Decline",
+  "brokerDriverReqAccept": "Accept",
+  "brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr": "Already agreed with the broker - accept or decline, no negotiation.",
+  "brokerDriverReqChangeFare": "Change Fare",
+  "brokerDriverReqDriverTimedOutBrokerTakeoverActive": "Driver timed out - broker takeover active.",
+  "brokerDriverReqBrokerAssigned": "Broker-assigned",
+  "brokerDriverReqChangeFare2": "Change fare",
+  "brokerDriverReqSetFareAmount": "Set fare amount",
+  "brokerDriverReqCancel": "Cancel",
+  "brokerVehiclesVehicles": "Vehicles",
+  "brokerVehiclesManageYourFleetAndTruckAvailability": "Manage your fleet and truck availability",
+  "brokerVehiclesSearchVehiclesDriversOrLocation": "Search vehicles, drivers or location",
+  "brokerVehiclesRemoveTruck": "Remove Truck",
+  "brokerVehiclesRemoveFromYourFleet": "Remove {vehicle} from your fleet?",
+  "@brokerVehiclesRemoveFromYourFleet": {
+    "placeholders": {
+      "vehicle": {}
+    }
+  },
+  "brokerVehiclesCancel": "Cancel",
+  "brokerVehiclesRemove": "Remove",
+  "brokerVehiclesTruckRemoved": "Truck removed.",
+  "brokerVehiclesYourFleet": "Your fleet",
+  "brokerVehiclesAddTruck": "Add truck",
+  "brokerVehiclesCouldNotLoadTrucks": "Could not load trucks",
+  "brokerVehiclesNoMatchingVehicles": "No matching vehicles",
+  "brokerVehiclesTryADifferentSearchOrAddA": "Try a different search or add a new truck.",
+  "brokerVehiclesEdit": "Edit",
+  "brokerVehiclesAssign": "Assign",
+  "brokerVehiclesTrack": "Track",
+  "brokerVehiclesHistory": "History",
+  "addVehiclePleaseSignInAgainToAddA": "Please sign in again to add a truck.",
+  "addVehiclePleaseAssignADriver": "Please assign a driver.",
+  "addVehiclePleaseEnterAValidYear": "Please enter a valid year.",
+  "addVehicleRegistration": "Registration",
+  "addVehicleCapacity": "Capacity",
+  "addVehicleAssignDriver": "Assign driver",
+  "addVehicleMake": "Make",
+  "addVehicleYear": "Year",
+  "addVehicleInsuranceExpiry": "Insurance expiry",
+  "addVehiclePickADate": "Pick a date",
+  "addVehicleSaveTruck": "Save truck",
+  "brokerEarningsEarnings": "Earnings",
+  "brokerEarningsRevenueMomentumAndSettlementsAtAGlance": "Revenue, momentum and settlements at a glance.",
+  "brokerEarningsFailedToLoadEarnings": "Failed to load earnings",
+  "brokerEarningsGrossRevenue": "Gross revenue",
+  "brokerEarningsPlatformFees": "Platform fees",
+  "brokerEarningsRecentSettlements": "Recent settlements",
+  "brokerEarningsSeeAll": "See all",
+  "brokerEarningsNoSettlementsYet": "No settlements yet",
+  "brokerEarningsCompletedSettlementsWillAppearHereWithRoute": "Completed settlements will appear here with route and payout details.",
+  "brokerEarningsNETEARNINGS": "NET EARNINGS",
+  "brokerEarningsViewSettlements": "View settlements",
+  "brokerEarningsMonthlyMomentum": "Monthly momentum",
+  "brokerEarningsThisMonth": "This month",
+  "brokerEarningsLastMonth": "Last month",
+  "brokerInvoicesInvoiceFetchedFor": "Invoice fetched for {booking}",
+  "@brokerInvoicesInvoiceFetchedFor": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerInvoicesInvoiceEmailedFor": "Invoice emailed for {booking}",
+  "@brokerInvoicesInvoiceEmailedFor": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerInvoicesCouldNotLoadInvoices": "Could not load invoices",
+  "brokerInvoicesNoInvoiceReadyBookingsYet": "No invoice-ready bookings yet",
+  "brokerInvoicesCompletedOrDeliveredBookingsWillAppearHere": "Completed or delivered bookings will appear here.",
+  "brokerInvoicesInvoices": "Invoices",
+  "brokerInvoicesTrackingID": "Tracking ID: {id}",
+  "@brokerInvoicesTrackingID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerInvoicesFrom": "From:",
+  "brokerInvoicesShippingTo": "Shipping to:",
+  "brokerInvoicesStatus": "Status:",
+  "brokerInvoicesFetchInvoice": "Fetch invoice",
+  "brokerInvoicesEmailInvoice": "Email invoice",
+  "brokerSettlementsCouldNotLoadSettlements": "Could not load settlements",
+  "brokerSettlementsNoSettlementsYet": "No settlements yet",
+  "brokerSettlementsPaidAndPendingSettlementRecordsWillAppear": "Paid and pending settlement records will appear here.",
+  "brokerSettlementsNetEarnings": "Net earnings",
+  "brokerSettlementsClose": "Close",
+  "brokerSettlementsSettlements": "Settlements",
+  "brokerSettlementsGross": "Gross",
+  "brokerSettlementsPICKUP": "PICKUP",
+  "brokerSettlementsDROP": "DROP",
+  "addTruckPleaseSignInAgainToAddA": "Please sign in again to add a truck.",
+  "addTruckChooseTheTruckTypeAndFillIn": "Choose the truck type and fill in the fleet details.",
+  "addTruckSelectTruckType": "Select truck type",
+  "addTruckRegistration": "Registration",
+  "addTruckCapacity": "Capacity",
+  "addTruckAssignDriverOptional": "Assign driver (optional)",
+  "addTruckMakeOptional": "Make (optional)",
+  "addTruckYearOptional": "Year (optional)",
+  "addTruckInsuranceExpiry": "Insurance expiry",
+  "addTruckPickADate": "Pick a date",
+  "brokerTrackLiveDriverPhoneNumberIsNotAvailable": "Driver phone number is not available.",
+  "brokerTrackLiveCouldNotOpenThePhoneApp": "Could not open the phone app.",
+  "brokerTrackLiveTrackLive": "Track Live",
+  "brokerTrackLiveChat": "Chat",
+  "brokerTrackLiveCallDriver": "Call driver",
+  "brokerTrackLiveLIVE": "LIVE",
+  "brokerTrackLiveRoute": "Route",
+  "brokerTrackLivePickup": "Pickup",
+  "brokerTrackLiveDropOff": "Drop-off",
+  "brokerTrackLiveWeight": "Weight",
+  "brokerTrackLiveTruck": "Truck",
+  "brokerTrackLiveTripProgress": "Trip progress",
+  "brokerNotifCouldnTLoadYourNotifications": "Couldn't load your notifications",
+  "brokerNotifNoNotifications": "No notifications",
+  "brokerNotifNewAlertsWillAppearHere": "New alerts will appear here.",
+  "brokerNotifNotifications": "Notifications",
+  "brokerAnalyticsCouldNotLoadAnalytics": "Could not load analytics",
+  "brokerAnalyticsThisMonth": "This month",
+  "brokerAnalyticsLastMonth": "Last month",
+  "brokerAnalyticsTripHistory": "Trip history",
+  "brokerAnalyticsFilter": "Filter",
+  "brokerAnalyticsNoTripHistoryYet": "No trip history yet",
+  "brokerAnalyticsCompletedSettlementsWillAppearHereOnceTrips": "Completed settlements will appear here once trips close.",
+  "brokerAnalyticsAnalytics": "Analytics",
+  "brokerAnalyticsTrackYourEarningsAndTripHistory": "Track your earnings and trip history",
+  "brokerAnalyticsTotalEarnings": "Total earnings",
+  "brokerAnalyticsNetEarnings": "Net earnings: ₹{amount}",
+  "@brokerAnalyticsNetEarnings": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverDetailVehicle": "Vehicle",
+  "driverDetailLocation": "Location",
+  "driverDetailLicense": "License",
+  "driverDetailOnTripSince": "On trip since",
+  "driverDetailLiveTracking": "Live tracking",
+  "driverDetailLiveTracking2": "Live Tracking",
+  "driverDetailLiveDriverPosition": "Live driver position",
+  "driverDetailChatWithDriver": "Chat with driver",
+  "brokerTruckAssignDriverAssignedToTruck": "Driver assigned to truck.",
+  "brokerTruckAssignAssignDriver": "Assign Driver",
+  "brokerTruckAssignTruck": "Truck",
+  "brokerTruckAssignNoActiveDriversAvailableRightNow": "No active drivers available right now.",
+  "brokerTruckAssignDriver": "Driver",
+  "brokerTruckAssignCancel": "Cancel",
+  "brokerTruckHistoryCouldNotLoadTripHistory": "Could not load trip history",
+  "brokerTruckHistoryTruckTripsWillAppearHereOnceJobs": "Truck trips will appear here once jobs are assigned.",
+  "brokerTruckHistorySearchByBookingIDRoute": "Search by booking ID, route...",
+  "brokerTruckLocationCouldNotLoadTruckLocation": "Could not load truck location",
+  "brokerTruckLocationUpdated": "Updated {time}",
+  "@brokerTruckLocationUpdated": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "brokerTruckLocationLiveLocationPending": "Live location pending",
+  "brokerTruckLocationThisTruckHasNotReportedALocation": "This truck has not reported a location yet.",
+  "brokerTrackingDriverHasNotBegunNegotiation": "Driver has not begun negotiation",
+  "brokerTrackingClickHereToNegotiateThisTimedOut": "Click here to negotiate this timed-out request.",
+  "brokerTrackingRemainingNegotiation": "Remaining negotiation",
+  "brokerTrackingNegotiationReady": "Negotiation ready",
+  "brokerTrackingDrivers": "Drivers",
+  "brokerTrackingMonitorYourDriversAndLiveTrips": "Monitor your drivers and live trips",
+  "brokerTrackingSearchDriversPhoneOrVehicle": "Search drivers, phone or vehicle",
+  "brokerTrackingYourDrivers": "Your drivers",
+  "brokerTrackingChangeFareRequest": "Change fare request",
+  "brokerTrackingAmount": "Amount",
+  "brokerTrackingNote": "Note",
+  "brokerTrackingCancel": "Cancel",
+  "brokerTrackingSend": "Send",
+  "brokerTrackingChangeFare": "Change Fare",
+  "brokerTrackingBrokerAssignedNoFareChange": "Broker-assigned - no fare change",
+  "brokerTrackingSLA": "SLA: {hours}",
+  "@brokerTrackingSLA": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "brokerTrackingDelay": "Delay charge: ₹{amount}",
+  "@brokerTrackingDelay": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerTrackingIncidents": "Incidents",
+  "brokerTrackingLoadingUnloadingStops": "Loading & Unloading Stops",
+  "brokerTrackingCompleteEarlierStopFirst": "Complete the earlier {type} stop first.",
+  "@brokerTrackingCompleteEarlierStopFirst": {
+    "placeholders": {
+      "type": {}
+    }
+  },
+  "brokerTrackingMechanic": "Mechanic: {name}",
+  "@brokerTrackingMechanic": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerFlowLoadID": "Load ID: {id}",
+  "@brokerFlowLoadID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerFlowPickup": "Pickup",
+  "brokerFlowDropOff": "Drop-off",
+  "brokerFlowReviewRequest": "Review request",
+  "brokerFlowCapacity": "Capacity",
+  "brokerFlowLocation": "Location",
+  "brokerFlowID": "ID: {id}",
+  "@brokerFlowID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerFlowEdit": "Edit",
+  "brokerFlowCall": "Call",
+  "brokerFlowRemove": "Remove",
+  "allEarningsTripCount": "{count} trips",
+  "@allEarningsTripCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "appNewChatBookingSuffix": " for booking {booking}",
+  "@appNewChatBookingSuffix": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "appNewChatRequestFrom": "New chat request from {name}",
+  "@appNewChatRequestFrom": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "appNewMessageFrom": "New message from {name}",
+  "@appNewMessageFrom": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeClientAcceptedConfirm": "Client accepted {amount}. Confirm now.",
+  "@brokerHomeClientAcceptedConfirm": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeDriverChangedFare": "{name} changed the fare.",
+  "@brokerHomeDriverChangedFare": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeDriverNoResponse": "{name} did not respond.",
+  "@brokerHomeDriverNoResponse": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeHelloName": "Hello, {name}",
+  "@brokerHomeHelloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeNoMatchButPending": "No exact match, but {count} pending requests need attention.",
+  "@brokerHomeNoMatchButPending": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHomeOfferLive": "Offer live: {amount}",
+  "@brokerHomeOfferLive": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeRequestsNeedAttention": "{count} requests need attention",
+  "@brokerHomeRequestsNeedAttention": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHomeWaitingClientResponse": "Waiting for client response on {amount}",
+  "@brokerHomeWaitingClientResponse": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeWaitingForDriver": "Waiting for {name}",
+  "@brokerHomeWaitingForDriver": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "clientBookingRouteDistance": "Route distance: {distance} km",
+  "@clientBookingRouteDistance": {
+    "placeholders": {
+      "distance": {}
+    }
+  },
+  "clientCheckoutDefaultMethod": "Default method: {method}",
+  "@clientCheckoutDefaultMethod": {
+    "placeholders": {
+      "method": {}
+    }
+  },
+  "clientCheckoutDemoMode": "Demo mode: {description}",
+  "@clientCheckoutDemoMode": {
+    "placeholders": {
+      "description": {}
+    }
+  },
+  "clientCheckoutPay": "Pay {amount}",
+  "@clientCheckoutPay": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "clientProceedWith": "Proceed with {vehicle}",
+  "@clientProceedWith": {
+    "placeholders": {
+      "vehicle": {}
+    }
+  },
+  "clientPublicDelayCharge": "Delay charge: {amount} for {hours}",
+  "@clientPublicDelayCharge": {
+    "placeholders": {
+      "amount": {},
+      "hours": {}
+    }
+  },
+  "clientPublicExpectedDelivery": "Expected delivery: {time} {suffix}",
+  "@clientPublicExpectedDelivery": {
+    "placeholders": {
+      "time": {},
+      "suffix": {}
+    }
+  },
+  "clientPublicIncidentUpdate": "Incident update: {status}",
+  "@clientPublicIncidentUpdate": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "deliveryFlowAddMore": "Add {count} more item(s).",
+  "@deliveryFlowAddMore": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "deliveryFlowImagePickerError": "Image picker error: {error}",
+  "@deliveryFlowImagePickerError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "deliveryFlowVideoCameraError": "Video camera error: {error}",
+  "@deliveryFlowVideoCameraError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverEarningsAvgPerDelivery": "Avg per delivery: {amount}",
+  "@driverEarningsAvgPerDelivery": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverEarningsCompletedCount": "{count} completed",
+  "@driverEarningsCompletedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "driverPaymentRecordedAs": "Recorded as {mode}",
+  "@driverPaymentRecordedAs": {
+    "placeholders": {
+      "mode": {}
+    }
+  },
+  "gpsAppVersion": "App version {version}",
+  "@gpsAppVersion": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "gpsDashboardGreeting": "Hi, {name}",
+  "@gpsDashboardGreeting": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "gpsFleetMapSummary": "{count} vehicles, {online} online",
+  "@gpsFleetMapSummary": {
+    "placeholders": {
+      "count": {},
+      "online": {}
+    }
+  },
+  "gpsPageIndicator": "Page {current} of {total}",
+  "@gpsPageIndicator": {
+    "placeholders": {
+      "current": {},
+      "total": {}
+    }
+  },
+  "gpsScreenComingNext": "{name} is coming next.",
+  "@gpsScreenComingNext": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "gpsShowingEntries": "Showing {start}-{end} of {total}",
+  "@gpsShowingEntries": {
+    "placeholders": {
+      "start": {},
+      "end": {},
+      "total": {}
+    }
+  },
+  "gpsTimeSuffixFrom": "from {time}",
+  "@gpsTimeSuffixFrom": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "gpsTokenEquivalent": "Equivalent: ₹{amount}",
+  "@gpsTokenEquivalent": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "gpsTokensCredit": "+{count} tokens",
+  "@gpsTokensCredit": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "gpsTokensDebit": "-{count} tokens",
+  "@gpsTokensDebit": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "gpsVehicleCachedBanner": "Last updated {time}",
+  "@gpsVehicleCachedBanner": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "photoUploadAddMore": "Add {count} more item(s).",
+  "@photoUploadAddMore": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "photoUploadImagePickerError": "Image picker error: {error}",
+  "@photoUploadImagePickerError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "photoUploadVideoCameraError": "Video camera error: {error}",
+  "@photoUploadVideoCameraError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "sharedHaltingChargeWithHours": "Halting charge {amount} applied for {hours} after the free {freeHours} window.",
+  "@sharedHaltingChargeWithHours": {
+    "placeholders": {
+      "amount": {},
+      "hours": {},
+      "freeHours": {}
+    }
+  },
+  "sharedHaltingChargeWithoutHours": "Halting charge {amount} applied after the free {freeHours} window.",
+  "@sharedHaltingChargeWithoutHours": {
+    "placeholders": {
+      "amount": {},
+      "freeHours": {}
+    }
+  },
+  "sharedHaltingExceededEstimate": "Free window exceeded by {duration}. Estimated charge: {amount}.",
+  "@sharedHaltingExceededEstimate": {
+    "placeholders": {
+      "duration": {},
+      "amount": {}
+    }
+  },
+  "sharedHaltingExceededNoEstimate": "Free window exceeded by {duration}.",
+  "@sharedHaltingExceededNoEstimate": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "sharedHaltingNotStartedMessage": "Halting timer starts after the free {hours} window.",
+  "@sharedHaltingNotStartedMessage": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "sharedHaltingRemainingMessage": "{remaining} remaining before halting charges start after the free {freeHours} window.",
+  "@sharedHaltingRemainingMessage": {
+    "placeholders": {
+      "remaining": {},
+      "freeHours": {}
+    }
+  },
+  "truckSearchDriverOffers": "Driver offers ({count})",
+  "@truckSearchDriverOffers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "allEarningsActiveMonths": "Active Months",
+  "allEarningsAvgTrip": "Avg Trip",
+  "allEarningsBreakdown": "Breakdown",
+  "allEarningsDeliveries": "Deliveries",
+  "allEarningsEmptySubtitle": "Empty Subtitle",
+  "allEarningsEmptyTitle": "Empty Title",
+  "allEarningsLoadFailed": "Load Failed",
+  "allEarningsMonthlyTrend": "Monthly Trend",
+  "allEarningsMonths": "Months",
+  "allEarningsNetPerMonth": "Net Per Month",
+  "allEarningsPerDelivery": "Per Delivery",
+  "allEarningsTitle": "Title",
+  "allEarningsTotalEarned": "Total Earned",
+  "allEarningsTripsDone": "Trips Done",
+  "appChatClientFallback": "Client",
+  "appChatSupportFallback": "Support",
+  "appLoginAttemptBlockedBody": "For your safety, this login attempt was blocked. Please review tracking settings.",
+  "appLoginAttemptBlockedTitle": "Login attempt blocked",
+  "appNewChatRequestTitle": "New chat request",
+  "appOkButton": "OK",
+  "appSignedInRetry": "Signed in. Please try again.",
+  "appTrackingSettingsAction": "Tracking settings",
+  "arrivedHeading": "Heading",
+  "arrivedNextLabel": "Next Label",
+  "arrivedNextUpload": "Next Upload",
+  "arrivedPreparing": "Preparing",
+  "arrivedPreparingSub": "Preparing Sub",
+  "arrivedSlideSub": "Slide Sub",
+  "arrivedSlideTitle": "Slide Title",
+  "arrivedStatusLabel": "Status Label",
+  "arrivedStatusReady": "Status Ready",
+  "arrivedSub": "Sub",
+  "arrivedSwipeContinue": "Swipe Continue",
+  "arrivedTitle": "Title",
+  "arrivedTripIdLabel": "Trip ID Label",
+  "brokerActiveDescription": "Broker Active Description",
+  "brokerActiveSubmit": "Broker Active Submit",
+  "brokerActiveSubmitting": "Broker Active Submitting",
+  "brokerHomeClientOffered": "Client Offered",
+  "brokerHomeDriverFallback": "Driver Fallback",
+  "brokerHomeDropUnavailable": "Drop Unavailable",
+  "brokerHomeFareChangeSent": "Fare Change Sent",
+  "brokerHomeFareChangesUsed": "Fare Changes Used",
+  "brokerHomeHelloPrefix": "Hello Prefix",
+  "brokerHomeJustNow": "Just Now",
+  "brokerHomePickupUnavailable": "Pickup Unavailable",
+  "brokerHomeRequestAccepted": "Request Accepted",
+  "brokerHomeRequestDeclined": "Request Declined",
+  "brokerHomeSendAssignment": "Send Assignment",
+  "brokerHomeSending": "Sending",
+  "brokerHomeTryClearingSearch": "Try Clearing Search",
+  "brokerHomeYouAcceptedWaiting": "You Accepted Waiting",
+  "brokerHomeYouOffered": "You Offered",
+  "brokerKycCompleteTitle": "Complete Title",
+  "brokerKycContinue": "Continue",
+  "brokerKycFinish": "Finish",
+  "brokerKycNotAvailable": "Not Available",
+  "brokerKycNotProvided": "Not Provided",
+  "brokerKycPendingReviewStatus": "Pending Review Status",
+  "brokerKycSubmitKyc": "Submit KYC",
+  "brokerKycSubmittedBadge": "Submitted Badge",
+  "brokerKycSubmittedDesc": "Submitted Desc",
+  "brokerKycSubmittedTitle": "Submitted Title",
+  "brokerKycVerifiedBadge": "Verified Badge",
+  "brokerKycVerifiedDesc": "Verified Desc",
+  "brokerKycVerifiedStatus": "Verified Status",
+  "brokerKycVerifyCarefullyWarning": "Verify Carefully Warning",
+  "brokerReqAcceptAssign": "Accept Assign",
+  "brokerReqAcceptedNoCard": "Accepted No Card",
+  "brokerReqAcceptedPickDriver": "Accepted Pick Driver",
+  "brokerReqAssignmentTitle": "Assignment Title",
+  "brokerReqAutoSelectedDetails": "Auto Selected Details",
+  "brokerReqAwaitingOtherSide": "Awaiting Other Side",
+  "brokerReqChangeFareOrReject": "Change Fare or Reject",
+  "brokerReqClientAcceptedFinalize": "Client Accepted Finalize",
+  "brokerReqConfirmAssign": "Confirm Assign",
+  "brokerReqConfirmBookingTitle": "Confirm Booking Title",
+  "brokerReqCustomerFallback": "Customer Fallback",
+  "brokerReqDeclinedNoActions": "Declined No Actions",
+  "brokerReqFareChangeWaiting": "Fare Change Waiting",
+  "brokerReqGeneralFallback": "General Fallback",
+  "brokerReqNoDriversFound": "No Drivers Found",
+  "brokerReqNoTrucksFound": "No Trucks Found",
+  "brokerReqSaving": "Saving",
+  "brokerReqUnavailable": "Unavailable",
+  "changePasswordAllFieldsRequired": "All Fields Required",
+  "changePasswordConfirmHint": "Confirm Hint",
+  "changePasswordConfirmLabel": "Confirm Label",
+  "changePasswordCurrentHint": "Current Hint",
+  "changePasswordCurrentLabel": "Current Label",
+  "changePasswordMismatch": "Mismatch",
+  "changePasswordNewHint": "New Hint",
+  "changePasswordNewLabel": "New Label",
+  "changePasswordScreenTitle": "Screen Title",
+  "changePasswordStrengthEmptyHint": "Strength Empty Hint",
+  "changePasswordStrengthFair": "Strength Fair",
+  "changePasswordStrengthGood": "Strength Good",
+  "changePasswordStrengthLowercase": "Strength Lowercase",
+  "changePasswordStrengthMinLength": "Strength Min Length",
+  "changePasswordStrengthNumber": "Strength Number",
+  "changePasswordStrengthStrong": "Strength Strong",
+  "changePasswordStrengthStrongHint": "Strength Strong Hint",
+  "changePasswordStrengthSymbol": "Strength Symbol",
+  "changePasswordStrengthTitle": "Strength Title",
+  "changePasswordStrengthUppercase": "Strength Uppercase",
+  "changePasswordStrengthWeak": "Strength Weak",
+  "changePasswordSubmitButton": "Submit Button",
+  "changePasswordSuccessLoggedOut": "Success Logged Out",
+  "chatAssistantName": "Assistant Name",
+  "chatClosedChip": "Closed Chip",
+  "chatDetailBookingTitle": "Detail Booking Title",
+  "chatDetailClientTitle": "Detail Client Title",
+  "chatDetailDirectTitle": "Detail Direct Title",
+  "chatDirectMessageChip": "Direct Message Chip",
+  "chatDirectMessageFallback": "Direct Message Fallback",
+  "chatListEmpty": "List Empty",
+  "chatListLoadError": "List Load Error",
+  "chatListRetry": "List Retry",
+  "chatListTitle": "List Title",
+  "chatMessageFallback": "Message Fallback",
+  "chatMessageNotSent": "Message Not Sent",
+  "chatNoMessagesYet": "No Messages Yet",
+  "chatNotConnectedChip": "Not Connected Chip",
+  "chatReadReceipt": "Read Receipt",
+  "chatThreadLoadError": "Thread Load Error",
+  "chatTripClosedNotice": "Trip Closed Notice",
+  "chatTypeMessageHint": "Type Message Hint",
+  "chatTypingIndicator": "Typing Indicator",
+  "clientAddressAddTitle": "Add address",
+  "clientAddressEditTitle": "Edit address",
+  "clientAddressLoading": "Loading address",
+  "clientAddressRemoved": "Address removed",
+  "clientBookingLoadingPointHint": "Loading Point Hint",
+  "clientBookingUnloadingPointHint": "Unloading Point Hint",
+  "clientBookingWeightError": "Weight Error",
+  "clientCheckoutCancel": "Cancel",
+  "clientCheckoutChooseMethod": "Choose Method",
+  "clientCheckoutEnterPin": "Enter Pin",
+  "clientCheckoutMethodCards": "Method Cards",
+  "clientCheckoutMethodNetbanking": "Method Netbanking",
+  "clientCheckoutMethodRecommended": "Method Recommended",
+  "clientCheckoutMethodUpi": "Method UPI",
+  "clientCheckoutMethodWallet": "Method Wallet",
+  "clientCheckoutTestTitle": "Test Title",
+  "clientChooseTrucks": "Client Choose Trucks",
+  "clientFindingBrokers": "Client Finding Brokers",
+  "clientHomeBookAnyTruck": "Book Any Truck",
+  "clientHomeLoadingHint": "Loading Hint",
+  "clientHomeUnloadingHint": "Unloading Hint",
+  "clientNotificationsAllCaughtUp": "All Caught Up",
+  "clientNotificationsAllCaughtUpHint": "All Caught Up Hint",
+  "clientNotificationsEmpty": "Empty",
+  "clientNotificationsEmptyHint": "Empty Hint",
+  "clientNotificationsFallbackMessage": "Fallback Message",
+  "clientNotificationsFallbackTitle": "Fallback Title",
+  "clientNotificationsFilterAll": "Filter All",
+  "clientNotificationsFilterUnread": "Filter Unread",
+  "clientNotificationsGotIt": "Got It",
+  "clientNotificationsKindBooking": "Kind Booking",
+  "clientNotificationsKindOffer": "Kind Offer",
+  "clientNotificationsKindPayment": "Kind Payment",
+  "clientNotificationsKindUpdate": "Kind Update",
+  "clientNotificationsLoadError": "Load Error",
+  "clientNotificationsMarkAllRead": "Mark All Read",
+  "clientNotificationsMarkedRead": "Marked Read",
+  "clientNotificationsSaving": "Saving",
+  "clientNotificationsTitle": "Title",
+  "clientNotificationsTryAgain": "Try Again",
+  "clientPaymentAddAccountInvalid": "Account Invalid",
+  "clientPaymentAddAccountLabel": "Account Label",
+  "clientPaymentAddBankLabel": "Bank Label",
+  "clientPaymentAddBankRequired": "Bank Required",
+  "clientPaymentAddBankSearchHint": "Bank Search Hint",
+  "clientPaymentAddBrandLabel": "Brand Label",
+  "clientPaymentAddBrandRequired": "Brand Required",
+  "clientPaymentAddCardNote": "Card Note",
+  "clientPaymentAddDefaultOption": "Default Option",
+  "clientPaymentAddIfscInvalid": "IFSC Invalid",
+  "clientPaymentAddIfscLabel": "IFSC Label",
+  "clientPaymentAddLast4Label": "Last4 Label",
+  "clientPaymentAddLast4Required": "Last4 Required",
+  "clientPaymentAddMethod": "Method",
+  "clientPaymentAddNoteLabel": "Note Label",
+  "clientPaymentAddPrivacyNote": "Privacy Note",
+  "clientPaymentAddSaveButton": "Save Button",
+  "clientPaymentAddSignInRequired": "Sign In Required",
+  "clientPaymentAddTileSubtitle": "Tile Subtitle",
+  "clientPaymentAddTileTitle": "Tile Title",
+  "clientPaymentAddTitle": "Title",
+  "clientPaymentAddTypeLabel": "Type Label",
+  "clientPaymentAddUpiInvalid": "UPI Invalid",
+  "clientPaymentAddUpiLabel": "UPI Label",
+  "clientPaymentAddWalletLabel": "Wallet Label",
+  "clientPaymentAddWalletRequired": "Wallet Required",
+  "clientPaymentAddWalletSearchHint": "Wallet Search Hint",
+  "clientPaymentCardSaved": "Card Saved",
+  "clientPaymentDefaultBadge": "Default Badge",
+  "clientPaymentDeleteTooltip": "Delete tooltip",
+  "clientPaymentEmptySubtitle": "Empty Subtitle",
+  "clientPaymentEmptyTitle": "Empty Title",
+  "clientPaymentLoadError": "Load Error",
+  "clientPaymentLoadErrorHint": "Load Error Hint",
+  "clientPaymentMethodsTitle": "Methods Title",
+  "clientPaymentRemoved": "Removed",
+  "clientPaymentRetry": "Retry",
+  "clientPaymentSetDefault": "Set Default",
+  "clientPaymentSignInSubtitle": "Sign In Subtitle",
+  "clientPaymentSignInTitle": "Sign In Title",
+  "clientPaymentTypeBank": "Type Bank",
+  "clientPaymentTypeCard": "Type Card",
+  "clientPaymentTypeMethod": "Type Method",
+  "clientPaymentTypeUpi": "Type UPI",
+  "clientPaymentTypeWallet": "Type Wallet",
+  "clientPaymentUpiFallback": "UPI Fallback",
+  "clientPaymentWalletFallback": "Wallet Fallback",
+  "clientPlacesSuggestionsError": "Suggestions Error",
+  "clientPublicAssignedDriver": "Assigned Driver",
+  "clientPublicDriverLabel": "Driver Label",
+  "clientPublicDropLabel": "Drop Label",
+  "clientPublicExpressSuffix": "Express Suffix",
+  "clientPublicIncidentActive": "Incident Active",
+  "clientPublicPickupLabel": "Pickup Label",
+  "clientPublicTrackingInvalidLink": "Tracking Invalid Link",
+  "clientPublicTrackingUnavailable": "Tracking Unavailable",
+  "clientPublicTruckLabel": "Truck Label",
+  "clientSavedAddAddress": "Add address",
+  "clientSavedAddressesTitle": "Saved addresses",
+  "clientSavedEmptySubtitle": "Save frequent pickup and drop-off locations for faster bookings.",
+  "clientSavedEmptyTitle": "No saved addresses yet",
+  "clientSavedLoadError": "Could not load addresses",
+  "clientSavedLoadErrorHint": "Please try again in a moment.",
+  "clientSavedNoMatchSubtitle": "Try a different label, area, or contact name.",
+  "clientSavedNoMatchTitle": "No matching addresses",
+  "clientSavedRetry": "Retry",
+  "clientSavedSearchHint": "Search saved addresses",
+  "clientSavedSignInSubtitle": "Your pickup and drop-off locations stay linked to your account.",
+  "clientSavedSignInTitle": "Sign in to view saved addresses",
+  "clientSearchRetry": "Retry",
+  "clientSelectVehicle": "Client Select Vehicle",
+  "clientTrackingGpsPending": "Gps Pending",
+  "clientTrackingLivePendingSubtitle": "Live Pending Subtitle",
+  "clientTrackingLivePendingTitle": "Live Pending Title",
+  "clientTrackingLivePosition": "Live Position",
+  "clientTrackingLoading": "Loading",
+  "clientTrackingMapEmptyHint": "Map Empty Hint",
+  "clientTrackingMapLoading": "Map Loading",
+  "clientTrackingPayNow": "Pay Now",
+  "clientTrackingPayRemaining": "Pay Remaining",
+  "clientTrackingRateDelivery": "Rate Delivery",
+  "clientTrackingSubmitting": "Submitting",
+  "clientTrackingUnloading": "Unloading",
+  "clientVehicleSelected": "Selected",
+  "coreDigilockerAadhaarFallbackNote": "Aadhaar Fallback Note",
+  "coreDigilockerBankAccountHint": "Bank Account Hint",
+  "coreDigilockerBrokerIntro": "Broker Intro",
+  "coreDigilockerBusinessDetails": "Business Details",
+  "coreDigilockerBusinessRegHint": "Business Reg Hint",
+  "coreDigilockerCheckStatus": "Check Status",
+  "coreDigilockerChecking": "Checking",
+  "coreDigilockerDidntMatch": "Didnt Match",
+  "coreDigilockerDocAadhaar": "Doc Aadhaar",
+  "coreDigilockerDocLicense": "Doc License",
+  "coreDigilockerDocPan": "Doc PAN",
+  "coreDigilockerDriverIntro": "Driver Intro",
+  "coreDigilockerGstHint": "GST Hint",
+  "coreDigilockerInfoNote": "Info Note",
+  "coreDigilockerNoLoginLink": "No Login Link",
+  "coreDigilockerNotComplete": "Not Complete",
+  "coreDigilockerNotFound": "Not Found",
+  "coreDigilockerNotVerifiedYet": "Not Verified Yet",
+  "coreDigilockerOpenBrowserFailed": "Open Browser Failed",
+  "coreDigilockerOptionalNote": "Optional Note",
+  "coreDigilockerPendingRetry": "Pending Retry",
+  "coreDigilockerUnreachable": "Unreachable",
+  "coreDigilockerVehicleDetails": "Vehicle Details",
+  "coreDigilockerVehicleInsuranceHint": "Vehicle Insurance Hint",
+  "coreDigilockerVehicleRegHint": "Vehicle Reg Hint",
+  "coreDigilockerVerified": "Verified",
+  "coreDigilockerVerifyButton": "Verify Button",
+  "coreDigilockerVerifyLicense": "Verify License",
+  "coreDigilockerVerifyPan": "Verify PAN",
+  "coreDigilockerWorking": "Working",
+  "coreKycCompleteAction": "Complete Action",
+  "coreKycIncompleteBody": "Incomplete Body",
+  "coreKycIncompleteTitle": "Incomplete Title",
+  "coreKycNotNow": "Not Now",
+  "coreKycRejectedBody": "Rejected Body",
+  "coreKycRejectedTitle": "Rejected Title",
+  "coreKycResubmitAction": "Resubmit Action",
+  "coreKycUnderReviewBody": "Under Review Body",
+  "coreKycUnderReviewTitle": "Under Review Title",
+  "coreKycViewStatusAction": "View Status Action",
+  "coreMapDropTitle": "Drop Title",
+  "coreMapExpressLabel": "Express Label",
+  "coreMapPickupTitle": "Pickup Title",
+  "coreMapRouteNotFound": "Route Not Found",
+  "deliveryFlowChoosePhoto": "Choose Photo",
+  "deliveryFlowCompany": "Company",
+  "deliveryFlowContactUnavailable": "Contact Unavailable",
+  "deliveryFlowMaxItems": "Max Items",
+  "deliveryFlowMyQr": "My QR",
+  "deliveryFlowPersonal": "Personal",
+  "deliveryFlowPhotosUploaded": "Photos Uploaded",
+  "deliveryFlowRecordVideo": "Record Video",
+  "deliveryFlowSignInContinue": "Sign In Continue",
+  "deliveryFlowSignInUploadPhotos": "Sign In Upload Photos",
+  "deliveryFlowTakePhoto": "Take Photo",
+  "deliveryFlowVerified": "Verified",
+  "driverEarningsCurrentBalance": "Current Balance",
+  "driverEarningsLastMonth": "Last Month",
+  "driverEarningsNoDeliveries": "No Deliveries",
+  "driverEarningsReadyPayout": "Ready Payout",
+  "driverEarningsThisMonth": "This Month",
+  "driverEarningsTrips": "Trips",
+  "driverEarningsViewAll": "View All",
+  "driverHomeTripAccepted": "Trip Accepted",
+  "driverHomeTripDeclined": "Trip Declined",
+  "driverKycEdit": "Edit",
+  "driverKycPickFailed": "Pick Failed",
+  "driverKycSignInToSubmit": "Sign In to Submit",
+  "driverKycSignInToUpload": "Sign In to Upload",
+  "driverKycView": "View",
+  "driverPaymentCompany": "Company",
+  "driverPaymentPersonal": "Personal",
+  "driverPaymentQrUploaded": "QR Uploaded",
+  "driverPaymentSignInRecord": "Sign In Record",
+  "driverPaymentSignInUploadQr": "Sign In Upload QR",
+  "driverPaymentVerified": "Verified",
+  "gpsAbout": "About",
+  "gpsAboutSubtitle": "About Subtitle",
+  "gpsAccountDetails": "Account Details",
+  "gpsAccountDetailsSubtitle": "Account Details Subtitle",
+  "gpsAccountSection": "Account",
+  "gpsActive": "Active",
+  "gpsAllFleet": "All Fleet",
+  "gpsAllVehiclesLiveMap": "All Vehicles Live Map",
+  "gpsAppearance": "Appearance",
+  "gpsAppearanceSubtitle": "Appearance Subtitle",
+  "gpsBackToFleet": "Back to Fleet",
+  "gpsCached": "Cached",
+  "gpsChangePassword": "Change Password",
+  "gpsChangePasswordSubtitle": "Change Password Subtitle",
+  "gpsCompleted": "Completed",
+  "gpsCreateGeofence": "Create Geofence",
+  "gpsCustom": "Custom",
+  "gpsDashboardWelcome": "Dashboard Welcome",
+  "gpsDeducted": "Deducted",
+  "gpsDefineZones": "Define Zones",
+  "gpsDuration": "Duration",
+  "gpsDurationSubtitle": "Duration Subtitle",
+  "gpsExpired": "Expired",
+  "gpsExpiredTokensRemoved": "Expired tokens Removed",
+  "gpsFilter": "Filter",
+  "gpsFilterAll": "Filter All",
+  "gpsFleet": "Fleet",
+  "gpsFleetStatus": "Fleet Status",
+  "gpsFrom": "From",
+  "gpsFuelSummary": "Fuel Summary",
+  "gpsGenerateReport": "Generate Report",
+  "gpsGeofences": "Geofences",
+  "gpsGeofencesSubtitle": "Geofences Subtitle",
+  "gpsHelpSupport": "Help Support",
+  "gpsHelpSupportSubtitle": "Help Support Subtitle",
+  "gpsInvoices": "Invoices",
+  "gpsList": "List",
+  "gpsLiveFleetTracking": "Live Fleet Tracking",
+  "gpsLiveMap": "Live map",
+  "gpsLiveTrackingUnavailableFleet": "Live Tracking Unavailable Fleet",
+  "gpsLogout": "Logout",
+  "gpsLogoutSubtitle": "Logout Subtitle",
+  "gpsMap": "Map",
+  "gpsModules": "Modules",
+  "gpsMonthlyPlan": "Monthly Plan",
+  "gpsMyFleet": "My fleet",
+  "gpsMyVehicles": "My Vehicles",
+  "gpsMyVehiclesSubtitle": "My Vehicles Subtitle",
+  "gpsNavDashboard": "Dashboard",
+  "gpsNavProfile": "Profile",
+  "gpsNavReports": "Reports",
+  "gpsNavVehicles": "Vehicles",
+  "gpsNoData": "No Data",
+  "gpsNoGeofencesSubtitle": "No Geofences Subtitle",
+  "gpsNoGeofencesYet": "No Geofences Yet",
+  "gpsNoMoreTransactions": "No More Transactions",
+  "gpsNotifications": "Notifications",
+  "gpsNotificationsSubtitle": "Notifications Subtitle",
+  "gpsOffline": "Offline",
+  "gpsOnline": "Online",
+  "gpsProfileSubtitle": "Profile Subtitle",
+  "gpsRecentActivity": "Recent Activity",
+  "gpsReportType": "Report Type",
+  "gpsReportTypeSubtitle": "Report Type Subtitle",
+  "gpsReportsSecureNote": "Reports Secure Note",
+  "gpsReportsSubtitle": "Reports Subtitle",
+  "gpsRetry": "Retry",
+  "gpsRouteHistory": "Route History",
+  "gpsRunning": "Running",
+  "gpsSearchGeofences": "Search Geofences",
+  "gpsSearchTransactions": "Search Transactions",
+  "gpsSearchVehiclesHint": "Search Vehicles Hint",
+  "gpsSelectFromFleet": "Select From Fleet",
+  "gpsSelectVehicle": "Select Vehicle",
+  "gpsSelectVehicleOrFleet": "Select Vehicle or Fleet",
+  "gpsSettings": "Settings",
+  "gpsSettingsSubtitle": "Settings Subtitle",
+  "gpsSignInForFleetDevices": "Sign In For Fleet Devices",
+  "gpsSignInForLiveFleet": "Sign In For Live Fleet",
+  "gpsSignInForVehicle": "Sign In For Vehicle",
+  "gpsStopped": "Stopped",
+  "gpsSubscriptionPayment": "Subscription Payment",
+  "gpsThisWeek": "This Week",
+  "gpsTimeEightMinsAgo": "Time Eight Mins Ago",
+  "gpsTimeTwoMinsAgo": "Time Two Mins Ago",
+  "gpsTo": "To",
+  "gpsToday": "Today",
+  "gpsTokenBalance": "Token Balance",
+  "gpsTokenExpiry": "Token Expiry",
+  "gpsTokenPurchase": "Token Purchase",
+  "gpsTokens": "Tokens",
+  "gpsTokensAdded": "Tokens Added",
+  "gpsTotalVehicles": "Total Vehicles",
+  "gpsTotalVehiclesCenter": "Total Vehicles Center",
+  "gpsTransactions": "Transactions",
+  "gpsTripSummary": "Trip Summary",
+  "gpsUsageSummary": "Usage Summary",
+  "gpsVehicle": "Vehicle",
+  "gpsVehicleLiveMap": "Vehicle Live Map",
+  "gpsVehicleNotFound": "Vehicle Not Found",
+  "gpsViaRazorpay": "Via Razorpay",
+  "gpsViewAll": "View All",
+  "gpsVsLastWeek": "Vs Last Week",
+  "gpsWalletBilling": "Wallet & billing",
+  "gpsWelcomeBonus": "Welcome Bonus",
+  "gpsYesterday": "Yesterday",
+  "historyDetailsCancel": "Cancel",
+  "historyDetailsEmailInvoice": "Email Invoice",
+  "historyDetailsRetry": "Retry",
+  "historyDetailsSend": "Send",
+  "historySegmentCompleted": "Completed",
+  "historySegmentPending": "Pending",
+  "locationFlowAddLoading": "Add Loading",
+  "locationFlowAddLoadingHint": "Add Loading Hint",
+  "locationFlowAddUnloading": "Add Unloading",
+  "locationFlowAddUnloadingHint": "Add Unloading Hint",
+  "locationFlowDropHint": "Drop Hint",
+  "locationFlowDropSubtitle": "Drop Subtitle",
+  "locationFlowDropTitle": "Drop Title",
+  "locationFlowFetching": "Fetching",
+  "locationFlowMovePin": "Move Pin",
+  "locationFlowOwnUnavailable": "Own Unavailable",
+  "locationFlowPermissionNeeded": "Permission Needed",
+  "locationFlowPickupHint": "Pickup Hint",
+  "locationFlowPickupSubtitle": "Pickup Subtitle",
+  "locationFlowPickupTitle": "Pickup Title",
+  "locationFlowPinHint": "Pin Hint",
+  "locationFlowPinLoading": "Pin Loading",
+  "locationFlowPinUnloading": "Pin Unloading",
+  "locationFlowResolveCurrent": "Resolve Current",
+  "locationFlowResolvePoint": "Resolve Point",
+  "locationFlowSavedTitle": "Saved Title",
+  "locationFlowSuggestionsError": "Suggestions Error",
+  "locationFlowTurnOnLocation": "Turn On Location",
+  "locationFlowUseCurrent": "Use Current",
+  "locationFlowUseCurrentPickup": "Use Current Pickup",
+  "manageAccountActiveLabel": "Active Label",
+  "manageAccountActiveNo": "Active No",
+  "manageAccountActiveYes": "Active Yes",
+  "manageAccountBasicDetails": "Basic Details",
+  "manageAccountBusinessAddressLabel": "Business Address Label",
+  "manageAccountBusinessDetails": "Business Details",
+  "manageAccountChangePhoto": "Change Photo",
+  "manageAccountEditProfileSubtitle": "Edit Profile Subtitle",
+  "manageAccountEditProfileTitle": "Edit Profile Title",
+  "manageAccountEmailLabel": "Email Label",
+  "manageAccountEnterEmail": "Enter Email",
+  "manageAccountEnterName": "Enter Name",
+  "manageAccountEnterServiceCity": "Enter Service City",
+  "manageAccountEnterValidEmail": "Enter Valid Email",
+  "manageAccountFullNameLabel": "Full Name Label",
+  "manageAccountOptionalTag": "Optional Tag",
+  "manageAccountPhoneLabel": "Phone Label",
+  "manageAccountProfileUpdated": "Profile Updated",
+  "manageAccountSaveChanges": "Save Changes",
+  "manageAccountServiceCityLabel": "Service City Label",
+  "manageAccountYourNameFallback": "Your Name Fallback",
+  "negotiationAccept": "Accept",
+  "negotiationBack": "Back",
+  "negotiationBrokerConfirmBody": "Broker Confirm Body",
+  "negotiationBrokerConfirmTitle": "Broker Confirm Title",
+  "negotiationBrokerOfferBody": "Broker Offer Body",
+  "negotiationBrokerOfferLabel": "Broker Offer Label",
+  "negotiationBrokerOfferTitle": "Broker Offer Title",
+  "negotiationConfirm": "Confirm",
+  "negotiationDecline": "Decline",
+  "negotiationDriverAcceptedTitle": "Driver Accepted Title",
+  "negotiationDriverConfirmBody": "Driver Confirm Body",
+  "negotiationDriverConfirmNowTitle": "Driver Confirm Now Title",
+  "negotiationDriverFallback": "Driver Fallback",
+  "negotiationDriverResponseBody": "Driver Response Body",
+  "negotiationDriverResponseTitle": "Driver Response Title",
+  "negotiationFareChangeBody": "Fare Change Body",
+  "negotiationFareChangeTitle": "Fare Change Title",
+  "negotiationHandshakeProgress": "Handshake Progress",
+  "negotiationOfferCaption": "Offer Caption",
+  "negotiationOfferSentBody": "Offer Sent Body",
+  "negotiationOfferSentTitle": "Offer Sent Title",
+  "negotiationPillActionNeeded": "Pill Action Needed",
+  "negotiationPillLiveOffer": "Pill Live Offer",
+  "negotiationPillNewCounter": "Pill New Counter",
+  "negotiationPillWithBroker": "Pill With Broker",
+  "negotiationWaitingBrokerBody": "Waiting Broker Body",
+  "negotiationWaitingBrokerTitle": "Waiting Broker Title",
+  "negotiationWaitingDriverBody": "Waiting Driver Body",
+  "negotiationWaitingDriverTitle": "Waiting Driver Title",
+  "onboardingFastSubtitle": "Payments, invoices, and updates stay in one place.",
+  "onboardingFastTitle": "Fast settlements",
+  "onboardingGetStarted": "Get started",
+  "onboardingNext": "Next",
+  "onboardingSafeSubtitle": "Book verified trucks and drivers with confidence.",
+  "onboardingSafeTitle": "Safe bookings",
+  "onboardingSkip": "Skip",
+  "onboardingTrackingSubtitle": "Track every shipment from pickup to delivery.",
+  "onboardingTrackingTitle": "Live tracking",
+  "orderAcceptedAssignedTitle": "Assigned Title",
+  "orderAcceptedOfferUnavailable": "Offer Unavailable",
+  "orderAcceptedRequestTitle": "Request Title",
+  "orderAcceptedRequestUpdated": "Request Updated",
+  "orderAcceptedSignInContinue": "Sign In Continue",
+  "photoUploadChoosePhoto": "Choose Photo",
+  "photoUploadMaxItems": "Max Items",
+  "photoUploadRecordVideo": "Record Video",
+  "photoUploadSignInUpload": "Sign In Upload",
+  "photoUploadTakePhoto": "Take Photo",
+  "podWaitingCouldNotComplete": "Could Not Complete",
+  "podWaitingFinishing": "Finishing",
+  "podWaitingNewPhotosFallback": "New Photos Fallback",
+  "podWaitingPhotosUp": "Photos Up",
+  "podWaitingRejectedTitle": "Rejected Title",
+  "podWaitingTitle": "Title",
+  "podWaitingTryAgain": "Try Again",
+  "podWaitingUploadNew": "Upload New",
+  "podWaitingWaitingReview": "Waiting Review",
+  "sessionExpiredEmailHint": "Email Hint",
+  "sessionExpiredEmailLabel": "Email Label",
+  "sessionExpiredEnterEmailPassword": "Enter Email Password",
+  "sessionExpiredPasswordHint": "Password Hint",
+  "sessionExpiredPasswordLabel": "Password Label",
+  "sessionExpiredSignInButton": "Sign In Button",
+  "sessionExpiredSubtitle": "Subtitle",
+  "sessionExpiredTitle": "Title",
+  "sharedExpressLabel": "Express",
+  "sharedHaltingChargeApplied": "Charge Applied",
+  "sharedHaltingExceededTitle": "Exceeded Title",
+  "sharedHaltingFreeWindowTitle": "Free Window Title",
+  "sharedHaltingRemainingTitle": "Remaining Title",
+  "signupAccountCreated": "Account Created",
+  "signupAgreeTerms": "Agree Terms",
+  "signupAllFieldsRequired": "All Fields Required",
+  "signupAlreadyHaveAccount": "Already Have Account",
+  "signupBackToLogin": "Back to Login",
+  "signupCreateAccount": "Create Account",
+  "signupEmailHint": "Email Hint",
+  "signupEmailLabel": "Email Label",
+  "signupFullNameHint": "Full Name Hint",
+  "signupFullNameLabel": "Full Name Label",
+  "signupLoginAction": "Login Action",
+  "signupPasswordHelper": "Password Helper",
+  "signupPasswordHint": "Password Hint",
+  "signupPasswordLabel": "Password Label",
+  "signupPhoneHint": "Phone Hint",
+  "signupPhoneLabel": "Phone Label",
+  "signupSubtitle": "Subtitle",
+  "signupTermsRequired": "Terms Required",
+  "signupTitle": "Title",
+  "thankYouBackToTrips": "Back to Trips",
+  "thankYouDeliveryComplete": "Delivery Complete",
+  "thankYouForCompleting": "For Completing",
+  "thankYouPaid": "Paid",
+  "thankYouTripCompleted": "Trip Completed",
+  "tripSummaryCargo": "Cargo",
+  "tripSummaryDelivered": "Delivered",
+  "tripSummaryInProgress": "In Progress",
+  "tripSummaryLocationUnavailable": "Location Unavailable",
+  "truckSearchAllDeclinedHint": "All Declined Hint",
+  "truckSearchBack": "Back",
+  "truckSearchCancel": "Cancel",
+  "truckSearchCloseTooltip": "Close tooltip",
+  "truckSearchConfirmTurn": "Confirm Turn",
+  "truckSearchConfirmed": "Confirmed",
+  "truckSearchDriverFallback": "Driver Fallback",
+  "truckSearchFindingDrivers": "Finding Drivers",
+  "truckSearchFindingNearby": "Finding Nearby",
+  "truckSearchGoBack": "Go Back",
+  "truckSearchKeepSearching": "Keep Searching",
+  "truckSearchNewFare": "New Fare",
+  "truckSearchNoDriverAccepted": "No Driver Accepted",
+  "truckSearchNoResponse": "No Response",
+  "truckSearchNotifyingDrivers": "Notifying Drivers",
+  "truckSearchRetry": "Retry",
+  "truckSearchSearching": "Searching",
+  "truckSearchWaitingConfirm": "Waiting Confirm",
+  "truckSearchWaitingResponse": "Waiting Response",
+  "negotiationContinuePrice": "Continue price",
+  "negotiationCancel": "Cancel",
+  "negotiationSend": "Send",
+  "negotiationReject": "Reject",
+  "negotiationChangeFare": "Change fare",
+  "negotiationReviewPriceFor": "Review price for {truck}",
+  "@negotiationReviewPriceFor": {
+    "placeholders": {
+      "truck": {}
+    }
+  },
+  "negotiationOfferPrice": "Offer price",
+  "driverKycReviewYourInformation": "Review Your Information",
+  "driverKycPleaseVerifyEverythingBeforeSubmitting": "Please verify everything before submitting.",
+  "driverKycDriverInformation": "Driver Information",
+  "driverKycPANNumber": "PAN Number",
+  "driverKycDateOfBirth": "Date of Birth",
+  "driverKycLicenseNumber": "License Number",
+  "driverKycAadhaarNumber": "Aadhaar Number",
+  "driverKycVehicleRegistrationNumber": "Vehicle Registration Number",
+  "driverKycVehicleInsuranceNumber": "Vehicle Insurance Number",
+  "driverKycNotProvided": "Not provided",
+  "driverKycUploadedDocuments": "Uploaded Documents",
+  "driverKycVerificationDetails": "Verification Details",
+  "driverKycCurrentStatus": "Current Status",
+  "driverKycSubmittedDate": "Submitted Date",
+  "driverKycSubmissionID": "Submission ID",
+  "driverKycReviewedAt": "Reviewed At",
+  "driverKycNotAvailable": "Not available",
+  "driverKycDrivingLicense": "Driving License",
+  "driverKycVehicleRegShort": "Vehicle Reg.",
+  "driverKycInsurance": "Insurance",
+  "driverKycChooseHowYouWantToUploadThisDocument": "Choose how you want to upload this document.",
+  "driverKycCamera": "Camera",
+  "driverKycGallery": "Gallery",
+  "driverKycCancel": "Cancel",
+  "driverKycDocumentPreview": "Document preview",
+  "driverKycUploadedFile": "Uploaded file",
+  "driverKycUpload": "Upload",
+  "driverKycClose": "Close",
+  "driverKycStepDetails": "Details",
+  "driverKycStepDocuments": "Documents",
+  "driverKycStepReview": "Review",
+  "driverKycStepSubmit": "Submit",
+  "driverKycVerifiedTitle": "KYC Verified",
+  "driverKycVerifiedSubtitle": "Your driver account is verified and active.",
+  "driverKycVerifiedBadge": "VERIFIED",
+  "driverKycRejectedTitle": "KYC Rejected",
+  "driverKycRejectedSubtitle": "Review the reason below and resubmit your documents.",
+  "driverKycRejectedBadge": "REJECTED",
+  "driverKycUnderReviewTitle": "KYC Under Review",
+  "driverKycUnderReviewSubtitle": "Documents submitted successfully. Review usually takes 24-48 hours.",
+  "driverKycSubmittedBadge": "SUBMITTED",
+  "driverKycCompleteTitle": "Complete Driver KYC",
+  "driverKycCompleteSubtitle": "Submit your identity and vehicle documents for verification.",
+  "driverKycPendingBadge": "PENDING",
+  "driverKycPanCard": "PAN Card",
+  "driverKycAadhaarCard": "Aadhaar Card",
+  "driverKycUploaded": "Uploaded",
+  "driverKycRequired": "Required",
+  "driverKycSupportedFormats": "Supported formats: {formats}",
+  "@driverKycSupportedFormats": {
+    "placeholders": {
+      "formats": {}
+    }
+  },
+  "driverKycMaxSize10Mb": "Max 10 MB",
+  "driverKycDocumentPhoto": "{document} Photo",
+  "@driverKycDocumentPhoto": {
+    "placeholders": {
+      "document": {}
+    }
+  },
+  "driverKycNotUploaded": "Not uploaded",
+  "driverKycWaitingForUpload": "Waiting for upload",
+  "clientSavedAddNewAddress": "Add New Address",
+  "clientSavedPickupOrDropoffLocation": "Pickup or Drop-off Location",
+  "clientSavedAddressNameRequired": "Give this address a name, such as Home or Warehouse.",
+  "clientSavedAddressRequired": "Search and select an address from Google Maps.",
+  "clientSavedPinnedLocation": "Pinned location ({latitude}, {longitude})",
+  "@clientSavedPinnedLocation": {
+    "placeholders": {
+      "latitude": {},
+      "longitude": {}
+    }
+  },
+  "clientSavedLabelHint": "Home, Office, Warehouse 2",
+  "clientSavedUseCurrent": "Use current",
+  "clientSavedSearchOrTapMap": "Search, or tap the map...",
+  "clientSavedFloorHint": "3rd Floor, Flat 402, Gate 2",
+  "clientSavedOnSiteContact": "On-site Contact",
+  "clientSavedOptional": "(optional)",
+  "clientSavedContactNameHint": "Contact name",
+  "clientSavedUse": "Use",
+  "historyDetailsTo": "To",
+  "historyDetailsEmailHint": "recipient@example.com",
+  "historyDetailsBookingTime": "Booking time",
+  "historyDetailsExpectedDelivery": "Expected delivery",
+  "historyDetailsDeliveredOn": "Delivered on",
+  "historyDetailsDistanceTravelled": "Distance travelled",
+  "historyDetailsSaving": "Saving...",
+  "historyDetailsInvoice": "Invoice",
+  "historyDetailsSending": "Sending...",
+  "historyDetailsEmail": "Email",
+  "historyDetailsNotify": "Notify",
+  "deliveryFlowShowThisToCollect": "Show this to collect {amount}",
+  "@deliveryFlowShowThisToCollect": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "deliveryFlowScanToPayViaUpi": "Scan to pay {amount} via any UPI app",
+  "@deliveryFlowScanToPayViaUpi": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "deliveryFlowAddUpiIdForQr": "Add your UPI ID in Profile to show a scannable payment QR here next time.",
+  "deliveryFlowPaymentReceivedViaUpi": "Payment Received via UPI",
+  "deliveryFlowRecording": "Recording...",
+  "deliveryFlowCollectCash": "Collect Cash",
+  "deliveryFlowPaymentVerifiedByRazorpay": "Payment verified by Razorpay",
+  "deliveryFlowQrGenerationFailed": "Couldn't generate the verified QR code - collect via UPI ID or cash instead.",
+  "deliveryFlowRazorpayAutoConfirms": "Auto-confirms the moment Razorpay verifies the payment",
+  "negotiationAcceptedWaitingDriverConfirm": "Accepted - waiting for the driver to confirm.",
+  "loadingPoint": "Loading point",
+  "unloadingPoint": "Unloading point",
+  "hour": "Hour",
+  "minute": "Minute",
+  "emailRecipientHint": "recipient@example.com",
+  "addMoreDetailOptional": "Add more detail (optional)",
+  "typeMessageHint": "Type a message...",
+  "brokerStatusAccepted": "Accepted",
+  "brokerStatusAcceptedBookingConfirmed": "Accepted - booking confirmed",
+  "brokerStatusFareChanged": "Fare changed",
+  "brokerStatusFareChangedWaiting": "Fare changed - waiting for the next response",
+  "brokerStatusAwaitingConfirmation": "Awaiting confirmation",
+  "brokerStatusWaitingOtherSideConfirm": "Waiting for the other side to confirm.",
+  "brokerStatusDeclined": "Declined",
+  "brokerStatusDeclinedUnavailable": "Declined - no longer available",
+  "brokerStatusPending": "Pending",
+  "brokerStatusReviewRequest": "Review request",
+  "brokerStatusCancelled": "Cancelled",
+  "brokerReqAcceptedAssignDriverTruck": "This request has been accepted. Assign a driver and truck.",
+  "brokerReqFareChangeWaitingClient": "Fare change sent. Waiting for the client to respond.",
+  "brokerReqCancelledNoActions": "This booking has been cancelled. No further broker actions are available.",
+  "brokerReqPendingAction": "This request is still waiting for action.",
+  "brokerSettlementsFee": "Fee",
+  "brokerSettlementsNet": "Net",
+  "pickupLocation": "Pickup location",
+  "dropLocation": "Drop location",
+  "vehicleSmallTruck": "Small truck",
+  "vehicleMediumTruck": "Medium truck",
+  "vehicleBigTruck": "Big truck",
+  "vehicleTruckPooling": "Truck pooling"
 }

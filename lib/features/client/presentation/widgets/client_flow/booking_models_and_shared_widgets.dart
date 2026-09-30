@@ -601,6 +601,24 @@ const vehicleOptions = <VehicleOption>[
   ),
 ];
 
+String localizedVehicleOptionLabel(
+  AppLocalizations l10n,
+  VehicleOption option,
+) {
+  switch (option.id) {
+    case 'small':
+      return l10n.vehicleSmallTruck;
+    case 'medium':
+      return l10n.vehicleMediumTruck;
+    case 'large':
+      return l10n.vehicleBigTruck;
+    case 'part':
+      return l10n.vehicleTruckPooling;
+    default:
+      return option.label;
+  }
+}
+
 List<VehicleOption> resolveVehicleOptions({
   required TripType tripType,
   ClientPricingConfig? pricing,

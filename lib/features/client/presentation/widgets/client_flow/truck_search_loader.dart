@@ -129,35 +129,36 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final request = widget.request;
     final driverName = request.brokerName.isNotEmpty
         ? request.brokerName
-        : 'Driver';
+        : l10n.truckSearchDriverFallback;
     final amount = request.amountText.isNotEmpty ? request.amountText : '—';
 
     final String statusLabel;
     final Color pillBg;
     final Color pillFg;
     if (request.isClientTurnToConfirm) {
-      statusLabel = 'Your turn to confirm';
+      statusLabel = AppLocalizations.of(context)!.truckSearchConfirmTurn;
       pillBg = const Color(0xFFE8F5EE);
       pillFg = const Color(0xFF167247);
     } else if (request.isWaitingForCounterpartyConfirmation) {
-      statusLabel = 'Waiting for them to confirm';
+      statusLabel = AppLocalizations.of(context)!.truckSearchWaitingConfirm;
       pillBg = const Color(0xFFF0F2F5);
       pillFg = const Color(0xFF667085);
     } else if (request.isCountered) {
-      statusLabel = 'New fare — your turn';
+      statusLabel = AppLocalizations.of(context)!.truckSearchNewFare;
       pillBg = const Color(0xFFFFF4E0);
       pillFg = const Color(0xFFB54708);
     } else if (request.normalizedStatus == 'accepted') {
-      statusLabel = 'Confirmed';
+      statusLabel = AppLocalizations.of(context)!.truckSearchConfirmed;
       pillBg = const Color(0xFFE8F5EE);
       pillFg = const Color(0xFF167247);
     } else {
       statusLabel = request.driverTimedOut
-          ? 'No response — broker notified'
-          : 'Waiting for response';
+          ? AppLocalizations.of(context)!.truckSearchNoResponse
+          : AppLocalizations.of(context)!.truckSearchWaitingResponse;
       pillBg = const Color(0xFFF0F2F5);
       pillFg = const Color(0xFF667085);
     }
@@ -344,7 +345,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Back', style: TextStyle(fontSize: 12)),
+                  child: Text(l10n.truckSearchBack, style: TextStyle(fontSize: 12)),
               ),
             ),
           ] else if (_negotiating) ...[
@@ -422,7 +423,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                 ),
                 TextButton(
                   onPressed: _sending ? null : _closeNegotiate,
-                  child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                  child: Text(l10n.truckSearchCancel, style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -775,6 +776,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final live =
         requests
             .where((request) => request.normalizedStatus != 'declined')
@@ -821,8 +823,8 @@ class _FindTruckOffersSheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         live.isEmpty
-                            ? 'Finding drivers'
-                            : 'Driver offers (${live.length})',
+                            ? l10n.truckSearchFindingDrivers
+                            : l10n.truckSearchDriverOffers(live.length),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: context.colors.textPrimary,
@@ -831,7 +833,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Close',
+                      tooltip: l10n.truckSearchCloseTooltip,
                       onPressed:
                           onClose ?? () => Navigator.of(context).maybePop(),
                       style: IconButton.styleFrom(
@@ -881,7 +883,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Finding nearby trucks…',
+                          l10n.truckSearchFindingNearby,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
@@ -891,7 +893,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Notifying drivers — their offers will appear here.',
+                          l10n.truckSearchNotifyingDrivers,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: context.colors.textSecondary),
@@ -900,7 +902,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: onRetryOffers,
-                            child: const Text('Retry'),
+                            child: Text(l10n.truckSearchRetry),
                           ),
                         ],
                       ],
@@ -935,7 +937,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Oops! No driver accepted',
+                          l10n.truckSearchNoDriverAccepted,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
@@ -945,7 +947,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Every nearby driver declined or timed out. Keep searching to notify them again, or go back to choose trucks.',
+                          l10n.truckSearchAllDeclinedHint,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: context.colors.textSecondary),
@@ -968,8 +970,8 @@ class _FindTruckOffersSheet extends StatelessWidget {
                                 ),
                                 child: Text(
                                   searchingAgain
-                                      ? 'Searching...'
-                                      : 'Keep Searching',
+                                      ? l10n.truckSearchSearching
+                                      : l10n.truckSearchKeepSearching,
                                 ),
                               ),
                             ),
@@ -987,7 +989,7 @@ class _FindTruckOffersSheet extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                child: const Text('Go Back'),
+                                child: Text(l10n.truckSearchGoBack),
                               ),
                             ),
                           ],

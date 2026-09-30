@@ -888,7 +888,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                     children: [
                       Expanded(
                         child: _TimeStepper(
-                          label: 'Hour',
+                          label: AppLocalizations.of(context)!.hour,
                           value: _displayHour.toString().padLeft(2, '0'),
                           onDecrease: () => _changeHour(-1),
                           onIncrease: () => _changeHour(1),
@@ -897,7 +897,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _TimeStepper(
-                          label: 'Minute',
+                          label: AppLocalizations.of(context)!.minute,
                           value: _minute.toString().padLeft(2, '0'),
                           onDecrease: () => _changeMinute(-15),
                           onIncrease: () => _changeMinute(15),

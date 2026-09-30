@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/gps_tracking_models.dart';
 import '../../data/gps_tracking_repository.dart';
@@ -144,7 +145,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
       setState(() {
         _devices = [];
         _loading = false;
-        _error = 'Please sign in again to view live fleet tracking.';
+        _error = AppLocalizations.of(context)!.gpsSignInForLiveFleet;
       });
       return;
     }
@@ -203,6 +204,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final onlineCount = _devices
         .where((device) => device.statusLabel.toLowerCase().contains('online'))
         .length;
@@ -237,7 +239,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                             InkWell(
                               onTap: () => context.go('/gps/maps'),
                               child: Text(
-                                'Fleet',
+                                l10n.gpsFleet,
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       fontSize: 24,
@@ -249,7 +251,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'All vehicles live map',
+                              l10n.gpsAllVehiclesLiveMap,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     fontSize: 11,
@@ -267,7 +269,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                           AppIcons.local_shipping_rounded,
                           size: 18,
                         ),
-                        label: const Text('Vehicles'),
+                        label: Text(l10n.gpsNavVehicles),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF2D6EF2),
                           backgroundColor: Colors.white,
@@ -301,9 +303,9 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: const Color(0xFFF3D38C)),
                       ),
-                      child: const Text(
-                        'Live tracking is unavailable right now - showing each vehicle\'s last known position.',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.gpsLiveTrackingUnavailableFleet,
+                        style: const TextStyle(
                           color: Color(0xFF9A6B00),
                           fontSize: 12.5,
                           height: 1.35,
@@ -344,7 +346,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
                           ),
                           TextButton(
                             onPressed: _loadDevices,
-                            child: const Text('Retry'),
+                            child: Text(l10n.gpsRetry),
                           ),
                         ],
                       ),
@@ -446,6 +448,7 @@ class _FleetSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -477,7 +480,7 @@ class _FleetSummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Live fleet tracking',
+                  l10n.gpsLiveFleetTracking,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF10213F),
@@ -485,7 +488,7 @@ class _FleetSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$count vehicles visible on the map · $onlineCount online',
+                  l10n.gpsFleetMapSummary(count, onlineCount),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 11.5,
                     color: const Color(0xFF63708A),

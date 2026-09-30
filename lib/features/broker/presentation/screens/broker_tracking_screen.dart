@@ -112,7 +112,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Driver has not begun negotiation',
+                            AppLocalizations.of(context)!.brokerTrackingDriverHasNotBegunNegotiation,
                             style: Theme.of(dialogContext).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w900,
@@ -129,7 +129,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Click here to negotiate this timed-out request.',
+                      AppLocalizations.of(context)!.brokerTrackingClickHereToNegotiateThisTimedOut,
                       style: Theme.of(dialogContext).textTheme.bodyMedium
                           ?.copyWith(
                             color: AppColors.textSecondary,
@@ -190,6 +190,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ref = this.ref;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
@@ -245,7 +246,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
               children: [
                 if (timedOutRequests.isNotEmpty) ...[
                   Text(
-                    'Remaining negotiation',
+                    l10n.brokerTrackingRemainingNegotiation,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -328,7 +329,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                 if (timedOutRequests.isEmpty &&
                     negotiationNotifications.isNotEmpty) ...[
                   Text(
-                    'Negotiation ready',
+                    AppLocalizations.of(context)!.brokerTrackingNegotiationReady,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -394,7 +395,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                   const SizedBox(height: 18),
                 ],
                 Text(
-                  'Drivers',
+                  AppLocalizations.of(context)!.brokerTrackingDrivers,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
@@ -402,7 +403,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Monitor your drivers and live trips',
+                  AppLocalizations.of(context)!.brokerTrackingMonitorYourDriversAndLiveTrips,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -427,7 +428,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                         AppIcons.search_rounded,
                         color: AppColors.textTertiary,
                       ),
-                      hintText: 'Search drivers, phone or vehicle',
+                      hintText: AppLocalizations.of(context)!.brokerTrackingSearchDriversPhoneOrVehicle,
                       hintStyle: const TextStyle(
                         color: AppColors.textTertiary,
                         fontWeight: FontWeight.w600,
@@ -451,7 +452,7 @@ class _BrokerTrackingScreenState extends ConsumerState<BrokerTrackingScreen> {
                 Row(
                   children: [
                     Text(
-                      'Your drivers',
+                      AppLocalizations.of(context)!.brokerTrackingYourDrivers,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w800,
@@ -831,6 +832,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final screenHeight = MediaQuery.of(context).size.height;
     return Padding(
@@ -846,7 +848,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
           ),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+          padding: EdgeInsets.fromLTRB(18, 18, 18, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -887,7 +889,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
               Expanded(
                 child: requestsAsync.when(
                   loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                      Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Text(
                       error.toString().replaceFirst('Exception: ', ''),
@@ -947,7 +949,7 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                               ),
                               if (brokerAssigned) ...[
                                 const SizedBox(height: 8),
-                                const _BrokerAssignedInlineBadge(),
+                                _BrokerAssignedInlineBadge(),
                               ],
                               const SizedBox(height: 6),
                               Text(
@@ -1013,8 +1015,8 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                   context: context,
                                                   builder: (dialogContext) {
                                                     return AlertDialog(
-                                                      title: const Text(
-                                                        'Change fare request',
+                                                      title: Text(
+                                                        AppLocalizations.of(context)!.brokerTrackingChangeFareRequest,
                                                       ),
                                                       content: Column(
                                                         mainAxisSize:
@@ -1033,9 +1035,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                                   .textPrimary,
                                                             ),
                                                             decoration:
-                                                                const InputDecoration(
+                                                                InputDecoration(
                                                                   labelText:
-                                                                      'Amount',
+                                                                      AppLocalizations.of(context)!.brokerTrackingAmount,
                                                                 ),
                                                           ),
                                                           const SizedBox(
@@ -1051,9 +1053,9 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                                   .textPrimary,
                                                             ),
                                                             decoration:
-                                                                const InputDecoration(
+                                                                InputDecoration(
                                                                   labelText:
-                                                                      'Note',
+                                                                      AppLocalizations.of(context)!.brokerTrackingNote,
                                                                 ),
                                                           ),
                                                         ],
@@ -1064,8 +1066,8 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                               Navigator.of(
                                                                 dialogContext,
                                                               ).pop(),
-                                                          child: const Text(
-                                                            'Cancel',
+                                                          child: Text(
+                                                            AppLocalizations.of(context)!.brokerTrackingCancel,
                                                           ),
                                                         ),
                                                         FilledButton(
@@ -1080,8 +1082,8 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                               dialogContext,
                                                             ).pop(amount);
                                                           },
-                                                          child: const Text(
-                                                            'Send',
+                                                          child: Text(
+                                                            AppLocalizations.of(context)!.brokerTrackingSend,
                                                           ),
                                                         ),
                                                       ],
@@ -1110,8 +1112,8 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
                                                   }
                                                 }
                                               },
-                                        child: const Text(
-                                          'Change Fare',
+                                        child: Text(
+                                          AppLocalizations.of(context)!.brokerTrackingChangeFare,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -1137,10 +1139,11 @@ class _DriverRequestsSheetState extends ConsumerState<_DriverRequestsSheet> {
 }
 
 class _BrokerAssignedInlineBadge extends StatelessWidget {
-  const _BrokerAssignedInlineBadge();
+  _BrokerAssignedInlineBadge();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -1149,7 +1152,7 @@ class _BrokerAssignedInlineBadge extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
-        'Broker-assigned - no fare change',
+        l10n.brokerTrackingBrokerAssignedNoFareChange,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.brand,
           fontWeight: FontWeight.w900,
@@ -1291,19 +1294,19 @@ class _BrokerDriverTripSheetState
           'tripStartedAt',
           'trip_started_at',
         ]),
-        haltingGraceHours: _tripDouble(tripPayload, const [
+        haltingGraceHours: _tripDouble(tripPayload, [
           'haltingGraceHours',
           'halting_grace_hours',
         ]),
-        haltingRatePerHour: _tripDouble(tripPayload, const [
+        haltingRatePerHour: _tripDouble(tripPayload, [
           'haltingRatePerHour',
           'halting_rate_per_hour',
         ]),
         haltingHours:
-            _tripDouble(tripPayload, const ['haltingHours', 'halting_hours']) ??
+            _tripDouble(tripPayload, ['haltingHours', 'halting_hours']) ??
             0,
         haltingCharge:
-            _tripDouble(tripPayload, const [
+            _tripDouble(tripPayload, [
               'haltingCharge',
               'halting_charge',
             ]) ??
@@ -1764,9 +1767,10 @@ class _BrokerDriverTripSheetState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final height = MediaQuery.of(context).size.height;
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       child: Container(
         constraints: BoxConstraints(maxHeight: height * 0.9),
         decoration: BoxDecoration(
@@ -1884,13 +1888,13 @@ class _BrokerDriverTripSheetState
                           _TripInfoChip(
                             icon: AppIcons.schedule_rounded,
                             label:
-                                'SLA ~${_formatTripHours(data.shipment.expectedDeliveryHours!)}',
+                                AppLocalizations.of(context)!.brokerTrackingSLA(_formatTripHours(data.shipment.expectedDeliveryHours!)),
                           ),
                         if (data.shipment.slaOverageCharge > 0)
                           _TripInfoChip(
                             icon: AppIcons.warning_amber_rounded,
                             label:
-                                'Delay +₹${data.shipment.slaOverageCharge.toStringAsFixed(data.shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
+                                AppLocalizations.of(context)!.brokerTrackingDelay(data.shipment.slaOverageCharge.toStringAsFixed(data.shipment.slaOverageCharge % 1 == 0 ? 0 : 2)),
                           ),
                       ],
                     ),
@@ -1992,7 +1996,7 @@ class _BrokerDriverTripSheetState
                     ],
                     const SizedBox(height: 16),
                     Text(
-                      'Incidents',
+                      AppLocalizations.of(context)!.brokerTrackingIncidents,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -2129,16 +2133,17 @@ class _BrokerStopsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final extraStops = stops.where((stop) => stop.isExtraStop).toList();
     if (extraStops.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: EdgeInsets.only(top: 16),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.fillSubtle,
           borderRadius: BorderRadius.circular(AppRadius.card),
@@ -2148,7 +2153,7 @@ class _BrokerStopsPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Loading & Unloading Stops',
+              l10n.brokerTrackingLoadingUnloadingStops,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: AppColors.textPrimary,
@@ -2192,6 +2197,7 @@ class _BrokerStopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = stop.isDone
         ? AppColors.successText
         : stop.isLoading
@@ -2241,7 +2247,7 @@ class _BrokerStopRow extends StatelessWidget {
               if (!stop.isDone && !actionable) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Complete earlier ${stop.type} stop first',
+                  l10n.brokerTrackingCompleteEarlierStopFirst(stop.type),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -2378,6 +2384,7 @@ class _ReassignDriverDialogState extends State<_ReassignDriverDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driverOptions = widget.drivers
         .where((driver) => driver.id != widget.currentDriverId)
         .toList();
@@ -2522,6 +2529,7 @@ class _TripInfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -2554,6 +2562,7 @@ class _TimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         for (var index = 0; index < steps.length; index++) ...[
@@ -2578,6 +2587,7 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = step.completed ? AppColors.brand : AppColors.textTertiary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2640,6 +2650,7 @@ class _TripIncidentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -2684,7 +2695,7 @@ class _TripIncidentCard extends StatelessWidget {
           if (incident.mechanicName.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Mechanic: ${incident.mechanicName}',
+              l10n.brokerTrackingMechanic(incident.mechanicName),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,

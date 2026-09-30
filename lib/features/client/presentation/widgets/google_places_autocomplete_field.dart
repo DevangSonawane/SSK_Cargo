@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/services/google_places_service.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class GooglePlacesAutocompleteField extends ConsumerStatefulWidget {
   const GooglePlacesAutocompleteField({
@@ -285,7 +286,7 @@ class _GooglePlacesAutocompleteFieldState
         if (_errorMessage != null) ...[
           const SizedBox(height: 8),
           Text(
-            'Could not load suggestions',
+            AppLocalizations.of(context)!.clientPlacesSuggestionsError,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: context.colors.dangerEmphasis,
               fontWeight: FontWeight.w600,

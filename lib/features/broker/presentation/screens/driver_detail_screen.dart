@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class DriverDetailScreen extends ConsumerStatefulWidget {
   const DriverDetailScreen({super.key, required this.driver});
@@ -63,6 +64,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
@@ -89,7 +91,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                           borderRadius: BorderRadius.circular(28),
                           child: Stack(
                             children: [
-                              const Positioned.fill(
+                              Positioned.fill(
                                 child: _BrokerTrackingMapBackdrop(),
                               ),
                               Positioned.fill(
@@ -103,7 +105,7 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                         Colors.white.withValues(alpha: 0.46),
                                         Colors.white.withValues(alpha: 0.84),
                                       ],
-                                      stops: const [0.0, 0.42, 1.0],
+                                      stops: [0.0, 0.42, 1.0],
                                     ),
                                   ),
                                 ),
@@ -119,22 +121,22 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _InfoBlock(
-                                      title: 'Vehicle',
+                                      title: l10n.driverDetailVehicle,
                                       value: widget.driver.assignedVehicle,
                                     ),
                                     const SizedBox(height: 12),
                                     _InfoBlock(
-                                      title: 'Location',
+                                      title: AppLocalizations.of(context)!.driverDetailLocation,
                                       value: widget.driver.currentLocation,
                                     ),
                                     const SizedBox(height: 12),
                                     _InfoBlock(
-                                      title: 'License',
+                                      title: AppLocalizations.of(context)!.driverDetailLicense,
                                       value: widget.driver.licenseNo,
                                     ),
                                     const SizedBox(height: 12),
                                     _InfoBlock(
-                                      title: 'On trip since',
+                                      title: AppLocalizations.of(context)!.driverDetailOnTripSince,
                                       value: widget.driver.onTripSince.isEmpty
                                           ? 'Not on trip'
                                           : widget.driver.onTripSince,
@@ -160,8 +162,8 @@ class _DriverDetailScreenState extends ConsumerState<DriverDetailScreen> {
                                       ),
                                       backgroundColor: AppColors.accentBlue,
                                     ),
-                                    child: const Text(
-                                      'Live tracking',
+                                    child: Text(
+                                      AppLocalizations.of(context)!.driverDetailLiveTracking,
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -218,6 +220,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -249,7 +252,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Live Tracking',
+                    l10n.driverDetailLiveTracking2,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 20,
@@ -265,7 +268,7 @@ class _DriverLiveViewState extends State<_DriverLiveView>
             Expanded(
               child: DriverLocationOverviewCard(
                 driver: widget.driver,
-                title: 'Live driver position',
+                title: l10n.driverDetailLiveDriverPosition,
                 subtitle: widget.driver.currentLocation.isEmpty
                     ? 'Awaiting live location'
                     : widget.driver.currentLocation,
@@ -292,6 +295,7 @@ class _DriverSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -357,7 +361,7 @@ class _DriverSummaryCard extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(AppIcons.chat_bubble_outline_rounded),
-            tooltip: 'Chat with driver',
+            tooltip: l10n.driverDetailChatWithDriver,
           ),
         ],
       ),
@@ -381,6 +385,7 @@ class _InfoBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -412,10 +417,11 @@ class _InfoBlock extends StatelessWidget {
 }
 
 class _BrokerTrackingMapBackdrop extends StatelessWidget {
-  const _BrokerTrackingMapBackdrop();
+  _BrokerTrackingMapBackdrop();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return CustomPaint(
       painter: _BrokerMapPainter(),
       child: Container(

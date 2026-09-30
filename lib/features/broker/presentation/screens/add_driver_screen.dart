@@ -12,6 +12,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class AddDriverScreen extends ConsumerStatefulWidget {
   const AddDriverScreen({super.key, this.existingDriver});
@@ -155,8 +156,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to create a driver.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.addDriverPleaseSignInAgainToCreateA),
         ),
       );
       return;
@@ -284,8 +285,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
       ref.invalidate(brokerTrucksProvider((status: null, page: 1, limit: 50)));
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Driver profile saved successfully.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.addDriverDriverProfileSavedSuccessfully),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -359,7 +360,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                   const SizedBox(width: 13),
                   Expanded(
                     child: Text(
-                      '$name has been registered and added to your fleet.',
+                      AppLocalizations.of(context)!.addDriverHasBeenRegisteredAndAddedToYour(name),
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 15,
@@ -389,8 +390,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Temporary Password',
+                    Text(
+                      AppLocalizations.of(context)!.addDriverTemporaryPassword,
                       style: TextStyle(
                         color: AppColors.textTertiary,
                         fontSize: 10.5,
@@ -425,8 +426,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                                 ScaffoldMessenger.of(
                                   dialogContext,
                                 ).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Password copied'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.addDriverPasswordCopied),
                                     backgroundColor: AppColors.brand,
                                     duration: Duration(seconds: 1),
                                   ),
@@ -443,8 +444,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                                 color: AppColors.brand,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text(
-                                'Copy',
+                              child: Text(
+                                AppLocalizations.of(context)!.addDriverCopy,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12.5,
@@ -459,8 +460,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'This password is shown only once — the driver can change it from their profile after logging in.',
+              Text(
+                AppLocalizations.of(context)!.addDriverThisPasswordIsShownOnlyOnceThe,
                 style: TextStyle(
                   color: AppColors.warningText,
                   fontSize: 11.5,
@@ -480,8 +481,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
-                  child: const Text(
-                    'Done',
+                  child: Text(
+                    AppLocalizations.of(context)!.addDriverDone,
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -527,9 +528,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     ),
                   ),
                   const SizedBox(width: 13),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Email already registered',
+                      AppLocalizations.of(context)!.addDriverEmailAlreadyRegistered,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 17,
@@ -542,7 +543,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                '$email is already tied to a driver account — a deleted driver keeps their email reserved. Edit the existing driver instead of creating a new one.',
+                AppLocalizations.of(context)!.addDriverIsAlreadyTiedToADriverAccount(email),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
@@ -565,8 +566,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'Keep editing',
+                      child: Text(
+                        AppLocalizations.of(context)!.addDriverKeepEditing,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -583,8 +584,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'View drivers',
+                      child: Text(
+                        AppLocalizations.of(context)!.addDriverViewDrivers,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -603,6 +604,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final trucksAsync = ref.watch(
       brokerTrucksProvider((status: null, page: 1, limit: 50)),
     );
@@ -673,7 +675,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                   children: [
                     if (!_isEditing) ...[
                       _FormSection(
-                        title: 'Account Details',
+                        title: l10n.addDriverAccountDetails,
                         icon: AppIcons.person_rounded,
                         iconColor: AppColors.brand,
                         children: [
@@ -681,7 +683,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             controller: _nameController,
                             textInputAction: TextInputAction.next,
                             decoration: brokerFieldDecoration(
-                              labelText: 'Full name',
+                              labelText: AppLocalizations.of(context)!.addDriverFullName,
                               prefixIcon: AppIcons.person_rounded,
                             ),
                             validator: (value) {
@@ -697,7 +699,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             decoration: brokerFieldDecoration(
-                              labelText: 'Email',
+                              labelText: AppLocalizations.of(context)!.addDriverEmail,
                               prefixIcon: AppIcons.email_rounded,
                             ),
                             validator: (value) {
@@ -724,7 +726,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               ),
                             ],
                             decoration: brokerFieldDecoration(
-                              labelText: 'Mobile number',
+                              labelText: AppLocalizations.of(context)!.addDriverMobileNumber,
                               prefixIcon: AppIcons.phone_rounded,
                             ),
                             validator: (value) {
@@ -747,7 +749,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       const SizedBox(height: 14),
                     ],
                     _FormSection(
-                      title: 'License & Documents',
+                      title: AppLocalizations.of(context)!.addDriverLicenseDocuments,
                       icon: AppIcons.badge_rounded,
                       iconColor: AppColors.brandDark,
                       children: [
@@ -755,7 +757,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           controller: _licenseController,
                           textInputAction: TextInputAction.next,
                           decoration: brokerFieldDecoration(
-                            labelText: 'License number',
+                            labelText: AppLocalizations.of(context)!.addDriverLicenseNumber,
                             prefixIcon: AppIcons.badge_rounded,
                           ),
                           validator: (value) {
@@ -776,7 +778,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             _AadhaarSpacingFormatter(),
                           ],
                           decoration: brokerFieldDecoration(
-                            labelText: 'Aadhaar number',
+                            labelText: AppLocalizations.of(context)!.addDriverAadhaarNumber,
                             prefixIcon: AppIcons.credit_card_rounded,
                           ),
                           validator: (value) {
@@ -795,7 +797,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              'Leave blank to keep the current Aadhaar on file.',
+                              AppLocalizations.of(context)!.addDriverLeaveBlankToKeepTheCurrentAadhaar,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
@@ -806,9 +808,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           readOnly: true,
                           onTap: _pickLicenseExpiry,
                           decoration: brokerFieldDecoration(
-                            labelText: 'License expiry',
+                            labelText: AppLocalizations.of(context)!.addDriverLicenseExpiry,
                             prefixIcon: AppIcons.event_rounded,
-                            hintText: 'YYYY-MM-DD',
+                            hintText: AppLocalizations.of(context)!.addDriverYYYYMMDD,
                             suffixIcon: AppIcons.calendar_month_rounded,
                           ),
                           validator: (value) {
@@ -836,7 +838,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     ),
                     const SizedBox(height: 14),
                     _FormSection(
-                      title: 'Vehicle Assignment',
+                      title: AppLocalizations.of(context)!.addDriverVehicleAssignment,
                       icon: AppIcons.local_shipping_rounded,
                       iconColor: AppColors.brand,
                       children: [
@@ -854,7 +856,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               color: AppColors.textSecondary,
                             ),
                             decoration: brokerFieldDecoration(
-                              labelText: 'Assign truck',
+                              labelText: AppLocalizations.of(context)!.addDriverAssignTruck,
                               prefixIcon: AppIcons.local_shipping_rounded,
                             ),
                             items: trucks
@@ -882,9 +884,9 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             controller: _truckIdController,
                             textInputAction: TextInputAction.next,
                             decoration: brokerFieldDecoration(
-                              labelText: 'Truck ID',
+                              labelText: AppLocalizations.of(context)!.addDriverTruckID,
                               prefixIcon: AppIcons.local_shipping_rounded,
-                              hintText: 'Enter truck UUID (optional)',
+                              hintText: AppLocalizations.of(context)!.addDriverEnterTruckUUIDOptional,
                             ),
                             validator: (value) {
                               return null;
@@ -907,21 +909,21 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               color: AppColors.textSecondary,
                             ),
                             decoration: brokerFieldDecoration(
-                              labelText: 'Status',
+                              labelText: AppLocalizations.of(context)!.addDriverStatus,
                               prefixIcon: AppIcons.toggle_on_rounded,
                             ),
-                            items: const [
+                            items: [
                               DropdownMenuItem<String>(
                                 value: 'available',
-                                child: Text('Available'),
+                                child: Text(AppLocalizations.of(context)!.addDriverAvailable),
                               ),
                               DropdownMenuItem<String>(
                                 value: 'on_trip',
-                                child: Text('On trip'),
+                                child: Text(AppLocalizations.of(context)!.addDriverOnTrip),
                               ),
                               DropdownMenuItem<String>(
                                 value: 'offline',
-                                child: Text('Offline'),
+                                child: Text(AppLocalizations.of(context)!.addDriverOffline),
                               ),
                             ],
                             onChanged: (value) =>
@@ -933,7 +935,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                     if (trucksAsync.hasError) ...[
                       const SizedBox(height: 10),
                       Text(
-                        'Truck list could not be loaded. You can still enter a truck ID manually.',
+                        AppLocalizations.of(context)!.addDriverTruckListCouldNotBeLoadedYou,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -1021,6 +1023,7 @@ class _DriverAvatarHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
@@ -1109,7 +1112,7 @@ class _DriverAvatarHero extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.35),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -1119,7 +1122,7 @@ class _DriverAvatarHero extends StatelessWidget {
                         ),
                         SizedBox(width: 6),
                         Text(
-                          'Change Photo',
+                          AppLocalizations.of(context)!.addDriverChangePhoto,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -1154,6 +1157,7 @@ class _FormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1200,6 +1204,7 @@ class _ReadonlyDriverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1228,7 +1233,7 @@ class _ReadonlyDriverCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Account Details',
+                l10n.addDriverAccountDetails,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -1365,7 +1370,7 @@ String _extractUserId(Map<String, dynamic> response) {
       }
     }
 
-    for (final key in ['id', 'user_id', 'userId', 'driver_id', 'driverId']) {
+    for (final key in const ['id', 'user_id', 'userId', 'driver_id', 'driverId']) {
       final value = data[key]?.toString().trim();
       if (value != null && value.isNotEmpty) {
         return value;
@@ -1387,7 +1392,7 @@ String _extractUserId(Map<String, dynamic> response) {
       return driverId;
     }
   }
-  for (final key in ['user_id', 'userId', 'driver_id', 'driverId', 'id']) {
+  for (final key in const ['user_id', 'userId', 'driver_id', 'driverId', 'id']) {
     final value = response[key]?.toString().trim();
     if (value != null && value.isNotEmpty) {
       return value;

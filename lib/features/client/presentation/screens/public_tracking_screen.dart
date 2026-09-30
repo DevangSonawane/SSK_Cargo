@@ -11,6 +11,7 @@ import '../../../shared/presentation/widgets/halting_timer_card.dart';
 import '../widgets/client_flow_widgets.dart';
 import '../widgets/tracking_route_map_view.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class PublicTrackingScreen extends ConsumerStatefulWidget {
   const PublicTrackingScreen({super.key, required this.token});
@@ -47,10 +48,11 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
   }
 
   Future<void> _loadTracking({bool silent = false}) async {
+    final l10n = AppLocalizations.of(context)!;
     if (widget.token.trim().isEmpty) {
       setState(() {
         _loading = false;
-        _errorMessage = 'Tracking link is invalid.';
+        _errorMessage = l10n.clientPublicTrackingInvalidLink;
       });
       return;
     }
@@ -104,7 +106,7 @@ class _PublicTrackingScreenState extends ConsumerState<PublicTrackingScreen> {
             : _errorMessage != null && shipment == null
             ? _PublicTrackingMessage(
                 icon: AppIcons.link_off_rounded,
-                title: 'Tracking unavailable',
+                title: AppLocalizations.of(context)!.clientPublicTrackingUnavailable,
                 message: _errorMessage!,
               )
             : RefreshIndicator(
@@ -208,6 +210,7 @@ class _RouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -217,7 +220,7 @@ class _RouteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoLine(label: 'Pickup', value: shipment.fromLocation),
+          _InfoLine(label: l10n.clientPublicPickupLabel, value: shipment.fromLocation),
           for (final stop in shipment.stops.where((stop) => stop.isExtraStop))
             Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -227,7 +230,7 @@ class _RouteCard extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 12),
-          _InfoLine(label: 'Drop-off', value: shipment.toLocation),
+          _InfoLine(label: l10n.clientPublicDropLabel, value: shipment.toLocation),
         ],
       ),
     );
@@ -241,6 +244,7 @@ class _DriverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driver = shipment.assignedDriverName?.trim();
     final truck = shipment.assignedTruckName?.trim();
     return Container(
@@ -253,12 +257,12 @@ class _DriverCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _InfoLine(
-            label: 'Driver',
-            value: driver?.isNotEmpty == true ? driver! : 'Assigned driver',
+            label: l10n.clientPublicDriverLabel,
+            value: driver?.isNotEmpty == true ? driver! : l10n.clientPublicAssignedDriver,
           ),
           if (truck?.isNotEmpty == true) ...[
             const SizedBox(height: 12),
-            _InfoLine(label: 'Truck', value: truck!),
+            _InfoLine(label: l10n.clientPublicTruckLabel, value: truck!),
           ],
         ],
       ),
@@ -273,6 +277,7 @@ class _DeliverySlaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasCharge = shipment.slaOverageCharge > 0;
     final expected = shipment.expectedDeliveryHours;
     return Container(
@@ -300,8 +305,14 @@ class _DeliverySlaCard extends StatelessWidget {
           Expanded(
             child: Text(
               hasCharge
-                  ? 'Delay charge ₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)} for ${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h over SLA.'
-                  : 'Expected delivery within ~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h${shipment.isExpress ? ' (Express)' : ''}.',
+                  ? l10n.clientPublicDelayCharge(
+                      '₹${shipment.slaOverageCharge.toStringAsFixed(shipment.slaOverageCharge % 1 == 0 ? 0 : 2)}',
+                      '${shipment.slaOverageHours.toStringAsFixed(shipment.slaOverageHours % 1 == 0 ? 0 : 1)}h',
+                    )
+                  : l10n.clientPublicExpectedDelivery(
+                      '~${expected!.toStringAsFixed(expected % 1 == 0 ? 0 : 1)}h',
+                      shipment.isExpress ? l10n.clientPublicExpressSuffix : '',
+                    ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: hasCharge
                     ? const Color(0xFF9A5B13)
@@ -324,6 +335,7 @@ class _IncidentBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final status = _readPublicString(incident, const ['status']);
     return Container(
       padding: const EdgeInsets.all(14),
@@ -339,8 +351,8 @@ class _IncidentBanner extends StatelessWidget {
           Expanded(
             child: Text(
               status.isEmpty
-                  ? 'There is an active delivery update.'
-                  : 'Delivery update: ${_titleCase(status)}',
+                  ? l10n.clientPublicIncidentActive
+                  : l10n.clientPublicIncidentUpdate(_titleCase(status)),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF8A5200),
                 fontWeight: FontWeight.w700,

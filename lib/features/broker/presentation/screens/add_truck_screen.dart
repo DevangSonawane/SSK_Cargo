@@ -11,6 +11,7 @@ import '../../../client/data/client_booking_models.dart';
 import '../../../client/presentation/controllers/client_bookings_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class AddTruckScreen extends ConsumerStatefulWidget {
   const AddTruckScreen({super.key, this.existingTruck});
@@ -105,7 +106,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to add a truck.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.addTruckPleaseSignInAgainToAddA)),
       );
       return;
     }
@@ -237,6 +238,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 50)),
     );
@@ -287,7 +289,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Choose the truck type and fill in the fleet details.',
+                          l10n.addTruckChooseTheTruckTypeAndFillIn,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -306,7 +308,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Select truck type',
+                      l10n.addTruckSelectTruckType,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             color: AppColors.textPrimary,
@@ -359,7 +361,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       controller: _registrationController,
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Registration',
+                        labelText: AppLocalizations.of(context)!.addTruckRegistration,
                         prefixIcon: AppIcons.confirmation_number_rounded,
                       ),
                       enabled: !isEditing,
@@ -385,7 +387,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       controller: _capacityController,
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Capacity',
+                        labelText: AppLocalizations.of(context)!.addTruckCapacity,
                         prefixIcon: AppIcons.scale_rounded,
                       ),
                       validator: (value) {
@@ -439,7 +441,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                             .toList();
                       },
                       decoration: brokerFieldDecoration(
-                        labelText: 'Assign driver (optional)',
+                        labelText: AppLocalizations.of(context)!.addTruckAssignDriverOptional,
                         prefixIcon: AppIcons.person_rounded,
                       ),
                       items: drivers
@@ -463,7 +465,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       controller: _makeController,
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Make (optional)',
+                        labelText: AppLocalizations.of(context)!.addTruckMakeOptional,
                         prefixIcon: AppIcons.precision_manufacturing_rounded,
                       ),
                       validator: (value) {
@@ -477,7 +479,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       textInputAction: TextInputAction.next,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Year (optional)',
+                        labelText: AppLocalizations.of(context)!.addTruckYearOptional,
                         prefixIcon: AppIcons.event_rounded,
                       ),
                       validator: (value) {
@@ -499,8 +501,8 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       textInputAction: TextInputAction.done,
                       onTap: _pickInsuranceExpiry,
                       decoration: brokerFieldDecoration(
-                        labelText: 'Insurance expiry',
-                        hintText: 'Pick a date',
+                        labelText: AppLocalizations.of(context)!.addTruckInsuranceExpiry,
+                        hintText: AppLocalizations.of(context)!.addTruckPickADate,
                         prefixIcon: AppIcons.event_available_rounded,
                         suffixIcon: AppIcons.calendar_month_rounded,
                       ),
@@ -682,6 +684,7 @@ class _DriverDropdownMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         _DriverAvatar(initials: _driverInitials(driver.name), compact: false),
@@ -711,6 +714,7 @@ class _DriverAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: compact ? 34 : 38,
       height: compact ? 34 : 38,

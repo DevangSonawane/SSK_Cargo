@@ -1,5 +1,4 @@
 {
-  "@@locale": "hi",
   "settings": "सेटिंग्स",
   "language": "भाषा",
   "languageSubtitle": "इस डिवाइस के लिए भाषा चुनें",
@@ -209,10 +208,10 @@
   "removeFromMyListDescription": "यह केवल आपकी सूची से हटेगा। इसे वापस नहीं किया जा सकेगा।",
   "remove": "हटाएं",
   "bookingRemovedFromList": "बुकिंग आपकी सूची से हटा दी गई।",
-  "invoiceForBooking": "बुकिंग {bookingRef} के लिए इनवॉइस",
+  "invoiceForBooking": "बुकिंग {trackingId} के लिए इनवॉइस",
   "@invoiceForBooking": {
     "placeholders": {
-      "bookingRef": {}
+      "trackingId": {}
     }
   },
   "invoiceEmailDefaultMessage": "कृपया बुकिंग {bookingRef} का इनवॉइस संलग्न देखें।",
@@ -347,8 +346,7 @@
   "jobsInProgress": "जॉब्स अभी प्रगति में हैं",
   "manageFleetAtGlance": "अपनी फ्लीट को एक नजर में मैनेज करें",
   "monitorDriverMovement": "ड्राइवर की मूवमेंट मॉनिटर करें",
-  "reviewRecentBookings": "हाल की बुकिंग देखें"
-  ,
+  "reviewRecentBookings": "हाल की बुकिंग देखें",
   "bookingId": "बुकिंग ID",
   "pickup": "पिकअप",
   "drop": "ड्रॉप",
@@ -370,12 +368,6 @@
   "pickupLocationNotProvided": "पिकअप लोकेशन उपलब्ध नहीं",
   "dropOffLocationNotProvided": "ड्रॉप-ऑफ लोकेशन उपलब्ध नहीं",
   "express": "एक्सप्रेस",
-  "invoiceForBooking": "बुकिंग {trackingId} के लिए इनवॉइस",
-  "@invoiceForBooking": {
-    "placeholders": {
-      "trackingId": {}
-    }
-  },
   "invoiceEmailMessage": "कृपया बुकिंग {trackingId} के लिए अटैच की गई इनवॉइस देखें।",
   "@invoiceEmailMessage": {
     "placeholders": {
@@ -725,5 +717,1576 @@
   "brokerOffersSubtitle": "बुकिंग ब्रॉडकास्ट होने के बाद भेजे गए किराया बदलाव।",
   "noBrokerOffersYet": "अभी कोई ब्रोकर ऑफर नहीं",
   "brokerOffersAppearHere": "ब्रोकर जवाब देगा तो ऑफर यहां दिखेंगे।",
-  "confirm": "कन्फर्म"
+  "confirm": "कन्फर्म",
+  "photo": "फोटो",
+  "video": "वीडियो",
+  "gallery": "गैलरी",
+  "brokerReqDetailRequestRejected": "रिक्वेस्ट अस्वीकार कर दी गई।",
+  "brokerReqDetailFareChangeSent": "किराया change sent.",
+  "brokerReqDetailAcceptedWaitingForTheClientToConfirm": "स्वीकार किया गया - क्लाइंट की पुष्टि की प्रतीक्षा है।",
+  "brokerReqDetailOfferSentToTheDriverWaitingFor": "ऑफर sent to the ड्राइवर - waiting for response.",
+  "brokerReqDetailAssignDriverTruck": "असाइन करें ड्राइवर & ट्रक",
+  "brokerReqDetailBookingPickAnAvailableDriverAndTruck": "बुकिंग #{id} - उपलब्ध ड्राइवर और ट्रक चुनें।",
+  "@brokerReqDetailBookingPickAnAvailableDriverAndTruck": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerReqDetailDriver": "ड्राइवर",
+  "brokerReqDetailTruck": "ट्रक",
+  "brokerReqDetailSelectOneIdleDriverAndOneIdle": "चुनें one idle ड्राइवर and one idle ट्रक to continue.",
+  "brokerReqDetailCancel": "रद्द करें",
+  "brokerReqDetailConfirmAssignment": "कन्फर्म करें असाइनमेंट",
+  "brokerReqDetailSelectDriver": "चुनें ड्राइवर",
+  "brokerReqDetailSelectTruck": "चुनें ट्रक",
+  "brokerReqDetailNegotiationAccepted": "नेगोशिएशन accepted.",
+  "brokerReqDetailWaitingForClientConfirmation": "प्रतीक्षा for client confirmation",
+  "brokerReqDetailYourAcceptHasBeenSavedFareChanges": "आपका accept has been saved. किराया changes are locked until the client confirms or declines.",
+  "brokerReqDetailYourAcceptHasBeenSavedNoMore": "आपका accept has been saved. कोई more fare changes are उपलब्ध until the client responds.",
+  "brokerReqDetailYourAcceptHasBeenSavedTheRequest": "आपका accept has been saved. The request is locked until the client confirms or declines.",
+  "brokerReqDetailBrokerAssigned": "ब्रोकर-असाइन्ड",
+  "brokerReqDetailAssignedDriverRequest": "असाइन्ड ड्राइवर request",
+  "brokerReqDetailThisPriceWasAlreadyAgreedWithThe": "इस price was already agreed with the broker. स्वीकार करें or decline only - no fare changes.",
+  "brokerReqDetailReject": "अस्वीकार करें",
+  "brokerReqDetailBrokerNegotiation": "ब्रोकर नेगोशिएशन",
+  "brokerReqDetailFareAmount": "किराया amount",
+  "brokerReqDetailChangeFare": "बदलें किराया",
+  "brokerReqDetailAutoSelectedAssignment": "ऑटो-चयनित असाइनमेंट",
+  "brokerReqDetailNoExactMatchFoundAFallbackDriver": "कोई exact match मिला — a fallback ड्राइवर or ट्रक will be used when you accept.",
+  "brokerReqDetailBookingDetails": "बुकिंग विवरण",
+  "brokerReqDetailOverview": "ओवरव्यू",
+  "brokerReqDetailRequestedOn": "रिक्वेस्ट की तारीख",
+  "brokerReqDetailRequestedBy": "रिक्वेस्ट किसने की",
+  "brokerReqDetailLoadType": "लोड का प्रकार",
+  "brokerReqDetailPayment": "पेमेंट",
+  "brokerReqDetailRouteInformation": "रूट Information",
+  "brokerReqDetailPickup": "पिकअप",
+  "brokerReqDetailDropOff": "ड्रॉप-off",
+  "brokerReqDetailWeight": "वजन",
+  "brokerReqDetailVehicle": "वाहन",
+  "brokerReqDetailETA": "ETA: {eta}",
+  "@brokerReqDetailETA": {
+    "placeholders": {
+      "eta": {}
+    }
+  },
+  "brokerReqDetailSetFareAmount": "किराया राशि सेट करें",
+  "brokerHomeDeclinedPickADifferentDriverForThis": "{name} ने मना किया। इस रिक्वेस्ट के लिए दूसरा ड्राइवर चुनें।",
+  "@brokerHomeDeclinedPickADifferentDriverForThis": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeConfirmedTripCreated": "कन्फर्म हुआ। {name} के लिए ट्रिप बन गई।",
+  "@brokerHomeConfirmedTripCreated": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeOfferSentToTheDriverWaitingFor": "ऑफर sent to the ड्राइवर - waiting for response.",
+  "brokerHomeChangeFare": "बदलें fare",
+  "brokerHomeBookingProposeADifferentAmount": "बुकिंग #{id}: अलग राशि प्रस्तावित करें।",
+  "@brokerHomeBookingProposeADifferentAmount": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerHomeEnterAmount": "दर्ज करें amount",
+  "brokerHomeCancel": "रद्द करें",
+  "brokerHomeChangeFare2": "बदलें किराया",
+  "brokerHomeSearchBookingIDLocation": "खोजें बुकिंग ID, location...",
+  "brokerHomeBookingRequests": "बुकिंग Requests",
+  "brokerHomeSort": "सॉर्ट करें",
+  "brokerHomeNoBookingsFound": "कोई bookings मिला",
+  "brokerHomeCouldNotLoadBookings": "नहीं नहीं लोड bookings",
+  "brokerHomeReloadRequests": "रीलोड करें रिक्वेस्ट",
+  "brokerHomeNewBookings": "नए bookings",
+  "brokerHomeTo": "{pickup} से {drop}",
+  "@brokerHomeTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerHomePickup": "पिकअप",
+  "brokerHomeDrop": "ड्रॉप",
+  "brokerHomeDistance": "दूरी",
+  "brokerHomeWeight": "वजन",
+  "brokerHomeClient": "क्लाइंट",
+  "brokerHomeAssignDriverTruck": "असाइन करें ड्राइवर & ट्रक",
+  "brokerHomeConfirm": "कन्फर्म करें",
+  "brokerHomeDecline": "अस्वीकार करें",
+  "brokerHomeAccept": "स्वीकार करें",
+  "brokerHomeReviewRequest": "रिव्यू request",
+  "brokerHomeChooseAnIdleDriverAndTruck": "{booking} के लिए खाली ड्राइवर और ट्रक चुनें।",
+  "@brokerHomeChooseAnIdleDriverAndTruck": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerHomeDriver": "ड्राइवर",
+  "brokerHomeTruck": "ट्रक",
+  "brokerHomeSelectOneIdleDriverAndOneIdle": "चुनें one idle ड्राइवर and one idle ट्रक to continue.",
+  "brokerHomeSelect": "{label} चुनें",
+  "@brokerHomeSelect": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "brokerHomeCouldNotLoadAssignmentOptions": "नहीं नहीं लोड assignment options",
+  "brokerHomeRetry": "पुनः प्रयास करें",
+  "brokerHomeNEGOTIATIONHISTORY": "नेगोशिएशन हिस्ट्री",
+  "brokerKycPleaseSignInAgainToSubmitKYC": "कृपया साइन in फिर से to submit KYC.",
+  "brokerKycIsProvidedInTheDetailsSection": "{document} डिटेल्स सेक्शन में दिया गया है।",
+  "@brokerKycIsProvidedInTheDetailsSection": {
+    "placeholders": {
+      "document": {}
+    }
+  },
+  "brokerKycPleaseSignInAgainToUploadDocuments": "कृपया साइन in फिर से to upload documents.",
+  "brokerKycUnableToPickDocumentRightNow": "अभी दस्तावेज़ नहीं चुन सकते।",
+  "brokerKycChooseHowYouWantToUploadThis": "यह दस्तावेज़ कैसे अपलोड करना है चुनें।",
+  "brokerKycCamera": "कैमरा",
+  "brokerKycGallery": "गैलरी",
+  "brokerKycCancel": "रद्द करें",
+  "brokerKycDocumentPreview": "दस्तावेज़ preview",
+  "brokerKycClose": "बंद करें",
+  "brokerKycCompleteYourKYCToVerifyYourBrokerage": "अपना ब्रोकरेज अकाउंट वेरिफाई करने के लिए KYC पूरा करें।",
+  "brokerKycUploadDocuments": "अपलोड करें दस्तावेज़",
+  "brokerKycAllYourDocumentsAreVerifiedThroughDigiLocker": "सभी your documents are verified through DigiLocker — nothing to upload.",
+  "brokerKycAadhaarAndPANVerifiedContinueToReview": "आधार and पैन verified. जारी रखें to review and finish.",
+  "brokerKycThesePhotosSupportManualReviewForThe": "ये फोटो उन दस्तावेज़ों की मैनुअल जांच में मदद करती हैं जिन्हें DigiLocker कन्फर्म नहीं कर सका।",
+  "brokerKycReviewYourInformation": "रिव्यू आपका Information",
+  "brokerKycPleaseVerifyEverythingBeforeSubmitting": "कृपया verify everything before submitting.",
+  "brokerKycBusinessInformation": "बिज़नेस Information",
+  "brokerKycPANNumber": "पैन Number",
+  "brokerKycAadhaarNumber": "आधार Number",
+  "brokerKycGSTNumber": "GST नंबर",
+  "brokerKycBankAccountNumber": "बैंक अकाउंट Number",
+  "brokerKycBusinessRegistrationNumber": "बिज़नेस रजिस्ट्रेशन Number",
+  "brokerKycUploadedDocuments": "अपलोड दस्तावेज़",
+  "brokerKycIConfirmThatAllTheInformationProvided": "मैं पुष्टि करता हूं कि दी गई सभी जानकारी सही है।",
+  "brokerKycVerificationDetails": "Verification विवरण",
+  "brokerKycCurrentStatus": "Current स्थिति",
+  "brokerKycSubmittedDate": "सबमिट की तारीख",
+  "brokerKycSubmissionID": "सबमिशन ID",
+  "brokerKycReviewedAt": "रिव्यू की तारीख",
+  "brokerKycViewMyDocuments": "देखें My दस्तावेज़",
+  "brokerKycGoBack": "वापस जाएं",
+  "brokerKycMyDocuments": "मेरे दस्तावेज़",
+  "brokerKycKYCRegistration": "KYC रजिस्ट्रेशन",
+  "brokerKycVerifyYourBrokerAccount": "वेरिफाई करें your broker account",
+  "brokerKycSupportedFormats": "समर्थित फॉर्मैट: {formats}",
+  "@brokerKycSupportedFormats": {
+    "placeholders": {
+      "formats": {}
+    }
+  },
+  "brokerKycThisItemIsCoveredInTheDetails": "इस item is covered in the details section.",
+  "brokerActiveJobsCouldNotLoadActiveJobs": "नहीं नहीं लोड एक्टिव jobs",
+  "brokerActiveJobsNoActiveJobsFound": "कोई एक्टिव jobs मिला",
+  "brokerActiveJobsAssignedAndInTransitJobsWillAppear": "असाइन्ड and in-transit jobs will appear here.",
+  "brokerActiveJobsReportAProblem": "रिपोर्ट करें a Problem",
+  "brokerActiveJobsTo": "{pickup} से {drop}",
+  "@brokerActiveJobsTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerActiveJobsIssueType": "समस्या प्रकार",
+  "brokerActiveJobsDescribeWhatWentWrong": "क्या गलत हुआ, बताएं...",
+  "brokerActiveJobsCancel": "रद्द करें",
+  "brokerActiveJobsDisputeRaisedOurTeamWillReviewIt": "विवाद दर्ज — हमारी टीम जल्द रिव्यू करेगी।",
+  "brokerActiveJobsReassignDriver": "Reassign ड्राइवर",
+  "brokerActiveJobsCurrentlyAssigned": "Currently असाइन्ड",
+  "brokerActiveJobsReassignTo": "किसे रीअसाइन करें",
+  "brokerActiveJobsOptionalReasonForReassignment": "रीअसाइनमेंट का वैकल्पिक कारण",
+  "brokerActiveJobsCanTFindTheOriginalJobRequest": "Can't find the original जॉब request for this बुकिंग.",
+  "brokerActiveJobsDriverReassigned": "ड्राइवर reassigned.",
+  "brokerActiveJobsActiveJobs": "एक्टिव जॉब्स",
+  "brokerActiveJobsJobsCurrentlyInProgress": "{count} जॉब्स अभी प्रगति में हैं",
+  "@brokerActiveJobsJobsCurrentlyInProgress": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerActiveJobsPickup": "पिकअप",
+  "brokerActiveJobsDrop": "ड्रॉप",
+  "brokerActiveJobsTruck": "ट्रक",
+  "brokerActiveJobsDriver": "ड्राइवर",
+  "brokerActiveJobsTRIPPROGRESS": "ट्रिप प्रोग्रेस",
+  "brokerActiveJobsTrackLive": "ट्रैक करें लाइव",
+  "brokerActiveJobsChat": "चैट",
+  "addDriverPleaseSignInAgainToCreateA": "कृपया साइन in फिर से to create a ड्राइवर.",
+  "addDriverDriverProfileSavedSuccessfully": "ड्राइवर profile saved सफलतापूर्वक.",
+  "addDriverHasBeenRegisteredAndAddedToYour": "{name} रजिस्टर होकर आपके ड्राइवरों में जोड़ दिया गया है।",
+  "@addDriverHasBeenRegisteredAndAddedToYour": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addDriverTemporaryPassword": "Temporary पासवर्ड",
+  "addDriverPasswordCopied": "पासवर्ड copied",
+  "addDriverCopy": "कॉपी करें",
+  "addDriverThisPasswordIsShownOnlyOnceThe": "इस password is shown only once — the ड्राइवर can change it from their profile after logging in.",
+  "addDriverDone": "हो गया",
+  "addDriverEmailAlreadyRegistered": "ईमेल already registered",
+  "addDriverIsAlreadyTiedToADriverAccount": "{email} पहले से ड्राइवर अकाउंट से जुड़ा है।",
+  "@addDriverIsAlreadyTiedToADriverAccount": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "addDriverKeepEditing": "एडिट जारी रखें",
+  "addDriverViewDrivers": "देखें drivers",
+  "addDriverAccountDetails": "अकाउंट विवरण",
+  "addDriverFullName": "पूरा नाम",
+  "addDriverEmail": "ईमेल",
+  "addDriverMobileNumber": "मोबाइल नंबर",
+  "addDriverLicenseDocuments": "लाइसेंस & दस्तावेज़",
+  "addDriverLicenseNumber": "लाइसेंस नंबर",
+  "addDriverAadhaarNumber": "आधार नंबर",
+  "addDriverLeaveBlankToKeepTheCurrentAadhaar": "Leave blank to keep the current आधार on file.",
+  "addDriverLicenseExpiry": "लाइसेंस समाप्ति",
+  "addDriverYYYYMMDD": "YYYY-MM-DD",
+  "addDriverVehicleAssignment": "वाहन असाइनमेंट",
+  "addDriverAssignTruck": "असाइन करें ट्रक",
+  "addDriverTruckID": "ट्रक ID",
+  "addDriverEnterTruckUUIDOptional": "दर्ज करें ट्रक UUID (optional)",
+  "addDriverStatus": "स्थिति",
+  "addDriverAvailable": "उपलब्ध",
+  "addDriverOnTrip": "ट्रिप पर",
+  "addDriverOffline": "ऑफलाइन",
+  "addDriverTruckListCouldNotBeLoadedYou": "ट्रक list could नहीं be loaded. You can still enter a ट्रक ID manually.",
+  "addDriverChangePhoto": "बदलें फोटो",
+  "brokerHistoryRemoveFromMyList": "हटाएं from my list?",
+  "brokerHistoryThisOnlyRemovesItFromYourOwn": "इस only removes it from your own list. There's no undo.",
+  "brokerHistoryCancel": "रद्द करें",
+  "brokerHistoryRemove": "हटाएं",
+  "brokerHistoryBookingRemovedFromYourList": "बुकिंग removed from your list.",
+  "brokerHistoryCouldNotLoadJobHistory": "नहीं नहीं लोड जॉब history",
+  "brokerHistoryNoBookingsFound": "कोई bookings मिला",
+  "brokerHistoryCompletedAndCancelledBookingsAppearHere": "पूर्ण and रद्द bookings appear here.",
+  "brokerHistoryJobHistory": "Job हिस्ट्री",
+  "brokerHistoryCompletedAndCancelledBookings": "{count} पूरी और रद्द बुकिंग्स",
+  "@brokerHistoryCompletedAndCancelledBookings": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHistorySearchBookingsRoutesDrivers": "खोजें bookings, routes, drivers...",
+  "brokerHistoryTotalNetEarningsFiltered": "कुल नेट कमाई (filtered)",
+  "brokerHistoryTo": "{pickup} से {drop}",
+  "@brokerHistoryTo": {
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  "brokerHistoryPickup": "पिकअप",
+  "brokerHistoryDrop": "ड्रॉप",
+  "brokerHistoryTruck": "ट्रक",
+  "brokerHistoryDriver": "ड्राइवर",
+  "brokerHistoryViewDetails": "देखें details",
+  "brokerHistoryFee": "फीस: {amount}",
+  "@brokerHistoryFee": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHistoryNet": "नेट: {amount}",
+  "@brokerHistoryNet": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerDriverReqDriverRequests": "ड्राइवर रिक्वेस्ट",
+  "brokerDriverReqCouldNotLoadDriverRequests": "नहीं नहीं लोड ड्राइवर रिक्वेस्ट",
+  "brokerDriverReqNegotiationCards": "नेगोशिएशन cards",
+  "brokerDriverReqReload": "रीलोड करें",
+  "brokerDriverReqNoDriverRequestsYet": "कोई ड्राइवर रिक्वेस्ट yet",
+  "brokerDriverReqWhenADriverTimesOutTheRequest": "When a ड्राइवर times out, the request will appear here for broker takeover.",
+  "brokerDriverReqBookingID": "बुकिंग ID",
+  "brokerDriverReqPickup": "पिकअप",
+  "brokerDriverReqDrop": "ड्रॉप",
+  "brokerDriverReqAcceptedWaitingForTheClientToConfirm": "स्वीकार किया गया - क्लाइंट की पुष्टि की प्रतीक्षा है",
+  "brokerDriverReqConfirm": "कन्फर्म करें",
+  "brokerDriverReqDecline": "अस्वीकार करें",
+  "brokerDriverReqAccept": "स्वीकार करें",
+  "brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr": "ब्रोकर से पहले ही सहमत — स्वीकार या अस्वीकार करें, नेगोशिएशन नहीं।",
+  "brokerDriverReqChangeFare": "बदलें किराया",
+  "brokerDriverReqDriverTimedOutBrokerTakeoverActive": "ड्राइवर timed out - broker takeover एक्टिव.",
+  "brokerDriverReqBrokerAssigned": "ब्रोकर-असाइन्ड",
+  "brokerDriverReqChangeFare2": "बदलें fare",
+  "brokerDriverReqSetFareAmount": "किराया राशि सेट करें",
+  "brokerDriverReqCancel": "रद्द करें",
+  "brokerVehiclesVehicles": "वाहन",
+  "brokerVehiclesManageYourFleetAndTruckAvailability": "मैनेज करें your फ्लीट and ट्रक availability",
+  "brokerVehiclesSearchVehiclesDriversOrLocation": "खोजें vehicles, drivers or location",
+  "brokerVehiclesRemoveTruck": "हटाएं ट्रक",
+  "brokerVehiclesRemoveFromYourFleet": "{vehicle} को अपने फ्लीट से हटाएं?",
+  "@brokerVehiclesRemoveFromYourFleet": {
+    "placeholders": {
+      "vehicle": {}
+    }
+  },
+  "brokerVehiclesCancel": "रद्द करें",
+  "brokerVehiclesRemove": "हटाएं",
+  "brokerVehiclesTruckRemoved": "ट्रक removed.",
+  "brokerVehiclesYourFleet": "आपका फ्लीट",
+  "brokerVehiclesAddTruck": "जोड़ें ट्रक",
+  "brokerVehiclesCouldNotLoadTrucks": "नहीं नहीं लोड trucks",
+  "brokerVehiclesNoMatchingVehicles": "कोई matching vehicles",
+  "brokerVehiclesTryADifferentSearchOrAddA": "Try a different search or add a new ट्रक.",
+  "brokerVehiclesEdit": "एडिट करें",
+  "brokerVehiclesAssign": "असाइन करें",
+  "brokerVehiclesTrack": "ट्रैक करें",
+  "brokerVehiclesHistory": "हिस्ट्री",
+  "addVehiclePleaseSignInAgainToAddA": "कृपया साइन in फिर से to add a ट्रक.",
+  "addVehiclePleaseAssignADriver": "कृपया assign a ड्राइवर.",
+  "addVehiclePleaseEnterAValidYear": "कृपया enter a valid year.",
+  "addVehicleRegistration": "रजिस्ट्रेशन",
+  "addVehicleCapacity": "क्षमता",
+  "addVehicleAssignDriver": "असाइन करें ड्राइवर",
+  "addVehicleMake": "मेक",
+  "addVehicleYear": "साल",
+  "addVehicleInsuranceExpiry": "इंश्योरेंस समाप्ति",
+  "addVehiclePickADate": "तारीख चुनें",
+  "addVehicleSaveTruck": "सेव करें ट्रक",
+  "brokerEarningsEarnings": "कमाई",
+  "brokerEarningsRevenueMomentumAndSettlementsAtAGlance": "रेवेन्यू, मोमेंटम और सेटलमेंट एक नज़र में।",
+  "brokerEarningsFailedToLoadEarnings": "Failed to लोड earnings",
+  "brokerEarningsGrossRevenue": "ग्रॉस revenue",
+  "brokerEarningsPlatformFees": "प्लेटफॉर्म फीस",
+  "brokerEarningsRecentSettlements": "हाल के सेटलमेंट",
+  "brokerEarningsSeeAll": "सभी देखें",
+  "brokerEarningsNoSettlementsYet": "कोई settlements yet",
+  "brokerEarningsCompletedSettlementsWillAppearHereWithRoute": "पूर्ण settlements will appear here with route and payout details.",
+  "brokerEarningsNETEARNINGS": "नेट कमाई",
+  "brokerEarningsViewSettlements": "देखें settlements",
+  "brokerEarningsMonthlyMomentum": "मासिक मोमेंटम",
+  "brokerEarningsThisMonth": "इस महीना",
+  "brokerEarningsLastMonth": "पिछले महीना",
+  "brokerInvoicesInvoiceFetchedFor": "{booking} के लिए इनवॉइस मिल गया।",
+  "@brokerInvoicesInvoiceFetchedFor": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerInvoicesInvoiceEmailedFor": "{booking} के लिए इनवॉइस ईमेल किया गया।",
+  "@brokerInvoicesInvoiceEmailedFor": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "brokerInvoicesCouldNotLoadInvoices": "नहीं नहीं लोड invoices",
+  "brokerInvoicesNoInvoiceReadyBookingsYet": "कोई invoice-ready bookings yet",
+  "brokerInvoicesCompletedOrDeliveredBookingsWillAppearHere": "पूर्ण or delivered bookings will appear here.",
+  "brokerInvoicesInvoices": "इनवॉइस",
+  "brokerInvoicesTrackingID": "ट्रैकिंग ID: {id}",
+  "@brokerInvoicesTrackingID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerInvoicesFrom": "प्रेषक:",
+  "brokerInvoicesShippingTo": "भेजने का पता:",
+  "brokerInvoicesStatus": "स्थिति:",
+  "brokerInvoicesFetchInvoice": "इनवॉइस लाएं",
+  "brokerInvoicesEmailInvoice": "ईमेल invoice",
+  "brokerSettlementsCouldNotLoadSettlements": "नहीं नहीं लोड settlements",
+  "brokerSettlementsNoSettlementsYet": "कोई settlements yet",
+  "brokerSettlementsPaidAndPendingSettlementRecordsWillAppear": "Paid and पेंडिंग settlement records will appear here.",
+  "brokerSettlementsNetEarnings": "नेट earnings",
+  "brokerSettlementsClose": "बंद करें",
+  "brokerSettlementsSettlements": "सेटलमेंट",
+  "brokerSettlementsGross": "ग्रॉस",
+  "brokerSettlementsPICKUP": "पिकअप",
+  "brokerSettlementsDROP": "ड्रॉप",
+  "addTruckPleaseSignInAgainToAddA": "कृपया साइन in फिर से to add a ट्रक.",
+  "addTruckChooseTheTruckTypeAndFillIn": "Choose the ट्रक type and fill in the फ्लीट details.",
+  "addTruckSelectTruckType": "चुनें ट्रक type",
+  "addTruckRegistration": "रजिस्ट्रेशन",
+  "addTruckCapacity": "क्षमता",
+  "addTruckAssignDriverOptional": "असाइन करें ड्राइवर (optional)",
+  "addTruckMakeOptional": "मेक (optional)",
+  "addTruckYearOptional": "साल (optional)",
+  "addTruckInsuranceExpiry": "इंश्योरेंस समाप्ति",
+  "addTruckPickADate": "तारीख चुनें",
+  "brokerTrackLiveDriverPhoneNumberIsNotAvailable": "ड्राइवर phone नंबर is नहीं उपलब्ध.",
+  "brokerTrackLiveCouldNotOpenThePhoneApp": "नहीं नहीं open the phone app.",
+  "brokerTrackLiveTrackLive": "ट्रैक करें लाइव",
+  "brokerTrackLiveChat": "चैट",
+  "brokerTrackLiveCallDriver": "कॉल करें ड्राइवर",
+  "brokerTrackLiveLIVE": "लाइव",
+  "brokerTrackLiveRoute": "रूट",
+  "brokerTrackLivePickup": "पिकअप",
+  "brokerTrackLiveDropOff": "ड्रॉप-off",
+  "brokerTrackLiveWeight": "वजन",
+  "brokerTrackLiveTruck": "ट्रक",
+  "brokerTrackLiveTripProgress": "ट्रिप प्रगति",
+  "brokerNotifCouldnTLoadYourNotifications": "Couldn't लोड your notifications",
+  "brokerNotifNoNotifications": "कोई notifications",
+  "brokerNotifNewAlertsWillAppearHere": "नए अलर्ट will appear here.",
+  "brokerNotifNotifications": "नोटिफिकेशन",
+  "brokerAnalyticsCouldNotLoadAnalytics": "नहीं नहीं लोड analytics",
+  "brokerAnalyticsThisMonth": "इस महीना",
+  "brokerAnalyticsLastMonth": "पिछले महीना",
+  "brokerAnalyticsTripHistory": "ट्रिप history",
+  "brokerAnalyticsFilter": "फिल्टर",
+  "brokerAnalyticsNoTripHistoryYet": "कोई trip history yet",
+  "brokerAnalyticsCompletedSettlementsWillAppearHereOnceTrips": "पूर्ण settlements will appear here once ट्रिप close.",
+  "brokerAnalyticsAnalytics": "एनालिटिक्स",
+  "brokerAnalyticsTrackYourEarningsAndTripHistory": "ट्रैक करें your earnings and trip history",
+  "brokerAnalyticsTotalEarnings": "कुल earnings",
+  "brokerAnalyticsNetEarnings": "नेट कमाई: ₹{amount}",
+  "@brokerAnalyticsNetEarnings": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverDetailVehicle": "वाहन",
+  "driverDetailLocation": "लोकेशन",
+  "driverDetailLicense": "लाइसेंस",
+  "driverDetailOnTripSince": "ट्रिप शुरू",
+  "driverDetailLiveTracking": "लाइव tracking",
+  "driverDetailLiveTracking2": "लाइव ट्रैकिंग",
+  "driverDetailLiveDriverPosition": "लाइव ड्राइवर position",
+  "driverDetailChatWithDriver": "चैट with ड्राइवर",
+  "brokerTruckAssignDriverAssignedToTruck": "ड्राइवर assigned to ट्रक.",
+  "brokerTruckAssignAssignDriver": "असाइन करें ड्राइवर",
+  "brokerTruckAssignTruck": "ट्रक",
+  "brokerTruckAssignNoActiveDriversAvailableRightNow": "कोई एक्टिव drivers उपलब्ध right now.",
+  "brokerTruckAssignDriver": "ड्राइवर",
+  "brokerTruckAssignCancel": "रद्द करें",
+  "brokerTruckHistoryCouldNotLoadTripHistory": "नहीं नहीं लोड trip history",
+  "brokerTruckHistoryTruckTripsWillAppearHereOnceJobs": "ट्रक ट्रिप will appear here once jobs are assigned.",
+  "brokerTruckHistorySearchByBookingIDRoute": "खोजें by बुकिंग ID, route...",
+  "brokerTruckLocationCouldNotLoadTruckLocation": "नहीं नहीं लोड ट्रक location",
+  "brokerTruckLocationUpdated": "{time} अपडेट हुआ",
+  "@brokerTruckLocationUpdated": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "brokerTruckLocationLiveLocationPending": "लाइव location पेंडिंग",
+  "brokerTruckLocationThisTruckHasNotReportedALocation": "इस ट्रक has नहीं reported a location yet.",
+  "brokerTrackingDriverHasNotBegunNegotiation": "ड्राइवर has नहीं begun negotiation",
+  "brokerTrackingClickHereToNegotiateThisTimedOut": "इस टाइम-आउट रिक्वेस्ट पर नेगोशिएट करने के लिए यहां क्लिक करें।",
+  "brokerTrackingRemainingNegotiation": "शेष नेगोशिएशन",
+  "brokerTrackingNegotiationReady": "नेगोशिएशन ready",
+  "brokerTrackingDrivers": "ड्राइवर",
+  "brokerTrackingMonitorYourDriversAndLiveTrips": "Monitor your drivers and live ट्रिप",
+  "brokerTrackingSearchDriversPhoneOrVehicle": "खोजें drivers, phone or vehicle",
+  "brokerTrackingYourDrivers": "आपका drivers",
+  "brokerTrackingChangeFareRequest": "बदलें fare request",
+  "brokerTrackingAmount": "राशि",
+  "brokerTrackingNote": "नोट",
+  "brokerTrackingCancel": "रद्द करें",
+  "brokerTrackingSend": "भेजें",
+  "brokerTrackingChangeFare": "बदलें किराया",
+  "brokerTrackingBrokerAssignedNoFareChange": "ब्रोकर-असाइन्ड - किराया नहीं बदलेगा",
+  "brokerTrackingSLA": "SLA: {hours}",
+  "@brokerTrackingSLA": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "brokerTrackingDelay": "देरी शुल्क: ₹{amount}",
+  "@brokerTrackingDelay": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerTrackingIncidents": "इंसिडेंट",
+  "brokerTrackingLoadingUnloadingStops": "लोडिंग और अनलोडिंग स्टॉप",
+  "brokerTrackingCompleteEarlierStopFirst": "पहले पिछले {type} स्टॉप को पूरा करें।",
+  "@brokerTrackingCompleteEarlierStopFirst": {
+    "placeholders": {
+      "type": {}
+    }
+  },
+  "brokerTrackingMechanic": "मैकेनिक: {name}",
+  "@brokerTrackingMechanic": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerFlowLoadID": "लोड ID: {id}",
+  "@brokerFlowLoadID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerFlowPickup": "पिकअप",
+  "brokerFlowDropOff": "ड्रॉप-off",
+  "brokerFlowReviewRequest": "रिव्यू request",
+  "brokerFlowCapacity": "क्षमता",
+  "brokerFlowLocation": "लोकेशन",
+  "brokerFlowID": "ID: {id}",
+  "@brokerFlowID": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "brokerFlowEdit": "एडिट करें",
+  "brokerFlowCall": "कॉल करें",
+  "brokerFlowRemove": "हटाएं",
+  "allEarningsTripCount": "{count} ट्रिप्स",
+  "@allEarningsTripCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "appNewChatBookingSuffix": " बुकिंग {booking} के लिए",
+  "@appNewChatBookingSuffix": {
+    "placeholders": {
+      "booking": {}
+    }
+  },
+  "appNewChatRequestFrom": "{name} से नई चैट रिक्वेस्ट",
+  "@appNewChatRequestFrom": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "appNewMessageFrom": "{name} से नया मैसेज",
+  "@appNewMessageFrom": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeClientAcceptedConfirm": "क्लाइंट ने {amount} स्वीकार किया। अभी कन्फर्म करें।",
+  "@brokerHomeClientAcceptedConfirm": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeDriverChangedFare": "{name} ने किराया बदला।",
+  "@brokerHomeDriverChangedFare": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeDriverNoResponse": "{name} ने जवाब नहीं दिया।",
+  "@brokerHomeDriverNoResponse": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeHelloName": "नमस्ते, {name}",
+  "@brokerHomeHelloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "brokerHomeNoMatchButPending": "सटीक मैच नहीं मिला, लेकिन {count} पेंडिंग रिक्वेस्ट्स पर ध्यान चाहिए।",
+  "@brokerHomeNoMatchButPending": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHomeOfferLive": "ऑफर लाइव: {amount}",
+  "@brokerHomeOfferLive": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeRequestsNeedAttention": "{count} रिक्वेस्ट्स पर ध्यान चाहिए",
+  "@brokerHomeRequestsNeedAttention": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "brokerHomeWaitingClientResponse": "{amount} पर क्लाइंट के जवाब की प्रतीक्षा है",
+  "@brokerHomeWaitingClientResponse": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "brokerHomeWaitingForDriver": "{name} की प्रतीक्षा है",
+  "@brokerHomeWaitingForDriver": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "clientBookingRouteDistance": "रूट दूरी: {distance} किमी",
+  "@clientBookingRouteDistance": {
+    "placeholders": {
+      "distance": {}
+    }
+  },
+  "clientCheckoutDefaultMethod": "डिफॉल्ट तरीका: {method}",
+  "@clientCheckoutDefaultMethod": {
+    "placeholders": {
+      "method": {}
+    }
+  },
+  "clientCheckoutDemoMode": "डेमो मोड: {description}",
+  "@clientCheckoutDemoMode": {
+    "placeholders": {
+      "description": {}
+    }
+  },
+  "clientCheckoutPay": "{amount} पे करें",
+  "@clientCheckoutPay": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "clientProceedWith": "{vehicle} के साथ आगे बढ़ें",
+  "@clientProceedWith": {
+    "placeholders": {
+      "vehicle": {}
+    }
+  },
+  "clientPublicDelayCharge": "{hours} के लिए देरी शुल्क: {amount}",
+  "@clientPublicDelayCharge": {
+    "placeholders": {
+      "amount": {},
+      "hours": {}
+    }
+  },
+  "clientPublicExpectedDelivery": "अपेक्षित डिलीवरी: {time} {suffix}",
+  "@clientPublicExpectedDelivery": {
+    "placeholders": {
+      "time": {},
+      "suffix": {}
+    }
+  },
+  "clientPublicIncidentUpdate": "घटना अपडेट: {status}",
+  "@clientPublicIncidentUpdate": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "deliveryFlowAddMore": "{count} और आइटम जोड़ें।",
+  "@deliveryFlowAddMore": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "deliveryFlowImagePickerError": "इमेज पिकर त्रुटि: {error}",
+  "@deliveryFlowImagePickerError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "deliveryFlowVideoCameraError": "वीडियो कैमरा त्रुटि: {error}",
+  "@deliveryFlowVideoCameraError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "driverEarningsAvgPerDelivery": "प्रति डिलीवरी औसत: {amount}",
+  "@driverEarningsAvgPerDelivery": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "driverEarningsCompletedCount": "{count} पूरी",
+  "@driverEarningsCompletedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "driverPaymentRecordedAs": "{mode} के रूप में दर्ज किया गया",
+  "@driverPaymentRecordedAs": {
+    "placeholders": {
+      "mode": {}
+    }
+  },
+  "gpsAppVersion": "ऐप वर्जन {version}",
+  "@gpsAppVersion": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "gpsDashboardGreeting": "नमस्ते, {name}",
+  "@gpsDashboardGreeting": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "gpsFleetMapSummary": "{count} वाहन, {online} ऑनलाइन",
+  "@gpsFleetMapSummary": {
+    "placeholders": {
+      "count": {},
+      "online": {}
+    }
+  },
+  "gpsPageIndicator": "पेज {current} / {total}",
+  "@gpsPageIndicator": {
+    "placeholders": {
+      "current": {},
+      "total": {}
+    }
+  },
+  "gpsScreenComingNext": "{name} जल्द आ रहा है।",
+  "@gpsScreenComingNext": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "gpsShowingEntries": "{total} में से {start}-{end} दिखा रहे हैं",
+  "@gpsShowingEntries": {
+    "placeholders": {
+      "start": {},
+      "end": {},
+      "total": {}
+    }
+  },
+  "gpsTimeSuffixFrom": "{time} से",
+  "@gpsTimeSuffixFrom": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "gpsTokenEquivalent": "बराबर: ₹{amount}",
+  "@gpsTokenEquivalent": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "gpsTokensCredit": "+{count} टोकन",
+  "@gpsTokensCredit": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "gpsTokensDebit": "-{count} टोकन",
+  "@gpsTokensDebit": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "gpsVehicleCachedBanner": "आखिरी अपडेट {time}",
+  "@gpsVehicleCachedBanner": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "photoUploadAddMore": "{count} और आइटम जोड़ें।",
+  "@photoUploadAddMore": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "photoUploadImagePickerError": "इमेज पिकर त्रुटि: {error}",
+  "@photoUploadImagePickerError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "photoUploadVideoCameraError": "वीडियो कैमरा त्रुटि: {error}",
+  "@photoUploadVideoCameraError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "sharedHaltingChargeWithHours": "फ्री {freeHours} विंडो के बाद {hours} के लिए {amount} हाल्टिंग शुल्क लागू हुआ।",
+  "@sharedHaltingChargeWithHours": {
+    "placeholders": {
+      "amount": {},
+      "hours": {},
+      "freeHours": {}
+    }
+  },
+  "sharedHaltingChargeWithoutHours": "फ्री {freeHours} विंडो के बाद {amount} हाल्टिंग शुल्क लागू हुआ।",
+  "@sharedHaltingChargeWithoutHours": {
+    "placeholders": {
+      "amount": {},
+      "freeHours": {}
+    }
+  },
+  "sharedHaltingExceededEstimate": "फ्री विंडो {duration} से पार हो गई। अनुमानित शुल्क: {amount}।",
+  "@sharedHaltingExceededEstimate": {
+    "placeholders": {
+      "duration": {},
+      "amount": {}
+    }
+  },
+  "sharedHaltingExceededNoEstimate": "फ्री विंडो {duration} से पार हो गई।",
+  "@sharedHaltingExceededNoEstimate": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "sharedHaltingNotStartedMessage": "फ्री {hours} विंडो के बाद हाल्टिंग टाइमर शुरू होगा।",
+  "@sharedHaltingNotStartedMessage": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "sharedHaltingRemainingMessage": "फ्री {freeHours} विंडो के बाद हाल्टिंग शुल्क शुरू होने से पहले {remaining} बाकी है।",
+  "@sharedHaltingRemainingMessage": {
+    "placeholders": {
+      "remaining": {},
+      "freeHours": {}
+    }
+  },
+  "truckSearchDriverOffers": "ड्राइवर ऑफर ({count})",
+  "@truckSearchDriverOffers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "allEarningsActiveMonths": "सक्रिय Months",
+  "allEarningsAvgTrip": "औसत ट्रिप",
+  "allEarningsBreakdown": "Breakdown",
+  "allEarningsDeliveries": "Deliveries",
+  "allEarningsEmptySubtitle": "Empty सबटाइटल",
+  "allEarningsEmptyTitle": "Empty शीर्षक",
+  "allEarningsLoadFailed": "लोड Failed",
+  "allEarningsMonthlyTrend": "मासिक Trend",
+  "allEarningsMonths": "Months",
+  "allEarningsNetPerMonth": "नेट Per महीना",
+  "allEarningsPerDelivery": "Per डिलीवरी",
+  "allEarningsTitle": "शीर्षक",
+  "allEarningsTotalEarned": "कुल Earned",
+  "allEarningsTripsDone": "ट्रिप्स हो गया",
+  "appChatClientFallback": "क्लाइंट",
+  "appChatSupportFallback": "सपोर्ट",
+  "appLoginAttemptBlockedBody": "आपकी सुरक्षा के लिए यह लॉगिन प्रयास ब्लॉक किया गया। कृपया ट्रैकिंग सेटिंग्स देखें।",
+  "appLoginAttemptBlockedTitle": "लॉगिन प्रयास ब्लॉक किया गया",
+  "appNewChatRequestTitle": "नई चैट रिक्वेस्ट",
+  "appOkButton": "ठीक है",
+  "appSignedInRetry": "साइन इन हो गया। कृपया फिर कोशिश करें।",
+  "appTrackingSettingsAction": "ट्रैकिंग सेटिंग्स",
+  "arrivedHeading": "Heading",
+  "arrivedNextLabel": "Next लेबल",
+  "arrivedNextUpload": "Next अपलोड",
+  "arrivedPreparing": "Preparing",
+  "arrivedPreparingSub": "Preparing Sub",
+  "arrivedSlideSub": "Slide Sub",
+  "arrivedSlideTitle": "Slide शीर्षक",
+  "arrivedStatusLabel": "स्टेटस लेबल",
+  "arrivedStatusReady": "स्टेटस तैयार",
+  "arrivedSub": "Sub",
+  "arrivedSwipeContinue": "Swipe जारी रखें",
+  "arrivedTitle": "शीर्षक",
+  "arrivedTripIdLabel": "ट्रिप ID लेबल",
+  "brokerActiveDescription": "ब्रोकर सक्रिय Description",
+  "brokerActiveSubmit": "ब्रोकर सक्रिय सबमिट करें",
+  "brokerActiveSubmitting": "ब्रोकर सक्रिय सबमिट हो रहा है",
+  "brokerHomeClientOffered": "क्लाइंट Offered",
+  "brokerHomeDriverFallback": "ड्राइवर Fallback",
+  "brokerHomeDropUnavailable": "ड्रॉप उपलब्ध नहीं",
+  "brokerHomeFareChangeSent": "किराया बदलें Sent",
+  "brokerHomeFareChangesUsed": "किराया Changes Used",
+  "brokerHomeHelloPrefix": "Hello Prefix",
+  "brokerHomeJustNow": "Just Now",
+  "brokerHomePickupUnavailable": "पिकअप उपलब्ध नहीं",
+  "brokerHomeRequestAccepted": "रिक्वेस्ट Accepted",
+  "brokerHomeRequestDeclined": "रिक्वेस्ट अस्वीकृत",
+  "brokerHomeSendAssignment": "भेजें Assignment",
+  "brokerHomeSending": "भेज रहे हैं",
+  "brokerHomeTryClearingSearch": "कोशिश करें Clearing खोजें",
+  "brokerHomeYouAcceptedWaiting": "You Accepted प्रतीक्षा",
+  "brokerHomeYouOffered": "You Offered",
+  "brokerKycCompleteTitle": "Complete शीर्षक",
+  "brokerKycContinue": "जारी रखें",
+  "brokerKycFinish": "समाप्त करें",
+  "brokerKycNotAvailable": "Not उपलब्ध",
+  "brokerKycNotProvided": "Not Provided",
+  "brokerKycPendingReviewStatus": "पेंडिंग रिव्यू स्टेटस",
+  "brokerKycSubmitKyc": "सबमिट करें KYC",
+  "brokerKycSubmittedBadge": "Submitted बैज",
+  "brokerKycSubmittedDesc": "Submitted Desc",
+  "brokerKycSubmittedTitle": "Submitted शीर्षक",
+  "brokerKycVerifiedBadge": "सत्यापित बैज",
+  "brokerKycVerifiedDesc": "सत्यापित Desc",
+  "brokerKycVerifiedStatus": "सत्यापित स्टेटस",
+  "brokerKycVerifyCarefullyWarning": "सत्यापित करें Carefully Warning",
+  "brokerReqAcceptAssign": "Accept Assign",
+  "brokerReqAcceptedNoCard": "Accepted नहीं कार्ड",
+  "brokerReqAcceptedPickDriver": "Accepted Pick ड्राइवर",
+  "brokerReqAssignmentTitle": "Assignment शीर्षक",
+  "brokerReqAutoSelectedDetails": "Auto Selected डिटेल्स",
+  "brokerReqAwaitingOtherSide": "Awaiting Other Side",
+  "brokerReqChangeFareOrReject": "बदलें किराया or Reject",
+  "brokerReqClientAcceptedFinalize": "क्लाइंट Accepted Finalize",
+  "brokerReqConfirmAssign": "कन्फर्म करें Assign",
+  "brokerReqConfirmBookingTitle": "कन्फर्म करें बुकिंग शीर्षक",
+  "brokerReqCustomerFallback": "Customer Fallback",
+  "brokerReqDeclinedNoActions": "अस्वीकृत नहीं Actions",
+  "brokerReqFareChangeWaiting": "किराया बदलें प्रतीक्षा",
+  "brokerReqGeneralFallback": "General Fallback",
+  "brokerReqNoDriversFound": "नहीं ड्राइवर मिला",
+  "brokerReqNoTrucksFound": "नहीं ट्रक मिला",
+  "brokerReqSaving": "Saving",
+  "brokerReqUnavailable": "उपलब्ध नहीं",
+  "changePasswordAllFieldsRequired": "सभी Fields Required",
+  "changePasswordConfirmHint": "कन्फर्म करें संकेत",
+  "changePasswordConfirmLabel": "कन्फर्म करें लेबल",
+  "changePasswordCurrentHint": "मौजूदा संकेत",
+  "changePasswordCurrentLabel": "मौजूदा लेबल",
+  "changePasswordMismatch": "Mismatch",
+  "changePasswordNewHint": "नया संकेत",
+  "changePasswordNewLabel": "नया लेबल",
+  "changePasswordScreenTitle": "Screen शीर्षक",
+  "changePasswordStrengthEmptyHint": "Strength Empty संकेत",
+  "changePasswordStrengthFair": "Strength Fair",
+  "changePasswordStrengthGood": "Strength Good",
+  "changePasswordStrengthLowercase": "Strength Lowercase",
+  "changePasswordStrengthMinLength": "Strength Min Length",
+  "changePasswordStrengthNumber": "Strength नंबर",
+  "changePasswordStrengthStrong": "Strength Strong",
+  "changePasswordStrengthStrongHint": "Strength Strong संकेत",
+  "changePasswordStrengthSymbol": "Strength Symbol",
+  "changePasswordStrengthTitle": "Strength शीर्षक",
+  "changePasswordStrengthUppercase": "Strength Uppercase",
+  "changePasswordStrengthWeak": "Strength Weak",
+  "changePasswordSubmitButton": "सबमिट करें बटन",
+  "changePasswordSuccessLoggedOut": "सफल Logged Out",
+  "chatAssistantName": "Assistant नाम",
+  "chatClosedChip": "Closed Chip",
+  "chatDetailBookingTitle": "Detail बुकिंग शीर्षक",
+  "chatDetailClientTitle": "Detail क्लाइंट शीर्षक",
+  "chatDetailDirectTitle": "Detail Direct शीर्षक",
+  "chatDirectMessageChip": "Direct मैसेज Chip",
+  "chatDirectMessageFallback": "Direct मैसेज Fallback",
+  "chatListEmpty": "List Empty",
+  "chatListLoadError": "List लोड त्रुटि",
+  "chatListRetry": "List फिर कोशिश करें",
+  "chatListTitle": "List शीर्षक",
+  "chatMessageFallback": "मैसेज Fallback",
+  "chatMessageNotSent": "मैसेज Not Sent",
+  "chatNoMessagesYet": "नहीं Messages Yet",
+  "chatNotConnectedChip": "Not Connected Chip",
+  "chatReadReceipt": "Read Receipt",
+  "chatThreadLoadError": "Thread लोड त्रुटि",
+  "chatTripClosedNotice": "ट्रिप Closed Notice",
+  "chatTypeMessageHint": "प्रकार मैसेज संकेत",
+  "chatTypingIndicator": "Typing Indicator",
+  "clientAddressAddTitle": "पता जोड़ें",
+  "clientAddressEditTitle": "पता एडिट करें",
+  "clientAddressLoading": "पता लोड हो रहा है",
+  "clientAddressRemoved": "पता हटा दिया गया",
+  "clientBookingLoadingPointHint": "लोडिंग Point संकेत",
+  "clientBookingUnloadingPointHint": "Unloading Point संकेत",
+  "clientBookingWeightError": "वजन त्रुटि",
+  "clientCheckoutCancel": "रद्द करें",
+  "clientCheckoutChooseMethod": "चुनें तरीका",
+  "clientCheckoutEnterPin": "दर्ज करें Pin",
+  "clientCheckoutMethodCards": "तरीका कार्ड्स",
+  "clientCheckoutMethodNetbanking": "तरीका Netbanking",
+  "clientCheckoutMethodRecommended": "तरीका Recommended",
+  "clientCheckoutMethodUpi": "तरीका UPI",
+  "clientCheckoutMethodWallet": "तरीका वॉलेट",
+  "clientCheckoutTestTitle": "Test शीर्षक",
+  "clientChooseTrucks": "क्लाइंट चुनें ट्रक",
+  "clientFindingBrokers": "क्लाइंट Finding Brokers",
+  "clientHomeBookAnyTruck": "Book Any ट्रक",
+  "clientHomeLoadingHint": "लोडिंग संकेत",
+  "clientHomeUnloadingHint": "Unloading संकेत",
+  "clientNotificationsAllCaughtUp": "सभी Caught Up",
+  "clientNotificationsAllCaughtUpHint": "सभी Caught Up संकेत",
+  "clientNotificationsEmpty": "Empty",
+  "clientNotificationsEmptyHint": "Empty संकेत",
+  "clientNotificationsFallbackMessage": "Fallback मैसेज",
+  "clientNotificationsFallbackTitle": "Fallback शीर्षक",
+  "clientNotificationsFilterAll": "फिल्टर सभी",
+  "clientNotificationsFilterUnread": "फिल्टर Unread",
+  "clientNotificationsGotIt": "Got It",
+  "clientNotificationsKindBooking": "Kind बुकिंग",
+  "clientNotificationsKindOffer": "Kind Offer",
+  "clientNotificationsKindPayment": "Kind पेमेंट",
+  "clientNotificationsKindUpdate": "Kind Update",
+  "clientNotificationsLoadError": "लोड त्रुटि",
+  "clientNotificationsMarkAllRead": "Mark सभी Read",
+  "clientNotificationsMarkedRead": "Marked Read",
+  "clientNotificationsSaving": "Saving",
+  "clientNotificationsTitle": "शीर्षक",
+  "clientNotificationsTryAgain": "कोशिश करें Again",
+  "clientPaymentAddAccountInvalid": "अकाउंट Invalid",
+  "clientPaymentAddAccountLabel": "अकाउंट लेबल",
+  "clientPaymentAddBankLabel": "बैंक लेबल",
+  "clientPaymentAddBankRequired": "बैंक Required",
+  "clientPaymentAddBankSearchHint": "बैंक खोजें संकेत",
+  "clientPaymentAddBrandLabel": "Brand लेबल",
+  "clientPaymentAddBrandRequired": "Brand Required",
+  "clientPaymentAddCardNote": "कार्ड Note",
+  "clientPaymentAddDefaultOption": "डिफॉल्ट Option",
+  "clientPaymentAddIfscInvalid": "IFSC Invalid",
+  "clientPaymentAddIfscLabel": "IFSC लेबल",
+  "clientPaymentAddLast4Label": "Last4 लेबल",
+  "clientPaymentAddLast4Required": "Last4 Required",
+  "clientPaymentAddMethod": "तरीका",
+  "clientPaymentAddNoteLabel": "Note लेबल",
+  "clientPaymentAddPrivacyNote": "Privacy Note",
+  "clientPaymentAddSaveButton": "सेव करें बटन",
+  "clientPaymentAddSignInRequired": "साइन In Required",
+  "clientPaymentAddTileSubtitle": "Tile सबटाइटल",
+  "clientPaymentAddTileTitle": "Tile शीर्षक",
+  "clientPaymentAddTitle": "शीर्षक",
+  "clientPaymentAddTypeLabel": "प्रकार लेबल",
+  "clientPaymentAddUpiInvalid": "UPI Invalid",
+  "clientPaymentAddUpiLabel": "UPI लेबल",
+  "clientPaymentAddWalletLabel": "वॉलेट लेबल",
+  "clientPaymentAddWalletRequired": "वॉलेट Required",
+  "clientPaymentAddWalletSearchHint": "वॉलेट खोजें संकेत",
+  "clientPaymentCardSaved": "कार्ड सेव्ड",
+  "clientPaymentDefaultBadge": "डिफॉल्ट बैज",
+  "clientPaymentDeleteTooltip": "Delete tooltip",
+  "clientPaymentEmptySubtitle": "Empty सबटाइटल",
+  "clientPaymentEmptyTitle": "Empty शीर्षक",
+  "clientPaymentLoadError": "लोड त्रुटि",
+  "clientPaymentLoadErrorHint": "लोड त्रुटि संकेत",
+  "clientPaymentMethodsTitle": "Methods शीर्षक",
+  "clientPaymentRemoved": "Removed",
+  "clientPaymentRetry": "फिर कोशिश करें",
+  "clientPaymentSetDefault": "Set डिफॉल्ट",
+  "clientPaymentSignInSubtitle": "साइन In सबटाइटल",
+  "clientPaymentSignInTitle": "साइन In शीर्षक",
+  "clientPaymentTypeBank": "प्रकार बैंक",
+  "clientPaymentTypeCard": "प्रकार कार्ड",
+  "clientPaymentTypeMethod": "प्रकार तरीका",
+  "clientPaymentTypeUpi": "प्रकार UPI",
+  "clientPaymentTypeWallet": "प्रकार वॉलेट",
+  "clientPaymentUpiFallback": "UPI Fallback",
+  "clientPaymentWalletFallback": "वॉलेट Fallback",
+  "clientPlacesSuggestionsError": "Suggestions त्रुटि",
+  "clientPublicAssignedDriver": "असाइन किया गया ड्राइवर",
+  "clientPublicDriverLabel": "ड्राइवर लेबल",
+  "clientPublicDropLabel": "ड्रॉप लेबल",
+  "clientPublicExpressSuffix": "Express Suffix",
+  "clientPublicIncidentActive": "Incident सक्रिय",
+  "clientPublicPickupLabel": "पिकअप लेबल",
+  "clientPublicTrackingInvalidLink": "ट्रैकिंग Invalid Link",
+  "clientPublicTrackingUnavailable": "ट्रैकिंग उपलब्ध नहीं",
+  "clientPublicTruckLabel": "ट्रक लेबल",
+  "clientSavedAddAddress": "पता जोड़ें",
+  "clientSavedAddressesTitle": "सेव किए गए पते",
+  "clientSavedEmptySubtitle": "तेज बुकिंग के लिए अक्सर इस्तेमाल होने वाले पिकअप और ड्रॉप-ऑफ स्थान सेव करें।",
+  "clientSavedEmptyTitle": "अभी कोई सेव पता नहीं है",
+  "clientSavedLoadError": "पते लोड नहीं हो सके",
+  "clientSavedLoadErrorHint": "कृपया थोड़ी देर में फिर कोशिश करें।",
+  "clientSavedNoMatchSubtitle": "कोई दूसरा लेबल, क्षेत्र या संपर्क नाम आजमाएं।",
+  "clientSavedNoMatchTitle": "कोई मिलता-जुलता पता नहीं मिला",
+  "clientSavedRetry": "फिर कोशिश करें",
+  "clientSavedSearchHint": "सेव किए गए पते खोजें",
+  "clientSavedSignInSubtitle": "आपके पिकअप और ड्रॉप-ऑफ स्थान आपके अकाउंट से जुड़े रहते हैं।",
+  "clientSavedSignInTitle": "सेव किए गए पते देखने के लिए साइन इन करें",
+  "clientSearchRetry": "फिर कोशिश करें",
+  "clientSelectVehicle": "क्लाइंट चुनें वाहन",
+  "clientTrackingGpsPending": "Gps पेंडिंग",
+  "clientTrackingLivePendingSubtitle": "लाइव पेंडिंग सबटाइटल",
+  "clientTrackingLivePendingTitle": "लाइव पेंडिंग शीर्षक",
+  "clientTrackingLivePosition": "लाइव Position",
+  "clientTrackingLoading": "लोडिंग",
+  "clientTrackingMapEmptyHint": "मैप Empty संकेत",
+  "clientTrackingMapLoading": "मैप लोडिंग",
+  "clientTrackingPayNow": "Pay Now",
+  "clientTrackingPayRemaining": "Pay Remaining",
+  "clientTrackingRateDelivery": "Rate डिलीवरी",
+  "clientTrackingSubmitting": "सबमिट हो रहा है",
+  "clientTrackingUnloading": "Unloading",
+  "clientVehicleSelected": "Selected",
+  "coreDigilockerAadhaarFallbackNote": "आधार Fallback Note",
+  "coreDigilockerBankAccountHint": "बैंक अकाउंट संकेत",
+  "coreDigilockerBrokerIntro": "ब्रोकर Intro",
+  "coreDigilockerBusinessDetails": "Business डिटेल्स",
+  "coreDigilockerBusinessRegHint": "Business Reg संकेत",
+  "coreDigilockerCheckStatus": "Check स्टेटस",
+  "coreDigilockerChecking": "Checking",
+  "coreDigilockerDidntMatch": "Didnt Match",
+  "coreDigilockerDocAadhaar": "Doc आधार",
+  "coreDigilockerDocLicense": "Doc लाइसेंस",
+  "coreDigilockerDocPan": "Doc PAN",
+  "coreDigilockerDriverIntro": "ड्राइवर Intro",
+  "coreDigilockerGstHint": "GST संकेत",
+  "coreDigilockerInfoNote": "Info Note",
+  "coreDigilockerNoLoginLink": "नहीं लॉगिन Link",
+  "coreDigilockerNotComplete": "Not Complete",
+  "coreDigilockerNotFound": "Not मिला",
+  "coreDigilockerNotVerifiedYet": "Not सत्यापित Yet",
+  "coreDigilockerOpenBrowserFailed": "Open Browser Failed",
+  "coreDigilockerOptionalNote": "वैकल्पिक Note",
+  "coreDigilockerPendingRetry": "पेंडिंग फिर कोशिश करें",
+  "coreDigilockerUnreachable": "Unreachable",
+  "coreDigilockerVehicleDetails": "वाहन डिटेल्स",
+  "coreDigilockerVehicleInsuranceHint": "वाहन Insurance संकेत",
+  "coreDigilockerVehicleRegHint": "वाहन Reg संकेत",
+  "coreDigilockerVerified": "सत्यापित",
+  "coreDigilockerVerifyButton": "सत्यापित करें बटन",
+  "coreDigilockerVerifyLicense": "सत्यापित करें लाइसेंस",
+  "coreDigilockerVerifyPan": "सत्यापित करें PAN",
+  "coreDigilockerWorking": "Working",
+  "coreKycCompleteAction": "Complete Action",
+  "coreKycIncompleteBody": "Incomplete Body",
+  "coreKycIncompleteTitle": "Incomplete शीर्षक",
+  "coreKycNotNow": "Not Now",
+  "coreKycRejectedBody": "अस्वीकृत Body",
+  "coreKycRejectedTitle": "अस्वीकृत शीर्षक",
+  "coreKycResubmitAction": "Resubmit Action",
+  "coreKycUnderReviewBody": "Under रिव्यू Body",
+  "coreKycUnderReviewTitle": "Under रिव्यू शीर्षक",
+  "coreKycViewStatusAction": "देखें स्टेटस Action",
+  "coreMapDropTitle": "ड्रॉप शीर्षक",
+  "coreMapExpressLabel": "Express लेबल",
+  "coreMapPickupTitle": "पिकअप शीर्षक",
+  "coreMapRouteNotFound": "रूट Not मिला",
+  "deliveryFlowChoosePhoto": "चुनें फोटो",
+  "deliveryFlowCompany": "Company",
+  "deliveryFlowContactUnavailable": "Contact उपलब्ध नहीं",
+  "deliveryFlowMaxItems": "Max Items",
+  "deliveryFlowMyQr": "My QR",
+  "deliveryFlowPersonal": "Personal",
+  "deliveryFlowPhotosUploaded": "फोटो अपलोडेड",
+  "deliveryFlowRecordVideo": "रिकॉर्ड करें वीडियो",
+  "deliveryFlowSignInContinue": "साइन In जारी रखें",
+  "deliveryFlowSignInUploadPhotos": "साइन In अपलोड फोटो",
+  "deliveryFlowTakePhoto": "Take फोटो",
+  "deliveryFlowVerified": "सत्यापित",
+  "driverEarningsCurrentBalance": "मौजूदा Balance",
+  "driverEarningsLastMonth": "Last महीना",
+  "driverEarningsNoDeliveries": "नहीं Deliveries",
+  "driverEarningsReadyPayout": "तैयार Payout",
+  "driverEarningsThisMonth": "यह महीना",
+  "driverEarningsTrips": "ट्रिप्स",
+  "driverEarningsViewAll": "देखें सभी",
+  "driverHomeTripAccepted": "ट्रिप Accepted",
+  "driverHomeTripDeclined": "ट्रिप अस्वीकृत",
+  "driverKycEdit": "एडिट",
+  "driverKycPickFailed": "Pick Failed",
+  "driverKycSignInToSubmit": "साइन In to सबमिट करें",
+  "driverKycSignInToUpload": "साइन In to अपलोड",
+  "driverKycView": "देखें",
+  "driverPaymentCompany": "Company",
+  "driverPaymentPersonal": "Personal",
+  "driverPaymentQrUploaded": "QR अपलोडेड",
+  "driverPaymentSignInRecord": "साइन In रिकॉर्ड करें",
+  "driverPaymentSignInUploadQr": "साइन In अपलोड QR",
+  "driverPaymentVerified": "सत्यापित",
+  "gpsAbout": "About",
+  "gpsAboutSubtitle": "About सबटाइटल",
+  "gpsAccountDetails": "अकाउंट डिटेल्स",
+  "gpsAccountDetailsSubtitle": "अकाउंट डिटेल्स सबटाइटल",
+  "gpsAccountSection": "अकाउंट",
+  "gpsActive": "सक्रिय",
+  "gpsAllFleet": "सभी फ्लीट",
+  "gpsAllVehiclesLiveMap": "सभी वाहन लाइव मैप",
+  "gpsAppearance": "दिखावट",
+  "gpsAppearanceSubtitle": "Appearance सबटाइटल",
+  "gpsBackToFleet": "वापस to फ्लीट",
+  "gpsCached": "Cached",
+  "gpsChangePassword": "बदलें पासवर्ड",
+  "gpsChangePasswordSubtitle": "बदलें पासवर्ड सबटाइटल",
+  "gpsCompleted": "पूरी",
+  "gpsCreateGeofence": "बनाएं Geofence",
+  "gpsCustom": "Custom",
+  "gpsDashboardWelcome": "डैशबोर्ड Welcome",
+  "gpsDeducted": "Deducted",
+  "gpsDefineZones": "Define Zones",
+  "gpsDuration": "Duration",
+  "gpsDurationSubtitle": "Duration सबटाइटल",
+  "gpsExpired": "समाप्त",
+  "gpsExpiredTokensRemoved": "Expired tokens Removed",
+  "gpsFilter": "फिल्टर",
+  "gpsFilterAll": "फिल्टर सभी",
+  "gpsFleet": "फ्लीट",
+  "gpsFleetStatus": "फ्लीट स्टेटस",
+  "gpsFrom": "From",
+  "gpsFuelSummary": "Fuel Summary",
+  "gpsGenerateReport": "Generate रिपोर्ट",
+  "gpsGeofences": "जियोफेंस",
+  "gpsGeofencesSubtitle": "Geofences सबटाइटल",
+  "gpsHelpSupport": "Help Support",
+  "gpsHelpSupportSubtitle": "Help Support सबटाइटल",
+  "gpsInvoices": "इनवॉइस",
+  "gpsList": "List",
+  "gpsLiveFleetTracking": "लाइव फ्लीट ट्रैकिंग",
+  "gpsLiveMap": "लाइव मैप",
+  "gpsLiveTrackingUnavailableFleet": "लाइव ट्रैकिंग उपलब्ध नहीं फ्लीट",
+  "gpsLogout": "लॉगआउट",
+  "gpsLogoutSubtitle": "लॉगआउट सबटाइटल",
+  "gpsMap": "मैप",
+  "gpsModules": "मॉड्यूल",
+  "gpsMonthlyPlan": "मासिक Plan",
+  "gpsMyFleet": "मेरा फ्लीट",
+  "gpsMyVehicles": "My वाहन",
+  "gpsMyVehiclesSubtitle": "My वाहन सबटाइटल",
+  "gpsNavDashboard": "डैशबोर्ड",
+  "gpsNavProfile": "प्रोफाइल",
+  "gpsNavReports": "रिपोर्ट्स",
+  "gpsNavVehicles": "वाहन",
+  "gpsNoData": "नहीं Data",
+  "gpsNoGeofencesSubtitle": "नहीं Geofences सबटाइटल",
+  "gpsNoGeofencesYet": "नहीं Geofences Yet",
+  "gpsNoMoreTransactions": "नहीं More Transactions",
+  "gpsNotifications": "नोटिफिकेशन",
+  "gpsNotificationsSubtitle": "नोटिफिकेशन सबटाइटल",
+  "gpsOffline": "ऑफलाइन",
+  "gpsOnline": "ऑनलाइन",
+  "gpsProfileSubtitle": "प्रोफाइल सबटाइटल",
+  "gpsRecentActivity": "Recent Activity",
+  "gpsReportType": "रिपोर्ट प्रकार",
+  "gpsReportTypeSubtitle": "रिपोर्ट प्रकार सबटाइटल",
+  "gpsReportsSecureNote": "रिपोर्ट्स Secure Note",
+  "gpsReportsSubtitle": "रिपोर्ट्स सबटाइटल",
+  "gpsRetry": "फिर कोशिश करें",
+  "gpsRouteHistory": "रूट इतिहास",
+  "gpsRunning": "Running",
+  "gpsSearchGeofences": "खोजें Geofences",
+  "gpsSearchTransactions": "खोजें Transactions",
+  "gpsSearchVehiclesHint": "खोजें वाहन संकेत",
+  "gpsSelectFromFleet": "चुनें From फ्लीट",
+  "gpsSelectVehicle": "चुनें वाहन",
+  "gpsSelectVehicleOrFleet": "चुनें वाहन or फ्लीट",
+  "gpsSettings": "सेटिंग्स",
+  "gpsSettingsSubtitle": "Settings सबटाइटल",
+  "gpsSignInForFleetDevices": "साइन In For फ्लीट Devices",
+  "gpsSignInForLiveFleet": "साइन In For लाइव फ्लीट",
+  "gpsSignInForVehicle": "साइन In For वाहन",
+  "gpsStopped": "Stopped",
+  "gpsSubscriptionPayment": "Subscription पेमेंट",
+  "gpsThisWeek": "यह Week",
+  "gpsTimeEightMinsAgo": "Time Eight Mins Ago",
+  "gpsTimeTwoMinsAgo": "Time Two Mins Ago",
+  "gpsTo": "से",
+  "gpsToday": "Today",
+  "gpsTokenBalance": "Token Balance",
+  "gpsTokenExpiry": "Token समाप्ति",
+  "gpsTokenPurchase": "Token Purchase",
+  "gpsTokens": "टोकन",
+  "gpsTokensAdded": "Tokens जोड़ा गया",
+  "gpsTotalVehicles": "कुल वाहन",
+  "gpsTotalVehiclesCenter": "कुल वाहन Center",
+  "gpsTransactions": "लेन-देन",
+  "gpsTripSummary": "ट्रिप Summary",
+  "gpsUsageSummary": "Usage Summary",
+  "gpsVehicle": "वाहन",
+  "gpsVehicleLiveMap": "वाहन लाइव मैप",
+  "gpsVehicleNotFound": "वाहन Not मिला",
+  "gpsViaRazorpay": "Via Razorpay",
+  "gpsViewAll": "देखें सभी",
+  "gpsVsLastWeek": "Vs Last Week",
+  "gpsWalletBilling": "वॉलेट और बिलिंग",
+  "gpsWelcomeBonus": "Welcome Bonus",
+  "gpsYesterday": "Yesterday",
+  "historyDetailsCancel": "रद्द करें",
+  "historyDetailsEmailInvoice": "ईमेल इनवॉइस",
+  "historyDetailsRetry": "फिर कोशिश करें",
+  "historyDetailsSend": "भेजें",
+  "historySegmentCompleted": "पूरी",
+  "historySegmentPending": "पेंडिंग",
+  "locationFlowAddLoading": "जोड़ें लोडिंग",
+  "locationFlowAddLoadingHint": "जोड़ें लोडिंग संकेत",
+  "locationFlowAddUnloading": "जोड़ें Unloading",
+  "locationFlowAddUnloadingHint": "जोड़ें Unloading संकेत",
+  "locationFlowDropHint": "ड्रॉप संकेत",
+  "locationFlowDropSubtitle": "ड्रॉप सबटाइटल",
+  "locationFlowDropTitle": "ड्रॉप शीर्षक",
+  "locationFlowFetching": "Fetching",
+  "locationFlowMovePin": "Move Pin",
+  "locationFlowOwnUnavailable": "Own उपलब्ध नहीं",
+  "locationFlowPermissionNeeded": "Permission Needed",
+  "locationFlowPickupHint": "पिकअप संकेत",
+  "locationFlowPickupSubtitle": "पिकअप सबटाइटल",
+  "locationFlowPickupTitle": "पिकअप शीर्षक",
+  "locationFlowPinHint": "Pin संकेत",
+  "locationFlowPinLoading": "Pin लोडिंग",
+  "locationFlowPinUnloading": "Pin Unloading",
+  "locationFlowResolveCurrent": "Resolve मौजूदा",
+  "locationFlowResolvePoint": "Resolve Point",
+  "locationFlowSavedTitle": "सेव्ड शीर्षक",
+  "locationFlowSuggestionsError": "Suggestions त्रुटि",
+  "locationFlowTurnOnLocation": "Turn On लोकेशन",
+  "locationFlowUseCurrent": "उपयोग करें मौजूदा",
+  "locationFlowUseCurrentPickup": "उपयोग करें मौजूदा पिकअप",
+  "manageAccountActiveLabel": "सक्रिय लेबल",
+  "manageAccountActiveNo": "सक्रिय नहीं",
+  "manageAccountActiveYes": "सक्रिय Yes",
+  "manageAccountBasicDetails": "बेसिक डिटेल्स",
+  "manageAccountBusinessAddressLabel": "Business पता लेबल",
+  "manageAccountBusinessDetails": "Business डिटेल्स",
+  "manageAccountChangePhoto": "बदलें फोटो",
+  "manageAccountEditProfileSubtitle": "एडिट प्रोफाइल सबटाइटल",
+  "manageAccountEditProfileTitle": "एडिट प्रोफाइल शीर्षक",
+  "manageAccountEmailLabel": "ईमेल लेबल",
+  "manageAccountEnterEmail": "दर्ज करें ईमेल",
+  "manageAccountEnterName": "दर्ज करें नाम",
+  "manageAccountEnterServiceCity": "दर्ज करें सेवा City",
+  "manageAccountEnterValidEmail": "दर्ज करें Valid ईमेल",
+  "manageAccountFullNameLabel": "पूरा नाम लेबल",
+  "manageAccountOptionalTag": "वैकल्पिक Tag",
+  "manageAccountPhoneLabel": "फोन लेबल",
+  "manageAccountProfileUpdated": "प्रोफाइल अपडेटेड",
+  "manageAccountSaveChanges": "सेव करें Changes",
+  "manageAccountServiceCityLabel": "सेवा City लेबल",
+  "manageAccountYourNameFallback": "आपका नाम Fallback",
+  "negotiationAccept": "Accept",
+  "negotiationBack": "वापस",
+  "negotiationBrokerConfirmBody": "ब्रोकर कन्फर्म करें Body",
+  "negotiationBrokerConfirmTitle": "ब्रोकर कन्फर्म करें शीर्षक",
+  "negotiationBrokerOfferBody": "ब्रोकर Offer Body",
+  "negotiationBrokerOfferLabel": "ब्रोकर Offer लेबल",
+  "negotiationBrokerOfferTitle": "ब्रोकर Offer शीर्षक",
+  "negotiationConfirm": "कन्फर्म करें",
+  "negotiationDecline": "अस्वीकार करें",
+  "negotiationDriverAcceptedTitle": "ड्राइवर Accepted शीर्षक",
+  "negotiationDriverConfirmBody": "ड्राइवर कन्फर्म करें Body",
+  "negotiationDriverConfirmNowTitle": "ड्राइवर कन्फर्म करें Now शीर्षक",
+  "negotiationDriverFallback": "ड्राइवर Fallback",
+  "negotiationDriverResponseBody": "ड्राइवर Response Body",
+  "negotiationDriverResponseTitle": "ड्राइवर Response शीर्षक",
+  "negotiationFareChangeBody": "किराया बदलें Body",
+  "negotiationFareChangeTitle": "किराया बदलें शीर्षक",
+  "negotiationHandshakeProgress": "Handshake प्रगति",
+  "negotiationOfferCaption": "Offer Caption",
+  "negotiationOfferSentBody": "Offer Sent Body",
+  "negotiationOfferSentTitle": "Offer Sent शीर्षक",
+  "negotiationPillActionNeeded": "Pill Action Needed",
+  "negotiationPillLiveOffer": "Pill लाइव Offer",
+  "negotiationPillNewCounter": "Pill नया Counter",
+  "negotiationPillWithBroker": "Pill साथ ब्रोकर",
+  "negotiationWaitingBrokerBody": "प्रतीक्षा ब्रोकर Body",
+  "negotiationWaitingBrokerTitle": "प्रतीक्षा ब्रोकर शीर्षक",
+  "negotiationWaitingDriverBody": "प्रतीक्षा ड्राइवर Body",
+  "negotiationWaitingDriverTitle": "प्रतीक्षा ड्राइवर शीर्षक",
+  "onboardingFastSubtitle": "पेमेंट, इनवॉइस और अपडेट एक ही जगह रहते हैं।",
+  "onboardingFastTitle": "तेज सेटलमेंट",
+  "onboardingGetStarted": "शुरू करें",
+  "onboardingNext": "अगला",
+  "onboardingSafeSubtitle": "विश्वास के साथ सत्यापित ट्रक और ड्राइवर बुक करें।",
+  "onboardingSafeTitle": "सुरक्षित बुकिंग",
+  "onboardingSkip": "छोड़ें",
+  "onboardingTrackingSubtitle": "हर शिपमेंट को पिकअप से डिलीवरी तक ट्रैक करें।",
+  "onboardingTrackingTitle": "लाइव ट्रैकिंग",
+  "orderAcceptedAssignedTitle": "असाइन किया गया शीर्षक",
+  "orderAcceptedOfferUnavailable": "Offer उपलब्ध नहीं",
+  "orderAcceptedRequestTitle": "रिक्वेस्ट शीर्षक",
+  "orderAcceptedRequestUpdated": "रिक्वेस्ट अपडेटेड",
+  "orderAcceptedSignInContinue": "साइन In जारी रखें",
+  "photoUploadChoosePhoto": "चुनें फोटो",
+  "photoUploadMaxItems": "Max Items",
+  "photoUploadRecordVideo": "रिकॉर्ड करें वीडियो",
+  "photoUploadSignInUpload": "साइन In अपलोड",
+  "photoUploadTakePhoto": "Take फोटो",
+  "podWaitingCouldNotComplete": "नहीं हो सका Not Complete",
+  "podWaitingFinishing": "Finishing",
+  "podWaitingNewPhotosFallback": "नया फोटो Fallback",
+  "podWaitingPhotosUp": "फोटो Up",
+  "podWaitingRejectedTitle": "अस्वीकृत शीर्षक",
+  "podWaitingTitle": "शीर्षक",
+  "podWaitingTryAgain": "कोशिश करें Again",
+  "podWaitingUploadNew": "अपलोड नया",
+  "podWaitingWaitingReview": "प्रतीक्षा रिव्यू",
+  "sessionExpiredEmailHint": "ईमेल संकेत",
+  "sessionExpiredEmailLabel": "ईमेल लेबल",
+  "sessionExpiredEnterEmailPassword": "दर्ज करें ईमेल पासवर्ड",
+  "sessionExpiredPasswordHint": "पासवर्ड संकेत",
+  "sessionExpiredPasswordLabel": "पासवर्ड लेबल",
+  "sessionExpiredSignInButton": "साइन In बटन",
+  "sessionExpiredSubtitle": "सबटाइटल",
+  "sessionExpiredTitle": "शीर्षक",
+  "sharedExpressLabel": "एक्सप्रेस",
+  "sharedHaltingChargeApplied": "Charge Applied",
+  "sharedHaltingExceededTitle": "Exceeded शीर्षक",
+  "sharedHaltingFreeWindowTitle": "Free Window शीर्षक",
+  "sharedHaltingRemainingTitle": "Remaining शीर्षक",
+  "signupAccountCreated": "अकाउंट Created",
+  "signupAgreeTerms": "Agree शर्तें",
+  "signupAllFieldsRequired": "सभी Fields Required",
+  "signupAlreadyHaveAccount": "Already Have अकाउंट",
+  "signupBackToLogin": "वापस to लॉगिन",
+  "signupCreateAccount": "बनाएं अकाउंट",
+  "signupEmailHint": "ईमेल संकेत",
+  "signupEmailLabel": "ईमेल लेबल",
+  "signupFullNameHint": "पूरा नाम संकेत",
+  "signupFullNameLabel": "पूरा नाम लेबल",
+  "signupLoginAction": "लॉगिन Action",
+  "signupPasswordHelper": "पासवर्ड Helper",
+  "signupPasswordHint": "पासवर्ड संकेत",
+  "signupPasswordLabel": "पासवर्ड लेबल",
+  "signupPhoneHint": "फोन संकेत",
+  "signupPhoneLabel": "फोन लेबल",
+  "signupSubtitle": "सबटाइटल",
+  "signupTermsRequired": "शर्तें Required",
+  "signupTitle": "शीर्षक",
+  "thankYouBackToTrips": "वापस to ट्रिप्स",
+  "thankYouDeliveryComplete": "डिलीवरी Complete",
+  "thankYouForCompleting": "For Completing",
+  "thankYouPaid": "Paid",
+  "thankYouTripCompleted": "ट्रिप पूरी",
+  "tripSummaryCargo": "Cargo",
+  "tripSummaryDelivered": "डिलीवर",
+  "tripSummaryInProgress": "In प्रगति",
+  "tripSummaryLocationUnavailable": "लोकेशन उपलब्ध नहीं",
+  "truckSearchAllDeclinedHint": "सभी अस्वीकृत संकेत",
+  "truckSearchBack": "वापस",
+  "truckSearchCancel": "रद्द करें",
+  "truckSearchCloseTooltip": "बंद करें tooltip",
+  "truckSearchConfirmTurn": "कन्फर्म करें Turn",
+  "truckSearchConfirmed": "Confirmed",
+  "truckSearchDriverFallback": "ड्राइवर Fallback",
+  "truckSearchFindingDrivers": "Finding ड्राइवर",
+  "truckSearchFindingNearby": "Finding Nearby",
+  "truckSearchGoBack": "Go वापस",
+  "truckSearchKeepSearching": "Keep Searching",
+  "truckSearchNewFare": "नया किराया",
+  "truckSearchNoDriverAccepted": "नहीं ड्राइवर Accepted",
+  "truckSearchNoResponse": "नहीं Response",
+  "truckSearchNotifyingDrivers": "Notifying ड्राइवर",
+  "truckSearchRetry": "फिर कोशिश करें",
+  "truckSearchSearching": "Searching",
+  "truckSearchWaitingConfirm": "प्रतीक्षा कन्फर्म करें",
+  "truckSearchWaitingResponse": "प्रतीक्षा Response",
+  "negotiationContinuePrice": "किराया जारी रखें",
+  "negotiationCancel": "रद्द करें",
+  "negotiationSend": "भेजें",
+  "negotiationReject": "अस्वीकार करें",
+  "negotiationChangeFare": "किराया बदलें",
+  "negotiationReviewPriceFor": "{truck} के लिए किराया देखें",
+  "@negotiationReviewPriceFor": {
+    "placeholders": {
+      "truck": {}
+    }
+  },
+  "negotiationOfferPrice": "ऑफर किराया",
+  "driverKycReviewYourInformation": "अपनी जानकारी की समीक्षा करें",
+  "driverKycPleaseVerifyEverythingBeforeSubmitting": "सबमिट करने से पहले कृपया सब कुछ सत्यापित करें।",
+  "driverKycDriverInformation": "ड्राइवर जानकारी",
+  "driverKycPANNumber": "PAN नंबर",
+  "driverKycDateOfBirth": "जन्म तिथि",
+  "driverKycLicenseNumber": "लाइसेंस नंबर",
+  "driverKycAadhaarNumber": "आधार नंबर",
+  "driverKycVehicleRegistrationNumber": "वाहन रजिस्ट्रेशन नंबर",
+  "driverKycVehicleInsuranceNumber": "वाहन बीमा नंबर",
+  "driverKycNotProvided": "दिया नहीं गया",
+  "driverKycUploadedDocuments": "अपलोड किए गए दस्तावेज",
+  "driverKycVerificationDetails": "सत्यापन विवरण",
+  "driverKycCurrentStatus": "मौजूदा स्थिति",
+  "driverKycSubmittedDate": "सबमिट की तारीख",
+  "driverKycSubmissionID": "सबमिशन ID",
+  "driverKycReviewedAt": "समीक्षा समय",
+  "driverKycNotAvailable": "उपलब्ध नहीं",
+  "driverKycDrivingLicense": "ड्राइविंग लाइसेंस",
+  "driverKycVehicleRegShort": "वाहन रजिस्ट्रेशन",
+  "driverKycInsurance": "बीमा",
+  "driverKycChooseHowYouWantToUploadThisDocument": "चुनें कि आप यह दस्तावेज कैसे अपलोड करना चाहते हैं।",
+  "driverKycCamera": "कैमरा",
+  "driverKycGallery": "गैलरी",
+  "driverKycCancel": "रद्द करें",
+  "driverKycDocumentPreview": "दस्तावेज प्रीव्यू",
+  "driverKycUploadedFile": "अपलोड की गई फाइल",
+  "driverKycUpload": "अपलोड",
+  "driverKycClose": "बंद करें",
+  "driverKycStepDetails": "विवरण",
+  "driverKycStepDocuments": "दस्तावेज",
+  "driverKycStepReview": "समीक्षा",
+  "driverKycStepSubmit": "सबमिट",
+  "driverKycVerifiedTitle": "KYC सत्यापित",
+  "driverKycVerifiedSubtitle": "आपका ड्राइवर अकाउंट सत्यापित और सक्रिय है।",
+  "driverKycVerifiedBadge": "सत्यापित",
+  "driverKycRejectedTitle": "KYC अस्वीकृत",
+  "driverKycRejectedSubtitle": "नीचे कारण देखें और अपने दस्तावेज फिर से सबमिट करें।",
+  "driverKycRejectedBadge": "अस्वीकृत",
+  "driverKycUnderReviewTitle": "KYC समीक्षा में है",
+  "driverKycUnderReviewSubtitle": "दस्तावेज सफलतापूर्वक सबमिट हो गए। समीक्षा में आमतौर पर 24-48 घंटे लगते हैं।",
+  "driverKycSubmittedBadge": "सबमिट किया गया",
+  "driverKycCompleteTitle": "ड्राइवर KYC पूरा करें",
+  "driverKycCompleteSubtitle": "सत्यापन के लिए अपनी पहचान और वाहन दस्तावेज सबमिट करें।",
+  "driverKycPendingBadge": "पेंडिंग",
+  "driverKycPanCard": "PAN कार्ड",
+  "driverKycAadhaarCard": "आधार कार्ड",
+  "driverKycUploaded": "अपलोडेड",
+  "driverKycRequired": "आवश्यक",
+  "driverKycSupportedFormats": "समर्थित फॉर्मैट: {formats}",
+  "@driverKycSupportedFormats": {
+    "placeholders": {
+      "formats": {}
+    }
+  },
+  "driverKycMaxSize10Mb": "अधिकतम 10 MB",
+  "driverKycDocumentPhoto": "{document} फोटो",
+  "@driverKycDocumentPhoto": {
+    "placeholders": {
+      "document": {}
+    }
+  },
+  "driverKycNotUploaded": "अपलोड नहीं हुआ",
+  "driverKycWaitingForUpload": "अपलोड की प्रतीक्षा है",
+  "clientSavedAddNewAddress": "नया पता जोड़ें",
+  "clientSavedPickupOrDropoffLocation": "पिकअप या ड्रॉप-ऑफ स्थान",
+  "clientSavedAddressNameRequired": "इस पते को Home या Warehouse जैसा कोई नाम दें।",
+  "clientSavedAddressRequired": "Google Maps से पता खोजकर चुनें।",
+  "clientSavedPinnedLocation": "पिन किया गया स्थान ({latitude}, {longitude})",
+  "@clientSavedPinnedLocation": {
+    "placeholders": {
+      "latitude": {},
+      "longitude": {}
+    }
+  },
+  "clientSavedLabelHint": "Home, Office, Warehouse 2",
+  "clientSavedUseCurrent": "मौजूदा उपयोग करें",
+  "clientSavedSearchOrTapMap": "खोजें, या मैप पर टैप करें...",
+  "clientSavedFloorHint": "3rd Floor, Flat 402, Gate 2",
+  "clientSavedOnSiteContact": "साइट पर संपर्क",
+  "clientSavedOptional": "(वैकल्पिक)",
+  "clientSavedContactNameHint": "संपर्क नाम",
+  "clientSavedUse": "उपयोग करें",
+  "historyDetailsTo": "किसे",
+  "historyDetailsEmailHint": "recipient@example.com",
+  "historyDetailsBookingTime": "बुकिंग समय",
+  "historyDetailsExpectedDelivery": "अपेक्षित डिलीवरी",
+  "historyDetailsDeliveredOn": "डिलीवर हुआ",
+  "historyDetailsDistanceTravelled": "तय की गई दूरी",
+  "historyDetailsSaving": "सेव हो रहा है...",
+  "historyDetailsInvoice": "इनवॉइस",
+  "historyDetailsSending": "भेजा जा रहा है...",
+  "historyDetailsEmail": "ईमेल",
+  "historyDetailsNotify": "सूचित करें",
+  "deliveryFlowShowThisToCollect": "{amount} लेने के लिए यह दिखाएं",
+  "@deliveryFlowShowThisToCollect": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "deliveryFlowScanToPayViaUpi": "किसी भी UPI ऐप से {amount} पे करने के लिए स्कैन करें",
+  "@deliveryFlowScanToPayViaUpi": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "deliveryFlowAddUpiIdForQr": "अगली बार यहां स्कैन करने योग्य पेमेंट QR दिखाने के लिए Profile में अपनी UPI ID जोड़ें।",
+  "deliveryFlowPaymentReceivedViaUpi": "UPI से पेमेंट मिला",
+  "deliveryFlowRecording": "रिकॉर्ड हो रहा है...",
+  "deliveryFlowCollectCash": "कैश लें",
+  "deliveryFlowPaymentVerifiedByRazorpay": "Razorpay द्वारा पेमेंट सत्यापित",
+  "deliveryFlowQrGenerationFailed": "सत्यापित QR कोड नहीं बन सका - इसके बजाय UPI ID या कैश से लें।",
+  "deliveryFlowRazorpayAutoConfirms": "Razorpay पेमेंट सत्यापित करते ही अपने-आप कन्फर्म होगा",
+  "negotiationAcceptedWaitingDriverConfirm": "स्वीकार किया गया - ड्राइवर की पुष्टि की प्रतीक्षा है।",
+  "loadingPoint": "लोडिंग पॉइंट",
+  "unloadingPoint": "अनलोडिंग पॉइंट",
+  "hour": "घंटा",
+  "minute": "मिनट",
+  "emailRecipientHint": "recipient@example.com",
+  "addMoreDetailOptional": "और विवरण जोड़ें (वैकल्पिक)",
+  "typeMessageHint": "मैसेज टाइप करें...",
+  "brokerStatusAccepted": "स्वीकार किया गया",
+  "brokerStatusAcceptedBookingConfirmed": "स्वीकार किया गया - बुकिंग कन्फर्म हुई",
+  "brokerStatusFareChanged": "किराया बदला गया",
+  "brokerStatusFareChangedWaiting": "किराया बदला गया - अगले जवाब की प्रतीक्षा है",
+  "brokerStatusAwaitingConfirmation": "पुष्टि की प्रतीक्षा",
+  "brokerStatusWaitingOtherSideConfirm": "दूसरी तरफ से पुष्टि की प्रतीक्षा है।",
+  "brokerStatusDeclined": "अस्वीकार किया गया",
+  "brokerStatusDeclinedUnavailable": "अस्वीकार किया गया - अब उपलब्ध नहीं",
+  "brokerStatusPending": "पेंडिंग",
+  "brokerStatusReviewRequest": "रिक्वेस्ट देखें",
+  "brokerStatusCancelled": "रद्द किया गया",
+  "brokerReqAcceptedAssignDriverTruck": "यह रिक्वेस्ट स्वीकार हो गई है। ड्राइवर और ट्रक असाइन करें।",
+  "brokerReqFareChangeWaitingClient": "किराया बदलाव भेजा गया। क्लाइंट के जवाब की प्रतीक्षा है।",
+  "brokerReqCancelledNoActions": "यह बुकिंग रद्द हो गई है। आगे कोई ब्रोकर कार्रवाई उपलब्ध नहीं है।",
+  "brokerReqPendingAction": "यह रिक्वेस्ट अभी कार्रवाई की प्रतीक्षा में है।",
+  "brokerSettlementsFee": "फीस",
+  "brokerSettlementsNet": "नेट",
+  "pickupLocation": "पिकअप स्थान",
+  "dropLocation": "ड्रॉप स्थान",
+  "vehicleSmallTruck": "छोटा ट्रक",
+  "vehicleMediumTruck": "मध्यम ट्रक",
+  "vehicleBigTruck": "बड़ा ट्रक",
+  "vehicleTruckPooling": "ट्रक पूलिंग"
 }

@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class AddVehicleScreen extends ConsumerStatefulWidget {
   const AddVehicleScreen({super.key, this.existingTruck});
@@ -61,7 +62,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to add a truck.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.addVehiclePleaseSignInAgainToAddA)),
       );
       return;
     }
@@ -75,14 +76,14 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     if (driver == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please assign a driver.')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.addVehiclePleaseAssignADriver)));
       return;
     }
 
     final year = int.tryParse(_yearController.text.trim());
     if (year == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid year.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.addVehiclePleaseEnterAValidYear)),
       );
       return;
     }
@@ -184,6 +185,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 50)),
     );
@@ -267,7 +269,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   controller: _registrationController,
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
-                    labelText: 'Registration',
+                    labelText: AppLocalizations.of(context)!.addVehicleRegistration,
                     prefixIcon: AppIcons.confirmation_number_rounded,
                   ),
                   enabled: !isEditing,
@@ -283,7 +285,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   controller: _capacityController,
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
-                    labelText: 'Capacity',
+                    labelText: AppLocalizations.of(context)!.addVehicleCapacity,
                     prefixIcon: AppIcons.scale_rounded,
                   ),
                   validator: (value) {
@@ -337,7 +339,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                         .toList();
                   },
                   decoration: _fieldDecoration(
-                    labelText: 'Assign driver',
+                    labelText: AppLocalizations.of(context)!.addVehicleAssignDriver,
                     prefixIcon: AppIcons.person_rounded,
                   ),
                   items: drivers
@@ -361,7 +363,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   controller: _makeController,
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
-                    labelText: 'Make',
+                    labelText: AppLocalizations.of(context)!.addVehicleMake,
                     prefixIcon: AppIcons.precision_manufacturing_rounded,
                   ),
                   validator: (value) {
@@ -378,7 +380,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   textInputAction: TextInputAction.next,
                   decoration: _fieldDecoration(
-                    labelText: 'Year',
+                    labelText: AppLocalizations.of(context)!.addVehicleYear,
                     prefixIcon: AppIcons.event_rounded,
                   ),
                   validator: (value) {
@@ -396,8 +398,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   textInputAction: TextInputAction.done,
                   onTap: _pickInsuranceExpiry,
                   decoration: _fieldDecoration(
-                    labelText: 'Insurance expiry',
-                    hintText: 'Pick a date',
+                    labelText: AppLocalizations.of(context)!.addVehicleInsuranceExpiry,
+                    hintText: AppLocalizations.of(context)!.addVehiclePickADate,
                     prefixIcon: AppIcons.event_available_rounded,
                     suffixIcon: AppIcons.calendar_month_rounded,
                   ),
@@ -432,8 +434,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Save truck',
+                        : Text(
+                            AppLocalizations.of(context)!.addVehicleSaveTruck,
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                   ),
@@ -531,6 +533,7 @@ class _DriverDropdownMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         _DriverAvatar(initials: _driverInitials(driver.name), compact: false),
@@ -560,6 +563,7 @@ class _DriverAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: compact ? 34 : 38,
       height: compact ? 34 : 38,

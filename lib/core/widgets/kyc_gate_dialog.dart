@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
@@ -24,34 +25,31 @@ class KycGateCopy {
   final Color background;
 }
 
-KycGateCopy kycGateCopyFor(String status) {
+KycGateCopy kycGateCopyFor(String status, AppLocalizations l10n) {
   switch (status.trim().toLowerCase()) {
     case 'submitted':
-      return const KycGateCopy(
-        title: 'KYC Under Review',
-        body:
-            "Your documents are being reviewed by our team. You'll be able to accept jobs once verified - usually within 24-48 hours.",
-        action: 'View KYC Status',
+      return KycGateCopy(
+        title: l10n.coreKycUnderReviewTitle,
+        body: l10n.coreKycUnderReviewBody,
+        action: l10n.coreKycViewStatusAction,
         icon: AppIcons.hourglass_top_rounded,
         color: Color(0xFFD97706),
         background: Color(0xFFFFF7E8),
       );
     case 'rejected':
-      return const KycGateCopy(
-        title: 'KYC Rejected',
-        body:
-            'Your last submission was rejected. Please review the reason and resubmit your documents to continue.',
-        action: 'Resubmit KYC',
+      return KycGateCopy(
+        title: l10n.coreKycRejectedTitle,
+        body: l10n.coreKycRejectedBody,
+        action: l10n.coreKycResubmitAction,
         icon: AppIcons.error_outline_rounded,
         color: AppColors.dangerIcon,
         background: AppColors.dangerFill,
       );
     default:
-      return const KycGateCopy(
-        title: 'Complete Your KYC First',
-        body:
-            'You need to verify your PAN, Aadhaar, and license details before you can accept jobs on the platform. Most checks clear instantly.',
-        action: 'Complete KYC',
+      return KycGateCopy(
+        title: l10n.coreKycIncompleteTitle,
+        body: l10n.coreKycIncompleteBody,
+        action: l10n.coreKycCompleteAction,
         icon: AppIcons.verified_user_outlined,
         color: AppColors.brand,
         background: AppColors.brandTint,
@@ -88,7 +86,8 @@ Future<void> showKycGateDialog({
   required String status,
   required String role,
 }) {
-  final copy = kycGateCopyFor(status);
+  final l10n = AppLocalizations.of(context)!;
+  final copy = kycGateCopyFor(status, l10n);
   final path = role == 'broker'
       ? '/broker/kyc-registration'
       : '/driver/kyc-registration';
@@ -131,7 +130,7 @@ Future<void> showKycGateDialog({
         actions: [
           OutlinedButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Not now'),
+            child: Text(AppLocalizations.of(dialogContext)!.coreKycNotNow),
           ),
           FilledButton(
             onPressed: () {

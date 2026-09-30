@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -11,32 +12,31 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _index = 0;
 
-  static const _pages = <_OnboardingPage>[
-    _OnboardingPage(
-      image: 'assets/images/onboard1.png',
-      title: 'Safe & Secure Delivery',
-      subtitle:
-          'Your goods are protected with trusted transportation and secure handling.',
-      accent: Color(0xFF10B981),
-    ),
-    _OnboardingPage(
-      image: 'assets/images/onboard2.png',
-      title: 'Real-Time Tracking',
-      subtitle:
-          'Track your shipment live and stay updated throughout the journey.',
-      accent: Color(0xFF1F88C9),
-    ),
-    _OnboardingPage(
-      image: 'assets/images/onboard3.png',
-      title: 'Fast Pickup & Drop',
-      subtitle:
-          'Book cargo transportation quickly and get deliveries completed on time.',
-      accent: Color(0xFF2FA56E),
-    ),
-  ];
+  List<_OnboardingPage> _pagesFor(AppLocalizations l10n) {
+    return <_OnboardingPage>[
+      _OnboardingPage(
+        image: 'assets/images/onboard1.png',
+        title: l10n.onboardingSafeTitle,
+        subtitle: l10n.onboardingSafeSubtitle,
+        accent: Color(0xFF10B981),
+      ),
+      _OnboardingPage(
+        image: 'assets/images/onboard2.png',
+        title: l10n.onboardingTrackingTitle,
+        subtitle: l10n.onboardingTrackingSubtitle,
+        accent: Color(0xFF1F88C9),
+      ),
+      _OnboardingPage(
+        image: 'assets/images/onboard3.png',
+        title: l10n.onboardingFastTitle,
+        subtitle: l10n.onboardingFastSubtitle,
+        accent: Color(0xFF2FA56E),
+      ),
+    ];
+  }
 
-  void _goNext() {
-    if (_index < _pages.length - 1) {
+  void _goNext(List<_OnboardingPage> pages) {
+    if (_index < pages.length - 1) {
       setState(() => _index += 1);
       return;
     }
@@ -46,7 +46,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final page = _pages[_index];
+    final l10n = AppLocalizations.of(context)!;
+    final pages = _pagesFor(l10n);
+    final page = pages[_index];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -91,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        _pages.length,
+                        pages.length,
                         (i) => AnimatedContainer(
                           duration: const Duration(milliseconds: 240),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -167,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _goNext,
+                        onPressed: () => _goNext(pages),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2FA56E),
                           elevation: 0,
@@ -176,7 +178,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         child: Text(
-                          _index == _pages.length - 1 ? 'Get Started' : 'Next',
+                          _index == pages.length - 1
+                              ? l10n.onboardingGetStarted
+                              : l10n.onboardingNext,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -200,8 +204,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           side: const BorderSide(color: Color(0xFFE5E7EB)),
                           foregroundColor: const Color(0xFF111827),
                         ),
-                        child: const Text(
-                          'Skip',
+                        child: Text(
+                          l10n.onboardingSkip,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,

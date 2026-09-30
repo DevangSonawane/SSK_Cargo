@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ssk/core/services/google_places_service.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 /// A compact Google Maps card that geocodes the pickup and drop-off addresses,
 /// draws the driving route between them and optionally overlays a
@@ -85,7 +86,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
     if (pickup == null || drop == null) {
       setState(() {
         _loading = false;
-        _loadError = 'Could not locate the pickup or drop-off address.';
+        _loadError = AppLocalizations.of(context)!.coreMapRouteNotFound;
       });
       return;
     }
@@ -114,6 +115,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
     final pickup = _pickupLatLng;
     final drop = _dropLatLng;
     if (pickup == null || drop == null) return;
+    final l10n = AppLocalizations.of(context)!;
 
     _markers = widget.showMarkers
         ? {
@@ -123,7 +125,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
               icon: BitmapDescriptor.defaultMarkerWithHue(
                 BitmapDescriptor.hueGreen,
               ),
-              infoWindow: InfoWindow(title: 'Pickup', snippet: widget.pickup),
+              infoWindow: InfoWindow(title: l10n.coreMapPickupTitle, snippet: widget.pickup),
             ),
             Marker(
               markerId: const MarkerId('drop'),
@@ -131,7 +133,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
               icon: BitmapDescriptor.defaultMarkerWithHue(
                 BitmapDescriptor.hueRed,
               ),
-              infoWindow: InfoWindow(title: 'Drop-off', snippet: widget.drop),
+              infoWindow: InfoWindow(title: l10n.coreMapDropTitle, snippet: widget.drop),
             ),
           }
         : {};
@@ -194,6 +196,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
@@ -291,7 +294,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Express',
+                        l10n.coreMapExpressLabel,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -342,7 +345,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Pickup',
+                              l10n.coreMapPickupTitle,
                               style: TextStyle(
                                 color: AppColors.textTertiary,
                                 fontSize: 10,
@@ -382,7 +385,7 @@ class _MapRouteCardState extends State<MapRouteCard> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Drop-off',
+                              l10n.coreMapDropTitle,
                               style: TextStyle(
                                 color: AppColors.textTertiary,
                                 fontSize: 10,

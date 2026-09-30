@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
 
@@ -153,7 +154,7 @@ class _ClientPaymentMethodsScreenState
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Payment method removed.')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.clientPaymentRemoved)));
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -170,6 +171,7 @@ class _ClientPaymentMethodsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
 
@@ -182,7 +184,7 @@ class _ClientPaymentMethodsScreenState
           onPressed: () => context.pop(),
           icon: const Icon(AppIcons.arrow_back_rounded),
         ),
-        title: const Text('Payment Methods'),
+        title: Text(l10n.clientPaymentMethodsTitle),
       ),
       body: RefreshIndicator(
         color: const Color(0xFF2FA56E),
@@ -192,29 +194,29 @@ class _ClientPaymentMethodsScreenState
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           children: [
             if (session == null)
-              const _EmptyState(
+              _EmptyState(
                 icon: AppIcons.lock_outline_rounded,
-                title: 'Sign in to manage payment methods',
+                title: l10n.clientPaymentSignInTitle,
                 subtitle:
-                    'We need an active client session before we can load your saved methods.',
+                    l10n.clientPaymentSignInSubtitle,
               )
             else if (_loading)
               const _LoadingGrid()
             else if (_error)
               _EmptyState(
                 icon: AppIcons.error_outline_rounded,
-                title: 'Could not load payment methods',
-                subtitle: 'Pull to refresh or try again in a moment.',
-                actionLabel: 'Retry',
+                title: l10n.clientPaymentLoadError,
+                subtitle: l10n.clientPaymentLoadErrorHint,
+                actionLabel: l10n.clientPaymentRetry,
                 onAction: _load,
               )
             else if (_methods.isEmpty)
               _EmptyState(
                 icon: AppIcons.credit_card_outlined,
-                title: 'No saved payment methods yet',
+                title: l10n.clientPaymentEmptyTitle,
                 subtitle:
-                    'Save a UPI ID, card, bank, or wallet so checkout can remember it next time.',
-                actionLabel: 'Add Method',
+                    l10n.clientPaymentEmptySubtitle,
+                actionLabel: l10n.clientPaymentAddMethod,
                 onAction: _openAddPage,
               )
             else
@@ -310,6 +312,7 @@ class _PaymentMethodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = _methodTheme(method.methodType);
     final note = _noteText(method);
 
@@ -392,7 +395,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
-                                      'DEFAULT',
+                                      l10n.clientPaymentDefaultBadge,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelSmall
@@ -416,7 +419,7 @@ class _PaymentMethodCard extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       _MethodChip(
-                        label: _methodTypeLabel(method.methodType),
+                        label: _methodTypeLabelOf(context, method.methodType),
                         backgroundColor: theme.chipBackground,
                         foregroundColor: theme.chipForeground,
                       ),
@@ -424,7 +427,7 @@ class _PaymentMethodCard extends StatelessWidget {
                         _MethodChip(
                           label: _readDetail(method.details, 'last4').isNotEmpty
                               ? '•••• ${_readDetail(method.details, 'last4')}'
-                              : 'Card saved',
+                              : l10n.clientPaymentCardSaved,
                           backgroundColor: const Color(0xFFEAF1FF),
                           foregroundColor: const Color(0xFF2D6EF2),
                         ),
@@ -440,7 +443,7 @@ class _PaymentMethodCard extends StatelessWidget {
                           label:
                               _readDetail(method.details, 'upi_id').isNotEmpty
                               ? _readDetail(method.details, 'upi_id')
-                              : 'UPI ID',
+                              : l10n.clientPaymentUpiFallback,
                           backgroundColor: const Color(0xFFEAF1FF),
                           foregroundColor: const Color(0xFF2D6EF2),
                         ),
@@ -449,7 +452,7 @@ class _PaymentMethodCard extends StatelessWidget {
                           label:
                               _readDetail(method.details, 'wallet').isNotEmpty
                               ? _readDetail(method.details, 'wallet')
-                              : 'Wallet',
+                              : l10n.clientPaymentWalletFallback,
                           backgroundColor: const Color(0xFFF2E8FF),
                           foregroundColor: const Color(0xFF7A4FD6),
                         ),
@@ -487,7 +490,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                   color: theme.accent,
                                 ),
                           label: Text(
-                            'Set default',
+                            l10n.clientPaymentSetDefault,
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: theme.accent,
@@ -512,7 +515,7 @@ class _PaymentMethodCard extends StatelessWidget {
                                 size: 18,
                               ),
                         color: context.colors.textTertiary,
-                        tooltip: 'Delete',
+                        tooltip: l10n.clientPaymentDeleteTooltip,
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
@@ -539,6 +542,7 @@ class _AddTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -569,7 +573,7 @@ class _AddTile extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Add Payment Method',
+              l10n.clientPaymentAddTileTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 fontSize: 14.5,
@@ -578,7 +582,7 @@ class _AddTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Credit, Debit, or Bank Transfer',
+              l10n.clientPaymentAddTileSubtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontSize: 12,
@@ -703,6 +707,22 @@ String _methodTypeLabel(String methodType) {
       return 'UPI';
     default:
       return 'Method';
+  }
+}
+
+String _methodTypeLabelOf(BuildContext context, String methodType) {
+  final l10n = AppLocalizations.of(context)!;
+  switch (methodType) {
+    case 'card':
+      return l10n.clientPaymentTypeCard;
+    case 'netbanking':
+      return l10n.clientPaymentTypeBank;
+    case 'wallet':
+      return l10n.clientPaymentTypeWallet;
+    case 'upi':
+      return l10n.clientPaymentTypeUpi;
+    default:
+      return l10n.clientPaymentTypeMethod;
   }
 }
 

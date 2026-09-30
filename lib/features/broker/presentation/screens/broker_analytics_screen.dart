@@ -9,12 +9,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'broker_settlements_screen.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerAnalyticsScreen extends ConsumerWidget {
   const BrokerAnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final analyticsAsync = ref.watch(_analyticsProvider);
 
     return Scaffold(
@@ -27,7 +29,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
         child: analyticsAsync.when(
           loading: () => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
+            children: [
               _AnalyticsHeader(),
               SizedBox(height: 180),
               Center(child: CircularProgressIndicator()),
@@ -36,11 +38,11 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              const _AnalyticsHeader(),
+              _AnalyticsHeader(),
               const SizedBox(height: 24),
               _EmptyState(
                 icon: AppIcons.bar_chart_rounded,
-                title: 'Could not load analytics',
+                title: l10n.brokerAnalyticsCouldNotLoadAnalytics,
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
             ],
@@ -61,7 +63,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: _MetricCard(
-                              label: 'This month',
+                              label: l10n.brokerAnalyticsThisMonth,
                               value:
                                   '₹${analytics.thisMonth.toStringAsFixed(0)}',
                               accent: AppColors.accentBlue,
@@ -70,7 +72,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _MetricCard(
-                              label: 'Last month',
+                              label: l10n.brokerAnalyticsLastMonth,
                               value:
                                   '₹${analytics.lastMonth.toStringAsFixed(0)}',
                               accent: AppColors.brand,
@@ -83,7 +85,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'Trip history',
+                              l10n.brokerAnalyticsTripHistory,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.w900,
@@ -100,7 +102,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(14),
-                              boxShadow: const [
+                              boxShadow: [
                                 BoxShadow(
                                   color: Color(0x0D10245B),
                                   blurRadius: 12,
@@ -108,7 +110,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Icon(
                                   AppIcons.filter_list_rounded,
@@ -117,7 +119,7 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Filter',
+                                  AppLocalizations.of(context)!.brokerAnalyticsFilter,
                                   style: TextStyle(
                                     color: AppColors.brand,
                                     fontWeight: FontWeight.w800,
@@ -130,11 +132,11 @@ class BrokerAnalyticsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
                       if (tripHistory.isEmpty)
-                        const _EmptyState(
+                        _EmptyState(
                           icon: AppIcons.timeline_rounded,
-                          title: 'No trip history yet',
+                          title: AppLocalizations.of(context)!.brokerAnalyticsNoTripHistoryYet,
                           subtitle:
-                              'Completed settlements will appear here once trips close.',
+                              AppLocalizations.of(context)!.brokerAnalyticsCompletedSettlementsWillAppearHereOnceTrips,
                         )
                       else
                         ...tripHistory.asMap().entries.expand(
@@ -163,6 +165,7 @@ class _AnalyticsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -195,12 +198,12 @@ class _AnalyticsHeader extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Analytics',
+                  l10n.brokerAnalyticsAnalytics,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -209,7 +212,7 @@ class _AnalyticsHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Track your earnings and trip history',
+                  l10n.brokerAnalyticsTrackYourEarningsAndTripHistory,
                   style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 13),
                 ),
               ],
@@ -291,6 +294,7 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 174,
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 12),
@@ -336,8 +340,8 @@ class _MetricCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Total earnings',
+              Text(
+                l10n.brokerAnalyticsTotalEarnings,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ],
@@ -400,6 +404,7 @@ class _SettlementMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
@@ -436,7 +441,7 @@ class _SettlementMiniCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Net earnings: ₹${settlement.netEarnings.toStringAsFixed(0)}',
+            l10n.brokerAnalyticsNetEarnings(settlement.netEarnings.toStringAsFixed(0)),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.brand,
               fontWeight: FontWeight.w700,
@@ -466,6 +471,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

@@ -8,6 +8,7 @@ import 'package:ssk/core/theme/app_icons.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
@@ -228,7 +229,7 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Trip completed',
+                        AppLocalizations.of(context)!.thankYouTripCompleted,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -295,7 +296,8 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'Delivery complete',
+                          AppLocalizations.of(context)!
+                              .thankYouDeliveryComplete,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
@@ -305,7 +307,8 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Thank you for completing this trip',
+                          AppLocalizations.of(context)!
+                              .thankYouForCompleting,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
@@ -364,8 +367,8 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                           color: AppColors.brandTint,
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          'Paid',
+                        child: Text(
+                          AppLocalizations.of(context)!.thankYouPaid,
                           style: TextStyle(
                             color: AppColors.brand,
                             fontSize: 11,
@@ -387,8 +390,8 @@ class _DriverThankYouScreenState extends ConsumerState<DriverThankYouScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back to trips',
+                      child: Text(
+                        AppLocalizations.of(context)!.thankYouBackToTrips,
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,

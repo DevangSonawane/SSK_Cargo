@@ -10,6 +10,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 final _brokerTruckLocationProvider = FutureProvider.autoDispose
     .family<_TruckLocationSnapshot, String>((ref, truckId) async {
@@ -60,6 +61,7 @@ class _BrokerTruckLocationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final snapshotAsync = ref.watch(
       _brokerTruckLocationProvider(widget.truckId),
     );
@@ -77,12 +79,12 @@ class _BrokerTruckLocationScreenState
               BrokerBackButton(onTap: () => context.go('/broker/vehicles')),
               const SizedBox(height: 14),
               snapshotAsync.when(
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.only(top: 140),
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _LocationEmptyState(
-                  title: 'Could not load truck location',
+                  title: l10n.brokerTruckLocationCouldNotLoadTruckLocation,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (snapshot) => _TruckLocationContent(snapshot: snapshot),
@@ -102,6 +104,7 @@ class _TruckLocationContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasLocation =
         snapshot.currentLat != null && snapshot.currentLng != null;
     return Column(
@@ -158,7 +161,7 @@ class _TruckLocationContent extends StatelessWidget {
               if (snapshot.lastLocationAt.isNotEmpty)
                 Flexible(
                   child: Text(
-                    'Updated ${snapshot.lastLocationAt}',
+                    l10n.brokerTruckLocationUpdated(snapshot.lastLocationAt),
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                       color: AppColors.textTertiary,
@@ -184,12 +187,12 @@ class _TruckLocationContent extends StatelessWidget {
                   latitude: snapshot.currentLat,
                   longitude: snapshot.currentLng,
                   label: snapshot.truck.plateNumber,
-                  emptyTitle: 'Live location pending',
-                  emptySubtitle: 'This truck has not reported a location yet.',
+                  emptyTitle: AppLocalizations.of(context)!.brokerTruckLocationLiveLocationPending,
+                  emptySubtitle: AppLocalizations.of(context)!.brokerTruckLocationThisTruckHasNotReportedALocation,
                 )
-              : const _LocationEmptyState(
-                  title: 'Live location pending',
-                  subtitle: 'This truck has not reported a location yet.',
+              : _LocationEmptyState(
+                  title: AppLocalizations.of(context)!.brokerTruckLocationLiveLocationPending,
+                  subtitle: AppLocalizations.of(context)!.brokerTruckLocationThisTruckHasNotReportedALocation,
                 ),
         ),
       ],
@@ -205,6 +208,7 @@ class _LocationEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(22),
       color: Colors.white,

@@ -13,6 +13,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 
 class DriverDeliveryPhotoUploadScreen extends ConsumerStatefulWidget {
@@ -49,9 +50,8 @@ class _DriverDeliveryPhotoUploadScreenState
   int get _effectiveRemoteCount =>
       _podStatus == 'rejected' ? 0 : _remotePodMedia.length;
   int get _remoteMediaCount => _remotePodMedia.length;
-  int get _effectiveMin => _podMinRequired >= _minMedia
-      ? _podMinRequired
-      : _minMedia;
+  int get _effectiveMin =>
+      _podMinRequired >= _minMedia ? _podMinRequired : _minMedia;
   int get _totalMediaCount => _effectiveRemoteCount + _media.length;
 
   bool get _isRejected => _podStatus == 'rejected';
@@ -193,8 +193,8 @@ class _DriverDeliveryPhotoUploadScreenState
   Future<void> _pickImage(ImageSource source) async {
     if (_totalMediaCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You can add up to 6 proof-of-delivery items.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.photoUploadMaxItems),
         ),
       );
       return;
@@ -225,7 +225,9 @@ class _DriverDeliveryPhotoUploadScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open image picker: $error'),
+          content: Text(
+            AppLocalizations.of(context)!.photoUploadImagePickerError('$error'),
+          ),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -235,8 +237,8 @@ class _DriverDeliveryPhotoUploadScreenState
   Future<void> _pickVideo() async {
     if (_totalMediaCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You can add up to 6 proof-of-delivery items.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.photoUploadMaxItems),
         ),
       );
       return;
@@ -265,7 +267,9 @@ class _DriverDeliveryPhotoUploadScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open video camera: $error'),
+          content: Text(
+            AppLocalizations.of(context)!.photoUploadVideoCameraError('$error'),
+          ),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -277,7 +281,9 @@ class _DriverDeliveryPhotoUploadScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Add at least ${_effectiveMin - _totalMediaCount} more proof-of-delivery item(s).',
+            AppLocalizations.of(
+              context,
+            )!.photoUploadAddMore('${_effectiveMin - _totalMediaCount}'),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -288,8 +294,8 @@ class _DriverDeliveryPhotoUploadScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to upload delivery photos.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.photoUploadSignInUpload),
         ),
       );
       return;
@@ -939,7 +945,9 @@ class _AddPhotoTile extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(AppIcons.photo_camera_rounded),
-                  title: const Text('Take photo'),
+                  title: Text(
+                    AppLocalizations.of(context)!.photoUploadTakePhoto,
+                  ),
                   onTap: onCameraTap == null
                       ? null
                       : () {
@@ -949,7 +957,9 @@ class _AddPhotoTile extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(AppIcons.videocam_rounded),
-                  title: const Text('Record video'),
+                  title: Text(
+                    AppLocalizations.of(context)!.photoUploadRecordVideo,
+                  ),
                   onTap: onVideoTap == null
                       ? null
                       : () {
@@ -959,7 +969,9 @@ class _AddPhotoTile extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(AppIcons.photo_library_rounded),
-                  title: const Text('Choose photo'),
+                  title: Text(
+                    AppLocalizations.of(context)!.photoUploadChoosePhoto,
+                  ),
                   onTap: onGalleryTap == null
                       ? null
                       : () {
@@ -1003,19 +1015,19 @@ class _AddPhotoTile extends StatelessWidget {
                       children: [
                         _MediaPickButton(
                           icon: AppIcons.photo_camera_rounded,
-                          label: 'Photo',
+                          label: AppLocalizations.of(context)!.photo,
                           onTap: onCameraTap,
                         ),
                         const SizedBox(width: 10),
                         _MediaPickButton(
                           icon: AppIcons.videocam_rounded,
-                          label: 'Video',
+                          label: AppLocalizations.of(context)!.video,
                           onTap: onVideoTap,
                         ),
                         const SizedBox(width: 10),
                         _MediaPickButton(
                           icon: AppIcons.photo_library_rounded,
-                          label: 'Gallery',
+                          label: AppLocalizations.of(context)!.gallery,
                           onTap: onGalleryTap,
                         ),
                       ],

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/user_location_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../widgets/client_flow_widgets.dart';
 
 class ClientHomeScreen extends ConsumerStatefulWidget {
@@ -229,6 +230,7 @@ class _BookingPromptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -253,7 +255,7 @@ class _BookingPromptCard extends StatelessWidget {
             _BookingRouteRow(
               icon: AppIcons.arrow_upward_rounded,
               iconColor: const Color(0xFF38B47A),
-              hintText: 'Enter loading location (e.g. delhi)',
+              hintText: l10n.clientHomeLoadingHint,
             ),
             const SizedBox(height: 12),
             const _BookingRouteDivider(),
@@ -261,7 +263,7 @@ class _BookingPromptCard extends StatelessWidget {
             _BookingRouteRow(
               icon: AppIcons.arrow_downward_rounded,
               iconColor: const Color(0xFFF05252),
-              hintText: 'Search your unloading location',
+              hintText: l10n.clientHomeUnloadingHint,
             ),
             const SizedBox(height: 14),
             SizedBox(
@@ -278,7 +280,7 @@ class _BookingPromptCard extends StatelessWidget {
                   padding: EdgeInsets.zero,
                 ),
                 child: Text(
-                  'Book Any Truck',
+                  l10n.clientHomeBookAnyTruck,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontSize: 15,

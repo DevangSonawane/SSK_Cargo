@@ -278,6 +278,7 @@ class _BrokerOfferNegotiationSheetState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final offer = _offer;
     final brokerName = offer.brokerName.isNotEmpty
         ? offer.brokerName
@@ -289,23 +290,20 @@ class _BrokerOfferNegotiationSheetState
     final String title;
     final String body;
     if (offer.isYourTurnToConfirm) {
-      title = 'Broker accepted - confirm now';
-      body =
-          'The broker has committed to this booking. Confirm or decline to finish.';
+      title = l10n.negotiationBrokerConfirmTitle;
+      body = l10n.negotiationBrokerConfirmBody;
     } else if (offer.isWaitingOnBroker) {
-      title = 'Waiting for broker confirmation';
-      body =
-          'You accepted this offer. We are waiting for the broker to complete the handshake.';
+      title = l10n.negotiationWaitingBrokerTitle;
+      body = l10n.negotiationWaitingBrokerBody;
     } else if (_counterSent) {
-      title = 'Offer sent';
-      body =
-          'Your fare change is with the broker. We will update automatically when they respond.';
+      title = l10n.negotiationOfferSentTitle;
+      body = l10n.negotiationOfferSentBody;
     } else if (offer.normalizedStatus == 'countered') {
-      title = 'Fare change received';
-      body = 'Review the live fare change and respond.';
+      title = l10n.negotiationFareChangeTitle;
+      body = l10n.negotiationFareChangeBody;
     } else {
-      title = 'Broker offer received';
-      body = 'This offer is updating live from the broker side.';
+      title = l10n.negotiationBrokerOfferTitle;
+      body = l10n.negotiationBrokerOfferBody;
     }
 
     final canAct =
@@ -320,22 +318,22 @@ class _BrokerOfferNegotiationSheetState
     final Color pillBg;
     final Color pillBorder;
     if (offer.isYourTurnToConfirm) {
-      statusPill = 'ACTION NEEDED';
+      statusPill = l10n.negotiationPillActionNeeded;
       pillFg = const Color(0xFF167247);
       pillBg = const Color(0xFFEAF8EF);
       pillBorder = const Color(0xFFB7E4C7);
     } else if (offer.isWaitingOnBroker) {
-      statusPill = 'WITH BROKER';
+      statusPill = l10n.negotiationPillWithBroker;
       pillFg = const Color(0xFFB45309);
       pillBg = const Color(0xFFFFF0DB);
       pillBorder = const Color(0xFFFCD34D);
     } else if (offer.normalizedStatus == 'countered') {
-      statusPill = 'NEW COUNTER';
+      statusPill = l10n.negotiationPillNewCounter;
       pillFg = const Color(0xFFB45309);
       pillBg = const Color(0xFFFFF0DB);
       pillBorder = const Color(0xFFFCD34D);
     } else {
-      statusPill = 'LIVE OFFER';
+      statusPill = l10n.negotiationPillLiveOffer;
       pillFg = const Color(0xFF1F88C9);
       pillBg = const Color(0xFFEFF6FF);
       pillBorder = const Color(0xFFD7E7F4);
@@ -512,7 +510,7 @@ class _BrokerOfferNegotiationSheetState
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Broker offer',
+                                l10n.negotiationBrokerOfferLabel,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: context.colors.textSecondary,
@@ -528,7 +526,7 @@ class _BrokerOfferNegotiationSheetState
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'OFFER',
+                              l10n.negotiationOfferCaption,
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
@@ -582,7 +580,7 @@ class _BrokerOfferNegotiationSheetState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Handshake in progress — no action needed.',
+                            l10n.negotiationHandshakeProgress,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: context.colors.textSecondary,
@@ -607,7 +605,7 @@ class _BrokerOfferNegotiationSheetState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('Back'),
+                        child: Text(l10n.negotiationBack),
                       ),
                     )
                   else if (offer.isYourTurnToConfirm)
@@ -628,7 +626,7 @@ class _BrokerOfferNegotiationSheetState
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text('Decline'),
+                            child: Text(l10n.negotiationDecline),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -651,7 +649,7 @@ class _BrokerOfferNegotiationSheetState
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('Confirm'),
+                                : Text(l10n.negotiationConfirm),
                           ),
                         ),
                       ],
@@ -786,7 +784,7 @@ class _BrokerOfferNegotiationSheetState
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text('Decline'),
+                            child: Text(l10n.negotiationDecline),
                           ),
                         ),
                         if (showCounter) ...[
@@ -829,7 +827,7 @@ class _BrokerOfferNegotiationSheetState
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text('Accept'),
+                            child: Text(l10n.negotiationAccept),
                           ),
                         ),
                       ],
@@ -1146,8 +1144,12 @@ class _BrokerNegotiationSheetState
         unawaited(_loadAdvanceAmount());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Accepted - waiting for the driver to confirm.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              )!.negotiationAcceptedWaitingDriverConfirm,
+            ),
           ),
         );
         await _loadCurrentRequest();
@@ -1225,9 +1227,11 @@ class _BrokerNegotiationSheetState
 
       if (amount <= 0) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.enterValidAmount),
+          ),
+        );
         return;
       }
 
@@ -1956,9 +1960,11 @@ class _FindTruckNegotiationSheetState
         if (!mounted) {
           return;
         }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.enterValidAmount),
+          ),
+        );
         return;
       }
 
@@ -1994,29 +2000,30 @@ class _FindTruckNegotiationSheetState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final request = _request;
     final driverName = request.brokerName.isNotEmpty
         ? request.brokerName
-        : 'Driver';
+        : l10n.negotiationDriverFallback;
     final offerAmountText = request.amountText.isNotEmpty
         ? request.amountText
         : _formatRupees(widget.askingPrice);
     final title = request.normalizedStatus == 'accepted'
-        ? 'Driver accepted the request'
+        ? l10n.negotiationDriverAcceptedTitle
         : request.isClientTurnToConfirm
-        ? 'Driver accepted - confirm now'
+        ? l10n.negotiationDriverConfirmNowTitle
         : request.isWaitingForCounterpartyConfirmation
-        ? 'Waiting for driver confirmation'
+        ? l10n.negotiationWaitingDriverTitle
         : request.isCountered
-        ? 'Fare change received'
-        : 'Driver response received';
+        ? l10n.negotiationFareChangeTitle
+        : l10n.negotiationDriverResponseTitle;
     final body = request.isClientTurnToConfirm
-        ? 'The driver has committed to this booking. Confirm or decline to finish.'
+        ? l10n.negotiationDriverConfirmBody
         : request.isWaitingForCounterpartyConfirmation
-        ? 'You accepted this offer. We are waiting for the driver to complete the handshake.'
+        ? l10n.negotiationWaitingDriverBody
         : request.isCountered
-        ? 'Review the live fare change and respond.'
-        : 'This request is updating live from the driver side.';
+        ? l10n.negotiationFareChangeBody
+        : l10n.negotiationDriverResponseBody;
     final canAct = request.isActionableByClient;
 
     // Presented as a modal bottom sheet, never a centered popup: a floating
@@ -2291,12 +2298,13 @@ class _NegotiationSliderStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final displayValue = value.roundToDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Review price for ${truck.displayTitle}',
+          l10n.negotiationReviewPriceFor(truck.displayTitle),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,
@@ -2325,7 +2333,7 @@ class _NegotiationSliderStep extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Offer price',
+                    l10n.negotiationOfferPrice,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -2387,7 +2395,7 @@ class _NegotiationSliderStep extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Continue with this price'),
+                : Text(l10n.negotiationContinuePrice),
           ),
         ),
         if (errorMessage != null) ...[
@@ -2437,6 +2445,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
       top: false,
@@ -2617,7 +2626,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(l10n.negotiationCancel),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -2632,7 +2641,7 @@ class _CounterOfferSliderDialogState extends State<_CounterOfferSliderDialog> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text('Send'),
+                          child: Text(l10n.negotiationSend),
                         ),
                       ),
                     ],
@@ -2666,6 +2675,7 @@ class _NegotiationActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final buttonShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     );
@@ -2695,7 +2705,7 @@ class _NegotiationActionButtons extends StatelessWidget {
                 minimumSize: const Size.fromHeight(52),
                 shape: buttonShape,
               ),
-              child: const Text('Reject'),
+              child: Text(l10n.negotiationReject),
             ),
           ),
         ],
@@ -2730,7 +2740,7 @@ class _NegotiationActionButtons extends StatelessWidget {
                     minimumSize: const Size.fromHeight(50),
                     shape: buttonShape,
                   ),
-                  child: const Text('Reject'),
+                  child: Text(l10n.negotiationReject),
                 ),
               ),
               const SizedBox(width: 10),
@@ -2741,8 +2751,8 @@ class _NegotiationActionButtons extends StatelessWidget {
                     minimumSize: const Size.fromHeight(50),
                     shape: buttonShape,
                   ),
-                  child: const Text(
-                    'Change Fare',
+                  child: Text(
+                    l10n.negotiationChangeFare,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -10,6 +10,7 @@ import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/controllers/client_notifications_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerDriverRequestsScreen extends ConsumerStatefulWidget {
   const BrokerDriverRequestsScreen({super.key});
@@ -121,6 +122,7 @@ class _BrokerDriverRequestsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(brokerDriverRequestsProvider(_query));
     final notificationsAsync = ref.watch(clientNotificationsProvider);
 
@@ -129,7 +131,7 @@ class _BrokerDriverRequestsScreenState
       appBar: AppBar(
         backgroundColor: AppColors.canvas,
         elevation: 0,
-        title: const Text('Driver requests'),
+        title: Text(l10n.brokerDriverReqDriverRequests),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
@@ -137,14 +139,14 @@ class _BrokerDriverRequestsScreenState
           loading: () => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
-            children: const [Center(child: CircularProgressIndicator())],
+            children: [Center(child: CircularProgressIndicator())],
           ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
             children: [
               _EmptyState(
-                title: 'Could not load driver requests',
+                title: l10n.brokerDriverReqCouldNotLoadDriverRequests,
                 subtitle: error.toString().replaceFirst('Exception: ', ''),
               ),
             ],
@@ -195,7 +197,7 @@ class _BrokerDriverRequestsScreenState
                   children: [
                     Expanded(
                       child: Text(
-                        'Negotiation cards',
+                        l10n.brokerDriverReqNegotiationCards,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -205,16 +207,16 @@ class _BrokerDriverRequestsScreenState
                     TextButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(AppIcons.refresh_rounded),
-                      label: const Text('Reload'),
+                      label: Text(AppLocalizations.of(context)!.brokerDriverReqReload),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 if (visibleRequests.isEmpty)
-                  const _EmptyState(
-                    title: 'No driver requests yet',
+                  _EmptyState(
+                    title: AppLocalizations.of(context)!.brokerDriverReqNoDriverRequestsYet,
                     subtitle:
-                        'When a driver times out, the request will appear here for broker takeover.',
+                        AppLocalizations.of(context)!.brokerDriverReqWhenADriverTimesOutTheRequest,
                   )
                 else
                   ...visibleRequests.asMap().entries.expand((entry) {
@@ -257,6 +259,7 @@ class _BrokerRequestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bookingText = request.bookingNumber.isNotEmpty
         ? request.bookingNumber
         : request.bookingId;
@@ -303,7 +306,7 @@ class _BrokerRequestTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Booking ID',
+                      l10n.brokerDriverReqBookingID,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w800,
@@ -325,7 +328,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (brokerAssigned) ...[
-                    const _BrokerAssignedBadge(),
+                    _BrokerAssignedBadge(),
                     const SizedBox(height: 6),
                   ],
                   Container(
@@ -355,14 +358,14 @@ class _BrokerRequestTile extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _RouteRow(
-            label: 'Pickup',
+            label: AppLocalizations.of(context)!.brokerDriverReqPickup,
             value: request.pickup.isNotEmpty ? request.pickup : 'Pickup',
             icon: AppIcons.radio_button_checked_rounded,
             color: AppColors.brand,
           ),
           const SizedBox(height: 10),
           _RouteRow(
-            label: 'Drop',
+            label: AppLocalizations.of(context)!.brokerDriverReqDrop,
             value: request.drop.isNotEmpty ? request.drop : 'Drop',
             icon: AppIcons.location_on_rounded,
             color: AppColors.dangerIcon,
@@ -423,15 +426,15 @@ class _BrokerRequestTile extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           if (waitingOnClient) ...[
-            const _WaitingBadge(
-              label: 'Accepted - waiting for the client to confirm',
+            _WaitingBadge(
+              label: AppLocalizations.of(context)!.brokerDriverReqAcceptedWaitingForTheClientToConfirm,
             ),
           ] else if (yourTurn) ...[
             Row(
               children: [
                 Expanded(
                   child: _ActionButton(
-                    label: 'Confirm',
+                    label: AppLocalizations.of(context)!.brokerDriverReqConfirm,
                     icon: AppIcons.check_circle_rounded,
                     color: AppColors.brand,
                     backgroundColor: AppColors.brandFill,
@@ -441,7 +444,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: 'Decline',
+                    label: AppLocalizations.of(context)!.brokerDriverReqDecline,
                     icon: AppIcons.cancel_rounded,
                     color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
@@ -455,7 +458,7 @@ class _BrokerRequestTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: _ActionButton(
-                    label: 'Accept',
+                    label: AppLocalizations.of(context)!.brokerDriverReqAccept,
                     icon: AppIcons.check_circle_rounded,
                     color: AppColors.brand,
                     backgroundColor: AppColors.brandFill,
@@ -465,7 +468,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: 'Decline',
+                    label: AppLocalizations.of(context)!.brokerDriverReqDecline,
                     icon: AppIcons.cancel_rounded,
                     color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
@@ -476,7 +479,7 @@ class _BrokerRequestTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Already agreed with the broker - accept or decline, no negotiation.',
+              AppLocalizations.of(context)!.brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
@@ -488,7 +491,7 @@ class _BrokerRequestTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: _ActionButton(
-                    label: 'Accept',
+                    label: AppLocalizations.of(context)!.brokerDriverReqAccept,
                     icon: AppIcons.check_circle_rounded,
                     color: AppColors.brand,
                     backgroundColor: AppColors.brandFill,
@@ -498,7 +501,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: 'Change Fare',
+                    label: AppLocalizations.of(context)!.brokerDriverReqChangeFare,
                     icon: AppIcons.payments_rounded,
                     color: AppColors.accentBlue,
                     backgroundColor: AppColors.brandFill,
@@ -508,7 +511,7 @@ class _BrokerRequestTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
-                    label: 'Decline',
+                    label: AppLocalizations.of(context)!.brokerDriverReqDecline,
                     icon: AppIcons.cancel_rounded,
                     color: AppColors.dangerIcon,
                     backgroundColor: const Color(0xFFFDECEC),
@@ -521,7 +524,7 @@ class _BrokerRequestTile extends StatelessWidget {
           if (request.driverTimedOut) ...[
             const SizedBox(height: 10),
             Text(
-              'Driver timed out - broker takeover active.',
+              AppLocalizations.of(context)!.brokerDriverReqDriverTimedOutBrokerTakeoverActive,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.warningText,
                 fontWeight: FontWeight.w600,
@@ -541,6 +544,7 @@ class _WaitingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -561,10 +565,11 @@ class _WaitingBadge extends StatelessWidget {
 }
 
 class _BrokerAssignedBadge extends StatelessWidget {
-  const _BrokerAssignedBadge();
+  _BrokerAssignedBadge();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -573,7 +578,7 @@ class _BrokerAssignedBadge extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Text(
-        'Broker-assigned',
+        l10n.brokerDriverReqBrokerAssigned,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: AppColors.brand,
           fontWeight: FontWeight.w900,
@@ -598,6 +603,7 @@ class _RouteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -657,6 +663,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 46,
       child: FilledButton.tonal(
@@ -716,6 +723,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final base = (widget.request.amount > 0 ? widget.request.amount : 1000)
         .toDouble();
     final min = math.max(1.0, base * 0.75);
@@ -733,7 +741,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
         ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,13 +758,13 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Change fare',
+              l10n.brokerDriverReqChangeFare2,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               widget.request.bookingNumber.isNotEmpty
                   ? widget.request.bookingNumber
@@ -766,10 +774,10 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.fillSubtle,
                 borderRadius: BorderRadius.circular(20),
@@ -779,7 +787,7 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Set fare amount',
+                    l10n.brokerDriverReqSetFareAmount,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -829,15 +837,15 @@ class _BrokerCounterSheetState extends State<_BrokerCounterSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context)!.brokerDriverReqCancel),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(clamped),
-                    child: const Text(
-                      'Change Fare',
+                    child: Text(
+                      AppLocalizations.of(context)!.brokerDriverReqChangeFare,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -860,6 +868,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(

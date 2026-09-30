@@ -13,6 +13,7 @@ import '../../../../core/widgets/map_route_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
 import '../../../driver/data/driver_trip_handoff_utils.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerRequestDetailScreen extends ConsumerStatefulWidget {
   const BrokerRequestDetailScreen({super.key, this.initialRequest});
@@ -593,8 +594,10 @@ class _BrokerRequestDetailScreenState
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Request rejected.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.brokerReqDetailRequestRejected,
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -649,8 +652,10 @@ class _BrokerRequestDetailScreenState
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fare change sent.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.brokerReqDetailFareChangeSent,
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -704,9 +709,9 @@ class _BrokerRequestDetailScreenState
         final responseData = _detailAsMap(response['data']);
         final booking = _detailAsMap(responseData?['booking']);
         final requestData = _detailAsMap(responseData?['request']);
-        final status = _detailString(responseData, const ['status']).isNotEmpty
-            ? _detailString(responseData, const ['status']).toLowerCase()
-            : _detailString(requestData, const ['status']).toLowerCase();
+        final status = _detailString(responseData, ['status']).isNotEmpty
+            ? _detailString(responseData, ['status']).toLowerCase()
+            : _detailString(requestData, ['status']).toLowerCase();
 
         if ((booking == null || booking.isEmpty) &&
             status == 'awaiting_confirmation') {
@@ -716,8 +721,12 @@ class _BrokerRequestDetailScreenState
           });
           ref.invalidate(brokerJobRequestsProvider((page: 1, limit: 100)));
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Accepted - waiting for the client to confirm.'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(
+                  context,
+                )!.brokerReqDetailAcceptedWaitingForTheClientToConfirm,
+              ),
               backgroundColor: AppColors.brand,
             ),
           );
@@ -738,8 +747,12 @@ class _BrokerRequestDetailScreenState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offer sent to the driver - waiting for response.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(
+              context,
+            )!.brokerReqDetailOfferSentToTheDriverWaitingFor,
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -816,7 +829,9 @@ class _BrokerRequestDetailScreenState
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Assign Driver & Truck',
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.brokerReqDetailAssignDriverTruck,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
@@ -843,7 +858,11 @@ class _BrokerRequestDetailScreenState
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Booking #${_request.id} - pick an available driver and truck.',
+                              AppLocalizations.of(
+                                context,
+                              )!.brokerReqDetailBookingPickAnAvailableDriverAndTruck(
+                                _request.id,
+                              ),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
@@ -858,10 +877,14 @@ class _BrokerRequestDetailScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _AssignmentPickerField(
-                                label: 'Driver',
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.brokerReqDetailDriver,
                                 icon: AppIcons.person_rounded,
                                 value: selectedDriver == null
-                                    ? 'Select driver'
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.brokerReqDetailSelectDriver
                                     : selectedDriver.name.isNotEmpty
                                     ? selectedDriver.name
                                     : selectedDriver.id,
@@ -887,10 +910,14 @@ class _BrokerRequestDetailScreenState
                               ),
                               const SizedBox(height: 12),
                               _AssignmentPickerField(
-                                label: 'Truck',
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.brokerReqDetailTruck,
                                 icon: AppIcons.fire_truck_rounded,
                                 value: selectedTruck == null
-                                    ? 'Select truck'
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.brokerReqDetailSelectTruck
                                     : '${selectedTruck.label} - ${selectedTruck.plateNumber.isNotEmpty ? selectedTruck.plateNumber : selectedTruck.id}',
                                 selected: selectedTruck != null,
                                 onTap: () async {
@@ -905,7 +932,9 @@ class _BrokerRequestDetailScreenState
                               if (!canConfirm) ...[
                                 const SizedBox(height: 10),
                                 Text(
-                                  'Select one idle driver and one idle truck to continue.',
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.brokerReqDetailSelectOneIdleDriverAndOneIdle,
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: AppColors.dangerIcon),
                                 ),
@@ -934,7 +963,11 @@ class _BrokerRequestDetailScreenState
                                     ),
                                   ),
                                 ),
-                                child: const Text('Cancel'),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.brokerReqDetailCancel,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -957,7 +990,11 @@ class _BrokerRequestDetailScreenState
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                child: const Text('Confirm Assignment'),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.brokerReqDetailConfirmAssignment,
+                                ),
                               ),
                             ),
                           ],
@@ -982,8 +1019,8 @@ class _BrokerRequestDetailScreenState
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) => _AssignmentChoiceSheet<BrokerDriver>(
-        title: 'Select driver',
-        emptyText: 'No drivers found',
+        title: AppLocalizations.of(context)!.brokerReqDetailSelectDriver,
+        emptyText: AppLocalizations.of(context)!.brokerReqNoDriversFound,
         items: drivers,
         selectedId: selectedDriverId,
         idOf: (driver) => driver.id,
@@ -1005,8 +1042,8 @@ class _BrokerRequestDetailScreenState
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) => _AssignmentChoiceSheet<BrokerVehicle>(
-        title: 'Select truck',
-        emptyText: 'No trucks found',
+        title: AppLocalizations.of(context)!.brokerReqDetailSelectTruck,
+        emptyText: AppLocalizations.of(context)!.brokerReqNoTrucksFound,
         items: trucks,
         selectedId: selectedTruckId,
         idOf: (truck) => truck.id,
@@ -1080,8 +1117,10 @@ class _BrokerRequestDetailScreenState
       if (!mounted) return;
       final shipment = brokerDriverRequestToShipment(request);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Negotiation accepted.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.brokerReqDetailNegotiationAccepted,
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -1100,7 +1139,8 @@ class _BrokerRequestDetailScreenState
   }
 
   Widget _buildFinalStateCard(BuildContext context) {
-    final visual = _detailRequestStatusVisual(_normalizedStatus);
+    final l10n = AppLocalizations.of(context)!;
+    final visual = _detailRequestStatusVisual(_normalizedStatus, l10n);
     final isAccepted =
         _normalizedStatus == 'accepted' ||
         _normalizedStatus == 'confirmed' ||
@@ -1111,10 +1151,10 @@ class _BrokerRequestDetailScreenState
       icon: visual.icon,
       title: visual.label,
       subtitle: isAwaitingConfirmation
-          ? 'This request is awaiting confirmation from the other side.'
+          ? AppLocalizations.of(context)!.brokerReqAwaitingOtherSide
           : isAccepted
-          ? 'This request has been accepted. No assignment card is shown here.'
-          : 'This request has been declined. No further broker actions are available.',
+          ? AppLocalizations.of(context)!.brokerReqAcceptedNoCard
+          : AppLocalizations.of(context)!.brokerReqDeclinedNoActions,
       backgroundColor: visual.backgroundColor,
       borderColor: visual.textColor.withValues(alpha: 0.30),
       iconColor: visual.textColor,
@@ -1122,11 +1162,14 @@ class _BrokerRequestDetailScreenState
   }
 
   Widget _buildJobAwaitingConfirmationCard(BuildContext context) {
-    return const _StatusBannerCard(
+    return _StatusBannerCard(
       icon: AppIcons.schedule_rounded,
-      title: 'Waiting for client confirmation',
-      subtitle:
-          'Your accept has been saved. Fare changes are locked until the client confirms or declines.',
+      title: AppLocalizations.of(
+        context,
+      )!.brokerReqDetailWaitingForClientConfirmation,
+      subtitle: AppLocalizations.of(
+        context,
+      )!.brokerReqDetailYourAcceptHasBeenSavedFareChanges,
       backgroundColor: Color(0xFFEAF4FB),
       borderColor: AppColors.accentBlueBorder,
       iconColor: AppColors.accentBlue,
@@ -1139,11 +1182,14 @@ class _BrokerRequestDetailScreenState
     }
 
     if (_isWaitingOnBroker) {
-      return const _StatusBannerCard(
+      return _StatusBannerCard(
         icon: AppIcons.schedule_rounded,
-        title: 'Waiting for client confirmation',
-        subtitle:
-            'Your accept has been saved. No more fare changes are available until the client responds.',
+        title: AppLocalizations.of(
+          context,
+        )!.brokerReqDetailWaitingForClientConfirmation,
+        subtitle: AppLocalizations.of(
+          context,
+        )!.brokerReqDetailYourAcceptHasBeenSavedNoMore,
         backgroundColor: Color(0xFFEAF4FB),
         borderColor: AppColors.accentBlueBorder,
         iconColor: AppColors.accentBlue,
@@ -1151,11 +1197,14 @@ class _BrokerRequestDetailScreenState
     }
 
     if (_isLockedWaitingForClient) {
-      return const _StatusBannerCard(
+      return _StatusBannerCard(
         icon: AppIcons.schedule_rounded,
-        title: 'Waiting for client confirmation',
-        subtitle:
-            'Your accept has been saved. The request is locked until the client confirms or declines.',
+        title: AppLocalizations.of(
+          context,
+        )!.brokerReqDetailWaitingForClientConfirmation,
+        subtitle: AppLocalizations.of(
+          context,
+        )!.brokerReqDetailYourAcceptHasBeenSavedTheRequest,
         backgroundColor: Color(0xFFEAF4FB),
         borderColor: AppColors.accentBlueBorder,
         iconColor: AppColors.accentBlue,
@@ -1186,7 +1235,7 @@ class _BrokerRequestDetailScreenState
                     border: Border.all(color: AppColors.brandBorder),
                   ),
                   child: Text(
-                    'Broker-assigned',
+                    AppLocalizations.of(context)!.brokerReqDetailBrokerAssigned,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.brand,
                       fontWeight: FontWeight.w700,
@@ -1197,7 +1246,9 @@ class _BrokerRequestDetailScreenState
             ),
             const SizedBox(height: 12),
             Text(
-              'Assigned driver request',
+              AppLocalizations.of(
+                context,
+              )!.brokerReqDetailAssignedDriverRequest,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
@@ -1205,7 +1256,9 @@ class _BrokerRequestDetailScreenState
             ),
             const SizedBox(height: 4),
             Text(
-              'This price was already agreed with the broker. Accept or decline only - no fare changes.',
+              AppLocalizations.of(
+                context,
+              )!.brokerReqDetailThisPriceWasAlreadyAgreedWithThe,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -1220,7 +1273,9 @@ class _BrokerRequestDetailScreenState
                       foregroundColor: AppColors.dangerIcon,
                       side: const BorderSide(color: Color(0xFFF7B4B4)),
                     ),
-                    child: const Text('Reject'),
+                    child: Text(
+                      AppLocalizations.of(context)!.brokerReqDetailReject,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1232,7 +1287,11 @@ class _BrokerRequestDetailScreenState
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.brand,
                     ),
-                    child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+                    child: Text(
+                      _submitting
+                          ? AppLocalizations.of(context)!.brokerReqSaving
+                          : AppLocalizations.of(context)!.brokerReqAcceptAssign,
+                    ),
                   ),
                 ),
               ],
@@ -1253,7 +1312,7 @@ class _BrokerRequestDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Broker negotiation',
+            AppLocalizations.of(context)!.brokerReqDetailBrokerNegotiation,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -1262,15 +1321,15 @@ class _BrokerRequestDetailScreenState
           const SizedBox(height: 4),
           Text(
             _normalizedStatus == 'countered'
-                ? 'Fare change sent. Waiting for the client to respond before the broker can assign this booking.'
-                : 'Change fare or reject the timed-out driver request, then accept to assign this truck.',
+                ? AppLocalizations.of(context)!.brokerReqFareChangeWaiting
+                : AppLocalizations.of(context)!.brokerReqChangeFareOrReject,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 14),
           _CounterAmountSlider(
-            label: 'Fare amount',
+            label: AppLocalizations.of(context)!.brokerReqDetailFareAmount,
             amount: _counterAmount,
             minAmount: (_driverRequest!.amount * 0.75)
                 .clamp(1, double.infinity)
@@ -1292,7 +1351,9 @@ class _BrokerRequestDetailScreenState
                     foregroundColor: AppColors.dangerIcon,
                     side: const BorderSide(color: Color(0xFFF7B4B4)),
                   ),
-                  child: const Text('Reject'),
+                  child: Text(
+                    AppLocalizations.of(context)!.brokerReqDetailReject,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1306,8 +1367,8 @@ class _BrokerRequestDetailScreenState
                       width: 1.4,
                     ),
                   ),
-                  child: const Text(
-                    'Change Fare',
+                  child: Text(
+                    AppLocalizations.of(context)!.brokerReqDetailChangeFare,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1322,7 +1383,11 @@ class _BrokerRequestDetailScreenState
             child: FilledButton(
               onPressed: _submitting ? null : _acceptTimedOutDriverRequest,
               style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
-              child: Text(_submitting ? 'Saving...' : 'Accept & assign'),
+              child: Text(
+                _submitting
+                    ? AppLocalizations.of(context)!.brokerReqSaving
+                    : AppLocalizations.of(context)!.brokerReqAcceptAssign,
+              ),
             ),
           ),
         ],
@@ -1344,15 +1409,15 @@ class _BrokerRequestDetailScreenState
     final negotiationLocked = isConfirmationTurn || isAcceptedAssignment;
     final colors = context.colors;
     final title = isConfirmationTurn
-        ? 'Confirm booking'
+        ? AppLocalizations.of(context)!.brokerReqConfirmBookingTitle
         : isAcceptedAssignment
-        ? 'Assign Driver & Truck'
-        : 'Assignment';
+        ? AppLocalizations.of(context)!.brokerReqDetailAssignDriverTruck
+        : AppLocalizations.of(context)!.brokerReqAssignmentTitle;
     final subtitle = isConfirmationTurn
-        ? 'The client accepted this offer. Confirm to finalize, then assign the driver and truck.'
+        ? AppLocalizations.of(context)!.brokerReqClientAcceptedFinalize
         : isAcceptedAssignment
-        ? 'This request is accepted. Pick the assigned driver and truck to create the trip.'
-        : 'Driver and truck are auto-selected from the booking details.';
+        ? AppLocalizations.of(context)!.brokerReqAcceptedPickDriver
+        : AppLocalizations.of(context)!.brokerReqAutoSelectedDetails;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1427,7 +1492,9 @@ class _BrokerRequestDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Auto-selected assignment',
+                  AppLocalizations.of(
+                    context,
+                  )!.brokerReqDetailAutoSelectedAssignment,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.textTertiary,
                     fontSize: 11,
@@ -1437,7 +1504,7 @@ class _BrokerRequestDetailScreenState
                 const SizedBox(height: 10),
                 _AssigneeRow(
                   leading: _DriverInitialsBadge(name: selectedDriverName),
-                  label: 'Driver',
+                  label: AppLocalizations.of(context)!.brokerReqDetailDriver,
                   value: selectedDriverName,
                 ),
                 Padding(
@@ -1458,7 +1525,7 @@ class _BrokerRequestDetailScreenState
                       color: Color(0xFF2FA56E),
                     ),
                   ),
-                  label: 'Truck',
+                  label: AppLocalizations.of(context)!.brokerReqDetailTruck,
                   value: selectedTruckName,
                 ),
               ],
@@ -1467,7 +1534,7 @@ class _BrokerRequestDetailScreenState
           if (!negotiationLocked) ...[
             const SizedBox(height: 12),
             _CounterAmountSlider(
-              label: 'Fare amount',
+              label: AppLocalizations.of(context)!.brokerReqDetailFareAmount,
               amount: _counterAmount,
               minAmount: (_readAmount(_request.value) * 0.75)
                   .clamp(1, double.infinity)
@@ -1495,7 +1562,9 @@ class _BrokerRequestDetailScreenState
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text('Reject'),
+                    child: Text(
+                      AppLocalizations.of(context)!.brokerReqDetailReject,
+                    ),
                   ),
                 ),
                 if (!isConfirmationTurn) ...[
@@ -1514,8 +1583,8 @@ class _BrokerRequestDetailScreenState
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
-                        'Change Fare',
+                      child: Text(
+                        AppLocalizations.of(context)!.brokerReqDetailChangeFare,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1545,12 +1614,14 @@ class _BrokerRequestDetailScreenState
               ),
               child: Text(
                 _submitting
-                    ? 'Saving...'
+                    ? AppLocalizations.of(context)!.brokerReqSaving
                     : isConfirmationTurn
-                    ? 'Confirm & assign'
+                    ? AppLocalizations.of(context)!.brokerReqConfirmAssign
                     : isAcceptedAssignment
-                    ? 'Assign Driver & Truck'
-                    : 'Accept & assign',
+                    ? AppLocalizations.of(
+                        context,
+                      )!.brokerReqDetailAssignDriverTruck
+                    : AppLocalizations.of(context)!.brokerReqAcceptAssign,
               ),
             ),
           ),
@@ -1567,7 +1638,7 @@ class _BrokerRequestDetailScreenState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 1),
                     child: Icon(
                       AppIcons.info_outline_rounded,
@@ -1578,7 +1649,9 @@ class _BrokerRequestDetailScreenState
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'No exact match found — a fallback driver or truck will be used when you accept.',
+                      AppLocalizations.of(
+                        context,
+                      )!.brokerReqDetailNoExactMatchFoundAFallbackDriver,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.textSecondary,
                         fontSize: 12,
@@ -1598,6 +1671,7 @@ class _BrokerRequestDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
@@ -1630,21 +1704,25 @@ class _BrokerRequestDetailScreenState
             const SizedBox(height: 14),
             _BrokerOverviewCard(
               requestedOn: _request.requestedAt.isEmpty
-                  ? 'Unavailable'
+                  ? AppLocalizations.of(context)!.brokerReqUnavailable
                   : _request.requestedAt,
               requestedBy: _isDriverNegotiation
                   ? (_driverRequest!.clientName.isEmpty
-                        ? 'Customer'
+                        ? AppLocalizations.of(
+                            context,
+                          )!.brokerReqCustomerFallback
                         : _driverRequest!.clientName)
                   : (_request.clientName.isEmpty
-                        ? 'Customer'
+                        ? AppLocalizations.of(
+                            context,
+                          )!.brokerReqCustomerFallback
                         : _request.clientName),
               loadType: _isDriverNegotiation
                   ? (_driverRequest!.truckCategory.isEmpty
-                        ? 'General'
+                        ? AppLocalizations.of(context)!.brokerReqGeneralFallback
                         : _driverRequest!.truckCategory)
                   : (_request.productName.isEmpty
-                        ? 'General'
+                        ? AppLocalizations.of(context)!.brokerReqGeneralFallback
                         : _request.productName),
               payment: topAmount,
             ),
@@ -1764,6 +1842,7 @@ class _StatusBannerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       width: double.infinity,
@@ -1838,6 +1917,7 @@ class _BookingNavRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         IconButton(
@@ -1858,7 +1938,7 @@ class _BookingNavRow extends StatelessWidget {
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            'Booking Details',
+            l10n.brokerReqDetailBookingDetails,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -1885,6 +1965,7 @@ class _BrokerOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       width: double.infinity,
@@ -1905,7 +1986,7 @@ class _BrokerOverviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Overview',
+            l10n.brokerReqDetailOverview,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colors.textPrimary,
               fontSize: 16,
@@ -1915,25 +1996,25 @@ class _BrokerOverviewCard extends StatelessWidget {
           const SizedBox(height: 6),
           _OverviewDetailRow(
             icon: AppIcons.calendar_today_rounded,
-            label: 'Requested on',
+            label: l10n.brokerReqDetailRequestedOn,
             value: requestedOn,
           ),
           Divider(height: 24, thickness: 1, color: colors.line),
           _OverviewDetailRow(
             icon: AppIcons.person_rounded,
-            label: 'Requested by',
+            label: l10n.brokerReqDetailRequestedBy,
             value: requestedBy,
           ),
           Divider(height: 24, thickness: 1, color: colors.line),
           _OverviewDetailRow(
             icon: AppIcons.local_offer_rounded,
-            label: 'Load type',
+            label: l10n.brokerReqDetailLoadType,
             value: loadType,
           ),
           Divider(height: 24, thickness: 1, color: colors.line),
           _OverviewDetailRow(
             icon: AppIcons.currency_rupee_rounded,
-            label: 'Payment',
+            label: l10n.brokerReqDetailPayment,
             value: payment,
             highlight: true,
           ),
@@ -1958,6 +2039,7 @@ class _OverviewDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Row(
       children: [
@@ -2028,6 +2110,7 @@ class _BrokerRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final trimmedDistance = distance.trim();
@@ -2055,7 +2138,7 @@ class _BrokerRouteCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Route Information',
+                  l10n.brokerReqDetailRouteInformation,
                   style: textTheme.titleMedium?.copyWith(
                     color: colors.textPrimary,
                     fontSize: 16,
@@ -2126,7 +2209,7 @@ class _BrokerRouteCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  label: 'Pickup',
+                  label: AppLocalizations.of(context)!.brokerReqDetailPickup,
                   value: pickup.trim().isEmpty
                       ? 'Pickup pending'
                       : pickup.trim(),
@@ -2149,7 +2232,7 @@ class _BrokerRouteCard extends StatelessWidget {
                     color: Color(0xFF2FA56E),
                     size: 18,
                   ),
-                  label: 'Drop-off',
+                  label: AppLocalizations.of(context)!.brokerReqDetailDropOff,
                   value: drop.trim().isEmpty ? 'Drop pending' : drop.trim(),
                 ),
               ],
@@ -2161,7 +2244,7 @@ class _BrokerRouteCard extends StatelessWidget {
               Expanded(
                 child: _BrokerMetaTile(
                   icon: AppIcons.scale_outlined,
-                  label: 'Weight',
+                  label: AppLocalizations.of(context)!.brokerReqDetailWeight,
                   value: weight.trim().isEmpty ? '-' : weight.trim(),
                 ),
               ),
@@ -2169,7 +2252,7 @@ class _BrokerRouteCard extends StatelessWidget {
               Expanded(
                 child: _BrokerMetaTile(
                   icon: AppIcons.local_shipping_outlined,
-                  label: 'Vehicle',
+                  label: AppLocalizations.of(context)!.brokerReqDetailVehicle,
                   value: vehicle.trim().isEmpty ? 'Truck' : vehicle.trim(),
                 ),
               ),
@@ -2195,7 +2278,9 @@ class _BrokerRouteCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'ETA $trimmedEta',
+                      AppLocalizations.of(
+                        context,
+                      )!.brokerReqDetailETA(trimmedEta),
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.textSecondary,
                         fontSize: 12,
@@ -2226,6 +2311,7 @@ class _BrokerRailStop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2281,6 +2367,7 @@ class _BrokerMetaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -2348,6 +2435,7 @@ class _AssigneeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Row(
       children: [
@@ -2391,6 +2479,7 @@ class _DriverInitialsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final initials = name
         .trim()
         .split(RegExp(r'\s+'))
@@ -2586,23 +2675,25 @@ class _DetailRequestStatusVisual {
   final IconData icon;
 }
 
-_DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
+_DetailRequestStatusVisual _detailRequestStatusVisual(
+  String status,
+  AppLocalizations l10n,
+) {
   switch (status) {
     case 'accepted':
     case 'confirmed':
     case 'assigned':
-      return const _DetailRequestStatusVisual(
-        label: 'Accepted',
-        description:
-            'This request has been accepted. Assign a driver and truck.',
+      return _DetailRequestStatusVisual(
+        label: l10n.brokerStatusAccepted,
+        description: l10n.brokerReqAcceptedAssignDriverTruck,
         backgroundColor: AppColors.brandFill,
         textColor: AppColors.brandInk,
         icon: AppIcons.check_circle_rounded,
       );
     case 'countered':
-      return const _DetailRequestStatusVisual(
-        label: 'Fare changed',
-        description: 'Fare change sent. Waiting for the client to respond.',
+      return _DetailRequestStatusVisual(
+        label: l10n.brokerStatusFareChanged,
+        description: l10n.brokerReqFareChangeWaitingClient,
         backgroundColor: Color(0xFFFEF3C7),
         textColor: AppColors.warningText,
         icon: AppIcons.payments_rounded,
@@ -2612,18 +2703,17 @@ _DetailRequestStatusVisual _detailRequestStatusVisual(String status) {
     case 'expired':
     case 'cancelled':
     case 'canceled':
-      return const _DetailRequestStatusVisual(
-        label: 'Cancelled',
-        description:
-            'This booking has been cancelled. No further broker actions are available.',
+      return _DetailRequestStatusVisual(
+        label: l10n.brokerStatusCancelled,
+        description: l10n.brokerReqCancelledNoActions,
         backgroundColor: Color(0xFFFDECEC),
         textColor: AppColors.dangerText,
         icon: AppIcons.cancel_rounded,
       );
     default:
-      return const _DetailRequestStatusVisual(
-        label: 'Pending',
-        description: 'This request is still waiting for action.',
+      return _DetailRequestStatusVisual(
+        label: l10n.brokerStatusPending,
+        description: l10n.brokerReqPendingAction,
         backgroundColor: Color(0xFFEAF4FB),
         textColor: AppColors.accentBlue,
         icon: AppIcons.inbox_rounded,
@@ -2658,6 +2748,7 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final base = widget.initialAmount > 0 ? widget.initialAmount : 1000.0;
     final min = (base * 0.75).clamp(1.0, double.infinity).toDouble();
     final max = (base * 1.25).clamp(min + 1.0, double.infinity).toDouble();
@@ -2674,7 +2765,7 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
         ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2707,7 +2798,7 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
             ),
             const SizedBox(height: 16),
             _CounterAmountSlider(
-              label: 'Set fare amount',
+              label: l10n.brokerReqDetailSetFareAmount,
               amount: value,
               minAmount: min,
               maxAmount: max,
@@ -2719,15 +2810,15 @@ class _BrokerCounterSliderSheetState extends State<_BrokerCounterSliderSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.brokerReqDetailCancel),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(value),
-                    child: const Text(
-                      'Change Fare',
+                    child: Text(
+                      l10n.brokerReqDetailChangeFare,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2759,6 +2850,7 @@ class _CounterAmountSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final value = amount.clamp(minAmount, maxAmount).toDouble();
 
@@ -2860,6 +2952,7 @@ class _AssignmentPickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -2937,6 +3030,7 @@ class _AssignmentChoiceSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 28),
       backgroundColor: Colors.transparent,
@@ -3067,6 +3161,7 @@ class _AssignmentOptionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final titleColor = enabled ? AppColors.textPrimary : AppColors.textTertiary;
     final subtitleColor = enabled ? AppColors.textSecondary : AppColors.line;
 

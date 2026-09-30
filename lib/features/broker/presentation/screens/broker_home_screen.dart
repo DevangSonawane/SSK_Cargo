@@ -12,6 +12,7 @@ import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerHomeScreen extends ConsumerStatefulWidget {
   const BrokerHomeScreen({super.key});
@@ -202,7 +203,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$name declined — pick a different driver for this job.',
+            AppLocalizations.of(context)!.brokerHomeDeclinedPickADifferentDriverForThis(name),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -218,7 +219,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           : 'The driver';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$name confirmed — trip created.'),
+          content: Text(AppLocalizations.of(context)!.brokerHomeConfirmedTripCreated(name)),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -345,7 +346,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           .read(apiClientProvider)
           .acceptJobRequest(accessToken: token, id: request.id)
           .then((_) {}),
-      successMessage: 'Request accepted.',
+      successMessage:
+          AppLocalizations.of(context)!.brokerHomeRequestAccepted,
     );
   }
 
@@ -356,7 +358,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           .read(apiClientProvider)
           .declineJobRequest(accessToken: token, id: request.id)
           .then((_) {}),
-      successMessage: 'Request declined.',
+      successMessage:
+          AppLocalizations.of(context)!.brokerHomeRequestDeclined,
     );
   }
 
@@ -371,7 +374,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           .read(apiClientProvider)
           .counterJobRequest(accessToken: token, id: request.id, amount: amount)
           .then((_) {}),
-      successMessage: 'Fare change sent.',
+      successMessage:
+          AppLocalizations.of(context)!.brokerHomeFareChangeSent,
     );
   }
 
@@ -405,8 +409,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offer sent to the driver - waiting for response.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerHomeOfferSentToTheDriverWaitingFor),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -472,7 +476,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Change fare',
+                    AppLocalizations.of(context)!.brokerHomeChangeFare,
                     style: Theme.of(sheetContext).textTheme.titleLarge
                         ?.copyWith(
                           color: AppColors.textPrimary,
@@ -481,7 +485,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Booking #${request.id} - propose a different amount.',
+                    AppLocalizations.of(context)!.brokerHomeBookingProposeADifferentAmount(request.id),
                     style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -494,11 +498,11 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(
+                      prefixIcon: Icon(
                         AppIcons.currency_rupee_rounded,
                         color: AppColors.brand,
                       ),
-                      hintText: 'Enter amount',
+                      hintText: AppLocalizations.of(context)!.brokerHomeEnterAmount,
                       filled: true,
                       fillColor: AppColors.fillSubtle,
                       border: OutlineInputBorder(
@@ -513,7 +517,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(sheetContext).pop(),
-                          child: const Text('Cancel'),
+                          child: Text(AppLocalizations.of(context)!.brokerHomeCancel),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -526,8 +530,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.brand,
                           ),
-                          child: const Text(
-                            'Change Fare',
+                          child: Text(
+                            AppLocalizations.of(context)!.brokerHomeChangeFare2,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -570,6 +574,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final requestsAsync = ref.watch(brokerJobRequestsProvider(_requestsQuery));
     final requests = requestsAsync.valueOrNull ?? const <BookingRequest>[];
     final visibleRequests = _visibleRequests(requests);
@@ -599,7 +604,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
               const SizedBox(height: 14),
               _SearchField(
                 controller: _searchController,
-                hintText: 'Search booking ID, location...',
+                hintText: l10n.brokerHomeSearchBookingIDLocation,
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 18),
@@ -607,7 +612,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Booking Requests',
+                      l10n.brokerHomeBookingRequests,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
@@ -622,7 +627,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                           ? AppIcons.south_rounded
                           : AppIcons.north_rounded,
                     ),
-                    label: const Text('Sort'),
+                    label: Text(l10n.brokerHomeSort),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.brand,
                     ),
@@ -634,10 +639,10 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 data: (_) {
                   if (visibleRequests.isEmpty) {
                     return _EmptyBookingsState(
-                      title: 'No bookings found',
+                      title: l10n.brokerHomeNoBookingsFound,
                       subtitle: pendingCount > 0
-                          ? 'There are $pendingCount request(s), but none match the current search.'
-                          : 'Try clearing the search field to see more requests.',
+                          ? l10n.brokerHomeNoMatchButPending(pendingCount)
+                          : l10n.brokerHomeTryClearingSearch,
                     );
                   }
 
@@ -679,12 +684,12 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                     },
                   );
                 },
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.only(top: 40),
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _EmptyBookingsState(
-                  title: 'Could not load bookings',
+                  title: AppLocalizations.of(context)!.brokerHomeCouldNotLoadBookings,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
               ),
@@ -693,7 +698,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
                 child: TextButton.icon(
                   onPressed: _refresh,
                   icon: const Icon(AppIcons.refresh_rounded),
-                  label: const Text('Reload requests'),
+                  label: Text(AppLocalizations.of(context)!.brokerHomeReloadRequests),
                 ),
               ),
             ],
@@ -719,19 +724,20 @@ class _BrokerHomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: Text.rich(
             TextSpan(
-              text: 'Hello, ',
+              text: l10n.brokerHomeHelloPrefix,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w900,
               ),
               children: [
                 TextSpan(
-                  text: '$greetingName 👋',
+                  text: l10n.brokerHomeHelloName(greetingName),
                   style: const TextStyle(color: AppColors.textPrimary),
                 ),
               ],
@@ -753,6 +759,7 @@ class _NewBookingsHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -792,7 +799,7 @@ class _NewBookingsHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'New bookings',
+                  l10n.brokerHomeNewBookings,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -800,9 +807,7 @@ class _NewBookingsHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  pendingCount == 1
-                      ? '1 request needs attention'
-                      : '$pendingCount requests need attention',
+                  l10n.brokerHomeRequestsNeedAttention(pendingCount),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.88),
                     fontWeight: FontWeight.w700,
@@ -852,6 +857,7 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -904,19 +910,23 @@ class _PendingAssignmentBanner extends StatelessWidget {
   final _PendingDriverOffer offer;
   final VoidCallback? onTap;
 
-  String get _text {
-    final name = offer.driverName.isNotEmpty ? offer.driverName : 'Driver';
+  String text(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final name = offer.driverName.isNotEmpty
+        ? offer.driverName
+        : l10n.brokerHomeDriverFallback;
     if (offer.status == 'countered') {
-      return '$name changed fare — respond from Driver Requests';
+      return l10n.brokerHomeDriverChangedFare(name);
     }
     if (offer.driverTimedOut) {
-      return '$name hasn\'t responded — respond on their behalf from Driver Requests';
+      return l10n.brokerHomeDriverNoResponse(name);
     }
-    return 'Waiting for $name to respond';
+    return l10n.brokerHomeWaitingForDriver(name);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -939,7 +949,7 @@ class _PendingAssignmentBanner extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _text,
+                text(context),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12,
@@ -985,11 +995,13 @@ class _BookingRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final pickupText = _locationText(
       request.from,
-      'Pickup location unavailable',
+      l10n.brokerHomePickupUnavailable,
     );
-    final dropText = _locationText(request.to, 'Drop-off location unavailable');
+    final dropText =
+        _locationText(request.to, l10n.brokerHomeDropUnavailable);
     final status = _normalizeStatus(request.status);
     final amountText = _formatRequestAmount(request.value);
     final counterLimitReached =
@@ -1051,7 +1063,7 @@ class _BookingRequestCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${_locationLead(pickupText)} to ${_locationLead(dropText)}',
+                        l10n.brokerHomeTo(_locationLead(pickupText), _locationLead(dropText)),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
@@ -1089,7 +1101,7 @@ class _BookingRequestCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           request.requestedAt.isEmpty
-                              ? 'Just now'
+                              ? l10n.brokerHomeJustNow
                               : request.requestedAt,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
@@ -1107,13 +1119,13 @@ class _BookingRequestCard extends StatelessWidget {
             Column(
               children: [
                 _JobLocationRow(
-                  label: 'Pickup',
+                  label: AppLocalizations.of(context)!.brokerHomePickup,
                   value: pickupText,
                   iconColor: AppColors.brandBright,
                 ),
                 const SizedBox(height: 8),
                 _JobLocationRow(
-                  label: 'Drop',
+                  label: AppLocalizations.of(context)!.brokerHomeDrop,
                   value: dropText,
                   iconColor: AppColors.dangerIcon,
                 ),
@@ -1124,21 +1136,21 @@ class _BookingRequestCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _JobMetricTile(
-                    label: 'Distance',
+                    label: AppLocalizations.of(context)!.brokerHomeDistance,
                     value: _distanceText(request.distance),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _JobMetricTile(
-                    label: 'Weight',
+                    label: AppLocalizations.of(context)!.brokerHomeWeight,
                     value: request.weight.trim().isEmpty ? '-' : request.weight,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _JobMetricTile(
-                    label: 'Client',
+                    label: AppLocalizations.of(context)!.brokerHomeClient,
                     value: request.clientName,
                   ),
                 ),
@@ -1160,7 +1172,7 @@ class _BookingRequestCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: busy ? null : onAssign,
                   icon: const Icon(AppIcons.local_shipping_rounded, size: 17),
-                  label: const Text('Assign Driver & Truck'),
+                  label: Text(AppLocalizations.of(context)!.brokerHomeAssignDriverTruck),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.brand,
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1173,7 +1185,7 @@ class _BookingRequestCard extends StatelessWidget {
             ] else if (status == 'countered') ...[
               _InlineStatusNote(
                 icon: AppIcons.schedule_rounded,
-                text: 'Waiting for client response to your $amountText offer',
+                text: l10n.brokerHomeWaitingClientResponse(amountText),
                 color: AppColors.warningText,
                 backgroundColor: AppColors.warningFill,
                 borderColor: AppColors.warningBorder,
@@ -1182,7 +1194,7 @@ class _BookingRequestCard extends StatelessWidget {
                 !showConfirmActions) ...[
               _InlineStatusNote(
                 icon: AppIcons.schedule_rounded,
-                text: 'You accepted - waiting for the client to confirm',
+                text: l10n.brokerHomeYouAcceptedWaiting,
                 color: AppColors.accentBlue,
                 backgroundColor: const Color(0xFFEAF4FB),
                 borderColor: AppColors.accentBlueBorder,
@@ -1192,7 +1204,7 @@ class _BookingRequestCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _JobActionButton(
-                      label: 'Confirm',
+                      label: AppLocalizations.of(context)!.brokerHomeConfirm,
                       icon: AppIcons.check_circle_outline_rounded,
                       color: AppColors.brand,
                       borderColor: AppColors.successBorder,
@@ -1203,7 +1215,7 @@ class _BookingRequestCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _JobActionButton(
-                      label: 'Decline',
+                      label: AppLocalizations.of(context)!.brokerHomeDecline,
                       icon: AppIcons.cancel_outlined,
                       color: AppColors.textSecondary,
                       borderColor: AppColors.line,
@@ -1214,15 +1226,14 @@ class _BookingRequestCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               _ActionHint(
-                text:
-                    'The client accepted at $amountText - confirm to finalize the booking.',
+                text: l10n.brokerHomeClientAcceptedConfirm(amountText),
               ),
             ] else if (showPrimaryActions) ...[
               Row(
                 children: [
                   Expanded(
                     child: _JobActionButton(
-                      label: 'Accept',
+                      label: AppLocalizations.of(context)!.brokerHomeAccept,
                       icon: AppIcons.check_circle_outline_rounded,
                       color: AppColors.brand,
                       borderColor: AppColors.successBorder,
@@ -1234,7 +1245,7 @@ class _BookingRequestCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _JobActionButton(
-                        label: 'Change Fare',
+                        label: AppLocalizations.of(context)!.brokerHomeChangeFare2,
                         icon: AppIcons.currency_rupee_rounded,
                         color: AppColors.accentBlue,
                         borderColor: AppColors.accentBlueBorder,
@@ -1245,7 +1256,7 @@ class _BookingRequestCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _JobActionButton(
-                      label: 'Decline',
+                      label: AppLocalizations.of(context)!.brokerHomeDecline,
                       icon: AppIcons.cancel_outlined,
                       color: AppColors.textSecondary,
                       borderColor: AppColors.line,
@@ -1257,8 +1268,8 @@ class _BookingRequestCard extends StatelessWidget {
               const SizedBox(height: 6),
               _ActionHint(
                 text: counterLimitReached
-                    ? 'You have used your fare changes - accept or decline instead.'
-                    : 'Your offer of $amountText is live - accept to lock it in, or change fare/decline.',
+                    ? l10n.brokerHomeFareChangesUsed
+                    : l10n.brokerHomeOfferLive(amountText),
               ),
             ] else ...[
               SizedBox(
@@ -1266,7 +1277,7 @@ class _BookingRequestCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onTap,
                   icon: const Icon(AppIcons.open_in_new_rounded, size: 16),
-                  label: const Text('Review request'),
+                  label: Text(AppLocalizations.of(context)!.brokerHomeReviewRequest),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.brand,
                     side: const BorderSide(color: AppColors.brandBorder),
@@ -1330,6 +1341,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driversAsync = ref.watch(
       brokerDriversApiProvider(_BrokerHomeScreenState._driversQuery),
     );
@@ -1356,7 +1368,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: driversAsync.when(
-            loading: () => const _AssignmentLoadingState(),
+            loading: () => _AssignmentLoadingState(),
             error: (error, _) => _AssignmentErrorState(
               message: error.toString().replaceFirst('Exception: ', ''),
               onRetry: () {
@@ -1368,7 +1380,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
               },
             ),
             data: (drivers) => trucksAsync.when(
-              loading: () => const _AssignmentLoadingState(),
+              loading: () => _AssignmentLoadingState(),
               error: (error, _) => _AssignmentErrorState(
                 message: error.toString().replaceFirst('Exception: ', ''),
                 onRetry: () {
@@ -1420,7 +1432,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Assign Driver & Truck',
+                    AppLocalizations.of(context)!.brokerHomeAssignDriverTruck,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w900,
@@ -1428,7 +1440,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${_bookingRef(widget.request)} - choose an idle driver and truck.',
+                    AppLocalizations.of(context)!.brokerHomeChooseAnIdleDriverAndTruck(_bookingRef(widget.request)),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -1440,7 +1452,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         ),
         const SizedBox(height: 18),
         _AssignmentDropdown<BrokerDriver>(
-          label: 'Driver',
+          label: AppLocalizations.of(context)!.brokerHomeDriver,
           icon: AppIcons.person_rounded,
           value: selectedDriver?.id,
           items: drivers,
@@ -1465,7 +1477,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         ),
         const SizedBox(height: 12),
         _AssignmentDropdown<BrokerVehicle>(
-          label: 'Truck',
+          label: AppLocalizations.of(context)!.brokerHomeTruck,
           icon: AppIcons.fire_truck_rounded,
           value: selectedTruck?.id,
           items: trucks,
@@ -1481,7 +1493,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
         if (!canConfirm) ...[
           const SizedBox(height: 10),
           Text(
-            'Select one idle driver and one idle truck to continue.',
+            AppLocalizations.of(context)!.brokerHomeSelectOneIdleDriverAndOneIdle,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.dangerText),
@@ -1495,7 +1507,7 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                 onPressed: _submitting
                     ? null
                     : () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.brokerHomeCancel),
               ),
             ),
             const SizedBox(width: 10),
@@ -1517,7 +1529,11 @@ class _HomeAssignmentSheetState extends ConsumerState<_HomeAssignmentSheet> {
                       }
                     : null,
                 style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
-                child: Text(_submitting ? 'Sending...' : 'Send Assignment'),
+                child: Text(
+                    _submitting
+                        ? AppLocalizations.of(context)!.brokerHomeSending
+                        : AppLocalizations.of(context)!
+                            .brokerHomeSendAssignment),
               ),
             ),
           ],
@@ -1647,6 +1663,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedExists = items.any((item) => idOf(item) == value);
     return DropdownButtonFormField<String>(
       initialValue: selectedExists ? value : null,
@@ -1661,7 +1678,7 @@ class _AssignmentDropdown<T> extends StatelessWidget {
         color: AppColors.textSecondary,
       ),
       decoration: brokerFieldDecoration(labelText: label, prefixIcon: icon),
-      hint: Text('Select ${label.toLowerCase()}'),
+      hint: Text(l10n.brokerHomeSelect(label.toLowerCase())),
       selectedItemBuilder: (context) => [
         for (final item in items)
           Align(
@@ -1725,10 +1742,11 @@ class _AssignmentDropdown<T> extends StatelessWidget {
 }
 
 class _AssignmentLoadingState extends StatelessWidget {
-  const _AssignmentLoadingState();
+  _AssignmentLoadingState();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return const SizedBox(
       height: 180,
       child: Center(child: CircularProgressIndicator()),
@@ -1744,12 +1762,13 @@ class _AssignmentErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Could not load assignment options',
+          l10n.brokerHomeCouldNotLoadAssignmentOptions,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
@@ -1768,7 +1787,7 @@ class _AssignmentErrorState extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(AppIcons.refresh_rounded),
-            label: const Text('Retry'),
+            label: Text(l10n.brokerHomeRetry),
             style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
           ),
         ),
@@ -1784,6 +1803,7 @@ class _TruckTypeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1815,6 +1835,7 @@ class _JobLocationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1866,6 +1887,7 @@ class _JobMetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       constraints: const BoxConstraints(minHeight: 50),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
@@ -1909,6 +1931,7 @@ class _NegotiationHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(11),
@@ -1928,7 +1951,7 @@ class _NegotiationHistory extends StatelessWidget {
               ),
               const SizedBox(width: 5),
               Text(
-                'NEGOTIATION HISTORY',
+                l10n.brokerHomeNEGOTIATIONHISTORY,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.textTertiary,
                   fontSize: 10,
@@ -1943,7 +1966,9 @@ class _NegotiationHistory extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    entry.by == 'broker' ? 'You offered' : 'Client offered',
+                    entry.by == 'broker'
+                        ? AppLocalizations.of(context)!.brokerHomeYouOffered
+                        : AppLocalizations.of(context)!.brokerHomeClientOffered,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
@@ -1986,6 +2011,7 @@ class _JobActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: loading
@@ -2017,6 +2043,7 @@ class _ActionHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Text(
       text,
       textAlign: TextAlign.center,
@@ -2046,6 +2073,7 @@ class _InlineStatusNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2081,6 +2109,7 @@ class _EmptyBookingsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -2136,6 +2165,7 @@ class _AvatarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final photo = imageUrl?.trim() ?? '';
     final hasPhoto = photo.startsWith('http');
 
@@ -2174,9 +2204,9 @@ class _AvatarButton extends StatelessWidget {
                 ? Image.network(
                     photo,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, _, _) => const _AvatarPlaceholder(),
+                    errorBuilder: (context, _, _) => _AvatarPlaceholder(),
                   )
-                : const _AvatarPlaceholder(),
+                : _AvatarPlaceholder(),
           ),
         ),
       ),
@@ -2187,10 +2217,11 @@ class _AvatarButton extends StatelessWidget {
 /// Platform-style placeholder (Uber/Ola/Rapido): neutral slate disc with a
 /// dark person glyph — no brand color, lets the photo be the identity.
 class _AvatarPlaceholder extends StatelessWidget {
-  const _AvatarPlaceholder();
+  _AvatarPlaceholder();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       alignment: Alignment.center,
       color: const Color(0xFFE8EDF3),
@@ -2211,6 +2242,7 @@ class _NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),

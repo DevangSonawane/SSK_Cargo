@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/network/api_client.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/chat_models.dart';
 
 class BookingChatView extends ConsumerStatefulWidget {
@@ -363,7 +364,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
               content: Text(
                 messageText?.isNotEmpty == true
                     ? messageText!
-                    : 'Message could not be sent.',
+                    : AppLocalizations.of(context)!.chatMessageNotSent,
               ),
             ),
           );
@@ -455,6 +456,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isLocked = _isLocked;
 
@@ -466,7 +468,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
               : _loadError
               ? Center(
                   child: Text(
-                    'Could not load this chat.',
+                    l10n.chatThreadLoadError,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF667085),
                     ),
@@ -475,7 +477,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
               : _messages.isEmpty
               ? Center(
                   child: Text(
-                    'No messages yet.',
+                    l10n.chatNoMessagesYet,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF667085),
                     ),
@@ -502,7 +504,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
             child: Padding(
               padding: const EdgeInsets.only(left: 2, top: 2),
               child: Text(
-                'Typing...',
+                l10n.chatTypingIndicator,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF667085),
                   fontStyle: FontStyle.italic,
@@ -533,7 +535,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'This trip is complete — the chat has closed.',
+                      l10n.chatTripClosedNotice,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF667085),
@@ -592,7 +594,7 @@ class _BookingChatViewState extends ConsumerState<BookingChatView> {
                     onChanged: _handleTyping,
                     onSubmitted: (_) => _sendMessage(),
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: l10n.chatTypeMessageHint,
                       filled: true,
                       fillColor: const Color(0xFFF5F7FB),
                       border: OutlineInputBorder(
@@ -650,6 +652,7 @@ class _ChatMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isMine =
         chatReadString(message, const ['senderId', 'sender_id', 'user_id']) ==
         currentUserId;
@@ -718,7 +721,7 @@ class _ChatMessageBubble extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'SSK Assistant',
+                        l10n.chatAssistantName,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: const Color(0xFF7F56D9),
                           fontWeight: FontWeight.w700,
@@ -737,7 +740,7 @@ class _ChatMessageBubble extends StatelessWidget {
                 if ((!isMine && (isBot || senderName.isNotEmpty)))
                   const SizedBox(height: 4),
                 Text(
-                  messageText.isEmpty ? 'Message' : messageText,
+                  messageText.isEmpty ? l10n.chatMessageFallback : messageText,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isMine ? Colors.white : const Color(0xFF101828),
                     height: 1.35,
@@ -757,7 +760,7 @@ class _ChatMessageBubble extends StatelessWidget {
                 ),
                 if (isMine && isRead)
                   Text(
-                    'Read',
+                    l10n.chatReadReceipt,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Colors.white70,
                       fontSize: 10,

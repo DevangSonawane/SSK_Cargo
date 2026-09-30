@@ -12,6 +12,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/kyc_status_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/digilocker_verification_card.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 enum _KycStep { details, documents, review, submitted }
@@ -106,13 +107,6 @@ class _DriverKycRegistrationScreenState
     ),
   ];
 
-  static const _stepLabels = <String>[
-    'Details',
-    'Documents',
-    'Review',
-    'Submit',
-  ];
-
   bool _isApprovedStatus(String status) {
     return status.contains('verified') ||
         status.contains('approved') ||
@@ -132,9 +126,14 @@ class _DriverKycRegistrationScreenState
   /// Web `needsFallback` (any): photo uploads are only useful for the
   /// manual-review fallback, so the uploads card stays hidden until a
   /// document actually needs it.
-  bool get _digiNeedsFallback => digilockerRequiredDocs(
-    'driver',
-  ).any((key) => const {'missing', 'failed', 'error', 'loading'}.contains(_digiStatuses[key]));
+  bool get _digiNeedsFallback => digilockerRequiredDocs('driver').any(
+    (key) => const {
+      'missing',
+      'failed',
+      'error',
+      'loading',
+    }.contains(_digiStatuses[key]),
+  );
 
   void _onDigiChanged(DigilockerVerificationSnapshot snapshot) {
     _digiValues = snapshot.values;
@@ -375,8 +374,8 @@ class _DriverKycRegistrationScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to submit KYC.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.driverKycSignInToSubmit),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -452,8 +451,10 @@ class _DriverKycRegistrationScreenState
       if (session == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please sign in again to upload documents.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.driverKycSignInToUpload,
+            ),
             backgroundColor: AppColors.dangerIcon,
           ),
         );
@@ -492,8 +493,8 @@ class _DriverKycRegistrationScreenState
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to pick document right now.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.driverKycPickFailed),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -505,6 +506,7 @@ class _DriverKycRegistrationScreenState
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -521,7 +523,7 @@ class _DriverKycRegistrationScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      document.title,
+                      _driverKycDocumentTitle(l10n, document),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -529,7 +531,7 @@ class _DriverKycRegistrationScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Choose how you want to upload this document.',
+                      l10n.driverKycChooseHowYouWantToUploadThisDocument,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -537,7 +539,7 @@ class _DriverKycRegistrationScreenState
                     const SizedBox(height: 16),
                     _SheetAction(
                       icon: AppIcons.photo_camera_rounded,
-                      label: 'Camera',
+                      label: l10n.driverKycCamera,
                       onTap: () {
                         Navigator.of(context).pop();
                         _pickDocument(document, ImageSource.camera);
@@ -546,7 +548,7 @@ class _DriverKycRegistrationScreenState
                     const SizedBox(height: 10),
                     _SheetAction(
                       icon: AppIcons.photo_library_rounded,
-                      label: 'Gallery',
+                      label: l10n.driverKycGallery,
                       onTap: () {
                         Navigator.of(context).pop();
                         _pickDocument(document, ImageSource.gallery);
@@ -555,7 +557,7 @@ class _DriverKycRegistrationScreenState
                     const SizedBox(height: 10),
                     _SheetAction(
                       icon: AppIcons.close_rounded,
-                      label: 'Cancel',
+                      label: l10n.driverKycCancel,
                       onTap: () => Navigator.of(context).pop(),
                       muted: true,
                     ),
@@ -577,6 +579,7 @@ class _DriverKycRegistrationScreenState
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -601,7 +604,7 @@ class _DriverKycRegistrationScreenState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Document preview',
+                            l10n.driverKycDocumentPreview,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -639,7 +642,8 @@ class _DriverKycRegistrationScreenState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  attachment.fileName ?? 'Uploaded file',
+                                  attachment.fileName ??
+                                      l10n.driverKycUploadedFile,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w700,
@@ -648,7 +652,8 @@ class _DriverKycRegistrationScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  attachment.sourceLabel ?? 'Upload',
+                                  attachment.sourceLabel ??
+                                      l10n.driverKycUpload,
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColors.textSecondary,
@@ -671,9 +676,9 @@ class _DriverKycRegistrationScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Close',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                      child: Text(
+                        l10n.driverKycClose,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ],
@@ -688,6 +693,13 @@ class _DriverKycRegistrationScreenState
 
   // ignore: unused_element
   Widget _buildStepper() {
+    final l10n = AppLocalizations.of(context)!;
+    final stepLabels = <String>[
+      l10n.driverKycStepDetails,
+      l10n.driverKycStepDocuments,
+      l10n.driverKycStepReview,
+      l10n.driverKycStepSubmit,
+    ];
     final activeIndex = switch (_step) {
       _KycStep.details => 0,
       _KycStep.documents => 1,
@@ -697,7 +709,7 @@ class _DriverKycRegistrationScreenState
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stepWidth = constraints.maxWidth / _stepLabels.length;
+        final stepWidth = constraints.maxWidth / stepLabels.length;
         final lineInset = stepWidth / 2;
 
         return SizedBox(
@@ -710,7 +722,7 @@ class _DriverKycRegistrationScreenState
                 top: 22,
                 child: Row(
                   children: [
-                    for (var i = 0; i < _stepLabels.length - 1; i++) ...[
+                    for (var i = 0; i < stepLabels.length - 1; i++) ...[
                       Expanded(
                         child: Container(
                           height: 2,
@@ -725,10 +737,10 @@ class _DriverKycRegistrationScreenState
               ),
               Row(
                 children: [
-                  for (var i = 0; i < _stepLabels.length; i++) ...[
+                  for (var i = 0; i < stepLabels.length; i++) ...[
                     Expanded(
                       child: _StepperItem(
-                        label: _stepLabels[i],
+                        label: stepLabels[i],
                         index: i,
                         activeIndex: activeIndex,
                       ),
@@ -775,6 +787,7 @@ class _DriverKycRegistrationScreenState
   }
 
   Widget _buildReviewStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploadedItems = _kycDocuments
         .map(
           (doc) =>
@@ -786,53 +799,53 @@ class _DriverKycRegistrationScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(
-          title: 'Review Your Information',
-          subtitle: 'Please verify everything before submitting.',
+          title: l10n.driverKycReviewYourInformation,
+          subtitle: l10n.driverKycPleaseVerifyEverythingBeforeSubmitting,
         ),
         const SizedBox(height: 16),
         _CardSection(
-          title: 'Driver Information',
+          title: l10n.driverKycDriverInformation,
           child: Column(
             children: [
               _ReviewFieldRow(
-                label: 'PAN Number',
+                label: l10n.driverKycPANNumber,
                 value: _panController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _panController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Date of Birth',
+                label: l10n.driverKycDateOfBirth,
                 value: _dobController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _dobController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'License Number',
+                label: l10n.driverKycLicenseNumber,
                 value: _licenseController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _licenseController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Aadhaar Number',
+                label: l10n.driverKycAadhaarNumber,
                 value: _aadhaarController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _aadhaarController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Vehicle Registration Number',
+                label: l10n.driverKycVehicleRegistrationNumber,
                 value: _vehicleRegController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _vehicleRegController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Vehicle Insurance Number',
+                label: l10n.driverKycVehicleInsuranceNumber,
                 value: _vehicleInsuranceController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? l10n.driverKycNotProvided
                     : _vehicleInsuranceController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
@@ -841,13 +854,13 @@ class _DriverKycRegistrationScreenState
         ),
         const SizedBox(height: 14),
         _CardSection(
-          title: 'Uploaded Documents',
+          title: l10n.driverKycUploadedDocuments,
           child: Column(
             children: [
               for (var i = 0; i < uploadedItems.length; i++) ...[
                 _ReviewDocumentRow(
                   document: uploadedItems[i].key,
-                  title: uploadedItems[i].key.title,
+                  title: _driverKycDocumentTitle(l10n, uploadedItems[i].key),
                   attachment: uploadedItems[i].value,
                   onView: () =>
                       _showAttachmentPreview(uploadedItems[i].key.key),
@@ -1013,7 +1026,7 @@ class _DriverKycRegistrationScreenState
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    'Verification Details',
+                    AppLocalizations.of(context)!.driverKycVerificationDetails,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: AppColors.textHeading,
                       fontSize: 20,
@@ -1027,7 +1040,7 @@ class _DriverKycRegistrationScreenState
                 icon: AppIcons.verified_rounded,
                 iconColor: AppColors.brandBright,
                 iconBackground: AppColors.brandTint,
-                label: 'Current Status',
+                label: AppLocalizations.of(context)!.driverKycCurrentStatus,
                 value: currentStatus,
                 valueColor: statusColor,
                 valueBadge: isApproved,
@@ -1036,24 +1049,26 @@ class _DriverKycRegistrationScreenState
                 icon: AppIcons.calendar_month_outlined,
                 iconColor: AppColors.brand,
                 iconBackground: AppColors.brandTint,
-                label: 'Submitted Date',
+                label: AppLocalizations.of(context)!.driverKycSubmittedDate,
                 value: _submittedAt != null
                     ? _formatDateTime(_submittedAt!)
-                    : 'Not available',
+                    : AppLocalizations.of(context)!.driverKycNotAvailable,
               ),
               _verificationInfoRow(
                 icon: AppIcons.badge_outlined,
                 iconColor: AppColors.brand,
                 iconBackground: AppColors.brandTint,
-                label: 'Submission ID',
-                value: _submissionId ?? 'Not available',
+                label: AppLocalizations.of(context)!.driverKycSubmissionID,
+                value:
+                    _submissionId ??
+                    AppLocalizations.of(context)!.driverKycNotAvailable,
               ),
               if (_reviewedAt != null)
                 _verificationInfoRow(
                   icon: AppIcons.schedule_outlined,
                   iconColor: AppColors.warningText,
                   iconBackground: AppColors.warningFill,
-                  label: 'Reviewed At',
+                  label: AppLocalizations.of(context)!.driverKycReviewedAt,
                   value: _formatDateTime(_reviewedAt!),
                 ),
             ],
@@ -1275,8 +1290,7 @@ class _DriverKycRegistrationScreenState
                     'date_of_birth': _dobController.text,
                     'license_number': _licenseController.text,
                     'aadhaar_number': _aadhaarController.text,
-                    'vehicle_registration_number':
-                        _vehicleRegController.text,
+                    'vehicle_registration_number': _vehicleRegController.text,
                     'vehicle_insurance_number':
                         _vehicleInsuranceController.text,
                   },
@@ -1295,11 +1309,13 @@ class _DriverKycRegistrationScreenState
                   // Web parity: only the documents DigiLocker couldn't
                   // confirm show a photo card — verified ones never show a
                   // "Not uploaded" row.
-                  final fallbackDocs = _kycDocuments.where((doc) {
-                    final key = digiDocKeyForUploadKey(doc.key);
-                    return key != null &&
-                        digiNeedsFallback(_digiStatuses[key]);
-                  }).toList(growable: false);
+                  final fallbackDocs = _kycDocuments
+                      .where((doc) {
+                        final key = digiDocKeyForUploadKey(doc.key);
+                        return key != null &&
+                            digiNeedsFallback(_digiStatuses[key]);
+                      })
+                      .toList(growable: false);
                   return Column(
                     children: [
                       for (var i = 0; i < fallbackDocs.length; i++) ...[
@@ -1308,8 +1324,7 @@ class _DriverKycRegistrationScreenState
                           attachment:
                               _attachments[fallbackDocs[i].key] ??
                               const _KycAttachment(),
-                          onUpload: () =>
-                              _showUploadOptions(fallbackDocs[i]),
+                          onUpload: () => _showUploadOptions(fallbackDocs[i]),
                           onCamera: () => _pickDocument(
                             fallbackDocs[i],
                             ImageSource.camera,
@@ -1320,8 +1335,7 @@ class _DriverKycRegistrationScreenState
                           ),
                           onView: () =>
                               _showAttachmentPreview(fallbackDocs[i].key),
-                          onReplace: () =>
-                              _showUploadOptions(fallbackDocs[i]),
+                          onReplace: () => _showUploadOptions(fallbackDocs[i]),
                         ),
                         if (i != fallbackDocs.length - 1)
                           const SizedBox(height: 12),
@@ -1383,11 +1397,12 @@ class _DriverKycRegistrationScreenState
               // Web parity: the summary lists only documents that went
               // through the manual-review fallback — verified ones never
               // show a "Not uploaded" row.
-              final submittedDocs = _kycDocuments.where((doc) {
-                final key = digiDocKeyForUploadKey(doc.key);
-                return key != null &&
-                    digiNeedsFallback(_digiStatuses[key]);
-              }).toList(growable: false);
+              final submittedDocs = _kycDocuments
+                  .where((doc) {
+                    final key = digiDocKeyForUploadKey(doc.key);
+                    return key != null && digiNeedsFallback(_digiStatuses[key]);
+                  })
+                  .toList(growable: false);
               return _SubmittedDocumentsCard(
                 licenseNumber: _licenseController.text.trim(),
                 aadhaarNumber: _aadhaarController.text.trim(),
@@ -1497,7 +1512,8 @@ class _KycStatusSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visuals = _kycStatusVisuals(status);
+    final l10n = AppLocalizations.of(context)!;
+    final visuals = _kycStatusVisuals(status, l10n);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1656,7 +1672,7 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onEdit,
                   icon: const Icon(AppIcons.edit_outlined, size: 15),
-                  label: const Text('Edit'),
+                  label: Text(AppLocalizations.of(context)!.driverKycEdit),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.brand,
                     textStyle: const TextStyle(fontWeight: FontWeight.w900),
@@ -1679,22 +1695,28 @@ class _SubmittedDocumentsCard extends StatelessWidget {
                   childAspectRatio: 1.55,
                   children: [
                     _SubmittedFieldTile(
-                      label: 'Driving License',
+                      label: AppLocalizations.of(
+                        context,
+                      )!.driverKycDrivingLicense,
                       icon: AppIcons.credit_card_rounded,
                       value: licenseNumber,
                     ),
                     _SubmittedFieldTile(
-                      label: 'Aadhaar Number',
+                      label: AppLocalizations.of(
+                        context,
+                      )!.driverKycAadhaarNumber,
                       icon: AppIcons.fingerprint_rounded,
                       value: aadhaarNumber,
                     ),
                     _SubmittedFieldTile(
-                      label: 'Vehicle Reg.',
+                      label: AppLocalizations.of(
+                        context,
+                      )!.driverKycVehicleRegShort,
                       icon: AppIcons.local_shipping_outlined,
                       value: vehicleRegistration,
                     ),
                     _SubmittedFieldTile(
-                      label: 'Insurance',
+                      label: AppLocalizations.of(context)!.driverKycInsurance,
                       icon: AppIcons.shield_outlined,
                       value: insuranceNumber,
                     ),
@@ -1790,6 +1812,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploaded = attachment.isUploaded;
 
     return Container(
@@ -1813,7 +1836,9 @@ class _SubmittedDocumentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${document.title} Photo',
+                  l10n.driverKycDocumentPhoto(
+                    _driverKycDocumentTitle(l10n, document),
+                  ),
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
@@ -1822,7 +1847,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  uploaded ? 'Uploaded' : 'Not uploaded',
+                  uploaded ? l10n.driverKycUploaded : l10n.driverKycNotUploaded,
                   style: TextStyle(
                     color: uploaded
                         ? AppColors.brandDark
@@ -1838,7 +1863,7 @@ class _SubmittedDocumentTile extends StatelessWidget {
             TextButton.icon(
               onPressed: onView,
               icon: const Icon(AppIcons.visibility_outlined, size: 14),
-              label: const Text('View'),
+              label: Text(AppLocalizations.of(context)!.driverKycView),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.brand,
                 textStyle: const TextStyle(fontWeight: FontWeight.w900),
@@ -1868,44 +1893,43 @@ class _KycStatusVisuals {
   final Color background;
 }
 
-_KycStatusVisuals _kycStatusVisuals(String status) {
+_KycStatusVisuals _kycStatusVisuals(String status, AppLocalizations l10n) {
   if (status.contains('verified') ||
       status.contains('approved') ||
       status.contains('complete')) {
-    return const _KycStatusVisuals(
-      title: 'KYC Verified',
-      subtitle: 'Your driver account is verified and active.',
-      badge: 'VERIFIED',
+    return _KycStatusVisuals(
+      title: l10n.driverKycVerifiedTitle,
+      subtitle: l10n.driverKycVerifiedSubtitle,
+      badge: l10n.driverKycVerifiedBadge,
       icon: AppIcons.verified_rounded,
       color: AppColors.brandDark,
       background: AppColors.brandTint,
     );
   }
   if (status.contains('reject') || status.contains('declin')) {
-    return const _KycStatusVisuals(
-      title: 'KYC Rejected',
-      subtitle: 'Review the reason below and resubmit your documents.',
-      badge: 'REJECTED',
+    return _KycStatusVisuals(
+      title: l10n.driverKycRejectedTitle,
+      subtitle: l10n.driverKycRejectedSubtitle,
+      badge: l10n.driverKycRejectedBadge,
       icon: AppIcons.error_outline_rounded,
       color: AppColors.dangerText,
       background: AppColors.dangerFill,
     );
   }
   if (status.contains('submit') || status.contains('review')) {
-    return const _KycStatusVisuals(
-      title: 'KYC Under Review',
-      subtitle:
-          'Documents submitted successfully. Review usually takes 24-48 hours.',
-      badge: 'SUBMITTED',
+    return _KycStatusVisuals(
+      title: l10n.driverKycUnderReviewTitle,
+      subtitle: l10n.driverKycUnderReviewSubtitle,
+      badge: l10n.driverKycSubmittedBadge,
       icon: AppIcons.hourglass_top_rounded,
       color: AppColors.brand,
       background: AppColors.brandTint,
     );
   }
-  return const _KycStatusVisuals(
-    title: 'Complete Driver KYC',
-    subtitle: 'Submit your identity and vehicle documents for verification.',
-    badge: 'PENDING',
+  return _KycStatusVisuals(
+    title: l10n.driverKycCompleteTitle,
+    subtitle: l10n.driverKycCompleteSubtitle,
+    badge: l10n.driverKycPendingBadge,
     icon: AppIcons.badge_outlined,
     color: AppColors.warningText,
     background: AppColors.warningFill,
@@ -1926,6 +1950,15 @@ class _KycDocument {
   final String requiredLabel;
   final String formats;
   final String maxSize;
+}
+
+String _driverKycDocumentTitle(AppLocalizations l10n, _KycDocument document) {
+  return switch (document.key) {
+    'pan_photo_url' => l10n.driverKycPanCard,
+    'license_photo_url' => l10n.driverKycDrivingLicense,
+    'aadhaar_photo_url' => l10n.driverKycAadhaarCard,
+    _ => document.title,
+  };
 }
 
 class _KycAttachment {
@@ -2171,6 +2204,7 @@ class _KycUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploaded = attachment.isUploaded;
     final borderColor = uploaded ? AppColors.successBorder : AppColors.divider;
     final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
@@ -2220,7 +2254,7 @@ class _KycUploadCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            document.title,
+                            _driverKycDocumentTitle(l10n, document),
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
@@ -2233,14 +2267,16 @@ class _KycUploadCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         _TinyTag(
-                          label: uploaded ? 'Uploaded' : document.requiredLabel,
+                          label: uploaded
+                              ? l10n.driverKycUploaded
+                              : l10n.driverKycRequired,
                           uploaded: uploaded,
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Supported formats: ${document.formats}',
+                      l10n.driverKycSupportedFormats(document.formats),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2250,7 +2286,7 @@ class _KycUploadCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      document.maxSize,
+                      l10n.driverKycMaxSize10Mb,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2446,10 +2482,13 @@ class _ReviewDocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploaded = attachment.isUploaded;
     final hasPreview =
         attachment.path != null && File(attachment.path!).existsSync();
-    final subtitle = uploaded ? 'Uploaded' : 'Waiting for upload';
+    final subtitle = uploaded
+        ? l10n.driverKycUploaded
+        : l10n.driverKycWaitingForUpload;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(

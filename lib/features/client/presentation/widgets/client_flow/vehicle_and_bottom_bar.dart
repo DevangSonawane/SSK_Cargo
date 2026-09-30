@@ -73,7 +73,7 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Select your vehicle',
+                    AppLocalizations.of(context)!.clientSelectVehicle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -124,7 +124,14 @@ class _SelectVehicleScreenState extends ConsumerState<SelectVehicleScreen> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
-                      child: Text('Proceed with ${selected.label}'),
+                      child: Text(
+                        AppLocalizations.of(context)!.clientProceedWith(
+                          localizedVehicleOptionLabel(
+                            AppLocalizations.of(context)!,
+                            selected,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -194,7 +201,10 @@ class _VehicleOptionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    option.label,
+                    localizedVehicleOptionLabel(
+                      AppLocalizations.of(context)!,
+                      option,
+                    ),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -226,7 +236,9 @@ class _VehicleOptionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  selected ? 'Selected' : '',
+                  selected
+                      ? AppLocalizations.of(context)!.clientVehicleSelected
+                      : '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: selected ? accent : Colors.transparent,
                     fontSize: 10,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
@@ -80,6 +81,7 @@ class _ProfileBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       height: width < 390 ? 188 : 206,
@@ -112,7 +114,7 @@ class _ProfileBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Profile',
+                    l10n.gpsNavProfile,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontSize: width < 390 ? 22 : 24,
                       fontWeight: FontWeight.w900,
@@ -124,7 +126,7 @@ class _ProfileBanner extends StatelessWidget {
                   SizedBox(
                     width: width * 0.6,
                     child: Text(
-                      'Manage your account and preferences',
+                      l10n.gpsProfileSubtitle,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontSize: width < 390 ? 12.5 : 13.5,
                         height: 1.45,
@@ -157,6 +159,7 @@ class _ProfileContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -180,52 +183,52 @@ class _ProfileContentCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.person_outline_rounded,
-            title: 'Account Details',
-            subtitle: 'View and update your personal information',
+            title: l10n.gpsAccountDetails,
+            subtitle: l10n.gpsAccountDetailsSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.notifications_none_rounded,
-            title: 'Notifications',
-            subtitle: 'Manage your notification preferences',
+            title: l10n.gpsNotifications,
+            subtitle: l10n.gpsNotificationsSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.settings_outlined,
-            title: 'Settings',
-            subtitle: 'App settings and preferences',
+            title: l10n.gpsSettings,
+            subtitle: l10n.gpsSettingsSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.palette_outlined,
-            title: 'Appearance',
-            subtitle: 'Customize app theme and display',
+            title: l10n.gpsAppearance,
+            subtitle: l10n.gpsAppearanceSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.lock_outline_rounded,
-            title: 'Change Password',
-            subtitle: 'Update your account password',
+            title: l10n.gpsChangePassword,
+            subtitle: l10n.gpsChangePasswordSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.help_outline_rounded,
-            title: 'Help & Support',
-            subtitle: 'Get help and contact support',
+            title: l10n.gpsHelpSupport,
+            subtitle: l10n.gpsHelpSupportSubtitle,
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFE8EDF5)),
-          const _ProfileMenuTile(
+          _ProfileMenuTile(
             icon: AppIcons.info_outline_rounded,
-            title: 'About',
-            subtitle: 'App information and policies',
+            title: l10n.gpsAbout,
+            subtitle: l10n.gpsAboutSubtitle,
           ),
           const SizedBox(height: 4),
           _ProfileMenuTile(
             icon: AppIcons.logout_rounded,
-            title: 'Logout',
-            subtitle: 'Sign out from your account',
+            title: l10n.gpsLogout,
+            subtitle: l10n.gpsLogoutSubtitle,
             danger: true,
             onTap: onLogout,
           ),
@@ -406,6 +409,7 @@ class _GpsBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -432,14 +436,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
                   ),
@@ -447,14 +451,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       selected: true,
                       onTap: () => context.go('/gps/profile'),
                     ),

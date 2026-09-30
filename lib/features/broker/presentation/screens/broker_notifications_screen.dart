@@ -10,6 +10,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/data/client_booking_models.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 enum _NotificationTab { all, operations, system, financial }
 
@@ -195,6 +196,7 @@ class _BrokerNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationsAsync = ref.watch(_brokerNotificationsProvider);
     final notifications =
         notificationsAsync.valueOrNull ?? const <ClientNotification>[];
@@ -268,7 +270,7 @@ class _BrokerNotificationsScreenState
     // Only show skeletons on the very first load. Background refreshes keep
     // the existing list on screen so "mark all read" never collapses the UI.
     if (notificationsAsync.isLoading && !notificationsAsync.hasValue) {
-      return const [
+      return [
         _NotificationSkeletonList(),
         SizedBox(height: 24),
       ];
@@ -277,7 +279,7 @@ class _BrokerNotificationsScreenState
       return [
         _NotificationEmptyState(
           icon: AppIcons.inbox_outlined,
-          title: "Couldn't load your notifications",
+          title: AppLocalizations.of(context)!.brokerNotifCouldnTLoadYourNotifications,
           subtitle: notificationsAsync.error
               .toString()
               .replaceFirst('Exception: ', ''),
@@ -288,11 +290,11 @@ class _BrokerNotificationsScreenState
       ];
     }
     if (groups.isEmpty) {
-      return const [
+      return [
         _NotificationEmptyState(
           icon: AppIcons.notifications_none_rounded,
-          title: 'No notifications',
-          subtitle: 'New alerts will appear here.',
+          title: AppLocalizations.of(context)!.brokerNotifNoNotifications,
+          subtitle: AppLocalizations.of(context)!.brokerNotifNewAlertsWillAppearHere,
         ),
         SizedBox(height: 24),
       ];
@@ -338,6 +340,7 @@ class _NotificationsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final subtitle = totalCount == 0
         ? 'No notifications yet'
         : unreadCount > 0
@@ -352,7 +355,7 @@ class _NotificationsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Notifications',
+                l10n.brokerNotifNotifications,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -405,6 +408,7 @@ class _NotificationTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const tabs = [
       (_NotificationTab.all, 'All'),
       (_NotificationTab.operations, 'Ops'),
@@ -510,6 +514,7 @@ class _NotificationTabLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -560,8 +565,9 @@ class _NotificationSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+      padding: EdgeInsets.fromLTRB(4, 4, 4, 10),
       child: Text(
         title,
         style: const TextStyle(
@@ -591,6 +597,7 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final meta = _metaFor(notification);
     final actionLabel = _actionLabel(notification);
     final isRead = effectiveRead ?? notification.isRead;
@@ -717,13 +724,14 @@ class _NotificationCard extends StatelessWidget {
   }
 }
 
-class _NotificationIconChip extends StatelessWidget {  const _NotificationIconChip({required this.meta, required this.isRead});
+class _NotificationIconChip extends StatelessWidget {  _NotificationIconChip({required this.meta, required this.isRead});
 
   final _NotificationMeta meta;
   final bool isRead;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 46,
       height: 46,
@@ -760,6 +768,7 @@ class _NotificationActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -794,7 +803,7 @@ class _NotificationActionButton extends StatelessWidget {
 }
 
 class _NotificationSkeletonList extends StatefulWidget {
-  const _NotificationSkeletonList();
+  _NotificationSkeletonList();
 
   @override
   State<_NotificationSkeletonList> createState() =>
@@ -822,6 +831,7 @@ class _NotificationSkeletonListState extends State<_NotificationSkeletonList>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         for (var i = 0; i < 4; i++) ...[
@@ -910,6 +920,7 @@ class _NotificationEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),

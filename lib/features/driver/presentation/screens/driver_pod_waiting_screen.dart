@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_trip_handoff_utils.dart';
 
@@ -209,6 +210,7 @@ class _DriverPodWaitingScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isRejected = _podStatus == 'rejected';
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -245,7 +247,7 @@ class _DriverPodWaitingScreenState
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    'Delivery review',
+                    l10n.podWaitingTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w900,
@@ -285,7 +287,7 @@ class _DriverPodWaitingScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Proof of delivery rejected',
+                      l10n.podWaitingRejectedTitle,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
@@ -295,7 +297,7 @@ class _DriverPodWaitingScreenState
                     Text(
                       _rejectionReason.isNotEmpty
                           ? _rejectionReason
-                          : 'The customer asked for new photos.',
+                          : l10n.podWaitingNewPhotosFallback,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
@@ -314,8 +316,8 @@ class _DriverPodWaitingScreenState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Upload new photos',
+                        child: Text(
+                          l10n.podWaitingUploadNew,
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
@@ -339,7 +341,7 @@ class _DriverPodWaitingScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Couldn\'t complete the trip',
+                      l10n.podWaitingCouldNotComplete,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -368,8 +370,8 @@ class _DriverPodWaitingScreenState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Try again',
+                        child: Text(
+                          l10n.podWaitingTryAgain,
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
@@ -394,8 +396,8 @@ class _DriverPodWaitingScreenState
                     const SizedBox(height: 16),
                     Text(
                       _completing
-                          ? 'Finishing up...'
-                          : 'Waiting for the customer to review',
+                          ? l10n.podWaitingFinishing
+                          : l10n.podWaitingWaitingReview,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
@@ -403,7 +405,7 @@ class _DriverPodWaitingScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Your proof-of-delivery photos are up — this screen updates automatically the moment they respond.',
+                      l10n.podWaitingPhotosUp,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,

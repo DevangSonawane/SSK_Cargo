@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -39,6 +40,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final currentPassword = _currentPasswordController.text;
     final newPassword = _newPasswordController.text;
     final confirmPassword = _confirmPasswordController.text;
@@ -48,14 +50,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All password fields are required.')),
+        SnackBar(content: Text(l10n.changePasswordAllFieldsRequired)),
       );
       return;
     }
 
     if (newPassword != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New passwords do not match.')),
+        SnackBar(content: Text(l10n.changePasswordMismatch)),
       );
       return;
     }
@@ -73,9 +75,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Password changed successfully. You will be logged out now.',
+            l10n.changePasswordSuccessLoggedOut,
           ),
           backgroundColor: Color(0xFF2FA56E),
           duration: Duration(seconds: 2),
@@ -120,6 +122,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: AppTheme.light,
       child: Scaffold(
@@ -132,7 +135,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             onPressed: () => context.pop(),
             icon: const Icon(AppIcons.arrow_back_rounded),
           ),
-          title: const Text('Change Password'),
+          title: Text(l10n.changePasswordScreenTitle),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -158,8 +161,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _passwordField(
-                        label: 'Current password',
-                        hint: 'Enter your current password',
+                        label: l10n.changePasswordCurrentLabel,
+                        hint: l10n.changePasswordCurrentHint,
                         controller: _currentPasswordController,
                         obscureText: _obscureCurrent,
                         onToggle: () =>
@@ -167,8 +170,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       ),
                       const SizedBox(height: 16),
                       _passwordField(
-                        label: 'New password',
-                        hint: 'Enter your new password',
+                        label: l10n.changePasswordNewLabel,
+                        hint: l10n.changePasswordNewHint,
                         controller: _newPasswordController,
                         obscureText: _obscureNew,
                         onChanged: (_) => setState(() {}),
@@ -181,8 +184,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       ),
                       const SizedBox(height: 18),
                       _passwordField(
-                        label: 'Confirm new password',
-                        hint: 'Confirm your new password',
+                        label: l10n.changePasswordConfirmLabel,
+                        hint: l10n.changePasswordConfirmHint,
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirm,
                         onToggle: () =>
@@ -209,7 +212,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Change Password'),
+                              : Text(l10n.changePasswordSubmitButton),
                         ),
                       ),
                     ],
@@ -320,37 +323,42 @@ class _PasswordStrengthMeter extends StatelessWidget {
     };
   }
 
-  String get _label {
+  String labelOf(AppLocalizations l10n) {
     return switch (_score) {
-      0 => 'Password strength',
-      1 => 'Weak password',
-      2 => 'Fair password',
-      3 => 'Good password',
-      _ => 'Strong password',
+      0 => l10n.changePasswordStrengthTitle,
+      1 => l10n.changePasswordStrengthWeak,
+      2 => l10n.changePasswordStrengthFair,
+      3 => l10n.changePasswordStrengthGood,
+      _ => l10n.changePasswordStrengthStrong,
     };
   }
 
-  String get _hint {
-    if (password.isEmpty) return 'Type a new password to check strength.';
-    if (password.length < 8) return 'Use at least 8 characters.';
+  String hintOf(AppLocalizations l10n) {
+    if (password.isEmpty) return l10n.changePasswordStrengthEmptyHint;
+    if (password.length < 8) return l10n.changePasswordStrengthMinLength;
     if (!RegExp(r'[A-Z]').hasMatch(password)) {
-      return 'Add an uppercase letter.';
+      return l10n.changePasswordStrengthUppercase;
     }
     if (!RegExp(r'[a-z]').hasMatch(password)) {
-      return 'Add a lowercase letter.';
+      return l10n.changePasswordStrengthLowercase;
     }
-    if (!RegExp(r'\d').hasMatch(password)) return 'Add a number.';
+    if (!RegExp(r'\d').hasMatch(password)) {
+      return l10n.changePasswordStrengthNumber;
+    }
     if (!RegExp(r'[^A-Za-z0-9]').hasMatch(password)) {
-      return 'Add a symbol for extra protection.';
+      return l10n.changePasswordStrengthSymbol;
     }
-    return 'Nice. This password has a strong mix.';
+    return l10n.changePasswordStrengthStrongHint;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final score = _score;
     final color = _color;
+    final label = labelOf(l10n);
+    final hint = hintOf(l10n);
 
     return Row(
       children: [
@@ -379,7 +387,7 @@ class _PasswordStrengthMeter extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      _label,
+                      label,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF354267),
                         fontSize: 12,
@@ -400,7 +408,7 @@ class _PasswordStrengthMeter extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                _hint,
+                hint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF5C6B8C),
                   fontSize: 11,

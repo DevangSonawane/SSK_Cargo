@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class BrokerTruckAssignScreen extends ConsumerStatefulWidget {
   const BrokerTruckAssignScreen({super.key, required this.truckId});
@@ -42,8 +43,8 @@ class _BrokerTruckAssignScreenState
       if (!mounted) return;
       context.go('/broker/vehicles');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Driver assigned to truck.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerTruckAssignDriverAssignedToTruck),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -62,6 +63,7 @@ class _BrokerTruckAssignScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
     );
@@ -92,8 +94,8 @@ class _BrokerTruckAssignScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Assign Driver',
+                  Text(
+                    l10n.brokerTruckAssignAssignDriver,
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
@@ -111,8 +113,8 @@ class _BrokerTruckAssignScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Truck',
+                        Text(
+                          l10n.brokerTruckAssignTruck,
                           style: TextStyle(
                             color: AppColors.textTertiary,
                             fontSize: 11,
@@ -135,7 +137,7 @@ class _BrokerTruckAssignScreenState
                   ),
                   const SizedBox(height: 16),
                   driversAsync.when(
-                    loading: () => const Padding(
+                    loading: () => Padding(
                       padding: EdgeInsets.symmetric(vertical: 20),
                       child: Center(child: CircularProgressIndicator()),
                     ),
@@ -151,8 +153,8 @@ class _BrokerTruckAssignScreenState
                           )
                           .toList();
                       if (activeDrivers.isEmpty) {
-                        return const Text(
-                          'No active drivers available right now.',
+                        return Text(
+                          AppLocalizations.of(context)!.brokerTruckAssignNoActiveDriversAvailableRightNow,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w700,
@@ -172,7 +174,7 @@ class _BrokerTruckAssignScreenState
                           color: AppColors.textSecondary,
                         ),
                         decoration: brokerFieldDecoration(
-                          labelText: 'Driver',
+                          labelText: AppLocalizations.of(context)!.brokerTruckAssignDriver,
                           prefixIcon: AppIcons.person_rounded,
                         ),
                         items: [
@@ -203,7 +205,7 @@ class _BrokerTruckAssignScreenState
                           onPressed: _submitting
                               ? null
                               : () => context.go('/broker/vehicles'),
-                          child: const Text('Cancel'),
+                          child: Text(AppLocalizations.of(context)!.brokerTruckAssignCancel),
                         ),
                       ),
                       const SizedBox(width: 12),

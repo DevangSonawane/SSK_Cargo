@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_trip_handoff_utils.dart';
@@ -88,14 +89,10 @@ class _DriverDeliveryCompletionFlowScreenState
   }
 
   String get _rawStatus => _str(const ['status']).toLowerCase();
-  String get _paymentStatus => _str(const [
-    'paymentStatus',
-    'payment_status',
-  ]).toLowerCase();
-  String get _podStatus => _str(const [
-    'podStatus',
-    'pod_status',
-  ]).toLowerCase();
+  String get _paymentStatus =>
+      _str(const ['paymentStatus', 'payment_status']).toLowerCase();
+  String get _podStatus =>
+      _str(const ['podStatus', 'pod_status']).toLowerCase();
   String get _podRejectionReason => _str(const [
     'podRejectionReason',
     'pod_rejection_reason',
@@ -127,12 +124,7 @@ class _DriverDeliveryCompletionFlowScreenState
           final url = _mapStr(json, const ['url', 'src', 'path']);
           if (url.isEmpty) continue;
           final type = _mapStr(json, const ['type', 'mediaType']);
-          out.add(
-            _RemotePod(
-              url: url,
-              isVideo: type.toLowerCase() == 'video',
-            ),
-          );
+          out.add(_RemotePod(url: url, isVideo: type.toLowerCase() == 'video'));
         } else {
           final url = item.toString().trim();
           if (url.isEmpty || url.toLowerCase() == 'null') continue;
@@ -168,10 +160,11 @@ class _DriverDeliveryCompletionFlowScreenState
   String get _dropLocation {
     final drop = _trip['drop'];
     if (drop is Map) {
-      final label = _mapStr(
-        drop.cast<String, dynamic>(),
-        const ['location', 'address', 'name'],
-      );
+      final label = _mapStr(drop.cast<String, dynamic>(), const [
+        'location',
+        'address',
+        'name',
+      ]);
       if (label.isNotEmpty) return label;
     }
     return _str(const ['dropLocation', 'drop_location', 'dropAddress']);
@@ -180,10 +173,11 @@ class _DriverDeliveryCompletionFlowScreenState
   String get _contactPhone {
     final drop = _trip['drop'];
     if (drop is Map) {
-      final phone = _mapStr(
-        drop.cast<String, dynamic>(),
-        const ['contactPhone', 'contact_phone', 'phone'],
-      );
+      final phone = _mapStr(drop.cast<String, dynamic>(), const [
+        'contactPhone',
+        'contact_phone',
+        'phone',
+      ]);
       if (phone.isNotEmpty) return phone;
     }
     return _str(const ['clientPhone', 'client_phone', 'customerPhone']);
@@ -192,10 +186,11 @@ class _DriverDeliveryCompletionFlowScreenState
   String get _contactName {
     final drop = _trip['drop'];
     if (drop is Map) {
-      final name = _mapStr(
-        drop.cast<String, dynamic>(),
-        const ['contactPerson', 'contact_person', 'name'],
-      );
+      final name = _mapStr(drop.cast<String, dynamic>(), const [
+        'contactPerson',
+        'contact_person',
+        'name',
+      ]);
       if (name.isNotEmpty) return name;
     }
     return _str(const ['clientName', 'client_name', 'customerName']);
@@ -407,7 +402,11 @@ class _DriverDeliveryCompletionFlowScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.deliveryFlowSignInContinue,
+          ),
+        ),
       );
       return;
     }
@@ -434,9 +433,9 @@ class _DriverDeliveryCompletionFlowScreenState
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _confirmingArrival = false);
     }
@@ -446,7 +445,11 @@ class _DriverDeliveryCompletionFlowScreenState
     final number = _contactPhone.trim();
     if (number.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact phone number is not available.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.deliveryFlowContactUnavailable,
+          ),
+        ),
       );
       return;
     }
@@ -461,8 +464,8 @@ class _DriverDeliveryCompletionFlowScreenState
   Future<void> _pickImage(ImageSource source) async {
     if (_totalMediaCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You can add up to 6 proof-of-delivery items.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deliveryFlowMaxItems),
         ),
       );
       return;
@@ -486,7 +489,11 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open image picker: $error'),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            )!.deliveryFlowImagePickerError('$error'),
+          ),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -496,8 +503,8 @@ class _DriverDeliveryCompletionFlowScreenState
   Future<void> _pickVideo() async {
     if (_totalMediaCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You can add up to 6 proof-of-delivery items.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deliveryFlowMaxItems),
         ),
       );
       return;
@@ -519,7 +526,11 @@ class _DriverDeliveryCompletionFlowScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open video camera: $error'),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            )!.deliveryFlowVideoCameraError('$error'),
+          ),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -531,7 +542,9 @@ class _DriverDeliveryCompletionFlowScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Add at least ${_podMinRequired - _totalMediaCount} more proof-of-delivery item(s).',
+            AppLocalizations.of(
+              context,
+            )!.deliveryFlowAddMore('${_podMinRequired - _totalMediaCount}'),
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -542,8 +555,10 @@ class _DriverDeliveryCompletionFlowScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to upload delivery photos.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.deliveryFlowSignInUploadPhotos,
+          ),
         ),
       );
       return;
@@ -585,8 +600,10 @@ class _DriverDeliveryCompletionFlowScreenState
         _newMedia.clear();
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Photos/videos uploaded.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.deliveryFlowPhotosUploaded,
+          ),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -610,9 +627,9 @@ class _DriverDeliveryCompletionFlowScreenState
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -620,18 +637,12 @@ class _DriverDeliveryCompletionFlowScreenState
 
   // ---- payments ----
 
-  String get _driverUpiId => _str(const [
-    'driverUpiId',
-    'driver_upi_id',
-    'upiId',
-    'upi_id',
-  ]);
-  String get _driverName =>
-      _str(const ['driverName', 'driver_name']).isNotEmpty
+  String get _driverUpiId =>
+      _str(const ['driverUpiId', 'driver_upi_id', 'upiId', 'upi_id']);
+  String get _driverName => _str(const ['driverName', 'driver_name']).isNotEmpty
       ? _str(const ['driverName', 'driver_name'])
       : 'Driver';
-  String get _companyUpiId =>
-      _str(const ['companyUpiId', 'company_upi_id']);
+  String get _companyUpiId => _str(const ['companyUpiId', 'company_upi_id']);
   String get _companyUpiName {
     final name = _str(const ['companyUpiName', 'company_upi_name']);
     return name.isNotEmpty ? name : 'GadiDost Logistics';
@@ -643,10 +654,8 @@ class _DriverDeliveryCompletionFlowScreenState
     'driverQrUrl',
     'driver_qr_url',
   ]);
-  bool get _razorpayAvailable => _readBool(const [
-    'razorpayQrAvailable',
-    'razorpay_qr_available',
-  ]);
+  bool get _razorpayAvailable =>
+      _readBool(const ['razorpayQrAvailable', 'razorpay_qr_available']);
 
   List<String> get _qrSources => [
     if (_driverUpiId.isNotEmpty) 'personal',
@@ -663,15 +672,16 @@ class _DriverDeliveryCompletionFlowScreenState
 
   String _upiIntent({required String upiId, required String payee}) {
     final amount = (_amountToCollect ?? 0).toStringAsFixed(2);
-    final query = <String, String>{
-      'pa': upiId,
-      'pn': payee,
-      'am': amount,
-      'cu': 'INR',
-      'tn': 'Payment for $_bookingRefSafe',
-    }.entries
-        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
-        .join('&');
+    final query =
+        <String, String>{
+              'pa': upiId,
+              'pn': payee,
+              'am': amount,
+              'cu': 'INR',
+              'tn': 'Payment for $_bookingRefSafe',
+            }.entries
+            .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+            .join('&');
     return 'upi://pay?$query';
   }
 
@@ -778,7 +788,11 @@ class _DriverDeliveryCompletionFlowScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.deliveryFlowSignInContinue,
+          ),
+        ),
       );
       return;
     }
@@ -816,9 +830,9 @@ class _DriverDeliveryCompletionFlowScreenState
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _collectingPayment = false);
     }
@@ -888,9 +902,9 @@ class _DriverDeliveryCompletionFlowScreenState
         ),
         title: Text(
           _bookingRef,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
       ),
       body: SafeArea(
@@ -971,18 +985,18 @@ class _DriverDeliveryCompletionFlowScreenState
         Text(
           'Reached the drop location?',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ),
         if (_dropLocation.isNotEmpty) ...[
           const SizedBox(height: 6),
           Text(
             _dropLocation,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
         const SizedBox(height: 24),
@@ -1004,16 +1018,16 @@ class _DriverDeliveryCompletionFlowScreenState
       children: [
         Text(
           'Upload Proof of Delivery',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
         Text(
           'Add photos or videos of the delivered cargo (at least $_podMinRequired)',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
         ),
         if (_podStatus == 'rejected') ...[
           const SizedBox(height: 12),
@@ -1155,18 +1169,18 @@ class _DriverDeliveryCompletionFlowScreenState
       children: [
         Text(
           'Collect Payment',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
         Text(
           isPartial
               ? 'The client already paid a 20% advance online — collect the remaining balance below.'
               : 'Payment for this delivery is still pending',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 14),
         Container(
@@ -1190,9 +1204,9 @@ class _DriverDeliveryCompletionFlowScreenState
               const SizedBox(height: 6),
               Text(
                 _money(amount),
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -1202,13 +1216,31 @@ class _DriverDeliveryCompletionFlowScreenState
           SegmentedButton<String>(
             segments: [
               if (_driverUpiId.isNotEmpty)
-                const ButtonSegment(value: 'personal', label: Text('Personal')),
+                ButtonSegment(
+                  value: 'personal',
+                  label: Text(
+                    AppLocalizations.of(context)!.deliveryFlowPersonal,
+                  ),
+                ),
               if (_companyUpiId.isNotEmpty)
-                const ButtonSegment(value: 'company', label: Text('Company')),
+                ButtonSegment(
+                  value: 'company',
+                  label: Text(
+                    AppLocalizations.of(context)!.deliveryFlowCompany,
+                  ),
+                ),
               if (_myQrUrl.isNotEmpty)
-                const ButtonSegment(value: 'mine', label: Text('My QR')),
+                ButtonSegment(
+                  value: 'mine',
+                  label: Text(AppLocalizations.of(context)!.deliveryFlowMyQr),
+                ),
               if (_razorpayAvailable)
-                const ButtonSegment(value: 'razorpay', label: Text('Verified')),
+                ButtonSegment(
+                  value: 'razorpay',
+                  label: Text(
+                    AppLocalizations.of(context)!.deliveryFlowVerified,
+                  ),
+                ),
             ],
             selected: {active},
             onSelectionChanged: (selection) {
@@ -1232,13 +1264,17 @@ class _DriverDeliveryCompletionFlowScreenState
                 .valueOrNull
                 ?.tokens
                 .accessToken,
-            label: 'Show this to collect ${_money(amount)}',
+            label: AppLocalizations.of(
+              context,
+            )!.deliveryFlowShowThisToCollect(_money(amount)),
           )
         else if (intentQr != null)
           _QrImage(
             url: intentQr,
             accessToken: null,
-            label: 'Scan to pay ${_money(amount)} via any UPI app',
+            label: AppLocalizations.of(
+              context,
+            )!.deliveryFlowScanToPayViaUpi(_money(amount)),
           )
         else
           Container(
@@ -1248,8 +1284,8 @@ class _DriverDeliveryCompletionFlowScreenState
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.warningBorder),
             ),
-            child: const Text(
-              'Add your UPI ID in Profile to show a scannable payment QR here next time.',
+            child: Text(
+              AppLocalizations.of(context)!.deliveryFlowAddUpiIdForQr,
               textAlign: TextAlign.center,
             ),
           ),
@@ -1258,7 +1294,9 @@ class _DriverDeliveryCompletionFlowScreenState
           SizedBox(
             height: 54,
             child: ElevatedButton(
-              onPressed: _collectingPayment ? null : () => _collectPayment('upi'),
+              onPressed: _collectingPayment
+                  ? null
+                  : () => _collectPayment('upi'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brand,
                 shape: RoundedRectangleBorder(
@@ -1266,7 +1304,11 @@ class _DriverDeliveryCompletionFlowScreenState
                 ),
               ),
               child: Text(
-                _collectingPayment ? 'Confirming...' : 'Payment Received via UPI',
+                _collectingPayment
+                    ? AppLocalizations.of(context)!.confirming
+                    : AppLocalizations.of(
+                        context,
+                      )!.deliveryFlowPaymentReceivedViaUpi,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -1278,7 +1320,9 @@ class _DriverDeliveryCompletionFlowScreenState
         SizedBox(
           height: 54,
           child: ElevatedButton(
-            onPressed: _collectingPayment ? null : () => _collectPayment('cash'),
+            onPressed: _collectingPayment
+                ? null
+                : () => _collectPayment('cash'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppColors.textPrimary,
@@ -1288,7 +1332,9 @@ class _DriverDeliveryCompletionFlowScreenState
               ),
             ),
             child: Text(
-              _collectingPayment ? 'Recording…' : 'Collect Cash',
+              _collectingPayment
+                  ? AppLocalizations.of(context)!.deliveryFlowRecording
+                  : AppLocalizations.of(context)!.deliveryFlowCollectCash,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
@@ -1305,14 +1351,16 @@ class _DriverDeliveryCompletionFlowScreenState
           color: AppColors.brandTint,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(AppIcons.check_circle_rounded, color: AppColors.brand),
-            SizedBox(width: 8),
+            const Icon(AppIcons.check_circle_rounded, color: AppColors.brand),
+            const SizedBox(width: 8),
             Text(
-              'Payment verified by Razorpay',
-              style: TextStyle(
+              AppLocalizations.of(
+                context,
+              )!.deliveryFlowPaymentVerifiedByRazorpay,
+              style: const TextStyle(
                 color: AppColors.brand,
                 fontWeight: FontWeight.w800,
               ),
@@ -1322,8 +1370,8 @@ class _DriverDeliveryCompletionFlowScreenState
       );
     }
     if (_razorpayQrError) {
-      return const Text(
-        'Couldn\'t generate the verified QR code — collect via UPI ID or cash instead.',
+      return Text(
+        AppLocalizations.of(context)!.deliveryFlowQrGenerationFailed,
         textAlign: TextAlign.center,
       );
     }
@@ -1339,7 +1387,7 @@ class _DriverDeliveryCompletionFlowScreenState
     return _QrImage(
       url: url,
       accessToken: null,
-      label: 'Auto-confirms the moment Razorpay verifies the payment',
+      label: AppLocalizations.of(context)!.deliveryFlowRazorpayAutoConfirms,
     );
   }
 
@@ -1364,16 +1412,16 @@ class _DriverDeliveryCompletionFlowScreenState
           Text(
             'Trip $_bookingRef has been completed successfully',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           Text(
             'Payment and delivery marked complete',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -1418,9 +1466,9 @@ class _DriverDeliveryCompletionFlowScreenState
           const SizedBox(height: 16),
           Text(
             'Proof of delivery rejected',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           Text(
@@ -1428,9 +1476,9 @@ class _DriverDeliveryCompletionFlowScreenState
                 ? _podRejectionReason
                 : 'The customer asked for new photos.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -1475,17 +1523,17 @@ class _DriverDeliveryCompletionFlowScreenState
           const SizedBox(height: 16),
           Text(
             'Couldn\'t complete the trip',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           Text(
             _completeError!,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -1536,9 +1584,9 @@ class _DriverDeliveryCompletionFlowScreenState
           _completing
               ? 'Finishing up...'
               : 'Waiting for the customer to review',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 6),
         Text(
@@ -1648,11 +1696,7 @@ class _StepProgress extends StatelessWidget {
               if (i < steps.length - 1)
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.only(
-                      top: 17,
-                      left: 4,
-                      right: 4,
-                    ),
+                    margin: const EdgeInsets.only(top: 17, left: 4, right: 4),
                     height: 3,
                     decoration: BoxDecoration(
                       color: i < currentIndex
@@ -1846,47 +1890,53 @@ class _AddTile extends StatelessWidget {
       child: InkWell(
         onTap: enabled
             ? () => showModalBottomSheet<void>(
-                  context: context,
-                  showDragHandle: true,
-                  builder: (sheetContext) => SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: const Icon(
-                              AppIcons.photo_camera_rounded,
-                            ),
-                            title: const Text('Take photo'),
-                            onTap: () {
-                              Navigator.of(sheetContext).pop();
-                              onPhotoCamera();
-                            },
+                context: context,
+                showDragHandle: true,
+                builder: (sheetContext) => SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(AppIcons.photo_camera_rounded),
+                          title: Text(
+                            AppLocalizations.of(context)!.deliveryFlowTakePhoto,
                           ),
-                          ListTile(
-                            leading: const Icon(AppIcons.videocam_rounded),
-                            title: const Text('Record video'),
-                            onTap: () {
-                              Navigator.of(sheetContext).pop();
-                              onVideo();
-                            },
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            onPhotoCamera();
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(AppIcons.videocam_rounded),
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.deliveryFlowRecordVideo,
                           ),
-                          ListTile(
-                            leading: const Icon(
-                              AppIcons.photo_library_rounded,
-                            ),
-                            title: const Text('Choose photo'),
-                            onTap: () {
-                              Navigator.of(sheetContext).pop();
-                              onPhotoGallery();
-                            },
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            onVideo();
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(AppIcons.photo_library_rounded),
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.deliveryFlowChoosePhoto,
                           ),
-                        ],
-                      ),
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            onPhotoGallery();
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                )
+                ),
+              )
             : null,
         borderRadius: BorderRadius.circular(22),
         child: Container(
@@ -1934,9 +1984,9 @@ class _QrImage extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         Container(

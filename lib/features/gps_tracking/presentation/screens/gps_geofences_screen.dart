@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
 
@@ -66,6 +67,7 @@ class _GeofenceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final titleSize = width < 390 ? 22.0 : 24.0;
     final subtitleSize = width < 390 ? 10.5 : 11.5;
 
@@ -82,7 +84,7 @@ class _GeofenceHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Geofences',
+                l10n.gpsGeofences,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -94,7 +96,7 @@ class _GeofenceHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Create and manage virtual boundaries',
+                l10n.gpsGeofencesSubtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -156,6 +158,7 @@ class _HeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: Container(
@@ -249,12 +252,12 @@ class _HeroPanel extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(AppIcons.map_outlined, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
+                  children: [
+                    const Icon(AppIcons.map_outlined, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
                     Text(
-                      'Define zones for your fleet',
-                      style: TextStyle(
+                      l10n.gpsDefineZones,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -357,6 +360,7 @@ class _SearchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -383,7 +387,7 @@ class _SearchRow extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Search geofences...',
+                    l10n.gpsSearchGeofences,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -428,6 +432,7 @@ class _EmptyStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 26, 18, 24),
@@ -446,7 +451,7 @@ class _EmptyStateCard extends StatelessWidget {
         children: [
           const SizedBox(height: 4),
           Text(
-            'No geofences yet',
+            l10n.gpsNoGeofencesYet,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontSize: 20,
@@ -456,7 +461,7 @@ class _EmptyStateCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Create a geofence to monitor areas and get notified when vehicles enter or exit the zone.',
+            l10n.gpsNoGeofencesSubtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 13,
@@ -471,9 +476,9 @@ class _EmptyStateCard extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () {},
               icon: const Icon(AppIcons.add_rounded, size: 20),
-              label: const Text(
-                'Create Geofence',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+              label: Text(
+                l10n.gpsCreateGeofence,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF245BD8),
@@ -496,6 +501,7 @@ class _GpsBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -522,7 +528,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       selected: true,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
@@ -530,7 +536,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       selected: false,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -539,7 +545,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       selected: false,
                       onTap: () => context.go('/gps/reports'),
                     ),
@@ -547,7 +553,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       selected: false,
                       onTap: () => context.go('/gps/profile'),
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
@@ -12,6 +13,7 @@ class GpsSidebarDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final userName = session?.user.displayName ?? 'Gadidost';
     final userEmail = session?.user.email ?? 'sskcargoservices@gmail.com';
@@ -51,63 +53,66 @@ class GpsSidebarDrawer extends ConsumerWidget {
                       const SizedBox(height: 4),
                       _SidebarNavTile(
                         icon: AppIcons.grid_view_rounded,
-                        label: 'Dashboard',
+                        label: l10n.gpsNavDashboard,
                         selected: currentRoute == '/gps/dashboard',
                         onTap: () => _go(context, '/gps/dashboard'),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.local_shipping_rounded,
-                        label: 'My Fleet',
+                        label: l10n.gpsMyFleet,
                         selected: currentRoute == '/gps/vehicles',
                         onTap: () => _go(context, '/gps/vehicles'),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.map_outlined,
-                        label: 'Live Map',
+                        label: l10n.gpsLiveMap,
                         selected: false,
-                        onTap: () => _showComingSoon(context, 'Live Map'),
+                        onTap: () =>
+                            _showComingSoon(context, l10n.gpsLiveMap),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.insert_chart_rounded,
-                        label: 'Reports',
+                        label: l10n.gpsNavReports,
                         selected: currentRoute == '/gps/reports',
                         onTap: () => _go(context, '/gps/reports'),
                       ),
-                      const _SectionHeader(label: 'Modules'),
+                      _SectionHeader(label: l10n.gpsModules),
                       _SidebarNavTile(
                         icon: AppIcons.gps_fixed_rounded,
-                        label: 'Geofences',
+                        label: l10n.gpsGeofences,
                         selected: currentRoute == '/gps/geofences',
                         onTap: () => _go(context, '/gps/geofences'),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.account_balance_wallet_rounded,
-                        label: 'Wallet & Billing',
+                        label: l10n.gpsWalletBilling,
                         selected: currentRoute == '/gps/wallet-billing',
                         onTap: () => _go(context, '/gps/wallet-billing'),
                       ),
-                      const _SectionHeader(label: 'Account'),
+                      _SectionHeader(label: l10n.gpsAccountSection),
                       _SidebarNavTile(
                         icon: AppIcons.person_rounded,
-                        label: 'Profile',
+                        label: l10n.gpsNavProfile,
                         selected: currentRoute == '/gps/profile',
                         onTap: () => _go(context, '/gps/profile'),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.settings_rounded,
-                        label: 'Settings',
+                        label: l10n.gpsSettings,
                         selected: false,
-                        onTap: () => _showComingSoon(context, 'Settings'),
+                        onTap: () =>
+                            _showComingSoon(context, l10n.gpsSettings),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.palette_outlined,
-                        label: 'Appearance',
+                        label: l10n.gpsAppearance,
                         selected: false,
-                        onTap: () => _showComingSoon(context, 'Appearance'),
+                        onTap: () =>
+                            _showComingSoon(context, l10n.gpsAppearance),
                       ),
                       _SidebarNavTile(
                         icon: AppIcons.logout_rounded,
-                        label: 'Logout',
+                        label: l10n.gpsLogout,
                         selected: false,
                         danger: true,
                         onTap: () async {
@@ -130,7 +135,7 @@ class GpsSidebarDrawer extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            'App Version 2.4.0',
+                            l10n.gpsAppVersion('2.4.0'),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   fontSize: 10.5,
@@ -158,9 +163,10 @@ class GpsSidebarDrawer extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context, String name) {
     Navigator.of(context).pop();
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('$name screen coming next.')));
+    ).showSnackBar(SnackBar(content: Text(l10n.gpsScreenComingNext(name))));
   }
 }
 

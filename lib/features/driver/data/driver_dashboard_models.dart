@@ -128,8 +128,65 @@ List<BrokerSettlement> _analyticsFromResponse(Map<String, dynamic> response) {
   }
   return history
       .whereType<Map<String, dynamic>>()
-      .map(BrokerSettlement.fromJson)
+      .map(_driverSettlementFromAnalytics)
       .toList();
+}
+
+BrokerSettlement _driverSettlementFromAnalytics(Map<String, dynamic> json) {
+  final earnings = _mapFrom(json['earnings']);
+  final amount = _doubleFrom(json, const [
+    'amount',
+    'grossAmount',
+    'gross_amount',
+    'fare',
+    'price',
+  ]);
+  final netEarnings = _doubleFrom(json, const [
+    'netEarnings',
+    'net_earnings',
+    'net',
+    'driverEarnings',
+    'driver_earnings',
+    'amount',
+  ]);
+  final nestedEarnings = _doubleFrom(earnings, const [
+    'amount',
+    'net',
+    'netEarnings',
+    'net_earnings',
+  ]);
+
+  return BrokerSettlement(
+    id: _stringFrom(json, const ['id', 'tripId', 'trip_id']),
+    bookingId: _stringFrom(json, const ['bookingId', 'booking_id']),
+    bookingNumber:
+        _stringFrom(json, const ['bookingNumber', 'booking_number']).isNotEmpty
+        ? _stringFrom(json, const ['bookingNumber', 'booking_number'])
+        : 'Booking',
+    route: _stringFrom(json, const ['route']),
+    truck: _stringFrom(json, const ['truck', 'truckReg', 'truck_reg']),
+    driver: _stringFrom(json, const ['driver', 'driverName', 'driver_name']),
+    amount: amount > 0 ? amount : nestedEarnings,
+    platformFee: _doubleFrom(json, const ['platformFee', 'platform_fee']),
+    netEarnings: netEarnings > 0 ? netEarnings : nestedEarnings,
+    status: _stringFrom(json, const ['status', 'rawStatus']).isNotEmpty
+        ? _stringFrom(json, const ['status', 'rawStatus'])
+        : 'pending',
+    settledAt: _stringFrom(json, const [
+      'settledAt',
+      'settled_at',
+      'paidAt',
+      'paid_at',
+      'deliveredAt',
+      'delivered_at',
+      'completedAt',
+      'completed_at',
+      'updatedAt',
+      'updated_at',
+      'createdAt',
+      'created_at',
+    ]),
+  );
 }
 
 Map<String, dynamic>? _truckFromResponse(Map<String, dynamic> response) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class HaltingTimerCard extends StatefulWidget {
   const HaltingTimerCard({
@@ -74,6 +75,7 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final graceHours = widget.haltingGraceHours;
     if (graceHours == null) {
       return const SizedBox.shrink();
@@ -84,11 +86,20 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
       if (widget.haltingCharge <= 0) {
         return const SizedBox.shrink();
       }
+      final appliedMessage = widget.haltingHours > 0
+          ? l10n.sharedHaltingChargeWithHours(
+              _formatMoney(widget.haltingCharge),
+              _formatHours(widget.haltingHours),
+              _formatHours(graceHours),
+            )
+          : l10n.sharedHaltingChargeWithoutHours(
+              _formatMoney(widget.haltingCharge),
+              _formatHours(graceHours),
+            );
       return _TimerShell(
         icon: AppIcons.receipt_long_rounded,
-        title: 'Halting charge applied',
-        message:
-            '${_formatMoney(widget.haltingCharge)}${widget.haltingHours > 0 ? ' for ${_formatHours(widget.haltingHours)}' : ''} after the free ${_formatHours(graceHours)} window.',
+        title: l10n.sharedHaltingChargeApplied,
+        message: appliedMessage,
         backgroundColor: const Color(0xFFFFF7ED),
         borderColor: const Color(0xFFFED7AA),
         accentColor: const Color(0xFFC2410C),
@@ -102,8 +113,8 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
       }
       return _TimerShell(
         icon: AppIcons.hourglass_top_rounded,
-        title: 'Free halting window',
-        message: '${_formatHours(graceHours)} once the trip starts.',
+        title: l10n.sharedHaltingFreeWindowTitle,
+        message: l10n.sharedHaltingNotStartedMessage(_formatHours(graceHours)),
         backgroundColor: const Color(0xFFF8FAFC),
         borderColor: const Color(0xFFE2E8F0),
         accentColor: const Color(0xFF475569),
@@ -120,9 +131,11 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
     if (!remaining.isNegative) {
       return _TimerShell(
         icon: AppIcons.timer_rounded,
-        title: 'Free halting time remaining',
-        message:
-            '${_formatDuration(remaining)} left in the ${_formatHours(graceHours)} free window.',
+        title: l10n.sharedHaltingRemainingTitle,
+        message: l10n.sharedHaltingRemainingMessage(
+          _formatDuration(remaining),
+          _formatHours(graceHours),
+        ),
         backgroundColor: const Color(0xFFEAF7EF),
         borderColor: const Color(0xFFCDEFD9),
         accentColor: const Color(0xFF2FA56E),
@@ -138,10 +151,13 @@ class _HaltingTimerCardState extends State<HaltingTimerCard> {
 
     return _TimerShell(
       icon: AppIcons.warning_amber_rounded,
-      title: 'Halting time exceeded',
+      title: l10n.sharedHaltingExceededTitle,
       message: estimatedCharge == null
-          ? '${_formatDuration(overage)} over the free window - a charge will be added on delivery.'
-          : '${_formatDuration(overage)} over - ~${_formatMoney(estimatedCharge)} and counting (estimate, finalized at delivery).',
+          ? l10n.sharedHaltingExceededNoEstimate(_formatDuration(overage))
+          : l10n.sharedHaltingExceededEstimate(
+              _formatDuration(overage),
+              _formatMoney(estimatedCharge),
+            ),
       backgroundColor: const Color(0xFFFFF7ED),
       borderColor: const Color(0xFFFED7AA),
       accentColor: const Color(0xFFC2410C),

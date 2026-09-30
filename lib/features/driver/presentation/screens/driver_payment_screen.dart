@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_socket_service.dart';
 import '../../../../core/providers/driver_tracking_state_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class DriverPaymentScreen extends ConsumerStatefulWidget {
@@ -351,8 +352,9 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to upload your QR code.'),
+        SnackBar(
+          content: Text(
+              AppLocalizations.of(context)!.driverPaymentSignInUploadQr),
         ),
       );
       return;
@@ -376,8 +378,9 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       await _loadTripState();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment QR uploaded successfully.'),
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.driverPaymentQrUploaded),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -522,8 +525,9 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to record payment.'),
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.driverPaymentSignInRecord),
         ),
       );
       return;
@@ -552,7 +556,8 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment recorded as ${mode.toUpperCase()}.'),
+          content: Text(AppLocalizations.of(context)!
+              .driverPaymentRecordedAs(mode.toUpperCase())),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -822,22 +827,25 @@ class _DriverPaymentScreenState extends ConsumerState<DriverPaymentScreen> {
                     SegmentedButton<String>(
                       segments: [
                         if (hasPersonalUpi)
-                          const ButtonSegment<String>(
+                          ButtonSegment<String>(
                             value: 'personal',
-                            icon: Icon(AppIcons.person_rounded),
-                            label: Text('Personal'),
+                            icon: const Icon(AppIcons.person_rounded),
+                            label: Text(AppLocalizations.of(context)!
+                                .driverPaymentPersonal),
                           ),
                         if (hasCompanyUpi)
-                          const ButtonSegment<String>(
+                          ButtonSegment<String>(
                             value: 'company',
-                            icon: Icon(AppIcons.apartment_rounded),
-                            label: Text('Company'),
+                            icon: const Icon(AppIcons.apartment_rounded),
+                            label: Text(AppLocalizations.of(context)!
+                                .driverPaymentCompany),
                           ),
                         if (hasRazorpayQr)
-                          const ButtonSegment<String>(
+                          ButtonSegment<String>(
                             value: 'razorpay',
-                            icon: Icon(AppIcons.shield_rounded),
-                            label: Text('Verified'),
+                            icon: const Icon(AppIcons.shield_rounded),
+                            label: Text(AppLocalizations.of(context)!
+                                .driverPaymentVerified),
                           ),
                       ],
                       selected: {activeQrSource},

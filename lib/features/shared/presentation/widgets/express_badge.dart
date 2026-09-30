@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class ExpressBadge extends StatelessWidget {
   const ExpressBadge({super.key, this.compact = false, this.invert = false});
@@ -35,7 +36,7 @@ class ExpressBadge extends StatelessWidget {
           ),
           const SizedBox(width: 3),
           Text(
-            'Express',
+            AppLocalizations.of(context)!.sharedExpressLabel,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: invert ? Colors.white : const Color(0xFFC2410C),
               fontWeight: FontWeight.w800,

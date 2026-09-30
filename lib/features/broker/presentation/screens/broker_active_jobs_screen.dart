@@ -10,6 +10,7 @@ import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../shared/data/trip_route_stop.dart';
 import '../../../shared/presentation/widgets/express_badge.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 const int _activeJobsFetchPageLimit = 100;
 const int _activeJobsFetchMaxPages = 50;
@@ -184,6 +185,7 @@ class _BrokerActiveJobsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final jobsAsync = ref.watch(_brokerActiveJobsProvider);
     final driversAsync = ref.watch(
       brokerDriversApiProvider((status: null, page: 1, limit: 100)),
@@ -203,20 +205,20 @@ class _BrokerActiveJobsScreenState
               _ActiveJobsHeader(total: jobsAsync.valueOrNull?.length ?? 0),
               const SizedBox(height: 18),
               jobsAsync.when(
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.only(top: 80),
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _ActiveEmptyState(
-                  title: 'Could not load active jobs',
+                  title: l10n.brokerActiveJobsCouldNotLoadActiveJobs,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (jobs) {
                   if (jobs.isEmpty) {
-                    return const _ActiveEmptyState(
-                      title: 'No active jobs found',
+                    return _ActiveEmptyState(
+                      title: l10n.brokerActiveJobsNoActiveJobsFound,
                       subtitle:
-                          'Assigned and in-transit jobs will appear here.',
+                          l10n.brokerActiveJobsAssignedAndInTransitJobsWillAppear,
                     );
                   }
                   return LayoutBuilder(
@@ -286,13 +288,13 @@ class _BrokerActiveJobsScreenState
           child: StatefulBuilder(
             builder: (context, setSheetState) {
               return _ActiveSheet(
-                title: 'Report a Problem',
+                title: AppLocalizations.of(context)!.brokerActiveJobsReportAProblem,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${job.pickup} to ${job.drop}',
+                      AppLocalizations.of(context)!.brokerActiveJobsTo(job.pickup, job.drop),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -311,7 +313,7 @@ class _BrokerActiveJobsScreenState
                         color: AppColors.textSecondary,
                       ),
                       decoration: brokerFieldDecoration(
-                        labelText: 'Issue Type',
+                        labelText: AppLocalizations.of(context)!.brokerActiveJobsIssueType,
                         prefixIcon: AppIcons.report_problem_rounded,
                       ),
                       items: [
@@ -333,8 +335,8 @@ class _BrokerActiveJobsScreenState
                       cursorColor: AppColors.brand,
                       style: const TextStyle(color: AppColors.textPrimary),
                       decoration: _sheetInputDecoration(
-                        'Description',
-                      ).copyWith(hintText: 'Describe what went wrong...'),
+                        AppLocalizations.of(context)!.brokerActiveDescription,
+                      ).copyWith(hintText: AppLocalizations.of(context)!.brokerActiveJobsDescribeWhatWentWrong),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -344,7 +346,7 @@ class _BrokerActiveJobsScreenState
                             onPressed: submitting
                                 ? null
                                 : () => Navigator.of(sheetContext).pop(),
-                            child: const Text('Cancel'),
+                            child: Text(AppLocalizations.of(context)!.brokerActiveJobsCancel),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -371,7 +373,11 @@ class _BrokerActiveJobsScreenState
                               backgroundColor: AppColors.dangerIcon,
                             ),
                             child: Text(
-                              submitting ? 'Submitting...' : 'Submit',
+                              submitting
+                                  ? AppLocalizations.of(context)!
+                                      .brokerActiveSubmitting
+                                  : AppLocalizations.of(context)!
+                                      .brokerActiveSubmit,
                             ),
                           ),
                         ),
@@ -405,8 +411,8 @@ class _BrokerActiveJobsScreenState
           );
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Dispute raised - our team will review it shortly.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerActiveJobsDisputeRaisedOurTeamWillReviewIt),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -441,14 +447,14 @@ class _BrokerActiveJobsScreenState
           child: StatefulBuilder(
             builder: (context, setSheetState) {
               return _ActiveSheet(
-                title: 'Reassign Driver',
+                title: AppLocalizations.of(context)!.brokerActiveJobsReassignDriver,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _MiniInfoTile(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Currently Assigned',
+                      label: AppLocalizations.of(context)!.brokerActiveJobsCurrentlyAssigned,
                       value: job.driverName.isEmpty
                           ? 'Not Assigned'
                           : job.driverName,
@@ -467,7 +473,7 @@ class _BrokerActiveJobsScreenState
                         color: AppColors.textSecondary,
                       ),
                       decoration: brokerFieldDecoration(
-                        labelText: 'Reassign to',
+                        labelText: AppLocalizations.of(context)!.brokerActiveJobsReassignTo,
                         prefixIcon: AppIcons.person_rounded,
                       ),
                       items: [
@@ -496,7 +502,7 @@ class _BrokerActiveJobsScreenState
                       style: const TextStyle(color: AppColors.textPrimary),
                       decoration: _sheetInputDecoration(
                         'Reason',
-                      ).copyWith(hintText: 'Optional reason for reassignment'),
+                      ).copyWith(hintText: AppLocalizations.of(context)!.brokerActiveJobsOptionalReasonForReassignment),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -542,9 +548,9 @@ class _BrokerActiveJobsScreenState
     if (session == null) return false;
     if (job.jobRequestId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Can't find the original job request for this booking.",
+            AppLocalizations.of(context)!.brokerActiveJobsCanTFindTheOriginalJobRequest,
           ),
           backgroundColor: AppColors.dangerIcon,
         ),
@@ -565,8 +571,8 @@ class _BrokerActiveJobsScreenState
       ref.invalidate(brokerActiveJobsCountProvider);
       if (!mounted) return true;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Driver reassigned.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerActiveJobsDriverReassigned),
           backgroundColor: AppColors.brand,
         ),
       );
@@ -591,6 +597,7 @@ class _ActiveJobsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -598,7 +605,7 @@ class _ActiveJobsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Active Jobs',
+                l10n.brokerActiveJobsActiveJobs,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -606,7 +613,7 @@ class _ActiveJobsHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '$total jobs currently in progress',
+                l10n.brokerActiveJobsJobsCurrentlyInProgress(total),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -637,6 +644,7 @@ class _ActiveJobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusColor = _statusColor(job.statusKey);
     return Container(
       padding: const EdgeInsets.all(16),
@@ -691,7 +699,7 @@ class _ActiveJobCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '${_lead(job.pickup)} to ${_lead(job.drop)}',
+            l10n.brokerActiveJobsTo(_lead(job.pickup), _lead(job.drop)),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -712,7 +720,7 @@ class _ActiveJobCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _RouteLine(
-            label: 'Pickup',
+            label: l10n.brokerActiveJobsPickup,
             value: job.pickup,
             color: AppColors.brandBright,
           ),
@@ -729,7 +737,7 @@ class _ActiveJobCard extends StatelessWidget {
           ],
           const SizedBox(height: 10),
           _RouteLine(
-            label: 'Drop',
+            label: AppLocalizations.of(context)!.brokerActiveJobsDrop,
             value: job.drop,
             color: AppColors.dangerIcon,
           ),
@@ -739,7 +747,7 @@ class _ActiveJobCard extends StatelessWidget {
               Expanded(
                 child: _MiniInfoTile(
                   icon: AppIcons.local_shipping_rounded,
-                  label: 'Truck',
+                  label: AppLocalizations.of(context)!.brokerActiveJobsTruck,
                   value: job.truckReg.isEmpty ? 'Not Assigned' : job.truckReg,
                 ),
               ),
@@ -747,7 +755,7 @@ class _ActiveJobCard extends StatelessWidget {
               Expanded(
                 child: _MiniInfoTile(
                   icon: AppIcons.person_rounded,
-                  label: 'Driver',
+                  label: AppLocalizations.of(context)!.brokerActiveJobsDriver,
                   value: job.driverName.isEmpty
                       ? 'Not Assigned'
                       : job.driverName,
@@ -757,7 +765,7 @@ class _ActiveJobCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'TRIP PROGRESS',
+            AppLocalizations.of(context)!.brokerActiveJobsTRIPPROGRESS,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: AppColors.textTertiary,
               fontWeight: FontWeight.w900,
@@ -777,13 +785,13 @@ class _ActiveJobCard extends StatelessWidget {
                   children: [
                     _TextAction(
                       icon: AppIcons.flag_rounded,
-                      label: 'Report a Problem',
+                      label: AppLocalizations.of(context)!.brokerActiveJobsReportAProblem,
                       color: AppColors.dangerIcon,
                       onTap: onDispute,
                     ),
                     _TextAction(
                       icon: AppIcons.navigation_rounded,
-                      label: 'Track Live',
+                      label: AppLocalizations.of(context)!.brokerActiveJobsTrackLive,
                       color: AppColors.brand,
                       onTap: onTrack,
                     ),
@@ -799,13 +807,13 @@ class _ActiveJobCard extends StatelessWidget {
                   children: [
                     _TextAction(
                       icon: AppIcons.repeat_rounded,
-                      label: 'Reassign Driver',
+                      label: AppLocalizations.of(context)!.brokerActiveJobsReassignDriver,
                       color: AppColors.brand,
                       onTap: onReassign,
                     ),
                     _TextAction(
                       icon: AppIcons.chat_bubble_outline_rounded,
-                      label: 'Chat',
+                      label: AppLocalizations.of(context)!.brokerActiveJobsChat,
                       color: AppColors.brand,
                       onTap: onChat,
                     ),
@@ -828,6 +836,7 @@ class _ActiveSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxHeight: 560),
@@ -875,6 +884,7 @@ class _ActiveEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(top: 40),
       padding: const EdgeInsets.all(28),
@@ -924,6 +934,7 @@ class _MiniInfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -980,6 +991,7 @@ class _RouteLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1027,6 +1039,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1052,6 +1065,7 @@ class _ProgressDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const steps = [
       ('assigned', 'Assigned'),
       ('en_route_pickup', 'En Route'),
@@ -1118,6 +1132,7 @@ class _TextAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),

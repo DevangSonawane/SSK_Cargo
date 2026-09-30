@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 class GpsMapBottomNavBar extends StatelessWidget {
   const GpsMapBottomNavBar({super.key, required this.currentRoute});
@@ -11,6 +12,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -37,7 +39,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       selected: currentRoute == '/gps/dashboard',
                       onTap: () => context.go('/gps/dashboard'),
                     ),
@@ -45,7 +47,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       selected: currentRoute == '/gps/vehicles',
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -54,7 +56,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       selected: currentRoute == '/gps/reports',
                       onTap: () => context.go('/gps/reports'),
                     ),
@@ -62,7 +64,7 @@ class GpsMapBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       selected: currentRoute == '/gps/profile',
                       onTap: () => context.go('/gps/profile'),
                     ),

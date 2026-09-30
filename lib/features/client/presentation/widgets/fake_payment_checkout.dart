@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:ssk/core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 Future<bool> showFakePaymentCheckout({
   required BuildContext context,
@@ -51,9 +52,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
 
   String _selectedMethod = methods.first;
   String _pin = '';
-  bool _processing = false;
-
-  @override
+  bool _processing = false;  @override
   void initState() {
     super.initState();
     // Checkout remembers the default saved method (web PaymentMethods
@@ -66,6 +65,23 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
 
   String get _amountLabel =>
       '₹${widget.amount.toStringAsFixed(widget.amount % 1 == 0 ? 0 : 2)}';
+
+  String _checkoutMethodLabel(AppLocalizations l10n, String method) {
+    switch (method) {
+      case 'Recommended':
+        return l10n.clientCheckoutMethodRecommended;
+      case 'UPI':
+        return l10n.clientCheckoutMethodUpi;
+      case 'Cards':
+        return l10n.clientCheckoutMethodCards;
+      case 'Netbanking':
+        return l10n.clientCheckoutMethodNetbanking;
+      case 'Wallet':
+        return l10n.clientCheckoutMethodWallet;
+      default:
+        return method;
+    }
+  }
 
   void _addDigit(String digit) {
     if (_pin.length >= 4 || _processing) return;
@@ -87,6 +103,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
       child: Padding(
@@ -121,7 +138,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Test payment checkout',
+                        l10n.clientCheckoutTestTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -138,7 +155,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.description} • Demo mode',
+                  l10n.clientCheckoutDemoMode(widget.description),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
                   ),
@@ -164,7 +181,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Default method: ${widget.defaultMethodLabel}',
+                            l10n.clientCheckoutDefaultMethod(widget.defaultMethodLabel ?? ''),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: context.colors.brandEmphasis,
@@ -178,7 +195,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                 ],
                 const SizedBox(height: 18),
                 Text(
-                  'Choose a payment method',
+                  l10n.clientCheckoutChooseMethod,
                   style: Theme.of(
                     context,
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -190,7 +207,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                   children: [
                     for (final method in methods)
                       ChoiceChip(
-                        label: Text(method),
+                        label: Text(_checkoutMethodLabel(l10n, method)),
                         selected: _selectedMethod == method,
                         onSelected: _processing
                             ? null
@@ -200,7 +217,7 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'Enter any 4-digit demo PIN',
+                  l10n.clientCheckoutEnterPin,
                   style: Theme.of(
                     context,
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -251,14 +268,14 @@ class _FakePaymentCheckoutState extends State<_FakePaymentCheckout> {
                               color: Colors.white,
                             ),
                           )
-                        : Text('Pay $_amountLabel'),
+                        : Text(l10n.clientCheckoutPay(_amountLabel)),
                   ),
                 ),
                 TextButton(
                   onPressed: _processing
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.clientCheckoutCancel),
                 ),
               ],
             ),

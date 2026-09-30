@@ -14,6 +14,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/negotiation_timer.dart';
 import '../../../../core/widgets/kyc_gate_dialog.dart';
 import '../../../../core/widgets/map_route_card.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../../data/driver_request_models.dart';
@@ -1007,7 +1008,11 @@ class _DriverOrderAcceptedScreenState
     if (session == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in again to continue.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.orderAcceptedSignInContinue,
+          ),
+        ),
       );
       return;
     }
@@ -1121,15 +1126,21 @@ class _DriverOrderAcceptedScreenState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request updated successfully.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.orderAcceptedRequestUpdated,
+          ),
+        ),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
       if (resolveTripOnSuccess &&
           (error.statusCode == 400 || error.statusCode == 409)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('This offer is no longer available.'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.orderAcceptedOfferUnavailable,
+            ),
             backgroundColor: AppColors.dangerIcon,
           ),
         );
@@ -1591,7 +1602,7 @@ class _DriverOrderAcceptedScreenState
             icon: const Icon(AppIcons.arrow_back_rounded),
             onPressed: () => context.go('/driver/home'),
           ),
-          title: const Text('Assigned request'),
+          title: Text(AppLocalizations.of(context)!.orderAcceptedAssignedTitle),
         ),
         body: SafeArea(
           child: ListView(
@@ -1730,7 +1741,7 @@ class _DriverOrderAcceptedScreenState
           icon: const Icon(AppIcons.arrow_back_rounded),
           onPressed: _goBackToHome,
         ),
-        title: const Text('Driver request'),
+        title: Text(AppLocalizations.of(context)!.orderAcceptedRequestTitle),
       ),
       body: PopScope(
         canPop: false,
@@ -2084,6 +2095,7 @@ class _RequestRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final pickupParts = _splitAddress(pickup);
     final dropParts = _splitAddress(drop);
 
@@ -2154,20 +2166,20 @@ class _RequestRouteCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _RouteLabel(label: 'Pickup'),
+                    _RouteLabel(label: l10n.pickup),
                     const SizedBox(height: 6),
                     _RouteText(
                       title: pickupParts.title,
                       subtitle: pickupParts.subtitle,
-                      fallback: 'Pickup location',
+                      fallback: l10n.pickupLocation,
                     ),
                     const SizedBox(height: 18),
-                    const _RouteLabel(label: 'Drop off'),
+                    _RouteLabel(label: l10n.dropOff),
                     const SizedBox(height: 6),
                     _RouteText(
                       title: dropParts.title,
                       subtitle: dropParts.subtitle,
-                      fallback: 'Drop location',
+                      fallback: l10n.dropLocation,
                     ),
                   ],
                 ),

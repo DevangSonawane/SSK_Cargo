@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
 
@@ -9,6 +10,7 @@ class GpsReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
     final isCompact = width < 390;
 
@@ -28,8 +30,8 @@ class GpsReportsScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   _ReportCard(
                     number: '1',
-                    title: 'Report Type',
-                    subtitle: 'Choose the type of report you want to generate',
+                    title: l10n.gpsReportType,
+                    subtitle: l10n.gpsReportTypeSubtitle,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -38,14 +40,25 @@ class GpsReportsScreen extends StatelessWidget {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _reportTypes.length,
+                            itemCount: 4,
                             separatorBuilder: (context, index) =>
                                 const SizedBox(width: 12),
                             itemBuilder: (context, index) {
-                              final item = _reportTypes[index];
+                              final titles = [
+                                l10n.gpsTripSummary,
+                                l10n.gpsRouteHistory,
+                                l10n.gpsFuelSummary,
+                                l10n.gpsUsageSummary,
+                              ];
+                              final icons = [
+                                AppIcons.show_chart_rounded,
+                                AppIcons.place_rounded,
+                                AppIcons.local_gas_station_rounded,
+                                AppIcons.speed_rounded,
+                              ];
                               return _MiniOptionCard(
-                                title: item.title,
-                                icon: item.icon,
+                                title: titles[index],
+                                icon: icons[index],
                                 selected: index == 0,
                                 compact: isCompact,
                               );
@@ -58,14 +71,14 @@ class GpsReportsScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   _ReportCard(
                     number: '2',
-                    title: 'Vehicle',
-                    subtitle: 'Select a vehicle or fleet',
+                    title: l10n.gpsVehicle,
+                    subtitle: l10n.gpsSelectVehicleOrFleet,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _DropdownField(
                           icon: AppIcons.local_shipping_rounded,
-                          label: 'Select a vehicle',
+                          label: l10n.gpsSelectVehicle,
                         ),
                         const SizedBox(height: 14),
                         InkWell(
@@ -74,24 +87,24 @@ class GpsReportsScreen extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
-                              children: const [
-                                Icon(
+                              children: [
+                                const Icon(
                                   AppIcons.groups_rounded,
                                   color: Color(0xFF2D6EF2),
                                   size: 20,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Select from fleet',
-                                    style: TextStyle(
+                                    l10n.gpsSelectFromFleet,
+                                    style: const TextStyle(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFF2D6EF2),
                                     ),
                                   ),
                                 ),
-                                Icon(
+                                const Icon(
                                   AppIcons.chevron_right_rounded,
                                   color: Color(0xFF2D6EF2),
                                 ),
@@ -105,8 +118,8 @@ class GpsReportsScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   _ReportCard(
                     number: '3',
-                    title: 'Duration',
-                    subtitle: 'Choose the time period for the report',
+                    title: l10n.gpsDuration,
+                    subtitle: l10n.gpsDurationSubtitle,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -114,14 +127,14 @@ class GpsReportsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _DateField(
-                                label: 'From',
+                                label: l10n.gpsFrom,
                                 value: '28 Jul 2026, 00:00',
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _DateField(
-                                label: 'To',
+                                label: l10n.gpsTo,
                                 value: '28 Jul 2026, 12:56',
                               ),
                             ),
@@ -133,13 +146,18 @@ class GpsReportsScreen extends StatelessWidget {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _durationFilters.length,
+                            itemCount: 4,
                             separatorBuilder: (context, index) =>
                                 const SizedBox(width: 10),
                             itemBuilder: (context, index) {
-                              final item = _durationFilters[index];
+                              final filters = [
+                                l10n.gpsToday,
+                                l10n.gpsYesterday,
+                                l10n.gpsThisWeek,
+                                l10n.gpsCustom,
+                              ];
                               return _DurationChip(
-                                label: item,
+                                label: filters[index],
                                 selected: index == 0,
                               );
                             },
@@ -155,9 +173,9 @@ class GpsReportsScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () {},
                       icon: const Icon(AppIcons.bar_chart_rounded, size: 20),
-                      label: const Text(
-                        'Generate Report',
-                        style: TextStyle(
+                      label: Text(
+                        l10n.gpsGenerateReport,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -200,7 +218,7 @@ class GpsReportsScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Reports are securely generated and can be downloaded in PDF or Excel format.',
+                            l10n.gpsReportsSecureNote,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   fontSize: 13,
@@ -247,6 +265,7 @@ class _ReportsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final titleSize = width < 390 ? 22.0 : 24.0;
     final subtitleSize = width < 390 ? 10.5 : 11.5;
 
@@ -264,7 +283,7 @@ class _ReportsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Reports',
+                l10n.gpsNavReports,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -276,7 +295,7 @@ class _ReportsHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Generate and download detailed reports',
+                l10n.gpsReportsSubtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -475,20 +494,6 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
-class _MiniOption {
-  const _MiniOption({required this.title, required this.icon});
-
-  final String title;
-  final IconData icon;
-}
-
-const _reportTypes = <_MiniOption>[
-  _MiniOption(title: 'Trip Summary', icon: AppIcons.show_chart_rounded),
-  _MiniOption(title: 'Route History', icon: AppIcons.place_rounded),
-  _MiniOption(title: 'Fuel Summary', icon: AppIcons.local_gas_station_rounded),
-  _MiniOption(title: 'Usage Summary', icon: AppIcons.speed_rounded),
-];
-
 class _MiniOptionCard extends StatelessWidget {
   const _MiniOptionCard({
     required this.title,
@@ -608,8 +613,6 @@ class _DateField extends StatelessWidget {
   }
 }
 
-const _durationFilters = ['Today', 'Yesterday', 'This Week', 'Custom'];
-
 class _DurationChip extends StatelessWidget {
   const _DurationChip({required this.label, required this.selected});
 
@@ -656,6 +659,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -682,14 +686,14 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
                   ),
@@ -697,7 +701,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       selected: true,
                       onTap: () => context.go('/gps/reports'),
                     ),
@@ -705,7 +709,7 @@ class _GpsReportsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       onTap: () => context.go('/gps/profile'),
                     ),
                   ),

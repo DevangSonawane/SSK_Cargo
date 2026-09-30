@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
 
@@ -114,6 +115,7 @@ class _DashboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final titleSize = width < 390 ? 20.0 : 22.0;
     final subtitleSize = width < 390 ? 10.0 : 11.0;
 
@@ -130,7 +132,7 @@ class _DashboardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hello, Gadidost 👋',
+                l10n.gpsDashboardGreeting('Gadidost'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -142,7 +144,7 @@ class _DashboardHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Welcome back to your Fleet Dashboard',
+                l10n.gpsDashboardWelcome,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -241,6 +243,37 @@ class _KpiStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final kpiCards = <_KpiCardData>[
+      _KpiCardData(
+        title: l10n.gpsTotalVehicles,
+        value: '32',
+        icon: AppIcons.local_shipping_rounded,
+        tint: const Color(0xFF2D6EF2),
+        background: const Color(0xFFEAF1FF),
+      ),
+      _KpiCardData(
+        title: l10n.gpsRunning,
+        value: '18',
+        icon: AppIcons.play_arrow_rounded,
+        tint: const Color(0xFF13B36C),
+        background: const Color(0xFFEAF9F1),
+      ),
+      _KpiCardData(
+        title: l10n.gpsStopped,
+        value: '6',
+        icon: AppIcons.stop_circle_rounded,
+        tint: const Color(0xFFFF595D),
+        background: const Color(0xFFFFEEEE),
+      ),
+      _KpiCardData(
+        title: l10n.gpsOffline,
+        value: '4',
+        icon: AppIcons.wifi_rounded,
+        tint: const Color(0xFF4B84F6),
+        background: const Color(0xFFEAF1FF),
+      ),
+    ];
     final cardWidth = width < 390 ? 124.0 : 140.0;
     final cardHeight = width < 390 ? 152.0 : 164.0;
 
@@ -249,12 +282,12 @@ class _KpiStrip extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: _kpiCards.length,
+        itemCount: kpiCards.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           return SizedBox(
             width: cardWidth,
-            child: _KpiCard(data: _kpiCards[index], compact: isCompact),
+            child: _KpiCard(data: kpiCards[index], compact: isCompact),
           );
         },
       ),
@@ -278,37 +311,6 @@ class _KpiCardData {
   final String value;
 }
 
-const _kpiCards = <_KpiCardData>[
-  _KpiCardData(
-    title: 'Total Vehicles',
-    value: '32',
-    icon: AppIcons.local_shipping_rounded,
-    tint: Color(0xFF2D6EF2),
-    background: Color(0xFFEAF1FF),
-  ),
-  _KpiCardData(
-    title: 'Running',
-    value: '18',
-    icon: AppIcons.play_arrow_rounded,
-    tint: Color(0xFF13B36C),
-    background: Color(0xFFEAF9F1),
-  ),
-  _KpiCardData(
-    title: 'Stopped',
-    value: '6',
-    icon: AppIcons.stop_circle_rounded,
-    tint: Color(0xFFFF595D),
-    background: Color(0xFFFFEEEE),
-  ),
-  _KpiCardData(
-    title: 'Offline',
-    value: '4',
-    icon: AppIcons.wifi_rounded,
-    tint: Color(0xFF4B84F6),
-    background: Color(0xFFEAF1FF),
-  ),
-];
-
 class _KpiCard extends StatelessWidget {
   const _KpiCard({required this.data, required this.compact});
 
@@ -317,6 +319,7 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
@@ -366,7 +369,7 @@ class _KpiCard extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            'vs last week',
+            l10n.gpsVsLastWeek,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: compact ? 10.0 : 11.0,
               color: const Color(0xFF5F6E86),
@@ -383,6 +386,7 @@ class _FleetStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.white.withValues(alpha: 0.96),
       borderRadius: BorderRadius.circular(24),
@@ -407,7 +411,7 @@ class _FleetStatusCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Fleet Status',
+                    l10n.gpsFleetStatus,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -416,7 +420,7 @@ class _FleetStatusCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    'View All',
+                    l10n.gpsViewAll,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -474,13 +478,14 @@ class _FleetDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return CustomPaint(
       painter: _FleetDonutPainter(),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               '32',
               style: TextStyle(
                 fontSize: 36,
@@ -489,11 +494,11 @@ class _FleetDonutChart extends StatelessWidget {
                 height: 1,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Total\nVehicles',
+              l10n.gpsTotalVehiclesCenter,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF6B7690),
@@ -560,35 +565,36 @@ class _StatusBreakdownList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
       children: [
         _StatusRow(
-          color: Color(0xFF13B36C),
-          label: 'Running',
+          color: const Color(0xFF13B36C),
+          label: l10n.gpsRunning,
           percent: '56%',
           count: '18',
           fill: 0.56,
         ),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         _StatusRow(
-          color: Color(0xFFFF595D),
-          label: 'Stopped',
+          color: const Color(0xFFFF595D),
+          label: l10n.gpsStopped,
           percent: '19%',
           count: '6',
           fill: 0.19,
         ),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         _StatusRow(
-          color: Color(0xFF4B84F6),
-          label: 'Offline',
+          color: const Color(0xFF4B84F6),
+          label: l10n.gpsOffline,
           percent: '12%',
           count: '4',
           fill: 0.12,
         ),
-        SizedBox(height: 14),
+        const SizedBox(height: 14),
         _StatusRow(
-          color: Color(0xFF8F98AA),
-          label: 'No Data',
+          color: const Color(0xFF8F98AA),
+          label: l10n.gpsNoData,
           percent: '13%',
           count: '4',
           fill: 0.13,
@@ -679,6 +685,7 @@ class _RecentActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       decoration: BoxDecoration(
@@ -698,7 +705,7 @@ class _RecentActivityCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Recent Activity',
+                l10n.gpsRecentActivity,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -707,7 +714,7 @@ class _RecentActivityCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'View All',
+                l10n.gpsViewAll,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -717,24 +724,24 @@ class _RecentActivityCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const _ActivityRow(
-            iconColor: Color(0xFFFF595D),
+          _ActivityRow(
+            iconColor: const Color(0xFFFF595D),
             icon: AppIcons.stop_circle_rounded,
             title: 'MH12 AB 1234',
-            status: 'Stopped',
+            status: l10n.gpsStopped,
             location: 'Oshiwara, Mumbai',
-            time: '2 mins ago',
-            dotColor: Color(0xFFFF595D),
+            time: l10n.gpsTimeTwoMinsAgo,
+            dotColor: const Color(0xFFFF595D),
           ),
           const Divider(height: 24, color: Color(0xFFE9EEF6)),
-          const _ActivityRow(
-            iconColor: Color(0xFF13B36C),
+          _ActivityRow(
+            iconColor: const Color(0xFF13B36C),
             icon: AppIcons.local_shipping_rounded,
             title: 'DL01 XY 5521',
-            status: 'Running',
+            status: l10n.gpsRunning,
             location: 'Noida, Uttar Pradesh',
-            time: '8 mins ago',
-            dotColor: Color(0xFF13B36C),
+            time: l10n.gpsTimeEightMinsAgo,
+            dotColor: const Color(0xFF13B36C),
           ),
         ],
       ),
@@ -747,6 +754,7 @@ class _GpsBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -773,7 +781,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       selected: true,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
@@ -781,7 +789,7 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
                   ),
@@ -789,14 +797,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       onTap: () => context.go('/gps/profile'),
                     ),
                   ),

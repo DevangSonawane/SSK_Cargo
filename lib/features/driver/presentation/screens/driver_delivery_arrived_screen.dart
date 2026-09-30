@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/driver_tracking_state_provider.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class DriverDeliveryArrivedScreen extends ConsumerStatefulWidget {
   const DriverDeliveryArrivedScreen({super.key, required this.tripId});
@@ -45,12 +46,13 @@ class _DriverDeliveryArrivedScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         backgroundColor: AppColors.canvas,
         elevation: 0,
-        title: const Text('Arrived at destination'),
+        title: Text(l10n.arrivedTitle),
       ),
       body: SafeArea(
         child: ListView(
@@ -94,7 +96,7 @@ class _DriverDeliveryArrivedScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Delivery complete at location',
+                              l10n.arrivedHeading,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: AppColors.textPrimary,
@@ -103,7 +105,7 @@ class _DriverDeliveryArrivedScreenState
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'The on-route card is replaced with this arrival step.',
+                              l10n.arrivedSub,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: AppColors.textSecondary,
@@ -128,7 +130,7 @@ class _DriverDeliveryArrivedScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Trip ID',
+                          l10n.arrivedTripIdLabel,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
@@ -153,15 +155,15 @@ class _DriverDeliveryArrivedScreenState
                     children: [
                       Expanded(
                         child: _MiniStat(
-                          label: 'Status',
-                          value: 'Ready to confirm',
+                          label: l10n.arrivedStatusLabel,
+                          value: l10n.arrivedStatusReady,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _MiniStat(
-                          label: 'Next step',
-                          value: 'Upload proof photo',
+                          label: l10n.arrivedNextLabel,
+                          value: l10n.arrivedNextUpload,
                           alignRight: true,
                         ),
                       ),
@@ -189,7 +191,7 @@ class _DriverDeliveryArrivedScreenState
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                'Slide to confirm arrival',
+                                l10n.arrivedSlideTitle,
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       color: AppColors.textPrimary,
@@ -199,7 +201,7 @@ class _DriverDeliveryArrivedScreenState
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'This hides the route card and opens the photo upload page.',
+                                l10n.arrivedSlideSub,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
@@ -262,7 +264,7 @@ class _DriverDeliveryArrivedScreenState
                                           milliseconds: 90,
                                         ),
                                         child: Text(
-                                          'Swipe to continue',
+                                          l10n.arrivedSwipeContinue,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium
@@ -305,7 +307,7 @@ class _DriverDeliveryArrivedScreenState
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Preparing swipe control...',
+                                  l10n.arrivedPreparing,
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
@@ -315,7 +317,7 @@ class _DriverDeliveryArrivedScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'It will appear automatically after 2 seconds.',
+                                  l10n.arrivedPreparingSub,
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(

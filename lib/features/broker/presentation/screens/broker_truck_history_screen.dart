@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 final _brokerTruckHistoryProvider = FutureProvider.autoDispose
     .family<_TruckHistoryBundle, String>((ref, truckId) async {
@@ -78,6 +79,7 @@ class _BrokerTruckHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final historyAsync = ref.watch(_brokerTruckHistoryProvider(widget.truckId));
 
     return Scaffold(
@@ -93,12 +95,12 @@ class _BrokerTruckHistoryScreenState
               BrokerBackButton(onTap: () => context.go('/broker/vehicles')),
               const SizedBox(height: 14),
               historyAsync.when(
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.only(top: 140),
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, _) => _HistoryEmptyState(
-                  title: 'Could not load trip history',
+                  title: l10n.brokerTruckHistoryCouldNotLoadTripHistory,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                 ),
                 data: (bundle) {
@@ -119,7 +121,7 @@ class _BrokerTruckHistoryScreenState
                               ? 'No trips yet'
                               : 'No trips match your search',
                           subtitle:
-                              'Truck trips will appear here once jobs are assigned.',
+                              l10n.brokerTruckHistoryTruckTripsWillAppearHereOnceJobs,
                         )
                       else
                         for (final trip in trips) ...[
@@ -152,6 +154,7 @@ class _HistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final truck = bundle.truck;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -214,6 +217,7 @@ class _HistorySearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 52,
       decoration: BoxDecoration(
@@ -224,10 +228,10 @@ class _HistorySearchField extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
           prefixIcon: Icon(AppIcons.search_rounded, color: AppColors.textTertiary),
-          hintText: 'Search by booking ID, route...',
+          hintText: l10n.brokerTruckHistorySearchByBookingIDRoute,
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontWeight: FontWeight.w600,
@@ -246,6 +250,7 @@ class _TripHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
@@ -328,6 +333,7 @@ class _TripMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
@@ -360,6 +366,7 @@ class _TripStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final key = status.trim().toLowerCase();
     final danger = key.contains('cancel');
     final success = key.contains('complete') || key.contains('deliver');
@@ -394,6 +401,7 @@ class _HistoryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(

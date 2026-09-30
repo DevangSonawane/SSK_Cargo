@@ -930,7 +930,7 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: l10n.to,
-                          hintText: 'recipient@example.com',
+                          hintText: l10n.emailRecipientHint,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1373,8 +1373,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                             shipment.paymentStatus
                                                         .toLowerCase() ==
                                                     'partial'
-                                                ? 'Pay remaining'
-                                                : 'Pay now',
+                                                ? AppLocalizations.of(
+                                                    context,
+                                                  )!.clientTrackingPayRemaining
+                                                : AppLocalizations.of(
+                                                    context,
+                                                  )!.clientTrackingPayNow,
                                           ),
                                           style: FilledButton.styleFrom(
                                             backgroundColor: const Color(
@@ -1414,8 +1418,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                             ),
                                             child: Text(
                                               _isCancelling
-                                                  ? 'Cancelling...'
-                                                  : 'Cancel',
+                                                  ? AppLocalizations.of(
+                                                      context,
+                                                    )!.cancelling
+                                                  : AppLocalizations.of(
+                                                      context,
+                                                    )!.cancel,
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
@@ -1446,8 +1454,12 @@ class _TrackingDetailsScreenState extends ConsumerState<TrackingDetailsScreen> {
                                             ),
                                             label: Text(
                                               _isRatingSubmitting
-                                                  ? 'Submitting...'
-                                                  : 'Rate delivery',
+                                                  ? AppLocalizations.of(
+                                                      context,
+                                                    )!.clientTrackingSubmitting
+                                                  : AppLocalizations.of(
+                                                      context,
+                                                    )!.clientTrackingRateDelivery,
                                             ),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: const Color(
@@ -4484,7 +4496,7 @@ class _CancellationReasonDialogState extends State<_CancellationReasonDialog> {
               textCapitalization: TextCapitalization.sentences,
               style: TextStyle(color: colors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Add more detail (optional)',
+                hintText: AppLocalizations.of(context)!.addMoreDetailOptional,
                 hintStyle: TextStyle(color: colors.textTertiary, fontSize: 13),
                 filled: true,
                 fillColor: colors.fillSubtle,
@@ -5407,7 +5419,7 @@ class _LegacyClientBookingChatSheetState
                       onChanged: _handleTyping,
                       onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
-                        hintText: 'Type a message...',
+                        hintText: AppLocalizations.of(context)!.typeMessageHint,
                         filled: true,
                         fillColor: context.colors.canvas,
                         border: OutlineInputBorder(

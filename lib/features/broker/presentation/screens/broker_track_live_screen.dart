@@ -13,6 +13,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../client/presentation/widgets/client_flow_widgets.dart';
 import '../../../client/presentation/widgets/tracking_route_map_view.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 /// Broker-only live tracking view.
 ///
@@ -160,7 +161,7 @@ class _BrokerTrackLiveScreenState
     if (phone.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Driver phone number is not available.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.brokerTrackLiveDriverPhoneNumberIsNotAvailable)),
       );
       return;
     }
@@ -170,7 +171,7 @@ class _BrokerTrackLiveScreenState
     );
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the phone app.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.brokerTrackLiveCouldNotOpenThePhoneApp)),
       );
     }
   }
@@ -186,6 +187,7 @@ class _BrokerTrackLiveScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusKey = (_shipment.bookingStatus ?? _shipment.status)
         .trim()
         .toLowerCase()
@@ -216,7 +218,7 @@ class _BrokerTrackLiveScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Track Live',
+                          l10n.brokerTrackLiveTrackLive,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 color: AppColors.textPrimary,
@@ -269,7 +271,7 @@ class _BrokerTrackLiveScreenState
                     Positioned(
                       top: 12,
                       left: 12,
-                      child: const _LiveBadge(),
+                      child: _LiveBadge(),
                     ),
                   ],
                 ),
@@ -301,7 +303,7 @@ class _BrokerTrackLiveScreenState
                         AppIcons.chat_bubble_outline_rounded,
                         size: 17,
                       ),
-                      label: const Text('Chat'),
+                      label: Text(AppLocalizations.of(context)!.brokerTrackLiveChat),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.brandDark,
                         side: const BorderSide(color: AppColors.brandBorder),
@@ -317,7 +319,7 @@ class _BrokerTrackLiveScreenState
                     child: FilledButton.icon(
                       onPressed: _callDriver,
                       icon: const Icon(AppIcons.phone_rounded, size: 17),
-                      label: const Text('Call driver'),
+                      label: Text(AppLocalizations.of(context)!.brokerTrackLiveCallDriver),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.brand,
                         padding: const EdgeInsets.symmetric(vertical: 13),
@@ -338,7 +340,7 @@ class _BrokerTrackLiveScreenState
 }
 
 class _LiveBadge extends StatefulWidget {
-  const _LiveBadge();
+  _LiveBadge();
 
   @override
   State<_LiveBadge> createState() => _LiveBadgeState();
@@ -367,6 +369,7 @@ class _LiveBadgeState extends State<_LiveBadge>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -424,8 +427,8 @@ class _LiveBadgeState extends State<_LiveBadge>
                 ),
               ),
               const SizedBox(width: 6),
-              const Text(
-                'LIVE',
+              Text(
+                l10n.brokerTrackLiveLIVE,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -449,6 +452,7 @@ class _TrackStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -474,6 +478,7 @@ class _TrackRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       width: double.infinity,
@@ -494,7 +499,7 @@ class _TrackRouteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Route',
+            l10n.brokerTrackLiveRoute,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colors.textPrimary,
               fontSize: 16,
@@ -529,7 +534,7 @@ class _TrackRouteCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  label: 'Pickup',
+                  label: l10n.brokerTrackLivePickup,
                   value: shipment.fromLocation.trim().isEmpty
                       ? 'Pickup pending'
                       : shipment.fromLocation.trim(),
@@ -552,7 +557,7 @@ class _TrackRouteCard extends StatelessWidget {
                     color: Color(0xFF2FA56E),
                     size: 18,
                   ),
-                  label: 'Drop-off',
+                  label: l10n.brokerTrackLiveDropOff,
                   value: shipment.toLocation.trim().isEmpty
                       ? 'Drop pending'
                       : shipment.toLocation.trim(),
@@ -566,7 +571,7 @@ class _TrackRouteCard extends StatelessWidget {
               Expanded(
                 child: _TrackMetaTile(
                   icon: AppIcons.scale_outlined,
-                  label: 'Weight',
+                  label: AppLocalizations.of(context)!.brokerTrackLiveWeight,
                   value: shipment.weight.trim().isEmpty
                       ? '-'
                       : shipment.weight.trim(),
@@ -576,7 +581,7 @@ class _TrackRouteCard extends StatelessWidget {
               Expanded(
                 child: _TrackMetaTile(
                   icon: AppIcons.local_shipping_outlined,
-                  label: 'Truck',
+                  label: AppLocalizations.of(context)!.brokerTrackLiveTruck,
                   value:
                       shipment.assignedTruckName?.trim().isEmpty != false
                       ? '-'
@@ -604,6 +609,7 @@ class _TrackRailStop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,6 +665,7 @@ class _TrackMetaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -724,6 +731,7 @@ class _TrackProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const steps = [
       ('assigned', 'Assigned'),
       ('en_route_pickup', 'En Route'),
@@ -753,7 +761,7 @@ class _TrackProgressCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trip progress',
+            l10n.brokerTrackLiveTripProgress,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colors.textPrimary,
               fontSize: 16,
@@ -823,6 +831,7 @@ class _TrackDriverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final initials = name
         .trim()
@@ -929,6 +938,7 @@ class _TrackTruckCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Container(
       width: double.infinity,
@@ -966,7 +976,7 @@ class _TrackTruckCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Truck',
+                  l10n.brokerTrackLiveTruck,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.textTertiary,
                     fontSize: 11,

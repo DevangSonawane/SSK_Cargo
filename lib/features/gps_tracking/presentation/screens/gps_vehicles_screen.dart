@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/gps_tracking_models.dart';
 import '../../data/gps_tracking_repository.dart';
@@ -51,7 +52,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
       }
       setState(() {
         _devices = [];
-        _error = 'Please sign in again to view live fleet devices.';
+        _error = AppLocalizations.of(context)!.gpsSignInForFleetDevices;
         _loading = false;
       });
       return;
@@ -97,6 +98,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
     final isCompact = width < 390;
     final filtered = _devices.where((device) {
@@ -115,7 +117,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
         : ((filtered.length - 1) / _itemsPerPage).floor() + 1;
     final startIndex = (_currentPage - 1) * _itemsPerPage;
     final paginated = filtered.skip(startIndex).take(_itemsPerPage).toList();
-    final statusChips = _buildStatusChips(_devices);
+    final statusChips = _buildStatusChips(_devices, l10n);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FD),
@@ -189,7 +191,7 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
                           ),
                           TextButton(
                             onPressed: _loadDevices,
-                            child: const Text('Retry'),
+                            child: Text(l10n.gpsRetry),
                           ),
                         ],
                       ),
@@ -225,7 +227,10 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
     );
   }
 
-  List<_StatusChipData> _buildStatusChips(List<GpsTrackerDevice> devices) {
+  List<_StatusChipData> _buildStatusChips(
+    List<GpsTrackerDevice> devices,
+    AppLocalizations l10n,
+  ) {
     final onlineCount = devices
         .where((device) => device.statusLabel.toLowerCase().contains('online'))
         .length;
@@ -238,25 +243,25 @@ class _GpsVehiclesScreenState extends ConsumerState<GpsVehiclesScreen> {
 
     return [
       _StatusChipData(
-        label: 'All',
+        label: l10n.gpsFilterAll,
         count: devices.length.toString(),
         color: const Color(0xFF0F1F44),
         background: const Color(0xFF0F1F44),
       ),
       _StatusChipData(
-        label: 'Online',
+        label: l10n.gpsOnline,
         count: onlineCount.toString(),
         color: const Color(0xFF13B36C),
         background: const Color(0xFFEAF9F1),
       ),
       _StatusChipData(
-        label: 'Offline',
+        label: l10n.gpsOffline,
         count: offlineCount.toString(),
         color: const Color(0xFFFF595D),
         background: const Color(0xFFFFEEEE),
       ),
       _StatusChipData(
-        label: 'Cached',
+        label: l10n.gpsCached,
         count: cachedCount.toString(),
         color: const Color(0xFFD19A00),
         background: const Color(0xFFFFF4DA),
@@ -289,6 +294,7 @@ class _VehiclesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final titleSize = width < 390 ? 21.0 : 24.0;
     final subtitleSize = width < 390 ? 9.5 : 10.2;
 
@@ -306,7 +312,7 @@ class _VehiclesHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Vehicles',
+                l10n.gpsMyVehicles,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -318,7 +324,7 @@ class _VehiclesHeader extends StatelessWidget {
               ),
               const SizedBox(height: 1),
               Text(
-                'Manage and track all your vehicles',
+                l10n.gpsMyVehiclesSubtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -394,6 +400,7 @@ class _ViewToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final padH = width < 390 ? 8.0 : 10.0;
     final padV = width < 390 ? 6.0 : 8.0;
 
@@ -420,16 +427,16 @@ class _ViewToggle extends StatelessWidget {
               ],
             ),
             child: Row(
-              children: const [
-                Icon(
+              children: [
+                const Icon(
                   AppIcons.view_list_rounded,
                   color: Color(0xFF182B4E),
                   size: 16,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
-                  'List',
-                  style: TextStyle(
+                  l10n.gpsList,
+                  style: const TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF182B4E),
@@ -448,16 +455,16 @@ class _ViewToggle extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
                 child: Row(
-                  children: const [
-                    Icon(
+                  children: [
+                    const Icon(
                       AppIcons.map_outlined,
                       color: Color(0xFF72809B),
                       size: 16,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Map',
-                      style: TextStyle(
+                      l10n.gpsMap,
+                      style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF72809B),
@@ -482,6 +489,7 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -506,10 +514,10 @@ class _SearchBar extends StatelessWidget {
           Expanded(
             child: TextField(
               onChanged: onChanged,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                hintText: 'Search vehicles by number, name or driver...',
+                hintText: l10n.gpsSearchVehiclesHint,
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: isCompact ? 11.5 : 12.5,
@@ -873,6 +881,10 @@ class _PaginationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final endIndex = startIndex + itemsPerPage > totalItems
+        ? totalItems
+        : startIndex + itemsPerPage;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
@@ -890,7 +902,7 @@ class _PaginationBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Showing ${startIndex + 1} to ${startIndex + itemsPerPage > totalItems ? totalItems : startIndex + itemsPerPage} of $totalItems entries',
+            l10n.gpsShowingEntries(startIndex + 1, endIndex, totalItems),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontSize: 11.5,
               color: const Color(0xFF63708A),
@@ -906,7 +918,7 @@ class _PaginationBar extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               ),
               Text(
-                '$currentPage / $totalPages',
+                l10n.gpsPageIndicator(currentPage, totalPages),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -933,6 +945,7 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -959,14 +972,14 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       selected: true,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
@@ -975,14 +988,14 @@ class _GpsVehiclesBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       onTap: () => context.go('/gps/profile'),
                     ),
                   ),

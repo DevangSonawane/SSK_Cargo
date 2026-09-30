@@ -563,7 +563,9 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         if (distance != null) ...[
           const SizedBox(height: 8),
           Text(
-            'Estimated route distance: ${distance.toStringAsFixed(distance < 10 ? 1 : 0)} km',
+            AppLocalizations.of(context)!.clientBookingRouteDistance(
+              distance.toStringAsFixed(distance < 10 ? 1 : 0),
+            ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: context.colors.textSecondary,
               fontWeight: FontWeight.w700,
@@ -696,8 +698,8 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
         SnackBar(
           content: Text(
             loading
-                ? 'Choose a loading point from suggestions so we can pin it.'
-                : 'Choose an unloading point from suggestions so we can pin it.',
+                ? AppLocalizations.of(context)!.clientBookingLoadingPointHint
+                : AppLocalizations.of(context)!.clientBookingUnloadingPointHint,
           ),
         ),
       );
@@ -831,7 +833,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
     if (!unknown && (parsedWeight == null || parsedWeight <= 0)) {
       setState(() {
         _weightUnknown = false;
-        _weightError = 'Enter weight';
+        _weightError = AppLocalizations.of(context)!.clientBookingWeightError;
       });
       return;
     }
@@ -4654,7 +4656,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           children: [
             Expanded(
               child: _WeightStepActionChip(
-                label: 'Loading point',
+                label: AppLocalizations.of(context)!.loadingPoint,
                 icon: AppIcons.add_location_alt_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: true);
@@ -4664,7 +4666,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _WeightStepActionChip(
-                label: 'Unloading point',
+                label: AppLocalizations.of(context)!.unloadingPoint,
                 icon: AppIcons.add_road_rounded,
                 onPressed: () async {
                   await _addIntermediateStop(loading: false);

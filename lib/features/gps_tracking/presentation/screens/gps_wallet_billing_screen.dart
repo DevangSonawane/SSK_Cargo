@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../widgets/gps_sidebar_drawer.dart';
 
@@ -9,6 +10,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 390;
 
@@ -58,60 +60,60 @@ class GpsWalletBillingScreen extends StatelessWidget {
                             const SizedBox(height: 10),
                             _SearchAndFilterRow(compact: compact),
                             const SizedBox(height: 10),
-                            const _TransactionCard(
+                            _TransactionCard(
                               icon: AppIcons.add_circle_outline_rounded,
-                              iconBackground: Color(0xFFEAF8EE),
-                              iconColor: Color(0xFF23A852),
-                              title: 'Welcome Bonus',
-                              subtitle: 'Tokens added',
+                              iconBackground: const Color(0xFFEAF8EE),
+                              iconColor: const Color(0xFF23A852),
+                              title: l10n.gpsWelcomeBonus,
+                              subtitle: l10n.gpsTokensAdded,
                               meta: '25 May 2024, 10:30 AM',
-                              amount: '+ 50 tokens',
-                              amountColor: Color(0xFF23A852),
-                              status: 'Completed',
-                              statusBackground: Color(0xFFEAF8EE),
-                              statusColor: Color(0xFF23A852),
+                              amount: l10n.gpsTokensCredit(50),
+                              amountColor: const Color(0xFF23A852),
+                              status: l10n.gpsCompleted,
+                              statusBackground: const Color(0xFFEAF8EE),
+                              statusColor: const Color(0xFF23A852),
                             ),
                             const SizedBox(height: 6),
-                            const _TransactionCard(
+                            _TransactionCard(
                               icon: AppIcons.shopping_cart_outlined,
-                              iconBackground: Color(0xFFEAF1FF),
-                              iconColor: Color(0xFF2D6EF2),
-                              title: 'Token Purchase',
-                              subtitle: 'Via Razorpay',
+                              iconBackground: const Color(0xFFEAF1FF),
+                              iconColor: const Color(0xFF2D6EF2),
+                              title: l10n.gpsTokenPurchase,
+                              subtitle: l10n.gpsViaRazorpay,
                               meta: '25 May 2024, 10:30 AM',
-                              amount: '+ 100 tokens',
-                              amountColor: Color(0xFF23A852),
-                              status: 'Completed',
-                              statusBackground: Color(0xFFEAF8EE),
-                              statusColor: Color(0xFF23A852),
+                              amount: l10n.gpsTokensCredit(100),
+                              amountColor: const Color(0xFF23A852),
+                              status: l10n.gpsCompleted,
+                              statusBackground: const Color(0xFFEAF8EE),
+                              statusColor: const Color(0xFF23A852),
                             ),
                             const SizedBox(height: 6),
-                            const _TransactionCard(
+                            _TransactionCard(
                               icon: AppIcons.remove_circle_outline_rounded,
-                              iconBackground: Color(0xFFFFEDEF),
-                              iconColor: Color(0xFFFF595D),
-                              title: 'Subscription Payment',
-                              subtitle: 'Monthly Plan',
+                              iconBackground: const Color(0xFFFFEDEF),
+                              iconColor: const Color(0xFFFF595D),
+                              title: l10n.gpsSubscriptionPayment,
+                              subtitle: l10n.gpsMonthlyPlan,
                               meta: '24 May 2024, 09:15 AM',
-                              amount: '- 50 tokens',
-                              amountColor: Color(0xFFFF595D),
-                              status: 'Deducted',
-                              statusBackground: Color(0xFFFFEEF0),
-                              statusColor: Color(0xFFFF595D),
+                              amount: l10n.gpsTokensDebit(50),
+                              amountColor: const Color(0xFFFF595D),
+                              status: l10n.gpsDeducted,
+                              statusBackground: const Color(0xFFFFEEF0),
+                              statusColor: const Color(0xFFFF595D),
                             ),
                             const SizedBox(height: 6),
-                            const _TransactionCard(
+                            _TransactionCard(
                               icon: AppIcons.schedule_rounded,
-                              iconBackground: Color(0xFFFFF5DF),
-                              iconColor: Color(0xFFD19A00),
-                              title: 'Token Expiry',
-                              subtitle: 'Expired tokens removed',
+                              iconBackground: const Color(0xFFFFF5DF),
+                              iconColor: const Color(0xFFD19A00),
+                              title: l10n.gpsTokenExpiry,
+                              subtitle: l10n.gpsExpiredTokensRemoved,
                               meta: '20 May 2024, 11:00 PM',
-                              amount: '- 10 tokens',
-                              amountColor: Color(0xFFFF595D),
-                              status: 'Expired',
-                              statusBackground: Color(0xFFFFEEF0),
-                              statusColor: Color(0xFFFF595D),
+                              amount: l10n.gpsTokensDebit(10),
+                              amountColor: const Color(0xFFFF595D),
+                              status: l10n.gpsExpired,
+                              statusBackground: const Color(0xFFFFEEF0),
+                              statusColor: const Color(0xFFFF595D),
                             ),
                             const SizedBox(height: 12),
                             Row(
@@ -128,7 +130,7 @@ class GpsWalletBillingScreen extends StatelessWidget {
                                     horizontal: 8,
                                   ),
                                   child: Text(
-                                    'No more transactions',
+                                    l10n.gpsNoMoreTransactions,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
@@ -224,6 +226,7 @@ class _WalletHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         GestureDetector(
@@ -242,7 +245,7 @@ class _WalletHeader extends StatelessWidget {
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            'Wallet & Billing',
+            l10n.gpsWalletBilling,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -265,6 +268,7 @@ class _TokenHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
@@ -351,7 +355,7 @@ class _TokenHeroCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              'Token Balance',
+                              l10n.gpsTokenBalance,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     fontSize: compact ? 12.8 : 13.5,
@@ -371,8 +375,8 @@ class _TokenHeroCard extends StatelessWidget {
                                 ).withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: const Text(
-                                'ACTIVE',
+                              child: Text(
+                                l10n.gpsActive,
                                 style: TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w900,
@@ -401,7 +405,7 @@ class _TokenHeroCard extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Text(
-                                'tokens',
+                                l10n.gpsTokens,
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       fontSize: 12.5,
@@ -416,7 +420,7 @@ class _TokenHeroCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '₹0.00 equivalent',
+                          l10n.gpsTokenEquivalent('0.00'),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontSize: compact ? 10 : 10.5,
@@ -442,6 +446,7 @@ class _SectionTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Row(
@@ -450,7 +455,7 @@ class _SectionTabs extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Transactions',
+                    l10n.gpsTransactions,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w900,
@@ -473,7 +478,7 @@ class _SectionTabs extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Invoices',
+                    l10n.gpsInvoices,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
@@ -501,6 +506,7 @@ class _SearchAndFilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -522,7 +528,7 @@ class _SearchAndFilterRow extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Search transactions...',
+                    l10n.gpsSearchTransactions,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -552,7 +558,7 @@ class _SearchAndFilterRow extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Filter',
+                l10n.gpsFilter,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -696,6 +702,7 @@ class _GpsBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -722,14 +729,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.home_rounded,
-                      label: 'Dashboard',
+                      label: l10n.gpsNavDashboard,
                       onTap: () => context.go('/gps/dashboard'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.local_shipping_rounded,
-                      label: 'Vehicles',
+                      label: l10n.gpsNavVehicles,
                       onTap: () => context.go('/gps/vehicles'),
                     ),
                   ),
@@ -737,14 +744,14 @@ class _GpsBottomNavBar extends StatelessWidget {
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.insert_chart_rounded,
-                      label: 'Reports',
+                      label: l10n.gpsNavReports,
                       onTap: () => context.go('/gps/reports'),
                     ),
                   ),
                   Expanded(
                     child: _GpsNavItem(
                       icon: AppIcons.person_rounded,
-                      label: 'Profile',
+                      label: l10n.gpsNavProfile,
                       onTap: () => context.go('/gps/profile'),
                     ),
                   ),

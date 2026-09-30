@@ -11,6 +11,7 @@ import '../../../../core/theme/client_map_theme.dart';
 import '../../../../core/providers/google_places_provider.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../widgets/google_places_autocomplete_field.dart';
 
 class ClientSavedAddressesScreen extends ConsumerStatefulWidget {
@@ -183,9 +184,11 @@ class _ClientSavedAddressesScreenState
       setState(() {
         _addresses.removeWhere((item) => item.id == address.id);
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Address removed.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.clientAddressRemoved),
+        ),
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -202,6 +205,7 @@ class _ClientSavedAddressesScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final session = ref.watch(authSessionProvider).valueOrNull;
     final filtered = _filteredAddresses;
@@ -215,7 +219,7 @@ class _ClientSavedAddressesScreenState
           onPressed: () => context.pop(),
           icon: const Icon(AppIcons.arrow_back_rounded),
         ),
-        title: const Text('Saved Addresses'),
+        title: Text(l10n.clientSavedAddressesTitle),
       ),
       body: RefreshIndicator(
         color: const Color(0xFF2FA56E),
@@ -225,43 +229,42 @@ class _ClientSavedAddressesScreenState
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           children: [
             if (session == null)
-              const _EmptyState(
+              _EmptyState(
                 icon: AppIcons.lock_outline_rounded,
-                title: 'Sign in to manage addresses',
-                subtitle:
-                    'We need an active client session before we can load your saved locations.',
+                title: l10n.clientSavedSignInTitle,
+                subtitle: l10n.clientSavedSignInSubtitle,
               )
             else if (_loading)
               const Center(child: CircularProgressIndicator())
             else if (_error)
               _EmptyState(
                 icon: AppIcons.error_outline_rounded,
-                title: 'Could not load saved addresses',
-                subtitle: 'Pull to refresh or try again in a moment.',
-                actionLabel: 'Retry',
+                title: l10n.clientSavedLoadError,
+                subtitle: l10n.clientSavedLoadErrorHint,
+                actionLabel: l10n.clientSavedRetry,
                 onAction: _load,
               )
             else if (_addresses.isEmpty)
               _EmptyState(
                 icon: AppIcons.location_on_outlined,
-                title: 'No saved addresses yet',
-                subtitle:
-                    'Save your frequent pickup and drop-off locations to check out faster next time.',
-                actionLabel: 'Add Address',
+                title: l10n.clientSavedEmptyTitle,
+                subtitle: l10n.clientSavedEmptySubtitle,
+                actionLabel: l10n.clientSavedAddAddress,
                 onAction: _openEditor,
               )
             else ...[
               _SavedAddressSearchField(
                 controller: _searchController,
                 query: _query,
+                hint: l10n.clientSavedSearchHint,
                 onQueryChanged: (value) => setState(() => _query = value),
               ),
               const SizedBox(height: 12),
               if (filtered.isEmpty)
-                const _EmptyState(
+                _EmptyState(
                   icon: AppIcons.search_off_rounded,
-                  title: 'No addresses match your search',
-                  subtitle: 'Try another name, address, or contact.',
+                  title: l10n.clientSavedNoMatchTitle,
+                  subtitle: l10n.clientSavedNoMatchSubtitle,
                 )
               else
                 _AddressList(
@@ -286,11 +289,13 @@ class _SavedAddressSearchField extends StatelessWidget {
     required this.controller,
     required this.query,
     required this.onQueryChanged,
+    this.hint = 'Search saved addresses...',
   });
 
   final TextEditingController controller;
   final String query;
   final ValueChanged<String> onQueryChanged;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -313,8 +318,8 @@ class _SavedAddressSearchField extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onQueryChanged,
-              decoration: const InputDecoration(
-                hintText: 'Search saved addresses...',
+              decoration: InputDecoration(
+                hintText: hint,
                 filled: false,
                 fillColor: Colors.transparent,
                 border: InputBorder.none,
@@ -442,7 +447,7 @@ class _AddAddressTile extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Add New Address',
+              AppLocalizations.of(context)!.clientSavedAddNewAddress,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 fontSize: 14.5,
@@ -451,7 +456,7 @@ class _AddAddressTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Pickup or Drop-off Location',
+              AppLocalizations.of(context)!.clientSavedPickupOrDropoffLocation,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,
                 fontSize: 12,
@@ -608,13 +613,17 @@ class _ClientSavedAddressEditorScreenState
 
     if (label.isEmpty) {
       setState(() {
-        _errorMessage = 'Give this address a name, such as Home or Warehouse.';
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientSavedAddressNameRequired;
       });
       return;
     }
     if (address.isEmpty) {
       setState(() {
-        _errorMessage = 'Search and select an address from Google Maps.';
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientSavedAddressRequired;
       });
       return;
     }
@@ -710,8 +719,10 @@ class _ClientSavedAddressEditorScreenState
     final longitude = selection.longitude;
     if (latitude == null || longitude == null) return;
 
-    final fallback =
-        'Pinned location (${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)})';
+    final fallback = AppLocalizations.of(context)!.clientSavedPinnedLocation(
+      latitude.toStringAsFixed(5),
+      longitude.toStringAsFixed(5),
+    );
     final address = selection.formattedAddress.trim().isNotEmpty
         ? selection.formattedAddress.trim()
         : fallback;
@@ -743,8 +754,10 @@ class _ClientSavedAddressEditorScreenState
           .read(googlePlacesServiceProvider)
           .reverseGeocode(latitude: point.latitude, longitude: point.longitude);
       if (!mounted) return;
-      final fallback =
-          'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+      final fallback = AppLocalizations.of(context)!.clientSavedPinnedLocation(
+        point.latitude.toStringAsFixed(5),
+        point.longitude.toStringAsFixed(5),
+      );
       final address = resolved.isNotEmpty ? resolved : fallback;
       setState(() {
         _addressController.text = address;
@@ -752,14 +765,18 @@ class _ClientSavedAddressEditorScreenState
       });
     } catch (_) {
       if (!mounted) return;
-      final fallback =
-          'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+      final fallback = AppLocalizations.of(context)!.clientSavedPinnedLocation(
+        point.latitude.toStringAsFixed(5),
+        point.longitude.toStringAsFixed(5),
+      );
       setState(() {
         _addressController.text = fallback;
         _draft = _draft.copyWith(address: fallback);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not resolve this map point.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotResolveMapPoint),
+        ),
       );
     } finally {
       if (mounted) {
@@ -818,9 +835,12 @@ class _ClientSavedAddressEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final hasCoordinates = _draft.latitude != null && _draft.longitude != null;
-    final title = _isEditing ? 'Edit Address' : 'Add Address';
+    final title = _isEditing
+        ? l10n.clientAddressEditTitle
+        : l10n.clientAddressAddTitle;
 
     if (_loading) {
       return Scaffold(
@@ -842,7 +862,7 @@ class _ClientSavedAddressEditorScreenState
                 const CircularProgressIndicator(color: Color(0xFF2FA56E)),
                 const SizedBox(height: 12),
                 Text(
-                  'Loading address...',
+                  l10n.clientAddressLoading,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -931,7 +951,7 @@ class _ClientSavedAddressEditorScreenState
                         color: colors.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Home, Office, Warehouse 2',
+                        hintText: l10n.clientSavedLabelHint,
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -970,7 +990,7 @@ class _ClientSavedAddressEditorScreenState
                                 AppIcons.my_location_rounded,
                                 size: 15,
                               ),
-                        label: const Text('Use current'),
+                        label: Text(l10n.clientSavedUseCurrent),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF2FA56E),
                           textStyle: const TextStyle(
@@ -989,7 +1009,7 @@ class _ClientSavedAddressEditorScreenState
                     child: GooglePlacesAutocompleteField(
                       controller: _addressController,
                       label: '',
-                      hintText: 'Search, or tap the map...',
+                      hintText: l10n.clientSavedSearchOrTapMap,
                       showLabel: false,
                       embedded: true,
                       onSelected: (selection) {
@@ -1037,7 +1057,7 @@ class _ClientSavedAddressEditorScreenState
                         color: colors.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: '3rd Floor, Flat 402, Gate 2',
+                        hintText: l10n.clientSavedFloorHint,
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -1058,7 +1078,10 @@ class _ClientSavedAddressEditorScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _FieldLabel(text: 'On-site Contact', trailing: '(optional)'),
+                  _FieldLabel(
+                    text: l10n.clientSavedOnSiteContact,
+                    trailing: l10n.clientSavedOptional,
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -1074,7 +1097,7 @@ class _ClientSavedAddressEditorScreenState
                               color: colors.textPrimary,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Contact name',
+                              hintText: l10n.clientSavedContactNameHint,
                               hintStyle: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
@@ -1391,16 +1414,24 @@ class _SavedAddressMapPickerState
       setState(() {
         _selectedAddress = address.isNotEmpty
             ? address
-            : 'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+            : AppLocalizations.of(context)!.clientSavedPinnedLocation(
+                point.latitude.toStringAsFixed(5),
+                point.longitude.toStringAsFixed(5),
+              );
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _selectedAddress =
-            'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+        _selectedAddress = AppLocalizations.of(context)!
+            .clientSavedPinnedLocation(
+              point.latitude.toStringAsFixed(5),
+              point.longitude.toStringAsFixed(5),
+            );
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not resolve this map point.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotResolveMapPoint),
+        ),
       );
     } finally {
       if (mounted) {
@@ -1476,7 +1507,7 @@ class _SavedAddressMapPickerState
                             ),
                           )
                         : const Icon(AppIcons.check_rounded, size: 18),
-                    label: const Text('Use'),
+                    label: Text(AppLocalizations.of(context)!.clientSavedUse),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF2FA56E),
                       foregroundColor: Colors.white,
@@ -1707,6 +1738,11 @@ class _AddressTypeMeta {
   }
 }
 
+String _addressTypeLabel(BuildContext context, _AddressTypeMeta meta) {
+  final l10n = AppLocalizations.of(context)!;
+  return meta.label == 'Drop-off' ? l10n.dropOff : l10n.pickup;
+}
+
 class _AddressTypeChip extends StatelessWidget {
   const _AddressTypeChip({required this.meta, this.dense = false});
 
@@ -1730,7 +1766,7 @@ class _AddressTypeChip extends StatelessWidget {
           Icon(meta.icon, size: dense ? 11 : 13, color: meta.color),
           const SizedBox(width: 5),
           Text(
-            meta.label,
+            _addressTypeLabel(context, meta),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: meta.color,
               fontSize: dense ? 10 : 11,
@@ -1901,7 +1937,7 @@ class _AddressTypeOption extends StatelessWidget {
             Icon(meta.icon, color: meta.color, size: 16),
             const SizedBox(width: 8),
             Text(
-              meta.label,
+              _addressTypeLabel(context, meta),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: selected ? meta.color : context.colors.textSecondary,

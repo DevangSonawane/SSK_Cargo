@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../data/gps_tracking_models.dart';
 import '../../data/gps_tracking_repository.dart';
@@ -87,7 +88,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
       setState(() {
         _vehicle = null;
         _loading = false;
-        _error = 'Please sign in again to view this vehicle.';
+        _error = AppLocalizations.of(context)!.gpsSignInForVehicle;
       });
       return;
     }
@@ -112,7 +113,9 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
       setState(() {
         _vehicle = vehicle;
         _loading = false;
-        _error = vehicle == null ? 'Vehicle not found' : '';
+        _error = vehicle == null
+            ? AppLocalizations.of(context)!.gpsVehicleNotFound
+            : '';
       });
     } on ApiException catch (error) {
       if (!mounted) {
@@ -153,6 +156,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final vehicle = _vehicle;
 
     if (_loading) {
@@ -169,7 +173,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Vehicle not found'),
+              Text(l10n.gpsVehicleNotFound),
               if (_error.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
@@ -184,7 +188,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => context.go('/gps/maps'),
-                child: const Text('Back to Fleet'),
+                child: Text(l10n.gpsBackToFleet),
               ),
             ],
           ),
@@ -217,7 +221,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                             InkWell(
                               onTap: () => context.go('/gps/maps'),
                               child: Text(
-                                'Fleet',
+                                l10n.gpsFleet,
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       fontSize: 24,
@@ -229,7 +233,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Vehicle live map',
+                              l10n.gpsVehicleLiveMap,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     fontSize: 11,
@@ -244,7 +248,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                       TextButton.icon(
                         onPressed: () => context.go('/gps/maps'),
                         icon: const Icon(AppIcons.grid_view_rounded, size: 18),
-                        label: const Text('All Fleet'),
+                        label: Text(l10n.gpsAllFleet),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF2D6EF2),
                           backgroundColor: Colors.white,
@@ -276,7 +280,11 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                         border: Border.all(color: const Color(0xFFF3D38C)),
                       ),
                       child: Text(
-                        'Live tracking is unavailable right now - showing the last known position${vehicle.lastSeenAt != null ? ', from ${vehicle.timeAgoLabel}' : ''}.',
+                        l10n.gpsVehicleCachedBanner(
+                          vehicle.lastSeenAt != null
+                              ? l10n.gpsTimeSuffixFrom(vehicle.timeAgoLabel)
+                              : '',
+                        ),
                         style: const TextStyle(
                           color: Color(0xFF9A6B00),
                           fontSize: 12.5,

@@ -13,6 +13,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/providers/kyc_status_provider.dart';
 import '../../../../core/widgets/digilocker_verification_card.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 enum _KycStep { details, documents, review, submitted }
 
@@ -396,8 +397,8 @@ class _BrokerKycRegistrationScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in again to submit KYC.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerKycPleaseSignInAgainToSubmitKYC),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -476,7 +477,7 @@ class _BrokerKycRegistrationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${document.title} is provided in the details section.',
+              AppLocalizations.of(context)!.brokerKycIsProvidedInTheDetailsSection(document.title),
             ),
             backgroundColor: AppColors.brand,
           ),
@@ -488,8 +489,8 @@ class _BrokerKycRegistrationScreenState
       if (session == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please sign in again to upload documents.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.brokerKycPleaseSignInAgainToUploadDocuments),
             backgroundColor: AppColors.dangerIcon,
           ),
         );
@@ -528,8 +529,8 @@ class _BrokerKycRegistrationScreenState
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to pick document right now.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.brokerKycUnableToPickDocumentRightNow),
           backgroundColor: AppColors.dangerIcon,
         ),
       );
@@ -565,7 +566,7 @@ class _BrokerKycRegistrationScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Choose how you want to upload this document.',
+                      AppLocalizations.of(context)!.brokerKycChooseHowYouWantToUploadThis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -573,7 +574,7 @@ class _BrokerKycRegistrationScreenState
                     const SizedBox(height: 16),
                     _SheetAction(
                       icon: AppIcons.photo_camera_rounded,
-                      label: 'Camera',
+                      label: AppLocalizations.of(context)!.brokerKycCamera,
                       onTap: () {
                         Navigator.of(context).pop();
                         _pickDocument(document, ImageSource.camera);
@@ -582,7 +583,7 @@ class _BrokerKycRegistrationScreenState
                     const SizedBox(height: 10),
                     _SheetAction(
                       icon: AppIcons.photo_library_rounded,
-                      label: 'Gallery',
+                      label: AppLocalizations.of(context)!.brokerKycGallery,
                       onTap: () {
                         Navigator.of(context).pop();
                         _pickDocument(document, ImageSource.gallery);
@@ -591,7 +592,7 @@ class _BrokerKycRegistrationScreenState
                     const SizedBox(height: 10),
                     _SheetAction(
                       icon: AppIcons.close_rounded,
-                      label: 'Cancel',
+                      label: AppLocalizations.of(context)!.brokerKycCancel,
                       onTap: () => Navigator.of(context).pop(),
                       muted: true,
                     ),
@@ -637,7 +638,7 @@ class _BrokerKycRegistrationScreenState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Document preview',
+                            AppLocalizations.of(context)!.brokerKycDocumentPreview,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -707,8 +708,8 @@ class _BrokerKycRegistrationScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Close',
+                      child: Text(
+                        AppLocalizations.of(context)!.brokerKycClose,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -804,7 +805,7 @@ class _BrokerKycRegistrationScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Complete your KYC to verify your brokerage account.',
+          AppLocalizations.of(context)!.brokerKycCompleteYourKYCToVerifyYourBrokerage,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppColors.textSecondary,
             fontSize: 12,
@@ -847,9 +848,9 @@ class _BrokerKycRegistrationScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SectionHeader(
-            title: 'Upload Documents',
+            title: AppLocalizations.of(context)!.brokerKycUploadDocuments,
             subtitle:
-                'All your documents are verified through DigiLocker — nothing to upload.',
+                AppLocalizations.of(context)!.brokerKycAllYourDocumentsAreVerifiedThroughDigiLocker,
           ),
           const SizedBox(height: 12),
           Container(
@@ -859,7 +860,7 @@ class _BrokerKycRegistrationScreenState
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.brandBorder),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(
                   AppIcons.verified_rounded,
@@ -869,7 +870,7 @@ class _BrokerKycRegistrationScreenState
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Aadhaar and PAN verified. Continue to review and finish.',
+                    AppLocalizations.of(context)!.brokerKycAadhaarAndPANVerifiedContinueToReview,
                     style: TextStyle(
                       color: AppColors.successText,
                       fontSize: 13,
@@ -892,9 +893,9 @@ class _BrokerKycRegistrationScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(
-          title: 'Upload Documents',
+          title: AppLocalizations.of(context)!.brokerKycUploadDocuments,
           subtitle:
-              'These photos support manual review for the documents DigiLocker couldn’t confirm.',
+              AppLocalizations.of(context)!.brokerKycThesePhotosSupportManualReviewForThe,
         ),
         const SizedBox(height: 12),
         Builder(
@@ -948,7 +949,7 @@ class _BrokerKycRegistrationScreenState
         })
         .map(
           (doc) =>
-              MapEntry(doc, _attachments[doc.key] ?? const _KycAttachment()),
+              MapEntry(doc, _attachments[doc.key] ?? _KycAttachment()),
         )
         .toList(growable: false);
 
@@ -956,46 +957,46 @@ class _BrokerKycRegistrationScreenState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(
-          title: 'Review Your Information',
-          subtitle: 'Please verify everything before submitting.',
+          title: AppLocalizations.of(context)!.brokerKycReviewYourInformation,
+          subtitle: AppLocalizations.of(context)!.brokerKycPleaseVerifyEverythingBeforeSubmitting,
         ),
         const SizedBox(height: 12),
         _CardSection(
-          title: 'Business Information',
+          title: AppLocalizations.of(context)!.brokerKycBusinessInformation,
           child: Column(
             children: [
               _ReviewFieldRow(
-                label: 'PAN Number',
+                label: AppLocalizations.of(context)!.brokerKycPANNumber,
                 value: _panController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? AppLocalizations.of(context)!.brokerKycNotProvided
                     : _panController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Aadhaar Number',
+                label: AppLocalizations.of(context)!.brokerKycAadhaarNumber,
                 value: _aadhaarController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? AppLocalizations.of(context)!.brokerKycNotProvided
                     : _aadhaarController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'GST Number',
+                label: AppLocalizations.of(context)!.brokerKycGSTNumber,
                 value: _gstController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? AppLocalizations.of(context)!.brokerKycNotProvided
                     : _gstController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Bank Account Number',
+                label: AppLocalizations.of(context)!.brokerKycBankAccountNumber,
                 value: _bankAccountController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? AppLocalizations.of(context)!.brokerKycNotProvided
                     : _bankAccountController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
               _ReviewFieldRow(
-                label: 'Business Registration Number',
+                label: AppLocalizations.of(context)!.brokerKycBusinessRegistrationNumber,
                 value: _businessRegController.text.trim().isEmpty
-                    ? 'Not provided'
+                    ? AppLocalizations.of(context)!.brokerKycNotProvided
                     : _businessRegController.text.trim(),
                 onEdit: () => setState(() => _step = _KycStep.details),
               ),
@@ -1005,7 +1006,7 @@ class _BrokerKycRegistrationScreenState
         const SizedBox(height: 10),
         if (uploadedItems.isNotEmpty) ...[
           _CardSection(
-            title: 'Uploaded Documents',
+            title: AppLocalizations.of(context)!.brokerKycUploadedDocuments,
             child: Column(
               children: [
                 for (var i = 0; i < uploadedItems.length; i++) ...[
@@ -1026,8 +1027,8 @@ class _BrokerKycRegistrationScreenState
           const SizedBox(height: 10),
         ],
         _WarningCard(
-          message:
-              'Please verify all information carefully. Incorrect information may delay KYC approval.',
+          message: AppLocalizations.of(context)!
+              .brokerKycVerifyCarefullyWarning,
         ),
         const SizedBox(height: 8),
         ValueListenableBuilder<bool>(
@@ -1043,7 +1044,7 @@ class _BrokerKycRegistrationScreenState
                 setState(() {});
               },
               title: Text(
-                'I confirm that all the information provided is accurate.',
+                AppLocalizations.of(context)!.brokerKycIConfirmThatAllTheInformationProvided,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -1060,13 +1061,17 @@ class _BrokerKycRegistrationScreenState
     final isApproved =
         _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
     final title = isApproved
-        ? 'KYC Verification Complete'
-        : 'KYC Submitted Successfully';
-    final badgeLabel = isApproved ? 'VERIFIED' : 'SUBMITTED';
+        ? AppLocalizations.of(context)!.brokerKycCompleteTitle
+        : AppLocalizations.of(context)!.brokerKycSubmittedTitle;
+    final badgeLabel = isApproved
+        ? AppLocalizations.of(context)!.brokerKycVerifiedBadge
+        : AppLocalizations.of(context)!.brokerKycSubmittedBadge;
     final description = isApproved
-        ? 'Your KYC has been verified. Your broker account is now active.'
-        : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
-    final currentStatus = isApproved ? 'Verified' : 'Pending Review';
+        ? AppLocalizations.of(context)!.brokerKycVerifiedDesc
+        : AppLocalizations.of(context)!.brokerKycSubmittedDesc;
+    final currentStatus = isApproved
+        ? AppLocalizations.of(context)!.brokerKycVerifiedStatus
+        : AppLocalizations.of(context)!.brokerKycPendingReviewStatus;
     final statusColor = isApproved ? AppColors.brand : AppColors.brand;
 
     return Column(
@@ -1180,7 +1185,7 @@ class _BrokerKycRegistrationScreenState
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Verification Details',
+                      AppLocalizations.of(context)!.brokerKycVerificationDetails,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
                         fontSize: 14,
@@ -1194,7 +1199,7 @@ class _BrokerKycRegistrationScreenState
                   icon: AppIcons.verified_rounded,
                   iconColor: AppColors.brand,
                   iconBackground: AppColors.brandFill,
-                  label: 'Current Status',
+                  label: AppLocalizations.of(context)!.brokerKycCurrentStatus,
                   value: currentStatus,
                   valueColor: statusColor,
                   valueBadge: isApproved,
@@ -1203,24 +1208,25 @@ class _BrokerKycRegistrationScreenState
                   icon: AppIcons.calendar_month_outlined,
                   iconColor: AppColors.brand,
                   iconBackground: AppColors.brandFill,
-                  label: 'Submitted Date',
+                  label: AppLocalizations.of(context)!.brokerKycSubmittedDate,
                   value: _submittedAt != null
                       ? _formatDateTime(_submittedAt!)
-                      : 'Not available',
+                      : AppLocalizations.of(context)!.brokerKycNotAvailable,
                 ),
                 _verificationInfoRow(
                   icon: AppIcons.badge_outlined,
                   iconColor: AppColors.textSecondary,
                   iconBackground: AppColors.fillSubtle,
-                  label: 'Submission ID',
-                  value: _submissionId ?? 'Not available',
+                  label: AppLocalizations.of(context)!.brokerKycSubmissionID,
+                  value: _submissionId ??
+                      AppLocalizations.of(context)!.brokerKycNotAvailable,
                 ),
                 if (_reviewedAt != null)
                   _verificationInfoRow(
                     icon: AppIcons.schedule_outlined,
                     iconColor: AppColors.warningText,
                     iconBackground: AppColors.warningFill,
-                    label: 'Reviewed At',
+                    label: AppLocalizations.of(context)!.brokerKycReviewedAt,
                     value: _formatDateTime(_reviewedAt!),
                   ),
               ],
@@ -1241,11 +1247,11 @@ class _BrokerKycRegistrationScreenState
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          label: const Row(
+          label: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'View My Documents',
+                AppLocalizations.of(context)!.brokerKycViewMyDocuments,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
               SizedBox(width: 10),
@@ -1265,8 +1271,8 @@ class _BrokerKycRegistrationScreenState
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          label: const Text(
-            'Go Back',
+          label: Text(
+            AppLocalizations.of(context)!.brokerKycGoBack,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ),
@@ -1388,7 +1394,7 @@ class _BrokerKycRegistrationScreenState
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'My documents',
+                          AppLocalizations.of(context)!.brokerKycMyDocuments,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
@@ -1457,8 +1463,8 @@ class _BrokerKycRegistrationScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Close',
+                      child: Text(
+                        AppLocalizations.of(context)!.brokerKycClose,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -1478,8 +1484,10 @@ class _BrokerKycRegistrationScreenState
     }
 
     final label = _step == _KycStep.review
-        ? (_digiAllVerified ? 'Finish' : 'Submit KYC')
-        : 'Continue';
+        ? (_digiAllVerified
+            ? AppLocalizations.of(context)!.brokerKycFinish
+            : AppLocalizations.of(context)!.brokerKycSubmitKyc)
+        : AppLocalizations.of(context)!.brokerKycContinue;
     final action = _step == _KycStep.details
         ? () {
             setState(() {
@@ -1553,6 +1561,7 @@ class _BrokerKycRegistrationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentUserId = ref.watch(
       authSessionProvider.select((value) => value.valueOrNull?.user.id),
     );
@@ -1580,7 +1589,7 @@ class _BrokerKycRegistrationScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _KycPageHeader(),
+                  _KycPageHeader(),
                   const SizedBox(height: 10),
                   _buildStepper(),
                   const SizedBox(height: 12),
@@ -1594,10 +1603,11 @@ class _BrokerKycRegistrationScreenState
 }
 
 class _KycPageHeader extends StatelessWidget {
-  const _KycPageHeader();
+  _KycPageHeader();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         4,
@@ -1605,11 +1615,11 @@ class _KycPageHeader extends StatelessWidget {
         4,
         8,
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'KYC Registration',
+            l10n.brokerKycKYCRegistration,
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 20,
@@ -1618,7 +1628,7 @@ class _KycPageHeader extends StatelessWidget {
           ),
           SizedBox(height: 2),
           Text(
-            'Verify your broker account',
+            l10n.brokerKycVerifyYourBrokerAccount,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -1644,6 +1654,7 @@ class _KycIconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 58,
       height: 58,
@@ -1698,6 +1709,7 @@ class _StepperItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isCompleted = index < activeIndex;
     final isActive = index == activeIndex;
     final textMuted = AppColors.textSecondary;
@@ -1793,6 +1805,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1825,6 +1838,7 @@ class _CardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1865,6 +1879,7 @@ class _WarningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1926,6 +1941,7 @@ class _KycUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploaded = document.uploadable ? attachment.isUploaded : true;
     final borderColor = uploaded ? AppColors.brandBorder : AppColors.line;
     final backgroundColor = uploaded ? AppColors.brandFill : Colors.white;
@@ -1995,7 +2011,7 @@ class _KycUploadCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Supported formats: ${document.formats}',
+                      l10n.brokerKycSupportedFormats(document.formats),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2065,8 +2081,8 @@ class _KycUploadCard extends StatelessWidget {
 
   void _showDetailInfo(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('This item is covered in the details section.'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.brokerKycThisItemIsCoveredInTheDetails),
         backgroundColor: AppColors.brand,
       ),
     );
@@ -2086,6 +2102,7 @@ class _MiniIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final background = filled ? AppColors.brand : Colors.white;
     final iconColor = filled ? Colors.white : AppColors.textSecondary;
     final borderColor = filled ? AppColors.brand : AppColors.line;
@@ -2116,6 +2133,7 @@ class _TinyTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
@@ -2147,6 +2165,7 @@ class _ReviewFieldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
@@ -2216,6 +2235,7 @@ class _ReviewDocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uploaded = document.uploadable ? attachment.isUploaded : true;
     final hasPreview =
         attachment.path != null && File(attachment.path!).existsSync();
@@ -2318,6 +2338,7 @@ class _SheetAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),

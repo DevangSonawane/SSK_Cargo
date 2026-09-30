@@ -13,6 +13,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/widgets/truck_marker_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/client_map_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../broker/presentation/widgets/broker_flow_widgets.dart';
 import '../../../../core/services/google_places_service.dart';
 import '../../../shared/data/trip_route_stop.dart';
@@ -91,7 +92,8 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
   List<LatLng> get _cameraPoints =>
       _routePoints.isNotEmpty ? _routePoints : _points;
 
-  Set<Marker> get _markers {
+  Set<Marker> markersFor(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final markers = <Marker>{};
     final pickup = _pickupPoint;
     final live = _livePoint;
@@ -116,7 +118,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
         Marker(
           markerId: const MarkerId('live'),
           position: live,
-          infoWindow: const InfoWindow(title: 'Truck live position'),
+          infoWindow: InfoWindow(title: l10n.clientTrackingLivePosition),
           icon:
               _truckMarkerIcon ??
               BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
@@ -150,7 +152,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
             markerId: MarkerId('stop-${stop.index}'),
             position: LatLng(stop.lat!, stop.lng!),
             infoWindow: InfoWindow(
-              title: '$label ${stop.isLoading ? 'Loading' : 'Unloading'}',
+              title: '$label ${stop.isLoading ? l10n.clientTrackingLoading : l10n.clientTrackingUnloading}',
               snippet: stop.location,
             ),
             icon:
@@ -386,7 +388,7 @@ class _TrackingRouteMapViewState extends State<TrackingRouteMapView> {
         zoom: points.length == 1 ? 11 : 7,
       ),
       mapType: MapType.normal,
-      markers: _markers,
+      markers: markersFor(context),
       polylines: _polylines,
       myLocationButtonEnabled: false,
       zoomGesturesEnabled: true,
@@ -484,6 +486,7 @@ class _EmptyMapState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     debugPrint('[TrackingMap] empty placeholder shown');
     return Container(
       decoration: const BoxDecoration(
@@ -519,14 +522,14 @@ class _EmptyMapState extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Map loading',
+                l10n.clientTrackingMapLoading,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
-                'Location coordinates will appear once the booking has pickup and drop details.',
+                l10n.clientTrackingMapEmptyHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: context.colors.textSecondary,
@@ -788,6 +791,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final map = ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Stack(
@@ -797,9 +801,8 @@ class DriverLocationOverviewCard extends StatelessWidget {
               latitude: driver.currentLatitude,
               longitude: driver.currentLongitude,
               label: driver.name,
-              emptyTitle: 'Live location pending',
-              emptySubtitle:
-                  'Driver coordinates will appear once the backend reports GPS updates.',
+              emptyTitle: l10n.clientTrackingLivePendingTitle,
+              emptySubtitle: l10n.clientTrackingLivePendingSubtitle,
             ),
           ),
           Positioned(
@@ -872,7 +875,7 @@ class DriverLocationOverviewCard extends StatelessWidget {
                   Text(
                     driver.hasLiveCoordinates
                         ? '${driver.currentLatitude!.toStringAsFixed(5)}, ${driver.currentLongitude!.toStringAsFixed(5)}'
-                        : 'Live GPS pending from backend',
+                        : l10n.clientTrackingGpsPending,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textTertiary,
                     ),

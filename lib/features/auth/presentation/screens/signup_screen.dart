@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../controllers/auth_controller.dart';
@@ -35,6 +36,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Future<void> _submit() async {
     if (_isSubmitting) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
@@ -42,9 +44,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Full name, email, phone number, and password are required.',
+            l10n.signupAllFieldsRequired,
           ),
         ),
       );
@@ -53,9 +55,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Please agree to the Terms of Service and Privacy Policy.',
+            l10n.signupTermsRequired,
           ),
         ),
       );
@@ -77,8 +79,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Client account created. You can log in now.'),
+        SnackBar(
+          content: Text(l10n.signupAccountCreated),
           backgroundColor: Color(0xFF2FA56E),
         ),
       );
@@ -110,6 +112,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FB),
@@ -166,7 +169,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             onPressed: () => context.go('/login'),
                             icon: const Icon(AppIcons.arrow_back_rounded),
                             color: const Color(0xFF0F172A),
-                            tooltip: 'Back to login',
+                            tooltip: l10n.signupBackToLogin,
                           ),
                         ),
                       ),
@@ -207,8 +210,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Create your client account',
+                              Text(
+                                l10n.signupTitle,
                                 style: TextStyle(
                                   fontSize: 19,
                                   fontWeight: FontWeight.w800,
@@ -217,7 +220,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Simple sign up for clients only.',
+                                l10n.signupSubtitle,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: const Color(0xFF667085),
                                   fontSize: 11.5,
@@ -235,7 +238,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _LabelField(
-                                label: 'Full Name',
+                                label: l10n.signupFullNameLabel,
                                 child: TextField(
                                   controller: _nameController,
                                   keyboardType: TextInputType.name,
@@ -247,14 +250,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                   decoration: _inputDecoration(
-                                    hintText: 'Enter your full name',
+                                    hintText: l10n.signupFullNameHint,
                                     icon: AppIcons.person_outline_rounded,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               _LabelField(
-                                label: 'Email Address',
+                                label: l10n.signupEmailLabel,
                                 child: TextField(
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
@@ -266,14 +269,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                   decoration: _inputDecoration(
-                                    hintText: 'Enter your email address',
+                                    hintText: l10n.signupEmailHint,
                                     icon: AppIcons.mail_outline_rounded,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               _LabelField(
-                                label: 'Phone Number',
+                                label: l10n.signupPhoneLabel,
                                 child: TextField(
                                   controller: _phoneController,
                                   keyboardType: TextInputType.phone,
@@ -285,15 +288,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                   decoration: _inputDecoration(
-                                    hintText: 'Enter your phone number',
+                                    hintText: l10n.signupPhoneHint,
                                     icon: AppIcons.phone_outlined,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               _LabelField(
-                                label: 'Password',
-                                helper: 'Min 6 characters',
+                                label: l10n.signupPasswordLabel,
+                                helper: l10n.signupPasswordHelper,
                                 child: TextField(
                                   controller: _passwordController,
                                   obscureText: _obscurePassword,
@@ -306,7 +309,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   ),
                                   onSubmitted: (_) => _submit(),
                                   decoration: _inputDecoration(
-                                    hintText: 'Create a password',
+                                    hintText: l10n.signupPasswordHint,
                                     icon: AppIcons.lock_outline_rounded,
                                     suffix: IconButton(
                                       onPressed: () {
@@ -370,14 +373,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               color: Colors.white,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             key: ValueKey('label'),
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
-                                                'Create Account',
+                                                l10n.signupCreateAccount,
                                                 style: TextStyle(
                                                   fontSize: 13.5,
                                                   fontWeight: FontWeight.w800,
@@ -403,8 +406,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   spacing: 6,
                                   runSpacing: 4,
                                   children: [
-                                    const Text(
-                                      'Already have an account?',
+                                    Text(
+                                      l10n.signupAlreadyHaveAccount,
                                       style: TextStyle(
                                         color: Color(0xFF667085),
                                         fontSize: 11,
@@ -422,8 +425,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                         tapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
                                       ),
-                                      child: const Text(
-                                        'Login',
+                                      child: Text(
+                                        l10n.signupLoginAction,
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w800,
@@ -457,6 +460,7 @@ class _TermsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -484,9 +488,9 @@ class _TermsRow extends StatelessWidget {
                   : null,
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                'I agree to the Terms of Service and Privacy Policy',
+                l10n.signupAgreeTerms,
                 style: TextStyle(
                   color: Color(0xFF475467),
                   fontSize: 11.5,

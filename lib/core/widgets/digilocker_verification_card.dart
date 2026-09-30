@@ -9,6 +9,7 @@ import '../network/api_client.dart';
 import '../providers/kyc_status_provider.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_tokens.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 /// Document keys, matching the backend's `verification_results` and the web
 /// client's `REQUIRED` map (Onboarding.jsx).
@@ -268,6 +269,7 @@ class _DigilockerVerificationCardState
   // because a redirect reloads the page — no equivalent hazard here).
   Future<void> _startDigilocker() async {
     if (_sessionStatus == 'loading') return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _sessionStatus = 'loading';
       _sessionMessage = null;
@@ -284,7 +286,7 @@ class _DigilockerVerificationCardState
       final url = data['url']?.toString() ?? '';
       final verificationId = data['verificationId']?.toString() ?? '';
       if (url.isEmpty || verificationId.isEmpty) {
-        throw const ApiException('DigiLocker did not return a login link.');
+        throw ApiException(l10n.coreDigilockerNoLoginLink);
       }
       final opened = await launchUrl(
         Uri.parse(url),
@@ -294,8 +296,7 @@ class _DigilockerVerificationCardState
       if (!opened) {
         setState(() {
           _sessionStatus = 'error';
-          _sessionMessage =
-              "Couldn't open DigiLocker in your browser — please try again.";
+          _sessionMessage = l10n.coreDigilockerOpenBrowserFailed;
           _verificationId = null;
         });
         return;
@@ -327,6 +328,7 @@ class _DigilockerVerificationCardState
   Future<void> _checkDigilocker(String verificationId, int attempt) async {
     final token = ++_pollToken;
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _sessionStatus = 'loading';
       _sessionMessage = null;
@@ -352,8 +354,7 @@ class _DigilockerVerificationCardState
         }
         setState(() {
           _sessionStatus = 'error';
-          _sessionMessage =
-              "DigiLocker hasn't confirmed yet. If you finished there, tap Check status; otherwise start again.";
+          _sessionMessage = l10n.coreDigilockerPendingRetry;
           _verificationId = verificationId;
         });
         return;
@@ -364,7 +365,7 @@ class _DigilockerVerificationCardState
           _sessionMessage =
               (message != null && message.trim().isNotEmpty)
               ? message
-              : "DigiLocker didn't complete — please start again.";
+              : l10n.coreDigilockerNotComplete;
           _verificationId = null;
         });
         return;
@@ -476,13 +477,14 @@ class _DigilockerVerificationCardState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           _isDriver
-              ? "Sign in once with DigiLocker and we'll confirm your Aadhaar, PAN and driving license together. Nothing to type or photograph."
-              : "Sign in once with DigiLocker and we'll confirm your Aadhaar and PAN together. Nothing to type or photograph.",
+              ? l10n.coreDigilockerDriverIntro
+              : l10n.coreDigilockerBrokerIntro,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppColors.textSecondary,
             height: 1.45,
@@ -518,8 +520,8 @@ class _DigilockerVerificationCardState
                   : const Icon(AppIcons.verified_user_outlined, size: 18),
               label: Text(
                 _sessionStatus == 'loading'
-                    ? 'Working...'
-                    : 'Verify with DigiLocker',
+                    ? l10n.coreDigilockerWorking
+                    : l10n.coreDigilockerVerifyButton,
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               style: FilledButton.styleFrom(
@@ -557,8 +559,8 @@ class _DigilockerVerificationCardState
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => _checkDigilocker(_verificationId!, 0),
-                    child: const Text(
-                      'Check status',
+                    child: Text(
+                      l10n.coreDigilockerCheckStatus,
                       style: TextStyle(
                         color: AppColors.brand,
                         fontSize: 12,
@@ -593,7 +595,7 @@ class _DigilockerVerificationCardState
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                "DigiLocker only returns documents that are in your account. If one is missing you'll be asked to enter its details instead — or you can link it inside DigiLocker and try again. Anything still unverified is reviewed by our team, usually within 24-48 hours.",
+                l10n.coreDigilockerInfoNote,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textTertiary,
                   fontSize: 11,
@@ -608,6 +610,7 @@ class _DigilockerVerificationCardState
   }
 
   Widget? _fallbackFor(String key) {
+    final l10n = AppLocalizations.of(context)!;
     switch (key) {
       case 'aadhaar':
         // Aadhaar has no number-check fallback (OTP isn't enabled on this
@@ -616,8 +619,8 @@ class _DigilockerVerificationCardState
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              "Couldn't confirm this through DigiLocker — add the number and our team will review it (usually within 24-48 hours).",
+            Text(
+              l10n.coreDigilockerAadhaarFallbackNote,
               style: TextStyle(color: AppColors.textTertiary, fontSize: 11),
             ),
             const SizedBox(height: 8),
@@ -646,7 +649,7 @@ class _DigilockerVerificationCardState
             ),
             const SizedBox(height: 8),
             _FallbackVerifyButton(
-              label: 'Verify PAN',
+              label: l10n.coreDigilockerVerifyPan,
               loading: _verifyingPan,
               onPressed: _panController.text.trim().isNotEmpty && !_verifyingPan
                   ? _verifyPan
@@ -673,7 +676,7 @@ class _DigilockerVerificationCardState
             ),
             const SizedBox(height: 8),
             _FallbackVerifyButton(
-              label: 'Verify License',
+              label: l10n.coreDigilockerVerifyLicense,
               loading: _verifyingDl,
               onPressed:
                   _licenseController.text.trim().isNotEmpty &&
@@ -690,11 +693,11 @@ class _DigilockerVerificationCardState
   }
 }
 
-String _docLabel(String key) {
+String _docLabel(String key, AppLocalizations l10n) {
   return switch (key) {
-    'aadhaar' => 'Aadhaar',
-    'pan' => 'PAN',
-    'drivingLicense' => 'Driving License',
+    'aadhaar' => l10n.coreDigilockerDocAadhaar,
+    'pan' => l10n.coreDigilockerDocPan,
+    'drivingLicense' => l10n.coreDigilockerDocLicense,
     _ => key,
   };
 }
@@ -723,6 +726,7 @@ class _DocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -739,7 +743,7 @@ class _DocumentRow extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _docLabel(docKey),
+                  _docLabel(docKey, l10n),
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14,
@@ -771,6 +775,7 @@ class _DocBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const base = TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
     switch (status.trim().toLowerCase()) {
       case 'loading':
@@ -784,7 +789,7 @@ class _DocBadge extends StatelessWidget {
             ),
             const SizedBox(width: 5),
             Text(
-              'Checking...',
+              l10n.coreDigilockerChecking,
               style: base.copyWith(color: AppColors.textTertiary),
             ),
           ],
@@ -799,7 +804,7 @@ class _DocBadge extends StatelessWidget {
               color: AppColors.successText,
             ),
             const SizedBox(width: 5),
-            Text('Verified', style: base.copyWith(color: AppColors.successText)),
+            Text(l10n.coreDigilockerVerified, style: base.copyWith(color: AppColors.successText)),
           ],
         );
       case 'missing':
@@ -816,7 +821,7 @@ class _DocBadge extends StatelessWidget {
               child: Text(
                 message?.trim().isNotEmpty == true
                     ? message!.trim()
-                    : 'Not found in your DigiLocker',
+                    : l10n.coreDigilockerNotFound,
                 style: base.copyWith(color: const Color(0xFFD97706)),
               ),
             ),
@@ -836,7 +841,7 @@ class _DocBadge extends StatelessWidget {
               child: Text(
                 message?.trim().isNotEmpty == true
                     ? message!.trim()
-                    : "Didn't match — check the details and try again",
+                    : l10n.coreDigilockerDidntMatch,
                 style: base.copyWith(color: AppColors.dangerText),
               ),
             ),
@@ -856,7 +861,7 @@ class _DocBadge extends StatelessWidget {
               child: Text(
                 message?.trim().isNotEmpty == true
                     ? message!.trim()
-                    : "Couldn't reach verification, try again",
+                    : l10n.coreDigilockerUnreachable,
                 style: base.copyWith(color: const Color(0xFFD97706)),
               ),
             ),
@@ -864,7 +869,7 @@ class _DocBadge extends StatelessWidget {
         );
       default:
         return Text(
-          'Not verified yet',
+          l10n.coreDigilockerNotVerifiedYet,
           style: base.copyWith(color: AppColors.textTertiary),
         );
     }
@@ -993,28 +998,29 @@ class _OptionalDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final fields = isDriver
         ? [
-            (vehicleRegController, 'Vehicle Registration Number'),
-            (vehicleInsuranceController, 'Vehicle Insurance Number'),
+            (vehicleRegController, l10n.coreDigilockerVehicleRegHint),
+            (vehicleInsuranceController, l10n.coreDigilockerVehicleInsuranceHint),
           ]
         : [
-            (gstController, 'GST Number'),
-            (bankAccountController, 'Bank Account Number'),
-            (businessRegController, 'Business Registration Number'),
+            (gstController, l10n.coreDigilockerGstHint),
+            (bankAccountController, l10n.coreDigilockerBankAccountHint),
+            (businessRegController, l10n.coreDigilockerBusinessRegHint),
           ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          isDriver ? 'Vehicle details' : 'Business details',
+          isDriver ? l10n.coreDigilockerVehicleDetails : l10n.coreDigilockerBusinessDetails,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
         ),
-        const Text(
-          'Optional — you can add or update these later from your profile too.',
+        Text(
+          l10n.coreDigilockerOptionalNote,
           style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
         ),
         const SizedBox(height: 10),

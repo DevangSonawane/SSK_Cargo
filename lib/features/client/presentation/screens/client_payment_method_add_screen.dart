@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'client_payment_methods_shared.dart';
 
@@ -50,6 +51,7 @@ class _ClientPaymentMethodAddScreenState
   }
 
   PaymentMethodDraft? _buildDraft() {
+    final l10n = AppLocalizations.of(context)!;
     final note = _noteController.text.trim();
 
     switch (_methodType) {
@@ -57,7 +59,7 @@ class _ClientPaymentMethodAddScreenState
         final upiId = _upiController.text.trim();
         if (!RegExp(r'^[\w.-]+@[\w.-]+$').hasMatch(upiId)) {
           setState(() {
-            _errorMessage = 'Enter a valid UPI ID, such as name@okhdfc.';
+            _errorMessage = l10n.clientPaymentAddUpiInvalid;
           });
           return null;
         }
@@ -73,13 +75,13 @@ class _ClientPaymentMethodAddScreenState
         final last4 = _last4Controller.text.replaceAll(RegExp(r'\D'), '');
         if (brand.isEmpty) {
           setState(() {
-            _errorMessage = 'Enter a card or bank brand name.';
+            _errorMessage = l10n.clientPaymentAddBrandRequired;
           });
           return null;
         }
         if (last4.length != 4) {
           setState(() {
-            _errorMessage = 'Enter the last 4 digits only.';
+            _errorMessage = l10n.clientPaymentAddLast4Required;
           });
           return null;
         }
@@ -99,19 +101,19 @@ class _ClientPaymentMethodAddScreenState
         final ifsc = _ifscController.text.trim().toUpperCase();
         if (bank.isEmpty) {
           setState(() {
-            _errorMessage = 'Choose a bank.';
+            _errorMessage = l10n.clientPaymentAddBankRequired;
           });
           return null;
         }
         if (accountNumber.length < 9 || accountNumber.length > 18) {
           setState(() {
-            _errorMessage = 'Enter a valid account number.';
+            _errorMessage = l10n.clientPaymentAddAccountInvalid;
           });
           return null;
         }
         if (!RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(ifsc)) {
           setState(() {
-            _errorMessage = 'Enter a valid IFSC code, such as HDFC0001234.';
+            _errorMessage = l10n.clientPaymentAddIfscInvalid;
           });
           return null;
         }
@@ -131,7 +133,7 @@ class _ClientPaymentMethodAddScreenState
         final wallet = _selectedWallet.trim();
         if (wallet.isEmpty) {
           setState(() {
-            _errorMessage = 'Choose a wallet.';
+            _errorMessage = l10n.clientPaymentAddWalletRequired;
           });
           return null;
         }
@@ -160,7 +162,9 @@ class _ClientPaymentMethodAddScreenState
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
       setState(() {
-        _errorMessage = 'Sign in again to save payment methods.';
+        _errorMessage = AppLocalizations.of(
+          context,
+        )!.clientPaymentAddSignInRequired;
       });
       return;
     }
@@ -218,6 +222,7 @@ class _ClientPaymentMethodAddScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.canvas,
@@ -228,7 +233,7 @@ class _ClientPaymentMethodAddScreenState
           onPressed: () => context.pop(),
           icon: const Icon(AppIcons.arrow_back_rounded),
         ),
-        title: const Text('Add Payment Method'),
+        title: Text(l10n.clientPaymentAddTitle),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -256,7 +261,7 @@ class _ClientPaymentMethodAddScreenState
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Type',
+                        l10n.clientPaymentAddTypeLabel,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                           fontWeight: FontWeight.w700,
@@ -277,7 +282,10 @@ class _ClientPaymentMethodAddScreenState
                             children: [
                               for (final option in paymentMethodTypeOptions)
                                 _TypeChip(
-                                  label: option.label,
+                                  label: _paymentMethodTypeLabel(
+                                    l10n,
+                                    option.id,
+                                  ),
                                   icon: option.icon,
                                   selected: _methodType == option.id,
                                   onTap: () => setState(() {
@@ -291,7 +299,7 @@ class _ClientPaymentMethodAddScreenState
                       ),
                       const SizedBox(height: 14),
                       if (_methodType == 'upi') ...[
-                        const _FieldLabel(text: 'UPI ID'),
+                        _FieldLabel(text: l10n.clientPaymentAddUpiLabel),
                         const SizedBox(height: 8),
                         _CardField(
                           child: TextFormField(
@@ -305,7 +313,7 @@ class _ClientPaymentMethodAddScreenState
                           ),
                         ),
                       ] else if (_methodType == 'card') ...[
-                        const _FieldLabel(text: 'Brand / Bank name'),
+                        _FieldLabel(text: l10n.clientPaymentAddBrandLabel),
                         const SizedBox(height: 8),
                         _CardField(
                           child: TextFormField(
@@ -318,7 +326,7 @@ class _ClientPaymentMethodAddScreenState
                           ),
                         ),
                         const SizedBox(height: 14),
-                        const _FieldLabel(text: 'Last 4 digits'),
+                        _FieldLabel(text: l10n.clientPaymentAddLast4Label),
                         const SizedBox(height: 8),
                         _CardField(
                           child: TextFormField(
@@ -337,18 +345,18 @@ class _ClientPaymentMethodAddScreenState
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Only the brand and last 4 digits are stored.',
+                          l10n.clientPaymentAddCardNote,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.textTertiary),
                         ),
                       ] else if (_methodType == 'netbanking') ...[
-                        const _FieldLabel(text: 'Bank'),
+                        _FieldLabel(text: l10n.clientPaymentAddBankLabel),
                         const SizedBox(height: 8),
                         _CardField(
                           child: TextFormField(
                             controller: _bankSearchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Search 33 banks...',
+                            decoration: InputDecoration(
+                              hintText: l10n.clientPaymentAddBankSearchHint,
                               border: InputBorder.none,
                               isDense: true,
                             ),
@@ -379,7 +387,9 @@ class _ClientPaymentMethodAddScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const _FieldLabel(text: 'Account Number'),
+                                  _FieldLabel(
+                                    text: l10n.clientPaymentAddAccountLabel,
+                                  ),
                                   const SizedBox(height: 8),
                                   _CardField(
                                     child: TextFormField(
@@ -404,7 +414,9 @@ class _ClientPaymentMethodAddScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const _FieldLabel(text: 'IFSC Code'),
+                                  _FieldLabel(
+                                    text: l10n.clientPaymentAddIfscLabel,
+                                  ),
                                   const SizedBox(height: 8),
                                   _CardField(
                                     child: TextFormField(
@@ -430,13 +442,13 @@ class _ClientPaymentMethodAddScreenState
                           ],
                         ),
                       ] else if (_methodType == 'wallet') ...[
-                        const _FieldLabel(text: 'Wallet'),
+                        _FieldLabel(text: l10n.clientPaymentAddWalletLabel),
                         const SizedBox(height: 8),
                         _CardField(
                           child: TextFormField(
                             controller: _walletSearchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Search wallet name...',
+                            decoration: InputDecoration(
+                              hintText: l10n.clientPaymentAddWalletSearchHint,
                               border: InputBorder.none,
                               isDense: true,
                             ),
@@ -462,7 +474,7 @@ class _ClientPaymentMethodAddScreenState
                         ),
                       ],
                       const SizedBox(height: 14),
-                      const _FieldLabel(text: 'Note'),
+                      _FieldLabel(text: l10n.clientPaymentAddNoteLabel),
                       const SizedBox(height: 8),
                       _CardField(
                         child: TextFormField(
@@ -488,7 +500,7 @@ class _ClientPaymentMethodAddScreenState
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                         title: Text(
-                          'Set as default payment method',
+                          l10n.clientPaymentAddDefaultOption,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: colors.textSecondary),
                         ),
@@ -520,12 +532,12 @@ class _ClientPaymentMethodAddScreenState
                                     ),
                                   ),
                                 )
-                              : const Text('Save Payment Method'),
+                              : Text(l10n.clientPaymentAddSaveButton),
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'We only store display details like your card\'s last 4 digits — never your full number or CVV.',
+                        l10n.clientPaymentAddPrivacyNote,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.textTertiary,
@@ -651,7 +663,9 @@ class _SelectableLogoTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
+          color: selected
+              ? context.colors.brandFill
+              : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? const Color(0xFF2FA56E) : context.colors.line,
@@ -701,7 +715,9 @@ class _TypeChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         decoration: BoxDecoration(
-          color: selected ? context.colors.brandFill : context.colors.fillSubtle,
+          color: selected
+              ? context.colors.brandFill
+              : context.colors.fillSubtle,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? const Color(0xFF2FA56E) : context.colors.line,
@@ -793,5 +809,20 @@ class _InlineError extends StatelessWidget {
         ).textTheme.bodySmall?.copyWith(color: const Color(0xFFB42318)),
       ),
     );
+  }
+}
+
+String _paymentMethodTypeLabel(AppLocalizations l10n, String methodType) {
+  switch (methodType) {
+    case 'card':
+      return l10n.clientPaymentTypeCard;
+    case 'netbanking':
+      return l10n.clientPaymentTypeBank;
+    case 'wallet':
+      return l10n.clientPaymentTypeWallet;
+    case 'upi':
+      return l10n.clientPaymentTypeUpi;
+    default:
+      return l10n.clientPaymentTypeMethod;
   }
 }

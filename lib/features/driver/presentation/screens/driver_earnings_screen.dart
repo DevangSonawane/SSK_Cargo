@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/driver_dashboard_models.dart';
 import '../widgets/driver_currency.dart';
 
@@ -92,7 +93,7 @@ class _DriverEarningsScreenState extends ConsumerState<DriverEarningsScreen> {
                     foregroundColor: AppColors.brandDark,
                     textStyle: const TextStyle(fontWeight: FontWeight.w900),
                   ),
-                  child: const Text('View all earnings'),
+                  child: Text(AppLocalizations.of(context)!.driverEarningsViewAll),
                 ),
               ],
             ),
@@ -111,6 +112,7 @@ class _HeroBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasBalance = total > 0;
 
     return Container(
@@ -130,7 +132,7 @@ class _HeroBalanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Current Balance',
+                  l10n.driverEarningsCurrentBalance,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -165,7 +167,7 @@ class _HeroBalanceCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     if (hasBalance)
                       Text(
-                        'Ready for payout',
+                        l10n.driverEarningsReadyPayout,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: AppColors.brandDark,
                           fontWeight: FontWeight.w800,
@@ -177,8 +179,8 @@ class _HeroBalanceCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   deliveredCount == 0
-                      ? 'You have not completed any deliveries yet.'
-                      : 'You have completed $deliveredCount deliveries.',
+                      ? l10n.driverEarningsNoDeliveries
+                      : l10n.driverEarningsCompletedCount(deliveredCount),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -244,12 +246,13 @@ class _EarningsStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _EarningsStatTile(
             icon: AppIcons.currency_rupee_rounded,
-            label: 'This Month',
+            label: l10n.driverEarningsThisMonth,
             value: formatDriverCurrency(thisMonth),
           ),
         ),
@@ -257,7 +260,7 @@ class _EarningsStatsGrid extends StatelessWidget {
         Expanded(
           child: _EarningsStatTile(
             icon: AppIcons.account_balance_wallet_outlined,
-            label: 'Last Month',
+            label: l10n.driverEarningsLastMonth,
             value: formatDriverCurrency(lastMonth),
           ),
         ),
@@ -265,7 +268,7 @@ class _EarningsStatsGrid extends StatelessWidget {
         Expanded(
           child: _EarningsStatTile(
             icon: AppIcons.trending_up_rounded,
-            label: 'Trips',
+            label: l10n.driverEarningsTrips,
             value: _formatTripCount(deliveredCount),
           ),
         ),
@@ -336,7 +339,7 @@ class _AveragePerDeliveryText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Average per delivery: ${formatDriverCurrency(average)}',
+      AppLocalizations.of(context)!.driverEarningsAvgPerDelivery(formatDriverCurrency(average)),
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: AppColors.textSecondary,

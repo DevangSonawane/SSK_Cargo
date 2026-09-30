@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../broker/presentation/screens/broker_settlements_screen.dart';
 import '../../../client/data/client_booking_models.dart';
@@ -623,7 +624,7 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Email invoice'),
+      title: Text(AppLocalizations.of(context)!.historyDetailsEmailInvoice),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -633,9 +634,9 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
               keyboardType: TextInputType.emailAddress,
               cursorColor: AppColors.brand,
               style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'To',
-                hintText: 'recipient@example.com',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.historyDetailsTo,
+                hintText: AppLocalizations.of(context)!.historyDetailsEmailHint,
               ),
             ),
             const SizedBox(height: 12),
@@ -660,9 +661,12 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.historyDetailsCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Send')),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(AppLocalizations.of(context)!.historyDetailsSend),
+        ),
       ],
     );
   }
@@ -836,11 +840,14 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _ActionButton(
-            label: downloading ? 'Saving...' : 'Invoice',
+            label: downloading
+                ? l10n.historyDetailsSaving
+                : l10n.historyDetailsInvoice,
             icon: AppIcons.receipt_long_rounded,
             tint: AppColors.brandFill,
             border: AppColors.brandBorder,
@@ -851,7 +858,9 @@ class _ActionRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _ActionButton(
-            label: emailing ? 'Sending...' : 'Email',
+            label: emailing
+                ? l10n.historyDetailsSending
+                : l10n.historyDetailsEmail,
             icon: AppIcons.mail_rounded,
             tint: const Color(0xFFEFF6FF),
             border: const Color(0xFFD7E7F4),
@@ -862,7 +871,9 @@ class _ActionRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _ActionButton(
-            label: notifying ? 'Sending...' : 'Notify',
+            label: notifying
+                ? l10n.historyDetailsSending
+                : l10n.historyDetailsNotify,
             icon: AppIcons.notifications_active_rounded,
             tint: AppColors.warningFill,
             border: AppColors.warningBorder,
@@ -1164,6 +1175,7 @@ class _PickupDropColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1172,14 +1184,14 @@ class _PickupDropColumn extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _LocationBlock(
-                label: 'Pickup',
+                label: l10n.pickup,
                 value: pickup,
                 color: AppColors.brand,
                 icon: AppIcons.arrow_upward_rounded,
               ),
               const SizedBox(height: 14),
               _LocationBlock(
-                label: 'Drop',
+                label: l10n.drop,
                 value: drop,
                 color: AppColors.warningText,
                 icon: AppIcons.location_on_rounded,
@@ -1265,13 +1277,14 @@ class _TripDetailsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final rows = [
       _TripRowData(
         icon: AppIcons.calendar_month_outlined,
         tint: AppColors.brandFill,
         border: AppColors.brandBorder,
         iconColor: AppColors.brandDark,
-        label: 'Booking time',
+        label: l10n.historyDetailsBookingTime,
         value: bookingTime,
       ),
       _TripRowData(
@@ -1279,7 +1292,7 @@ class _TripDetailsGrid extends StatelessWidget {
         tint: const Color(0xFFEFF6FF),
         border: const Color(0xFFD7E7F4),
         iconColor: AppColors.accentBlue,
-        label: 'Expected delivery',
+        label: l10n.historyDetailsExpectedDelivery,
         value: expectedDelivery,
       ),
       _TripRowData(
@@ -1287,7 +1300,7 @@ class _TripDetailsGrid extends StatelessWidget {
         tint: AppColors.brandFill,
         border: AppColors.brandBorder,
         iconColor: AppColors.brandDark,
-        label: 'Delivered on',
+        label: l10n.historyDetailsDeliveredOn,
         value: deliveredOn,
       ),
       _TripRowData(
@@ -1295,7 +1308,7 @@ class _TripDetailsGrid extends StatelessWidget {
         tint: AppColors.warningFill,
         border: AppColors.warningBorder,
         iconColor: AppColors.warningText,
-        label: 'Distance travelled',
+        label: l10n.historyDetailsDistanceTravelled,
         value: distanceTravelled,
       ),
     ];
@@ -1315,9 +1328,7 @@ class _TripDetailsGrid extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             decoration: BoxDecoration(
-              color: sla!.alert
-                  ? AppColors.warningFill
-                  : AppColors.brandFill,
+              color: sla!.alert ? AppColors.warningFill : AppColors.brandFill,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: sla!.alert
@@ -1580,7 +1591,10 @@ class _ErrorState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context)!.historyDetailsRetry),
+            ),
           ],
         ),
       ),

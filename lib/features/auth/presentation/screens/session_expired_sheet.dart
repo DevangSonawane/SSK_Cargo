@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -64,10 +65,11 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
 
   Future<void> _signIn() async {
     if (_loading) return;
+    final l10n = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Please enter your email and password.');
+      setState(() => _error = l10n.sessionExpiredEnterEmailPassword);
       return;
     }
     setState(() {
@@ -95,6 +97,7 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     return SafeArea(
       child: Container(
@@ -133,7 +136,7 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your session has expired',
+              l10n.sessionExpiredTitle,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: colors.textPrimary,
@@ -143,7 +146,7 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
             Text(
               widget.message?.trim().isNotEmpty == true
                   ? widget.message!.trim()
-                  : 'Please sign in again to continue where you left off.',
+                  : l10n.sessionExpiredSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.textSecondary,
                 height: 1.4,
@@ -151,7 +154,7 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
             ),
             const SizedBox(height: 18),
             Text(
-              'Email Address',
+              l10n.sessionExpiredEmailLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: colors.textSecondary,
@@ -161,15 +164,15 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                hintText: 'Enter your email',
+              decoration: InputDecoration(
+                hintText: l10n.sessionExpiredEmailHint,
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(AppIcons.mail_outline_rounded),
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Password',
+              l10n.sessionExpiredPasswordLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: colors.textSecondary,
@@ -181,7 +184,7 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
               obscureText: !_showPassword,
               onSubmitted: (_) => _signIn(),
               decoration: InputDecoration(
-                hintText: 'Enter your password',
+                hintText: l10n.sessionExpiredPasswordHint,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(AppIcons.lock_outline_rounded),
                 suffixIcon: IconButton(
@@ -240,8 +243,8 @@ class _SessionExpiredSheetState extends ConsumerState<_SessionExpiredSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Sign In',
+                    : Text(
+                        l10n.sessionExpiredSignInButton,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
               ),

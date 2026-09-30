@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../widgets/broker_flow_widgets.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 const double _vehiclesBottomNavClearance = 64;
 
@@ -18,6 +19,7 @@ class _VehiclesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -29,21 +31,21 @@ class _VehiclesHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Vehicles',
+            l10n.brokerVehiclesVehicles,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
-            'Manage your fleet and truck availability',
+            l10n.brokerVehiclesManageYourFleetAndTruckAvailability,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Container(
             height: 54,
             decoration: BoxDecoration(
@@ -55,14 +57,14 @@ class _VehiclesHeader extends StatelessWidget {
               controller: controller,
               onChanged: onSearchChanged,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 15),
                 prefixIcon: Icon(
                   AppIcons.search_rounded,
                   color: AppColors.textTertiary,
                 ),
-                hintText: 'Search vehicles, drivers or location',
+                hintText: l10n.brokerVehiclesSearchVehiclesDriversOrLocation,
                 hintStyle: TextStyle(
                   color: AppColors.textTertiary,
                   fontWeight: FontWeight.w600,
@@ -99,19 +101,19 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove Truck'),
-        content: Text('Remove ${vehicle.plateNumber} from your fleet?'),
+        title: Text(AppLocalizations.of(context)!.brokerVehiclesRemoveTruck),
+        content: Text(AppLocalizations.of(context)!.brokerVehiclesRemoveFromYourFleet(vehicle.plateNumber)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.brokerVehiclesCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.dangerIcon,
             ),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context)!.brokerVehiclesRemove),
           ),
         ],
       ),
@@ -130,7 +132,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Truck removed.')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.brokerVehiclesTruckRemoved)));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +179,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final trucksAsync = ref.watch(
       brokerTrucksProvider(BrokerVehiclesScreen._query),
     );
@@ -201,7 +204,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
           padding: listPadding,
           children: [
             _VehiclesHeader(),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 20, 20),
               child: Column(
                 children: [
@@ -216,7 +219,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: listPadding,
           children: [
-            const _VehiclesHeader(),
+            _VehiclesHeader(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
               child: Column(
@@ -225,7 +228,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                   Row(
                     children: [
                       Text(
-                        'Your fleet',
+                        l10n.brokerVehiclesYourFleet,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -237,7 +240,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                           context.push('/broker/vehicles/add');
                         },
                         icon: const Icon(AppIcons.add),
-                        label: const Text('Add truck'),
+                        label: Text(l10n.brokerVehiclesAddTruck),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.brand,
                           padding: const EdgeInsets.symmetric(
@@ -252,7 +255,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                   const SizedBox(height: 18),
                   _FleetEmptyState(
                     icon: AppIcons.error_outline_rounded,
-                    title: 'Could not load trucks',
+                    title: l10n.brokerVehiclesCouldNotLoadTrucks,
                     subtitle: error.toString().replaceFirst('Exception: ', ''),
                     actionLabel: 'Try again',
                     onAction: refreshTrucks,
@@ -293,7 +296,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                     Row(
                       children: [
                         Text(
-                          'Your fleet',
+                          AppLocalizations.of(context)!.brokerVehiclesYourFleet,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.textPrimary,
@@ -315,7 +318,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                             context.push('/broker/vehicles/add');
                           },
                           icon: const Icon(AppIcons.add),
-                          label: const Text('Add truck'),
+                          label: Text(AppLocalizations.of(context)!.brokerVehiclesAddTruck),
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.brand,
                             padding: const EdgeInsets.symmetric(
@@ -329,10 +332,10 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
                     ),
                     const SizedBox(height: 14),
                     if (visibleVehicles.isEmpty)
-                      const _FleetEmptyState(
+                      _FleetEmptyState(
                         icon: AppIcons.local_shipping_outlined,
-                        title: 'No matching vehicles',
-                        subtitle: 'Try a different search or add a new truck.',
+                        title: AppLocalizations.of(context)!.brokerVehiclesNoMatchingVehicles,
+                        subtitle: AppLocalizations.of(context)!.brokerVehiclesTryADifferentSearchOrAddA,
                       )
                     else
                       ...visibleVehicles.asMap().entries.expand(
@@ -373,6 +376,7 @@ class _FleetEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -438,6 +442,7 @@ class _TruckActionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 420),
@@ -535,22 +540,22 @@ class _TruckActionDialog extends StatelessWidget {
             children: [
               _TruckDialogAction(
                 icon: AppIcons.edit_rounded,
-                label: 'Edit',
+                label: AppLocalizations.of(context)!.brokerVehiclesEdit,
                 onTap: onEdit,
               ),
               _TruckDialogAction(
                 icon: AppIcons.manage_accounts_rounded,
-                label: 'Assign',
+                label: AppLocalizations.of(context)!.brokerVehiclesAssign,
                 onTap: onAssign,
               ),
               _TruckDialogAction(
                 icon: AppIcons.location_on_rounded,
-                label: 'Track',
+                label: AppLocalizations.of(context)!.brokerVehiclesTrack,
                 onTap: onTrack,
               ),
               _TruckDialogAction(
                 icon: AppIcons.history_rounded,
-                label: 'History',
+                label: AppLocalizations.of(context)!.brokerVehiclesHistory,
                 onTap: onHistory,
               ),
             ],
@@ -559,7 +564,7 @@ class _TruckActionDialog extends StatelessWidget {
           TextButton.icon(
             onPressed: onRemove,
             icon: const Icon(AppIcons.delete_outline_rounded),
-            label: const Text('Remove Truck'),
+            label: Text(AppLocalizations.of(context)!.brokerVehiclesRemoveTruck),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.dangerIcon,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -584,6 +589,7 @@ class _TruckDialogAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(15),
@@ -617,7 +623,7 @@ class _TruckDialogAction extends StatelessWidget {
 }
 
 class _TruckSummaryRow extends StatelessWidget {
-  const _TruckSummaryRow(this.label, this.value, {this.danger = false});
+  _TruckSummaryRow(this.label, this.value, {this.danger = false});
 
   final String label;
   final String value;
@@ -625,8 +631,9 @@ class _TruckSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
           Text(
@@ -662,6 +669,7 @@ class _VehicleStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = vehicleStatusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),

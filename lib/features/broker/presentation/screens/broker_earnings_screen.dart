@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'broker_settlements_screen.dart';
+import 'package:ssk/l10n/app_localizations.dart';
 
 final _brokerEarningsProvider = FutureProvider.autoDispose<_EarningsBundle>((
   ref,
@@ -33,7 +34,7 @@ final _brokerEarningsProvider = FutureProvider.autoDispose<_EarningsBundle>((
       settlementData['items'] ??
       responses[0]['settlements'] ??
       responses[0]['items'] ??
-      const [];
+      [];
   final settlements = rawSettlements is List
       ? rawSettlements
             .whereType<Map<String, dynamic>>()
@@ -56,6 +57,7 @@ class BrokerEarningsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final earningsAsync = ref.watch(_brokerEarningsProvider);
 
     return Scaffold(
@@ -77,8 +79,8 @@ class BrokerEarningsScreen extends ConsumerWidget {
             children: [
               BrokerBackButton(onTap: () => context.go('/broker/profile')),
               const SizedBox(height: 12),
-              const Text(
-                'Earnings',
+              Text(
+                l10n.brokerEarningsEarnings,
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 26,
@@ -87,8 +89,8 @@ class BrokerEarningsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Revenue, momentum and settlements at a glance.',
+              Text(
+                l10n.brokerEarningsRevenueMomentumAndSettlementsAtAGlance,
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13.5,
@@ -97,10 +99,10 @@ class BrokerEarningsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               earningsAsync.when(
-                loading: () => const _EarningsSkeleton(),
+                loading: () => _EarningsSkeleton(),
                 error: (error, _) => _EarningsStateCard(
                   icon: AppIcons.payments_outlined,
-                  title: 'Failed to load earnings',
+                  title: l10n.brokerEarningsFailedToLoadEarnings,
                   subtitle: error.toString().replaceFirst('Exception: ', ''),
                   actionLabel: 'Try again',
                   onAction: () => ref.invalidate(_brokerEarningsProvider),
@@ -122,6 +124,7 @@ class _EarningsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totalGross = bundle.settlements.fold<double>(
       0,
       (sum, row) => sum + row.amount,
@@ -154,7 +157,7 @@ class _EarningsContent extends StatelessWidget {
           children: [
             Expanded(
               child: _MiniStatCard(
-                label: 'Gross revenue',
+                label: l10n.brokerEarningsGrossRevenue,
                 value: _formatCurrency(totalGross),
                 icon: AppIcons.currency_rupee_rounded,
                 tint: AppColors.brandFill,
@@ -165,7 +168,7 @@ class _EarningsContent extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _MiniStatCard(
-                label: 'Platform fees',
+                label: l10n.brokerEarningsPlatformFees,
                 value: _formatCurrency(totalFees),
                 icon: AppIcons.account_balance_wallet_rounded,
                 tint: AppColors.warningFill,
@@ -185,9 +188,9 @@ class _EarningsContent extends StatelessWidget {
         const SizedBox(height: 14),
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Recent settlements',
+                l10n.brokerEarningsRecentSettlements,
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 16,
@@ -204,8 +207,8 @@ class _EarningsContent extends StatelessWidget {
                   vertical: 8,
                 ),
               ),
-              child: const Text(
-                'See all',
+              child: Text(
+                l10n.brokerEarningsSeeAll,
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
               ),
             ),
@@ -213,11 +216,11 @@ class _EarningsContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (bundle.settlements.isEmpty)
-          const _EarningsStateCard(
+          _EarningsStateCard(
             icon: AppIcons.receipt_long_rounded,
-            title: 'No settlements yet',
+            title: AppLocalizations.of(context)!.brokerEarningsNoSettlementsYet,
             subtitle:
-                'Completed settlements will appear here with route and payout details.',
+                AppLocalizations.of(context)!.brokerEarningsCompletedSettlementsWillAppearHereWithRoute,
           )
         else
           for (final settlement in recent) ...[
@@ -239,6 +242,7 @@ class _NetHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final positive = (change ?? 0) >= 0;
     final delta = change;
     final trendBg = delta == null
@@ -288,8 +292,8 @@ class _NetHeroCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        'NET EARNINGS',
+                      Text(
+                        l10n.brokerEarningsNETEARNINGS,
                         style: TextStyle(
                           color: AppColors.brandDark,
                           fontSize: 11,
@@ -370,8 +374,8 @@ class _NetHeroCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text(
-                        'View settlements',
+                      child: Text(
+                        AppLocalizations.of(context)!.brokerEarningsViewSettlements,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -410,6 +414,7 @@ class _MiniStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -481,6 +486,7 @@ class _MomentumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final delta = change;
     return Container(
       padding: const EdgeInsets.all(18),
@@ -499,11 +505,11 @@ class _MomentumCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: Text(
-                  'Monthly momentum',
+                  l10n.brokerEarningsMonthlyMomentum,
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 15,
@@ -519,7 +525,7 @@ class _MomentumCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MonthBar(
-                  label: 'This month',
+                  label: l10n.brokerEarningsThisMonth,
                   value: _formatCurrency(thisMonth),
                   fraction: thisMonth / comparisonMax,
                   barColor: AppColors.brand,
@@ -529,7 +535,7 @@ class _MomentumCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: _MonthBar(
-                  label: 'Last month',
+                  label: l10n.brokerEarningsLastMonth,
                   value: _formatCurrency(lastMonth),
                   fraction: lastMonth / comparisonMax,
                   barColor: AppColors.line,
@@ -565,6 +571,7 @@ class _MonthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -618,6 +625,7 @@ class _TrendLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final positive = change > 0;
     final neutral = change == 0;
     final color = neutral
@@ -677,6 +685,7 @@ class _SettlementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final normalized = settlement.status.trim().toLowerCase();
     final pillColor = switch (normalized) {
       'paid' || 'settled' => AppColors.brandDark,
@@ -796,10 +805,11 @@ class _SettlementCard extends StatelessWidget {
 // ---------- states ----------
 
 class _EarningsSkeleton extends StatelessWidget {
-  const _EarningsSkeleton();
+  _EarningsSkeleton();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     Widget block(double height, {double? width}) {
       return Container(
         height: height,
@@ -847,6 +857,7 @@ class _EarningsStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),

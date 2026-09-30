@@ -1,0 +1,1890 @@
+[
+  {
+    "key": "brokerReqDetailRequestRejected",
+    "en": "Request rejected.",
+    "hi": "रिक्वेस्ट अस्वीकार कर दी गई।"
+  },
+  {
+    "key": "brokerReqDetailFareChangeSent",
+    "en": "Fare change sent.",
+    "hi": "किराया change sent."
+  },
+  {
+    "key": "brokerReqDetailAcceptedWaitingForTheClientToConfirm",
+    "en": "Accepted - waiting for the client to confirm.",
+    "hi": "स्वीकार किया गया - क्लाइंट की पुष्टि की प्रतीक्षा है।"
+  },
+  {
+    "key": "brokerReqDetailOfferSentToTheDriverWaitingFor",
+    "en": "Offer sent to the driver - waiting for response.",
+    "hi": "ऑफर sent to the ड्राइवर - waiting for response."
+  },
+  {
+    "key": "brokerReqDetailAssignDriverTruck",
+    "en": "Assign Driver & Truck",
+    "hi": "असाइन करें ड्राइवर & ट्रक"
+  },
+  {
+    "key": "brokerReqDetailBookingPickAnAvailableDriverAndTruck",
+    "en": "Booking #{id} - pick an available driver and truck.",
+    "hi": "बुकिंग #{id} - pick an उपलब्ध ड्राइवर and ट्रक.",
+    "placeholders": {
+      "id": {}
+    }
+  },
+  {
+    "key": "brokerReqDetailDriver",
+    "en": "Driver",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerReqDetailTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerReqDetailSelectOneIdleDriverAndOneIdle",
+    "en": "Select one idle driver and one idle truck to continue.",
+    "hi": "चुनें one idle ड्राइवर and one idle ट्रक to continue."
+  },
+  {
+    "key": "brokerReqDetailCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerReqDetailConfirmAssignment",
+    "en": "Confirm Assignment",
+    "hi": "कन्फर्म करें असाइनमेंट"
+  },
+  {
+    "key": "brokerReqDetailSelectDriver",
+    "en": "Select driver",
+    "hi": "चुनें ड्राइवर"
+  },
+  {
+    "key": "brokerReqDetailSelectTruck",
+    "en": "Select truck",
+    "hi": "चुनें ट्रक"
+  },
+  {
+    "key": "brokerReqDetailNegotiationAccepted",
+    "en": "Negotiation accepted.",
+    "hi": "नेगोशिएशन accepted."
+  },
+  {
+    "key": "brokerReqDetailWaitingForClientConfirmation",
+    "en": "Waiting for client confirmation",
+    "hi": "प्रतीक्षा for client confirmation"
+  },
+  {
+    "key": "brokerReqDetailYourAcceptHasBeenSavedFareChanges",
+    "en": "Your accept has been saved. Fare changes are locked until the client confirms or declines.",
+    "hi": "आपका accept has been saved. किराया changes are locked until the client confirms or declines."
+  },
+  {
+    "key": "brokerReqDetailYourAcceptHasBeenSavedNoMore",
+    "en": "Your accept has been saved. No more fare changes are available until the client responds.",
+    "hi": "आपका accept has been saved. कोई more fare changes are उपलब्ध until the client responds."
+  },
+  {
+    "key": "brokerReqDetailYourAcceptHasBeenSavedTheRequest",
+    "en": "Your accept has been saved. The request is locked until the client confirms or declines.",
+    "hi": "आपका accept has been saved. The request is locked until the client confirms or declines."
+  },
+  {
+    "key": "brokerReqDetailBrokerAssigned",
+    "en": "Broker-assigned",
+    "hi": "ब्रोकर-असाइन्ड"
+  },
+  {
+    "key": "brokerReqDetailAssignedDriverRequest",
+    "en": "Assigned driver request",
+    "hi": "असाइन्ड ड्राइवर request"
+  },
+  {
+    "key": "brokerReqDetailThisPriceWasAlreadyAgreedWithThe",
+    "en": "This price was already agreed with the broker. Accept or decline only - no fare changes.",
+    "hi": "इस price was already agreed with the broker. स्वीकार करें or decline only - no fare changes."
+  },
+  {
+    "key": "brokerReqDetailReject",
+    "en": "Reject",
+    "hi": "अस्वीकार करें"
+  },
+  {
+    "key": "brokerReqDetailBrokerNegotiation",
+    "en": "Broker negotiation",
+    "hi": "ब्रोकर नेगोशिएशन"
+  },
+  {
+    "key": "brokerReqDetailFareAmount",
+    "en": "Fare amount",
+    "hi": "किराया amount"
+  },
+  {
+    "key": "brokerReqDetailChangeFare",
+    "en": "Change Fare",
+    "hi": "बदलें किराया"
+  },
+  {
+    "key": "brokerReqDetailAutoSelectedAssignment",
+    "en": "Auto-selected assignment",
+    "hi": "ऑटो-चयनित असाइनमेंट"
+  },
+  {
+    "key": "brokerReqDetailNoExactMatchFoundAFallbackDriver",
+    "en": "No exact match found — a fallback driver or truck will be used when you accept.",
+    "hi": "कोई exact match मिला — a fallback ड्राइवर or ट्रक will be used when you accept."
+  },
+  {
+    "key": "brokerReqDetailBookingDetails",
+    "en": "Booking Details",
+    "hi": "बुकिंग विवरण"
+  },
+  {
+    "key": "brokerReqDetailOverview",
+    "en": "Overview",
+    "hi": "ओवरव्यू"
+  },
+  {
+    "key": "brokerReqDetailRequestedOn",
+    "en": "Requested on",
+    "hi": "रिक्वेस्ट की तारीख"
+  },
+  {
+    "key": "brokerReqDetailRequestedBy",
+    "en": "Requested by",
+    "hi": "रिक्वेस्ट किसने की"
+  },
+  {
+    "key": "brokerReqDetailLoadType",
+    "en": "Load type",
+    "hi": "लोड का प्रकार"
+  },
+  {
+    "key": "brokerReqDetailPayment",
+    "en": "Payment",
+    "hi": "पेमेंट"
+  },
+  {
+    "key": "brokerReqDetailRouteInformation",
+    "en": "Route Information",
+    "hi": "रूट Information"
+  },
+  {
+    "key": "brokerReqDetailPickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerReqDetailDropOff",
+    "en": "Drop-off",
+    "hi": "ड्रॉप-off"
+  },
+  {
+    "key": "brokerReqDetailWeight",
+    "en": "Weight",
+    "hi": "वजन"
+  },
+  {
+    "key": "brokerReqDetailVehicle",
+    "en": "Vehicle",
+    "hi": "वाहन"
+  },
+  {
+    "key": "brokerReqDetailETA",
+    "en": "ETA {trimmedEta}",
+    "hi": "ETA {trimmedEta}",
+    "placeholders": {
+      "trimmedEta": {}
+    }
+  },
+  {
+    "key": "brokerReqDetailSetFareAmount",
+    "en": "Set fare amount",
+    "hi": "किराया राशि सेट करें"
+  },
+  {
+    "key": "brokerHomeDeclinedPickADifferentDriverForThis",
+    "en": "{name} declined — pick a different driver for this job.",
+    "hi": "{name} declined — pick a different ड्राइवर for this जॉब.",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  {
+    "key": "brokerHomeConfirmedTripCreated",
+    "en": "{name} confirmed — trip created.",
+    "hi": "{name} ने कन्फर्म किया — ट्रिप बन गई।",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  {
+    "key": "brokerHomeOfferSentToTheDriverWaitingFor",
+    "en": "Offer sent to the driver - waiting for response.",
+    "hi": "ऑफर sent to the ड्राइवर - waiting for response."
+  },
+  {
+    "key": "brokerHomeChangeFare",
+    "en": "Change fare",
+    "hi": "बदलें fare"
+  },
+  {
+    "key": "brokerHomeBookingProposeADifferentAmount",
+    "en": "Booking #{id} - propose a different amount.",
+    "hi": "बुकिंग #{id} - propose a different amount.",
+    "placeholders": {
+      "id": {}
+    }
+  },
+  {
+    "key": "brokerHomeEnterAmount",
+    "en": "Enter amount",
+    "hi": "दर्ज करें amount"
+  },
+  {
+    "key": "brokerHomeCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerHomeChangeFare2",
+    "en": "Change Fare",
+    "hi": "बदलें किराया"
+  },
+  {
+    "key": "brokerHomeSearchBookingIDLocation",
+    "en": "Search booking ID, location...",
+    "hi": "खोजें बुकिंग ID, location..."
+  },
+  {
+    "key": "brokerHomeBookingRequests",
+    "en": "Booking Requests",
+    "hi": "बुकिंग Requests"
+  },
+  {
+    "key": "brokerHomeSort",
+    "en": "Sort",
+    "hi": "सॉर्ट करें"
+  },
+  {
+    "key": "brokerHomeNoBookingsFound",
+    "en": "No bookings found",
+    "hi": "कोई bookings मिला"
+  },
+  {
+    "key": "brokerHomeCouldNotLoadBookings",
+    "en": "Could not load bookings",
+    "hi": "नहीं नहीं लोड bookings"
+  },
+  {
+    "key": "brokerHomeReloadRequests",
+    "en": "Reload requests",
+    "hi": "रीलोड करें रिक्वेस्ट"
+  },
+  {
+    "key": "brokerHomeNewBookings",
+    "en": "New bookings",
+    "hi": "नए bookings"
+  },
+  {
+    "key": "brokerHomeTo",
+    "en": "{pickupText} to {dropText}",
+    "hi": "{pickupText} से {dropText}",
+    "placeholders": {
+      "pickupText": {},
+      "dropText": {}
+    }
+  },
+  {
+    "key": "brokerHomePickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerHomeDrop",
+    "en": "Drop",
+    "hi": "ड्रॉप"
+  },
+  {
+    "key": "brokerHomeDistance",
+    "en": "Distance",
+    "hi": "दूरी"
+  },
+  {
+    "key": "brokerHomeWeight",
+    "en": "Weight",
+    "hi": "वजन"
+  },
+  {
+    "key": "brokerHomeClient",
+    "en": "Client",
+    "hi": "क्लाइंट"
+  },
+  {
+    "key": "brokerHomeAssignDriverTruck",
+    "en": "Assign Driver & Truck",
+    "hi": "असाइन करें ड्राइवर & ट्रक"
+  },
+  {
+    "key": "brokerHomeConfirm",
+    "en": "Confirm",
+    "hi": "कन्फर्म करें"
+  },
+  {
+    "key": "brokerHomeDecline",
+    "en": "Decline",
+    "hi": "अस्वीकार करें"
+  },
+  {
+    "key": "brokerHomeAccept",
+    "en": "Accept",
+    "hi": "स्वीकार करें"
+  },
+  {
+    "key": "brokerHomeReviewRequest",
+    "en": "Review request",
+    "hi": "रिव्यू request"
+  },
+  {
+    "key": "brokerHomeChooseAnIdleDriverAndTruck",
+    "en": "{summary} - choose an idle driver and truck.",
+    "hi": "{summary} - choose an idle ड्राइवर and ट्रक.",
+    "placeholders": {
+      "summary": {}
+    }
+  },
+  {
+    "key": "brokerHomeDriver",
+    "en": "Driver",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerHomeTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerHomeSelectOneIdleDriverAndOneIdle",
+    "en": "Select one idle driver and one idle truck to continue.",
+    "hi": "चुनें one idle ड्राइवर and one idle ट्रक to continue."
+  },
+  {
+    "key": "brokerHomeSelect",
+    "en": "Select {label}",
+    "hi": "{label} चुनें",
+    "placeholders": {
+      "label": {}
+    }
+  },
+  {
+    "key": "brokerHomeCouldNotLoadAssignmentOptions",
+    "en": "Could not load assignment options",
+    "hi": "नहीं नहीं लोड assignment options"
+  },
+  {
+    "key": "brokerHomeRetry",
+    "en": "Retry",
+    "hi": "पुनः प्रयास करें"
+  },
+  {
+    "key": "brokerHomeNEGOTIATIONHISTORY",
+    "en": "NEGOTIATION HISTORY",
+    "hi": "नेगोशिएशन हिस्ट्री"
+  },
+  {
+    "key": "brokerKycPleaseSignInAgainToSubmitKYC",
+    "en": "Please sign in again to submit KYC.",
+    "hi": "कृपया साइन in फिर से to submit KYC."
+  },
+  {
+    "key": "brokerKycIsProvidedInTheDetailsSection",
+    "en": "{title} is provided in the details section.",
+    "hi": "{title} विवरण सेक्शन में दिया गया है।",
+    "placeholders": {
+      "title": {}
+    }
+  },
+  {
+    "key": "brokerKycPleaseSignInAgainToUploadDocuments",
+    "en": "Please sign in again to upload documents.",
+    "hi": "कृपया साइन in फिर से to upload documents."
+  },
+  {
+    "key": "brokerKycUnableToPickDocumentRightNow",
+    "en": "Unable to pick document right now.",
+    "hi": "अभी दस्तावेज़ नहीं चुन सकते।"
+  },
+  {
+    "key": "brokerKycChooseHowYouWantToUploadThis",
+    "en": "Choose how you want to upload this document.",
+    "hi": "यह दस्तावेज़ कैसे अपलोड करना है चुनें।"
+  },
+  {
+    "key": "brokerKycCamera",
+    "en": "Camera",
+    "hi": "कैमरा"
+  },
+  {
+    "key": "brokerKycGallery",
+    "en": "Gallery",
+    "hi": "गैलरी"
+  },
+  {
+    "key": "brokerKycCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerKycDocumentPreview",
+    "en": "Document preview",
+    "hi": "दस्तावेज़ preview"
+  },
+  {
+    "key": "brokerKycClose",
+    "en": "Close",
+    "hi": "बंद करें"
+  },
+  {
+    "key": "brokerKycCompleteYourKYCToVerifyYourBrokerage",
+    "en": "Complete your KYC to verify your brokerage account.",
+    "hi": "अपना ब्रोकरेज अकाउंट वेरिफाई करने के लिए KYC पूरा करें।"
+  },
+  {
+    "key": "brokerKycUploadDocuments",
+    "en": "Upload Documents",
+    "hi": "अपलोड करें दस्तावेज़"
+  },
+  {
+    "key": "brokerKycAllYourDocumentsAreVerifiedThroughDigiLocker",
+    "en": "All your documents are verified through DigiLocker — nothing to upload.",
+    "hi": "सभी your documents are verified through DigiLocker — nothing to upload."
+  },
+  {
+    "key": "brokerKycAadhaarAndPANVerifiedContinueToReview",
+    "en": "Aadhaar and PAN verified. Continue to review and finish.",
+    "hi": "आधार and पैन verified. जारी रखें to review and finish."
+  },
+  {
+    "key": "brokerKycThesePhotosSupportManualReviewForThe",
+    "en": "These photos support manual review for the documents DigiLocker couldn’t confirm.",
+    "hi": "ये फोटो उन दस्तावेज़ों की मैनुअल जांच में मदद करती हैं जिन्हें DigiLocker कन्फर्म नहीं कर सका।"
+  },
+  {
+    "key": "brokerKycReviewYourInformation",
+    "en": "Review Your Information",
+    "hi": "रिव्यू आपका Information"
+  },
+  {
+    "key": "brokerKycPleaseVerifyEverythingBeforeSubmitting",
+    "en": "Please verify everything before submitting.",
+    "hi": "कृपया verify everything before submitting."
+  },
+  {
+    "key": "brokerKycBusinessInformation",
+    "en": "Business Information",
+    "hi": "बिज़नेस Information"
+  },
+  {
+    "key": "brokerKycPANNumber",
+    "en": "PAN Number",
+    "hi": "पैन Number"
+  },
+  {
+    "key": "brokerKycAadhaarNumber",
+    "en": "Aadhaar Number",
+    "hi": "आधार Number"
+  },
+  {
+    "key": "brokerKycGSTNumber",
+    "en": "GST Number",
+    "hi": "GST नंबर"
+  },
+  {
+    "key": "brokerKycBankAccountNumber",
+    "en": "Bank Account Number",
+    "hi": "बैंक अकाउंट Number"
+  },
+  {
+    "key": "brokerKycBusinessRegistrationNumber",
+    "en": "Business Registration Number",
+    "hi": "बिज़नेस रजिस्ट्रेशन Number"
+  },
+  {
+    "key": "brokerKycUploadedDocuments",
+    "en": "Uploaded Documents",
+    "hi": "अपलोड दस्तावेज़"
+  },
+  {
+    "key": "brokerKycIConfirmThatAllTheInformationProvided",
+    "en": "I confirm that all the information provided is accurate.",
+    "hi": "मैं पुष्टि करता हूं कि दी गई सभी जानकारी सही है।"
+  },
+  {
+    "key": "brokerKycVerificationDetails",
+    "en": "Verification Details",
+    "hi": "Verification विवरण"
+  },
+  {
+    "key": "brokerKycCurrentStatus",
+    "en": "Current Status",
+    "hi": "Current स्थिति"
+  },
+  {
+    "key": "brokerKycSubmittedDate",
+    "en": "Submitted Date",
+    "hi": "सबमिट की तारीख"
+  },
+  {
+    "key": "brokerKycSubmissionID",
+    "en": "Submission ID",
+    "hi": "सबमिशन ID"
+  },
+  {
+    "key": "brokerKycReviewedAt",
+    "en": "Reviewed At",
+    "hi": "रिव्यू की तारीख"
+  },
+  {
+    "key": "brokerKycViewMyDocuments",
+    "en": "View My Documents",
+    "hi": "देखें My दस्तावेज़"
+  },
+  {
+    "key": "brokerKycGoBack",
+    "en": "Go Back",
+    "hi": "वापस जाएं"
+  },
+  {
+    "key": "brokerKycMyDocuments",
+    "en": "My documents",
+    "hi": "मेरे दस्तावेज़"
+  },
+  {
+    "key": "brokerKycKYCRegistration",
+    "en": "KYC Registration",
+    "hi": "KYC रजिस्ट्रेशन"
+  },
+  {
+    "key": "brokerKycVerifyYourBrokerAccount",
+    "en": "Verify your broker account",
+    "hi": "वेरिफाई करें your broker account"
+  },
+  {
+    "key": "brokerKycSupportedFormats",
+    "en": "Supported formats: {formats}",
+    "hi": "समर्थित फॉर्मेट: {formats}",
+    "placeholders": {
+      "formats": {}
+    }
+  },
+  {
+    "key": "brokerKycThisItemIsCoveredInTheDetails",
+    "en": "This item is covered in the details section.",
+    "hi": "इस item is covered in the details section."
+  },
+  {
+    "key": "brokerActiveJobsCouldNotLoadActiveJobs",
+    "en": "Could not load active jobs",
+    "hi": "नहीं नहीं लोड एक्टिव jobs"
+  },
+  {
+    "key": "brokerActiveJobsNoActiveJobsFound",
+    "en": "No active jobs found",
+    "hi": "कोई एक्टिव jobs मिला"
+  },
+  {
+    "key": "brokerActiveJobsAssignedAndInTransitJobsWillAppear",
+    "en": "Assigned and in-transit jobs will appear here.",
+    "hi": "असाइन्ड and in-transit jobs will appear here."
+  },
+  {
+    "key": "brokerActiveJobsReportAProblem",
+    "en": "Report a Problem",
+    "hi": "रिपोर्ट करें a Problem"
+  },
+  {
+    "key": "brokerActiveJobsTo",
+    "en": "{pickup} to {drop}",
+    "hi": "{pickup} से {drop}",
+    "placeholders": {
+      "pickup": {},
+      "drop": {}
+    }
+  },
+  {
+    "key": "brokerActiveJobsIssueType",
+    "en": "Issue Type",
+    "hi": "समस्या प्रकार"
+  },
+  {
+    "key": "brokerActiveJobsDescribeWhatWentWrong",
+    "en": "Describe what went wrong...",
+    "hi": "क्या गलत हुआ, बताएं..."
+  },
+  {
+    "key": "brokerActiveJobsCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerActiveJobsDisputeRaisedOurTeamWillReviewIt",
+    "en": "Dispute raised - our team will review it shortly.",
+    "hi": "विवाद दर्ज — हमारी टीम जल्द रिव्यू करेगी।"
+  },
+  {
+    "key": "brokerActiveJobsReassignDriver",
+    "en": "Reassign Driver",
+    "hi": "Reassign ड्राइवर"
+  },
+  {
+    "key": "brokerActiveJobsCurrentlyAssigned",
+    "en": "Currently Assigned",
+    "hi": "Currently असाइन्ड"
+  },
+  {
+    "key": "brokerActiveJobsReassignTo",
+    "en": "Reassign to",
+    "hi": "किसे रीअसाइन करें"
+  },
+  {
+    "key": "brokerActiveJobsOptionalReasonForReassignment",
+    "en": "Optional reason for reassignment",
+    "hi": "रीअसाइनमेंट का वैकल्पिक कारण"
+  },
+  {
+    "key": "brokerActiveJobsCanTFindTheOriginalJobRequest",
+    "en": "Can't find the original job request for this booking.",
+    "hi": "Can't find the original जॉब request for this बुकिंग."
+  },
+  {
+    "key": "brokerActiveJobsDriverReassigned",
+    "en": "Driver reassigned.",
+    "hi": "ड्राइवर reassigned."
+  },
+  {
+    "key": "brokerActiveJobsActiveJobs",
+    "en": "Active Jobs",
+    "hi": "एक्टिव जॉब्स"
+  },
+  {
+    "key": "brokerActiveJobsJobsCurrentlyInProgress",
+    "en": "{total} jobs currently in progress",
+    "hi": "{total} jobs currently in प्रगति",
+    "placeholders": {
+      "total": {}
+    }
+  },
+  {
+    "key": "brokerActiveJobsPickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerActiveJobsDrop",
+    "en": "Drop",
+    "hi": "ड्रॉप"
+  },
+  {
+    "key": "brokerActiveJobsTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerActiveJobsDriver",
+    "en": "Driver",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerActiveJobsTRIPPROGRESS",
+    "en": "TRIP PROGRESS",
+    "hi": "ट्रिप प्रोग्रेस"
+  },
+  {
+    "key": "brokerActiveJobsTrackLive",
+    "en": "Track Live",
+    "hi": "ट्रैक करें लाइव"
+  },
+  {
+    "key": "brokerActiveJobsChat",
+    "en": "Chat",
+    "hi": "चैट"
+  },
+  {
+    "key": "addDriverPleaseSignInAgainToCreateA",
+    "en": "Please sign in again to create a driver.",
+    "hi": "कृपया साइन in फिर से to create a ड्राइवर."
+  },
+  {
+    "key": "addDriverDriverProfileSavedSuccessfully",
+    "en": "Driver profile saved successfully.",
+    "hi": "ड्राइवर profile saved सफलतापूर्वक."
+  },
+  {
+    "key": "addDriverHasBeenRegisteredAndAddedToYour",
+    "en": "{name} has been registered and added to your fleet.",
+    "hi": "{name} has been registered and added to your फ्लीट.",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  {
+    "key": "addDriverTemporaryPassword",
+    "en": "Temporary Password",
+    "hi": "Temporary पासवर्ड"
+  },
+  {
+    "key": "addDriverPasswordCopied",
+    "en": "Password copied",
+    "hi": "पासवर्ड copied"
+  },
+  {
+    "key": "addDriverCopy",
+    "en": "Copy",
+    "hi": "कॉपी करें"
+  },
+  {
+    "key": "addDriverThisPasswordIsShownOnlyOnceThe",
+    "en": "This password is shown only once — the driver can change it from their profile after logging in.",
+    "hi": "इस password is shown only once — the ड्राइवर can change it from their profile after logging in."
+  },
+  {
+    "key": "addDriverDone",
+    "en": "Done",
+    "hi": "हो गया"
+  },
+  {
+    "key": "addDriverEmailAlreadyRegistered",
+    "en": "Email already registered",
+    "hi": "ईमेल already registered"
+  },
+  {
+    "key": "addDriverIsAlreadyTiedToADriverAccount",
+    "en": "{email} is already tied to a driver account — a deleted driver keeps their email reserved. Edit the existing driver instead of creating a new one.",
+    "hi": "{email} is already tied to a ड्राइवर account — a deleted ड्राइवर keeps their email reserved. एडिट करें the existing ड्राइवर instead of creating a new one.",
+    "placeholders": {
+      "email": {}
+    }
+  },
+  {
+    "key": "addDriverKeepEditing",
+    "en": "Keep editing",
+    "hi": "एडिट जारी रखें"
+  },
+  {
+    "key": "addDriverViewDrivers",
+    "en": "View drivers",
+    "hi": "देखें drivers"
+  },
+  {
+    "key": "addDriverAccountDetails",
+    "en": "Account Details",
+    "hi": "अकाउंट विवरण"
+  },
+  {
+    "key": "addDriverFullName",
+    "en": "Full name",
+    "hi": "पूरा नाम"
+  },
+  {
+    "key": "addDriverEmail",
+    "en": "Email",
+    "hi": "ईमेल"
+  },
+  {
+    "key": "addDriverMobileNumber",
+    "en": "Mobile number",
+    "hi": "मोबाइल नंबर"
+  },
+  {
+    "key": "addDriverLicenseDocuments",
+    "en": "License & Documents",
+    "hi": "लाइसेंस & दस्तावेज़"
+  },
+  {
+    "key": "addDriverLicenseNumber",
+    "en": "License number",
+    "hi": "लाइसेंस नंबर"
+  },
+  {
+    "key": "addDriverAadhaarNumber",
+    "en": "Aadhaar number",
+    "hi": "आधार नंबर"
+  },
+  {
+    "key": "addDriverLeaveBlankToKeepTheCurrentAadhaar",
+    "en": "Leave blank to keep the current Aadhaar on file.",
+    "hi": "Leave blank to keep the current आधार on file."
+  },
+  {
+    "key": "addDriverLicenseExpiry",
+    "en": "License expiry",
+    "hi": "लाइसेंस समाप्ति"
+  },
+  {
+    "key": "addDriverYYYYMMDD",
+    "en": "YYYY-MM-DD",
+    "hi": "YYYY-MM-DD"
+  },
+  {
+    "key": "addDriverVehicleAssignment",
+    "en": "Vehicle Assignment",
+    "hi": "वाहन असाइनमेंट"
+  },
+  {
+    "key": "addDriverAssignTruck",
+    "en": "Assign truck",
+    "hi": "असाइन करें ट्रक"
+  },
+  {
+    "key": "addDriverTruckID",
+    "en": "Truck ID",
+    "hi": "ट्रक ID"
+  },
+  {
+    "key": "addDriverEnterTruckUUIDOptional",
+    "en": "Enter truck UUID (optional)",
+    "hi": "दर्ज करें ट्रक UUID (optional)"
+  },
+  {
+    "key": "addDriverStatus",
+    "en": "Status",
+    "hi": "स्थिति"
+  },
+  {
+    "key": "addDriverAvailable",
+    "en": "Available",
+    "hi": "उपलब्ध"
+  },
+  {
+    "key": "addDriverOnTrip",
+    "en": "On trip",
+    "hi": "ट्रिप पर"
+  },
+  {
+    "key": "addDriverOffline",
+    "en": "Offline",
+    "hi": "ऑफलाइन"
+  },
+  {
+    "key": "addDriverTruckListCouldNotBeLoadedYou",
+    "en": "Truck list could not be loaded. You can still enter a truck ID manually.",
+    "hi": "ट्रक list could नहीं be loaded. You can still enter a ट्रक ID manually."
+  },
+  {
+    "key": "addDriverChangePhoto",
+    "en": "Change Photo",
+    "hi": "बदलें फोटो"
+  },
+  {
+    "key": "brokerHistoryRemoveFromMyList",
+    "en": "Remove from my list?",
+    "hi": "हटाएं from my list?"
+  },
+  {
+    "key": "brokerHistoryThisOnlyRemovesItFromYourOwn",
+    "en": "This only removes it from your own list. There's no undo.",
+    "hi": "इस only removes it from your own list. There's no undo."
+  },
+  {
+    "key": "brokerHistoryCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerHistoryRemove",
+    "en": "Remove",
+    "hi": "हटाएं"
+  },
+  {
+    "key": "brokerHistoryBookingRemovedFromYourList",
+    "en": "Booking removed from your list.",
+    "hi": "बुकिंग removed from your list."
+  },
+  {
+    "key": "brokerHistoryCouldNotLoadJobHistory",
+    "en": "Could not load job history",
+    "hi": "नहीं नहीं लोड जॉब history"
+  },
+  {
+    "key": "brokerHistoryNoBookingsFound",
+    "en": "No bookings found",
+    "hi": "कोई bookings मिला"
+  },
+  {
+    "key": "brokerHistoryCompletedAndCancelledBookingsAppearHere",
+    "en": "Completed and cancelled bookings appear here.",
+    "hi": "पूर्ण and रद्द bookings appear here."
+  },
+  {
+    "key": "brokerHistoryJobHistory",
+    "en": "Job History",
+    "hi": "Job हिस्ट्री"
+  },
+  {
+    "key": "brokerHistoryCompletedAndCancelledBookings",
+    "en": "{count} completed and cancelled bookings",
+    "hi": "{count} पूर्ण and रद्द bookings",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  {
+    "key": "brokerHistorySearchBookingsRoutesDrivers",
+    "en": "Search bookings, routes, drivers...",
+    "hi": "खोजें bookings, routes, drivers..."
+  },
+  {
+    "key": "brokerHistoryTotalNetEarningsFiltered",
+    "en": "Total Net Earnings (filtered)",
+    "hi": "कुल नेट कमाई (filtered)"
+  },
+  {
+    "key": "brokerHistoryTo",
+    "en": "{pickupLocation} to {dropoffLocation}",
+    "hi": "{pickupLocation} से {dropoffLocation}",
+    "placeholders": {
+      "pickupLocation": {},
+      "dropoffLocation": {}
+    }
+  },
+  {
+    "key": "brokerHistoryPickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerHistoryDrop",
+    "en": "Drop",
+    "hi": "ड्रॉप"
+  },
+  {
+    "key": "brokerHistoryTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerHistoryDriver",
+    "en": "Driver",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerHistoryViewDetails",
+    "en": "View details",
+    "hi": "देखें details"
+  },
+  {
+    "key": "brokerHistoryFee",
+    "en": "Fee {fee}",
+    "hi": "फीस {fee}",
+    "placeholders": {
+      "fee": {}
+    }
+  },
+  {
+    "key": "brokerHistoryNet",
+    "en": "Net {net}",
+    "hi": "नेट {net}",
+    "placeholders": {
+      "net": {}
+    }
+  },
+  {
+    "key": "brokerDriverReqDriverRequests",
+    "en": "Driver requests",
+    "hi": "ड्राइवर रिक्वेस्ट"
+  },
+  {
+    "key": "brokerDriverReqCouldNotLoadDriverRequests",
+    "en": "Could not load driver requests",
+    "hi": "नहीं नहीं लोड ड्राइवर रिक्वेस्ट"
+  },
+  {
+    "key": "brokerDriverReqNegotiationCards",
+    "en": "Negotiation cards",
+    "hi": "नेगोशिएशन cards"
+  },
+  {
+    "key": "brokerDriverReqReload",
+    "en": "Reload",
+    "hi": "रीलोड करें"
+  },
+  {
+    "key": "brokerDriverReqNoDriverRequestsYet",
+    "en": "No driver requests yet",
+    "hi": "कोई ड्राइवर रिक्वेस्ट yet"
+  },
+  {
+    "key": "brokerDriverReqWhenADriverTimesOutTheRequest",
+    "en": "When a driver times out, the request will appear here for broker takeover.",
+    "hi": "When a ड्राइवर times out, the request will appear here for broker takeover."
+  },
+  {
+    "key": "brokerDriverReqBookingID",
+    "en": "Booking ID",
+    "hi": "बुकिंग ID"
+  },
+  {
+    "key": "brokerDriverReqPickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerDriverReqDrop",
+    "en": "Drop",
+    "hi": "ड्रॉप"
+  },
+  {
+    "key": "brokerDriverReqAcceptedWaitingForTheClientToConfirm",
+    "en": "Accepted - waiting for the client to confirm",
+    "hi": "स्वीकार किया गया - क्लाइंट की पुष्टि की प्रतीक्षा है"
+  },
+  {
+    "key": "brokerDriverReqConfirm",
+    "en": "Confirm",
+    "hi": "कन्फर्म करें"
+  },
+  {
+    "key": "brokerDriverReqDecline",
+    "en": "Decline",
+    "hi": "अस्वीकार करें"
+  },
+  {
+    "key": "brokerDriverReqAccept",
+    "en": "Accept",
+    "hi": "स्वीकार करें"
+  },
+  {
+    "key": "brokerDriverReqAlreadyAgreedWithTheBrokerAcceptOr",
+    "en": "Already agreed with the broker - accept or decline, no negotiation.",
+    "hi": "ब्रोकर से पहले ही सहमत — स्वीकार या अस्वीकार करें, नेगोशिएशन नहीं।"
+  },
+  {
+    "key": "brokerDriverReqChangeFare",
+    "en": "Change Fare",
+    "hi": "बदलें किराया"
+  },
+  {
+    "key": "brokerDriverReqDriverTimedOutBrokerTakeoverActive",
+    "en": "Driver timed out - broker takeover active.",
+    "hi": "ड्राइवर timed out - broker takeover एक्टिव."
+  },
+  {
+    "key": "brokerDriverReqBrokerAssigned",
+    "en": "Broker-assigned",
+    "hi": "ब्रोकर-असाइन्ड"
+  },
+  {
+    "key": "brokerDriverReqChangeFare2",
+    "en": "Change fare",
+    "hi": "बदलें fare"
+  },
+  {
+    "key": "brokerDriverReqSetFareAmount",
+    "en": "Set fare amount",
+    "hi": "किराया राशि सेट करें"
+  },
+  {
+    "key": "brokerDriverReqCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerVehiclesVehicles",
+    "en": "Vehicles",
+    "hi": "वाहन"
+  },
+  {
+    "key": "brokerVehiclesManageYourFleetAndTruckAvailability",
+    "en": "Manage your fleet and truck availability",
+    "hi": "मैनेज करें your फ्लीट and ट्रक availability"
+  },
+  {
+    "key": "brokerVehiclesSearchVehiclesDriversOrLocation",
+    "en": "Search vehicles, drivers or location",
+    "hi": "खोजें vehicles, drivers or location"
+  },
+  {
+    "key": "brokerVehiclesRemoveTruck",
+    "en": "Remove Truck",
+    "hi": "हटाएं ट्रक"
+  },
+  {
+    "key": "brokerVehiclesRemoveFromYourFleet",
+    "en": "Remove {plateNumber} from your fleet?",
+    "hi": "हटाएं {plateNumber} from your फ्लीट?",
+    "placeholders": {
+      "plateNumber": {}
+    }
+  },
+  {
+    "key": "brokerVehiclesCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerVehiclesRemove",
+    "en": "Remove",
+    "hi": "हटाएं"
+  },
+  {
+    "key": "brokerVehiclesTruckRemoved",
+    "en": "Truck removed.",
+    "hi": "ट्रक removed."
+  },
+  {
+    "key": "brokerVehiclesYourFleet",
+    "en": "Your fleet",
+    "hi": "आपका फ्लीट"
+  },
+  {
+    "key": "brokerVehiclesAddTruck",
+    "en": "Add truck",
+    "hi": "जोड़ें ट्रक"
+  },
+  {
+    "key": "brokerVehiclesCouldNotLoadTrucks",
+    "en": "Could not load trucks",
+    "hi": "नहीं नहीं लोड trucks"
+  },
+  {
+    "key": "brokerVehiclesNoMatchingVehicles",
+    "en": "No matching vehicles",
+    "hi": "कोई matching vehicles"
+  },
+  {
+    "key": "brokerVehiclesTryADifferentSearchOrAddA",
+    "en": "Try a different search or add a new truck.",
+    "hi": "Try a different search or add a new ट्रक."
+  },
+  {
+    "key": "brokerVehiclesEdit",
+    "en": "Edit",
+    "hi": "एडिट करें"
+  },
+  {
+    "key": "brokerVehiclesAssign",
+    "en": "Assign",
+    "hi": "असाइन करें"
+  },
+  {
+    "key": "brokerVehiclesTrack",
+    "en": "Track",
+    "hi": "ट्रैक करें"
+  },
+  {
+    "key": "brokerVehiclesHistory",
+    "en": "History",
+    "hi": "हिस्ट्री"
+  },
+  {
+    "key": "addVehiclePleaseSignInAgainToAddA",
+    "en": "Please sign in again to add a truck.",
+    "hi": "कृपया साइन in फिर से to add a ट्रक."
+  },
+  {
+    "key": "addVehiclePleaseAssignADriver",
+    "en": "Please assign a driver.",
+    "hi": "कृपया assign a ड्राइवर."
+  },
+  {
+    "key": "addVehiclePleaseEnterAValidYear",
+    "en": "Please enter a valid year.",
+    "hi": "कृपया enter a valid year."
+  },
+  {
+    "key": "addVehicleRegistration",
+    "en": "Registration",
+    "hi": "रजिस्ट्रेशन"
+  },
+  {
+    "key": "addVehicleCapacity",
+    "en": "Capacity",
+    "hi": "क्षमता"
+  },
+  {
+    "key": "addVehicleAssignDriver",
+    "en": "Assign driver",
+    "hi": "असाइन करें ड्राइवर"
+  },
+  {
+    "key": "addVehicleMake",
+    "en": "Make",
+    "hi": "मेक"
+  },
+  {
+    "key": "addVehicleYear",
+    "en": "Year",
+    "hi": "साल"
+  },
+  {
+    "key": "addVehicleInsuranceExpiry",
+    "en": "Insurance expiry",
+    "hi": "इंश्योरेंस समाप्ति"
+  },
+  {
+    "key": "addVehiclePickADate",
+    "en": "Pick a date",
+    "hi": "तारीख चुनें"
+  },
+  {
+    "key": "addVehicleSaveTruck",
+    "en": "Save truck",
+    "hi": "सेव करें ट्रक"
+  },
+  {
+    "key": "brokerEarningsEarnings",
+    "en": "Earnings",
+    "hi": "कमाई"
+  },
+  {
+    "key": "brokerEarningsRevenueMomentumAndSettlementsAtAGlance",
+    "en": "Revenue, momentum and settlements at a glance.",
+    "hi": "रेवेन्यू, मोमेंटम और सेटलमेंट एक नज़र में।"
+  },
+  {
+    "key": "brokerEarningsFailedToLoadEarnings",
+    "en": "Failed to load earnings",
+    "hi": "Failed to लोड earnings"
+  },
+  {
+    "key": "brokerEarningsGrossRevenue",
+    "en": "Gross revenue",
+    "hi": "ग्रॉस revenue"
+  },
+  {
+    "key": "brokerEarningsPlatformFees",
+    "en": "Platform fees",
+    "hi": "प्लेटफॉर्म फीस"
+  },
+  {
+    "key": "brokerEarningsRecentSettlements",
+    "en": "Recent settlements",
+    "hi": "हाल के सेटलमेंट"
+  },
+  {
+    "key": "brokerEarningsSeeAll",
+    "en": "See all",
+    "hi": "सभी देखें"
+  },
+  {
+    "key": "brokerEarningsNoSettlementsYet",
+    "en": "No settlements yet",
+    "hi": "कोई settlements yet"
+  },
+  {
+    "key": "brokerEarningsCompletedSettlementsWillAppearHereWithRoute",
+    "en": "Completed settlements will appear here with route and payout details.",
+    "hi": "पूर्ण settlements will appear here with route and payout details."
+  },
+  {
+    "key": "brokerEarningsNETEARNINGS",
+    "en": "NET EARNINGS",
+    "hi": "नेट कमाई"
+  },
+  {
+    "key": "brokerEarningsViewSettlements",
+    "en": "View settlements",
+    "hi": "देखें settlements"
+  },
+  {
+    "key": "brokerEarningsMonthlyMomentum",
+    "en": "Monthly momentum",
+    "hi": "मासिक मोमेंटम"
+  },
+  {
+    "key": "brokerEarningsThisMonth",
+    "en": "This month",
+    "hi": "इस महीना"
+  },
+  {
+    "key": "brokerEarningsLastMonth",
+    "en": "Last month",
+    "hi": "पिछले महीना"
+  },
+  {
+    "key": "brokerInvoicesInvoiceFetchedFor",
+    "en": "Invoice fetched for {bookingNumber}.",
+    "hi": "इनवॉइस fetched for {bookingNumber}.",
+    "placeholders": {
+      "bookingNumber": {}
+    }
+  },
+  {
+    "key": "brokerInvoicesInvoiceEmailedFor",
+    "en": "Invoice emailed for {bookingNumber}.",
+    "hi": "इनवॉइस emailed for {bookingNumber}.",
+    "placeholders": {
+      "bookingNumber": {}
+    }
+  },
+  {
+    "key": "brokerInvoicesCouldNotLoadInvoices",
+    "en": "Could not load invoices",
+    "hi": "नहीं नहीं लोड invoices"
+  },
+  {
+    "key": "brokerInvoicesNoInvoiceReadyBookingsYet",
+    "en": "No invoice-ready bookings yet",
+    "hi": "कोई invoice-ready bookings yet"
+  },
+  {
+    "key": "brokerInvoicesCompletedOrDeliveredBookingsWillAppearHere",
+    "en": "Completed or delivered bookings will appear here.",
+    "hi": "पूर्ण or delivered bookings will appear here."
+  },
+  {
+    "key": "brokerInvoicesInvoices",
+    "en": "Invoices",
+    "hi": "इनवॉइस"
+  },
+  {
+    "key": "brokerInvoicesTrackingID",
+    "en": "#Tracking ID: {trackingId}",
+    "hi": "#ट्रैकिंग ID: {trackingId}",
+    "placeholders": {
+      "trackingId": {}
+    }
+  },
+  {
+    "key": "brokerInvoicesFrom",
+    "en": "From:",
+    "hi": "प्रेषक:"
+  },
+  {
+    "key": "brokerInvoicesShippingTo",
+    "en": "Shipping to:",
+    "hi": "भेजने का पता:"
+  },
+  {
+    "key": "brokerInvoicesStatus",
+    "en": "Status:",
+    "hi": "स्थिति:"
+  },
+  {
+    "key": "brokerInvoicesFetchInvoice",
+    "en": "Fetch invoice",
+    "hi": "इनवॉइस लाएं"
+  },
+  {
+    "key": "brokerInvoicesEmailInvoice",
+    "en": "Email invoice",
+    "hi": "ईमेल invoice"
+  },
+  {
+    "key": "brokerSettlementsCouldNotLoadSettlements",
+    "en": "Could not load settlements",
+    "hi": "नहीं नहीं लोड settlements"
+  },
+  {
+    "key": "brokerSettlementsNoSettlementsYet",
+    "en": "No settlements yet",
+    "hi": "कोई settlements yet"
+  },
+  {
+    "key": "brokerSettlementsPaidAndPendingSettlementRecordsWillAppear",
+    "en": "Paid and pending settlement records will appear here.",
+    "hi": "Paid and पेंडिंग settlement records will appear here."
+  },
+  {
+    "key": "brokerSettlementsNetEarnings",
+    "en": "Net earnings",
+    "hi": "नेट earnings"
+  },
+  {
+    "key": "brokerSettlementsClose",
+    "en": "Close",
+    "hi": "बंद करें"
+  },
+  {
+    "key": "brokerSettlementsSettlements",
+    "en": "Settlements",
+    "hi": "सेटलमेंट"
+  },
+  {
+    "key": "brokerSettlementsGross",
+    "en": "Gross",
+    "hi": "ग्रॉस"
+  },
+  {
+    "key": "brokerSettlementsPICKUP",
+    "en": "PICKUP",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerSettlementsDROP",
+    "en": "DROP",
+    "hi": "ड्रॉप"
+  },
+  {
+    "key": "addTruckPleaseSignInAgainToAddA",
+    "en": "Please sign in again to add a truck.",
+    "hi": "कृपया साइन in फिर से to add a ट्रक."
+  },
+  {
+    "key": "addTruckChooseTheTruckTypeAndFillIn",
+    "en": "Choose the truck type and fill in the fleet details.",
+    "hi": "Choose the ट्रक type and fill in the फ्लीट details."
+  },
+  {
+    "key": "addTruckSelectTruckType",
+    "en": "Select truck type",
+    "hi": "चुनें ट्रक type"
+  },
+  {
+    "key": "addTruckRegistration",
+    "en": "Registration",
+    "hi": "रजिस्ट्रेशन"
+  },
+  {
+    "key": "addTruckCapacity",
+    "en": "Capacity",
+    "hi": "क्षमता"
+  },
+  {
+    "key": "addTruckAssignDriverOptional",
+    "en": "Assign driver (optional)",
+    "hi": "असाइन करें ड्राइवर (optional)"
+  },
+  {
+    "key": "addTruckMakeOptional",
+    "en": "Make (optional)",
+    "hi": "मेक (optional)"
+  },
+  {
+    "key": "addTruckYearOptional",
+    "en": "Year (optional)",
+    "hi": "साल (optional)"
+  },
+  {
+    "key": "addTruckInsuranceExpiry",
+    "en": "Insurance expiry",
+    "hi": "इंश्योरेंस समाप्ति"
+  },
+  {
+    "key": "addTruckPickADate",
+    "en": "Pick a date",
+    "hi": "तारीख चुनें"
+  },
+  {
+    "key": "brokerTrackLiveDriverPhoneNumberIsNotAvailable",
+    "en": "Driver phone number is not available.",
+    "hi": "ड्राइवर phone नंबर is नहीं उपलब्ध."
+  },
+  {
+    "key": "brokerTrackLiveCouldNotOpenThePhoneApp",
+    "en": "Could not open the phone app.",
+    "hi": "नहीं नहीं open the phone app."
+  },
+  {
+    "key": "brokerTrackLiveTrackLive",
+    "en": "Track Live",
+    "hi": "ट्रैक करें लाइव"
+  },
+  {
+    "key": "brokerTrackLiveChat",
+    "en": "Chat",
+    "hi": "चैट"
+  },
+  {
+    "key": "brokerTrackLiveCallDriver",
+    "en": "Call driver",
+    "hi": "कॉल करें ड्राइवर"
+  },
+  {
+    "key": "brokerTrackLiveLIVE",
+    "en": "LIVE",
+    "hi": "लाइव"
+  },
+  {
+    "key": "brokerTrackLiveRoute",
+    "en": "Route",
+    "hi": "रूट"
+  },
+  {
+    "key": "brokerTrackLivePickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerTrackLiveDropOff",
+    "en": "Drop-off",
+    "hi": "ड्रॉप-off"
+  },
+  {
+    "key": "brokerTrackLiveWeight",
+    "en": "Weight",
+    "hi": "वजन"
+  },
+  {
+    "key": "brokerTrackLiveTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerTrackLiveTripProgress",
+    "en": "Trip progress",
+    "hi": "ट्रिप प्रगति"
+  },
+  {
+    "key": "brokerNotifCouldnTLoadYourNotifications",
+    "en": "Couldn't load your notifications",
+    "hi": "Couldn't लोड your notifications"
+  },
+  {
+    "key": "brokerNotifNoNotifications",
+    "en": "No notifications",
+    "hi": "कोई notifications"
+  },
+  {
+    "key": "brokerNotifNewAlertsWillAppearHere",
+    "en": "New alerts will appear here.",
+    "hi": "नए अलर्ट will appear here."
+  },
+  {
+    "key": "brokerNotifNotifications",
+    "en": "Notifications",
+    "hi": "नोटिफिकेशन"
+  },
+  {
+    "key": "brokerAnalyticsCouldNotLoadAnalytics",
+    "en": "Could not load analytics",
+    "hi": "नहीं नहीं लोड analytics"
+  },
+  {
+    "key": "brokerAnalyticsThisMonth",
+    "en": "This month",
+    "hi": "इस महीना"
+  },
+  {
+    "key": "brokerAnalyticsLastMonth",
+    "en": "Last month",
+    "hi": "पिछले महीना"
+  },
+  {
+    "key": "brokerAnalyticsTripHistory",
+    "en": "Trip history",
+    "hi": "ट्रिप history"
+  },
+  {
+    "key": "brokerAnalyticsFilter",
+    "en": "Filter",
+    "hi": "फिल्टर"
+  },
+  {
+    "key": "brokerAnalyticsNoTripHistoryYet",
+    "en": "No trip history yet",
+    "hi": "कोई trip history yet"
+  },
+  {
+    "key": "brokerAnalyticsCompletedSettlementsWillAppearHereOnceTrips",
+    "en": "Completed settlements will appear here once trips close.",
+    "hi": "पूर्ण settlements will appear here once ट्रिप close."
+  },
+  {
+    "key": "brokerAnalyticsAnalytics",
+    "en": "Analytics",
+    "hi": "एनालिटिक्स"
+  },
+  {
+    "key": "brokerAnalyticsTrackYourEarningsAndTripHistory",
+    "en": "Track your earnings and trip history",
+    "hi": "ट्रैक करें your earnings and trip history"
+  },
+  {
+    "key": "brokerAnalyticsTotalEarnings",
+    "en": "Total earnings",
+    "hi": "कुल earnings"
+  },
+  {
+    "key": "brokerAnalyticsNetEarnings",
+    "en": "Net earnings: ₹{value1}",
+    "hi": "नेट earnings: ₹{value1}",
+    "placeholders": {
+      "value1": {}
+    }
+  },
+  {
+    "key": "driverDetailVehicle",
+    "en": "Vehicle",
+    "hi": "वाहन"
+  },
+  {
+    "key": "driverDetailLocation",
+    "en": "Location",
+    "hi": "लोकेशन"
+  },
+  {
+    "key": "driverDetailLicense",
+    "en": "License",
+    "hi": "लाइसेंस"
+  },
+  {
+    "key": "driverDetailOnTripSince",
+    "en": "On trip since",
+    "hi": "ट्रिप शुरू"
+  },
+  {
+    "key": "driverDetailLiveTracking",
+    "en": "Live tracking",
+    "hi": "लाइव tracking"
+  },
+  {
+    "key": "driverDetailLiveTracking2",
+    "en": "Live Tracking",
+    "hi": "लाइव ट्रैकिंग"
+  },
+  {
+    "key": "driverDetailLiveDriverPosition",
+    "en": "Live driver position",
+    "hi": "लाइव ड्राइवर position"
+  },
+  {
+    "key": "driverDetailChatWithDriver",
+    "en": "Chat with driver",
+    "hi": "चैट with ड्राइवर"
+  },
+  {
+    "key": "brokerTruckAssignDriverAssignedToTruck",
+    "en": "Driver assigned to truck.",
+    "hi": "ड्राइवर assigned to ट्रक."
+  },
+  {
+    "key": "brokerTruckAssignAssignDriver",
+    "en": "Assign Driver",
+    "hi": "असाइन करें ड्राइवर"
+  },
+  {
+    "key": "brokerTruckAssignTruck",
+    "en": "Truck",
+    "hi": "ट्रक"
+  },
+  {
+    "key": "brokerTruckAssignNoActiveDriversAvailableRightNow",
+    "en": "No active drivers available right now.",
+    "hi": "कोई एक्टिव drivers उपलब्ध right now."
+  },
+  {
+    "key": "brokerTruckAssignDriver",
+    "en": "Driver",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerTruckAssignCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerTruckHistoryCouldNotLoadTripHistory",
+    "en": "Could not load trip history",
+    "hi": "नहीं नहीं लोड trip history"
+  },
+  {
+    "key": "brokerTruckHistoryTruckTripsWillAppearHereOnceJobs",
+    "en": "Truck trips will appear here once jobs are assigned.",
+    "hi": "ट्रक ट्रिप will appear here once jobs are assigned."
+  },
+  {
+    "key": "brokerTruckHistorySearchByBookingIDRoute",
+    "en": "Search by booking ID, route...",
+    "hi": "खोजें by बुकिंग ID, route..."
+  },
+  {
+    "key": "brokerTruckLocationCouldNotLoadTruckLocation",
+    "en": "Could not load truck location",
+    "hi": "नहीं नहीं लोड ट्रक location"
+  },
+  {
+    "key": "brokerTruckLocationUpdated",
+    "en": "Updated {lastLocationAt}",
+    "hi": "अपडेट {lastLocationAt}",
+    "placeholders": {
+      "lastLocationAt": {}
+    }
+  },
+  {
+    "key": "brokerTruckLocationLiveLocationPending",
+    "en": "Live location pending",
+    "hi": "लाइव location पेंडिंग"
+  },
+  {
+    "key": "brokerTruckLocationThisTruckHasNotReportedALocation",
+    "en": "This truck has not reported a location yet.",
+    "hi": "इस ट्रक has नहीं reported a location yet."
+  },
+  {
+    "key": "brokerTrackingDriverHasNotBegunNegotiation",
+    "en": "Driver has not begun negotiation",
+    "hi": "ड्राइवर has नहीं begun negotiation"
+  },
+  {
+    "key": "brokerTrackingClickHereToNegotiateThisTimedOut",
+    "en": "Click here to negotiate this timed-out request.",
+    "hi": "इस टाइम-आउट रिक्वेस्ट पर नेगोशिएट करने के लिए यहां क्लिक करें।"
+  },
+  {
+    "key": "brokerTrackingRemainingNegotiation",
+    "en": "Remaining negotiation",
+    "hi": "शेष नेगोशिएशन"
+  },
+  {
+    "key": "brokerTrackingNegotiationReady",
+    "en": "Negotiation ready",
+    "hi": "नेगोशिएशन ready"
+  },
+  {
+    "key": "brokerTrackingDrivers",
+    "en": "Drivers",
+    "hi": "ड्राइवर"
+  },
+  {
+    "key": "brokerTrackingMonitorYourDriversAndLiveTrips",
+    "en": "Monitor your drivers and live trips",
+    "hi": "Monitor your drivers and live ट्रिप"
+  },
+  {
+    "key": "brokerTrackingSearchDriversPhoneOrVehicle",
+    "en": "Search drivers, phone or vehicle",
+    "hi": "खोजें drivers, phone or vehicle"
+  },
+  {
+    "key": "brokerTrackingYourDrivers",
+    "en": "Your drivers",
+    "hi": "आपका drivers"
+  },
+  {
+    "key": "brokerTrackingChangeFareRequest",
+    "en": "Change fare request",
+    "hi": "बदलें fare request"
+  },
+  {
+    "key": "brokerTrackingAmount",
+    "en": "Amount",
+    "hi": "राशि"
+  },
+  {
+    "key": "brokerTrackingNote",
+    "en": "Note",
+    "hi": "नोट"
+  },
+  {
+    "key": "brokerTrackingCancel",
+    "en": "Cancel",
+    "hi": "रद्द करें"
+  },
+  {
+    "key": "brokerTrackingSend",
+    "en": "Send",
+    "hi": "भेजें"
+  },
+  {
+    "key": "brokerTrackingChangeFare",
+    "en": "Change Fare",
+    "hi": "बदलें किराया"
+  },
+  {
+    "key": "brokerTrackingBrokerAssignedNoFareChange",
+    "en": "Broker-assigned - no fare change",
+    "hi": "ब्रोकर-असाइन्ड - किराया नहीं बदलेगा"
+  },
+  {
+    "key": "brokerTrackingSLA",
+    "en": "SLA ~{hours}",
+    "hi": "SLA ~{hours}",
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  {
+    "key": "brokerTrackingDelay",
+    "en": "Delay +₹{amount}",
+    "hi": "देरी +₹{amount}",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  {
+    "key": "brokerTrackingIncidents",
+    "en": "Incidents",
+    "hi": "इंसिडेंट"
+  },
+  {
+    "key": "brokerTrackingLoadingUnloadingStops",
+    "en": "Loading & Unloading Stops",
+    "hi": "लोडिंग और अनलोडिंग स्टॉप"
+  },
+  {
+    "key": "brokerTrackingCompleteEarlierStopFirst",
+    "en": "Complete earlier {stopType} stop first",
+    "hi": "पहले {stopType} स्टॉप पूरा करें",
+    "placeholders": {
+      "stopType": {}
+    }
+  },
+  {
+    "key": "brokerTrackingMechanic",
+    "en": "Mechanic: {name}",
+    "hi": "मैकेनिक: {name}",
+    "placeholders": {
+      "name": {}
+    }
+  },
+  {
+    "key": "brokerFlowLoadID",
+    "en": "Load ID: #{id}",
+    "hi": "लोड ID: #{id}",
+    "placeholders": {
+      "id": {}
+    }
+  },
+  {
+    "key": "brokerFlowPickup",
+    "en": "Pickup",
+    "hi": "पिकअप"
+  },
+  {
+    "key": "brokerFlowDropOff",
+    "en": "Drop-off",
+    "hi": "ड्रॉप-off"
+  },
+  {
+    "key": "brokerFlowReviewRequest",
+    "en": "Review request",
+    "hi": "रिव्यू request"
+  },
+  {
+    "key": "brokerFlowCapacity",
+    "en": "Capacity",
+    "hi": "क्षमता"
+  },
+  {
+    "key": "brokerFlowLocation",
+    "en": "Location",
+    "hi": "लोकेशन"
+  },
+  {
+    "key": "brokerFlowID",
+    "en": "ID: {id}",
+    "hi": "ID: {id}",
+    "placeholders": {
+      "id": {}
+    }
+  },
+  {
+    "key": "brokerFlowEdit",
+    "en": "Edit",
+    "hi": "एडिट करें"
+  },
+  {
+    "key": "brokerFlowCall",
+    "en": "Call",
+    "hi": "कॉल करें"
+  },
+  {
+    "key": "brokerFlowRemove",
+    "en": "Remove",
+    "hi": "हटाएं"
+  }
+]
