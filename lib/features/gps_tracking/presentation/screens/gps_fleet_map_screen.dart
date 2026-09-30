@@ -87,7 +87,7 @@ class _GpsFleetMapScreenState extends ConsumerState<GpsFleetMapScreen> {
         position: LatLng(device.latitude!, device.longitude!),
         infoWindow: InfoWindow(
           title: device.displayName,
-          snippet: device.locationLabel,
+          snippet: device.locationLabelWith(AppLocalizations.of(context)!),
         ),
         icon:
             _truckIcon ??

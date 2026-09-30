@@ -589,7 +589,10 @@ class _HistoryBookingCard extends StatelessWidget {
                         ),
                       ),
                       _HistoryPill(
-                        label: booking.displayStatusLabel,
+                        label: bookingStatusDisplay(
+                          AppLocalizations.of(context)!,
+                          booking.displayStatusLabel,
+                        ),
                         color: statusColor,
                       ),
                       if (booking.isExpress) const ExpressBadge(compact: true),

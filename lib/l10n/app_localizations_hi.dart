@@ -7481,4 +7481,85 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paymentStatusPendingFallback => 'लंबित';
+
+  @override
+  String get chatDirectChat => 'सीधी बातचीत';
+
+  @override
+  String get chatRelativeNow => 'अभी';
+
+  @override
+  String get clientOfferByYou => 'आप';
+
+  @override
+  String get clientOfferByBroker => 'ब्रोकर';
+
+  @override
+  String get clientOfferByDriver => 'ड्राइवर';
+
+  @override
+  String nearbyTruckRef(Object ref) {
+    return 'ट्रक $ref';
+  }
+
+  @override
+  String get driverTimelineCompletedSuccessfully => 'सफलतापूर्वक पूरा हुआ';
+
+  @override
+  String get driverTimelinePickedUp => 'पिकअप हो गया';
+
+  @override
+  String get brokerFlowDriverResponse => 'ड्राइवर प्रतिक्रिया';
+
+  @override
+  String get brokerFlowDriverTimedOut => 'ड्राइवर समय समाप्त';
+
+  @override
+  String get brokerFlowHandoffActive => 'ब्रोकर हैंडऑफ़ सक्रिय है';
+
+  @override
+  String get brokerFlowWaiting => 'प्रतीक्षारत';
+
+  @override
+  String get brokerFlowTruckAssignmentConfirmed =>
+      'ट्रक सौंपे जाने की पुष्टि हुई';
+
+  @override
+  String get brokerFlowAwaitingBrokerAction => 'ब्रोकर कार्रवाई की प्रतीक्षा';
+
+  @override
+  String get savedAddressPickupLocationNotProvided => 'पिकअप लोकेशन नहीं दी गई';
+
+  @override
+  String get savedAddressDropoffLocationNotProvided =>
+      'ड्रॉप-ऑफ़ लोकेशन नहीं दी गई';
+
+  @override
+  String brokerFlowMinsAgo(Object count) {
+    return '$count मिनट पहले';
+  }
+
+  @override
+  String brokerFlowHoursAgo(Object count) {
+    return '$count घंटे पहले';
+  }
+
+  @override
+  String brokerFlowDaysAgo(Object count) {
+    return '$count दिन पहले';
+  }
+
+  @override
+  String gpsLastSeen(Object time) {
+    return 'अंतिम बार देखा गया $time';
+  }
+
+  @override
+  String get gpsCachedPosition => 'संचित स्थान';
+
+  @override
+  String get gpsNoLocationYet => 'अभी कोई स्थान नहीं';
+
+  @override
+  String get tripSummaryOngoing => 'जारी';
 }

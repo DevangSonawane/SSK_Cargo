@@ -13588,6 +13588,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pending'**
   String get paymentStatusPendingFallback;
+
+  /// No description provided for @chatDirectChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct chat'**
+  String get chatDirectChat;
+
+  /// No description provided for @chatRelativeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get chatRelativeNow;
+
+  /// No description provided for @clientOfferByYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get clientOfferByYou;
+
+  /// No description provided for @clientOfferByBroker.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker'**
+  String get clientOfferByBroker;
+
+  /// No description provided for @clientOfferByDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get clientOfferByDriver;
+
+  /// No description provided for @nearbyTruckRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck {ref}'**
+  String nearbyTruckRef(Object ref);
+
+  /// No description provided for @driverTimelineCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed successfully'**
+  String get driverTimelineCompletedSuccessfully;
+
+  /// No description provided for @driverTimelinePickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked up'**
+  String get driverTimelinePickedUp;
+
+  /// No description provided for @brokerFlowDriverResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver response'**
+  String get brokerFlowDriverResponse;
+
+  /// No description provided for @brokerFlowDriverTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver timed out'**
+  String get brokerFlowDriverTimedOut;
+
+  /// No description provided for @brokerFlowHandoffActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker handoff is active'**
+  String get brokerFlowHandoffActive;
+
+  /// No description provided for @brokerFlowWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get brokerFlowWaiting;
+
+  /// No description provided for @brokerFlowTruckAssignmentConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck assignment confirmed'**
+  String get brokerFlowTruckAssignmentConfirmed;
+
+  /// No description provided for @brokerFlowAwaitingBrokerAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting broker action'**
+  String get brokerFlowAwaitingBrokerAction;
+
+  /// No description provided for @savedAddressPickupLocationNotProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup location not provided'**
+  String get savedAddressPickupLocationNotProvided;
+
+  /// No description provided for @savedAddressDropoffLocationNotProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off location not provided'**
+  String get savedAddressDropoffLocationNotProvided;
+
+  /// No description provided for @brokerFlowMinsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String brokerFlowMinsAgo(Object count);
+
+  /// No description provided for @brokerFlowHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String brokerFlowHoursAgo(Object count);
+
+  /// No description provided for @brokerFlowDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String brokerFlowDaysAgo(Object count);
+
+  /// No description provided for @gpsLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {time}'**
+  String gpsLastSeen(Object time);
+
+  /// No description provided for @gpsCachedPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached position'**
+  String get gpsCachedPosition;
+
+  /// No description provided for @gpsNoLocationYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No location yet'**
+  String get gpsNoLocationYet;
+
+  /// No description provided for @tripSummaryOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get tripSummaryOngoing;
 }
 
 class _AppLocalizationsDelegate

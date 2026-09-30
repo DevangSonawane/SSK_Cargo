@@ -1103,9 +1103,16 @@ class _BookingRequestCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          request.requestedAt.isEmpty
+                          brokerRelativeTimeDisplay(
+                            AppLocalizations.of(context)!,
+                            request.requestedAt,
+                          )
+                              .isEmpty
                               ? l10n.brokerHomeJustNow
-                              : request.requestedAt,
+                              : brokerRelativeTimeDisplay(
+                                  AppLocalizations.of(context)!,
+                                  request.requestedAt,
+                                ),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: AppColors.textTertiary,
@@ -1306,7 +1313,11 @@ class _BookingRequestCard extends StatelessWidget {
                     [
                       request.clientName,
                       if (request.clientPhone.isNotEmpty) request.clientPhone,
-                      if (request.requestedAt.isNotEmpty) request.requestedAt,
+                      if (request.requestedAt.isNotEmpty)
+                        brokerRelativeTimeDisplay(
+                          AppLocalizations.of(context)!,
+                          request.requestedAt,
+                        ),
                     ].join(' - '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

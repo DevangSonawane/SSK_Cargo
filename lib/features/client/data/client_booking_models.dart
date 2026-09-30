@@ -1,3 +1,5 @@
+import '../../../l10n/app_localizations.dart';
+
 import '../../shared/data/trip_route_stop.dart';
 
 /// A single entry from `GET /api/config/vehicle-types` — the backend's live
@@ -531,16 +533,18 @@ class ClientOfferHistoryEntry {
   final String by;
   final double amount;
 
-  String get displayBy {
+  /// Display-only mapping for [by], which stays the raw backend token because
+  /// callers compare it directly (e.g. `entry.by == 'broker'`).
+  String displayByWith(AppLocalizations l10n) {
     switch (by) {
       case 'client':
-        return 'You';
+        return l10n.clientOfferByYou;
       case 'broker':
-        return 'Broker';
+        return l10n.clientOfferByBroker;
       case 'driver':
-        return 'Driver';
+        return l10n.clientOfferByDriver;
       default:
-        return by.isEmpty ? 'Driver' : _titleCase(by);
+        return by.isEmpty ? l10n.clientOfferByDriver : _titleCase(by);
     }
   }
 }
@@ -1100,7 +1104,7 @@ class NearbyTruck {
 
   bool get hasLocation => currentLat != 0 && currentLng != 0;
 
-  String get displayTitle {
+  String displayTitleWith(AppLocalizations l10n) {
     if (registration.isNotEmpty) {
       return registration;
     }
@@ -1110,8 +1114,10 @@ class NearbyTruck {
     if (truckName.isNotEmpty) {
       return truckName;
     }
-    return 'Truck ${id.isNotEmpty ? id.substring(0, id.length > 6 ? 6 : id.length) : ''}'
-        .trim();
+    final short = id.isNotEmpty
+        ? id.substring(0, id.length > 6 ? 6 : id.length)
+        : '';
+    return l10n.nearbyTruckRef(short).trim();
   }
 
   String get displaySubtitle {
@@ -1123,9 +1129,6 @@ class NearbyTruck {
     ];
     return parts.isEmpty ? 'Available truck' : parts.join(' · ');
   }
-
-  String get selectionLabel =>
-      displayTitle.isNotEmpty ? displayTitle : 'Selected truck';
 }
 
 class ClientNotification {
@@ -1360,6 +1363,30 @@ int? _asInt(Object? value) {
     return value.round();
   }
   return int.tryParse(value?.toString() ?? '');
+}
+
+/// Display-only mapping for `displayStatusLabel` values, which are produced
+/// inside pure data-layer helpers that have no l10n in scope.
+String bookingStatusDisplay(AppLocalizations? l10n, String value) {
+  if (l10n == null) return value;
+  switch (value.trim()) {
+    case 'Pending':
+      return l10n.statusPending;
+    case 'Delivered':
+      return l10n.brokerActiveJobDelivered;
+    case 'Completed':
+      return l10n.completed;
+    case 'Cancelled':
+      return l10n.statusCancelled;
+    case 'Assigned':
+      return l10n.brokerActiveJobAssigned;
+    case 'In Transit':
+      return l10n.brokerActiveJobInTransit;
+    case 'Ongoing':
+      return l10n.tripSummaryOngoing;
+    default:
+      return value;
+  }
 }
 
 String _titleCase(String value) {

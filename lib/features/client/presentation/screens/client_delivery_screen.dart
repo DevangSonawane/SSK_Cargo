@@ -82,7 +82,13 @@ class _ClientDeliveryScreenState extends ConsumerState<ClientDeliveryScreen> {
           booking.pickupLocation,
           booking.dropoffLocation,
           booking.vehicleType,
-          booking.displayStatusLabel,
+          bookingStatusDisplay(
+            AppLocalizations.of(context)!,
+            bookingStatusDisplay(
+              AppLocalizations.of(context)!,
+              booking.displayStatusLabel,
+            ),
+          ),
         ],
       ),
     ];
@@ -441,7 +447,13 @@ class _MyBookingMobileCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        booking.displayStatusLabel,
+                        bookingStatusDisplay(
+            AppLocalizations.of(context)!,
+            bookingStatusDisplay(
+              AppLocalizations.of(context)!,
+              booking.displayStatusLabel,
+            ),
+          ),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: statusColor,
@@ -897,7 +909,13 @@ class ClientBookingCard extends StatelessWidget {
                 const SizedBox(width: 6),
               ],
               _StatusBadge(
-                label: booking.displayStatusLabel,
+                label: bookingStatusDisplay(
+                  AppLocalizations.of(context)!,
+                  bookingStatusDisplay(
+                    AppLocalizations.of(context)!,
+                    booking.displayStatusLabel,
+                  ),
+                ),
                 color: statusColor,
               ),
             ],

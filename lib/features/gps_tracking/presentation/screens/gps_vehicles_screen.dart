@@ -758,7 +758,9 @@ class _VehicleCard extends StatelessWidget {
                         children: [
                           _StatusPill(
                             color: statusColor,
-                            label: vehicle.statusLabel,
+                            label: vehicle.statusDisplayLabel(
+                              AppLocalizations.of(context)!,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Row(
@@ -786,7 +788,9 @@ class _VehicleCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            vehicle.locationLabel,
+                            vehicle.locationLabelWith(
+                              AppLocalizations.of(context)!,
+                            ),
                             textAlign: TextAlign.right,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

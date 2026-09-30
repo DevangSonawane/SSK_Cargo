@@ -590,7 +590,7 @@ class _FindTruckOfferCardState extends State<_FindTruckOfferCard> {
                 (entry) => Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
-                    '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                    '${entry.displayByWith(l10n)} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: context.colors.textSecondary,
                     ),

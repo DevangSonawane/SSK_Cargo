@@ -763,7 +763,10 @@ class _DetailTopCard extends StatelessWidget {
                 ),
               ),
               _DetailPill(
-                label: booking.displayStatusLabel,
+                label: bookingStatusDisplay(
+                  AppLocalizations.of(context)!,
+                  booking.displayStatusLabel,
+                ),
                 color: statusColor,
               ),
               if (booking.isExpress) const ExpressBadge(compact: true),

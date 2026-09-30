@@ -1,3 +1,5 @@
+import '../../../l10n/app_localizations.dart';
+
 import 'package:flutter/material.dart';
 import 'package:ssk/core/theme/app_icons.dart';
 
@@ -86,6 +88,23 @@ class GpsTrackerDevice {
     return value;
   }
 
+  /// Display-only mapping for [statusLabel]. `statusLabel` itself must stay
+  /// in its raw form because callers compare it against backend values such
+  /// as 'online' / 'offline' (see device filters in the GPS screens).
+  String statusDisplayLabel(AppLocalizations l10n) {
+    final value = status?.trim() ?? '';
+    if (value.isEmpty) return l10n.unknown;
+    switch (value.toLowerCase()) {
+      case 'online':
+      case 'running':
+        return l10n.gpsOnline;
+      case 'offline':
+        return l10n.gpsOffline;
+      default:
+        return value;
+    }
+  }
+
   String get vehicleLabel => displayName;
 
   String get plate => vehicleLabel;
@@ -120,14 +139,16 @@ class GpsTrackerDevice {
     return '$text km/h';
   }
 
-  String get locationLabel {
+  /// Display-only variant of [locationLabel]; the raw getter stays in its
+  /// data-layer English form since it has no l10n in scope.
+  String locationLabelWith(AppLocalizations l10n) {
     if (hasLocation) {
       return '${latitude!.toStringAsFixed(5)}, ${longitude!.toStringAsFixed(5)}';
     }
     if (lastSeenAt != null) {
-      return 'Last seen ${_formatShortDateTime(lastSeenAt!)}';
+      return l10n.gpsLastSeen(_formatShortDateTime(lastSeenAt!));
     }
-    return source == 'cached' ? 'Cached position' : 'No location yet';
+    return source == 'cached' ? l10n.gpsCachedPosition : l10n.gpsNoLocationYet;
   }
 
   String get timeAgoLabel {

@@ -271,7 +271,7 @@ class _BrokerVehiclesScreenState extends ConsumerState<BrokerVehiclesScreen> {
               ? vehicles
               : vehicles.where((vehicle) {
                   final searchable = [
-                    vehicle.label,
+                    vehicle.labelDisplay(AppLocalizations.of(context)!),
                     vehicle.plateNumber,
                     vehicle.truckType,
                     vehicle.category,
@@ -478,7 +478,9 @@ class _TruckActionDialog extends StatelessWidget {
                   children: [
                     Text(
                       vehicle.plateNumber.isEmpty
-                          ? vehicle.label
+                          ? vehicle.labelDisplay(
+                              AppLocalizations.of(context)!,
+                            )
                           : vehicle.plateNumber,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textPrimary,
@@ -511,7 +513,7 @@ class _TruckActionDialog extends StatelessWidget {
               children: [
                 _TruckSummaryRow(
                   AppLocalizations.of(context)!.brokerVehiclesRowType,
-                  _vehicleType(vehicle),
+                  _vehicleType(vehicle, AppLocalizations.of(context)!),
                 ),
                 _TruckSummaryRow(
                   AppLocalizations.of(context)!.addTruckCapacity,
@@ -692,12 +694,12 @@ class _VehicleStatusPill extends StatelessWidget {
   }
 }
 
-String _vehicleType(BrokerVehicle vehicle) {
+String _vehicleType(BrokerVehicle vehicle, AppLocalizations l10n) {
   final value = vehicle.category.isNotEmpty
       ? vehicle.category
       : vehicle.truckType.isNotEmpty
       ? vehicle.truckType
-      : vehicle.label;
+      : vehicle.labelDisplay(l10n);
   return value.isEmpty ? '-' : value;
 }
 

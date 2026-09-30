@@ -316,7 +316,7 @@ class _GpsVehicleMapScreenState extends ConsumerState<GpsVehicleMapScreen> {
                             ),
                             infoWindow: InfoWindow(
                               title: vehicle.displayName,
-                              snippet: vehicle.locationLabel,
+                              snippet: vehicle.locationLabelWith(AppLocalizations.of(context)!),
                             ),
                             icon:
                                 _truckIcon ??
@@ -466,7 +466,7 @@ class _VehicleSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              vehicle.statusLabel,
+              vehicle.statusDisplayLabel(AppLocalizations.of(context)!),
               style: TextStyle(
                 color: vehicle.color,
                 fontSize: 11,

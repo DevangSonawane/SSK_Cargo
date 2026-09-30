@@ -342,7 +342,7 @@ class _ChatThreadTile extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          chatRelativeLabel(thread.lastMessageAt),
+                          chatRelativeLabel(thread.lastMessageAt, l10n),
                           style: const TextStyle(
                             color: Color(0xFF98A2B3),
                             fontSize: 11,
@@ -356,7 +356,7 @@ class _ChatThreadTile extends StatelessWidget {
                           ? (thread.lastMessage.isEmpty
                                 ? l10n.chatNoMessagesYet
                                 : thread.lastMessage)
-                          : '${thread.bookingLabel}  •  ${thread.lastMessage.isEmpty ? l10n.chatNoMessagesYet : thread.lastMessage}',
+                          : '${thread.bookingLabelWith(l10n)}  •  ${thread.lastMessage.isEmpty ? l10n.chatNoMessagesYet : thread.lastMessage}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

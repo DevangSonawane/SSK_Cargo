@@ -2207,7 +2207,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             children: [
               Expanded(
                 child: Text(
-                  truck.displayTitle,
+                  truck.displayTitleWith(AppLocalizations.of(context)!),
                   style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: dialogContext.colors.textPrimary,
@@ -4346,7 +4346,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
           anchor: const Offset(0.5, 0.5),
           zIndexInt: _selectedTruck?.id == truck.id ? 2 : 1,
           infoWindow: InfoWindow(
-            title: truck.displayTitle,
+            title: truck.displayTitleWith(AppLocalizations.of(context)!),
             snippet: truck.displaySubtitle,
           ),
           onTap: () => _handleTruckTap(truck),
@@ -4405,7 +4405,10 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             title: request.brokerName.isEmpty
                 ? AppLocalizations.of(context)!.driver
                 : request.brokerName,
-            snippet: request.displayStatusLabel,
+            snippet: bookingStatusDisplay(
+              AppLocalizations.of(context)!,
+              request.displayStatusLabel,
+            ),
           ),
         ),
       );

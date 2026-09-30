@@ -1,3 +1,5 @@
+import '../../../l10n/app_localizations.dart';
+
 enum ChatAudience { client, broker, driver }
 
 class ChatThreadSummary {
@@ -88,8 +90,8 @@ class ChatThreadSummary {
     );
   }
 
-  String get bookingLabel {
-    if (isDirect || bookingId.isEmpty) return 'Direct chat';
+  String bookingLabelWith(AppLocalizations l10n) {
+    if (isDirect || bookingId.isEmpty) return l10n.chatDirectChat;
     return bookingNumber.isNotEmpty ? bookingNumber : bookingId;
   }
 
@@ -266,31 +268,31 @@ String chatTimeLabel(DateTime? value) {
   return '$hour:$minute';
 }
 
-String chatRelativeLabel(DateTime? value) {
+String chatRelativeLabel(DateTime? value, [AppLocalizations? l10n]) {
   if (value == null) return '';
   final diff = DateTime.now().difference(value);
   final minutes = diff.inMinutes;
-  if (minutes < 1) return 'now';
+  if (minutes < 1) return l10n?.chatRelativeNow ?? 'now';
   if (minutes < 60) return '${minutes}m';
   final hours = diff.inHours;
   if (hours < 24) return '${hours}h';
   final days = diff.inDays;
-  if (days == 1) return 'Yesterday';
+  if (days == 1) return l10n?.brokerNotificationsYesterday ?? 'Yesterday';
   if (days < 7) return '${days}d';
   final local = value.toLocal();
-  const months = <String>[
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = <String>[
+    l10n?.monthJan ?? 'Jan',
+    l10n?.monthFeb ?? 'Feb',
+    l10n?.monthMar ?? 'Mar',
+    l10n?.monthApr ?? 'Apr',
+    l10n?.monthMay ?? 'May',
+    l10n?.monthJun ?? 'Jun',
+    l10n?.monthJul ?? 'Jul',
+    l10n?.monthAug ?? 'Aug',
+    l10n?.monthSep ?? 'Sep',
+    l10n?.monthOct ?? 'Oct',
+    l10n?.monthNov ?? 'Nov',
+    l10n?.monthDec ?? 'Dec',
   ];
   return '${local.day.toString().padLeft(2, '0')} ${months[local.month - 1]}';
 }

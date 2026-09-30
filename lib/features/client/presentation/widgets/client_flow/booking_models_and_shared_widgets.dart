@@ -1067,6 +1067,80 @@ class TrackingTimelineStep {
   final String title;
   final String subtitle;
   final bool completed;
+
+  /// Display-only mapping. Timeline steps are built inside pure data-layer
+  /// functions (no BuildContext / l10n available there), so the raw [title]
+  /// stays English and is translated here at render time. Unknown titles fall
+  /// through unchanged.
+  String titleDisplay(AppLocalizations l10n) {
+    switch (title) {
+      case 'Assigned':
+        return l10n.brokerActiveJobAssigned;
+      case 'En Route Pickup':
+        return l10n.brokerActiveJobEnRoutePickup;
+      case 'Picked Up':
+      case 'Picked up':
+        return l10n.brokerActiveJobPickedUp;
+      case 'In Transit':
+      case 'In transit':
+        return l10n.brokerActiveJobInTransit;
+      case 'Delivered':
+        return l10n.brokerActiveJobDelivered;
+      case 'Request received':
+        return l10n.brokerFlowRequestReceived;
+      case 'Driver request sent':
+        return l10n.brokerFlowDriverRequestSent;
+      case 'Driver response':
+        return l10n.brokerFlowDriverResponse;
+      case 'Driver timed out':
+        return l10n.brokerFlowDriverTimedOut;
+      case 'Broker negotiation':
+        return l10n.brokerFlowBrokerNegotiation;
+      default:
+        return title;
+    }
+  }
+
+  String subtitleDisplay(AppLocalizations l10n) {
+    switch (subtitle) {
+      case 'Driver assigned':
+        return l10n.brokerActiveJobDriverAssigned;
+      case 'Driver heading to pickup':
+        return l10n.brokerActiveJobDriverHeadingToPickup;
+      case 'Shipment picked up':
+        return l10n.brokerActiveJobShipmentPickedUp;
+      case 'Shipment on the road':
+        return l10n.brokerActiveJobShipmentOnRoad;
+      case 'Drop completed':
+        return l10n.brokerActiveJobDropCompleted;
+      case 'Completed successfully':
+        return l10n.driverTimelineCompletedSuccessfully;
+      case 'Broker inbox':
+        return l10n.brokerFlowBrokerInbox;
+      case 'Assignment pending':
+        return l10n.brokerFlowAssignmentPending;
+      case 'Vehicle assignment pending':
+        return l10n.brokerFlowVehicleAssignmentPending;
+      case 'Awaiting pickup':
+        return l10n.brokerFlowAwaitingPickup;
+      case 'Pending':
+        return l10n.statusPending;
+      case 'Pickup location not provided':
+        return l10n.savedAddressPickupLocationNotProvided;
+      case 'Drop-off location not provided':
+        return l10n.savedAddressDropoffLocationNotProvided;
+      case 'Broker handoff is active':
+        return l10n.brokerFlowHandoffActive;
+      case 'Waiting':
+        return l10n.brokerFlowWaiting;
+      case 'Truck assignment confirmed':
+        return l10n.brokerFlowTruckAssignmentConfirmed;
+      case 'Awaiting broker action':
+        return l10n.brokerFlowAwaitingBrokerAction;
+      default:
+        return subtitle;
+    }
+  }
 }
 
 class PickupOtpBanner extends StatelessWidget {
@@ -1204,7 +1278,7 @@ TrackingDemoShipment trackingShipmentFromBooking(
     toLocation: booking.dropoffLocation.isEmpty
         ? (l10n?.dropOffLocationNotProvided ?? 'Drop-off location not provided')
         : booking.dropoffLocation,
-    status: booking.displayStatusLabel,
+    status: bookingStatusDisplay(l10n, booking.displayStatusLabel),
     customerName: booking.clientName,
     weight: booking.weight.isEmpty ? booking.vehicleType : booking.weight,
     pickupLat: _readBookingCoordinate(raw, const ['pickup_lat', 'pickupLat']),

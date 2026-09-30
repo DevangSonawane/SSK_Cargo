@@ -2975,6 +2975,7 @@ class _HorizontalTimelineStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isCompleted = step.completed && !isCurrent;
     final dotColor = isCompleted || isCurrent
         ? const Color(0xFF2FA56E)
@@ -3036,7 +3037,7 @@ class _HorizontalTimelineStep extends StatelessWidget {
               SizedBox(
                 width: 64,
                 child: Text(
-                  step.title,
+                  step.titleDisplay(l10n),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -4624,6 +4625,7 @@ class _TimelineStepItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final activeColor = step.completed
         ? const Color(0xFF2FA56E)
         : const Color(0xFFE0F4E8);
@@ -4668,7 +4670,7 @@ class _TimelineStepItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  step.title,
+                  step.titleDisplay(l10n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -4679,7 +4681,7 @@ class _TimelineStepItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  step.subtitle,
+                  step.subtitleDisplay(l10n),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -6572,6 +6574,7 @@ class _NegotiationCardState extends State<_NegotiationCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -6723,7 +6726,7 @@ class _NegotiationCardState extends State<_NegotiationCard> {
                       (entry) => Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          '${entry.displayBy} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
+                          '${entry.displayByWith(l10n)} offered ₹${entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2)}',
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: context.colors.textSecondary),
                         ),

@@ -1296,6 +1296,12 @@ class BrokerVehicle {
   final String plateNumber;
   final String capacity;
   final BrokerVehicleStatus status;
+
+  /// Display-only mapping for [label], which is built inside a pure JSON
+  /// parser with no l10n available. Only the generic fallback is translated;
+  /// real API-supplied labels pass through untouched.
+  String labelDisplay(AppLocalizations l10n) =>
+      label.trim() == 'Truck' ? l10n.truck : label;
   final String assignedDriverName;
   final String assetPath;
   final String driverId;
@@ -1757,6 +1763,20 @@ String _firstNonEmpty(List<String> values) {
     }
   }
   return '';
+}
+
+/// Display-only mapping for relative-time strings produced by
+/// [_formatRelativeTime] inside the pure data layer.
+String brokerRelativeTimeDisplay(AppLocalizations l10n, String value) {
+  final trimmed = value.trim();
+  if (trimmed == 'Just now') return l10n.brokerHomeJustNow;
+  final mins = RegExp(r'^(\d+) min ago$').firstMatch(trimmed);
+  if (mins != null) return l10n.brokerFlowMinsAgo(int.parse(mins.group(1)!));
+  final hours = RegExp(r'^(\d+)h ago$').firstMatch(trimmed);
+  if (hours != null) return l10n.brokerFlowHoursAgo(int.parse(hours.group(1)!));
+  final days = RegExp(r'^(\d+)d ago$').firstMatch(trimmed);
+  if (days != null) return l10n.brokerFlowDaysAgo(int.parse(days.group(1)!));
+  return trimmed;
 }
 
 String _formatRelativeTime(String isoDate) {

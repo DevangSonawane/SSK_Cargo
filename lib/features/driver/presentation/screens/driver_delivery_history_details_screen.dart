@@ -71,7 +71,7 @@ class _DriverDeliveryHistoryDetailsScreenState
   String get _statusLabel {
     final booking = _booking;
     if (booking != null) {
-      return booking.displayStatusLabel;
+      return bookingStatusDisplay(AppLocalizations.of(context)!, booking.displayStatusLabel);
     }
     return widget.initialSettlement?.status.isNotEmpty == true
         ? _titleCase(widget.initialSettlement!.status)

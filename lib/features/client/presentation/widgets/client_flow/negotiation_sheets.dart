@@ -1431,7 +1431,7 @@ class _BrokerNegotiationSheetState
                 Text(
                   request?.brokerName.isNotEmpty == true
                       ? request!.brokerName
-                      : widget.truck.displayTitle,
+                      : widget.truck.displayTitleWith(l10n),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: context.colors.textPrimary,
@@ -1485,7 +1485,7 @@ class _BrokerNegotiationSheetState
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           l10n.negotiationHistoryEntryOffered(
-                            entry.displayBy,
+                            entry.displayByWith(l10n),
                             entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
                           ),
                           style: Theme.of(context).textTheme.labelSmall
@@ -2212,7 +2212,7 @@ class _FindTruckNegotiationSheetState
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             l10n.negotiationHistoryEntryOffered(
-                              entry.displayBy,
+                              entry.displayByWith(l10n),
                               entry.amount.toStringAsFixed(entry.amount % 1 == 0 ? 0 : 2),
                             ),
                             style: Theme.of(context).textTheme.labelSmall
@@ -2312,7 +2312,7 @@ class _NegotiationSliderStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.negotiationReviewPriceFor(truck.displayTitle),
+          l10n.negotiationReviewPriceFor(truck.displayTitleWith(l10n)),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w800,

@@ -2628,7 +2628,7 @@ class _TimelineRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  step.title,
+                  step.titleDisplay(AppLocalizations.of(context)!),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -2636,7 +2636,7 @@ class _TimelineRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  step.subtitle,
+                  step.subtitleDisplay(AppLocalizations.of(context)!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
