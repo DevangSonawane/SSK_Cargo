@@ -13420,6 +13420,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{label} {countdown} remaining'**
   String negotiationWindowRemaining(Object countdown, Object label);
+
+  /// No description provided for @brokerActiveJobActiveJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Active job'**
+  String get brokerActiveJobActiveJob;
+
+  /// No description provided for @brokerActiveJobDriverPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver pending'**
+  String get brokerActiveJobDriverPending;
+
+  /// No description provided for @brokerActiveJobLoadPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Load details pending'**
+  String get brokerActiveJobLoadPending;
+
+  /// No description provided for @brokerActiveJobAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get brokerActiveJobAssigned;
+
+  /// No description provided for @brokerActiveJobDriverAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver assigned'**
+  String get brokerActiveJobDriverAssigned;
+
+  /// No description provided for @brokerActiveJobEnRoutePickup.
+  ///
+  /// In en, this message translates to:
+  /// **'En Route Pickup'**
+  String get brokerActiveJobEnRoutePickup;
+
+  /// No description provided for @brokerActiveJobDriverHeadingToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver heading to pickup'**
+  String get brokerActiveJobDriverHeadingToPickup;
+
+  /// No description provided for @brokerActiveJobPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked Up'**
+  String get brokerActiveJobPickedUp;
+
+  /// No description provided for @brokerActiveJobShipmentPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipment picked up'**
+  String get brokerActiveJobShipmentPickedUp;
+
+  /// No description provided for @brokerActiveJobInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'In Transit'**
+  String get brokerActiveJobInTransit;
+
+  /// No description provided for @brokerActiveJobShipmentOnRoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipment on the road'**
+  String get brokerActiveJobShipmentOnRoad;
+
+  /// No description provided for @brokerActiveJobDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get brokerActiveJobDelivered;
+
+  /// No description provided for @brokerActiveJobDropCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop completed'**
+  String get brokerActiveJobDropCompleted;
+
+  /// No description provided for @brokerFlowRequestReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Request received'**
+  String get brokerFlowRequestReceived;
+
+  /// No description provided for @brokerFlowBrokerInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker inbox'**
+  String get brokerFlowBrokerInbox;
+
+  /// No description provided for @brokerFlowAssignmentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment pending'**
+  String get brokerFlowAssignmentPending;
+
+  /// No description provided for @brokerFlowVehicleAssignmentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle assignment pending'**
+  String get brokerFlowVehicleAssignmentPending;
+
+  /// No description provided for @brokerFlowAwaitingPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting pickup'**
+  String get brokerFlowAwaitingPickup;
+
+  /// No description provided for @brokerFlowDriverRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver request sent'**
+  String get brokerFlowDriverRequestSent;
+
+  /// No description provided for @brokerFlowBrokerNegotiation.
+  ///
+  /// In en, this message translates to:
+  /// **'Broker negotiation'**
+  String get brokerFlowBrokerNegotiation;
+
+  /// No description provided for @driverNavDestinationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination is not available for this trip yet.'**
+  String get driverNavDestinationUnavailable;
+
+  /// No description provided for @driverNavPickupDropUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup or drop details are not available yet.'**
+  String get driverNavPickupDropUnavailable;
+
+  /// No description provided for @driverNavMapsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open Google Maps on this device.'**
+  String get driverNavMapsUnavailable;
+
+  /// No description provided for @vehicleOptionPartLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Part load'**
+  String get vehicleOptionPartLoad;
+
+  /// No description provided for @paymentStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get paymentStatusFailed;
+
+  /// No description provided for @paymentStatusRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get paymentStatusRefunded;
+
+  /// No description provided for @paymentStatusPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially paid'**
+  String get paymentStatusPartiallyPaid;
+
+  /// No description provided for @paymentStatusPendingFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get paymentStatusPendingFallback;
 }
 
 class _AppLocalizationsDelegate

@@ -7398,4 +7398,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String negotiationWindowRemaining(Object countdown, Object label) {
     return '$label $countdown remaining';
   }
+
+  @override
+  String get brokerActiveJobActiveJob => 'Active job';
+
+  @override
+  String get brokerActiveJobDriverPending => 'Driver pending';
+
+  @override
+  String get brokerActiveJobLoadPending => 'Load details pending';
+
+  @override
+  String get brokerActiveJobAssigned => 'Assigned';
+
+  @override
+  String get brokerActiveJobDriverAssigned => 'Driver assigned';
+
+  @override
+  String get brokerActiveJobEnRoutePickup => 'En Route Pickup';
+
+  @override
+  String get brokerActiveJobDriverHeadingToPickup => 'Driver heading to pickup';
+
+  @override
+  String get brokerActiveJobPickedUp => 'Picked Up';
+
+  @override
+  String get brokerActiveJobShipmentPickedUp => 'Shipment picked up';
+
+  @override
+  String get brokerActiveJobInTransit => 'In Transit';
+
+  @override
+  String get brokerActiveJobShipmentOnRoad => 'Shipment on the road';
+
+  @override
+  String get brokerActiveJobDelivered => 'Delivered';
+
+  @override
+  String get brokerActiveJobDropCompleted => 'Drop completed';
+
+  @override
+  String get brokerFlowRequestReceived => 'Request received';
+
+  @override
+  String get brokerFlowBrokerInbox => 'Broker inbox';
+
+  @override
+  String get brokerFlowAssignmentPending => 'Assignment pending';
+
+  @override
+  String get brokerFlowVehicleAssignmentPending => 'Vehicle assignment pending';
+
+  @override
+  String get brokerFlowAwaitingPickup => 'Awaiting pickup';
+
+  @override
+  String get brokerFlowDriverRequestSent => 'Driver request sent';
+
+  @override
+  String get brokerFlowBrokerNegotiation => 'Broker negotiation';
+
+  @override
+  String get driverNavDestinationUnavailable =>
+      'Destination is not available for this trip yet.';
+
+  @override
+  String get driverNavPickupDropUnavailable =>
+      'Pickup or drop details are not available yet.';
+
+  @override
+  String get driverNavMapsUnavailable =>
+      'Could not open Google Maps on this device.';
+
+  @override
+  String get vehicleOptionPartLoad => 'Part load';
+
+  @override
+  String get paymentStatusFailed => 'Failed';
+
+  @override
+  String get paymentStatusRefunded => 'Refunded';
+
+  @override
+  String get paymentStatusPartiallyPaid => 'Partially paid';
+
+  @override
+  String get paymentStatusPendingFallback => 'Pending';
 }

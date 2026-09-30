@@ -7393,4 +7393,92 @@ class AppLocalizationsHi extends AppLocalizations {
   String negotiationWindowRemaining(Object countdown, Object label) {
     return '$label $countdown शेष';
   }
+
+  @override
+  String get brokerActiveJobActiveJob => 'सक्रिय काम';
+
+  @override
+  String get brokerActiveJobDriverPending => 'ड्राइवर लंबित';
+
+  @override
+  String get brokerActiveJobLoadPending => 'लोड विवरण लंबित';
+
+  @override
+  String get brokerActiveJobAssigned => 'सौंपा गया';
+
+  @override
+  String get brokerActiveJobDriverAssigned => 'ड्राइवर सौंपा गया';
+
+  @override
+  String get brokerActiveJobEnRoutePickup => 'पिकअप की ओर';
+
+  @override
+  String get brokerActiveJobDriverHeadingToPickup =>
+      'ड्राइवर पिकअप की ओर जा रहा है';
+
+  @override
+  String get brokerActiveJobPickedUp => 'पिकअप हो गया';
+
+  @override
+  String get brokerActiveJobShipmentPickedUp => 'शिपमेंट पिकअप हो गया';
+
+  @override
+  String get brokerActiveJobInTransit => 'परिवहन में';
+
+  @override
+  String get brokerActiveJobShipmentOnRoad => 'शिपमेंट रास्ते में है';
+
+  @override
+  String get brokerActiveJobDelivered => 'डिलीवर हो गया';
+
+  @override
+  String get brokerActiveJobDropCompleted => 'ड्रॉप पूर्ण हुआ';
+
+  @override
+  String get brokerFlowRequestReceived => 'अनुरोध प्राप्त';
+
+  @override
+  String get brokerFlowBrokerInbox => 'ब्रोकर इनबॉक्स';
+
+  @override
+  String get brokerFlowAssignmentPending => 'सौंपने की प्रतीक्षा';
+
+  @override
+  String get brokerFlowVehicleAssignmentPending => 'वाहन सौंपने की प्रतीक्षा';
+
+  @override
+  String get brokerFlowAwaitingPickup => 'पिकअप की प्रतीक्षा';
+
+  @override
+  String get brokerFlowDriverRequestSent => 'ड्राइवर अनुरोध भेजा गया';
+
+  @override
+  String get brokerFlowBrokerNegotiation => 'ब्रोकर वार्ता';
+
+  @override
+  String get driverNavDestinationUnavailable =>
+      'इस यात्रा के लिए गंतव्य अभी उपलब्ध नहीं है।';
+
+  @override
+  String get driverNavPickupDropUnavailable =>
+      'पिकअप या ड्रॉप विवरण अभी उपलब्ध नहीं हैं।';
+
+  @override
+  String get driverNavMapsUnavailable =>
+      'इस डिवाइस पर Google Maps नहीं खोला जा सका।';
+
+  @override
+  String get vehicleOptionPartLoad => 'पार्ट लोड';
+
+  @override
+  String get paymentStatusFailed => 'विफल';
+
+  @override
+  String get paymentStatusRefunded => 'धनवापसी';
+
+  @override
+  String get paymentStatusPartiallyPaid => 'आंशिक रूप से भुगतान';
+
+  @override
+  String get paymentStatusPendingFallback => 'लंबित';
 }

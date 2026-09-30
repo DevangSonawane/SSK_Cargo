@@ -1907,6 +1907,7 @@ class _DriverDeliveryDetailsScreenState
   /// is shown BEFORE leaving the app because some devices block overlays
   /// that are added while the app is already in the background.
   Future<void> _openMapsDirect() async {
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     var bubbleShown = false;
     if (await DriverExternalNavigationService.hasBubblePermission()) {
@@ -1933,6 +1934,7 @@ class _DriverDeliveryDetailsScreenState
       liveLat: _shipment?.liveLat,
       liveLng: _shipment?.liveLng,
       headingToPickup: _navHeadingToPickup,
+      l10n: l10n,
     );
     if (!mounted) return;
     if (error != null) {

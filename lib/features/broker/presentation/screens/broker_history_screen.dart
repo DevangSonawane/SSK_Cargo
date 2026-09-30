@@ -608,7 +608,10 @@ class _HistoryBookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 11),
             Text(
-              l10n.brokerHistoryTo(_lead(booking.pickupLocation), _lead(booking.dropoffLocation)),
+              l10n.brokerHistoryTo(
+                _lead(l10n, booking.pickupLocation),
+                _lead(l10n, booking.dropoffLocation),
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -912,9 +915,9 @@ String _bookingRef(ClientBooking booking) {
   return '#${ref.toUpperCase()}';
 }
 
-String _lead(String value) {
+String _lead(AppLocalizations l10n, String value) {
   final trimmed = value.trim();
-  if (trimmed.isEmpty) return 'Location pending';
+  if (trimmed.isEmpty) return l10n.locationPending;
   final index = trimmed.indexOf(',');
   if (index <= 0) return trimmed;
   return trimmed.substring(0, index).trim();

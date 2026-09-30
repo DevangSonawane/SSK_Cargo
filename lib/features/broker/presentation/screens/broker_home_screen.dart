@@ -1063,7 +1063,10 @@ class _BookingRequestCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        l10n.brokerHomeTo(_locationLead(pickupText), _locationLead(dropText)),
+                        l10n.brokerHomeTo(
+                          _locationLead(l10n, pickupText),
+                          _locationLead(l10n, dropText),
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
@@ -2308,8 +2311,8 @@ String _locationText(String value, String fallback) {
   return trimmed.isEmpty ? fallback : trimmed;
 }
 
-String _locationLead(String value) {
-  final trimmed = _locationText(value, 'Location unavailable');
+String _locationLead(AppLocalizations l10n, String value) {
+  final trimmed = _locationText(value, l10n.tripSummaryLocationUnavailable);
   final index = trimmed.indexOf(',');
   if (index <= 0) {
     return trimmed;

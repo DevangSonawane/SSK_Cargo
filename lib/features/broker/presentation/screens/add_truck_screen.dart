@@ -370,7 +370,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       validator: (value) {
                         final text = value?.trim() ?? '';
                         if (text.isEmpty) {
-                          return 'Enter registration number';
+                          return l10n.addVehicleErrRegistration;
                         }
                         // Same format check as the web app (create only —
                         // existing plates are grandfathered in).
@@ -395,7 +395,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Enter capacity';
+                          return l10n.addVehicleErrCapacity;
                         }
                         return null;
                       },
@@ -492,7 +492,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                         }
                         final parsed = int.tryParse(text);
                         if (parsed == null || parsed < 1900) {
-                          return 'Enter a valid year';
+                          return l10n.addVehicleErrYear;
                         }
                         return null;
                       },
@@ -515,7 +515,7 @@ class _AddTruckScreenState extends ConsumerState<AddTruckScreen> {
                               .addVehicleErrInsuranceExpiry;
                         }
                         if (DateTime.tryParse(value.trim()) == null) {
-                          return 'Use YYYY-MM-DD';
+                          return l10n.addVehicleUseYyyyMmdd;
                         }
                         return null;
                       },

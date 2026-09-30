@@ -451,7 +451,11 @@ Color accentColorForTruckCategory(String category) {
 
 /// Human label for a category when the API didn't supply one (fleet rows for
 /// trucks registered via web/admin, old categories, etc.).
-String labelForTruckCategory(String category, [String fallback = '']) {
+String labelForTruckCategory(
+  String category, [
+  String fallback = '',
+  AppLocalizations? l10n,
+]) {
   switch (category.trim().toLowerCase()) {
     case '3_wheeler':
     case '3-wheeler':
@@ -460,40 +464,40 @@ String labelForTruckCategory(String category, [String fallback = '']) {
     case 'tata_ace':
     case 'tata-ace':
     case 'tata ace':
-      return 'Tata Ace';
+      return l10n?.vehicleOptionTataAce ?? 'Tata Ace';
     case 'pickup_8ft':
     case 'pickup-8ft':
     case 'pickup 8ft':
-      return 'Pickup 8ft';
+      return l10n?.vehicleOptionPickup8ft ?? 'Pickup 8ft';
     case 'pickup_10ft':
     case 'pickup-10ft':
     case 'pickup 10ft':
-      return 'Pickup 10ft';
+      return l10n?.vehicleOptionPickup10ft ?? 'Pickup 10ft';
     case '14ft':
     case '14 ft':
-      return '14ft Truck';
+      return l10n?.vehicleOption14ftTruck ?? '14ft Truck';
     case '17ft':
     case '17 ft':
-      return '17ft Truck';
+      return l10n?.vehicleOption17ftTruck ?? '17ft Truck';
     case '19ft':
     case '19 ft':
-      return '19ft Truck';
+      return l10n?.vehicleOption19ftTruck ?? '19ft Truck';
     case '22ft':
     case '22 ft':
-      return '22ft Truck';
+      return l10n?.vehicleOption22ftTruck ?? '22ft Truck';
     case 'small':
-      return 'Small truck';
+      return l10n?.vehicleSmallTruck ?? 'Small truck';
     case 'medium':
-      return 'Medium truck';
+      return l10n?.vehicleMediumTruck ?? 'Medium truck';
     case 'large':
     case 'big':
-      return 'Big truck';
+      return l10n?.vehicleBigTruck ?? 'Big truck';
     case 'part':
     case 'pooling':
     case 'truck pooling':
-      return 'Part load';
+      return l10n?.vehicleOptionPartLoad ?? 'Part load';
     case 'part load':
-      return 'Part load';
+      return l10n?.vehicleOptionPartLoad ?? 'Part load';
     default:
       if (fallback.trim().isNotEmpty) return fallback;
       if (category.trim().isEmpty) return 'Truck';
@@ -527,7 +531,9 @@ List<VehicleOption> vehicleOptionsFromTypes(
                   : (l10n?.vehiclePriceOnRequest ?? 'On request'));
         return VehicleOption(
           id: t.id,
-          label: t.name.isNotEmpty ? t.name : labelForTruckCategory(t.id),
+          label: t.name.isNotEmpty
+              ? t.name
+              : labelForTruckCategory(t.id, '', l10n),
           capacity: t.capacity,
           price: price,
           accentColor: accentColorForTruckCategory(t.id),
@@ -654,6 +660,36 @@ String localizedVehicleOptionLabel(
       return l10n.vehicleOption22ftTruck;
     default:
       return option.label;
+  }
+}
+
+
+String localizedPaymentStatus(
+  AppLocalizations l10n,
+  String status,
+) {
+  final normalized = status.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return l10n.pending;
+  }
+  switch (normalized) {
+    case 'paid':
+      return l10n.thankYouPaid;
+    case 'pending':
+      return l10n.pending;
+    case 'failed':
+      return l10n.paymentStatusFailed;
+    case 'refunded':
+      return l10n.paymentStatusRefunded;
+    case 'partial':
+    case 'partially_paid':
+      return l10n.paymentStatusPartiallyPaid;
+    default:
+      return normalized
+          .split(RegExp(r'[_\s-]+'))
+          .where((part) => part.isNotEmpty)
+          .map((part) => part[0].toUpperCase() + part.substring(1))
+          .join(' ');
   }
 }
 
@@ -995,23 +1031,23 @@ String _readString(Map<String, dynamic> json, List<String> keys) {
   return '';
 }
 
-String formatPaymentStatus(String status) {
+String formatPaymentStatus(String status, [AppLocalizations? l10n]) {
   final normalized = status.trim().toLowerCase();
   if (normalized.isEmpty) {
-    return 'Pending';
+    return l10n?.statusPending ?? 'Pending';
   }
   switch (normalized) {
     case 'paid':
-      return 'Paid';
+      return l10n?.thankYouPaid ?? 'Paid';
     case 'pending':
-      return 'Pending';
+      return l10n?.statusPending ?? 'Pending';
     case 'failed':
-      return 'Failed';
+      return l10n?.paymentStatusFailed ?? 'Failed';
     case 'refunded':
-      return 'Refunded';
+      return l10n?.paymentStatusRefunded ?? 'Refunded';
     case 'partial':
     case 'partially_paid':
-      return 'Partially paid';
+      return l10n?.paymentStatusPartiallyPaid ?? 'Partially paid';
     default:
       return normalized
           .split(RegExp(r'[_\s-]+'))

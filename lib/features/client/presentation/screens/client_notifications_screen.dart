@@ -1009,19 +1009,6 @@ extension on _NotifKind {
     }
   }
 
-  String get label {
-    switch (this) {
-      case _NotifKind.booking:
-        return 'Booking';
-      case _NotifKind.payment:
-        return 'Payment';
-      case _NotifKind.offer:
-        return 'Offer';
-      case _NotifKind.system:
-        return 'Update';
-    }
-  }
-
   IconData get icon {
     switch (this) {
       case _NotifKind.booking:

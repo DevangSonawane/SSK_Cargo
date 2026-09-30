@@ -237,7 +237,7 @@ class _BrokerActiveJobsScreenState
                                 job: job,
                                 onTrack: () => context.push(
                                   '/broker/tracking/details',
-                                  extra: job.toShipment(),
+                                  extra: job.toShipment(l10n),
                                 ),
                                 onChat: () => context.push(
                                   '/broker/chats/${job.bookingId}',
@@ -1309,16 +1309,18 @@ class _ActiveBrokerJob {
   final double? liveLat;
   final double? liveLng;
 
-  TrackingDemoShipment toShipment() {
+  TrackingDemoShipment toShipment(AppLocalizations l10n) {
     return TrackingDemoShipment(
-      packageName: 'Active job',
+      packageName: l10n.brokerActiveJobActiveJob,
       trackingId: tripId.isEmpty ? bookingId : tripId,
       fromLocation: pickup,
       toLocation: drop,
       status: statusLabel,
-      customerName: driverName.isEmpty ? 'Driver pending' : driverName,
-      weight: weight.isEmpty ? 'Load details pending' : weight,
-      timeline: _timelineFor(statusKey),
+      customerName: driverName.isEmpty
+          ? l10n.brokerActiveJobDriverPending
+          : driverName,
+      weight: weight.isEmpty ? l10n.brokerActiveJobLoadPending : weight,
+      timeline: _timelineFor(l10n, statusKey),
       pickupLat: pickupLat,
       pickupLng: pickupLng,
       dropLat: dropLat,
@@ -1582,7 +1584,10 @@ String _lead(String value) {
   return value.substring(0, index).trim();
 }
 
-List<TrackingTimelineStep> _timelineFor(String status) {
+List<TrackingTimelineStep> _timelineFor(
+  AppLocalizations l10n,
+  String status,
+) {
   const order = [
     'assigned',
     'en_route_pickup',
@@ -1594,28 +1599,28 @@ List<TrackingTimelineStep> _timelineFor(String status) {
   final index = activeIndex < 0 ? 0 : activeIndex;
   return [
     TrackingTimelineStep(
-      title: 'Assigned',
-      subtitle: 'Driver assigned',
+      title: l10n.brokerActiveJobAssigned,
+      subtitle: l10n.brokerActiveJobDriverAssigned,
       completed: index >= 0,
     ),
     TrackingTimelineStep(
-      title: 'En Route Pickup',
-      subtitle: 'Driver heading to pickup',
+      title: l10n.brokerActiveJobEnRoutePickup,
+      subtitle: l10n.brokerActiveJobDriverHeadingToPickup,
       completed: index >= 1,
     ),
     TrackingTimelineStep(
-      title: 'Picked Up',
-      subtitle: 'Shipment picked up',
+      title: l10n.brokerActiveJobPickedUp,
+      subtitle: l10n.brokerActiveJobShipmentPickedUp,
       completed: index >= 2,
     ),
     TrackingTimelineStep(
-      title: 'In Transit',
-      subtitle: 'Shipment on the road',
+      title: l10n.brokerActiveJobInTransit,
+      subtitle: l10n.brokerActiveJobShipmentOnRoad,
       completed: index >= 3,
     ),
     TrackingTimelineStep(
-      title: 'Delivered',
-      subtitle: 'Drop completed',
+      title: l10n.brokerActiveJobDelivered,
+      subtitle: l10n.brokerActiveJobDropCompleted,
       completed: index >= 4,
     ),
   ];

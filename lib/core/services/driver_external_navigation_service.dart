@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// Opens Google Maps turn-by-turn navigation for the driver trip and manages
 /// the floating "tap to return" bubble shown over Google Maps (Android only).
 ///
@@ -70,6 +72,7 @@ class DriverExternalNavigationService {
     double? liveLat,
     double? liveLng,
     required bool headingToPickup,
+    AppLocalizations? l10n,
   }) async {
     final hasPickupCoords = _hasCoords(pickupLat, pickupLng);
     final hasDropCoords = _hasCoords(dropLat, dropLng);
@@ -85,7 +88,8 @@ class DriverExternalNavigationService {
           : dropAddress.trim();
     }
     if (destination.isEmpty) {
-      return 'Destination is not available for this trip yet.';
+      return l10n?.driverNavDestinationUnavailable ??
+          'Destination is not available for this trip yet.';
     }
 
     // Prefer the live GPS fix as origin so Maps routes from where the truck
@@ -116,17 +120,20 @@ class DriverExternalNavigationService {
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
-        return 'Could not open Google Maps on this device.';
+        return l10n?.driverNavMapsUnavailable ??
+            'Could not open Google Maps on this device.';
       }
       return null;
     } catch (error) {
       debugPrint('[DriverNav] url_launcher failed: $error');
-      return 'Could not open Google Maps on this device.';
+      return l10n?.driverNavMapsUnavailable ??
+            'Could not open Google Maps on this device.';
     }
   }
 
   /// Opens a pickup → drop route preview (no turn-by-turn).
   static Future<String?> openRoutePreview({
+    AppLocalizations? l10n,
     double? pickupLat,
     double? pickupLng,
     String pickupAddress = '',
@@ -141,7 +148,8 @@ class DriverExternalNavigationService {
         ? _coords(dropLat, dropLng)
         : dropAddress.trim();
     if (origin.isEmpty || destination.isEmpty) {
-      return 'Pickup or drop details are not available yet.';
+      return l10n?.driverNavPickupDropUnavailable ??
+          'Pickup or drop details are not available yet.';
     }
     final uri = buildDirectionsUri(
       origin: origin,
@@ -154,11 +162,13 @@ class DriverExternalNavigationService {
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
-        return 'Could not open Google Maps on this device.';
+        return l10n?.driverNavMapsUnavailable ??
+            'Could not open Google Maps on this device.';
       }
       return null;
     } catch (_) {
-      return 'Could not open Google Maps on this device.';
+      return l10n?.driverNavMapsUnavailable ??
+            'Could not open Google Maps on this device.';
     }
   }
 
