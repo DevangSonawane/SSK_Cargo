@@ -52,9 +52,9 @@ String _formatTrackingMoney(double value) {
   return '₹${value.toStringAsFixed(value % 1 == 0 ? 0 : 2)}';
 }
 
-String _formatTrackingStatusLabel(String value) {
+String _formatTrackingStatusLabel(AppLocalizations l10n, String value) {
   final cleaned = value.trim().replaceAll(RegExp(r'[_-]+'), ' ');
-  if (cleaned.isEmpty) return 'In transit';
+  if (cleaned.isEmpty) return l10n.inTransit;
   return cleaned
       .split(RegExp(r'\s+'))
       .where((word) => word.isNotEmpty)
@@ -1908,10 +1908,13 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final maxHeight = MediaQuery.of(context).size.height * 0.34;
     final driverName = shipment.assignedDriverName?.trim() ?? '';
     final truckName = shipment.assignedTruckName?.trim() ?? '';
-    final crewTitle = truckName.isNotEmpty ? truckName : 'Assigned driver';
+    final crewTitle = truckName.isNotEmpty
+        ? truckName
+        : AppLocalizations.of(context)!.trackingAssignedDriver;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18, 10, 18, 12 + bottomInset),
@@ -1942,7 +1945,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                         children: [
                           const SizedBox(height: 6),
                           Text(
-                            'Package information',
+                            l10n.trackingPackageInformation,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
@@ -1969,7 +1972,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Delivery Type:',
+                                            l10n.trackingDeliveryTypeLabel,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall
@@ -1983,8 +1986,8 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                           const SizedBox(height: 4),
                                           Text(
                                             widget.shipment.isExpress
-                                                ? 'Express delivery'
-                                                : 'Standard delivery',
+                                                ? l10n.trackingExpressDelivery
+                                                : l10n.trackingStandardDelivery,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium
@@ -2002,7 +2005,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Package weight:',
+                                            l10n.trackingPackageWeightLabel,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall
@@ -2062,7 +2065,7 @@ class _LiveInfoCardState extends State<_LiveInfoCard> {
                                     children: [
                                       Text(
                                         driverName.isEmpty
-                                            ? 'Driver not assigned'
+                                            ? l10n.trackingDriverNotAssigned
                                             : driverName,
                                         style: Theme.of(context)
                                             .textTheme
@@ -2253,7 +2256,9 @@ class _PremiumStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayLabel = _formatTrackingStatusLabel(label);
+    final displayLabel = _formatTrackingStatusLabel(
+      AppLocalizations.of(context)!, label,
+    );
     final isCancelled = _isCancelledTrackingStatus(label);
     final backgroundColor = isCancelled
         ? const Color(0xFFFFEBEE)
@@ -2335,7 +2340,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Pickup Code',
+                        AppLocalizations.of(context)!.trackingPickupCodeTitle,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: context.colors.brandEmphasis,
                           fontSize: 11,
@@ -2352,7 +2357,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                           color: const Color(0xFF2FA56E),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
@@ -2362,7 +2367,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                             ),
                             SizedBox(width: 3),
                             Text(
-                              'Verified',
+                              AppLocalizations.of(context)!.trackingPickupVerifiedBadge,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 10.5,
@@ -2376,7 +2381,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pickup confirmed with your code.',
+                    AppLocalizations.of(context)!.trackingPickupConfirmedText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                       fontSize: 12,
@@ -2417,7 +2422,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pickup Code',
+                  AppLocalizations.of(context)!.trackingPickupCodeTitle,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: context.colors.brandEmphasis,
                     fontSize: 11,
@@ -2426,7 +2431,7 @@ class _ReactStylePickupOtpBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Share this with your driver when they arrive to confirm pickup.',
+                  AppLocalizations.of(context)!.trackingPickupCodeShareHint,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.colors.textSecondary,
                     fontSize: 12,
@@ -2511,8 +2516,9 @@ class _ReactRouteRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pickup = _cleanTrackingLocation(fromLocation, 'Pickup pending');
-    final drop = _cleanTrackingLocation(toLocation, 'Drop pending');
+    final l10n = AppLocalizations.of(context)!;
+    final pickup = _cleanTrackingLocation(fromLocation, l10n.pickupPending);
+    final drop = _cleanTrackingLocation(toLocation, l10n.dropPending);
     final extraStops = stops.where((stop) => stop.isExtraStop).toList();
 
     return Container(
@@ -2865,7 +2871,7 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
                         color: Colors.black.withValues(alpha: 0.55),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
@@ -2875,7 +2881,7 @@ class _GoogleMapsTrackingCard extends StatelessWidget {
                           ),
                           SizedBox(width: 5),
                           Text(
-                            'Live',
+                            AppLocalizations.of(context)!.trackingLiveBadge,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -2914,7 +2920,7 @@ class _ShipmentTimelineCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Shipment Timeline',
+            AppLocalizations.of(context)!.trackingTimelineTitle,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: context.colors.textPrimary,
               fontSize: 16,
@@ -3260,7 +3266,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Proof of delivery',
+                      AppLocalizations.of(context)!.trackingPodTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: context.colors.textPrimary,
                         fontWeight: FontWeight.w800,
@@ -3321,7 +3327,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.',
+                    AppLocalizations.of(context)!.trackingPodApprovalPrompt,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: context.colors.textSecondary,
                       height: 1.4,
@@ -3336,7 +3342,7 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
                           child: FilledButton(
                             onPressed: _verifying ? null : _approve,
                             child: Text(
-                              _verifying ? 'Approving...' : 'Approve',
+                              _verifying ? AppLocalizations.of(context)!.trackingPodApproving : AppLocalizations.of(context)!.trackingPodApprove,
                             ),
                           ),
                         ),
@@ -3368,12 +3374,12 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: context.colors.divider)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.check, size: 16, color: Color(0xFF2FA56E)),
-                  SizedBox(width: 6),
+                  const Icon(Icons.check, size: 16, color: Color(0xFF2FA56E)),
+                  const SizedBox(width: 6),
                   Text(
-                    'Approved',
+                    AppLocalizations.of(context)!.trackingPodApproved,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -3393,8 +3399,10 @@ class _ProofOfDeliveryCardState extends ConsumerState<_ProofOfDeliveryCard> {
               ),
               child: Text(
                 (widget.podRejectionReason ?? '').trim().isNotEmpty
-                    ? 'You asked the driver to re-upload: "${widget.podRejectionReason!.trim()}." Waiting for new photos.'
-                    : 'You asked the driver to re-upload. Waiting for new photos.',
+                    ? AppLocalizations.of(context)!.trackingPodRejectionWithReason(
+                        widget.podRejectionReason!.trim(),
+                      )
+                    : AppLocalizations.of(context)!.trackingPodRejection,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: context.colors.textSecondary,
                   height: 1.4,
@@ -3645,9 +3653,9 @@ class _PodMediaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final uri = _proofOfDeliveryUri(media.url);
     if (uri == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'Could not load delivery proof.',
+          AppLocalizations.of(context)!.trackingPodLoadFailed,
           style: TextStyle(color: Colors.white),
         ),
       );
@@ -3663,8 +3671,8 @@ class _PodMediaPage extends StatelessWidget {
           uri.toString(),
           fit: BoxFit.contain,
           headers: _podMediaHeaders(accessToken),
-          errorBuilder: (context, error, stackTrace) => const Text(
-            'Could not load delivery proof.',
+          errorBuilder: (context, error, stackTrace) => Text(
+            AppLocalizations.of(context)!.trackingPodLoadFailed,
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -3718,9 +3726,9 @@ class _PodVideoPlayerState extends State<_PodVideoPlayer> {
           );
         }
         if (snapshot.hasError) {
-          return const Center(
+          return Center(
             child: Text(
-              'Could not play delivery video.',
+              AppLocalizations.of(context)!.trackingPodPlayFailed,
               style: TextStyle(color: Colors.white),
             ),
           );

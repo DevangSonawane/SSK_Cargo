@@ -635,7 +635,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEditing ? 'Edit Driver' : 'Add Driver',
+                          _isEditing ? l10n.addDriverEditTitle : l10n.addDriverAddTitle,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontSize: 20,
@@ -646,8 +646,8 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                         const SizedBox(height: 2),
                         Text(
                           _isEditing
-                              ? 'Update the driver account'
-                              : 'Create a driver account',
+                              ? l10n.addDriverEditSubtitle
+                              : l10n.addDriverCreateAccountSubtitle,
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -688,7 +688,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Enter full name';
+                                return l10n.addDriverErrName;
                               }
                               return null;
                             },
@@ -705,12 +705,12 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                             validator: (value) {
                               final email = value?.trim() ?? '';
                               if (email.isEmpty) {
-                                return 'Enter email';
+                                return l10n.addDriverErrEmail;
                               }
                               if (!RegExp(
                                 r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
                               ).hasMatch(email)) {
-                                return 'Enter a valid email address — the driver logs in with email + password.';
+                                return l10n.addDriverEmailHelper;
                               }
                               return null;
                             },
@@ -733,10 +733,10 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                               final digits =
                                   value?.replaceAll(RegExp(r'\D'), '') ?? '';
                               if (digits.isEmpty) {
-                                return 'Enter mobile number';
+                                return l10n.addDriverErrMobile;
                               }
                               if (digits.length != 10) {
-                                return 'Enter a valid 10-digit phone number.';
+                                return l10n.addDriverMobileHelper;
                               }
                               return null;
                             },
@@ -762,7 +762,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Enter license number';
+                              return l10n.addDriverErrLicense;
                             }
                             return null;
                           },
@@ -984,7 +984,7 @@ class _AddDriverScreenState extends ConsumerState<AddDriverScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    _isEditing ? 'Update Driver' : 'Add Driver',
+                                    _isEditing ? l10n.addDriverUpdateAction : l10n.addDriverAddTitle,
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
@@ -1079,7 +1079,7 @@ class _DriverAvatarHero extends StatelessWidget {
                 Text(
                   isEditing && driverName != null
                       ? driverName!
-                      : 'Add driver photo',
+                      : l10n.addDriverAddPhotoTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,

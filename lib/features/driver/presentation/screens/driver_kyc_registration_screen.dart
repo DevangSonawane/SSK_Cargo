@@ -290,7 +290,7 @@ class _DriverKycRegistrationScreenState
       if (mounted) {
         setState(() {
           _initialLoading = false;
-          _errorMessage = 'No active session found.';
+          _errorMessage = AppLocalizations.of(context)!.driverKycNoActiveSession;
         });
       }
       return;
@@ -366,7 +366,7 @@ class _DriverKycRegistrationScreenState
     if (!(_confirmCheckboxController.value)) {
       setState(() {
         _step = _KycStep.review;
-        _errorMessage = 'Please confirm that all information is accurate.';
+        _errorMessage = AppLocalizations.of(context)!.driverKycConfirmAccuracy;
       });
       return;
     }
@@ -485,7 +485,9 @@ class _DriverKycRegistrationScreenState
           fileName: uploadedName != null && uploadedName.isNotEmpty
               ? uploadedName
               : picked.name,
-          sourceLabel: source == ImageSource.camera ? 'Camera' : 'Gallery',
+          sourceLabel: source == ImageSource.camera
+            ? AppLocalizations.of(context)!.brokerKycCamera
+            : AppLocalizations.of(context)!.driverKycGallery,
           path: picked.path,
           url: uploadedUrl,
         );
@@ -874,7 +876,7 @@ class _DriverKycRegistrationScreenState
         const SizedBox(height: 14),
         _WarningCard(
           message:
-              'Please verify all information carefully. Incorrect information may delay KYC approval.',
+              l10n.driverKycVerifyCarefully,
         ),
         const SizedBox(height: 14),
         ValueListenableBuilder<bool>(
@@ -904,16 +906,21 @@ class _DriverKycRegistrationScreenState
   }
 
   Widget _buildSubmittedStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isApproved =
         _statusLabel != null && _isApprovedStatus(_statusLabel!.toLowerCase());
     final title = isApproved
-        ? 'KYC Verification Complete'
-        : 'KYC Submitted Successfully';
-    final badgeLabel = isApproved ? 'VERIFIED' : 'SUBMITTED';
+        ? l10n.driverKycVerificationCompleteTitle
+        : l10n.driverKycSubmittedSuccessTitle;
+    final badgeLabel = isApproved
+        ? l10n.driverKycVerifiedBadgeUpper
+        : l10n.driverKycSubmittedBadgeUpper;
     final description = isApproved
-        ? 'Your KYC has been verified. Your driver account is now active.'
-        : 'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
-    final currentStatus = isApproved ? 'Verified' : 'Pending Review';
+        ? l10n.driverKycVerifiedDescription
+        : l10n.driverKycSubmittedDescription;
+    final currentStatus = isApproved
+        ? l10n.verified
+        : l10n.brokerKycPendingReviewStatus;
     final statusColor = isApproved ? AppColors.brand : AppColors.brand;
 
     return Column(
@@ -1086,9 +1093,9 @@ class _DriverKycRegistrationScreenState
               borderRadius: BorderRadius.circular(28),
             ),
           ),
-          label: const Expanded(
+          label: Expanded(
             child: Text(
-              'Go Back',
+              l10n.brokerKycGoBack,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
@@ -1177,11 +1184,14 @@ class _DriverKycRegistrationScreenState
 
   // ignore: unused_element
   Widget _bottomBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_step == _KycStep.submitted) {
       return const SizedBox.shrink();
     }
 
-    final label = _step == _KycStep.review ? 'Submit KYC' : 'Continue';
+    final label = _step == _KycStep.review
+        ? l10n.brokerKycSubmitKyc
+        : l10n.brokerKycContinue;
     final action = _step == _KycStep.details
         ? () {
             setState(() {

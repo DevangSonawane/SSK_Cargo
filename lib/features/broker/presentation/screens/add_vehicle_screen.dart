@@ -170,7 +170,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           : (initialDate.isAfter(lastDate) ? lastDate : initialDate),
       firstDate: firstDate,
       lastDate: lastDate,
-      helpText: 'Select insurance expiry date',
+      helpText: AppLocalizations.of(context)!.addVehicleInsuranceExpiryHelp,
     );
 
     if (picked == null || !mounted) return;
@@ -214,7 +214,11 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           icon: const Icon(AppIcons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(isEditing ? 'Edit truck' : 'Add truck'),
+        title: Text(
+          isEditing
+              ? l10n.addVehicleEditTruckTitle
+              : l10n.addVehicleAddTruckTitle,
+        ),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         centerTitle: false,
@@ -232,8 +236,8 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
               children: [
                 Text(
                   isEditing
-                      ? 'Update the truck details and save the changes.'
-                      : 'Choose the truck type and fill in the fleet details.',
+                      ? l10n.addVehicleEditTruckSubtitle
+                      : l10n.addVehicleAddTruckSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -275,7 +279,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   enabled: !isEditing,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter registration number';
+                      return l10n.addVehicleErrRegistration;
                     }
                     return null;
                   },
@@ -290,7 +294,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter capacity';
+                      return l10n.addVehicleErrCapacity;
                     }
                     return null;
                   },
@@ -353,7 +357,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   onChanged: (value) => setState(() => _selectedDriver = value),
                   validator: (value) {
                     if (value == null) {
-                      return 'Select a driver';
+                      return l10n.addVehicleErrSelectDriver;
                     }
                     return null;
                   },
@@ -368,7 +372,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter truck make';
+                      return l10n.addVehicleErrMake;
                     }
                     return null;
                   },
@@ -386,7 +390,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   validator: (value) {
                     final parsed = int.tryParse(value?.trim() ?? '');
                     if (parsed == null || parsed < 1900) {
-                      return 'Enter a valid year';
+                      return l10n.addVehicleErrYear;
                     }
                     return null;
                   },
@@ -405,7 +409,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter insurance expiry date';
+                      return l10n.addVehicleErrInsuranceExpiry;
                     }
                     if (DateTime.tryParse(value.trim()) == null) {
                       return 'Use YYYY-MM-DD';

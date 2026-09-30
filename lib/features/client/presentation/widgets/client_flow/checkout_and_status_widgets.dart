@@ -86,6 +86,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return IgnorePointer(
       child: DecoratedBox(
         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.20)),
@@ -145,7 +146,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'Booking confirmed',
+                      l10n.bookingConfirmed,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context.colors.textPrimary,
@@ -154,7 +155,7 @@ class _BookingCompleteOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Opening activity',
+                      l10n.checkoutOpeningActivity,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: context.colors.textSecondary,
@@ -476,32 +477,33 @@ class _WeightStepRouteSummary extends StatelessWidget {
   final String dropAddress;
   final VoidCallback onEditTap;
 
-  String _headline(String address) {
+  String _headline(AppLocalizations l10n, String address) {
     final parts = address
         .split(',')
         .map((part) => part.trim())
         .where((part) => part.isNotEmpty)
         .toList(growable: false);
     if (parts.isEmpty) {
-      return 'Add location';
+      return l10n.weightStepAddLocation;
     }
     return parts.first;
   }
 
-  String _subtitle(String address) {
+  String _subtitle(AppLocalizations l10n, String address) {
     final parts = address
         .split(',')
         .map((part) => part.trim())
         .where((part) => part.isNotEmpty)
         .toList(growable: false);
     if (parts.length <= 1) {
-      return address.isEmpty ? 'Tap + to add details' : address;
+      return address.isEmpty ? l10n.weightStepTapToAddDetails : address;
     }
     return parts.skip(1).join(', ');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
@@ -558,7 +560,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _headline(pickupAddress),
+                  _headline(l10n, pickupAddress),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -569,7 +571,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _subtitle(pickupAddress),
+                  _subtitle(l10n, pickupAddress),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -579,7 +581,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _headline(dropAddress),
+                  _headline(l10n, dropAddress),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -590,7 +592,7 @@ class _WeightStepRouteSummary extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _subtitle(dropAddress),
+                  _subtitle(l10n, dropAddress),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -787,6 +789,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final firstDate = DateUtils.dateOnly(widget.firstDateTime);
     final lastDate = DateUtils.dateOnly(widget.lastDateTime);
@@ -818,7 +821,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Book later',
+                          l10n.checkoutBookLater,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: context.colors.textPrimary,
@@ -848,7 +851,7 @@ class _SchedulePickerSheetState extends State<_SchedulePickerSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatSchedulePreview(_selectedDateTime),
+                  _formatSchedulePreview(AppLocalizations.of(context)!, _selectedDateTime),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: context.colors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -1091,24 +1094,24 @@ class _MeridiemButton extends StatelessWidget {
   }
 }
 
-String _formatSchedulePreview(DateTime value) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+String _formatSchedulePreview(AppLocalizations l10n, DateTime value) {
+  final months = <String>[
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
   final minute = value.minute.toString().padLeft(2, '0');
-  final suffix = value.hour >= 12 ? 'PM' : 'AM';
+  final suffix = value.hour >= 12 ? l10n.timePeriodPm : l10n.timePeriodAm;
   return '${value.day} ${months[value.month - 1]}, $hour:$minute $suffix';
 }
 
@@ -1150,26 +1153,21 @@ class _BookingSuccessCard extends StatelessWidget {
     required this.bookingReference,
     required this.onTrack,
     required this.onHome,
-    this.title = 'Booking confirmed',
-    this.message = 'Your booking has been successfully placed.',
+    this.title,
+    this.message,
   });
 
   final String? bookingReference;
   final VoidCallback onTrack;
   final VoidCallback onHome;
-  final String title;
-  final String message;
+  final String? title;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final displayTitle = title == 'Booking confirmed'
-        ? l10n.bookingConfirmed
-        : title;
-    final displayMessage =
-        message == 'Your booking has been successfully placed.'
-        ? l10n.bookingPlacedSuccessfully
-        : message;
+    final displayTitle = title ?? l10n.bookingConfirmed;
+    final displayMessage = message ?? l10n.bookingPlacedSuccessfully;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -1581,9 +1579,9 @@ DateTime? _readDateTimeValue(
   return null;
 }
 
-String _displayPriceLabel(String value) {
+String _displayPriceLabel(AppLocalizations l10n, String value) {
   final trimmed = value.trim();
-  return trimmed.isEmpty ? 'Loading...' : trimmed;
+  return trimmed.isEmpty ? l10n.loading : trimmed;
 }
 
 double? _readBookingCoordinate(Map<String, dynamic> raw, List<String> keys) {
@@ -1755,6 +1753,7 @@ class _BookingSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -1878,7 +1877,7 @@ class _BookingSummaryCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          dropValue ?? 'Where is your Drop ?',
+                          dropValue ?? l10n.checkoutWhereIsYourDrop,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyLarge

@@ -227,7 +227,7 @@ class _VehicleOptionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _displayPriceLabel(option.price),
+                  _displayPriceLabel(AppLocalizations.of(context)!, option.price),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,

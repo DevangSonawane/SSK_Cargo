@@ -3274,10 +3274,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get allEarningsActiveMonths => 'Active Months';
+  String get allEarningsActiveMonths => 'Active months';
 
   @override
-  String get allEarningsAvgTrip => 'Avg Trip';
+  String get allEarningsAvgTrip => 'Average trip';
 
   @override
   String get allEarningsBreakdown => 'Breakdown';
@@ -3286,34 +3286,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allEarningsDeliveries => 'Deliveries';
 
   @override
-  String get allEarningsEmptySubtitle => 'Empty Subtitle';
+  String get allEarningsEmptySubtitle => 'No earnings yet';
 
   @override
-  String get allEarningsEmptyTitle => 'Empty Title';
+  String get allEarningsEmptyTitle => 'No earnings yet';
 
   @override
-  String get allEarningsLoadFailed => 'Load Failed';
+  String get allEarningsLoadFailed => 'Could not load earnings';
 
   @override
-  String get allEarningsMonthlyTrend => 'Monthly Trend';
+  String get allEarningsMonthlyTrend => 'Monthly trend';
 
   @override
   String get allEarningsMonths => 'Months';
 
   @override
-  String get allEarningsNetPerMonth => 'Net Per Month';
+  String get allEarningsNetPerMonth => 'Net per month';
 
   @override
-  String get allEarningsPerDelivery => 'Per Delivery';
+  String get allEarningsPerDelivery => 'Per delivery';
 
   @override
-  String get allEarningsTitle => 'Title';
+  String get allEarningsTitle => 'All earnings';
 
   @override
-  String get allEarningsTotalEarned => 'Total Earned';
+  String get allEarningsTotalEarned => 'Total earned';
 
   @override
-  String get allEarningsTripsDone => 'Trips Done';
+  String get allEarningsTripsDone => 'Trips done';
 
   @override
   String get appChatClientFallback => 'Client';
@@ -3344,97 +3344,99 @@ class AppLocalizationsEn extends AppLocalizations {
   String get arrivedHeading => 'Heading';
 
   @override
-  String get arrivedNextLabel => 'Next Label';
+  String get arrivedNextLabel => 'Next';
 
   @override
-  String get arrivedNextUpload => 'Next Upload';
+  String get arrivedNextUpload => 'Upload delivery photos';
 
   @override
   String get arrivedPreparing => 'Preparing';
 
   @override
-  String get arrivedPreparingSub => 'Preparing Sub';
+  String get arrivedPreparingSub => 'Please wait while we finish preparing.';
 
   @override
-  String get arrivedSlideSub => 'Slide Sub';
+  String get arrivedSlideSub => 'Slide to continue';
 
   @override
-  String get arrivedSlideTitle => 'Slide Title';
+  String get arrivedSlideTitle => 'You\'re on site';
 
   @override
-  String get arrivedStatusLabel => 'Status Label';
+  String get arrivedStatusLabel => 'Status';
 
   @override
-  String get arrivedStatusReady => 'Status Ready';
+  String get arrivedStatusReady => 'Ready';
 
   @override
-  String get arrivedSub => 'Sub';
+  String get arrivedSub => 'Confirm that you have reached the stop.';
 
   @override
-  String get arrivedSwipeContinue => 'Swipe Continue';
+  String get arrivedSwipeContinue => 'Slide to continue';
 
   @override
-  String get arrivedTitle => 'Title';
+  String get arrivedTitle => 'Arrived';
 
   @override
-  String get arrivedTripIdLabel => 'Trip ID Label';
+  String get arrivedTripIdLabel => 'Trip ID';
 
   @override
-  String get brokerActiveDescription => 'Broker Active Description';
+  String get brokerActiveDescription =>
+      'A small delay here can cost you the booking. Assign a driver quickly.';
 
   @override
-  String get brokerActiveSubmit => 'Broker Active Submit';
+  String get brokerActiveSubmit => 'Confirm assignment';
 
   @override
-  String get brokerActiveSubmitting => 'Broker Active Submitting';
+  String get brokerActiveSubmitting => 'Confirming...';
 
   @override
-  String get brokerHomeClientOffered => 'Client Offered';
+  String get brokerHomeClientOffered => 'You offered';
 
   @override
-  String get brokerHomeDriverFallback => 'Driver Fallback';
+  String get brokerHomeDriverFallback => 'Driver';
 
   @override
-  String get brokerHomeDropUnavailable => 'Drop Unavailable';
+  String get brokerHomeDropUnavailable => 'Drop location unavailable';
 
   @override
-  String get brokerHomeFareChangeSent => 'Fare Change Sent';
+  String get brokerHomeFareChangeSent => 'Fare change sent';
 
   @override
-  String get brokerHomeFareChangesUsed => 'Fare Changes Used';
+  String get brokerHomeFareChangesUsed => 'Fare changes used';
 
   @override
-  String get brokerHomeHelloPrefix => 'Hello Prefix';
+  String get brokerHomeHelloPrefix => 'Hello';
 
   @override
-  String get brokerHomeJustNow => 'Just Now';
+  String get brokerHomeJustNow => 'Just now';
 
   @override
-  String get brokerHomePickupUnavailable => 'Pickup Unavailable';
+  String get brokerHomePickupUnavailable => 'Pickup location unavailable';
 
   @override
-  String get brokerHomeRequestAccepted => 'Request Accepted';
+  String get brokerHomeRequestAccepted => 'Request accepted';
 
   @override
-  String get brokerHomeRequestDeclined => 'Request Declined';
+  String get brokerHomeRequestDeclined => 'Request declined';
 
   @override
-  String get brokerHomeSendAssignment => 'Send Assignment';
+  String get brokerHomeSendAssignment => 'Send assignment';
 
   @override
-  String get brokerHomeSending => 'Sending';
+  String get brokerHomeSending => 'Sending...';
 
   @override
-  String get brokerHomeTryClearingSearch => 'Try Clearing Search';
+  String get brokerHomeTryClearingSearch => 'Try clearing your search';
 
   @override
-  String get brokerHomeYouAcceptedWaiting => 'You Accepted Waiting';
+  String get brokerHomeYouAcceptedWaiting =>
+      'You accepted. Waiting for the client to confirm.';
 
   @override
-  String get brokerHomeYouOffered => 'You Offered';
+  String get brokerHomeYouOffered => 'You offered';
 
   @override
-  String get brokerKycCompleteTitle => 'Complete Title';
+  String get brokerKycCompleteTitle => 'KYC complete';
 
   @override
   String get brokerKycContinue => 'Continue';
@@ -3443,220 +3445,230 @@ class AppLocalizationsEn extends AppLocalizations {
   String get brokerKycFinish => 'Finish';
 
   @override
-  String get brokerKycNotAvailable => 'Not Available';
+  String get brokerKycNotAvailable => 'Not available';
 
   @override
-  String get brokerKycNotProvided => 'Not Provided';
+  String get brokerKycNotProvided => 'Not provided';
 
   @override
-  String get brokerKycPendingReviewStatus => 'Pending Review Status';
+  String get brokerKycPendingReviewStatus => 'Pending review';
 
   @override
   String get brokerKycSubmitKyc => 'Submit KYC';
 
   @override
-  String get brokerKycSubmittedBadge => 'Submitted Badge';
+  String get brokerKycSubmittedBadge => 'Submitted';
 
   @override
-  String get brokerKycSubmittedDesc => 'Submitted Desc';
+  String get brokerKycSubmittedDesc =>
+      'Your KYC was submitted and is waiting for review.';
 
   @override
-  String get brokerKycSubmittedTitle => 'Submitted Title';
+  String get brokerKycSubmittedTitle => 'KYC submitted';
 
   @override
-  String get brokerKycVerifiedBadge => 'Verified Badge';
+  String get brokerKycVerifiedBadge => 'Verified';
 
   @override
-  String get brokerKycVerifiedDesc => 'Verified Desc';
+  String get brokerKycVerifiedDesc =>
+      'Your KYC is verified. You can now accept bookings.';
 
   @override
-  String get brokerKycVerifiedStatus => 'Verified Status';
+  String get brokerKycVerifiedStatus => 'Verified';
 
   @override
-  String get brokerKycVerifyCarefullyWarning => 'Verify Carefully Warning';
+  String get brokerKycVerifyCarefullyWarning =>
+      'Please verify all information carefully. Incorrect information may delay KYC approval.';
 
   @override
-  String get brokerReqAcceptAssign => 'Accept Assign';
+  String get brokerReqAcceptAssign => 'Accept & assign';
 
   @override
-  String get brokerReqAcceptedNoCard => 'Accepted No Card';
+  String get brokerReqAcceptedNoCard => 'Accepted';
 
   @override
-  String get brokerReqAcceptedPickDriver => 'Accepted Pick Driver';
+  String get brokerReqAcceptedPickDriver =>
+      'Accepted. Pick a driver to continue.';
 
   @override
-  String get brokerReqAssignmentTitle => 'Assignment Title';
+  String get brokerReqAssignmentTitle => 'Assign driver & truck';
 
   @override
-  String get brokerReqAutoSelectedDetails => 'Auto Selected Details';
+  String get brokerReqAutoSelectedDetails =>
+      'We selected this for you. You can change it.';
 
   @override
-  String get brokerReqAwaitingOtherSide => 'Awaiting Other Side';
+  String get brokerReqAwaitingOtherSide => 'Awaiting response';
 
   @override
-  String get brokerReqChangeFareOrReject => 'Change Fare or Reject';
+  String get brokerReqChangeFareOrReject => 'Change fare or reject';
 
   @override
-  String get brokerReqClientAcceptedFinalize => 'Client Accepted Finalize';
+  String get brokerReqClientAcceptedFinalize =>
+      'Client accepted. Finalise the assignment.';
 
   @override
-  String get brokerReqConfirmAssign => 'Confirm Assign';
+  String get brokerReqConfirmAssign => 'Confirm assignment';
 
   @override
-  String get brokerReqConfirmBookingTitle => 'Confirm Booking Title';
+  String get brokerReqConfirmBookingTitle => 'Confirm booking';
 
   @override
-  String get brokerReqCustomerFallback => 'Customer Fallback';
+  String get brokerReqCustomerFallback => 'Customer';
 
   @override
-  String get brokerReqDeclinedNoActions => 'Declined No Actions';
+  String get brokerReqDeclinedNoActions =>
+      'Declined. No further action needed.';
 
   @override
-  String get brokerReqFareChangeWaiting => 'Fare Change Waiting';
+  String get brokerReqFareChangeWaiting => 'Waiting for fare change response';
 
   @override
-  String get brokerReqGeneralFallback => 'General Fallback';
+  String get brokerReqGeneralFallback => 'Booking';
 
   @override
-  String get brokerReqNoDriversFound => 'No Drivers Found';
+  String get brokerReqNoDriversFound => 'No drivers found';
 
   @override
-  String get brokerReqNoTrucksFound => 'No Trucks Found';
+  String get brokerReqNoTrucksFound => 'No trucks found';
 
   @override
-  String get brokerReqSaving => 'Saving';
+  String get brokerReqSaving => 'Saving...';
 
   @override
   String get brokerReqUnavailable => 'Unavailable';
 
   @override
-  String get changePasswordAllFieldsRequired => 'All Fields Required';
+  String get changePasswordAllFieldsRequired => 'All fields are required';
 
   @override
-  String get changePasswordConfirmHint => 'Confirm Hint';
+  String get changePasswordConfirmHint => 'Re-enter your new password';
 
   @override
-  String get changePasswordConfirmLabel => 'Confirm Label';
+  String get changePasswordConfirmLabel => 'Confirm new password';
 
   @override
-  String get changePasswordCurrentHint => 'Current Hint';
+  String get changePasswordCurrentHint => 'Enter your current password';
 
   @override
-  String get changePasswordCurrentLabel => 'Current Label';
+  String get changePasswordCurrentLabel => 'Current password';
 
   @override
-  String get changePasswordMismatch => 'Mismatch';
+  String get changePasswordMismatch => 'The two passwords do not match';
 
   @override
-  String get changePasswordNewHint => 'New Hint';
+  String get changePasswordNewHint => 'At least 8 characters';
 
   @override
-  String get changePasswordNewLabel => 'New Label';
+  String get changePasswordNewLabel => 'New password';
 
   @override
-  String get changePasswordScreenTitle => 'Screen Title';
+  String get changePasswordScreenTitle => 'Change password';
 
   @override
-  String get changePasswordStrengthEmptyHint => 'Strength Empty Hint';
+  String get changePasswordStrengthEmptyHint =>
+      'Enter a password to check its strength';
 
   @override
-  String get changePasswordStrengthFair => 'Strength Fair';
+  String get changePasswordStrengthFair => 'Fair';
 
   @override
-  String get changePasswordStrengthGood => 'Strength Good';
+  String get changePasswordStrengthGood => 'Good';
 
   @override
-  String get changePasswordStrengthLowercase => 'Strength Lowercase';
+  String get changePasswordStrengthLowercase => 'Add a lowercase letter';
 
   @override
-  String get changePasswordStrengthMinLength => 'Strength Min Length';
+  String get changePasswordStrengthMinLength => 'Use at least 8 characters';
 
   @override
-  String get changePasswordStrengthNumber => 'Strength Number';
+  String get changePasswordStrengthNumber => 'Add a number';
 
   @override
-  String get changePasswordStrengthStrong => 'Strength Strong';
+  String get changePasswordStrengthStrong => 'Strong';
 
   @override
-  String get changePasswordStrengthStrongHint => 'Strength Strong Hint';
+  String get changePasswordStrengthStrongHint => 'Great password';
 
   @override
-  String get changePasswordStrengthSymbol => 'Strength Symbol';
+  String get changePasswordStrengthSymbol => 'Add a symbol';
 
   @override
-  String get changePasswordStrengthTitle => 'Strength Title';
+  String get changePasswordStrengthTitle => 'Password strength';
 
   @override
-  String get changePasswordStrengthUppercase => 'Strength Uppercase';
+  String get changePasswordStrengthUppercase => 'Add an uppercase letter';
 
   @override
-  String get changePasswordStrengthWeak => 'Strength Weak';
+  String get changePasswordStrengthWeak => 'Weak';
 
   @override
-  String get changePasswordSubmitButton => 'Submit Button';
+  String get changePasswordSubmitButton => 'Update password';
 
   @override
-  String get changePasswordSuccessLoggedOut => 'Success Logged Out';
+  String get changePasswordSuccessLoggedOut =>
+      'Password updated. Please sign in again.';
 
   @override
-  String get chatAssistantName => 'Assistant Name';
+  String get chatAssistantName => 'Support';
 
   @override
-  String get chatClosedChip => 'Closed Chip';
+  String get chatClosedChip => 'Closed';
 
   @override
-  String get chatDetailBookingTitle => 'Detail Booking Title';
+  String get chatDetailBookingTitle => 'Booking';
 
   @override
-  String get chatDetailClientTitle => 'Detail Client Title';
+  String get chatDetailClientTitle => 'Client';
 
   @override
-  String get chatDetailDirectTitle => 'Detail Direct Title';
+  String get chatDetailDirectTitle => 'Direct message';
 
   @override
-  String get chatDirectMessageChip => 'Direct Message Chip';
+  String get chatDirectMessageChip => 'Direct';
 
   @override
-  String get chatDirectMessageFallback => 'Direct Message Fallback';
+  String get chatDirectMessageFallback => 'Direct conversation';
 
   @override
-  String get chatListEmpty => 'List Empty';
+  String get chatListEmpty => 'No conversations yet';
 
   @override
-  String get chatListLoadError => 'List Load Error';
+  String get chatListLoadError => 'Could not load chats';
 
   @override
-  String get chatListRetry => 'List Retry';
+  String get chatListRetry => 'Try again';
 
   @override
-  String get chatListTitle => 'List Title';
+  String get chatListTitle => 'Chats';
 
   @override
-  String get chatMessageFallback => 'Message Fallback';
+  String get chatMessageFallback => 'Message';
 
   @override
-  String get chatMessageNotSent => 'Message Not Sent';
+  String get chatMessageNotSent => 'Message not sent';
 
   @override
-  String get chatNoMessagesYet => 'No Messages Yet';
+  String get chatNoMessagesYet => 'No messages yet';
 
   @override
-  String get chatNotConnectedChip => 'Not Connected Chip';
+  String get chatNotConnectedChip => 'Offline';
 
   @override
-  String get chatReadReceipt => 'Read Receipt';
+  String get chatReadReceipt => 'Read';
 
   @override
-  String get chatThreadLoadError => 'Thread Load Error';
+  String get chatThreadLoadError => 'Could not load this conversation';
 
   @override
-  String get chatTripClosedNotice => 'Trip Closed Notice';
+  String get chatTripClosedNotice =>
+      'This trip is closed. You can still read the messages.';
 
   @override
-  String get chatTypeMessageHint => 'Type Message Hint';
+  String get chatTypeMessageHint => 'Type a message';
 
   @override
-  String get chatTypingIndicator => 'Typing Indicator';
+  String get chatTypingIndicator => 'Typing...';
 
   @override
   String get clientAddressAddTitle => 'Add address';
@@ -3671,283 +3683,293 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientAddressRemoved => 'Address removed';
 
   @override
-  String get clientBookingLoadingPointHint => 'Loading Point Hint';
+  String get clientBookingLoadingPointHint => 'Search for the loading point';
 
   @override
-  String get clientBookingUnloadingPointHint => 'Unloading Point Hint';
+  String get clientBookingUnloadingPointHint =>
+      'Search for the unloading point';
 
   @override
-  String get clientBookingWeightError => 'Weight Error';
+  String get clientBookingWeightError => 'Please enter a valid weight';
 
   @override
   String get clientCheckoutCancel => 'Cancel';
 
   @override
-  String get clientCheckoutChooseMethod => 'Choose Method';
+  String get clientCheckoutChooseMethod => 'Choose a payment method';
 
   @override
-  String get clientCheckoutEnterPin => 'Enter Pin';
+  String get clientCheckoutEnterPin => 'Enter 4-digit UPI PIN';
 
   @override
-  String get clientCheckoutMethodCards => 'Method Cards';
+  String get clientCheckoutMethodCards => 'Card';
 
   @override
-  String get clientCheckoutMethodNetbanking => 'Method Netbanking';
+  String get clientCheckoutMethodNetbanking => 'Netbanking';
 
   @override
-  String get clientCheckoutMethodRecommended => 'Method Recommended';
+  String get clientCheckoutMethodRecommended => 'Recommended';
 
   @override
-  String get clientCheckoutMethodUpi => 'Method UPI';
+  String get clientCheckoutMethodUpi => 'UPI';
 
   @override
-  String get clientCheckoutMethodWallet => 'Method Wallet';
+  String get clientCheckoutMethodWallet => 'Wallet';
 
   @override
-  String get clientCheckoutTestTitle => 'Test Title';
+  String get clientCheckoutTestTitle => 'Test payment';
 
   @override
-  String get clientChooseTrucks => 'Client Choose Trucks';
+  String get clientChooseTrucks => 'Choose trucks';
 
   @override
-  String get clientFindingBrokers => 'Client Finding Brokers';
+  String get clientFindingBrokers => 'Finding brokers nearby';
 
   @override
-  String get clientHomeBookAnyTruck => 'Book Any Truck';
+  String get clientHomeBookAnyTruck => 'Book any truck';
 
   @override
-  String get clientHomeLoadingHint => 'Loading Hint';
+  String get clientHomeLoadingHint => 'Search loading location';
 
   @override
-  String get clientHomeUnloadingHint => 'Unloading Hint';
+  String get clientHomeUnloadingHint => 'Search unloading location';
 
   @override
-  String get clientNotificationsAllCaughtUp => 'All Caught Up';
+  String get clientNotificationsAllCaughtUp => 'You\'re all caught up';
 
   @override
-  String get clientNotificationsAllCaughtUpHint => 'All Caught Up Hint';
+  String get clientNotificationsAllCaughtUpHint =>
+      'No new notifications right now.';
 
   @override
-  String get clientNotificationsEmpty => 'Empty';
+  String get clientNotificationsEmpty => 'No notifications';
 
   @override
-  String get clientNotificationsEmptyHint => 'Empty Hint';
+  String get clientNotificationsEmptyHint =>
+      'Booking updates and invoice alerts will show up here.';
 
   @override
-  String get clientNotificationsFallbackMessage => 'Fallback Message';
+  String get clientNotificationsFallbackMessage =>
+      'Open your booking to see the full details.';
 
   @override
-  String get clientNotificationsFallbackTitle => 'Fallback Title';
+  String get clientNotificationsFallbackTitle => 'Booking update';
 
   @override
-  String get clientNotificationsFilterAll => 'Filter All';
+  String get clientNotificationsFilterAll => 'All';
 
   @override
-  String get clientNotificationsFilterUnread => 'Filter Unread';
+  String get clientNotificationsFilterUnread => 'Unread';
 
   @override
-  String get clientNotificationsGotIt => 'Got It';
+  String get clientNotificationsGotIt => 'Got it';
 
   @override
-  String get clientNotificationsKindBooking => 'Kind Booking';
+  String get clientNotificationsKindBooking => 'Booking';
 
   @override
-  String get clientNotificationsKindOffer => 'Kind Offer';
+  String get clientNotificationsKindOffer => 'Offer';
 
   @override
-  String get clientNotificationsKindPayment => 'Kind Payment';
+  String get clientNotificationsKindPayment => 'Payment';
 
   @override
-  String get clientNotificationsKindUpdate => 'Kind Update';
+  String get clientNotificationsKindUpdate => 'Update';
 
   @override
-  String get clientNotificationsLoadError => 'Load Error';
+  String get clientNotificationsLoadError => 'Could not load notifications';
 
   @override
-  String get clientNotificationsMarkAllRead => 'Mark All Read';
+  String get clientNotificationsMarkAllRead => 'Mark all as read';
 
   @override
-  String get clientNotificationsMarkedRead => 'Marked Read';
+  String get clientNotificationsMarkedRead => 'Marked as read';
 
   @override
-  String get clientNotificationsSaving => 'Saving';
+  String get clientNotificationsSaving => 'Saving...';
 
   @override
-  String get clientNotificationsTitle => 'Title';
+  String get clientNotificationsTitle => 'Notifications';
 
   @override
-  String get clientNotificationsTryAgain => 'Try Again';
+  String get clientNotificationsTryAgain => 'Try again';
 
   @override
-  String get clientPaymentAddAccountInvalid => 'Account Invalid';
+  String get clientPaymentAddAccountInvalid => 'Enter a valid account number';
 
   @override
-  String get clientPaymentAddAccountLabel => 'Account Label';
+  String get clientPaymentAddAccountLabel => 'Account number';
 
   @override
-  String get clientPaymentAddBankLabel => 'Bank Label';
+  String get clientPaymentAddBankLabel => 'Select your bank';
 
   @override
-  String get clientPaymentAddBankRequired => 'Bank Required';
+  String get clientPaymentAddBankRequired => 'Select a bank';
 
   @override
-  String get clientPaymentAddBankSearchHint => 'Bank Search Hint';
+  String get clientPaymentAddBankSearchHint => 'Search banks';
 
   @override
-  String get clientPaymentAddBrandLabel => 'Brand Label';
+  String get clientPaymentAddBrandLabel => 'Card brand';
 
   @override
-  String get clientPaymentAddBrandRequired => 'Brand Required';
+  String get clientPaymentAddBrandRequired => 'Enter the card brand';
 
   @override
-  String get clientPaymentAddCardNote => 'Card Note';
+  String get clientPaymentAddCardNote =>
+      'We only use this to show the card on your saved methods.';
 
   @override
-  String get clientPaymentAddDefaultOption => 'Default Option';
+  String get clientPaymentAddDefaultOption => 'Set as default';
 
   @override
-  String get clientPaymentAddIfscInvalid => 'IFSC Invalid';
+  String get clientPaymentAddIfscInvalid => 'Enter a valid IFSC code';
 
   @override
-  String get clientPaymentAddIfscLabel => 'IFSC Label';
+  String get clientPaymentAddIfscLabel => 'IFSC code';
 
   @override
-  String get clientPaymentAddLast4Label => 'Last4 Label';
+  String get clientPaymentAddLast4Label => 'Last 4 digits';
 
   @override
-  String get clientPaymentAddLast4Required => 'Last4 Required';
+  String get clientPaymentAddLast4Required => 'Enter the last 4 digits';
 
   @override
-  String get clientPaymentAddMethod => 'Method';
+  String get clientPaymentAddMethod => 'Add method';
 
   @override
-  String get clientPaymentAddNoteLabel => 'Note Label';
+  String get clientPaymentAddNoteLabel => 'Note';
 
   @override
-  String get clientPaymentAddPrivacyNote => 'Privacy Note';
+  String get clientPaymentAddPrivacyNote =>
+      'Your card details are encrypted and never shared with anyone.';
 
   @override
-  String get clientPaymentAddSaveButton => 'Save Button';
+  String get clientPaymentAddSaveButton => 'Save method';
 
   @override
-  String get clientPaymentAddSignInRequired => 'Sign In Required';
+  String get clientPaymentAddSignInRequired =>
+      'Please sign in to add a payment method.';
 
   @override
-  String get clientPaymentAddTileSubtitle => 'Tile Subtitle';
+  String get clientPaymentAddTileSubtitle => 'Card, UPI, netbanking or wallet';
 
   @override
-  String get clientPaymentAddTileTitle => 'Tile Title';
+  String get clientPaymentAddTileTitle => 'Add a payment method';
 
   @override
-  String get clientPaymentAddTitle => 'Title';
+  String get clientPaymentAddTitle => 'Add payment method';
 
   @override
-  String get clientPaymentAddTypeLabel => 'Type Label';
+  String get clientPaymentAddTypeLabel => 'Payment type';
 
   @override
-  String get clientPaymentAddUpiInvalid => 'UPI Invalid';
+  String get clientPaymentAddUpiInvalid => 'Enter a valid UPI ID';
 
   @override
-  String get clientPaymentAddUpiLabel => 'UPI Label';
+  String get clientPaymentAddUpiLabel => 'UPI ID';
 
   @override
-  String get clientPaymentAddWalletLabel => 'Wallet Label';
+  String get clientPaymentAddWalletLabel => 'Select a wallet';
 
   @override
-  String get clientPaymentAddWalletRequired => 'Wallet Required';
+  String get clientPaymentAddWalletRequired => 'Select a wallet';
 
   @override
-  String get clientPaymentAddWalletSearchHint => 'Wallet Search Hint';
+  String get clientPaymentAddWalletSearchHint => 'Search wallets';
 
   @override
-  String get clientPaymentCardSaved => 'Card Saved';
+  String get clientPaymentCardSaved => 'Card saved';
 
   @override
-  String get clientPaymentDefaultBadge => 'Default Badge';
+  String get clientPaymentDefaultBadge => 'Default';
 
   @override
-  String get clientPaymentDeleteTooltip => 'Delete tooltip';
+  String get clientPaymentDeleteTooltip => 'Delete payment method';
 
   @override
-  String get clientPaymentEmptySubtitle => 'Empty Subtitle';
+  String get clientPaymentEmptySubtitle =>
+      'Save a card, UPI ID or bank account for faster checkout.';
 
   @override
-  String get clientPaymentEmptyTitle => 'Empty Title';
+  String get clientPaymentEmptyTitle => 'No payment methods';
 
   @override
-  String get clientPaymentLoadError => 'Load Error';
+  String get clientPaymentLoadError => 'Could not load methods';
 
   @override
-  String get clientPaymentLoadErrorHint => 'Load Error Hint';
+  String get clientPaymentLoadErrorHint => 'Please try again in a moment.';
 
   @override
-  String get clientPaymentMethodsTitle => 'Methods Title';
+  String get clientPaymentMethodsTitle => 'Payment methods';
 
   @override
-  String get clientPaymentRemoved => 'Removed';
+  String get clientPaymentRemoved => 'Payment method removed';
 
   @override
   String get clientPaymentRetry => 'Retry';
 
   @override
-  String get clientPaymentSetDefault => 'Set Default';
+  String get clientPaymentSetDefault => 'Set as default';
 
   @override
-  String get clientPaymentSignInSubtitle => 'Sign In Subtitle';
+  String get clientPaymentSignInSubtitle =>
+      'Sign in to view your saved cards, UPI IDs and bank accounts.';
 
   @override
-  String get clientPaymentSignInTitle => 'Sign In Title';
+  String get clientPaymentSignInTitle => 'Sign in to continue';
 
   @override
-  String get clientPaymentTypeBank => 'Type Bank';
+  String get clientPaymentTypeBank => 'Bank';
 
   @override
-  String get clientPaymentTypeCard => 'Type Card';
+  String get clientPaymentTypeCard => 'Card';
 
   @override
-  String get clientPaymentTypeMethod => 'Type Method';
+  String get clientPaymentTypeMethod => 'Payment method';
 
   @override
-  String get clientPaymentTypeUpi => 'Type UPI';
+  String get clientPaymentTypeUpi => 'UPI';
 
   @override
-  String get clientPaymentTypeWallet => 'Type Wallet';
+  String get clientPaymentTypeWallet => 'Wallet';
 
   @override
-  String get clientPaymentUpiFallback => 'UPI Fallback';
+  String get clientPaymentUpiFallback => 'UPI';
 
   @override
-  String get clientPaymentWalletFallback => 'Wallet Fallback';
+  String get clientPaymentWalletFallback => 'Wallet';
 
   @override
-  String get clientPlacesSuggestionsError => 'Suggestions Error';
+  String get clientPlacesSuggestionsError => 'Could not load suggestions';
 
   @override
-  String get clientPublicAssignedDriver => 'Assigned Driver';
+  String get clientPublicAssignedDriver => 'To be assigned';
 
   @override
-  String get clientPublicDriverLabel => 'Driver Label';
+  String get clientPublicDriverLabel => 'Driver';
 
   @override
-  String get clientPublicDropLabel => 'Drop Label';
+  String get clientPublicDropLabel => 'Drop';
 
   @override
-  String get clientPublicExpressSuffix => 'Express Suffix';
+  String get clientPublicExpressSuffix => 'Express';
 
   @override
-  String get clientPublicIncidentActive => 'Incident Active';
+  String get clientPublicIncidentActive => 'Incident reported';
 
   @override
-  String get clientPublicPickupLabel => 'Pickup Label';
+  String get clientPublicPickupLabel => 'Pickup';
 
   @override
-  String get clientPublicTrackingInvalidLink => 'Tracking Invalid Link';
+  String get clientPublicTrackingInvalidLink =>
+      'This tracking link is not valid.';
 
   @override
-  String get clientPublicTrackingUnavailable => 'Tracking Unavailable';
+  String get clientPublicTrackingUnavailable => 'Tracking unavailable';
 
   @override
-  String get clientPublicTruckLabel => 'Truck Label';
+  String get clientPublicTruckLabel => 'Truck';
 
   @override
   String get clientSavedAddAddress => 'Add address';
@@ -3992,40 +4014,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientSearchRetry => 'Retry';
 
   @override
-  String get clientSelectVehicle => 'Client Select Vehicle';
+  String get clientSelectVehicle => 'Select a vehicle';
 
   @override
-  String get clientTrackingGpsPending => 'Gps Pending';
+  String get clientTrackingGpsPending => 'Waiting for GPS';
 
   @override
-  String get clientTrackingLivePendingSubtitle => 'Live Pending Subtitle';
+  String get clientTrackingLivePendingSubtitle =>
+      'The vehicle location will appear here as soon as it starts moving.';
 
   @override
-  String get clientTrackingLivePendingTitle => 'Live Pending Title';
+  String get clientTrackingLivePendingTitle => 'Live location pending';
 
   @override
-  String get clientTrackingLivePosition => 'Live Position';
+  String get clientTrackingLivePosition => 'Live position';
 
   @override
   String get clientTrackingLoading => 'Loading';
 
   @override
-  String get clientTrackingMapEmptyHint => 'Map Empty Hint';
+  String get clientTrackingMapEmptyHint =>
+      'Live tracking will appear on the map.';
 
   @override
-  String get clientTrackingMapLoading => 'Map Loading';
+  String get clientTrackingMapLoading => 'Loading the map...';
 
   @override
-  String get clientTrackingPayNow => 'Pay Now';
+  String get clientTrackingPayNow => 'Pay now';
 
   @override
-  String get clientTrackingPayRemaining => 'Pay Remaining';
+  String get clientTrackingPayRemaining => 'Pay remaining';
 
   @override
-  String get clientTrackingRateDelivery => 'Rate Delivery';
+  String get clientTrackingRateDelivery => 'Rate delivery';
 
   @override
-  String get clientTrackingSubmitting => 'Submitting';
+  String get clientTrackingSubmitting => 'Submitting...';
 
   @override
   String get clientTrackingUnloading => 'Unloading';
@@ -4034,148 +4058,159 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientVehicleSelected => 'Selected';
 
   @override
-  String get coreDigilockerAadhaarFallbackNote => 'Aadhaar Fallback Note';
+  String get coreDigilockerAadhaarFallbackNote =>
+      'DigiLocker could not read this Aadhaar. Enter the number manually.';
 
   @override
-  String get coreDigilockerBankAccountHint => 'Bank Account Hint';
+  String get coreDigilockerBankAccountHint => 'Bank account number';
 
   @override
-  String get coreDigilockerBrokerIntro => 'Broker Intro';
+  String get coreDigilockerBrokerIntro =>
+      'Verify your PAN, Aadhaar and business documents to receive bookings.';
 
   @override
-  String get coreDigilockerBusinessDetails => 'Business Details';
+  String get coreDigilockerBusinessDetails => 'Business details';
 
   @override
-  String get coreDigilockerBusinessRegHint => 'Business Reg Hint';
+  String get coreDigilockerBusinessRegHint => 'Business registration number';
 
   @override
-  String get coreDigilockerCheckStatus => 'Check Status';
+  String get coreDigilockerCheckStatus => 'Check status';
 
   @override
-  String get coreDigilockerChecking => 'Checking';
+  String get coreDigilockerChecking => 'Checking...';
 
   @override
-  String get coreDigilockerDidntMatch => 'Didnt Match';
+  String get coreDigilockerDidntMatch =>
+      'These details did not match your DigiLocker records.';
 
   @override
-  String get coreDigilockerDocAadhaar => 'Doc Aadhaar';
+  String get coreDigilockerDocAadhaar => 'Aadhaar';
 
   @override
-  String get coreDigilockerDocLicense => 'Doc License';
+  String get coreDigilockerDocLicense => 'Driving licence';
 
   @override
-  String get coreDigilockerDocPan => 'Doc PAN';
+  String get coreDigilockerDocPan => 'PAN card';
 
   @override
-  String get coreDigilockerDriverIntro => 'Driver Intro';
+  String get coreDigilockerDriverIntro =>
+      'Verify your PAN, Aadhaar and licence to start receiving trips.';
 
   @override
-  String get coreDigilockerGstHint => 'GST Hint';
+  String get coreDigilockerGstHint => 'GST number';
 
   @override
-  String get coreDigilockerInfoNote => 'Info Note';
+  String get coreDigilockerInfoNote =>
+      'DigiLocker fetches your documents securely from the government portal.';
 
   @override
-  String get coreDigilockerNoLoginLink => 'No Login Link';
+  String get coreDigilockerNoLoginLink =>
+      'No DigiLocker login available. Please sign in and try again.';
 
   @override
-  String get coreDigilockerNotComplete => 'Not Complete';
+  String get coreDigilockerNotComplete => 'Verification incomplete';
 
   @override
-  String get coreDigilockerNotFound => 'Not Found';
+  String get coreDigilockerNotFound => 'No document found';
 
   @override
-  String get coreDigilockerNotVerifiedYet => 'Not Verified Yet';
+  String get coreDigilockerNotVerifiedYet => 'Not verified yet';
 
   @override
-  String get coreDigilockerOpenBrowserFailed => 'Open Browser Failed';
+  String get coreDigilockerOpenBrowserFailed =>
+      'Could not open your browser for DigiLocker.';
 
   @override
-  String get coreDigilockerOptionalNote => 'Optional Note';
+  String get coreDigilockerOptionalNote => 'Optional';
 
   @override
-  String get coreDigilockerPendingRetry => 'Pending Retry';
+  String get coreDigilockerPendingRetry =>
+      'Verification is still pending. Please try again in a moment.';
 
   @override
-  String get coreDigilockerUnreachable => 'Unreachable';
+  String get coreDigilockerUnreachable => 'DigiLocker is unreachable right now';
 
   @override
-  String get coreDigilockerVehicleDetails => 'Vehicle Details';
+  String get coreDigilockerVehicleDetails => 'Vehicle details';
 
   @override
-  String get coreDigilockerVehicleInsuranceHint => 'Vehicle Insurance Hint';
+  String get coreDigilockerVehicleInsuranceHint => 'Vehicle insurance number';
 
   @override
-  String get coreDigilockerVehicleRegHint => 'Vehicle Reg Hint';
+  String get coreDigilockerVehicleRegHint => 'Vehicle registration number';
 
   @override
   String get coreDigilockerVerified => 'Verified';
 
   @override
-  String get coreDigilockerVerifyButton => 'Verify Button';
+  String get coreDigilockerVerifyButton => 'Verify with DigiLocker';
 
   @override
-  String get coreDigilockerVerifyLicense => 'Verify License';
+  String get coreDigilockerVerifyLicense => 'Verify driving licence';
 
   @override
   String get coreDigilockerVerifyPan => 'Verify PAN';
 
   @override
-  String get coreDigilockerWorking => 'Working';
+  String get coreDigilockerWorking => 'Working...';
 
   @override
-  String get coreKycCompleteAction => 'Complete Action';
+  String get coreKycCompleteAction => 'Complete KYC';
 
   @override
-  String get coreKycIncompleteBody => 'Incomplete Body';
+  String get coreKycIncompleteBody =>
+      'Finish verifying your documents to book and accept trips.';
 
   @override
-  String get coreKycIncompleteTitle => 'Incomplete Title';
+  String get coreKycIncompleteTitle => 'Complete your KYC';
 
   @override
-  String get coreKycNotNow => 'Not Now';
+  String get coreKycNotNow => 'Not now';
 
   @override
-  String get coreKycRejectedBody => 'Rejected Body';
+  String get coreKycRejectedBody =>
+      'Our team could not verify your documents. Please check them and submit again.';
 
   @override
-  String get coreKycRejectedTitle => 'Rejected Title';
+  String get coreKycRejectedTitle => 'KYC rejected';
 
   @override
-  String get coreKycResubmitAction => 'Resubmit Action';
+  String get coreKycResubmitAction => 'Submit again';
 
   @override
-  String get coreKycUnderReviewBody => 'Under Review Body';
+  String get coreKycUnderReviewBody =>
+      'We are reviewing your documents. This usually takes 24-48 hours.';
 
   @override
-  String get coreKycUnderReviewTitle => 'Under Review Title';
+  String get coreKycUnderReviewTitle => 'KYC under review';
 
   @override
-  String get coreKycViewStatusAction => 'View Status Action';
+  String get coreKycViewStatusAction => 'View status';
 
   @override
-  String get coreMapDropTitle => 'Drop Title';
+  String get coreMapDropTitle => 'Drop';
 
   @override
-  String get coreMapExpressLabel => 'Express Label';
+  String get coreMapExpressLabel => 'Express';
 
   @override
-  String get coreMapPickupTitle => 'Pickup Title';
+  String get coreMapPickupTitle => 'Pickup';
 
   @override
-  String get coreMapRouteNotFound => 'Route Not Found';
+  String get coreMapRouteNotFound => 'Route not found';
 
   @override
-  String get deliveryFlowChoosePhoto => 'Choose Photo';
+  String get deliveryFlowChoosePhoto => 'Choose photo';
 
   @override
   String get deliveryFlowCompany => 'Company';
 
   @override
-  String get deliveryFlowContactUnavailable => 'Contact Unavailable';
+  String get deliveryFlowContactUnavailable => 'Contact unavailable';
 
   @override
-  String get deliveryFlowMaxItems => 'Max Items';
+  String get deliveryFlowMaxItems => 'You can upload up to 5 photos.';
 
   @override
   String get deliveryFlowMyQr => 'My QR';
@@ -4184,61 +4219,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deliveryFlowPersonal => 'Personal';
 
   @override
-  String get deliveryFlowPhotosUploaded => 'Photos Uploaded';
+  String get deliveryFlowPhotosUploaded => 'Photos uploaded';
 
   @override
-  String get deliveryFlowRecordVideo => 'Record Video';
+  String get deliveryFlowRecordVideo => 'Record video';
 
   @override
-  String get deliveryFlowSignInContinue => 'Sign In Continue';
+  String get deliveryFlowSignInContinue => 'Please sign in to continue.';
 
   @override
-  String get deliveryFlowSignInUploadPhotos => 'Sign In Upload Photos';
+  String get deliveryFlowSignInUploadPhotos =>
+      'Please sign in to upload photos.';
 
   @override
-  String get deliveryFlowTakePhoto => 'Take Photo';
+  String get deliveryFlowTakePhoto => 'Take photo';
 
   @override
   String get deliveryFlowVerified => 'Verified';
 
   @override
-  String get driverEarningsCurrentBalance => 'Current Balance';
+  String get driverEarningsCurrentBalance => 'Current balance';
 
   @override
-  String get driverEarningsLastMonth => 'Last Month';
+  String get driverEarningsLastMonth => 'Last month';
 
   @override
-  String get driverEarningsNoDeliveries => 'No Deliveries';
+  String get driverEarningsNoDeliveries => 'No deliveries yet';
 
   @override
-  String get driverEarningsReadyPayout => 'Ready Payout';
+  String get driverEarningsReadyPayout => 'Ready for payout';
 
   @override
-  String get driverEarningsThisMonth => 'This Month';
+  String get driverEarningsThisMonth => 'This month';
 
   @override
   String get driverEarningsTrips => 'Trips';
 
   @override
-  String get driverEarningsViewAll => 'View All';
+  String get driverEarningsViewAll => 'View all';
 
   @override
-  String get driverHomeTripAccepted => 'Trip Accepted';
+  String get driverHomeTripAccepted => 'Trip accepted';
 
   @override
-  String get driverHomeTripDeclined => 'Trip Declined';
+  String get driverHomeTripDeclined => 'Trip declined';
 
   @override
   String get driverKycEdit => 'Edit';
 
   @override
-  String get driverKycPickFailed => 'Pick Failed';
+  String get driverKycPickFailed =>
+      'Could not open this right now. Please try again.';
 
   @override
-  String get driverKycSignInToSubmit => 'Sign In to Submit';
+  String get driverKycSignInToSubmit => 'Please sign in to submit your KYC.';
 
   @override
-  String get driverKycSignInToUpload => 'Sign In to Upload';
+  String get driverKycSignInToUpload => 'Please sign in to upload documents.';
 
   @override
   String get driverKycView => 'View';
@@ -4250,13 +4287,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverPaymentPersonal => 'Personal';
 
   @override
-  String get driverPaymentQrUploaded => 'QR Uploaded';
+  String get driverPaymentQrUploaded => 'QR uploaded';
 
   @override
-  String get driverPaymentSignInRecord => 'Sign In Record';
+  String get driverPaymentSignInRecord =>
+      'Please sign in to record this payment.';
 
   @override
-  String get driverPaymentSignInUploadQr => 'Sign In Upload QR';
+  String get driverPaymentSignInUploadQr =>
+      'Please sign in to upload your payment QR.';
 
   @override
   String get driverPaymentVerified => 'Verified';
@@ -4265,13 +4304,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsAbout => 'About';
 
   @override
-  String get gpsAboutSubtitle => 'About Subtitle';
+  String get gpsAboutSubtitle => 'Version, licences and app details';
 
   @override
-  String get gpsAccountDetails => 'Account Details';
+  String get gpsAccountDetails => 'Account details';
 
   @override
-  String get gpsAccountDetailsSubtitle => 'Account Details Subtitle';
+  String get gpsAccountDetailsSubtitle => 'Manage your account information';
 
   @override
   String get gpsAccountSection => 'Account';
@@ -4280,91 +4319,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsActive => 'Active';
 
   @override
-  String get gpsAllFleet => 'All Fleet';
+  String get gpsAllFleet => 'Entire fleet';
 
   @override
-  String get gpsAllVehiclesLiveMap => 'All Vehicles Live Map';
+  String get gpsAllVehiclesLiveMap => 'All vehicles on live map';
 
   @override
   String get gpsAppearance => 'Appearance';
 
   @override
-  String get gpsAppearanceSubtitle => 'Appearance Subtitle';
+  String get gpsAppearanceSubtitle => 'Light, dark or follow your device';
 
   @override
-  String get gpsBackToFleet => 'Back to Fleet';
+  String get gpsBackToFleet => 'Back to fleet';
 
   @override
   String get gpsCached => 'Cached';
 
   @override
-  String get gpsChangePassword => 'Change Password';
+  String get gpsChangePassword => 'Change password';
 
   @override
-  String get gpsChangePasswordSubtitle => 'Change Password Subtitle';
+  String get gpsChangePasswordSubtitle => 'Update your account password';
 
   @override
   String get gpsCompleted => 'Completed';
 
   @override
-  String get gpsCreateGeofence => 'Create Geofence';
+  String get gpsCreateGeofence => 'Create geofence';
 
   @override
   String get gpsCustom => 'Custom';
 
   @override
-  String get gpsDashboardWelcome => 'Dashboard Welcome';
+  String get gpsDashboardWelcome => 'Welcome back';
 
   @override
   String get gpsDeducted => 'Deducted';
 
   @override
-  String get gpsDefineZones => 'Define Zones';
+  String get gpsDefineZones => 'Define zones';
 
   @override
   String get gpsDuration => 'Duration';
 
   @override
-  String get gpsDurationSubtitle => 'Duration Subtitle';
+  String get gpsDurationSubtitle => 'Time spent driving or idling';
 
   @override
   String get gpsExpired => 'Expired';
 
   @override
-  String get gpsExpiredTokensRemoved => 'Expired tokens Removed';
+  String get gpsExpiredTokensRemoved => 'Expired tokens were removed';
 
   @override
   String get gpsFilter => 'Filter';
 
   @override
-  String get gpsFilterAll => 'Filter All';
+  String get gpsFilterAll => 'All';
 
   @override
   String get gpsFleet => 'Fleet';
 
   @override
-  String get gpsFleetStatus => 'Fleet Status';
+  String get gpsFleetStatus => 'Fleet status';
 
   @override
   String get gpsFrom => 'From';
 
   @override
-  String get gpsFuelSummary => 'Fuel Summary';
+  String get gpsFuelSummary => 'Fuel summary';
 
   @override
-  String get gpsGenerateReport => 'Generate Report';
+  String get gpsGenerateReport => 'Generate report';
 
   @override
   String get gpsGeofences => 'Geofences';
 
   @override
-  String get gpsGeofencesSubtitle => 'Geofences Subtitle';
+  String get gpsGeofencesSubtitle => 'Automatic alerts on entry and exit';
 
   @override
-  String get gpsHelpSupport => 'Help Support';
+  String get gpsHelpSupport => 'Help & support';
 
   @override
-  String get gpsHelpSupportSubtitle => 'Help Support Subtitle';
+  String get gpsHelpSupportSubtitle => 'Get help or contact our team';
 
   @override
   String get gpsInvoices => 'Invoices';
@@ -4373,20 +4412,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsList => 'List';
 
   @override
-  String get gpsLiveFleetTracking => 'Live Fleet Tracking';
+  String get gpsLiveFleetTracking => 'Live fleet tracking';
 
   @override
   String get gpsLiveMap => 'Live map';
 
   @override
   String get gpsLiveTrackingUnavailableFleet =>
-      'Live Tracking Unavailable Fleet';
+      'Live tracking is unavailable for this fleet.';
 
   @override
-  String get gpsLogout => 'Logout';
+  String get gpsLogout => 'Log out';
 
   @override
-  String get gpsLogoutSubtitle => 'Logout Subtitle';
+  String get gpsLogoutSubtitle => 'Sign out of this device';
 
   @override
   String get gpsMap => 'Map';
@@ -4395,16 +4434,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsModules => 'Modules';
 
   @override
-  String get gpsMonthlyPlan => 'Monthly Plan';
+  String get gpsMonthlyPlan => 'Monthly plan';
 
   @override
   String get gpsMyFleet => 'My fleet';
 
   @override
-  String get gpsMyVehicles => 'My Vehicles';
+  String get gpsMyVehicles => 'My vehicles';
 
   @override
-  String get gpsMyVehiclesSubtitle => 'My Vehicles Subtitle';
+  String get gpsMyVehiclesSubtitle => 'Devices linked to your account';
 
   @override
   String get gpsNavDashboard => 'Dashboard';
@@ -4419,22 +4458,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsNavVehicles => 'Vehicles';
 
   @override
-  String get gpsNoData => 'No Data';
+  String get gpsNoData => 'No data';
 
   @override
-  String get gpsNoGeofencesSubtitle => 'No Geofences Subtitle';
+  String get gpsNoGeofencesSubtitle =>
+      'Create a geofence to get alerts when a vehicle enters or leaves a zone.';
 
   @override
-  String get gpsNoGeofencesYet => 'No Geofences Yet';
+  String get gpsNoGeofencesYet => 'No geofences yet';
 
   @override
-  String get gpsNoMoreTransactions => 'No More Transactions';
+  String get gpsNoMoreTransactions => 'No more transactions';
 
   @override
   String get gpsNotifications => 'Notifications';
 
   @override
-  String get gpsNotificationsSubtitle => 'Notifications Subtitle';
+  String get gpsNotificationsSubtitle => 'Alerts about your vehicles';
 
   @override
   String get gpsOffline => 'Offline';
@@ -4443,79 +4483,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsOnline => 'Online';
 
   @override
-  String get gpsProfileSubtitle => 'Profile Subtitle';
+  String get gpsProfileSubtitle => 'Manage your account and preferences';
 
   @override
-  String get gpsRecentActivity => 'Recent Activity';
+  String get gpsRecentActivity => 'Recent activity';
 
   @override
-  String get gpsReportType => 'Report Type';
+  String get gpsReportType => 'Report type';
 
   @override
-  String get gpsReportTypeSubtitle => 'Report Type Subtitle';
+  String get gpsReportTypeSubtitle => 'Choose what you want to review';
 
   @override
-  String get gpsReportsSecureNote => 'Reports Secure Note';
+  String get gpsReportsSecureNote =>
+      'Reports are generated from your account data and stay private.';
 
   @override
-  String get gpsReportsSubtitle => 'Reports Subtitle';
+  String get gpsReportsSubtitle => 'Track usage, routes and costs over time';
 
   @override
-  String get gpsRetry => 'Retry';
+  String get gpsRetry => 'Try again';
 
   @override
-  String get gpsRouteHistory => 'Route History';
+  String get gpsRouteHistory => 'Route history';
 
   @override
   String get gpsRunning => 'Running';
 
   @override
-  String get gpsSearchGeofences => 'Search Geofences';
+  String get gpsSearchGeofences => 'Search geofences';
 
   @override
-  String get gpsSearchTransactions => 'Search Transactions';
+  String get gpsSearchTransactions => 'Search transactions';
 
   @override
-  String get gpsSearchVehiclesHint => 'Search Vehicles Hint';
+  String get gpsSearchVehiclesHint => 'Search by number or name';
 
   @override
-  String get gpsSelectFromFleet => 'Select From Fleet';
+  String get gpsSelectFromFleet => 'Select from your fleet';
 
   @override
-  String get gpsSelectVehicle => 'Select Vehicle';
+  String get gpsSelectVehicle => 'Select vehicle';
 
   @override
-  String get gpsSelectVehicleOrFleet => 'Select Vehicle or Fleet';
+  String get gpsSelectVehicleOrFleet =>
+      'Pick a single vehicle or the whole fleet';
 
   @override
   String get gpsSettings => 'Settings';
 
   @override
-  String get gpsSettingsSubtitle => 'Settings Subtitle';
+  String get gpsSettingsSubtitle => 'Configure your tracking preferences';
 
   @override
-  String get gpsSignInForFleetDevices => 'Sign In For Fleet Devices';
+  String get gpsSignInForFleetDevices =>
+      'Please sign in to view your fleet devices.';
 
   @override
-  String get gpsSignInForLiveFleet => 'Sign In For Live Fleet';
+  String get gpsSignInForLiveFleet => 'Please sign in to view the live fleet.';
 
   @override
-  String get gpsSignInForVehicle => 'Sign In For Vehicle';
+  String get gpsSignInForVehicle => 'Please sign in to view this vehicle.';
 
   @override
   String get gpsStopped => 'Stopped';
 
   @override
-  String get gpsSubscriptionPayment => 'Subscription Payment';
+  String get gpsSubscriptionPayment => 'Subscription payment';
 
   @override
-  String get gpsThisWeek => 'This Week';
+  String get gpsThisWeek => 'This week';
 
   @override
-  String get gpsTimeEightMinsAgo => 'Time Eight Mins Ago';
+  String get gpsTimeEightMinsAgo => '8 min ago';
 
   @override
-  String get gpsTimeTwoMinsAgo => 'Time Two Mins Ago';
+  String get gpsTimeTwoMinsAgo => '2 min ago';
 
   @override
   String get gpsTo => 'To';
@@ -4524,58 +4567,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gpsToday => 'Today';
 
   @override
-  String get gpsTokenBalance => 'Token Balance';
+  String get gpsTokenBalance => 'Token balance';
 
   @override
-  String get gpsTokenExpiry => 'Token Expiry';
+  String get gpsTokenExpiry => 'Token expiry';
 
   @override
-  String get gpsTokenPurchase => 'Token Purchase';
+  String get gpsTokenPurchase => 'Token purchase';
 
   @override
   String get gpsTokens => 'Tokens';
 
   @override
-  String get gpsTokensAdded => 'Tokens Added';
+  String get gpsTokensAdded => 'Tokens added';
 
   @override
-  String get gpsTotalVehicles => 'Total Vehicles';
+  String get gpsTotalVehicles => 'Total vehicles';
 
   @override
-  String get gpsTotalVehiclesCenter => 'Total Vehicles Center';
+  String get gpsTotalVehiclesCenter => 'Vehicles reporting location';
 
   @override
   String get gpsTransactions => 'Transactions';
 
   @override
-  String get gpsTripSummary => 'Trip Summary';
+  String get gpsTripSummary => 'Trip summary';
 
   @override
-  String get gpsUsageSummary => 'Usage Summary';
+  String get gpsUsageSummary => 'Usage summary';
 
   @override
   String get gpsVehicle => 'Vehicle';
 
   @override
-  String get gpsVehicleLiveMap => 'Vehicle Live Map';
+  String get gpsVehicleLiveMap => 'Vehicle live map';
 
   @override
-  String get gpsVehicleNotFound => 'Vehicle Not Found';
+  String get gpsVehicleNotFound => 'Vehicle not found';
 
   @override
   String get gpsViaRazorpay => 'Via Razorpay';
 
   @override
-  String get gpsViewAll => 'View All';
+  String get gpsViewAll => 'View all';
 
   @override
-  String get gpsVsLastWeek => 'Vs Last Week';
+  String get gpsVsLastWeek => 'vs last week';
 
   @override
   String get gpsWalletBilling => 'Wallet & billing';
 
   @override
-  String get gpsWelcomeBonus => 'Welcome Bonus';
+  String get gpsWelcomeBonus => 'Welcome bonus';
 
   @override
   String get gpsYesterday => 'Yesterday';
@@ -4584,10 +4627,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyDetailsCancel => 'Cancel';
 
   @override
-  String get historyDetailsEmailInvoice => 'Email Invoice';
+  String get historyDetailsEmailInvoice => 'Email invoice';
 
   @override
-  String get historyDetailsRetry => 'Retry';
+  String get historyDetailsRetry => 'Try again';
 
   @override
   String get historyDetailsSend => 'Send';
@@ -4599,139 +4642,146 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historySegmentPending => 'Pending';
 
   @override
-  String get locationFlowAddLoading => 'Add Loading';
+  String get locationFlowAddLoading => 'Add loading point';
 
   @override
-  String get locationFlowAddLoadingHint => 'Add Loading Hint';
+  String get locationFlowAddLoadingHint => 'Where should the goods be loaded?';
 
   @override
-  String get locationFlowAddUnloading => 'Add Unloading';
+  String get locationFlowAddUnloading => 'Add unloading point';
 
   @override
-  String get locationFlowAddUnloadingHint => 'Add Unloading Hint';
+  String get locationFlowAddUnloadingHint =>
+      'Where should the goods be delivered?';
 
   @override
-  String get locationFlowDropHint => 'Drop Hint';
+  String get locationFlowDropHint => 'Search the drop location';
 
   @override
-  String get locationFlowDropSubtitle => 'Drop Subtitle';
+  String get locationFlowDropSubtitle => 'Where is the goods going?';
 
   @override
-  String get locationFlowDropTitle => 'Drop Title';
+  String get locationFlowDropTitle => 'Drop location';
 
   @override
-  String get locationFlowFetching => 'Fetching';
+  String get locationFlowFetching => 'Finding your location...';
 
   @override
-  String get locationFlowMovePin => 'Move Pin';
+  String get locationFlowMovePin => 'Move the pin to adjust the point';
 
   @override
-  String get locationFlowOwnUnavailable => 'Own Unavailable';
+  String get locationFlowOwnUnavailable =>
+      'We could not read your current location.';
 
   @override
-  String get locationFlowPermissionNeeded => 'Permission Needed';
+  String get locationFlowPermissionNeeded =>
+      'Location permission is needed to continue.';
 
   @override
-  String get locationFlowPickupHint => 'Pickup Hint';
+  String get locationFlowPickupHint => 'Search the pickup location';
 
   @override
-  String get locationFlowPickupSubtitle => 'Pickup Subtitle';
+  String get locationFlowPickupSubtitle => 'Where is the goods coming from?';
 
   @override
-  String get locationFlowPickupTitle => 'Pickup Title';
+  String get locationFlowPickupTitle => 'Pickup location';
 
   @override
-  String get locationFlowPinHint => 'Pin Hint';
+  String get locationFlowPinHint => 'Drag the pin to the exact spot';
 
   @override
-  String get locationFlowPinLoading => 'Pin Loading';
+  String get locationFlowPinLoading => 'Place loading pin';
 
   @override
-  String get locationFlowPinUnloading => 'Pin Unloading';
+  String get locationFlowPinUnloading => 'Place drop pin';
 
   @override
-  String get locationFlowResolveCurrent => 'Resolve Current';
+  String get locationFlowResolveCurrent =>
+      'We could not determine your current location.';
 
   @override
-  String get locationFlowResolvePoint => 'Resolve Point';
+  String get locationFlowResolvePoint =>
+      'We could not locate that point on the map.';
 
   @override
-  String get locationFlowSavedTitle => 'Saved Title';
+  String get locationFlowSavedTitle => 'Location saved';
 
   @override
-  String get locationFlowSuggestionsError => 'Suggestions Error';
+  String get locationFlowSuggestionsError =>
+      'Could not load location suggestions';
 
   @override
-  String get locationFlowTurnOnLocation => 'Turn On Location';
+  String get locationFlowTurnOnLocation => 'Please turn on location services.';
 
   @override
-  String get locationFlowUseCurrent => 'Use Current';
+  String get locationFlowUseCurrent => 'Use current location';
 
   @override
-  String get locationFlowUseCurrentPickup => 'Use Current Pickup';
+  String get locationFlowUseCurrentPickup => 'Use my current location';
 
   @override
-  String get manageAccountActiveLabel => 'Active Label';
+  String get manageAccountActiveLabel => 'Active';
 
   @override
-  String get manageAccountActiveNo => 'Active No';
+  String get manageAccountActiveNo => 'No';
 
   @override
-  String get manageAccountActiveYes => 'Active Yes';
+  String get manageAccountActiveYes => 'Yes';
 
   @override
-  String get manageAccountBasicDetails => 'Basic Details';
+  String get manageAccountBasicDetails => 'Basic details';
 
   @override
-  String get manageAccountBusinessAddressLabel => 'Business Address Label';
+  String get manageAccountBusinessAddressLabel => 'Business address';
 
   @override
-  String get manageAccountBusinessDetails => 'Business Details';
+  String get manageAccountBusinessDetails => 'Business details';
 
   @override
-  String get manageAccountChangePhoto => 'Change Photo';
+  String get manageAccountChangePhoto => 'Change photo';
 
   @override
-  String get manageAccountEditProfileSubtitle => 'Edit Profile Subtitle';
+  String get manageAccountEditProfileSubtitle =>
+      'Update your name, email, phone and photo';
 
   @override
-  String get manageAccountEditProfileTitle => 'Edit Profile Title';
+  String get manageAccountEditProfileTitle => 'Edit profile';
 
   @override
-  String get manageAccountEmailLabel => 'Email Label';
+  String get manageAccountEmailLabel => 'Email';
 
   @override
-  String get manageAccountEnterEmail => 'Enter Email';
+  String get manageAccountEnterEmail => 'Enter your email';
 
   @override
-  String get manageAccountEnterName => 'Enter Name';
+  String get manageAccountEnterName => 'Enter your name';
 
   @override
-  String get manageAccountEnterServiceCity => 'Enter Service City';
+  String get manageAccountEnterServiceCity => 'Enter your service city';
 
   @override
-  String get manageAccountEnterValidEmail => 'Enter Valid Email';
+  String get manageAccountEnterValidEmail => 'Enter a valid email address';
 
   @override
-  String get manageAccountFullNameLabel => 'Full Name Label';
+  String get manageAccountFullNameLabel => 'Full name';
 
   @override
-  String get manageAccountOptionalTag => 'Optional Tag';
+  String get manageAccountOptionalTag => 'Optional';
 
   @override
-  String get manageAccountPhoneLabel => 'Phone Label';
+  String get manageAccountPhoneLabel => 'Phone';
 
   @override
   String get manageAccountProfileUpdated => 'Profile Updated';
 
   @override
-  String get manageAccountSaveChanges => 'Save Changes';
+  String get manageAccountSaveChanges => 'Save changes';
 
   @override
-  String get manageAccountServiceCityLabel => 'Service City Label';
+  String get manageAccountServiceCityLabel => 'Service city';
 
   @override
-  String get manageAccountYourNameFallback => 'Your Name Fallback';
+  String get manageAccountYourNameFallback => 'Your name';
 
   @override
   String get negotiationAccept => 'Accept';
@@ -4740,19 +4790,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get negotiationBack => 'Back';
 
   @override
-  String get negotiationBrokerConfirmBody => 'Broker Confirm Body';
+  String get negotiationBrokerConfirmBody =>
+      'Waiting for the broker to confirm the new fare.';
 
   @override
-  String get negotiationBrokerConfirmTitle => 'Broker Confirm Title';
+  String get negotiationBrokerConfirmTitle => 'Confirming with broker';
 
   @override
-  String get negotiationBrokerOfferBody => 'Broker Offer Body';
+  String get negotiationBrokerOfferBody =>
+      'The broker has sent a revised fare. Review it below.';
 
   @override
-  String get negotiationBrokerOfferLabel => 'Broker Offer Label';
+  String get negotiationBrokerOfferLabel => 'Broker\'s offer';
 
   @override
-  String get negotiationBrokerOfferTitle => 'Broker Offer Title';
+  String get negotiationBrokerOfferTitle => 'New offer from broker';
 
   @override
   String get negotiationConfirm => 'Confirm';
@@ -4761,64 +4813,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get negotiationDecline => 'Decline';
 
   @override
-  String get negotiationDriverAcceptedTitle => 'Driver Accepted Title';
+  String get negotiationDriverAcceptedTitle => 'Driver accepted';
 
   @override
-  String get negotiationDriverConfirmBody => 'Driver Confirm Body';
+  String get negotiationDriverConfirmBody =>
+      'Waiting for the driver to confirm the new fare.';
 
   @override
-  String get negotiationDriverConfirmNowTitle => 'Driver Confirm Now Title';
+  String get negotiationDriverConfirmNowTitle => 'Confirm with driver';
 
   @override
-  String get negotiationDriverFallback => 'Driver Fallback';
+  String get negotiationDriverFallback => 'Driver';
 
   @override
-  String get negotiationDriverResponseBody => 'Driver Response Body';
+  String get negotiationDriverResponseBody =>
+      'The driver has responded to your fare change.';
 
   @override
-  String get negotiationDriverResponseTitle => 'Driver Response Title';
+  String get negotiationDriverResponseTitle => 'Driver responded';
 
   @override
-  String get negotiationFareChangeBody => 'Fare Change Body';
+  String get negotiationFareChangeBody =>
+      'We have sent your new fare. Waiting for a response.';
 
   @override
-  String get negotiationFareChangeTitle => 'Fare Change Title';
+  String get negotiationFareChangeTitle => 'Fare change sent';
 
   @override
-  String get negotiationHandshakeProgress => 'Handshake Progress';
+  String get negotiationHandshakeProgress =>
+      'Both sides are confirming the new fare';
 
   @override
-  String get negotiationOfferCaption => 'Offer Caption';
+  String get negotiationOfferCaption => 'Fare for this booking';
 
   @override
-  String get negotiationOfferSentBody => 'Offer Sent Body';
+  String get negotiationOfferSentBody =>
+      'Your offer has been sent. Waiting for the other side.';
 
   @override
-  String get negotiationOfferSentTitle => 'Offer Sent Title';
+  String get negotiationOfferSentTitle => 'Offer sent';
 
   @override
-  String get negotiationPillActionNeeded => 'Pill Action Needed';
+  String get negotiationPillActionNeeded => 'Action needed';
 
   @override
-  String get negotiationPillLiveOffer => 'Pill Live Offer';
+  String get negotiationPillLiveOffer => 'Live offer';
 
   @override
-  String get negotiationPillNewCounter => 'Pill New Counter';
+  String get negotiationPillNewCounter => 'New counter offer';
 
   @override
-  String get negotiationPillWithBroker => 'Pill With Broker';
+  String get negotiationPillWithBroker => 'With broker';
 
   @override
-  String get negotiationWaitingBrokerBody => 'Waiting Broker Body';
+  String get negotiationWaitingBrokerBody =>
+      'We have sent your fare. Waiting for the broker to respond.';
 
   @override
-  String get negotiationWaitingBrokerTitle => 'Waiting Broker Title';
+  String get negotiationWaitingBrokerTitle => 'Waiting for broker';
 
   @override
-  String get negotiationWaitingDriverBody => 'Waiting Driver Body';
+  String get negotiationWaitingDriverBody =>
+      'We have sent the new fare to the driver.';
 
   @override
-  String get negotiationWaitingDriverTitle => 'Waiting Driver Title';
+  String get negotiationWaitingDriverTitle => 'Waiting for driver';
 
   @override
   String get onboardingFastSubtitle =>
@@ -4851,172 +4910,176 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingTrackingTitle => 'Live tracking';
 
   @override
-  String get orderAcceptedAssignedTitle => 'Assigned Title';
+  String get orderAcceptedAssignedTitle => 'Trip assigned';
 
   @override
-  String get orderAcceptedOfferUnavailable => 'Offer Unavailable';
+  String get orderAcceptedOfferUnavailable =>
+      'This offer is no longer available.';
 
   @override
-  String get orderAcceptedRequestTitle => 'Request Title';
+  String get orderAcceptedRequestTitle => 'New request';
 
   @override
-  String get orderAcceptedRequestUpdated => 'Request Updated';
+  String get orderAcceptedRequestUpdated =>
+      'This request was updated. Pull down to refresh.';
 
   @override
-  String get orderAcceptedSignInContinue => 'Sign In Continue';
+  String get orderAcceptedSignInContinue => 'Please sign in to continue.';
 
   @override
-  String get photoUploadChoosePhoto => 'Choose Photo';
+  String get photoUploadChoosePhoto => 'Choose photo';
 
   @override
-  String get photoUploadMaxItems => 'Max Items';
+  String get photoUploadMaxItems => 'You can upload up to 5 photos.';
 
   @override
-  String get photoUploadRecordVideo => 'Record Video';
+  String get photoUploadRecordVideo => 'Record video';
 
   @override
-  String get photoUploadSignInUpload => 'Sign In Upload';
+  String get photoUploadSignInUpload => 'Please sign in to upload photos.';
 
   @override
-  String get photoUploadTakePhoto => 'Take Photo';
+  String get photoUploadTakePhoto => 'Take photo';
 
   @override
-  String get podWaitingCouldNotComplete => 'Could Not Complete';
+  String get podWaitingCouldNotComplete => 'Could not complete';
 
   @override
-  String get podWaitingFinishing => 'Finishing';
+  String get podWaitingFinishing => 'Finishing up...';
 
   @override
-  String get podWaitingNewPhotosFallback => 'New Photos Fallback';
+  String get podWaitingNewPhotosFallback => 'New delivery photos';
 
   @override
-  String get podWaitingPhotosUp => 'Photos Up';
+  String get podWaitingPhotosUp => 'Uploading photos...';
 
   @override
-  String get podWaitingRejectedTitle => 'Rejected Title';
+  String get podWaitingRejectedTitle => 'Proof of delivery rejected';
 
   @override
-  String get podWaitingTitle => 'Title';
+  String get podWaitingTitle => 'Proof of delivery';
 
   @override
-  String get podWaitingTryAgain => 'Try Again';
+  String get podWaitingTryAgain => 'Try again';
 
   @override
-  String get podWaitingUploadNew => 'Upload New';
+  String get podWaitingUploadNew => 'Upload new photos';
 
   @override
-  String get podWaitingWaitingReview => 'Waiting Review';
+  String get podWaitingWaitingReview => 'Waiting for review';
 
   @override
-  String get sessionExpiredEmailHint => 'Email Hint';
+  String get sessionExpiredEmailHint => 'you@example.com';
 
   @override
-  String get sessionExpiredEmailLabel => 'Email Label';
+  String get sessionExpiredEmailLabel => 'Email';
 
   @override
-  String get sessionExpiredEnterEmailPassword => 'Enter Email Password';
+  String get sessionExpiredEnterEmailPassword =>
+      'Enter your email and password to continue.';
 
   @override
-  String get sessionExpiredPasswordHint => 'Password Hint';
+  String get sessionExpiredPasswordHint => 'Enter your password';
 
   @override
-  String get sessionExpiredPasswordLabel => 'Password Label';
+  String get sessionExpiredPasswordLabel => 'Password';
 
   @override
-  String get sessionExpiredSignInButton => 'Sign In Button';
+  String get sessionExpiredSignInButton => 'Sign in';
 
   @override
-  String get sessionExpiredSubtitle => 'Subtitle';
+  String get sessionExpiredSubtitle =>
+      'Sign in again to pick up where you left off.';
 
   @override
-  String get sessionExpiredTitle => 'Title';
+  String get sessionExpiredTitle => 'Session expired';
 
   @override
   String get sharedExpressLabel => 'Express';
 
   @override
-  String get sharedHaltingChargeApplied => 'Charge Applied';
+  String get sharedHaltingChargeApplied => 'Halting charge applied';
 
   @override
-  String get sharedHaltingExceededTitle => 'Exceeded Title';
+  String get sharedHaltingExceededTitle => 'Free time exceeded';
 
   @override
-  String get sharedHaltingFreeWindowTitle => 'Free Window Title';
+  String get sharedHaltingFreeWindowTitle => 'Free waiting time';
 
   @override
-  String get sharedHaltingRemainingTitle => 'Remaining Title';
+  String get sharedHaltingRemainingTitle => 'Time remaining';
 
   @override
-  String get signupAccountCreated => 'Account Created';
+  String get signupAccountCreated => 'Your account has been created.';
 
   @override
-  String get signupAgreeTerms => 'Agree Terms';
+  String get signupAgreeTerms => 'I agree to the Terms and Privacy Policy';
 
   @override
-  String get signupAllFieldsRequired => 'All Fields Required';
+  String get signupAllFieldsRequired => 'All fields are required';
 
   @override
-  String get signupAlreadyHaveAccount => 'Already Have Account';
+  String get signupAlreadyHaveAccount => 'Already have an account?';
 
   @override
-  String get signupBackToLogin => 'Back to Login';
+  String get signupBackToLogin => 'Back to login';
 
   @override
-  String get signupCreateAccount => 'Create Account';
+  String get signupCreateAccount => 'Create account';
 
   @override
-  String get signupEmailHint => 'Email Hint';
+  String get signupEmailHint => 'you@example.com';
 
   @override
-  String get signupEmailLabel => 'Email Label';
+  String get signupEmailLabel => 'Email';
 
   @override
-  String get signupFullNameHint => 'Full Name Hint';
+  String get signupFullNameHint => 'Enter your full name';
 
   @override
-  String get signupFullNameLabel => 'Full Name Label';
+  String get signupFullNameLabel => 'Full name';
 
   @override
-  String get signupLoginAction => 'Login Action';
+  String get signupLoginAction => 'Log in';
 
   @override
-  String get signupPasswordHelper => 'Password Helper';
+  String get signupPasswordHelper => 'Use at least 8 characters';
 
   @override
-  String get signupPasswordHint => 'Password Hint';
+  String get signupPasswordHint => 'At least 8 characters';
 
   @override
-  String get signupPasswordLabel => 'Password Label';
+  String get signupPasswordLabel => 'Password';
 
   @override
-  String get signupPhoneHint => 'Phone Hint';
+  String get signupPhoneHint => '10-digit mobile number';
 
   @override
-  String get signupPhoneLabel => 'Phone Label';
+  String get signupPhoneLabel => 'Phone';
 
   @override
-  String get signupSubtitle => 'Subtitle';
+  String get signupSubtitle => 'Create your account to start booking';
 
   @override
-  String get signupTermsRequired => 'Terms Required';
+  String get signupTermsRequired => 'Please accept the terms to continue.';
 
   @override
-  String get signupTitle => 'Title';
+  String get signupTitle => 'Create your account';
 
   @override
-  String get thankYouBackToTrips => 'Back to Trips';
+  String get thankYouBackToTrips => 'Back to trips';
 
   @override
-  String get thankYouDeliveryComplete => 'Delivery Complete';
+  String get thankYouDeliveryComplete => 'Delivery complete';
 
   @override
-  String get thankYouForCompleting => 'For Completing';
+  String get thankYouForCompleting => 'for completing this delivery';
 
   @override
   String get thankYouPaid => 'Paid';
 
   @override
-  String get thankYouTripCompleted => 'Trip Completed';
+  String get thankYouTripCompleted => 'Trip completed';
 
   @override
   String get tripSummaryCargo => 'Cargo';
@@ -5025,67 +5088,68 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripSummaryDelivered => 'Delivered';
 
   @override
-  String get tripSummaryInProgress => 'In Progress';
+  String get tripSummaryInProgress => 'In progress';
 
   @override
-  String get tripSummaryLocationUnavailable => 'Location Unavailable';
+  String get tripSummaryLocationUnavailable => 'Location unavailable';
 
   @override
-  String get truckSearchAllDeclinedHint => 'All Declined Hint';
+  String get truckSearchAllDeclinedHint =>
+      'Nearby drivers declined. Try widening your search radius.';
 
   @override
   String get truckSearchBack => 'Back';
 
   @override
-  String get truckSearchCancel => 'Cancel';
+  String get truckSearchCancel => 'Cancel search';
 
   @override
-  String get truckSearchCloseTooltip => 'Close tooltip';
+  String get truckSearchCloseTooltip => 'Close';
 
   @override
-  String get truckSearchConfirmTurn => 'Confirm Turn';
+  String get truckSearchConfirmTurn => 'Confirming your acceptance';
 
   @override
   String get truckSearchConfirmed => 'Confirmed';
 
   @override
-  String get truckSearchDriverFallback => 'Driver Fallback';
+  String get truckSearchDriverFallback => 'Driver';
 
   @override
-  String get truckSearchFindingDrivers => 'Finding Drivers';
+  String get truckSearchFindingDrivers => 'Finding drivers';
 
   @override
-  String get truckSearchFindingNearby => 'Finding Nearby';
+  String get truckSearchFindingNearby => 'Looking for drivers near your pickup';
 
   @override
-  String get truckSearchGoBack => 'Go Back';
+  String get truckSearchGoBack => 'Go back';
 
   @override
-  String get truckSearchKeepSearching => 'Keep Searching';
+  String get truckSearchKeepSearching => 'Keep searching';
 
   @override
-  String get truckSearchNewFare => 'New Fare';
+  String get truckSearchNewFare => 'New fare received';
 
   @override
-  String get truckSearchNoDriverAccepted => 'No Driver Accepted';
+  String get truckSearchNoDriverAccepted => 'No driver accepted yet';
 
   @override
-  String get truckSearchNoResponse => 'No Response';
+  String get truckSearchNoResponse => 'No response';
 
   @override
-  String get truckSearchNotifyingDrivers => 'Notifying Drivers';
+  String get truckSearchNotifyingDrivers => 'Notifying drivers nearby';
 
   @override
-  String get truckSearchRetry => 'Retry';
+  String get truckSearchRetry => 'Try again';
 
   @override
   String get truckSearchSearching => 'Searching';
 
   @override
-  String get truckSearchWaitingConfirm => 'Waiting Confirm';
+  String get truckSearchWaitingConfirm => 'Waiting for confirmation';
 
   @override
-  String get truckSearchWaitingResponse => 'Waiting Response';
+  String get truckSearchWaitingResponse => 'Waiting for responses';
 
   @override
   String get negotiationContinuePrice => 'Continue price';
@@ -5493,4 +5557,629 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vehicleTruckPooling => 'Truck pooling';
+
+  @override
+  String get historyDetailsTripDetails => 'Trip details';
+
+  @override
+  String get historyDetailsEarnings => 'Earnings';
+
+  @override
+  String get historyDetailsOpenInMaps => 'Open in Maps';
+
+  @override
+  String get historyDetailsMissingBookingId => 'Missing booking id.';
+
+  @override
+  String get historyDetailsSignInToView =>
+      'Please sign in again to view delivery details.';
+
+  @override
+  String get historyDetailsLoadFailed => 'Unable to load delivery details.';
+
+  @override
+  String get historyDetailsSignInToDownload =>
+      'Please sign in again to download the invoice.';
+
+  @override
+  String get historyDetailsSignInToEmail =>
+      'Please sign in again to email the invoice.';
+
+  @override
+  String get historyDetailsSignInToNotify =>
+      'Please sign in again to notify the client.';
+
+  @override
+  String historyDetailsEmailBody(Object bookingRef) {
+    return 'Please find attached the invoice for booking $bookingRef.';
+  }
+
+  @override
+  String get historyDetailsPreviousDriver => 'Previous driver';
+
+  @override
+  String get historyDetailsNewDriver => 'New driver';
+
+  @override
+  String historyDetailsDriverChanged(Object count) {
+    return 'Driver changed ($count)';
+  }
+
+  @override
+  String deliveryDetailsStopLabel(Object stop) {
+    return '$stop point';
+  }
+
+  @override
+  String get deliveryDetailsStopsTitle => 'Loading & unloading stops';
+
+  @override
+  String get deliveryDetailsConfirmDropReached =>
+      'Confirm when you have reached the drop point.';
+
+  @override
+  String get deliveryDetailsLoadingEllipsis => 'Loading...';
+
+  @override
+  String get deliveryDetailsEnterPickupCode => 'Enter pickup code';
+
+  @override
+  String get deliveryDetailsConfirmPickup => 'Confirm pickup';
+
+  @override
+  String get deliveryDetailsOpenPickupInMaps => 'Open pickup in Google Maps';
+
+  @override
+  String get deliveryDetailsOpenDropInMaps => 'Open drop in Google Maps';
+
+  @override
+  String get deliveryDetailsDropLocationMissing => 'Drop location not provided';
+
+  @override
+  String get deliveryDetailsSignInToContinue =>
+      'Please sign in again to continue.';
+
+  @override
+  String get driverKycUploadDocumentsTitle => 'Upload documents';
+
+  @override
+  String get driverKycUploadDocumentsSubtitle =>
+      'Upload clear photos of the following documents.';
+
+  @override
+  String get driverKycVerifyIdentityTitle => 'Verify your identity';
+
+  @override
+  String get driverKycRequiredBadge => 'Required';
+
+  @override
+  String get driverKycNoActiveSession => 'No active session found.';
+
+  @override
+  String get driverKycConfirmAccuracy =>
+      'Please confirm that all information is accurate.';
+
+  @override
+  String get driverKycSubmittedDocuments => 'Submitted documents';
+
+  @override
+  String get driverKycVerifyCarefully =>
+      'Please verify all information carefully. Incorrect information may delay KYC approval.';
+
+  @override
+  String get driverKycSubmitForReview => 'Submit for review';
+
+  @override
+  String get driverKycSourceLabelSubmittedUrl => 'Submitted URL';
+
+  @override
+  String get addVehicleInsuranceExpiryHelp => 'Select insurance expiry date';
+
+  @override
+  String get addVehicleEditTruckTitle => 'Edit truck';
+
+  @override
+  String get addVehicleAddTruckTitle => 'Add truck';
+
+  @override
+  String get addVehicleEditTruckSubtitle =>
+      'Update the truck details and save the changes.';
+
+  @override
+  String get addVehicleAddTruckSubtitle =>
+      'Choose the truck type and fill in the fleet details.';
+
+  @override
+  String get addVehicleErrRegistration => 'Enter registration number';
+
+  @override
+  String get addVehicleErrCapacity => 'Enter capacity';
+
+  @override
+  String get addVehicleErrSelectDriver => 'Select a driver';
+
+  @override
+  String get addVehicleErrMake => 'Enter truck make';
+
+  @override
+  String get addVehicleErrYear => 'Enter a valid year';
+
+  @override
+  String get addVehicleErrInsuranceExpiry => 'Enter insurance expiry date';
+
+  @override
+  String get addVehicleUpdateTruck => 'Update truck';
+
+  @override
+  String get addDriverEditTitle => 'Edit driver';
+
+  @override
+  String get addDriverAddTitle => 'Add driver';
+
+  @override
+  String get addDriverEditSubtitle => 'Update the driver account';
+
+  @override
+  String get addDriverAddSubtitle => 'Add a new driver to your fleet';
+
+  @override
+  String get addDriverUpdateAction => 'Update driver';
+
+  @override
+  String get addDriverAddPhotoTitle => 'Add driver photo';
+
+  @override
+  String get addDriverErrName => 'Enter full name';
+
+  @override
+  String get addDriverErrEmail => 'Enter email';
+
+  @override
+  String get addDriverEmailHelper =>
+      'Enter a valid email address — the driver logs in with email + password.';
+
+  @override
+  String get addDriverErrMobile => 'Enter mobile number';
+
+  @override
+  String get addDriverMobileHelper => 'Enter a valid 10-digit phone number.';
+
+  @override
+  String get addDriverErrLicense => 'Enter license number';
+
+  @override
+  String get brokerNotificationsRetry => 'Retry';
+
+  @override
+  String get brokerNotificationsEmptyTitle => 'No notifications yet';
+
+  @override
+  String get brokerNotificationsGenericTitle => 'Notification';
+
+  @override
+  String get brokerNotificationsToday => 'Today';
+
+  @override
+  String get brokerNotificationsYesterday => 'Yesterday';
+
+  @override
+  String get brokerNotificationsEarlier => 'Earlier';
+
+  @override
+  String get brokerNotificationsViewDetails => 'View details';
+
+  @override
+  String get brokerNotificationsViewTrip => 'View trip';
+
+  @override
+  String get brokerNotificationsOpenChat => 'Open chat';
+
+  @override
+  String get clientSavedSearchHintField => 'Search saved addresses...';
+
+  @override
+  String get clientSavedTooltipOpenMap => 'Open map picker';
+
+  @override
+  String get clientSavedTooltipSetDefault => 'Set as default';
+
+  @override
+  String get clientSavedTooltipEdit => 'Edit';
+
+  @override
+  String get clientSavedTooltipRemove => 'Remove';
+
+  @override
+  String get clientSavedDropoffTag => 'Drop-off';
+
+  @override
+  String get clientSavedPickupTag => 'Pickup';
+
+  @override
+  String get clientSavedErrorLoadOne => 'Could not load this address';
+
+  @override
+  String get clientSavedBackToAddresses => 'Back to saved addresses';
+
+  @override
+  String get clientSavedSaveChanges => 'Save changes';
+
+  @override
+  String get clientSavedSaveAddress => 'Save address';
+
+  @override
+  String get clientSavedMapPickerHint =>
+      'Search, tap the map, or drag the pin once it is placed.';
+
+  @override
+  String get clientSavedCurrentLocationError =>
+      'Could not get your current location.';
+
+  @override
+  String get clientSavedSignInToSave =>
+      'Please sign in again to save this address.';
+
+  @override
+  String get clientBookingStepNext => 'Next';
+
+  @override
+  String get clientBookingStepContinue => 'Continue';
+
+  @override
+  String get clientBookingChooseTrucks => 'Choose trucks';
+
+  @override
+  String get clientBookingChooseTrucksSubtitle =>
+      'Select truck type and search radius';
+
+  @override
+  String get clientBookingCancelling => 'Cancelling...';
+
+  @override
+  String get clientBookingCancelSearch => 'Cancel search';
+
+  @override
+  String get clientBookingEnterLoading => 'Enter loading location';
+
+  @override
+  String get clientBookingEnterUnloading => 'Enter unloading location';
+
+  @override
+  String get clientBookingConfirmToPay => 'Confirm to pay';
+
+  @override
+  String get clientBookingConfirmBilling => 'Confirm billing';
+
+  @override
+  String get clientBookingChoosePayment => 'Choose payment';
+
+  @override
+  String get clientBookingNoDriverInWindow =>
+      'No driver found within the search window';
+
+  @override
+  String get clientBookingBookNowTooltip => 'Book now';
+
+  @override
+  String get checkoutStatusBookingConfirmedTitle => 'Booking confirmed';
+
+  @override
+  String get checkoutStatusBookingConfirmedMessage =>
+      'Your booking has been successfully placed.';
+
+  @override
+  String get clientNegotiationRefreshBrokerOfferFailed =>
+      'Could not refresh the live broker offer.';
+
+  @override
+  String get clientNegotiationRefreshRequestFailed =>
+      'Could not refresh the live request.';
+
+  @override
+  String get clientNegotiationRefreshDriverOfferFailed =>
+      'Could not refresh the live driver offer.';
+
+  @override
+  String get clientTrackingProofLoadFailed => 'Could not load delivery proof.';
+
+  @override
+  String get clientTrackingVideoPlayFailed => 'Could not play delivery video.';
+
+  @override
+  String get clientTrackingCancelTitle => 'Cancel this booking?';
+
+  @override
+  String get clientTrackingYesCancel => 'Yes, cancel';
+
+  @override
+  String get clientTrackingChatLoadFailed => 'Could not load this chat.';
+
+  @override
+  String get clientTrackingNegotiationLoadFailed =>
+      'Could not load negotiation data.';
+
+  @override
+  String get clientTrackingConfirmedDriver => 'Confirmed driver';
+
+  @override
+  String get clientTrackingConfirmed => 'Confirmed';
+
+  @override
+  String get clientTrackingNoLongerAvailable => 'No longer available';
+
+  @override
+  String get clientBookingRemoveStopTooltip => 'Remove stop';
+
+  @override
+  String get clientTrackingLiveLocationLabel => 'Live location';
+
+  @override
+  String get clientTrackingLocationPendingTitle => 'Location pending';
+
+  @override
+  String get locationFlowSelectOnMap => 'Select on map';
+
+  @override
+  String get brokerFlowVehicleIdleLocation => 'Location';
+
+  @override
+  String get brokerFlowVehicleHeadingTo => 'Heading to';
+
+  @override
+  String get brokerFlowVehicleLastKnown => 'Last known';
+
+  @override
+  String get brokerFlowNoVehicleAssigned => 'No vehicle assigned';
+
+  @override
+  String get brokerFlowCtaViewMap => 'View map';
+
+  @override
+  String get brokerFlowCtaViewDetails => 'View details';
+
+  @override
+  String get brokerFlowLastSeenUnavailable => 'Not available';
+
+  @override
+  String get coreDigilockerAadhaarMaskHint => 'XXXX XXXX XXXX';
+
+  @override
+  String get coreDigilockerPanMaskHint => 'ABCDE1234F';
+
+  @override
+  String get coreDigilockerVehicleRegMaskHint => 'MH-2020123456789';
+
+  @override
+  String get coreDigilockerDateMaskHint => 'YYYY-MM-DD';
+
+  @override
+  String get statusInProgress => 'In progress';
+
+  @override
+  String get statusDelivered => 'Delivered';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusConfirmed => 'Confirmed';
+
+  @override
+  String get statusRouteUnavailable => 'Route unavailable';
+
+  @override
+  String get historyDetailsInvoiceDownloaded =>
+      'Invoice downloaded successfully.';
+
+  @override
+  String historyDetailsInvoiceDownloadedBytes(Object size) {
+    return 'Invoice downloaded ($size bytes).';
+  }
+
+  @override
+  String historyDetailsEmailSubject(Object bookingRef) {
+    return 'Invoice for booking $bookingRef';
+  }
+
+  @override
+  String get historyDetailsInvoiceEmailed => 'Invoice emailed successfully.';
+
+  @override
+  String get historyDetailsClientNotified => 'Client notified successfully.';
+
+  @override
+  String get timePeriodAm => 'AM';
+
+  @override
+  String get timePeriodPm => 'PM';
+
+  @override
+  String get addDriverCreateAccountSubtitle => 'Create a driver account';
+
+  @override
+  String brokerNotificationsMinsAgo(Object minutes) {
+    return '${minutes}m';
+  }
+
+  @override
+  String get brokerNotifRetryAction => 'Retry';
+
+  @override
+  String get brokerNotifEmptySubtitle => 'No notifications yet';
+
+  @override
+  String brokerNotifUnreadCount(Object count) {
+    return '$count unread';
+  }
+
+  @override
+  String brokerNotifTotalCount(Object count) {
+    return '$count notifications';
+  }
+
+  @override
+  String bookingRadiusKm(Object radius) {
+    return '$radius km';
+  }
+
+  @override
+  String get bookingBookNowTooltip => 'Book now';
+
+  @override
+  String get savedAddressCouldNotLoad => 'Could not load this address';
+
+  @override
+  String get savedAddressMapPickerTooltip => 'Open map picker';
+
+  @override
+  String get savedAddressSetDefaultTooltip => 'Set default';
+
+  @override
+  String get savedAddressEditTooltip => 'Edit';
+
+  @override
+  String get savedAddressRemoveTooltip => 'Remove';
+
+  @override
+  String get savedAddressDropoffLabel => 'Drop-off';
+
+  @override
+  String get savedAddressPickupLabel => 'Pickup';
+
+  @override
+  String get trackingAssignedDriver => 'Assigned driver';
+
+  @override
+  String get trackingPackageInformation => 'Package information';
+
+  @override
+  String get trackingDeliveryTypeLabel => 'Delivery Type:';
+
+  @override
+  String get trackingExpressDelivery => 'Express delivery';
+
+  @override
+  String get trackingStandardDelivery => 'Standard delivery';
+
+  @override
+  String get trackingPackageWeightLabel => 'Package weight:';
+
+  @override
+  String get trackingDriverNotAssigned => 'Driver not assigned';
+
+  @override
+  String get trackingPickupCodeTitle => 'Pickup Code';
+
+  @override
+  String get trackingPickupVerifiedBadge => 'Verified';
+
+  @override
+  String get trackingPickupConfirmedText => 'Pickup confirmed with your code.';
+
+  @override
+  String get trackingPickupCodeShareHint =>
+      'Share this with your driver when they arrive to confirm pickup.';
+
+  @override
+  String get trackingLiveBadge => 'Live';
+
+  @override
+  String get trackingTimelineTitle => 'Shipment Timeline';
+
+  @override
+  String get trackingPodTitle => 'Proof of delivery';
+
+  @override
+  String get trackingPodApprovalPrompt =>
+      'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.';
+
+  @override
+  String get trackingPodApproving => 'Approving...';
+
+  @override
+  String get trackingPodApprove => 'Approve';
+
+  @override
+  String get trackingPodApproved => 'Approved';
+
+  @override
+  String trackingPodRejectionWithReason(Object reason) {
+    return 'You asked the driver to re-upload: \"$reason.\" Waiting for new photos.';
+  }
+
+  @override
+  String get trackingPodRejection =>
+      'You asked the driver to re-upload. Waiting for new photos.';
+
+  @override
+  String get trackingPodLoadFailed => 'Could not load delivery proof.';
+
+  @override
+  String get trackingPodPlayFailed => 'Could not play delivery video.';
+
+  @override
+  String get bookingScheduled => 'Booking scheduled';
+
+  @override
+  String get bookingScheduledNotifyMessage =>
+      'We will notify drivers or brokers closer to your pickup time.';
+
+  @override
+  String get checkoutOpeningActivity => 'Opening activity';
+
+  @override
+  String get checkoutBookLater => 'Book later';
+
+  @override
+  String get checkoutWhereIsYourDrop => 'Where is your Drop ?';
+
+  @override
+  String get weightStepAddLocation => 'Add location';
+
+  @override
+  String get weightStepTapToAddDetails => 'Tap + to add details';
+
+  @override
+  String get deliveryDetailsLoadingPoint => 'Loading Point';
+
+  @override
+  String get deliveryDetailsUnloadingPoint => 'Unloading Point';
+
+  @override
+  String get deliveryDetailsStartTripToPickup => 'Start Trip to Pickup';
+
+  @override
+  String get deliveryDetailsReachedPickup => 'I\'ve Reached Pickup';
+
+  @override
+  String get deliveryDetailsStartDelivery => 'Start Delivery';
+
+  @override
+  String get deliveryDetailsMarkAsDelivered => 'Mark as Delivered';
+
+  @override
+  String get driverKycVerificationCompleteTitle => 'KYC Verification Complete';
+
+  @override
+  String get driverKycSubmittedSuccessTitle => 'KYC Submitted Successfully';
+
+  @override
+  String get driverKycVerifiedBadgeUpper => 'VERIFIED';
+
+  @override
+  String get driverKycSubmittedBadgeUpper => 'SUBMITTED';
+
+  @override
+  String get driverKycVerifiedDescription =>
+      'Your KYC has been verified. Your driver account is now active.';
+
+  @override
+  String get driverKycSubmittedDescription =>
+      'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.';
 }

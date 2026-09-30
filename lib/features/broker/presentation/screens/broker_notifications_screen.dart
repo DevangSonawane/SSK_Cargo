@@ -204,7 +204,7 @@ class _BrokerNotificationsScreenState
         .where((item) => !_isEffectivelyRead(item))
         .length;
     final filtered = _filtered(notifications);
-    final groups = _groupByDate(filtered);
+    final groups = _groupByDate(AppLocalizations.of(context)!, filtered);
     final isBackgroundRefresh =
         (notificationsAsync.isRefreshing || notificationsAsync.isReloading) &&
         notificationsAsync.hasValue;
@@ -283,7 +283,7 @@ class _BrokerNotificationsScreenState
           subtitle: notificationsAsync.error
               .toString()
               .replaceFirst('Exception: ', ''),
-          actionLabel: 'Retry',
+          actionLabel: AppLocalizations.of(context)!.brokerNotifRetryAction,
           onAction: _refresh,
         ),
         const SizedBox(height: 24),
@@ -342,10 +342,10 @@ class _NotificationsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final subtitle = totalCount == 0
-        ? 'No notifications yet'
+        ? l10n.brokerNotifEmptySubtitle
         : unreadCount > 0
-        ? '$unreadCount unread'
-        : '$totalCount notifications';
+        ? l10n.brokerNotifUnreadCount(unreadCount)
+        : l10n.brokerNotifTotalCount(totalCount);
     return Row(
       children: [
         BrokerBackButton(onTap: onBack),
@@ -670,7 +670,10 @@ class _NotificationCard extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
-                                  _timeAgo(notification.createdAt),
+                                  _timeAgo(
+                                    AppLocalizations.of(context)!,
+                                    notification.createdAt,
+                                  ),
                                   style: TextStyle(
                                     color: AppColors.textTertiary,
                                     fontSize: 10,
@@ -1022,7 +1025,10 @@ class _NotificationGroup {
   final List<ClientNotification> items;
 }
 
-List<_NotificationGroup> _groupByDate(List<ClientNotification> items) {
+List<_NotificationGroup> _groupByDate(
+  AppLocalizations l10n,
+  List<ClientNotification> items,
+) {
   if (items.isEmpty) return const [];
 
   final now = DateTime.now();
@@ -1035,20 +1041,29 @@ List<_NotificationGroup> _groupByDate(List<ClientNotification> items) {
     final day = date == null
         ? null
         : DateTime(date.year, date.month, date.day);
+    // Keys stay as stable internal identifiers; only the rendered title is localized.
+    const keyEarlier = 'earlier';
+    const keyToday = 'today';
+    const keyYesterday = 'yesterday';
     final key = day == null
-        ? 'Earlier'
+        ? keyEarlier
         : day.isAfter(yesterday)
-        ? (day.isAtSameMomentAs(today) ? 'Today' : 'Yesterday')
-        : 'Earlier';
+        ? (day.isAtSameMomentAs(today) ? keyToday : keyYesterday)
+        : keyEarlier;
     grouped.putIfAbsent(key, () => []).add(item);
   }
 
-  const order = ['Today', 'Yesterday', 'Earlier'];
+  const order = ['today', 'yesterday', 'earlier'];
   final result = <_NotificationGroup>[];
   for (final key in order) {
     final items = grouped[key];
     if (items != null && items.isNotEmpty) {
-      result.add(_NotificationGroup(title: key, items: items));
+      final title = switch (key) {
+        'today' => l10n.brokerNotificationsToday,
+        'yesterday' => l10n.brokerNotificationsYesterday,
+        _ => l10n.brokerNotificationsEarlier,
+      };
+      result.add(_NotificationGroup(title: title, items: items));
     }
   }
   return result;
@@ -1183,7 +1198,7 @@ String _notificationType(ClientNotification notification) {
   ]).trim().toLowerCase();
 }
 
-String _timeAgo(DateTime? date) {
+String _timeAgo(AppLocalizations l10n, DateTime? date) {
   if (date == null) return '';
   final local = date.toLocal();
   final now = DateTime.now();
@@ -1194,11 +1209,13 @@ String _timeAgo(DateTime? date) {
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
   if (day.isAtSameMomentAs(today)) {
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inMinutes < 1) return l10n.brokerHomeJustNow;
+    if (diff.inMinutes < 60) {
+      return l10n.brokerNotificationsMinsAgo(diff.inMinutes);
+    }
     return '$hour:$minute';
   }
-  if (diff.inHours < 48) return 'Yesterday';
+  if (diff.inHours < 48) return l10n.brokerNotificationsYesterday;
   return '$hour:$minute, ${local.day}/${local.month}';
 }
 

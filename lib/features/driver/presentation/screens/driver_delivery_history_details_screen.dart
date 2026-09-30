@@ -75,7 +75,7 @@ class _DriverDeliveryHistoryDetailsScreenState
     }
     return widget.initialSettlement?.status.isNotEmpty == true
         ? _titleCase(widget.initialSettlement!.status)
-        : 'Completed';
+        : AppLocalizations.of(context)!.statusCompleted;
   }
 
   Future<void> _loadDetails() async {
@@ -85,7 +85,7 @@ class _DriverDeliveryHistoryDetailsScreenState
     if (bookingId.isEmpty) {
       setState(() {
         _loading = false;
-        _error = 'Missing booking id.';
+        _error = AppLocalizations.of(context)!.historyDetailsMissingBookingId;
         _shipment = widget.initialSettlement == null
             ? null
             : _shipmentFromSettlement(widget.initialSettlement!);
@@ -96,7 +96,7 @@ class _DriverDeliveryHistoryDetailsScreenState
     if (session == null) {
       setState(() {
         _loading = false;
-        _error = 'Please sign in again to view delivery details.';
+        _error = AppLocalizations.of(context)!.historyDetailsSignInToView;
         _shipment = widget.initialSettlement == null
             ? null
             : _shipmentFromSettlement(widget.initialSettlement!);
@@ -191,7 +191,7 @@ class _DriverDeliveryHistoryDetailsScreenState
       if (widget.initialSettlement != null) {
         _shipment = _shipmentFromSettlement(widget.initialSettlement!);
       } else {
-        _error = 'Unable to load delivery details.';
+        _error = AppLocalizations.of(context)!.historyDetailsLoadFailed;
       }
       _loading = false;
     });
@@ -231,7 +231,9 @@ class _DriverDeliveryHistoryDetailsScreenState
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      _showSnack('Please sign in again to download the invoice.');
+      _showSnack(
+        AppLocalizations.of(context)!.historyDetailsSignInToDownload,
+      );
       return;
     }
 
@@ -247,8 +249,10 @@ class _DriverDeliveryHistoryDetailsScreenState
       if (!mounted) return;
       _showSnack(
         bytes.isEmpty
-            ? 'Invoice downloaded successfully.'
-            : 'Invoice downloaded (${bytes.length} bytes).',
+            ? AppLocalizations.of(context)!.historyDetailsInvoiceDownloaded
+            : AppLocalizations.of(
+                context,
+              )!.historyDetailsInvoiceDownloadedBytes(bytes.length),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -269,19 +273,19 @@ class _DriverDeliveryHistoryDetailsScreenState
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      _showSnack('Please sign in again to email the invoice.');
+      _showSnack(AppLocalizations.of(context)!.historyDetailsSignInToEmail);
       return;
     }
 
     try {
+      final l10n = AppLocalizations.of(context)!;
       final draft = await showDialog<_EmailInvoiceDraft>(
         context: context,
         builder: (dialogContext) {
           return _EmailInvoiceDialog(
             initialTo: session.user.email ?? '',
-            defaultSubject: 'Invoice for booking $_displayBookingRef',
-            defaultMessage:
-                'Please find attached the invoice for booking $_displayBookingRef.',
+            defaultSubject: l10n.historyDetailsEmailSubject(_displayBookingRef),
+            defaultMessage: l10n.historyDetailsEmailBody(_displayBookingRef),
           );
         },
       );
@@ -299,7 +303,7 @@ class _DriverDeliveryHistoryDetailsScreenState
             message: draft.message,
           );
       if (!mounted) return;
-      _showSnack('Invoice emailed successfully.');
+      _showSnack(AppLocalizations.of(context)!.historyDetailsInvoiceEmailed);
     } on ApiException catch (error) {
       if (!mounted) return;
       _showSnack(error.message);
@@ -319,7 +323,7 @@ class _DriverDeliveryHistoryDetailsScreenState
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      _showSnack('Please sign in again to notify the client.');
+      _showSnack(AppLocalizations.of(context)!.historyDetailsSignInToNotify);
       return;
     }
 
@@ -332,7 +336,7 @@ class _DriverDeliveryHistoryDetailsScreenState
             id: bookingId,
           );
       if (!mounted) return;
-      _showSnack('Client notified successfully.');
+      _showSnack(AppLocalizations.of(context)!.historyDetailsClientNotified);
     } on ApiException catch (error) {
       if (!mounted) return;
       _showSnack(error.message);
@@ -427,7 +431,9 @@ class _DriverDeliveryHistoryDetailsScreenState
                                 _MapPanel(shipment: shipment),
                                 const SizedBox(height: 16),
                                 _SectionCard(
-                                  title: 'Trip Details',
+                                  title: AppLocalizations.of(
+                                    context,
+                                  )!.historyDetailsTripDetails,
                                   accentColor: AppColors.brand,
                                   child: _TripDetailsGrid(
                                     bookingTime: _bookingTimeValue,
@@ -462,7 +468,9 @@ class _DriverDeliveryHistoryDetailsScreenState
                                 ],
                                 const SizedBox(height: 16),
                                 _SectionCard(
-                                  title: 'Earnings',
+                                  title: AppLocalizations.of(
+                                    context,
+                                  )!.historyDetailsEarnings,
                                   accentColor: AppColors.brand,
                                   child: _EarningsPanel(
                                     earningsValue: _earningsValue,
@@ -492,7 +500,9 @@ class _DriverDeliveryHistoryDetailsScreenState
       'startedAt',
       'started_at',
     ]);
-    return value == null ? '—' : _formatFullDateTime(value);
+    return value == null
+        ? '—'
+        : _formatFullDateTime(AppLocalizations.of(context)!, value);
   }
 
   String get _expectedDeliveryValue {
@@ -500,7 +510,7 @@ class _DriverDeliveryHistoryDetailsScreenState
     final etaText = _readFirstNonEmpty([
       _readString(booking, const ['eta_text', 'eta', 'eta_minutes']),
       _shipment?.status.isNotEmpty == true
-          ? _activeStatusLabel(_shipment!.status)
+          ? _activeStatusLabel(AppLocalizations.of(context)!, _shipment!.status)
           : '',
     ]);
     return etaText == '—' ? '—' : etaText;
@@ -514,7 +524,9 @@ class _DriverDeliveryHistoryDetailsScreenState
       'completedAt',
       'completed_at',
     ]);
-    return value == null ? '—' : _formatFullDateTime(value);
+    return value == null
+        ? '—'
+        : _formatFullDateTime(AppLocalizations.of(context)!, value);
   }
 
   String get _distanceTravelledValue {
@@ -644,7 +656,9 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
               controller: _subjectController,
               cursorColor: AppColors.brand,
               style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(labelText: 'Subject'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.subject,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -653,7 +667,9 @@ class _EmailInvoiceDialogState extends State<_EmailInvoiceDialog> {
               maxLines: 5,
               cursorColor: AppColors.brand,
               style: const TextStyle(color: AppColors.textPrimary),
-              decoration: const InputDecoration(labelText: 'Message'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.message,
+              ),
             ),
           ],
         ),
@@ -932,8 +948,9 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
         return right.compareTo(left);
       });
 
+    final l10n = AppLocalizations.of(context)!;
     return _SectionCard(
-      title: 'Driver Changed (${history.length})',
+      title: l10n.historyDetailsDriverChanged(history.length),
       accentColor: AppColors.brand,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,7 +962,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                 child: Divider(height: 1, color: AppColors.divider),
               ),
             Text(
-              '${sorted[index].fromDriverName.isEmpty ? 'Previous driver' : sorted[index].fromDriverName} -> ${sorted[index].toDriverName.isEmpty ? 'New driver' : sorted[index].toDriverName}',
+              '${sorted[index].fromDriverName.isEmpty ? l10n.historyDetailsPreviousDriver : sorted[index].fromDriverName} -> ${sorted[index].toDriverName.isEmpty ? l10n.historyDetailsNewDriver : sorted[index].toDriverName}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
@@ -967,7 +984,7 @@ class _ReassignmentHistoryPanel extends StatelessWidget {
                 if (sorted[index].reassignedByName.isNotEmpty)
                   'By ${sorted[index].reassignedByName}',
                 if (sorted[index].createdAt != null)
-                  _formatFullDateTime(sorted[index].createdAt!),
+                  _formatFullDateTime(l10n, sorted[index].createdAt!),
               ].join(' • '),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.textTertiary,
@@ -1100,7 +1117,7 @@ class _MapPanel extends StatelessWidget {
                 ),
                 icon: const Icon(AppIcons.navigation_rounded, size: 14),
                 label: Text(
-                  'Open in Maps',
+                  AppLocalizations.of(context)!.historyDetailsOpenInMaps,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -1642,13 +1659,15 @@ String _readFirstNonEmpty(List<String> values) {
   return '—';
 }
 
-String _activeStatusLabel(String status) {
+String _activeStatusLabel(AppLocalizations l10n, String status) {
   final normalized = status.trim().toLowerCase();
-  if (normalized.isEmpty) return 'In Progress';
-  if (normalized == 'delivered') return 'Delivered';
-  if (normalized == 'completed') return 'Completed';
-  if (normalized == 'cancelled' || normalized == 'canceled') return 'Cancelled';
-  if (normalized == 'pending') return 'Pending';
+  if (normalized.isEmpty) return l10n.statusInProgress;
+  if (normalized == 'delivered') return l10n.statusDelivered;
+  if (normalized == 'completed') return l10n.statusCompleted;
+  if (normalized == 'cancelled' || normalized == 'canceled') {
+    return l10n.statusCancelled;
+  }
+  if (normalized == 'pending') return l10n.statusPending;
   if (normalized == 'accepted' ||
       normalized == 'confirmed' ||
       normalized == 'en_route_pickup' ||
@@ -1659,7 +1678,7 @@ String _activeStatusLabel(String status) {
       normalized == 'picked_up' ||
       normalized == 'picked up' ||
       normalized == 'ongoing') {
-    return 'In Progress';
+    return l10n.statusInProgress;
   }
   return _titleCase(normalized);
 }
@@ -1690,33 +1709,35 @@ DateTime? _readDateTime(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-String _formatDate(DateTime dateTime) {
+String _formatDate(AppLocalizations l10n, DateTime dateTime) {
   final local = dateTime.toLocal();
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+  final months = [
+    l10n.monthJan,
+    l10n.monthFeb,
+    l10n.monthMar,
+    l10n.monthApr,
+    l10n.monthMay,
+    l10n.monthJun,
+    l10n.monthJul,
+    l10n.monthAug,
+    l10n.monthSep,
+    l10n.monthOct,
+    l10n.monthNov,
+    l10n.monthDec,
   ];
   final month = months[local.month - 1];
   final day = local.day.toString().padLeft(2, '0');
   return '$day $month ${local.year}';
 }
 
-String _formatFullDateTime(DateTime dateTime) {
+String _formatFullDateTime(AppLocalizations l10n, DateTime dateTime) {
   final local = dateTime.toLocal();
-  final date = _formatDate(local);
+  final date = _formatDate(l10n, local);
   final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
   final minute = local.minute.toString().padLeft(2, '0');
-  final period = local.hour >= 12 ? 'PM' : 'AM';
+  final period = local.hour >= 12
+      ? l10n.timePeriodPm
+      : l10n.timePeriodAm;
   return '$date, ${hour.toString().padLeft(2, '0')}:$minute $period';
 }
 

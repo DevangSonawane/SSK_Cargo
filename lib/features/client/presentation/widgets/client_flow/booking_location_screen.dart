@@ -4139,7 +4139,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
             min: 0.5,
             max: 200,
             divisions: 399,
-            label: '$radiusText km',
+            label: l10n.bookingRadiusKm(radiusText),
             onChanged: (value) {
               setState(() {
                 _draft = _draft.copyWith(searchRadiusKm: value);
@@ -4858,7 +4858,7 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
       children: [
         _HeaderScheduleIconButton(
           icon: AppIcons.flash_on_rounded,
-          tooltip: 'Book now',
+          tooltip: AppLocalizations.of(context)!.bookingBookNowTooltip,
           selected: !_draft.isScheduled,
           onTap: () {
             setState(() {
@@ -5323,12 +5323,15 @@ class _BookingLocationScreenState extends ConsumerState<BookingLocationScreen> {
   }
 
   Widget _buildSuccessStep(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _BookingSuccessCard(
       bookingReference: _bookingReference,
-      title: _draft.isScheduled ? 'Booking scheduled' : 'Booking confirmed',
+      title: _draft.isScheduled
+          ? l10n.bookingScheduled
+          : l10n.bookingConfirmed,
       message: _draft.isScheduled
-          ? 'We will notify drivers or brokers closer to your pickup time.'
-          : 'Your booking has been successfully placed.',
+          ? l10n.bookingScheduledNotifyMessage
+          : l10n.bookingPlacedSuccessfully,
       onTrack: () => context.go('/client/tracking'),
       onHome: _goToClientHome,
     );

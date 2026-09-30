@@ -41,8 +41,10 @@ class _TripStop {
 
   bool get done => status == 'done' || status == 'completed';
   bool get loading => type == 'loading';
-  String get label => loading ? 'Loading Point' : 'Unloading Point';
-  String get actionLabel => loading ? 'Mark Loaded' : 'Mark Unloaded';
+  String label(AppLocalizations l10n) =>
+      loading ? l10n.deliveryDetailsLoadingPoint : l10n.deliveryDetailsUnloadingPoint;
+  String actionLabel(AppLocalizations l10n) =>
+      loading ? l10n.markLoaded : l10n.markUnloaded;
 
   factory _TripStop.fromJson({
     required int index,
@@ -112,7 +114,7 @@ class _TripStopTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  stop.label,
+                  stop.label(AppLocalizations.of(context)!),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w800,
@@ -155,7 +157,7 @@ class _TripStopTile extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      stop.actionLabel,
+                      stop.actionLabel(AppLocalizations.of(context)!),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -775,6 +777,7 @@ class _DriverDeliveryDetailsScreenState
 
   Future<String?> _submitPickupOtp(String pickupOtp) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final stopwatch = Stopwatch()..start();
     developer.log(
       'Pickup OTP confirmation started. tripId=$_tripId',
@@ -783,13 +786,13 @@ class _DriverDeliveryDetailsScreenState
     if (_tripId.isEmpty) {
       await _loadTrip();
       if (_tripId.isEmpty) {
-        return 'Trip is still syncing. Please try again.';
+        return l10n.tripStillSyncing;
       }
     }
 
     final session = ref.read(authSessionProvider).valueOrNull;
     if (session == null) {
-      return 'Please sign in again to continue.';
+      return l10n.deliveryDetailsSignInToContinue;
     }
 
     setState(() => _loadingTrip = true);
@@ -924,7 +927,7 @@ class _DriverDeliveryDetailsScreenState
     }
   }
 
-  String _actionLabelForCurrentTrip() {
+  String _actionLabelForCurrentTrip(AppLocalizations l10n) {
     switch (_tripStatus) {
       case 'confirmed':
       case 'assigned':
@@ -937,15 +940,15 @@ class _DriverDeliveryDetailsScreenState
       case 'en_route':
       case 'route_to_pickup':
       case 'to_pickup':
-        return 'Start Trip to Pickup';
+        return l10n.deliveryDetailsStartTripToPickup;
       case 'en_route_pickup':
-        return "I've Reached Pickup";
+        return l10n.deliveryDetailsReachedPickup;
       case 'picked_up':
-        return 'Start Delivery';
+        return l10n.deliveryDetailsStartDelivery;
       case 'in_transit':
-        return 'Mark as Delivered';
+        return l10n.deliveryDetailsMarkAsDelivered;
       default:
-        return 'Start Trip to Pickup';
+        return l10n.deliveryDetailsStartTripToPickup;
     }
   }
 
@@ -1307,7 +1310,9 @@ class _DriverDeliveryDetailsScreenState
                                     ? 'Loading...'
                                     : _tripId.isEmpty
                                     ? 'Syncing trip...'
-                                    : _actionLabelForCurrentTrip(),
+                                    : _actionLabelForCurrentTrip(
+                                        AppLocalizations.of(context)!,
+                                      ),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                 ),

@@ -5852,13 +5852,13 @@ abstract class AppLocalizations {
   /// No description provided for @allEarningsActiveMonths.
   ///
   /// In en, this message translates to:
-  /// **'Active Months'**
+  /// **'Active months'**
   String get allEarningsActiveMonths;
 
   /// No description provided for @allEarningsAvgTrip.
   ///
   /// In en, this message translates to:
-  /// **'Avg Trip'**
+  /// **'Average trip'**
   String get allEarningsAvgTrip;
 
   /// No description provided for @allEarningsBreakdown.
@@ -5876,25 +5876,25 @@ abstract class AppLocalizations {
   /// No description provided for @allEarningsEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Empty Subtitle'**
+  /// **'No earnings yet'**
   String get allEarningsEmptySubtitle;
 
   /// No description provided for @allEarningsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Empty Title'**
+  /// **'No earnings yet'**
   String get allEarningsEmptyTitle;
 
   /// No description provided for @allEarningsLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Load Failed'**
+  /// **'Could not load earnings'**
   String get allEarningsLoadFailed;
 
   /// No description provided for @allEarningsMonthlyTrend.
   ///
   /// In en, this message translates to:
-  /// **'Monthly Trend'**
+  /// **'Monthly trend'**
   String get allEarningsMonthlyTrend;
 
   /// No description provided for @allEarningsMonths.
@@ -5906,31 +5906,31 @@ abstract class AppLocalizations {
   /// No description provided for @allEarningsNetPerMonth.
   ///
   /// In en, this message translates to:
-  /// **'Net Per Month'**
+  /// **'Net per month'**
   String get allEarningsNetPerMonth;
 
   /// No description provided for @allEarningsPerDelivery.
   ///
   /// In en, this message translates to:
-  /// **'Per Delivery'**
+  /// **'Per delivery'**
   String get allEarningsPerDelivery;
 
   /// No description provided for @allEarningsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'All earnings'**
   String get allEarningsTitle;
 
   /// No description provided for @allEarningsTotalEarned.
   ///
   /// In en, this message translates to:
-  /// **'Total Earned'**
+  /// **'Total earned'**
   String get allEarningsTotalEarned;
 
   /// No description provided for @allEarningsTripsDone.
   ///
   /// In en, this message translates to:
-  /// **'Trips Done'**
+  /// **'Trips done'**
   String get allEarningsTripsDone;
 
   /// No description provided for @appChatClientFallback.
@@ -5990,13 +5990,13 @@ abstract class AppLocalizations {
   /// No description provided for @arrivedNextLabel.
   ///
   /// In en, this message translates to:
-  /// **'Next Label'**
+  /// **'Next'**
   String get arrivedNextLabel;
 
   /// No description provided for @arrivedNextUpload.
   ///
   /// In en, this message translates to:
-  /// **'Next Upload'**
+  /// **'Upload delivery photos'**
   String get arrivedNextUpload;
 
   /// No description provided for @arrivedPreparing.
@@ -6008,169 +6008,169 @@ abstract class AppLocalizations {
   /// No description provided for @arrivedPreparingSub.
   ///
   /// In en, this message translates to:
-  /// **'Preparing Sub'**
+  /// **'Please wait while we finish preparing.'**
   String get arrivedPreparingSub;
 
   /// No description provided for @arrivedSlideSub.
   ///
   /// In en, this message translates to:
-  /// **'Slide Sub'**
+  /// **'Slide to continue'**
   String get arrivedSlideSub;
 
   /// No description provided for @arrivedSlideTitle.
   ///
   /// In en, this message translates to:
-  /// **'Slide Title'**
+  /// **'You\'re on site'**
   String get arrivedSlideTitle;
 
   /// No description provided for @arrivedStatusLabel.
   ///
   /// In en, this message translates to:
-  /// **'Status Label'**
+  /// **'Status'**
   String get arrivedStatusLabel;
 
   /// No description provided for @arrivedStatusReady.
   ///
   /// In en, this message translates to:
-  /// **'Status Ready'**
+  /// **'Ready'**
   String get arrivedStatusReady;
 
   /// No description provided for @arrivedSub.
   ///
   /// In en, this message translates to:
-  /// **'Sub'**
+  /// **'Confirm that you have reached the stop.'**
   String get arrivedSub;
 
   /// No description provided for @arrivedSwipeContinue.
   ///
   /// In en, this message translates to:
-  /// **'Swipe Continue'**
+  /// **'Slide to continue'**
   String get arrivedSwipeContinue;
 
   /// No description provided for @arrivedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Arrived'**
   String get arrivedTitle;
 
   /// No description provided for @arrivedTripIdLabel.
   ///
   /// In en, this message translates to:
-  /// **'Trip ID Label'**
+  /// **'Trip ID'**
   String get arrivedTripIdLabel;
 
   /// No description provided for @brokerActiveDescription.
   ///
   /// In en, this message translates to:
-  /// **'Broker Active Description'**
+  /// **'A small delay here can cost you the booking. Assign a driver quickly.'**
   String get brokerActiveDescription;
 
   /// No description provided for @brokerActiveSubmit.
   ///
   /// In en, this message translates to:
-  /// **'Broker Active Submit'**
+  /// **'Confirm assignment'**
   String get brokerActiveSubmit;
 
   /// No description provided for @brokerActiveSubmitting.
   ///
   /// In en, this message translates to:
-  /// **'Broker Active Submitting'**
+  /// **'Confirming...'**
   String get brokerActiveSubmitting;
 
   /// No description provided for @brokerHomeClientOffered.
   ///
   /// In en, this message translates to:
-  /// **'Client Offered'**
+  /// **'You offered'**
   String get brokerHomeClientOffered;
 
   /// No description provided for @brokerHomeDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver Fallback'**
+  /// **'Driver'**
   String get brokerHomeDriverFallback;
 
   /// No description provided for @brokerHomeDropUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Drop Unavailable'**
+  /// **'Drop location unavailable'**
   String get brokerHomeDropUnavailable;
 
   /// No description provided for @brokerHomeFareChangeSent.
   ///
   /// In en, this message translates to:
-  /// **'Fare Change Sent'**
+  /// **'Fare change sent'**
   String get brokerHomeFareChangeSent;
 
   /// No description provided for @brokerHomeFareChangesUsed.
   ///
   /// In en, this message translates to:
-  /// **'Fare Changes Used'**
+  /// **'Fare changes used'**
   String get brokerHomeFareChangesUsed;
 
   /// No description provided for @brokerHomeHelloPrefix.
   ///
   /// In en, this message translates to:
-  /// **'Hello Prefix'**
+  /// **'Hello'**
   String get brokerHomeHelloPrefix;
 
   /// No description provided for @brokerHomeJustNow.
   ///
   /// In en, this message translates to:
-  /// **'Just Now'**
+  /// **'Just now'**
   String get brokerHomeJustNow;
 
   /// No description provided for @brokerHomePickupUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Unavailable'**
+  /// **'Pickup location unavailable'**
   String get brokerHomePickupUnavailable;
 
   /// No description provided for @brokerHomeRequestAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Request Accepted'**
+  /// **'Request accepted'**
   String get brokerHomeRequestAccepted;
 
   /// No description provided for @brokerHomeRequestDeclined.
   ///
   /// In en, this message translates to:
-  /// **'Request Declined'**
+  /// **'Request declined'**
   String get brokerHomeRequestDeclined;
 
   /// No description provided for @brokerHomeSendAssignment.
   ///
   /// In en, this message translates to:
-  /// **'Send Assignment'**
+  /// **'Send assignment'**
   String get brokerHomeSendAssignment;
 
   /// No description provided for @brokerHomeSending.
   ///
   /// In en, this message translates to:
-  /// **'Sending'**
+  /// **'Sending...'**
   String get brokerHomeSending;
 
   /// No description provided for @brokerHomeTryClearingSearch.
   ///
   /// In en, this message translates to:
-  /// **'Try Clearing Search'**
+  /// **'Try clearing your search'**
   String get brokerHomeTryClearingSearch;
 
   /// No description provided for @brokerHomeYouAcceptedWaiting.
   ///
   /// In en, this message translates to:
-  /// **'You Accepted Waiting'**
+  /// **'You accepted. Waiting for the client to confirm.'**
   String get brokerHomeYouAcceptedWaiting;
 
   /// No description provided for @brokerHomeYouOffered.
   ///
   /// In en, this message translates to:
-  /// **'You Offered'**
+  /// **'You offered'**
   String get brokerHomeYouOffered;
 
   /// No description provided for @brokerKycCompleteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Complete Title'**
+  /// **'KYC complete'**
   String get brokerKycCompleteTitle;
 
   /// No description provided for @brokerKycContinue.
@@ -6188,19 +6188,19 @@ abstract class AppLocalizations {
   /// No description provided for @brokerKycNotAvailable.
   ///
   /// In en, this message translates to:
-  /// **'Not Available'**
+  /// **'Not available'**
   String get brokerKycNotAvailable;
 
   /// No description provided for @brokerKycNotProvided.
   ///
   /// In en, this message translates to:
-  /// **'Not Provided'**
+  /// **'Not provided'**
   String get brokerKycNotProvided;
 
   /// No description provided for @brokerKycPendingReviewStatus.
   ///
   /// In en, this message translates to:
-  /// **'Pending Review Status'**
+  /// **'Pending review'**
   String get brokerKycPendingReviewStatus;
 
   /// No description provided for @brokerKycSubmitKyc.
@@ -6212,145 +6212,145 @@ abstract class AppLocalizations {
   /// No description provided for @brokerKycSubmittedBadge.
   ///
   /// In en, this message translates to:
-  /// **'Submitted Badge'**
+  /// **'Submitted'**
   String get brokerKycSubmittedBadge;
 
   /// No description provided for @brokerKycSubmittedDesc.
   ///
   /// In en, this message translates to:
-  /// **'Submitted Desc'**
+  /// **'Your KYC was submitted and is waiting for review.'**
   String get brokerKycSubmittedDesc;
 
   /// No description provided for @brokerKycSubmittedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Submitted Title'**
+  /// **'KYC submitted'**
   String get brokerKycSubmittedTitle;
 
   /// No description provided for @brokerKycVerifiedBadge.
   ///
   /// In en, this message translates to:
-  /// **'Verified Badge'**
+  /// **'Verified'**
   String get brokerKycVerifiedBadge;
 
   /// No description provided for @brokerKycVerifiedDesc.
   ///
   /// In en, this message translates to:
-  /// **'Verified Desc'**
+  /// **'Your KYC is verified. You can now accept bookings.'**
   String get brokerKycVerifiedDesc;
 
   /// No description provided for @brokerKycVerifiedStatus.
   ///
   /// In en, this message translates to:
-  /// **'Verified Status'**
+  /// **'Verified'**
   String get brokerKycVerifiedStatus;
 
   /// No description provided for @brokerKycVerifyCarefullyWarning.
   ///
   /// In en, this message translates to:
-  /// **'Verify Carefully Warning'**
+  /// **'Please verify all information carefully. Incorrect information may delay KYC approval.'**
   String get brokerKycVerifyCarefullyWarning;
 
   /// No description provided for @brokerReqAcceptAssign.
   ///
   /// In en, this message translates to:
-  /// **'Accept Assign'**
+  /// **'Accept & assign'**
   String get brokerReqAcceptAssign;
 
   /// No description provided for @brokerReqAcceptedNoCard.
   ///
   /// In en, this message translates to:
-  /// **'Accepted No Card'**
+  /// **'Accepted'**
   String get brokerReqAcceptedNoCard;
 
   /// No description provided for @brokerReqAcceptedPickDriver.
   ///
   /// In en, this message translates to:
-  /// **'Accepted Pick Driver'**
+  /// **'Accepted. Pick a driver to continue.'**
   String get brokerReqAcceptedPickDriver;
 
   /// No description provided for @brokerReqAssignmentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Assignment Title'**
+  /// **'Assign driver & truck'**
   String get brokerReqAssignmentTitle;
 
   /// No description provided for @brokerReqAutoSelectedDetails.
   ///
   /// In en, this message translates to:
-  /// **'Auto Selected Details'**
+  /// **'We selected this for you. You can change it.'**
   String get brokerReqAutoSelectedDetails;
 
   /// No description provided for @brokerReqAwaitingOtherSide.
   ///
   /// In en, this message translates to:
-  /// **'Awaiting Other Side'**
+  /// **'Awaiting response'**
   String get brokerReqAwaitingOtherSide;
 
   /// No description provided for @brokerReqChangeFareOrReject.
   ///
   /// In en, this message translates to:
-  /// **'Change Fare or Reject'**
+  /// **'Change fare or reject'**
   String get brokerReqChangeFareOrReject;
 
   /// No description provided for @brokerReqClientAcceptedFinalize.
   ///
   /// In en, this message translates to:
-  /// **'Client Accepted Finalize'**
+  /// **'Client accepted. Finalise the assignment.'**
   String get brokerReqClientAcceptedFinalize;
 
   /// No description provided for @brokerReqConfirmAssign.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Assign'**
+  /// **'Confirm assignment'**
   String get brokerReqConfirmAssign;
 
   /// No description provided for @brokerReqConfirmBookingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Booking Title'**
+  /// **'Confirm booking'**
   String get brokerReqConfirmBookingTitle;
 
   /// No description provided for @brokerReqCustomerFallback.
   ///
   /// In en, this message translates to:
-  /// **'Customer Fallback'**
+  /// **'Customer'**
   String get brokerReqCustomerFallback;
 
   /// No description provided for @brokerReqDeclinedNoActions.
   ///
   /// In en, this message translates to:
-  /// **'Declined No Actions'**
+  /// **'Declined. No further action needed.'**
   String get brokerReqDeclinedNoActions;
 
   /// No description provided for @brokerReqFareChangeWaiting.
   ///
   /// In en, this message translates to:
-  /// **'Fare Change Waiting'**
+  /// **'Waiting for fare change response'**
   String get brokerReqFareChangeWaiting;
 
   /// No description provided for @brokerReqGeneralFallback.
   ///
   /// In en, this message translates to:
-  /// **'General Fallback'**
+  /// **'Booking'**
   String get brokerReqGeneralFallback;
 
   /// No description provided for @brokerReqNoDriversFound.
   ///
   /// In en, this message translates to:
-  /// **'No Drivers Found'**
+  /// **'No drivers found'**
   String get brokerReqNoDriversFound;
 
   /// No description provided for @brokerReqNoTrucksFound.
   ///
   /// In en, this message translates to:
-  /// **'No Trucks Found'**
+  /// **'No trucks found'**
   String get brokerReqNoTrucksFound;
 
   /// No description provided for @brokerReqSaving.
   ///
   /// In en, this message translates to:
-  /// **'Saving'**
+  /// **'Saving...'**
   String get brokerReqSaving;
 
   /// No description provided for @brokerReqUnavailable.
@@ -6362,259 +6362,259 @@ abstract class AppLocalizations {
   /// No description provided for @changePasswordAllFieldsRequired.
   ///
   /// In en, this message translates to:
-  /// **'All Fields Required'**
+  /// **'All fields are required'**
   String get changePasswordAllFieldsRequired;
 
   /// No description provided for @changePasswordConfirmHint.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Hint'**
+  /// **'Re-enter your new password'**
   String get changePasswordConfirmHint;
 
   /// No description provided for @changePasswordConfirmLabel.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Label'**
+  /// **'Confirm new password'**
   String get changePasswordConfirmLabel;
 
   /// No description provided for @changePasswordCurrentHint.
   ///
   /// In en, this message translates to:
-  /// **'Current Hint'**
+  /// **'Enter your current password'**
   String get changePasswordCurrentHint;
 
   /// No description provided for @changePasswordCurrentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Current Label'**
+  /// **'Current password'**
   String get changePasswordCurrentLabel;
 
   /// No description provided for @changePasswordMismatch.
   ///
   /// In en, this message translates to:
-  /// **'Mismatch'**
+  /// **'The two passwords do not match'**
   String get changePasswordMismatch;
 
   /// No description provided for @changePasswordNewHint.
   ///
   /// In en, this message translates to:
-  /// **'New Hint'**
+  /// **'At least 8 characters'**
   String get changePasswordNewHint;
 
   /// No description provided for @changePasswordNewLabel.
   ///
   /// In en, this message translates to:
-  /// **'New Label'**
+  /// **'New password'**
   String get changePasswordNewLabel;
 
   /// No description provided for @changePasswordScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'Screen Title'**
+  /// **'Change password'**
   String get changePasswordScreenTitle;
 
   /// No description provided for @changePasswordStrengthEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Strength Empty Hint'**
+  /// **'Enter a password to check its strength'**
   String get changePasswordStrengthEmptyHint;
 
   /// No description provided for @changePasswordStrengthFair.
   ///
   /// In en, this message translates to:
-  /// **'Strength Fair'**
+  /// **'Fair'**
   String get changePasswordStrengthFair;
 
   /// No description provided for @changePasswordStrengthGood.
   ///
   /// In en, this message translates to:
-  /// **'Strength Good'**
+  /// **'Good'**
   String get changePasswordStrengthGood;
 
   /// No description provided for @changePasswordStrengthLowercase.
   ///
   /// In en, this message translates to:
-  /// **'Strength Lowercase'**
+  /// **'Add a lowercase letter'**
   String get changePasswordStrengthLowercase;
 
   /// No description provided for @changePasswordStrengthMinLength.
   ///
   /// In en, this message translates to:
-  /// **'Strength Min Length'**
+  /// **'Use at least 8 characters'**
   String get changePasswordStrengthMinLength;
 
   /// No description provided for @changePasswordStrengthNumber.
   ///
   /// In en, this message translates to:
-  /// **'Strength Number'**
+  /// **'Add a number'**
   String get changePasswordStrengthNumber;
 
   /// No description provided for @changePasswordStrengthStrong.
   ///
   /// In en, this message translates to:
-  /// **'Strength Strong'**
+  /// **'Strong'**
   String get changePasswordStrengthStrong;
 
   /// No description provided for @changePasswordStrengthStrongHint.
   ///
   /// In en, this message translates to:
-  /// **'Strength Strong Hint'**
+  /// **'Great password'**
   String get changePasswordStrengthStrongHint;
 
   /// No description provided for @changePasswordStrengthSymbol.
   ///
   /// In en, this message translates to:
-  /// **'Strength Symbol'**
+  /// **'Add a symbol'**
   String get changePasswordStrengthSymbol;
 
   /// No description provided for @changePasswordStrengthTitle.
   ///
   /// In en, this message translates to:
-  /// **'Strength Title'**
+  /// **'Password strength'**
   String get changePasswordStrengthTitle;
 
   /// No description provided for @changePasswordStrengthUppercase.
   ///
   /// In en, this message translates to:
-  /// **'Strength Uppercase'**
+  /// **'Add an uppercase letter'**
   String get changePasswordStrengthUppercase;
 
   /// No description provided for @changePasswordStrengthWeak.
   ///
   /// In en, this message translates to:
-  /// **'Strength Weak'**
+  /// **'Weak'**
   String get changePasswordStrengthWeak;
 
   /// No description provided for @changePasswordSubmitButton.
   ///
   /// In en, this message translates to:
-  /// **'Submit Button'**
+  /// **'Update password'**
   String get changePasswordSubmitButton;
 
   /// No description provided for @changePasswordSuccessLoggedOut.
   ///
   /// In en, this message translates to:
-  /// **'Success Logged Out'**
+  /// **'Password updated. Please sign in again.'**
   String get changePasswordSuccessLoggedOut;
 
   /// No description provided for @chatAssistantName.
   ///
   /// In en, this message translates to:
-  /// **'Assistant Name'**
+  /// **'Support'**
   String get chatAssistantName;
 
   /// No description provided for @chatClosedChip.
   ///
   /// In en, this message translates to:
-  /// **'Closed Chip'**
+  /// **'Closed'**
   String get chatClosedChip;
 
   /// No description provided for @chatDetailBookingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Detail Booking Title'**
+  /// **'Booking'**
   String get chatDetailBookingTitle;
 
   /// No description provided for @chatDetailClientTitle.
   ///
   /// In en, this message translates to:
-  /// **'Detail Client Title'**
+  /// **'Client'**
   String get chatDetailClientTitle;
 
   /// No description provided for @chatDetailDirectTitle.
   ///
   /// In en, this message translates to:
-  /// **'Detail Direct Title'**
+  /// **'Direct message'**
   String get chatDetailDirectTitle;
 
   /// No description provided for @chatDirectMessageChip.
   ///
   /// In en, this message translates to:
-  /// **'Direct Message Chip'**
+  /// **'Direct'**
   String get chatDirectMessageChip;
 
   /// No description provided for @chatDirectMessageFallback.
   ///
   /// In en, this message translates to:
-  /// **'Direct Message Fallback'**
+  /// **'Direct conversation'**
   String get chatDirectMessageFallback;
 
   /// No description provided for @chatListEmpty.
   ///
   /// In en, this message translates to:
-  /// **'List Empty'**
+  /// **'No conversations yet'**
   String get chatListEmpty;
 
   /// No description provided for @chatListLoadError.
   ///
   /// In en, this message translates to:
-  /// **'List Load Error'**
+  /// **'Could not load chats'**
   String get chatListLoadError;
 
   /// No description provided for @chatListRetry.
   ///
   /// In en, this message translates to:
-  /// **'List Retry'**
+  /// **'Try again'**
   String get chatListRetry;
 
   /// No description provided for @chatListTitle.
   ///
   /// In en, this message translates to:
-  /// **'List Title'**
+  /// **'Chats'**
   String get chatListTitle;
 
   /// No description provided for @chatMessageFallback.
   ///
   /// In en, this message translates to:
-  /// **'Message Fallback'**
+  /// **'Message'**
   String get chatMessageFallback;
 
   /// No description provided for @chatMessageNotSent.
   ///
   /// In en, this message translates to:
-  /// **'Message Not Sent'**
+  /// **'Message not sent'**
   String get chatMessageNotSent;
 
   /// No description provided for @chatNoMessagesYet.
   ///
   /// In en, this message translates to:
-  /// **'No Messages Yet'**
+  /// **'No messages yet'**
   String get chatNoMessagesYet;
 
   /// No description provided for @chatNotConnectedChip.
   ///
   /// In en, this message translates to:
-  /// **'Not Connected Chip'**
+  /// **'Offline'**
   String get chatNotConnectedChip;
 
   /// No description provided for @chatReadReceipt.
   ///
   /// In en, this message translates to:
-  /// **'Read Receipt'**
+  /// **'Read'**
   String get chatReadReceipt;
 
   /// No description provided for @chatThreadLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Thread Load Error'**
+  /// **'Could not load this conversation'**
   String get chatThreadLoadError;
 
   /// No description provided for @chatTripClosedNotice.
   ///
   /// In en, this message translates to:
-  /// **'Trip Closed Notice'**
+  /// **'This trip is closed. You can still read the messages.'**
   String get chatTripClosedNotice;
 
   /// No description provided for @chatTypeMessageHint.
   ///
   /// In en, this message translates to:
-  /// **'Type Message Hint'**
+  /// **'Type a message'**
   String get chatTypeMessageHint;
 
   /// No description provided for @chatTypingIndicator.
   ///
   /// In en, this message translates to:
-  /// **'Typing Indicator'**
+  /// **'Typing...'**
   String get chatTypingIndicator;
 
   /// No description provided for @clientAddressAddTitle.
@@ -6644,19 +6644,19 @@ abstract class AppLocalizations {
   /// No description provided for @clientBookingLoadingPointHint.
   ///
   /// In en, this message translates to:
-  /// **'Loading Point Hint'**
+  /// **'Search for the loading point'**
   String get clientBookingLoadingPointHint;
 
   /// No description provided for @clientBookingUnloadingPointHint.
   ///
   /// In en, this message translates to:
-  /// **'Unloading Point Hint'**
+  /// **'Search for the unloading point'**
   String get clientBookingUnloadingPointHint;
 
   /// No description provided for @clientBookingWeightError.
   ///
   /// In en, this message translates to:
-  /// **'Weight Error'**
+  /// **'Please enter a valid weight'**
   String get clientBookingWeightError;
 
   /// No description provided for @clientCheckoutCancel.
@@ -6668,409 +6668,409 @@ abstract class AppLocalizations {
   /// No description provided for @clientCheckoutChooseMethod.
   ///
   /// In en, this message translates to:
-  /// **'Choose Method'**
+  /// **'Choose a payment method'**
   String get clientCheckoutChooseMethod;
 
   /// No description provided for @clientCheckoutEnterPin.
   ///
   /// In en, this message translates to:
-  /// **'Enter Pin'**
+  /// **'Enter 4-digit UPI PIN'**
   String get clientCheckoutEnterPin;
 
   /// No description provided for @clientCheckoutMethodCards.
   ///
   /// In en, this message translates to:
-  /// **'Method Cards'**
+  /// **'Card'**
   String get clientCheckoutMethodCards;
 
   /// No description provided for @clientCheckoutMethodNetbanking.
   ///
   /// In en, this message translates to:
-  /// **'Method Netbanking'**
+  /// **'Netbanking'**
   String get clientCheckoutMethodNetbanking;
 
   /// No description provided for @clientCheckoutMethodRecommended.
   ///
   /// In en, this message translates to:
-  /// **'Method Recommended'**
+  /// **'Recommended'**
   String get clientCheckoutMethodRecommended;
 
   /// No description provided for @clientCheckoutMethodUpi.
   ///
   /// In en, this message translates to:
-  /// **'Method UPI'**
+  /// **'UPI'**
   String get clientCheckoutMethodUpi;
 
   /// No description provided for @clientCheckoutMethodWallet.
   ///
   /// In en, this message translates to:
-  /// **'Method Wallet'**
+  /// **'Wallet'**
   String get clientCheckoutMethodWallet;
 
   /// No description provided for @clientCheckoutTestTitle.
   ///
   /// In en, this message translates to:
-  /// **'Test Title'**
+  /// **'Test payment'**
   String get clientCheckoutTestTitle;
 
   /// No description provided for @clientChooseTrucks.
   ///
   /// In en, this message translates to:
-  /// **'Client Choose Trucks'**
+  /// **'Choose trucks'**
   String get clientChooseTrucks;
 
   /// No description provided for @clientFindingBrokers.
   ///
   /// In en, this message translates to:
-  /// **'Client Finding Brokers'**
+  /// **'Finding brokers nearby'**
   String get clientFindingBrokers;
 
   /// No description provided for @clientHomeBookAnyTruck.
   ///
   /// In en, this message translates to:
-  /// **'Book Any Truck'**
+  /// **'Book any truck'**
   String get clientHomeBookAnyTruck;
 
   /// No description provided for @clientHomeLoadingHint.
   ///
   /// In en, this message translates to:
-  /// **'Loading Hint'**
+  /// **'Search loading location'**
   String get clientHomeLoadingHint;
 
   /// No description provided for @clientHomeUnloadingHint.
   ///
   /// In en, this message translates to:
-  /// **'Unloading Hint'**
+  /// **'Search unloading location'**
   String get clientHomeUnloadingHint;
 
   /// No description provided for @clientNotificationsAllCaughtUp.
   ///
   /// In en, this message translates to:
-  /// **'All Caught Up'**
+  /// **'You\'re all caught up'**
   String get clientNotificationsAllCaughtUp;
 
   /// No description provided for @clientNotificationsAllCaughtUpHint.
   ///
   /// In en, this message translates to:
-  /// **'All Caught Up Hint'**
+  /// **'No new notifications right now.'**
   String get clientNotificationsAllCaughtUpHint;
 
   /// No description provided for @clientNotificationsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Empty'**
+  /// **'No notifications'**
   String get clientNotificationsEmpty;
 
   /// No description provided for @clientNotificationsEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Empty Hint'**
+  /// **'Booking updates and invoice alerts will show up here.'**
   String get clientNotificationsEmptyHint;
 
   /// No description provided for @clientNotificationsFallbackMessage.
   ///
   /// In en, this message translates to:
-  /// **'Fallback Message'**
+  /// **'Open your booking to see the full details.'**
   String get clientNotificationsFallbackMessage;
 
   /// No description provided for @clientNotificationsFallbackTitle.
   ///
   /// In en, this message translates to:
-  /// **'Fallback Title'**
+  /// **'Booking update'**
   String get clientNotificationsFallbackTitle;
 
   /// No description provided for @clientNotificationsFilterAll.
   ///
   /// In en, this message translates to:
-  /// **'Filter All'**
+  /// **'All'**
   String get clientNotificationsFilterAll;
 
   /// No description provided for @clientNotificationsFilterUnread.
   ///
   /// In en, this message translates to:
-  /// **'Filter Unread'**
+  /// **'Unread'**
   String get clientNotificationsFilterUnread;
 
   /// No description provided for @clientNotificationsGotIt.
   ///
   /// In en, this message translates to:
-  /// **'Got It'**
+  /// **'Got it'**
   String get clientNotificationsGotIt;
 
   /// No description provided for @clientNotificationsKindBooking.
   ///
   /// In en, this message translates to:
-  /// **'Kind Booking'**
+  /// **'Booking'**
   String get clientNotificationsKindBooking;
 
   /// No description provided for @clientNotificationsKindOffer.
   ///
   /// In en, this message translates to:
-  /// **'Kind Offer'**
+  /// **'Offer'**
   String get clientNotificationsKindOffer;
 
   /// No description provided for @clientNotificationsKindPayment.
   ///
   /// In en, this message translates to:
-  /// **'Kind Payment'**
+  /// **'Payment'**
   String get clientNotificationsKindPayment;
 
   /// No description provided for @clientNotificationsKindUpdate.
   ///
   /// In en, this message translates to:
-  /// **'Kind Update'**
+  /// **'Update'**
   String get clientNotificationsKindUpdate;
 
   /// No description provided for @clientNotificationsLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Load Error'**
+  /// **'Could not load notifications'**
   String get clientNotificationsLoadError;
 
   /// No description provided for @clientNotificationsMarkAllRead.
   ///
   /// In en, this message translates to:
-  /// **'Mark All Read'**
+  /// **'Mark all as read'**
   String get clientNotificationsMarkAllRead;
 
   /// No description provided for @clientNotificationsMarkedRead.
   ///
   /// In en, this message translates to:
-  /// **'Marked Read'**
+  /// **'Marked as read'**
   String get clientNotificationsMarkedRead;
 
   /// No description provided for @clientNotificationsSaving.
   ///
   /// In en, this message translates to:
-  /// **'Saving'**
+  /// **'Saving...'**
   String get clientNotificationsSaving;
 
   /// No description provided for @clientNotificationsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Notifications'**
   String get clientNotificationsTitle;
 
   /// No description provided for @clientNotificationsTryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Try Again'**
+  /// **'Try again'**
   String get clientNotificationsTryAgain;
 
   /// No description provided for @clientPaymentAddAccountInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Account Invalid'**
+  /// **'Enter a valid account number'**
   String get clientPaymentAddAccountInvalid;
 
   /// No description provided for @clientPaymentAddAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'Account Label'**
+  /// **'Account number'**
   String get clientPaymentAddAccountLabel;
 
   /// No description provided for @clientPaymentAddBankLabel.
   ///
   /// In en, this message translates to:
-  /// **'Bank Label'**
+  /// **'Select your bank'**
   String get clientPaymentAddBankLabel;
 
   /// No description provided for @clientPaymentAddBankRequired.
   ///
   /// In en, this message translates to:
-  /// **'Bank Required'**
+  /// **'Select a bank'**
   String get clientPaymentAddBankRequired;
 
   /// No description provided for @clientPaymentAddBankSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Bank Search Hint'**
+  /// **'Search banks'**
   String get clientPaymentAddBankSearchHint;
 
   /// No description provided for @clientPaymentAddBrandLabel.
   ///
   /// In en, this message translates to:
-  /// **'Brand Label'**
+  /// **'Card brand'**
   String get clientPaymentAddBrandLabel;
 
   /// No description provided for @clientPaymentAddBrandRequired.
   ///
   /// In en, this message translates to:
-  /// **'Brand Required'**
+  /// **'Enter the card brand'**
   String get clientPaymentAddBrandRequired;
 
   /// No description provided for @clientPaymentAddCardNote.
   ///
   /// In en, this message translates to:
-  /// **'Card Note'**
+  /// **'We only use this to show the card on your saved methods.'**
   String get clientPaymentAddCardNote;
 
   /// No description provided for @clientPaymentAddDefaultOption.
   ///
   /// In en, this message translates to:
-  /// **'Default Option'**
+  /// **'Set as default'**
   String get clientPaymentAddDefaultOption;
 
   /// No description provided for @clientPaymentAddIfscInvalid.
   ///
   /// In en, this message translates to:
-  /// **'IFSC Invalid'**
+  /// **'Enter a valid IFSC code'**
   String get clientPaymentAddIfscInvalid;
 
   /// No description provided for @clientPaymentAddIfscLabel.
   ///
   /// In en, this message translates to:
-  /// **'IFSC Label'**
+  /// **'IFSC code'**
   String get clientPaymentAddIfscLabel;
 
   /// No description provided for @clientPaymentAddLast4Label.
   ///
   /// In en, this message translates to:
-  /// **'Last4 Label'**
+  /// **'Last 4 digits'**
   String get clientPaymentAddLast4Label;
 
   /// No description provided for @clientPaymentAddLast4Required.
   ///
   /// In en, this message translates to:
-  /// **'Last4 Required'**
+  /// **'Enter the last 4 digits'**
   String get clientPaymentAddLast4Required;
 
   /// No description provided for @clientPaymentAddMethod.
   ///
   /// In en, this message translates to:
-  /// **'Method'**
+  /// **'Add method'**
   String get clientPaymentAddMethod;
 
   /// No description provided for @clientPaymentAddNoteLabel.
   ///
   /// In en, this message translates to:
-  /// **'Note Label'**
+  /// **'Note'**
   String get clientPaymentAddNoteLabel;
 
   /// No description provided for @clientPaymentAddPrivacyNote.
   ///
   /// In en, this message translates to:
-  /// **'Privacy Note'**
+  /// **'Your card details are encrypted and never shared with anyone.'**
   String get clientPaymentAddPrivacyNote;
 
   /// No description provided for @clientPaymentAddSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'Save Button'**
+  /// **'Save method'**
   String get clientPaymentAddSaveButton;
 
   /// No description provided for @clientPaymentAddSignInRequired.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Required'**
+  /// **'Please sign in to add a payment method.'**
   String get clientPaymentAddSignInRequired;
 
   /// No description provided for @clientPaymentAddTileSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Tile Subtitle'**
+  /// **'Card, UPI, netbanking or wallet'**
   String get clientPaymentAddTileSubtitle;
 
   /// No description provided for @clientPaymentAddTileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Tile Title'**
+  /// **'Add a payment method'**
   String get clientPaymentAddTileTitle;
 
   /// No description provided for @clientPaymentAddTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Add payment method'**
   String get clientPaymentAddTitle;
 
   /// No description provided for @clientPaymentAddTypeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Type Label'**
+  /// **'Payment type'**
   String get clientPaymentAddTypeLabel;
 
   /// No description provided for @clientPaymentAddUpiInvalid.
   ///
   /// In en, this message translates to:
-  /// **'UPI Invalid'**
+  /// **'Enter a valid UPI ID'**
   String get clientPaymentAddUpiInvalid;
 
   /// No description provided for @clientPaymentAddUpiLabel.
   ///
   /// In en, this message translates to:
-  /// **'UPI Label'**
+  /// **'UPI ID'**
   String get clientPaymentAddUpiLabel;
 
   /// No description provided for @clientPaymentAddWalletLabel.
   ///
   /// In en, this message translates to:
-  /// **'Wallet Label'**
+  /// **'Select a wallet'**
   String get clientPaymentAddWalletLabel;
 
   /// No description provided for @clientPaymentAddWalletRequired.
   ///
   /// In en, this message translates to:
-  /// **'Wallet Required'**
+  /// **'Select a wallet'**
   String get clientPaymentAddWalletRequired;
 
   /// No description provided for @clientPaymentAddWalletSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Wallet Search Hint'**
+  /// **'Search wallets'**
   String get clientPaymentAddWalletSearchHint;
 
   /// No description provided for @clientPaymentCardSaved.
   ///
   /// In en, this message translates to:
-  /// **'Card Saved'**
+  /// **'Card saved'**
   String get clientPaymentCardSaved;
 
   /// No description provided for @clientPaymentDefaultBadge.
   ///
   /// In en, this message translates to:
-  /// **'Default Badge'**
+  /// **'Default'**
   String get clientPaymentDefaultBadge;
 
   /// No description provided for @clientPaymentDeleteTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Delete tooltip'**
+  /// **'Delete payment method'**
   String get clientPaymentDeleteTooltip;
 
   /// No description provided for @clientPaymentEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Empty Subtitle'**
+  /// **'Save a card, UPI ID or bank account for faster checkout.'**
   String get clientPaymentEmptySubtitle;
 
   /// No description provided for @clientPaymentEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Empty Title'**
+  /// **'No payment methods'**
   String get clientPaymentEmptyTitle;
 
   /// No description provided for @clientPaymentLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Load Error'**
+  /// **'Could not load methods'**
   String get clientPaymentLoadError;
 
   /// No description provided for @clientPaymentLoadErrorHint.
   ///
   /// In en, this message translates to:
-  /// **'Load Error Hint'**
+  /// **'Please try again in a moment.'**
   String get clientPaymentLoadErrorHint;
 
   /// No description provided for @clientPaymentMethodsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Methods Title'**
+  /// **'Payment methods'**
   String get clientPaymentMethodsTitle;
 
   /// No description provided for @clientPaymentRemoved.
   ///
   /// In en, this message translates to:
-  /// **'Removed'**
+  /// **'Payment method removed'**
   String get clientPaymentRemoved;
 
   /// No description provided for @clientPaymentRetry.
@@ -7082,121 +7082,121 @@ abstract class AppLocalizations {
   /// No description provided for @clientPaymentSetDefault.
   ///
   /// In en, this message translates to:
-  /// **'Set Default'**
+  /// **'Set as default'**
   String get clientPaymentSetDefault;
 
   /// No description provided for @clientPaymentSignInSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Subtitle'**
+  /// **'Sign in to view your saved cards, UPI IDs and bank accounts.'**
   String get clientPaymentSignInSubtitle;
 
   /// No description provided for @clientPaymentSignInTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Title'**
+  /// **'Sign in to continue'**
   String get clientPaymentSignInTitle;
 
   /// No description provided for @clientPaymentTypeBank.
   ///
   /// In en, this message translates to:
-  /// **'Type Bank'**
+  /// **'Bank'**
   String get clientPaymentTypeBank;
 
   /// No description provided for @clientPaymentTypeCard.
   ///
   /// In en, this message translates to:
-  /// **'Type Card'**
+  /// **'Card'**
   String get clientPaymentTypeCard;
 
   /// No description provided for @clientPaymentTypeMethod.
   ///
   /// In en, this message translates to:
-  /// **'Type Method'**
+  /// **'Payment method'**
   String get clientPaymentTypeMethod;
 
   /// No description provided for @clientPaymentTypeUpi.
   ///
   /// In en, this message translates to:
-  /// **'Type UPI'**
+  /// **'UPI'**
   String get clientPaymentTypeUpi;
 
   /// No description provided for @clientPaymentTypeWallet.
   ///
   /// In en, this message translates to:
-  /// **'Type Wallet'**
+  /// **'Wallet'**
   String get clientPaymentTypeWallet;
 
   /// No description provided for @clientPaymentUpiFallback.
   ///
   /// In en, this message translates to:
-  /// **'UPI Fallback'**
+  /// **'UPI'**
   String get clientPaymentUpiFallback;
 
   /// No description provided for @clientPaymentWalletFallback.
   ///
   /// In en, this message translates to:
-  /// **'Wallet Fallback'**
+  /// **'Wallet'**
   String get clientPaymentWalletFallback;
 
   /// No description provided for @clientPlacesSuggestionsError.
   ///
   /// In en, this message translates to:
-  /// **'Suggestions Error'**
+  /// **'Could not load suggestions'**
   String get clientPlacesSuggestionsError;
 
   /// No description provided for @clientPublicAssignedDriver.
   ///
   /// In en, this message translates to:
-  /// **'Assigned Driver'**
+  /// **'To be assigned'**
   String get clientPublicAssignedDriver;
 
   /// No description provided for @clientPublicDriverLabel.
   ///
   /// In en, this message translates to:
-  /// **'Driver Label'**
+  /// **'Driver'**
   String get clientPublicDriverLabel;
 
   /// No description provided for @clientPublicDropLabel.
   ///
   /// In en, this message translates to:
-  /// **'Drop Label'**
+  /// **'Drop'**
   String get clientPublicDropLabel;
 
   /// No description provided for @clientPublicExpressSuffix.
   ///
   /// In en, this message translates to:
-  /// **'Express Suffix'**
+  /// **'Express'**
   String get clientPublicExpressSuffix;
 
   /// No description provided for @clientPublicIncidentActive.
   ///
   /// In en, this message translates to:
-  /// **'Incident Active'**
+  /// **'Incident reported'**
   String get clientPublicIncidentActive;
 
   /// No description provided for @clientPublicPickupLabel.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Label'**
+  /// **'Pickup'**
   String get clientPublicPickupLabel;
 
   /// No description provided for @clientPublicTrackingInvalidLink.
   ///
   /// In en, this message translates to:
-  /// **'Tracking Invalid Link'**
+  /// **'This tracking link is not valid.'**
   String get clientPublicTrackingInvalidLink;
 
   /// No description provided for @clientPublicTrackingUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Tracking Unavailable'**
+  /// **'Tracking unavailable'**
   String get clientPublicTrackingUnavailable;
 
   /// No description provided for @clientPublicTruckLabel.
   ///
   /// In en, this message translates to:
-  /// **'Truck Label'**
+  /// **'Truck'**
   String get clientPublicTruckLabel;
 
   /// No description provided for @clientSavedAddAddress.
@@ -7280,31 +7280,31 @@ abstract class AppLocalizations {
   /// No description provided for @clientSelectVehicle.
   ///
   /// In en, this message translates to:
-  /// **'Client Select Vehicle'**
+  /// **'Select a vehicle'**
   String get clientSelectVehicle;
 
   /// No description provided for @clientTrackingGpsPending.
   ///
   /// In en, this message translates to:
-  /// **'Gps Pending'**
+  /// **'Waiting for GPS'**
   String get clientTrackingGpsPending;
 
   /// No description provided for @clientTrackingLivePendingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Live Pending Subtitle'**
+  /// **'The vehicle location will appear here as soon as it starts moving.'**
   String get clientTrackingLivePendingSubtitle;
 
   /// No description provided for @clientTrackingLivePendingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Live Pending Title'**
+  /// **'Live location pending'**
   String get clientTrackingLivePendingTitle;
 
   /// No description provided for @clientTrackingLivePosition.
   ///
   /// In en, this message translates to:
-  /// **'Live Position'**
+  /// **'Live position'**
   String get clientTrackingLivePosition;
 
   /// No description provided for @clientTrackingLoading.
@@ -7316,37 +7316,37 @@ abstract class AppLocalizations {
   /// No description provided for @clientTrackingMapEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Map Empty Hint'**
+  /// **'Live tracking will appear on the map.'**
   String get clientTrackingMapEmptyHint;
 
   /// No description provided for @clientTrackingMapLoading.
   ///
   /// In en, this message translates to:
-  /// **'Map Loading'**
+  /// **'Loading the map...'**
   String get clientTrackingMapLoading;
 
   /// No description provided for @clientTrackingPayNow.
   ///
   /// In en, this message translates to:
-  /// **'Pay Now'**
+  /// **'Pay now'**
   String get clientTrackingPayNow;
 
   /// No description provided for @clientTrackingPayRemaining.
   ///
   /// In en, this message translates to:
-  /// **'Pay Remaining'**
+  /// **'Pay remaining'**
   String get clientTrackingPayRemaining;
 
   /// No description provided for @clientTrackingRateDelivery.
   ///
   /// In en, this message translates to:
-  /// **'Rate Delivery'**
+  /// **'Rate delivery'**
   String get clientTrackingRateDelivery;
 
   /// No description provided for @clientTrackingSubmitting.
   ///
   /// In en, this message translates to:
-  /// **'Submitting'**
+  /// **'Submitting...'**
   String get clientTrackingSubmitting;
 
   /// No description provided for @clientTrackingUnloading.
@@ -7364,151 +7364,151 @@ abstract class AppLocalizations {
   /// No description provided for @coreDigilockerAadhaarFallbackNote.
   ///
   /// In en, this message translates to:
-  /// **'Aadhaar Fallback Note'**
+  /// **'DigiLocker could not read this Aadhaar. Enter the number manually.'**
   String get coreDigilockerAadhaarFallbackNote;
 
   /// No description provided for @coreDigilockerBankAccountHint.
   ///
   /// In en, this message translates to:
-  /// **'Bank Account Hint'**
+  /// **'Bank account number'**
   String get coreDigilockerBankAccountHint;
 
   /// No description provided for @coreDigilockerBrokerIntro.
   ///
   /// In en, this message translates to:
-  /// **'Broker Intro'**
+  /// **'Verify your PAN, Aadhaar and business documents to receive bookings.'**
   String get coreDigilockerBrokerIntro;
 
   /// No description provided for @coreDigilockerBusinessDetails.
   ///
   /// In en, this message translates to:
-  /// **'Business Details'**
+  /// **'Business details'**
   String get coreDigilockerBusinessDetails;
 
   /// No description provided for @coreDigilockerBusinessRegHint.
   ///
   /// In en, this message translates to:
-  /// **'Business Reg Hint'**
+  /// **'Business registration number'**
   String get coreDigilockerBusinessRegHint;
 
   /// No description provided for @coreDigilockerCheckStatus.
   ///
   /// In en, this message translates to:
-  /// **'Check Status'**
+  /// **'Check status'**
   String get coreDigilockerCheckStatus;
 
   /// No description provided for @coreDigilockerChecking.
   ///
   /// In en, this message translates to:
-  /// **'Checking'**
+  /// **'Checking...'**
   String get coreDigilockerChecking;
 
   /// No description provided for @coreDigilockerDidntMatch.
   ///
   /// In en, this message translates to:
-  /// **'Didnt Match'**
+  /// **'These details did not match your DigiLocker records.'**
   String get coreDigilockerDidntMatch;
 
   /// No description provided for @coreDigilockerDocAadhaar.
   ///
   /// In en, this message translates to:
-  /// **'Doc Aadhaar'**
+  /// **'Aadhaar'**
   String get coreDigilockerDocAadhaar;
 
   /// No description provided for @coreDigilockerDocLicense.
   ///
   /// In en, this message translates to:
-  /// **'Doc License'**
+  /// **'Driving licence'**
   String get coreDigilockerDocLicense;
 
   /// No description provided for @coreDigilockerDocPan.
   ///
   /// In en, this message translates to:
-  /// **'Doc PAN'**
+  /// **'PAN card'**
   String get coreDigilockerDocPan;
 
   /// No description provided for @coreDigilockerDriverIntro.
   ///
   /// In en, this message translates to:
-  /// **'Driver Intro'**
+  /// **'Verify your PAN, Aadhaar and licence to start receiving trips.'**
   String get coreDigilockerDriverIntro;
 
   /// No description provided for @coreDigilockerGstHint.
   ///
   /// In en, this message translates to:
-  /// **'GST Hint'**
+  /// **'GST number'**
   String get coreDigilockerGstHint;
 
   /// No description provided for @coreDigilockerInfoNote.
   ///
   /// In en, this message translates to:
-  /// **'Info Note'**
+  /// **'DigiLocker fetches your documents securely from the government portal.'**
   String get coreDigilockerInfoNote;
 
   /// No description provided for @coreDigilockerNoLoginLink.
   ///
   /// In en, this message translates to:
-  /// **'No Login Link'**
+  /// **'No DigiLocker login available. Please sign in and try again.'**
   String get coreDigilockerNoLoginLink;
 
   /// No description provided for @coreDigilockerNotComplete.
   ///
   /// In en, this message translates to:
-  /// **'Not Complete'**
+  /// **'Verification incomplete'**
   String get coreDigilockerNotComplete;
 
   /// No description provided for @coreDigilockerNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Not Found'**
+  /// **'No document found'**
   String get coreDigilockerNotFound;
 
   /// No description provided for @coreDigilockerNotVerifiedYet.
   ///
   /// In en, this message translates to:
-  /// **'Not Verified Yet'**
+  /// **'Not verified yet'**
   String get coreDigilockerNotVerifiedYet;
 
   /// No description provided for @coreDigilockerOpenBrowserFailed.
   ///
   /// In en, this message translates to:
-  /// **'Open Browser Failed'**
+  /// **'Could not open your browser for DigiLocker.'**
   String get coreDigilockerOpenBrowserFailed;
 
   /// No description provided for @coreDigilockerOptionalNote.
   ///
   /// In en, this message translates to:
-  /// **'Optional Note'**
+  /// **'Optional'**
   String get coreDigilockerOptionalNote;
 
   /// No description provided for @coreDigilockerPendingRetry.
   ///
   /// In en, this message translates to:
-  /// **'Pending Retry'**
+  /// **'Verification is still pending. Please try again in a moment.'**
   String get coreDigilockerPendingRetry;
 
   /// No description provided for @coreDigilockerUnreachable.
   ///
   /// In en, this message translates to:
-  /// **'Unreachable'**
+  /// **'DigiLocker is unreachable right now'**
   String get coreDigilockerUnreachable;
 
   /// No description provided for @coreDigilockerVehicleDetails.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Details'**
+  /// **'Vehicle details'**
   String get coreDigilockerVehicleDetails;
 
   /// No description provided for @coreDigilockerVehicleInsuranceHint.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Insurance Hint'**
+  /// **'Vehicle insurance number'**
   String get coreDigilockerVehicleInsuranceHint;
 
   /// No description provided for @coreDigilockerVehicleRegHint.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Reg Hint'**
+  /// **'Vehicle registration number'**
   String get coreDigilockerVehicleRegHint;
 
   /// No description provided for @coreDigilockerVerified.
@@ -7520,13 +7520,13 @@ abstract class AppLocalizations {
   /// No description provided for @coreDigilockerVerifyButton.
   ///
   /// In en, this message translates to:
-  /// **'Verify Button'**
+  /// **'Verify with DigiLocker'**
   String get coreDigilockerVerifyButton;
 
   /// No description provided for @coreDigilockerVerifyLicense.
   ///
   /// In en, this message translates to:
-  /// **'Verify License'**
+  /// **'Verify driving licence'**
   String get coreDigilockerVerifyLicense;
 
   /// No description provided for @coreDigilockerVerifyPan.
@@ -7538,97 +7538,97 @@ abstract class AppLocalizations {
   /// No description provided for @coreDigilockerWorking.
   ///
   /// In en, this message translates to:
-  /// **'Working'**
+  /// **'Working...'**
   String get coreDigilockerWorking;
 
   /// No description provided for @coreKycCompleteAction.
   ///
   /// In en, this message translates to:
-  /// **'Complete Action'**
+  /// **'Complete KYC'**
   String get coreKycCompleteAction;
 
   /// No description provided for @coreKycIncompleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Incomplete Body'**
+  /// **'Finish verifying your documents to book and accept trips.'**
   String get coreKycIncompleteBody;
 
   /// No description provided for @coreKycIncompleteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Incomplete Title'**
+  /// **'Complete your KYC'**
   String get coreKycIncompleteTitle;
 
   /// No description provided for @coreKycNotNow.
   ///
   /// In en, this message translates to:
-  /// **'Not Now'**
+  /// **'Not now'**
   String get coreKycNotNow;
 
   /// No description provided for @coreKycRejectedBody.
   ///
   /// In en, this message translates to:
-  /// **'Rejected Body'**
+  /// **'Our team could not verify your documents. Please check them and submit again.'**
   String get coreKycRejectedBody;
 
   /// No description provided for @coreKycRejectedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Rejected Title'**
+  /// **'KYC rejected'**
   String get coreKycRejectedTitle;
 
   /// No description provided for @coreKycResubmitAction.
   ///
   /// In en, this message translates to:
-  /// **'Resubmit Action'**
+  /// **'Submit again'**
   String get coreKycResubmitAction;
 
   /// No description provided for @coreKycUnderReviewBody.
   ///
   /// In en, this message translates to:
-  /// **'Under Review Body'**
+  /// **'We are reviewing your documents. This usually takes 24-48 hours.'**
   String get coreKycUnderReviewBody;
 
   /// No description provided for @coreKycUnderReviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Under Review Title'**
+  /// **'KYC under review'**
   String get coreKycUnderReviewTitle;
 
   /// No description provided for @coreKycViewStatusAction.
   ///
   /// In en, this message translates to:
-  /// **'View Status Action'**
+  /// **'View status'**
   String get coreKycViewStatusAction;
 
   /// No description provided for @coreMapDropTitle.
   ///
   /// In en, this message translates to:
-  /// **'Drop Title'**
+  /// **'Drop'**
   String get coreMapDropTitle;
 
   /// No description provided for @coreMapExpressLabel.
   ///
   /// In en, this message translates to:
-  /// **'Express Label'**
+  /// **'Express'**
   String get coreMapExpressLabel;
 
   /// No description provided for @coreMapPickupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Title'**
+  /// **'Pickup'**
   String get coreMapPickupTitle;
 
   /// No description provided for @coreMapRouteNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Route Not Found'**
+  /// **'Route not found'**
   String get coreMapRouteNotFound;
 
   /// No description provided for @deliveryFlowChoosePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Choose Photo'**
+  /// **'Choose photo'**
   String get deliveryFlowChoosePhoto;
 
   /// No description provided for @deliveryFlowCompany.
@@ -7640,13 +7640,13 @@ abstract class AppLocalizations {
   /// No description provided for @deliveryFlowContactUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Contact Unavailable'**
+  /// **'Contact unavailable'**
   String get deliveryFlowContactUnavailable;
 
   /// No description provided for @deliveryFlowMaxItems.
   ///
   /// In en, this message translates to:
-  /// **'Max Items'**
+  /// **'You can upload up to 5 photos.'**
   String get deliveryFlowMaxItems;
 
   /// No description provided for @deliveryFlowMyQr.
@@ -7664,31 +7664,31 @@ abstract class AppLocalizations {
   /// No description provided for @deliveryFlowPhotosUploaded.
   ///
   /// In en, this message translates to:
-  /// **'Photos Uploaded'**
+  /// **'Photos uploaded'**
   String get deliveryFlowPhotosUploaded;
 
   /// No description provided for @deliveryFlowRecordVideo.
   ///
   /// In en, this message translates to:
-  /// **'Record Video'**
+  /// **'Record video'**
   String get deliveryFlowRecordVideo;
 
   /// No description provided for @deliveryFlowSignInContinue.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Continue'**
+  /// **'Please sign in to continue.'**
   String get deliveryFlowSignInContinue;
 
   /// No description provided for @deliveryFlowSignInUploadPhotos.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Upload Photos'**
+  /// **'Please sign in to upload photos.'**
   String get deliveryFlowSignInUploadPhotos;
 
   /// No description provided for @deliveryFlowTakePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Take Photo'**
+  /// **'Take photo'**
   String get deliveryFlowTakePhoto;
 
   /// No description provided for @deliveryFlowVerified.
@@ -7700,31 +7700,31 @@ abstract class AppLocalizations {
   /// No description provided for @driverEarningsCurrentBalance.
   ///
   /// In en, this message translates to:
-  /// **'Current Balance'**
+  /// **'Current balance'**
   String get driverEarningsCurrentBalance;
 
   /// No description provided for @driverEarningsLastMonth.
   ///
   /// In en, this message translates to:
-  /// **'Last Month'**
+  /// **'Last month'**
   String get driverEarningsLastMonth;
 
   /// No description provided for @driverEarningsNoDeliveries.
   ///
   /// In en, this message translates to:
-  /// **'No Deliveries'**
+  /// **'No deliveries yet'**
   String get driverEarningsNoDeliveries;
 
   /// No description provided for @driverEarningsReadyPayout.
   ///
   /// In en, this message translates to:
-  /// **'Ready Payout'**
+  /// **'Ready for payout'**
   String get driverEarningsReadyPayout;
 
   /// No description provided for @driverEarningsThisMonth.
   ///
   /// In en, this message translates to:
-  /// **'This Month'**
+  /// **'This month'**
   String get driverEarningsThisMonth;
 
   /// No description provided for @driverEarningsTrips.
@@ -7736,19 +7736,19 @@ abstract class AppLocalizations {
   /// No description provided for @driverEarningsViewAll.
   ///
   /// In en, this message translates to:
-  /// **'View All'**
+  /// **'View all'**
   String get driverEarningsViewAll;
 
   /// No description provided for @driverHomeTripAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Trip Accepted'**
+  /// **'Trip accepted'**
   String get driverHomeTripAccepted;
 
   /// No description provided for @driverHomeTripDeclined.
   ///
   /// In en, this message translates to:
-  /// **'Trip Declined'**
+  /// **'Trip declined'**
   String get driverHomeTripDeclined;
 
   /// No description provided for @driverKycEdit.
@@ -7760,19 +7760,19 @@ abstract class AppLocalizations {
   /// No description provided for @driverKycPickFailed.
   ///
   /// In en, this message translates to:
-  /// **'Pick Failed'**
+  /// **'Could not open this right now. Please try again.'**
   String get driverKycPickFailed;
 
   /// No description provided for @driverKycSignInToSubmit.
   ///
   /// In en, this message translates to:
-  /// **'Sign In to Submit'**
+  /// **'Please sign in to submit your KYC.'**
   String get driverKycSignInToSubmit;
 
   /// No description provided for @driverKycSignInToUpload.
   ///
   /// In en, this message translates to:
-  /// **'Sign In to Upload'**
+  /// **'Please sign in to upload documents.'**
   String get driverKycSignInToUpload;
 
   /// No description provided for @driverKycView.
@@ -7796,19 +7796,19 @@ abstract class AppLocalizations {
   /// No description provided for @driverPaymentQrUploaded.
   ///
   /// In en, this message translates to:
-  /// **'QR Uploaded'**
+  /// **'QR uploaded'**
   String get driverPaymentQrUploaded;
 
   /// No description provided for @driverPaymentSignInRecord.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Record'**
+  /// **'Please sign in to record this payment.'**
   String get driverPaymentSignInRecord;
 
   /// No description provided for @driverPaymentSignInUploadQr.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Upload QR'**
+  /// **'Please sign in to upload your payment QR.'**
   String get driverPaymentSignInUploadQr;
 
   /// No description provided for @driverPaymentVerified.
@@ -7826,19 +7826,19 @@ abstract class AppLocalizations {
   /// No description provided for @gpsAboutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'About Subtitle'**
+  /// **'Version, licences and app details'**
   String get gpsAboutSubtitle;
 
   /// No description provided for @gpsAccountDetails.
   ///
   /// In en, this message translates to:
-  /// **'Account Details'**
+  /// **'Account details'**
   String get gpsAccountDetails;
 
   /// No description provided for @gpsAccountDetailsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Account Details Subtitle'**
+  /// **'Manage your account information'**
   String get gpsAccountDetailsSubtitle;
 
   /// No description provided for @gpsAccountSection.
@@ -7856,13 +7856,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsAllFleet.
   ///
   /// In en, this message translates to:
-  /// **'All Fleet'**
+  /// **'Entire fleet'**
   String get gpsAllFleet;
 
   /// No description provided for @gpsAllVehiclesLiveMap.
   ///
   /// In en, this message translates to:
-  /// **'All Vehicles Live Map'**
+  /// **'All vehicles on live map'**
   String get gpsAllVehiclesLiveMap;
 
   /// No description provided for @gpsAppearance.
@@ -7874,13 +7874,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsAppearanceSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Appearance Subtitle'**
+  /// **'Light, dark or follow your device'**
   String get gpsAppearanceSubtitle;
 
   /// No description provided for @gpsBackToFleet.
   ///
   /// In en, this message translates to:
-  /// **'Back to Fleet'**
+  /// **'Back to fleet'**
   String get gpsBackToFleet;
 
   /// No description provided for @gpsCached.
@@ -7892,13 +7892,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsChangePassword.
   ///
   /// In en, this message translates to:
-  /// **'Change Password'**
+  /// **'Change password'**
   String get gpsChangePassword;
 
   /// No description provided for @gpsChangePasswordSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Change Password Subtitle'**
+  /// **'Update your account password'**
   String get gpsChangePasswordSubtitle;
 
   /// No description provided for @gpsCompleted.
@@ -7910,7 +7910,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsCreateGeofence.
   ///
   /// In en, this message translates to:
-  /// **'Create Geofence'**
+  /// **'Create geofence'**
   String get gpsCreateGeofence;
 
   /// No description provided for @gpsCustom.
@@ -7922,7 +7922,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsDashboardWelcome.
   ///
   /// In en, this message translates to:
-  /// **'Dashboard Welcome'**
+  /// **'Welcome back'**
   String get gpsDashboardWelcome;
 
   /// No description provided for @gpsDeducted.
@@ -7934,7 +7934,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsDefineZones.
   ///
   /// In en, this message translates to:
-  /// **'Define Zones'**
+  /// **'Define zones'**
   String get gpsDefineZones;
 
   /// No description provided for @gpsDuration.
@@ -7946,7 +7946,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsDurationSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Duration Subtitle'**
+  /// **'Time spent driving or idling'**
   String get gpsDurationSubtitle;
 
   /// No description provided for @gpsExpired.
@@ -7958,7 +7958,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsExpiredTokensRemoved.
   ///
   /// In en, this message translates to:
-  /// **'Expired tokens Removed'**
+  /// **'Expired tokens were removed'**
   String get gpsExpiredTokensRemoved;
 
   /// No description provided for @gpsFilter.
@@ -7970,7 +7970,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsFilterAll.
   ///
   /// In en, this message translates to:
-  /// **'Filter All'**
+  /// **'All'**
   String get gpsFilterAll;
 
   /// No description provided for @gpsFleet.
@@ -7982,7 +7982,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsFleetStatus.
   ///
   /// In en, this message translates to:
-  /// **'Fleet Status'**
+  /// **'Fleet status'**
   String get gpsFleetStatus;
 
   /// No description provided for @gpsFrom.
@@ -7994,13 +7994,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsFuelSummary.
   ///
   /// In en, this message translates to:
-  /// **'Fuel Summary'**
+  /// **'Fuel summary'**
   String get gpsFuelSummary;
 
   /// No description provided for @gpsGenerateReport.
   ///
   /// In en, this message translates to:
-  /// **'Generate Report'**
+  /// **'Generate report'**
   String get gpsGenerateReport;
 
   /// No description provided for @gpsGeofences.
@@ -8012,19 +8012,19 @@ abstract class AppLocalizations {
   /// No description provided for @gpsGeofencesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Geofences Subtitle'**
+  /// **'Automatic alerts on entry and exit'**
   String get gpsGeofencesSubtitle;
 
   /// No description provided for @gpsHelpSupport.
   ///
   /// In en, this message translates to:
-  /// **'Help Support'**
+  /// **'Help & support'**
   String get gpsHelpSupport;
 
   /// No description provided for @gpsHelpSupportSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Help Support Subtitle'**
+  /// **'Get help or contact our team'**
   String get gpsHelpSupportSubtitle;
 
   /// No description provided for @gpsInvoices.
@@ -8042,7 +8042,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsLiveFleetTracking.
   ///
   /// In en, this message translates to:
-  /// **'Live Fleet Tracking'**
+  /// **'Live fleet tracking'**
   String get gpsLiveFleetTracking;
 
   /// No description provided for @gpsLiveMap.
@@ -8054,19 +8054,19 @@ abstract class AppLocalizations {
   /// No description provided for @gpsLiveTrackingUnavailableFleet.
   ///
   /// In en, this message translates to:
-  /// **'Live Tracking Unavailable Fleet'**
+  /// **'Live tracking is unavailable for this fleet.'**
   String get gpsLiveTrackingUnavailableFleet;
 
   /// No description provided for @gpsLogout.
   ///
   /// In en, this message translates to:
-  /// **'Logout'**
+  /// **'Log out'**
   String get gpsLogout;
 
   /// No description provided for @gpsLogoutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Logout Subtitle'**
+  /// **'Sign out of this device'**
   String get gpsLogoutSubtitle;
 
   /// No description provided for @gpsMap.
@@ -8084,7 +8084,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsMonthlyPlan.
   ///
   /// In en, this message translates to:
-  /// **'Monthly Plan'**
+  /// **'Monthly plan'**
   String get gpsMonthlyPlan;
 
   /// No description provided for @gpsMyFleet.
@@ -8096,13 +8096,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsMyVehicles.
   ///
   /// In en, this message translates to:
-  /// **'My Vehicles'**
+  /// **'My vehicles'**
   String get gpsMyVehicles;
 
   /// No description provided for @gpsMyVehiclesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'My Vehicles Subtitle'**
+  /// **'Devices linked to your account'**
   String get gpsMyVehiclesSubtitle;
 
   /// No description provided for @gpsNavDashboard.
@@ -8132,25 +8132,25 @@ abstract class AppLocalizations {
   /// No description provided for @gpsNoData.
   ///
   /// In en, this message translates to:
-  /// **'No Data'**
+  /// **'No data'**
   String get gpsNoData;
 
   /// No description provided for @gpsNoGeofencesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'No Geofences Subtitle'**
+  /// **'Create a geofence to get alerts when a vehicle enters or leaves a zone.'**
   String get gpsNoGeofencesSubtitle;
 
   /// No description provided for @gpsNoGeofencesYet.
   ///
   /// In en, this message translates to:
-  /// **'No Geofences Yet'**
+  /// **'No geofences yet'**
   String get gpsNoGeofencesYet;
 
   /// No description provided for @gpsNoMoreTransactions.
   ///
   /// In en, this message translates to:
-  /// **'No More Transactions'**
+  /// **'No more transactions'**
   String get gpsNoMoreTransactions;
 
   /// No description provided for @gpsNotifications.
@@ -8162,7 +8162,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsNotificationsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Notifications Subtitle'**
+  /// **'Alerts about your vehicles'**
   String get gpsNotificationsSubtitle;
 
   /// No description provided for @gpsOffline.
@@ -8180,49 +8180,49 @@ abstract class AppLocalizations {
   /// No description provided for @gpsProfileSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Profile Subtitle'**
+  /// **'Manage your account and preferences'**
   String get gpsProfileSubtitle;
 
   /// No description provided for @gpsRecentActivity.
   ///
   /// In en, this message translates to:
-  /// **'Recent Activity'**
+  /// **'Recent activity'**
   String get gpsRecentActivity;
 
   /// No description provided for @gpsReportType.
   ///
   /// In en, this message translates to:
-  /// **'Report Type'**
+  /// **'Report type'**
   String get gpsReportType;
 
   /// No description provided for @gpsReportTypeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Report Type Subtitle'**
+  /// **'Choose what you want to review'**
   String get gpsReportTypeSubtitle;
 
   /// No description provided for @gpsReportsSecureNote.
   ///
   /// In en, this message translates to:
-  /// **'Reports Secure Note'**
+  /// **'Reports are generated from your account data and stay private.'**
   String get gpsReportsSecureNote;
 
   /// No description provided for @gpsReportsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reports Subtitle'**
+  /// **'Track usage, routes and costs over time'**
   String get gpsReportsSubtitle;
 
   /// No description provided for @gpsRetry.
   ///
   /// In en, this message translates to:
-  /// **'Retry'**
+  /// **'Try again'**
   String get gpsRetry;
 
   /// No description provided for @gpsRouteHistory.
   ///
   /// In en, this message translates to:
-  /// **'Route History'**
+  /// **'Route history'**
   String get gpsRouteHistory;
 
   /// No description provided for @gpsRunning.
@@ -8234,37 +8234,37 @@ abstract class AppLocalizations {
   /// No description provided for @gpsSearchGeofences.
   ///
   /// In en, this message translates to:
-  /// **'Search Geofences'**
+  /// **'Search geofences'**
   String get gpsSearchGeofences;
 
   /// No description provided for @gpsSearchTransactions.
   ///
   /// In en, this message translates to:
-  /// **'Search Transactions'**
+  /// **'Search transactions'**
   String get gpsSearchTransactions;
 
   /// No description provided for @gpsSearchVehiclesHint.
   ///
   /// In en, this message translates to:
-  /// **'Search Vehicles Hint'**
+  /// **'Search by number or name'**
   String get gpsSearchVehiclesHint;
 
   /// No description provided for @gpsSelectFromFleet.
   ///
   /// In en, this message translates to:
-  /// **'Select From Fleet'**
+  /// **'Select from your fleet'**
   String get gpsSelectFromFleet;
 
   /// No description provided for @gpsSelectVehicle.
   ///
   /// In en, this message translates to:
-  /// **'Select Vehicle'**
+  /// **'Select vehicle'**
   String get gpsSelectVehicle;
 
   /// No description provided for @gpsSelectVehicleOrFleet.
   ///
   /// In en, this message translates to:
-  /// **'Select Vehicle or Fleet'**
+  /// **'Pick a single vehicle or the whole fleet'**
   String get gpsSelectVehicleOrFleet;
 
   /// No description provided for @gpsSettings.
@@ -8276,25 +8276,25 @@ abstract class AppLocalizations {
   /// No description provided for @gpsSettingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Settings Subtitle'**
+  /// **'Configure your tracking preferences'**
   String get gpsSettingsSubtitle;
 
   /// No description provided for @gpsSignInForFleetDevices.
   ///
   /// In en, this message translates to:
-  /// **'Sign In For Fleet Devices'**
+  /// **'Please sign in to view your fleet devices.'**
   String get gpsSignInForFleetDevices;
 
   /// No description provided for @gpsSignInForLiveFleet.
   ///
   /// In en, this message translates to:
-  /// **'Sign In For Live Fleet'**
+  /// **'Please sign in to view the live fleet.'**
   String get gpsSignInForLiveFleet;
 
   /// No description provided for @gpsSignInForVehicle.
   ///
   /// In en, this message translates to:
-  /// **'Sign In For Vehicle'**
+  /// **'Please sign in to view this vehicle.'**
   String get gpsSignInForVehicle;
 
   /// No description provided for @gpsStopped.
@@ -8306,25 +8306,25 @@ abstract class AppLocalizations {
   /// No description provided for @gpsSubscriptionPayment.
   ///
   /// In en, this message translates to:
-  /// **'Subscription Payment'**
+  /// **'Subscription payment'**
   String get gpsSubscriptionPayment;
 
   /// No description provided for @gpsThisWeek.
   ///
   /// In en, this message translates to:
-  /// **'This Week'**
+  /// **'This week'**
   String get gpsThisWeek;
 
   /// No description provided for @gpsTimeEightMinsAgo.
   ///
   /// In en, this message translates to:
-  /// **'Time Eight Mins Ago'**
+  /// **'8 min ago'**
   String get gpsTimeEightMinsAgo;
 
   /// No description provided for @gpsTimeTwoMinsAgo.
   ///
   /// In en, this message translates to:
-  /// **'Time Two Mins Ago'**
+  /// **'2 min ago'**
   String get gpsTimeTwoMinsAgo;
 
   /// No description provided for @gpsTo.
@@ -8342,19 +8342,19 @@ abstract class AppLocalizations {
   /// No description provided for @gpsTokenBalance.
   ///
   /// In en, this message translates to:
-  /// **'Token Balance'**
+  /// **'Token balance'**
   String get gpsTokenBalance;
 
   /// No description provided for @gpsTokenExpiry.
   ///
   /// In en, this message translates to:
-  /// **'Token Expiry'**
+  /// **'Token expiry'**
   String get gpsTokenExpiry;
 
   /// No description provided for @gpsTokenPurchase.
   ///
   /// In en, this message translates to:
-  /// **'Token Purchase'**
+  /// **'Token purchase'**
   String get gpsTokenPurchase;
 
   /// No description provided for @gpsTokens.
@@ -8366,19 +8366,19 @@ abstract class AppLocalizations {
   /// No description provided for @gpsTokensAdded.
   ///
   /// In en, this message translates to:
-  /// **'Tokens Added'**
+  /// **'Tokens added'**
   String get gpsTokensAdded;
 
   /// No description provided for @gpsTotalVehicles.
   ///
   /// In en, this message translates to:
-  /// **'Total Vehicles'**
+  /// **'Total vehicles'**
   String get gpsTotalVehicles;
 
   /// No description provided for @gpsTotalVehiclesCenter.
   ///
   /// In en, this message translates to:
-  /// **'Total Vehicles Center'**
+  /// **'Vehicles reporting location'**
   String get gpsTotalVehiclesCenter;
 
   /// No description provided for @gpsTransactions.
@@ -8390,13 +8390,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsTripSummary.
   ///
   /// In en, this message translates to:
-  /// **'Trip Summary'**
+  /// **'Trip summary'**
   String get gpsTripSummary;
 
   /// No description provided for @gpsUsageSummary.
   ///
   /// In en, this message translates to:
-  /// **'Usage Summary'**
+  /// **'Usage summary'**
   String get gpsUsageSummary;
 
   /// No description provided for @gpsVehicle.
@@ -8408,13 +8408,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsVehicleLiveMap.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Live Map'**
+  /// **'Vehicle live map'**
   String get gpsVehicleLiveMap;
 
   /// No description provided for @gpsVehicleNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Not Found'**
+  /// **'Vehicle not found'**
   String get gpsVehicleNotFound;
 
   /// No description provided for @gpsViaRazorpay.
@@ -8426,13 +8426,13 @@ abstract class AppLocalizations {
   /// No description provided for @gpsViewAll.
   ///
   /// In en, this message translates to:
-  /// **'View All'**
+  /// **'View all'**
   String get gpsViewAll;
 
   /// No description provided for @gpsVsLastWeek.
   ///
   /// In en, this message translates to:
-  /// **'Vs Last Week'**
+  /// **'vs last week'**
   String get gpsVsLastWeek;
 
   /// No description provided for @gpsWalletBilling.
@@ -8444,7 +8444,7 @@ abstract class AppLocalizations {
   /// No description provided for @gpsWelcomeBonus.
   ///
   /// In en, this message translates to:
-  /// **'Welcome Bonus'**
+  /// **'Welcome bonus'**
   String get gpsWelcomeBonus;
 
   /// No description provided for @gpsYesterday.
@@ -8462,13 +8462,13 @@ abstract class AppLocalizations {
   /// No description provided for @historyDetailsEmailInvoice.
   ///
   /// In en, this message translates to:
-  /// **'Email Invoice'**
+  /// **'Email invoice'**
   String get historyDetailsEmailInvoice;
 
   /// No description provided for @historyDetailsRetry.
   ///
   /// In en, this message translates to:
-  /// **'Retry'**
+  /// **'Try again'**
   String get historyDetailsRetry;
 
   /// No description provided for @historyDetailsSend.
@@ -8492,247 +8492,247 @@ abstract class AppLocalizations {
   /// No description provided for @locationFlowAddLoading.
   ///
   /// In en, this message translates to:
-  /// **'Add Loading'**
+  /// **'Add loading point'**
   String get locationFlowAddLoading;
 
   /// No description provided for @locationFlowAddLoadingHint.
   ///
   /// In en, this message translates to:
-  /// **'Add Loading Hint'**
+  /// **'Where should the goods be loaded?'**
   String get locationFlowAddLoadingHint;
 
   /// No description provided for @locationFlowAddUnloading.
   ///
   /// In en, this message translates to:
-  /// **'Add Unloading'**
+  /// **'Add unloading point'**
   String get locationFlowAddUnloading;
 
   /// No description provided for @locationFlowAddUnloadingHint.
   ///
   /// In en, this message translates to:
-  /// **'Add Unloading Hint'**
+  /// **'Where should the goods be delivered?'**
   String get locationFlowAddUnloadingHint;
 
   /// No description provided for @locationFlowDropHint.
   ///
   /// In en, this message translates to:
-  /// **'Drop Hint'**
+  /// **'Search the drop location'**
   String get locationFlowDropHint;
 
   /// No description provided for @locationFlowDropSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Drop Subtitle'**
+  /// **'Where is the goods going?'**
   String get locationFlowDropSubtitle;
 
   /// No description provided for @locationFlowDropTitle.
   ///
   /// In en, this message translates to:
-  /// **'Drop Title'**
+  /// **'Drop location'**
   String get locationFlowDropTitle;
 
   /// No description provided for @locationFlowFetching.
   ///
   /// In en, this message translates to:
-  /// **'Fetching'**
+  /// **'Finding your location...'**
   String get locationFlowFetching;
 
   /// No description provided for @locationFlowMovePin.
   ///
   /// In en, this message translates to:
-  /// **'Move Pin'**
+  /// **'Move the pin to adjust the point'**
   String get locationFlowMovePin;
 
   /// No description provided for @locationFlowOwnUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Own Unavailable'**
+  /// **'We could not read your current location.'**
   String get locationFlowOwnUnavailable;
 
   /// No description provided for @locationFlowPermissionNeeded.
   ///
   /// In en, this message translates to:
-  /// **'Permission Needed'**
+  /// **'Location permission is needed to continue.'**
   String get locationFlowPermissionNeeded;
 
   /// No description provided for @locationFlowPickupHint.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Hint'**
+  /// **'Search the pickup location'**
   String get locationFlowPickupHint;
 
   /// No description provided for @locationFlowPickupSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Subtitle'**
+  /// **'Where is the goods coming from?'**
   String get locationFlowPickupSubtitle;
 
   /// No description provided for @locationFlowPickupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pickup Title'**
+  /// **'Pickup location'**
   String get locationFlowPickupTitle;
 
   /// No description provided for @locationFlowPinHint.
   ///
   /// In en, this message translates to:
-  /// **'Pin Hint'**
+  /// **'Drag the pin to the exact spot'**
   String get locationFlowPinHint;
 
   /// No description provided for @locationFlowPinLoading.
   ///
   /// In en, this message translates to:
-  /// **'Pin Loading'**
+  /// **'Place loading pin'**
   String get locationFlowPinLoading;
 
   /// No description provided for @locationFlowPinUnloading.
   ///
   /// In en, this message translates to:
-  /// **'Pin Unloading'**
+  /// **'Place drop pin'**
   String get locationFlowPinUnloading;
 
   /// No description provided for @locationFlowResolveCurrent.
   ///
   /// In en, this message translates to:
-  /// **'Resolve Current'**
+  /// **'We could not determine your current location.'**
   String get locationFlowResolveCurrent;
 
   /// No description provided for @locationFlowResolvePoint.
   ///
   /// In en, this message translates to:
-  /// **'Resolve Point'**
+  /// **'We could not locate that point on the map.'**
   String get locationFlowResolvePoint;
 
   /// No description provided for @locationFlowSavedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Saved Title'**
+  /// **'Location saved'**
   String get locationFlowSavedTitle;
 
   /// No description provided for @locationFlowSuggestionsError.
   ///
   /// In en, this message translates to:
-  /// **'Suggestions Error'**
+  /// **'Could not load location suggestions'**
   String get locationFlowSuggestionsError;
 
   /// No description provided for @locationFlowTurnOnLocation.
   ///
   /// In en, this message translates to:
-  /// **'Turn On Location'**
+  /// **'Please turn on location services.'**
   String get locationFlowTurnOnLocation;
 
   /// No description provided for @locationFlowUseCurrent.
   ///
   /// In en, this message translates to:
-  /// **'Use Current'**
+  /// **'Use current location'**
   String get locationFlowUseCurrent;
 
   /// No description provided for @locationFlowUseCurrentPickup.
   ///
   /// In en, this message translates to:
-  /// **'Use Current Pickup'**
+  /// **'Use my current location'**
   String get locationFlowUseCurrentPickup;
 
   /// No description provided for @manageAccountActiveLabel.
   ///
   /// In en, this message translates to:
-  /// **'Active Label'**
+  /// **'Active'**
   String get manageAccountActiveLabel;
 
   /// No description provided for @manageAccountActiveNo.
   ///
   /// In en, this message translates to:
-  /// **'Active No'**
+  /// **'No'**
   String get manageAccountActiveNo;
 
   /// No description provided for @manageAccountActiveYes.
   ///
   /// In en, this message translates to:
-  /// **'Active Yes'**
+  /// **'Yes'**
   String get manageAccountActiveYes;
 
   /// No description provided for @manageAccountBasicDetails.
   ///
   /// In en, this message translates to:
-  /// **'Basic Details'**
+  /// **'Basic details'**
   String get manageAccountBasicDetails;
 
   /// No description provided for @manageAccountBusinessAddressLabel.
   ///
   /// In en, this message translates to:
-  /// **'Business Address Label'**
+  /// **'Business address'**
   String get manageAccountBusinessAddressLabel;
 
   /// No description provided for @manageAccountBusinessDetails.
   ///
   /// In en, this message translates to:
-  /// **'Business Details'**
+  /// **'Business details'**
   String get manageAccountBusinessDetails;
 
   /// No description provided for @manageAccountChangePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Change Photo'**
+  /// **'Change photo'**
   String get manageAccountChangePhoto;
 
   /// No description provided for @manageAccountEditProfileSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Profile Subtitle'**
+  /// **'Update your name, email, phone and photo'**
   String get manageAccountEditProfileSubtitle;
 
   /// No description provided for @manageAccountEditProfileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Profile Title'**
+  /// **'Edit profile'**
   String get manageAccountEditProfileTitle;
 
   /// No description provided for @manageAccountEmailLabel.
   ///
   /// In en, this message translates to:
-  /// **'Email Label'**
+  /// **'Email'**
   String get manageAccountEmailLabel;
 
   /// No description provided for @manageAccountEnterEmail.
   ///
   /// In en, this message translates to:
-  /// **'Enter Email'**
+  /// **'Enter your email'**
   String get manageAccountEnterEmail;
 
   /// No description provided for @manageAccountEnterName.
   ///
   /// In en, this message translates to:
-  /// **'Enter Name'**
+  /// **'Enter your name'**
   String get manageAccountEnterName;
 
   /// No description provided for @manageAccountEnterServiceCity.
   ///
   /// In en, this message translates to:
-  /// **'Enter Service City'**
+  /// **'Enter your service city'**
   String get manageAccountEnterServiceCity;
 
   /// No description provided for @manageAccountEnterValidEmail.
   ///
   /// In en, this message translates to:
-  /// **'Enter Valid Email'**
+  /// **'Enter a valid email address'**
   String get manageAccountEnterValidEmail;
 
   /// No description provided for @manageAccountFullNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Full Name Label'**
+  /// **'Full name'**
   String get manageAccountFullNameLabel;
 
   /// No description provided for @manageAccountOptionalTag.
   ///
   /// In en, this message translates to:
-  /// **'Optional Tag'**
+  /// **'Optional'**
   String get manageAccountOptionalTag;
 
   /// No description provided for @manageAccountPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Phone Label'**
+  /// **'Phone'**
   String get manageAccountPhoneLabel;
 
   /// No description provided for @manageAccountProfileUpdated.
@@ -8744,19 +8744,19 @@ abstract class AppLocalizations {
   /// No description provided for @manageAccountSaveChanges.
   ///
   /// In en, this message translates to:
-  /// **'Save Changes'**
+  /// **'Save changes'**
   String get manageAccountSaveChanges;
 
   /// No description provided for @manageAccountServiceCityLabel.
   ///
   /// In en, this message translates to:
-  /// **'Service City Label'**
+  /// **'Service city'**
   String get manageAccountServiceCityLabel;
 
   /// No description provided for @manageAccountYourNameFallback.
   ///
   /// In en, this message translates to:
-  /// **'Your Name Fallback'**
+  /// **'Your name'**
   String get manageAccountYourNameFallback;
 
   /// No description provided for @negotiationAccept.
@@ -8774,31 +8774,31 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationBrokerConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Broker Confirm Body'**
+  /// **'Waiting for the broker to confirm the new fare.'**
   String get negotiationBrokerConfirmBody;
 
   /// No description provided for @negotiationBrokerConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Broker Confirm Title'**
+  /// **'Confirming with broker'**
   String get negotiationBrokerConfirmTitle;
 
   /// No description provided for @negotiationBrokerOfferBody.
   ///
   /// In en, this message translates to:
-  /// **'Broker Offer Body'**
+  /// **'The broker has sent a revised fare. Review it below.'**
   String get negotiationBrokerOfferBody;
 
   /// No description provided for @negotiationBrokerOfferLabel.
   ///
   /// In en, this message translates to:
-  /// **'Broker Offer Label'**
+  /// **'Broker\'s offer'**
   String get negotiationBrokerOfferLabel;
 
   /// No description provided for @negotiationBrokerOfferTitle.
   ///
   /// In en, this message translates to:
-  /// **'Broker Offer Title'**
+  /// **'New offer from broker'**
   String get negotiationBrokerOfferTitle;
 
   /// No description provided for @negotiationConfirm.
@@ -8816,121 +8816,121 @@ abstract class AppLocalizations {
   /// No description provided for @negotiationDriverAcceptedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver Accepted Title'**
+  /// **'Driver accepted'**
   String get negotiationDriverAcceptedTitle;
 
   /// No description provided for @negotiationDriverConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Driver Confirm Body'**
+  /// **'Waiting for the driver to confirm the new fare.'**
   String get negotiationDriverConfirmBody;
 
   /// No description provided for @negotiationDriverConfirmNowTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver Confirm Now Title'**
+  /// **'Confirm with driver'**
   String get negotiationDriverConfirmNowTitle;
 
   /// No description provided for @negotiationDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver Fallback'**
+  /// **'Driver'**
   String get negotiationDriverFallback;
 
   /// No description provided for @negotiationDriverResponseBody.
   ///
   /// In en, this message translates to:
-  /// **'Driver Response Body'**
+  /// **'The driver has responded to your fare change.'**
   String get negotiationDriverResponseBody;
 
   /// No description provided for @negotiationDriverResponseTitle.
   ///
   /// In en, this message translates to:
-  /// **'Driver Response Title'**
+  /// **'Driver responded'**
   String get negotiationDriverResponseTitle;
 
   /// No description provided for @negotiationFareChangeBody.
   ///
   /// In en, this message translates to:
-  /// **'Fare Change Body'**
+  /// **'We have sent your new fare. Waiting for a response.'**
   String get negotiationFareChangeBody;
 
   /// No description provided for @negotiationFareChangeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Fare Change Title'**
+  /// **'Fare change sent'**
   String get negotiationFareChangeTitle;
 
   /// No description provided for @negotiationHandshakeProgress.
   ///
   /// In en, this message translates to:
-  /// **'Handshake Progress'**
+  /// **'Both sides are confirming the new fare'**
   String get negotiationHandshakeProgress;
 
   /// No description provided for @negotiationOfferCaption.
   ///
   /// In en, this message translates to:
-  /// **'Offer Caption'**
+  /// **'Fare for this booking'**
   String get negotiationOfferCaption;
 
   /// No description provided for @negotiationOfferSentBody.
   ///
   /// In en, this message translates to:
-  /// **'Offer Sent Body'**
+  /// **'Your offer has been sent. Waiting for the other side.'**
   String get negotiationOfferSentBody;
 
   /// No description provided for @negotiationOfferSentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Offer Sent Title'**
+  /// **'Offer sent'**
   String get negotiationOfferSentTitle;
 
   /// No description provided for @negotiationPillActionNeeded.
   ///
   /// In en, this message translates to:
-  /// **'Pill Action Needed'**
+  /// **'Action needed'**
   String get negotiationPillActionNeeded;
 
   /// No description provided for @negotiationPillLiveOffer.
   ///
   /// In en, this message translates to:
-  /// **'Pill Live Offer'**
+  /// **'Live offer'**
   String get negotiationPillLiveOffer;
 
   /// No description provided for @negotiationPillNewCounter.
   ///
   /// In en, this message translates to:
-  /// **'Pill New Counter'**
+  /// **'New counter offer'**
   String get negotiationPillNewCounter;
 
   /// No description provided for @negotiationPillWithBroker.
   ///
   /// In en, this message translates to:
-  /// **'Pill With Broker'**
+  /// **'With broker'**
   String get negotiationPillWithBroker;
 
   /// No description provided for @negotiationWaitingBrokerBody.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Broker Body'**
+  /// **'We have sent your fare. Waiting for the broker to respond.'**
   String get negotiationWaitingBrokerBody;
 
   /// No description provided for @negotiationWaitingBrokerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Broker Title'**
+  /// **'Waiting for broker'**
   String get negotiationWaitingBrokerTitle;
 
   /// No description provided for @negotiationWaitingDriverBody.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Driver Body'**
+  /// **'We have sent the new fare to the driver.'**
   String get negotiationWaitingDriverBody;
 
   /// No description provided for @negotiationWaitingDriverTitle.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Driver Title'**
+  /// **'Waiting for driver'**
   String get negotiationWaitingDriverTitle;
 
   /// No description provided for @onboardingFastSubtitle.
@@ -8990,163 +8990,163 @@ abstract class AppLocalizations {
   /// No description provided for @orderAcceptedAssignedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Assigned Title'**
+  /// **'Trip assigned'**
   String get orderAcceptedAssignedTitle;
 
   /// No description provided for @orderAcceptedOfferUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Offer Unavailable'**
+  /// **'This offer is no longer available.'**
   String get orderAcceptedOfferUnavailable;
 
   /// No description provided for @orderAcceptedRequestTitle.
   ///
   /// In en, this message translates to:
-  /// **'Request Title'**
+  /// **'New request'**
   String get orderAcceptedRequestTitle;
 
   /// No description provided for @orderAcceptedRequestUpdated.
   ///
   /// In en, this message translates to:
-  /// **'Request Updated'**
+  /// **'This request was updated. Pull down to refresh.'**
   String get orderAcceptedRequestUpdated;
 
   /// No description provided for @orderAcceptedSignInContinue.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Continue'**
+  /// **'Please sign in to continue.'**
   String get orderAcceptedSignInContinue;
 
   /// No description provided for @photoUploadChoosePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Choose Photo'**
+  /// **'Choose photo'**
   String get photoUploadChoosePhoto;
 
   /// No description provided for @photoUploadMaxItems.
   ///
   /// In en, this message translates to:
-  /// **'Max Items'**
+  /// **'You can upload up to 5 photos.'**
   String get photoUploadMaxItems;
 
   /// No description provided for @photoUploadRecordVideo.
   ///
   /// In en, this message translates to:
-  /// **'Record Video'**
+  /// **'Record video'**
   String get photoUploadRecordVideo;
 
   /// No description provided for @photoUploadSignInUpload.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Upload'**
+  /// **'Please sign in to upload photos.'**
   String get photoUploadSignInUpload;
 
   /// No description provided for @photoUploadTakePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Take Photo'**
+  /// **'Take photo'**
   String get photoUploadTakePhoto;
 
   /// No description provided for @podWaitingCouldNotComplete.
   ///
   /// In en, this message translates to:
-  /// **'Could Not Complete'**
+  /// **'Could not complete'**
   String get podWaitingCouldNotComplete;
 
   /// No description provided for @podWaitingFinishing.
   ///
   /// In en, this message translates to:
-  /// **'Finishing'**
+  /// **'Finishing up...'**
   String get podWaitingFinishing;
 
   /// No description provided for @podWaitingNewPhotosFallback.
   ///
   /// In en, this message translates to:
-  /// **'New Photos Fallback'**
+  /// **'New delivery photos'**
   String get podWaitingNewPhotosFallback;
 
   /// No description provided for @podWaitingPhotosUp.
   ///
   /// In en, this message translates to:
-  /// **'Photos Up'**
+  /// **'Uploading photos...'**
   String get podWaitingPhotosUp;
 
   /// No description provided for @podWaitingRejectedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Rejected Title'**
+  /// **'Proof of delivery rejected'**
   String get podWaitingRejectedTitle;
 
   /// No description provided for @podWaitingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Proof of delivery'**
   String get podWaitingTitle;
 
   /// No description provided for @podWaitingTryAgain.
   ///
   /// In en, this message translates to:
-  /// **'Try Again'**
+  /// **'Try again'**
   String get podWaitingTryAgain;
 
   /// No description provided for @podWaitingUploadNew.
   ///
   /// In en, this message translates to:
-  /// **'Upload New'**
+  /// **'Upload new photos'**
   String get podWaitingUploadNew;
 
   /// No description provided for @podWaitingWaitingReview.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Review'**
+  /// **'Waiting for review'**
   String get podWaitingWaitingReview;
 
   /// No description provided for @sessionExpiredEmailHint.
   ///
   /// In en, this message translates to:
-  /// **'Email Hint'**
+  /// **'you@example.com'**
   String get sessionExpiredEmailHint;
 
   /// No description provided for @sessionExpiredEmailLabel.
   ///
   /// In en, this message translates to:
-  /// **'Email Label'**
+  /// **'Email'**
   String get sessionExpiredEmailLabel;
 
   /// No description provided for @sessionExpiredEnterEmailPassword.
   ///
   /// In en, this message translates to:
-  /// **'Enter Email Password'**
+  /// **'Enter your email and password to continue.'**
   String get sessionExpiredEnterEmailPassword;
 
   /// No description provided for @sessionExpiredPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'Password Hint'**
+  /// **'Enter your password'**
   String get sessionExpiredPasswordHint;
 
   /// No description provided for @sessionExpiredPasswordLabel.
   ///
   /// In en, this message translates to:
-  /// **'Password Label'**
+  /// **'Password'**
   String get sessionExpiredPasswordLabel;
 
   /// No description provided for @sessionExpiredSignInButton.
   ///
   /// In en, this message translates to:
-  /// **'Sign In Button'**
+  /// **'Sign in'**
   String get sessionExpiredSignInButton;
 
   /// No description provided for @sessionExpiredSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtitle'**
+  /// **'Sign in again to pick up where you left off.'**
   String get sessionExpiredSubtitle;
 
   /// No description provided for @sessionExpiredTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Session expired'**
   String get sessionExpiredTitle;
 
   /// No description provided for @sharedExpressLabel.
@@ -9158,157 +9158,157 @@ abstract class AppLocalizations {
   /// No description provided for @sharedHaltingChargeApplied.
   ///
   /// In en, this message translates to:
-  /// **'Charge Applied'**
+  /// **'Halting charge applied'**
   String get sharedHaltingChargeApplied;
 
   /// No description provided for @sharedHaltingExceededTitle.
   ///
   /// In en, this message translates to:
-  /// **'Exceeded Title'**
+  /// **'Free time exceeded'**
   String get sharedHaltingExceededTitle;
 
   /// No description provided for @sharedHaltingFreeWindowTitle.
   ///
   /// In en, this message translates to:
-  /// **'Free Window Title'**
+  /// **'Free waiting time'**
   String get sharedHaltingFreeWindowTitle;
 
   /// No description provided for @sharedHaltingRemainingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Remaining Title'**
+  /// **'Time remaining'**
   String get sharedHaltingRemainingTitle;
 
   /// No description provided for @signupAccountCreated.
   ///
   /// In en, this message translates to:
-  /// **'Account Created'**
+  /// **'Your account has been created.'**
   String get signupAccountCreated;
 
   /// No description provided for @signupAgreeTerms.
   ///
   /// In en, this message translates to:
-  /// **'Agree Terms'**
+  /// **'I agree to the Terms and Privacy Policy'**
   String get signupAgreeTerms;
 
   /// No description provided for @signupAllFieldsRequired.
   ///
   /// In en, this message translates to:
-  /// **'All Fields Required'**
+  /// **'All fields are required'**
   String get signupAllFieldsRequired;
 
   /// No description provided for @signupAlreadyHaveAccount.
   ///
   /// In en, this message translates to:
-  /// **'Already Have Account'**
+  /// **'Already have an account?'**
   String get signupAlreadyHaveAccount;
 
   /// No description provided for @signupBackToLogin.
   ///
   /// In en, this message translates to:
-  /// **'Back to Login'**
+  /// **'Back to login'**
   String get signupBackToLogin;
 
   /// No description provided for @signupCreateAccount.
   ///
   /// In en, this message translates to:
-  /// **'Create Account'**
+  /// **'Create account'**
   String get signupCreateAccount;
 
   /// No description provided for @signupEmailHint.
   ///
   /// In en, this message translates to:
-  /// **'Email Hint'**
+  /// **'you@example.com'**
   String get signupEmailHint;
 
   /// No description provided for @signupEmailLabel.
   ///
   /// In en, this message translates to:
-  /// **'Email Label'**
+  /// **'Email'**
   String get signupEmailLabel;
 
   /// No description provided for @signupFullNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Full Name Hint'**
+  /// **'Enter your full name'**
   String get signupFullNameHint;
 
   /// No description provided for @signupFullNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Full Name Label'**
+  /// **'Full name'**
   String get signupFullNameLabel;
 
   /// No description provided for @signupLoginAction.
   ///
   /// In en, this message translates to:
-  /// **'Login Action'**
+  /// **'Log in'**
   String get signupLoginAction;
 
   /// No description provided for @signupPasswordHelper.
   ///
   /// In en, this message translates to:
-  /// **'Password Helper'**
+  /// **'Use at least 8 characters'**
   String get signupPasswordHelper;
 
   /// No description provided for @signupPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'Password Hint'**
+  /// **'At least 8 characters'**
   String get signupPasswordHint;
 
   /// No description provided for @signupPasswordLabel.
   ///
   /// In en, this message translates to:
-  /// **'Password Label'**
+  /// **'Password'**
   String get signupPasswordLabel;
 
   /// No description provided for @signupPhoneHint.
   ///
   /// In en, this message translates to:
-  /// **'Phone Hint'**
+  /// **'10-digit mobile number'**
   String get signupPhoneHint;
 
   /// No description provided for @signupPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Phone Label'**
+  /// **'Phone'**
   String get signupPhoneLabel;
 
   /// No description provided for @signupSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtitle'**
+  /// **'Create your account to start booking'**
   String get signupSubtitle;
 
   /// No description provided for @signupTermsRequired.
   ///
   /// In en, this message translates to:
-  /// **'Terms Required'**
+  /// **'Please accept the terms to continue.'**
   String get signupTermsRequired;
 
   /// No description provided for @signupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Create your account'**
   String get signupTitle;
 
   /// No description provided for @thankYouBackToTrips.
   ///
   /// In en, this message translates to:
-  /// **'Back to Trips'**
+  /// **'Back to trips'**
   String get thankYouBackToTrips;
 
   /// No description provided for @thankYouDeliveryComplete.
   ///
   /// In en, this message translates to:
-  /// **'Delivery Complete'**
+  /// **'Delivery complete'**
   String get thankYouDeliveryComplete;
 
   /// No description provided for @thankYouForCompleting.
   ///
   /// In en, this message translates to:
-  /// **'For Completing'**
+  /// **'for completing this delivery'**
   String get thankYouForCompleting;
 
   /// No description provided for @thankYouPaid.
@@ -9320,7 +9320,7 @@ abstract class AppLocalizations {
   /// No description provided for @thankYouTripCompleted.
   ///
   /// In en, this message translates to:
-  /// **'Trip Completed'**
+  /// **'Trip completed'**
   String get thankYouTripCompleted;
 
   /// No description provided for @tripSummaryCargo.
@@ -9338,19 +9338,19 @@ abstract class AppLocalizations {
   /// No description provided for @tripSummaryInProgress.
   ///
   /// In en, this message translates to:
-  /// **'In Progress'**
+  /// **'In progress'**
   String get tripSummaryInProgress;
 
   /// No description provided for @tripSummaryLocationUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Location Unavailable'**
+  /// **'Location unavailable'**
   String get tripSummaryLocationUnavailable;
 
   /// No description provided for @truckSearchAllDeclinedHint.
   ///
   /// In en, this message translates to:
-  /// **'All Declined Hint'**
+  /// **'Nearby drivers declined. Try widening your search radius.'**
   String get truckSearchAllDeclinedHint;
 
   /// No description provided for @truckSearchBack.
@@ -9362,19 +9362,19 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchCancel.
   ///
   /// In en, this message translates to:
-  /// **'Cancel'**
+  /// **'Cancel search'**
   String get truckSearchCancel;
 
   /// No description provided for @truckSearchCloseTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Close tooltip'**
+  /// **'Close'**
   String get truckSearchCloseTooltip;
 
   /// No description provided for @truckSearchConfirmTurn.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Turn'**
+  /// **'Confirming your acceptance'**
   String get truckSearchConfirmTurn;
 
   /// No description provided for @truckSearchConfirmed.
@@ -9386,61 +9386,61 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchDriverFallback.
   ///
   /// In en, this message translates to:
-  /// **'Driver Fallback'**
+  /// **'Driver'**
   String get truckSearchDriverFallback;
 
   /// No description provided for @truckSearchFindingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Finding Drivers'**
+  /// **'Finding drivers'**
   String get truckSearchFindingDrivers;
 
   /// No description provided for @truckSearchFindingNearby.
   ///
   /// In en, this message translates to:
-  /// **'Finding Nearby'**
+  /// **'Looking for drivers near your pickup'**
   String get truckSearchFindingNearby;
 
   /// No description provided for @truckSearchGoBack.
   ///
   /// In en, this message translates to:
-  /// **'Go Back'**
+  /// **'Go back'**
   String get truckSearchGoBack;
 
   /// No description provided for @truckSearchKeepSearching.
   ///
   /// In en, this message translates to:
-  /// **'Keep Searching'**
+  /// **'Keep searching'**
   String get truckSearchKeepSearching;
 
   /// No description provided for @truckSearchNewFare.
   ///
   /// In en, this message translates to:
-  /// **'New Fare'**
+  /// **'New fare received'**
   String get truckSearchNewFare;
 
   /// No description provided for @truckSearchNoDriverAccepted.
   ///
   /// In en, this message translates to:
-  /// **'No Driver Accepted'**
+  /// **'No driver accepted yet'**
   String get truckSearchNoDriverAccepted;
 
   /// No description provided for @truckSearchNoResponse.
   ///
   /// In en, this message translates to:
-  /// **'No Response'**
+  /// **'No response'**
   String get truckSearchNoResponse;
 
   /// No description provided for @truckSearchNotifyingDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Notifying Drivers'**
+  /// **'Notifying drivers nearby'**
   String get truckSearchNotifyingDrivers;
 
   /// No description provided for @truckSearchRetry.
   ///
   /// In en, this message translates to:
-  /// **'Retry'**
+  /// **'Try again'**
   String get truckSearchRetry;
 
   /// No description provided for @truckSearchSearching.
@@ -9452,13 +9452,13 @@ abstract class AppLocalizations {
   /// No description provided for @truckSearchWaitingConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Confirm'**
+  /// **'Waiting for confirmation'**
   String get truckSearchWaitingConfirm;
 
   /// No description provided for @truckSearchWaitingResponse.
   ///
   /// In en, this message translates to:
-  /// **'Waiting Response'**
+  /// **'Waiting for responses'**
   String get truckSearchWaitingResponse;
 
   /// No description provided for @negotiationContinuePrice.
@@ -10204,6 +10204,1158 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Truck pooling'**
   String get vehicleTruckPooling;
+
+  /// No description provided for @historyDetailsTripDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip details'**
+  String get historyDetailsTripDetails;
+
+  /// No description provided for @historyDetailsEarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings'**
+  String get historyDetailsEarnings;
+
+  /// No description provided for @historyDetailsOpenInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Maps'**
+  String get historyDetailsOpenInMaps;
+
+  /// No description provided for @historyDetailsMissingBookingId.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing booking id.'**
+  String get historyDetailsMissingBookingId;
+
+  /// No description provided for @historyDetailsSignInToView.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to view delivery details.'**
+  String get historyDetailsSignInToView;
+
+  /// No description provided for @historyDetailsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load delivery details.'**
+  String get historyDetailsLoadFailed;
+
+  /// No description provided for @historyDetailsSignInToDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to download the invoice.'**
+  String get historyDetailsSignInToDownload;
+
+  /// No description provided for @historyDetailsSignInToEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to email the invoice.'**
+  String get historyDetailsSignInToEmail;
+
+  /// No description provided for @historyDetailsSignInToNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to notify the client.'**
+  String get historyDetailsSignInToNotify;
+
+  /// No description provided for @historyDetailsEmailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please find attached the invoice for booking {bookingRef}.'**
+  String historyDetailsEmailBody(Object bookingRef);
+
+  /// No description provided for @historyDetailsPreviousDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous driver'**
+  String get historyDetailsPreviousDriver;
+
+  /// No description provided for @historyDetailsNewDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'New driver'**
+  String get historyDetailsNewDriver;
+
+  /// No description provided for @historyDetailsDriverChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver changed ({count})'**
+  String historyDetailsDriverChanged(Object count);
+
+  /// No description provided for @deliveryDetailsStopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{stop} point'**
+  String deliveryDetailsStopLabel(Object stop);
+
+  /// No description provided for @deliveryDetailsStopsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading & unloading stops'**
+  String get deliveryDetailsStopsTitle;
+
+  /// No description provided for @deliveryDetailsConfirmDropReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm when you have reached the drop point.'**
+  String get deliveryDetailsConfirmDropReached;
+
+  /// No description provided for @deliveryDetailsLoadingEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get deliveryDetailsLoadingEllipsis;
+
+  /// No description provided for @deliveryDetailsEnterPickupCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter pickup code'**
+  String get deliveryDetailsEnterPickupCode;
+
+  /// No description provided for @deliveryDetailsConfirmPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm pickup'**
+  String get deliveryDetailsConfirmPickup;
+
+  /// No description provided for @deliveryDetailsOpenPickupInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open pickup in Google Maps'**
+  String get deliveryDetailsOpenPickupInMaps;
+
+  /// No description provided for @deliveryDetailsOpenDropInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open drop in Google Maps'**
+  String get deliveryDetailsOpenDropInMaps;
+
+  /// No description provided for @deliveryDetailsDropLocationMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop location not provided'**
+  String get deliveryDetailsDropLocationMissing;
+
+  /// No description provided for @deliveryDetailsSignInToContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to continue.'**
+  String get deliveryDetailsSignInToContinue;
+
+  /// No description provided for @driverKycUploadDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload documents'**
+  String get driverKycUploadDocumentsTitle;
+
+  /// No description provided for @driverKycUploadDocumentsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload clear photos of the following documents.'**
+  String get driverKycUploadDocumentsSubtitle;
+
+  /// No description provided for @driverKycVerifyIdentityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your identity'**
+  String get driverKycVerifyIdentityTitle;
+
+  /// No description provided for @driverKycRequiredBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get driverKycRequiredBadge;
+
+  /// No description provided for @driverKycNoActiveSession.
+  ///
+  /// In en, this message translates to:
+  /// **'No active session found.'**
+  String get driverKycNoActiveSession;
+
+  /// No description provided for @driverKycConfirmAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm that all information is accurate.'**
+  String get driverKycConfirmAccuracy;
+
+  /// No description provided for @driverKycSubmittedDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted documents'**
+  String get driverKycSubmittedDocuments;
+
+  /// No description provided for @driverKycVerifyCarefully.
+  ///
+  /// In en, this message translates to:
+  /// **'Please verify all information carefully. Incorrect information may delay KYC approval.'**
+  String get driverKycVerifyCarefully;
+
+  /// No description provided for @driverKycSubmitForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for review'**
+  String get driverKycSubmitForReview;
+
+  /// No description provided for @driverKycSourceLabelSubmittedUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted URL'**
+  String get driverKycSourceLabelSubmittedUrl;
+
+  /// No description provided for @addVehicleInsuranceExpiryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select insurance expiry date'**
+  String get addVehicleInsuranceExpiryHelp;
+
+  /// No description provided for @addVehicleEditTruckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit truck'**
+  String get addVehicleEditTruckTitle;
+
+  /// No description provided for @addVehicleAddTruckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add truck'**
+  String get addVehicleAddTruckTitle;
+
+  /// No description provided for @addVehicleEditTruckSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the truck details and save the changes.'**
+  String get addVehicleEditTruckSubtitle;
+
+  /// No description provided for @addVehicleAddTruckSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the truck type and fill in the fleet details.'**
+  String get addVehicleAddTruckSubtitle;
+
+  /// No description provided for @addVehicleErrRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter registration number'**
+  String get addVehicleErrRegistration;
+
+  /// No description provided for @addVehicleErrCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter capacity'**
+  String get addVehicleErrCapacity;
+
+  /// No description provided for @addVehicleErrSelectDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a driver'**
+  String get addVehicleErrSelectDriver;
+
+  /// No description provided for @addVehicleErrMake.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter truck make'**
+  String get addVehicleErrMake;
+
+  /// No description provided for @addVehicleErrYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid year'**
+  String get addVehicleErrYear;
+
+  /// No description provided for @addVehicleErrInsuranceExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter insurance expiry date'**
+  String get addVehicleErrInsuranceExpiry;
+
+  /// No description provided for @addVehicleUpdateTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Update truck'**
+  String get addVehicleUpdateTruck;
+
+  /// No description provided for @addDriverEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit driver'**
+  String get addDriverEditTitle;
+
+  /// No description provided for @addDriverAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add driver'**
+  String get addDriverAddTitle;
+
+  /// No description provided for @addDriverEditSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the driver account'**
+  String get addDriverEditSubtitle;
+
+  /// No description provided for @addDriverAddSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a new driver to your fleet'**
+  String get addDriverAddSubtitle;
+
+  /// No description provided for @addDriverUpdateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update driver'**
+  String get addDriverUpdateAction;
+
+  /// No description provided for @addDriverAddPhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add driver photo'**
+  String get addDriverAddPhotoTitle;
+
+  /// No description provided for @addDriverErrName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter full name'**
+  String get addDriverErrName;
+
+  /// No description provided for @addDriverErrEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter email'**
+  String get addDriverErrEmail;
+
+  /// No description provided for @addDriverEmailHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address — the driver logs in with email + password.'**
+  String get addDriverEmailHelper;
+
+  /// No description provided for @addDriverErrMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter mobile number'**
+  String get addDriverErrMobile;
+
+  /// No description provided for @addDriverMobileHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 10-digit phone number.'**
+  String get addDriverMobileHelper;
+
+  /// No description provided for @addDriverErrLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter license number'**
+  String get addDriverErrLicense;
+
+  /// No description provided for @brokerNotificationsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get brokerNotificationsRetry;
+
+  /// No description provided for @brokerNotificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get brokerNotificationsEmptyTitle;
+
+  /// No description provided for @brokerNotificationsGenericTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get brokerNotificationsGenericTitle;
+
+  /// No description provided for @brokerNotificationsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get brokerNotificationsToday;
+
+  /// No description provided for @brokerNotificationsYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get brokerNotificationsYesterday;
+
+  /// No description provided for @brokerNotificationsEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get brokerNotificationsEarlier;
+
+  /// No description provided for @brokerNotificationsViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get brokerNotificationsViewDetails;
+
+  /// No description provided for @brokerNotificationsViewTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'View trip'**
+  String get brokerNotificationsViewTrip;
+
+  /// No description provided for @brokerNotificationsOpenChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat'**
+  String get brokerNotificationsOpenChat;
+
+  /// No description provided for @clientSavedSearchHintField.
+  ///
+  /// In en, this message translates to:
+  /// **'Search saved addresses...'**
+  String get clientSavedSearchHintField;
+
+  /// No description provided for @clientSavedTooltipOpenMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Open map picker'**
+  String get clientSavedTooltipOpenMap;
+
+  /// No description provided for @clientSavedTooltipSetDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default'**
+  String get clientSavedTooltipSetDefault;
+
+  /// No description provided for @clientSavedTooltipEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get clientSavedTooltipEdit;
+
+  /// No description provided for @clientSavedTooltipRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get clientSavedTooltipRemove;
+
+  /// No description provided for @clientSavedDropoffTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off'**
+  String get clientSavedDropoffTag;
+
+  /// No description provided for @clientSavedPickupTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get clientSavedPickupTag;
+
+  /// No description provided for @clientSavedErrorLoadOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this address'**
+  String get clientSavedErrorLoadOne;
+
+  /// No description provided for @clientSavedBackToAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to saved addresses'**
+  String get clientSavedBackToAddresses;
+
+  /// No description provided for @clientSavedSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get clientSavedSaveChanges;
+
+  /// No description provided for @clientSavedSaveAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Save address'**
+  String get clientSavedSaveAddress;
+
+  /// No description provided for @clientSavedMapPickerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search, tap the map, or drag the pin once it is placed.'**
+  String get clientSavedMapPickerHint;
+
+  /// No description provided for @clientSavedCurrentLocationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not get your current location.'**
+  String get clientSavedCurrentLocationError;
+
+  /// No description provided for @clientSavedSignInToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to save this address.'**
+  String get clientSavedSignInToSave;
+
+  /// No description provided for @clientBookingStepNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get clientBookingStepNext;
+
+  /// No description provided for @clientBookingStepContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get clientBookingStepContinue;
+
+  /// No description provided for @clientBookingChooseTrucks.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose trucks'**
+  String get clientBookingChooseTrucks;
+
+  /// No description provided for @clientBookingChooseTrucksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select truck type and search radius'**
+  String get clientBookingChooseTrucksSubtitle;
+
+  /// No description provided for @clientBookingCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling...'**
+  String get clientBookingCancelling;
+
+  /// No description provided for @clientBookingCancelSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel search'**
+  String get clientBookingCancelSearch;
+
+  /// No description provided for @clientBookingEnterLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter loading location'**
+  String get clientBookingEnterLoading;
+
+  /// No description provided for @clientBookingEnterUnloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter unloading location'**
+  String get clientBookingEnterUnloading;
+
+  /// No description provided for @clientBookingConfirmToPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm to pay'**
+  String get clientBookingConfirmToPay;
+
+  /// No description provided for @clientBookingConfirmBilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm billing'**
+  String get clientBookingConfirmBilling;
+
+  /// No description provided for @clientBookingChoosePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose payment'**
+  String get clientBookingChoosePayment;
+
+  /// No description provided for @clientBookingNoDriverInWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver found within the search window'**
+  String get clientBookingNoDriverInWindow;
+
+  /// No description provided for @clientBookingBookNowTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Book now'**
+  String get clientBookingBookNowTooltip;
+
+  /// No description provided for @checkoutStatusBookingConfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking confirmed'**
+  String get checkoutStatusBookingConfirmedTitle;
+
+  /// No description provided for @checkoutStatusBookingConfirmedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your booking has been successfully placed.'**
+  String get checkoutStatusBookingConfirmedMessage;
+
+  /// No description provided for @clientNegotiationRefreshBrokerOfferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh the live broker offer.'**
+  String get clientNegotiationRefreshBrokerOfferFailed;
+
+  /// No description provided for @clientNegotiationRefreshRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh the live request.'**
+  String get clientNegotiationRefreshRequestFailed;
+
+  /// No description provided for @clientNegotiationRefreshDriverOfferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh the live driver offer.'**
+  String get clientNegotiationRefreshDriverOfferFailed;
+
+  /// No description provided for @clientTrackingProofLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load delivery proof.'**
+  String get clientTrackingProofLoadFailed;
+
+  /// No description provided for @clientTrackingVideoPlayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not play delivery video.'**
+  String get clientTrackingVideoPlayFailed;
+
+  /// No description provided for @clientTrackingCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this booking?'**
+  String get clientTrackingCancelTitle;
+
+  /// No description provided for @clientTrackingYesCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, cancel'**
+  String get clientTrackingYesCancel;
+
+  /// No description provided for @clientTrackingChatLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this chat.'**
+  String get clientTrackingChatLoadFailed;
+
+  /// No description provided for @clientTrackingNegotiationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load negotiation data.'**
+  String get clientTrackingNegotiationLoadFailed;
+
+  /// No description provided for @clientTrackingConfirmedDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed driver'**
+  String get clientTrackingConfirmedDriver;
+
+  /// No description provided for @clientTrackingConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get clientTrackingConfirmed;
+
+  /// No description provided for @clientTrackingNoLongerAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer available'**
+  String get clientTrackingNoLongerAvailable;
+
+  /// No description provided for @clientBookingRemoveStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove stop'**
+  String get clientBookingRemoveStopTooltip;
+
+  /// No description provided for @clientTrackingLiveLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Live location'**
+  String get clientTrackingLiveLocationLabel;
+
+  /// No description provided for @clientTrackingLocationPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location pending'**
+  String get clientTrackingLocationPendingTitle;
+
+  /// No description provided for @locationFlowSelectOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Select on map'**
+  String get locationFlowSelectOnMap;
+
+  /// No description provided for @brokerFlowVehicleIdleLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get brokerFlowVehicleIdleLocation;
+
+  /// No description provided for @brokerFlowVehicleHeadingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading to'**
+  String get brokerFlowVehicleHeadingTo;
+
+  /// No description provided for @brokerFlowVehicleLastKnown.
+  ///
+  /// In en, this message translates to:
+  /// **'Last known'**
+  String get brokerFlowVehicleLastKnown;
+
+  /// No description provided for @brokerFlowNoVehicleAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No vehicle assigned'**
+  String get brokerFlowNoVehicleAssigned;
+
+  /// No description provided for @brokerFlowCtaViewMap.
+  ///
+  /// In en, this message translates to:
+  /// **'View map'**
+  String get brokerFlowCtaViewMap;
+
+  /// No description provided for @brokerFlowCtaViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get brokerFlowCtaViewDetails;
+
+  /// No description provided for @brokerFlowLastSeenUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get brokerFlowLastSeenUnavailable;
+
+  /// No description provided for @coreDigilockerAadhaarMaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'XXXX XXXX XXXX'**
+  String get coreDigilockerAadhaarMaskHint;
+
+  /// No description provided for @coreDigilockerPanMaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'ABCDE1234F'**
+  String get coreDigilockerPanMaskHint;
+
+  /// No description provided for @coreDigilockerVehicleRegMaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'MH-2020123456789'**
+  String get coreDigilockerVehicleRegMaskHint;
+
+  /// No description provided for @coreDigilockerDateMaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get coreDigilockerDateMaskHint;
+
+  /// No description provided for @statusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get statusInProgress;
+
+  /// No description provided for @statusDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get statusDelivered;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statusCompleted;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get statusCancelled;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get statusConfirmed;
+
+  /// No description provided for @statusRouteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Route unavailable'**
+  String get statusRouteUnavailable;
+
+  /// No description provided for @historyDetailsInvoiceDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice downloaded successfully.'**
+  String get historyDetailsInvoiceDownloaded;
+
+  /// No description provided for @historyDetailsInvoiceDownloadedBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice downloaded ({size} bytes).'**
+  String historyDetailsInvoiceDownloadedBytes(Object size);
+
+  /// No description provided for @historyDetailsEmailSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice for booking {bookingRef}'**
+  String historyDetailsEmailSubject(Object bookingRef);
+
+  /// No description provided for @historyDetailsInvoiceEmailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice emailed successfully.'**
+  String get historyDetailsInvoiceEmailed;
+
+  /// No description provided for @historyDetailsClientNotified.
+  ///
+  /// In en, this message translates to:
+  /// **'Client notified successfully.'**
+  String get historyDetailsClientNotified;
+
+  /// No description provided for @timePeriodAm.
+  ///
+  /// In en, this message translates to:
+  /// **'AM'**
+  String get timePeriodAm;
+
+  /// No description provided for @timePeriodPm.
+  ///
+  /// In en, this message translates to:
+  /// **'PM'**
+  String get timePeriodPm;
+
+  /// No description provided for @addDriverCreateAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a driver account'**
+  String get addDriverCreateAccountSubtitle;
+
+  /// No description provided for @brokerNotificationsMinsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m'**
+  String brokerNotificationsMinsAgo(Object minutes);
+
+  /// No description provided for @brokerNotifRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get brokerNotifRetryAction;
+
+  /// No description provided for @brokerNotifEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get brokerNotifEmptySubtitle;
+
+  /// No description provided for @brokerNotifUnreadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String brokerNotifUnreadCount(Object count);
+
+  /// No description provided for @brokerNotifTotalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} notifications'**
+  String brokerNotifTotalCount(Object count);
+
+  /// No description provided for @bookingRadiusKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{radius} km'**
+  String bookingRadiusKm(Object radius);
+
+  /// No description provided for @bookingBookNowTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Book now'**
+  String get bookingBookNowTooltip;
+
+  /// No description provided for @savedAddressCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this address'**
+  String get savedAddressCouldNotLoad;
+
+  /// No description provided for @savedAddressMapPickerTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open map picker'**
+  String get savedAddressMapPickerTooltip;
+
+  /// No description provided for @savedAddressSetDefaultTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Set default'**
+  String get savedAddressSetDefaultTooltip;
+
+  /// No description provided for @savedAddressEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get savedAddressEditTooltip;
+
+  /// No description provided for @savedAddressRemoveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get savedAddressRemoveTooltip;
+
+  /// No description provided for @savedAddressDropoffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off'**
+  String get savedAddressDropoffLabel;
+
+  /// No description provided for @savedAddressPickupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get savedAddressPickupLabel;
+
+  /// No description provided for @trackingAssignedDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned driver'**
+  String get trackingAssignedDriver;
+
+  /// No description provided for @trackingPackageInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Package information'**
+  String get trackingPackageInformation;
+
+  /// No description provided for @trackingDeliveryTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Type:'**
+  String get trackingDeliveryTypeLabel;
+
+  /// No description provided for @trackingExpressDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Express delivery'**
+  String get trackingExpressDelivery;
+
+  /// No description provided for @trackingStandardDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard delivery'**
+  String get trackingStandardDelivery;
+
+  /// No description provided for @trackingPackageWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Package weight:'**
+  String get trackingPackageWeightLabel;
+
+  /// No description provided for @trackingDriverNotAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver not assigned'**
+  String get trackingDriverNotAssigned;
+
+  /// No description provided for @trackingPickupCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup Code'**
+  String get trackingPickupCodeTitle;
+
+  /// No description provided for @trackingPickupVerifiedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get trackingPickupVerifiedBadge;
+
+  /// No description provided for @trackingPickupConfirmedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup confirmed with your code.'**
+  String get trackingPickupConfirmedText;
+
+  /// No description provided for @trackingPickupCodeShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this with your driver when they arrive to confirm pickup.'**
+  String get trackingPickupCodeShareHint;
+
+  /// No description provided for @trackingLiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get trackingLiveBadge;
+
+  /// No description provided for @trackingTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipment Timeline'**
+  String get trackingTimelineTitle;
+
+  /// No description provided for @trackingPodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Proof of delivery'**
+  String get trackingPodTitle;
+
+  /// No description provided for @trackingPodApprovalPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Does this look right? Approve to let the driver close out the trip, or reject to ask for new photos.'**
+  String get trackingPodApprovalPrompt;
+
+  /// No description provided for @trackingPodApproving.
+  ///
+  /// In en, this message translates to:
+  /// **'Approving...'**
+  String get trackingPodApproving;
+
+  /// No description provided for @trackingPodApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get trackingPodApprove;
+
+  /// No description provided for @trackingPodApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get trackingPodApproved;
+
+  /// No description provided for @trackingPodRejectionWithReason.
+  ///
+  /// In en, this message translates to:
+  /// **'You asked the driver to re-upload: \"{reason}.\" Waiting for new photos.'**
+  String trackingPodRejectionWithReason(Object reason);
+
+  /// No description provided for @trackingPodRejection.
+  ///
+  /// In en, this message translates to:
+  /// **'You asked the driver to re-upload. Waiting for new photos.'**
+  String get trackingPodRejection;
+
+  /// No description provided for @trackingPodLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load delivery proof.'**
+  String get trackingPodLoadFailed;
+
+  /// No description provided for @trackingPodPlayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not play delivery video.'**
+  String get trackingPodPlayFailed;
+
+  /// No description provided for @bookingScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking scheduled'**
+  String get bookingScheduled;
+
+  /// No description provided for @bookingScheduledNotifyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We will notify drivers or brokers closer to your pickup time.'**
+  String get bookingScheduledNotifyMessage;
+
+  /// No description provided for @checkoutOpeningActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening activity'**
+  String get checkoutOpeningActivity;
+
+  /// No description provided for @checkoutBookLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Book later'**
+  String get checkoutBookLater;
+
+  /// No description provided for @checkoutWhereIsYourDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Where is your Drop ?'**
+  String get checkoutWhereIsYourDrop;
+
+  /// No description provided for @weightStepAddLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Add location'**
+  String get weightStepAddLocation;
+
+  /// No description provided for @weightStepTapToAddDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add details'**
+  String get weightStepTapToAddDetails;
+
+  /// No description provided for @deliveryDetailsLoadingPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Point'**
+  String get deliveryDetailsLoadingPoint;
+
+  /// No description provided for @deliveryDetailsUnloadingPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unloading Point'**
+  String get deliveryDetailsUnloadingPoint;
+
+  /// No description provided for @deliveryDetailsStartTripToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Trip to Pickup'**
+  String get deliveryDetailsStartTripToPickup;
+
+  /// No description provided for @deliveryDetailsReachedPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve Reached Pickup'**
+  String get deliveryDetailsReachedPickup;
+
+  /// No description provided for @deliveryDetailsStartDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Delivery'**
+  String get deliveryDetailsStartDelivery;
+
+  /// No description provided for @deliveryDetailsMarkAsDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Delivered'**
+  String get deliveryDetailsMarkAsDelivered;
+
+  /// No description provided for @driverKycVerificationCompleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC Verification Complete'**
+  String get driverKycVerificationCompleteTitle;
+
+  /// No description provided for @driverKycSubmittedSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC Submitted Successfully'**
+  String get driverKycSubmittedSuccessTitle;
+
+  /// No description provided for @driverKycVerifiedBadgeUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFIED'**
+  String get driverKycVerifiedBadgeUpper;
+
+  /// No description provided for @driverKycSubmittedBadgeUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'SUBMITTED'**
+  String get driverKycSubmittedBadgeUpper;
+
+  /// No description provided for @driverKycVerifiedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your KYC has been verified. Your driver account is now active.'**
+  String get driverKycVerifiedDescription;
+
+  /// No description provided for @driverKycSubmittedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your KYC has been successfully submitted. Our verification team will review your documents. This usually takes 24-48 hours.'**
+  String get driverKycSubmittedDescription;
 }
 
 class _AppLocalizationsDelegate

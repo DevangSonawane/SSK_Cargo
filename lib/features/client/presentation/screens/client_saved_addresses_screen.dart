@@ -893,7 +893,7 @@ class _ClientSavedAddressEditorScreenState
             children: [
               _EmptyState(
                 icon: AppIcons.error_outline_rounded,
-                title: 'Could not load this address',
+                title: AppLocalizations.of(context)!.savedAddressCouldNotLoad,
                 subtitle:
                     'Go back to saved addresses and try editing it again.',
                 actionLabel: 'Back to Saved Addresses',
@@ -1301,7 +1301,7 @@ class _EditorMapPanel extends StatelessWidget {
             top: 12,
             child: IconButton(
               onPressed: onFullscreen,
-              tooltip: 'Open map picker',
+              tooltip: AppLocalizations.of(context)!.savedAddressMapPickerTooltip,
               icon: const Icon(AppIcons.open_in_full_rounded, size: 18),
               color: context.colors.textSecondary,
               style: IconButton.styleFrom(
@@ -1599,7 +1599,10 @@ class _AddressListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = _AddressTypeMeta.from(address.addressType);
+    final meta = _AddressTypeMeta.from(
+      AppLocalizations.of(context)!,
+      address.addressType,
+    );
     return Container(
       decoration: _savedCardDecoration(radius: 14, colors: context.colors),
       padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
@@ -1684,19 +1687,19 @@ class _AddressListTile extends StatelessWidget {
                     icon: AppIcons.star_outline_rounded,
                     onTap: isDefaulting ? null : onSetDefault,
                     loading: isDefaulting,
-                    tooltip: 'Set default',
+                    tooltip: AppLocalizations.of(context)!.savedAddressSetDefaultTooltip,
                   ),
                 _AddressIconAction(
                   icon: AppIcons.edit_outlined,
                   onTap: onEdit,
-                  tooltip: 'Edit',
+                  tooltip: AppLocalizations.of(context)!.savedAddressEditTooltip,
                 ),
                 _AddressIconAction(
                   icon: AppIcons.delete_outline_rounded,
                   onTap: isDeleting ? null : onDelete,
                   loading: isDeleting,
                   danger: true,
-                  tooltip: 'Remove',
+                  tooltip: AppLocalizations.of(context)!.savedAddressRemoveTooltip,
                 ),
               ],
             ),
@@ -1720,20 +1723,20 @@ class _AddressTypeMeta {
   final Color background;
   final Color color;
 
-  static _AddressTypeMeta from(String type) {
+  static _AddressTypeMeta from(AppLocalizations l10n, String type) {
     if (type == 'dropoff') {
-      return const _AddressTypeMeta(
-        label: 'Drop-off',
+      return _AddressTypeMeta(
+        label: l10n.savedAddressDropoffLabel,
         icon: AppIcons.remove_shopping_cart_outlined,
-        background: Color(0xFFFFF7ED),
-        color: Color(0xFFEA580C),
+        background: const Color(0xFFFFF7ED),
+        color: const Color(0xFFEA580C),
       );
     }
-    return const _AddressTypeMeta(
-      label: 'Pickup',
+    return _AddressTypeMeta(
+      label: l10n.savedAddressPickupLabel,
       icon: AppIcons.add_business_outlined,
-      background: Color(0xFFEAF6EF),
-      color: Color(0xFF2FA56E),
+      background: const Color(0xFFEAF6EF),
+      color: const Color(0xFF2FA56E),
     );
   }
 }
@@ -1876,7 +1879,7 @@ class _AddressTypeSelector extends StatelessWidget {
       children: [
         Expanded(
           child: _AddressTypeOption(
-            meta: _AddressTypeMeta.from('pickup'),
+            meta: _AddressTypeMeta.from(AppLocalizations.of(context)!, 'pickup'),
             selected: value != 'dropoff',
             onTap: () => onChanged('pickup'),
           ),
@@ -1884,7 +1887,7 @@ class _AddressTypeSelector extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _AddressTypeOption(
-            meta: _AddressTypeMeta.from('dropoff'),
+            meta: _AddressTypeMeta.from(AppLocalizations.of(context)!, 'dropoff'),
             selected: value == 'dropoff',
             onTap: () => onChanged('dropoff'),
           ),

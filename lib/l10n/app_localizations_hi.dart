@@ -3272,52 +3272,52 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get allEarningsActiveMonths => 'सक्रिय Months';
+  String get allEarningsActiveMonths => 'सक्रिय महीने';
 
   @override
   String get allEarningsAvgTrip => 'औसत ट्रिप';
 
   @override
-  String get allEarningsBreakdown => 'Breakdown';
+  String get allEarningsBreakdown => 'विवरण';
 
   @override
-  String get allEarningsDeliveries => 'Deliveries';
+  String get allEarningsDeliveries => 'डिलीवरी';
 
   @override
-  String get allEarningsEmptySubtitle => 'Empty सबटाइटल';
+  String get allEarningsEmptySubtitle => 'अभी कोई कमाई नहीं';
 
   @override
-  String get allEarningsEmptyTitle => 'Empty शीर्षक';
+  String get allEarningsEmptyTitle => 'अभी कोई कमाई नहीं';
 
   @override
-  String get allEarningsLoadFailed => 'लोड Failed';
+  String get allEarningsLoadFailed => 'कमाई लोड नहीं हो सकी';
 
   @override
-  String get allEarningsMonthlyTrend => 'मासिक Trend';
+  String get allEarningsMonthlyTrend => 'मासिक रुझान';
 
   @override
-  String get allEarningsMonths => 'Months';
+  String get allEarningsMonths => 'महीने';
 
   @override
-  String get allEarningsNetPerMonth => 'नेट Per महीना';
+  String get allEarningsNetPerMonth => 'प्रति माहा शुद्ध';
 
   @override
-  String get allEarningsPerDelivery => 'Per डिलीवरी';
+  String get allEarningsPerDelivery => 'प्रति डिलीवरी';
 
   @override
-  String get allEarningsTitle => 'शीर्षक';
+  String get allEarningsTitle => 'कुल कमाई';
 
   @override
-  String get allEarningsTotalEarned => 'कुल Earned';
+  String get allEarningsTotalEarned => 'कुल कमाई';
 
   @override
-  String get allEarningsTripsDone => 'ट्रिप्स हो गया';
+  String get allEarningsTripsDone => 'पूरी ट्रिप';
 
   @override
-  String get appChatClientFallback => 'क्लाइंट';
+  String get appChatClientFallback => 'ग्राहक';
 
   @override
-  String get appChatSupportFallback => 'सपोर्ट';
+  String get appChatSupportFallback => 'सहायता';
 
   @override
   String get appLoginAttemptBlockedBody =>
@@ -3339,100 +3339,103 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appTrackingSettingsAction => 'ट्रैकिंग सेटिंग्स';
 
   @override
-  String get arrivedHeading => 'Heading';
+  String get arrivedHeading => 'आगे';
 
   @override
-  String get arrivedNextLabel => 'Next लेबल';
+  String get arrivedNextLabel => 'अगला';
 
   @override
-  String get arrivedNextUpload => 'Next अपलोड';
+  String get arrivedNextUpload => 'डिलीवरी फोटो अपलोड करें';
 
   @override
-  String get arrivedPreparing => 'Preparing';
+  String get arrivedPreparing => 'तैयारी हो रही है';
 
   @override
-  String get arrivedPreparingSub => 'Preparing Sub';
+  String get arrivedPreparingSub =>
+      'कृपया प्रतीक्षा करें, हम तैयारी पूरी कर रहे हैं।';
 
   @override
-  String get arrivedSlideSub => 'Slide Sub';
+  String get arrivedSlideSub => 'जारी रखने के लिए स्लाइड करें';
 
   @override
-  String get arrivedSlideTitle => 'Slide शीर्षक';
+  String get arrivedSlideTitle => 'आप पहुंच गए हैं';
 
   @override
-  String get arrivedStatusLabel => 'स्टेटस लेबल';
+  String get arrivedStatusLabel => 'स्थिति';
 
   @override
-  String get arrivedStatusReady => 'स्टेटस तैयार';
+  String get arrivedStatusReady => 'तैयार';
 
   @override
-  String get arrivedSub => 'Sub';
+  String get arrivedSub => 'पुष्टि करें कि आप पहुंच गए हैं।';
 
   @override
-  String get arrivedSwipeContinue => 'Swipe जारी रखें';
+  String get arrivedSwipeContinue => 'जारी रखने के लिए स्लाइड करें';
 
   @override
-  String get arrivedTitle => 'शीर्षक';
+  String get arrivedTitle => 'पहुंच गए';
 
   @override
-  String get arrivedTripIdLabel => 'ट्रिप ID लेबल';
+  String get arrivedTripIdLabel => 'ट्रिप आईडी';
 
   @override
-  String get brokerActiveDescription => 'ब्रोकर सक्रिय Description';
+  String get brokerActiveDescription =>
+      'यहां थोड़ी देरी आपकी बुकिंग छीन सकती है। जल्दी ड्राइवर असाइन करें।';
 
   @override
-  String get brokerActiveSubmit => 'ब्रोकर सक्रिय सबमिट करें';
+  String get brokerActiveSubmit => 'असाइनमेंट की पुष्टि करें';
 
   @override
-  String get brokerActiveSubmitting => 'ब्रोकर सक्रिय सबमिट हो रहा है';
+  String get brokerActiveSubmitting => 'पुष्टि हो रही है...';
 
   @override
-  String get brokerHomeClientOffered => 'क्लाइंट Offered';
+  String get brokerHomeClientOffered => 'आपने ऑफर दिया';
 
   @override
-  String get brokerHomeDriverFallback => 'ड्राइवर Fallback';
+  String get brokerHomeDriverFallback => 'ड्राइवर';
 
   @override
-  String get brokerHomeDropUnavailable => 'ड्रॉप उपलब्ध नहीं';
+  String get brokerHomeDropUnavailable => 'ड्रॉप स्थान उपलब्ध नहीं';
 
   @override
-  String get brokerHomeFareChangeSent => 'किराया बदलें Sent';
+  String get brokerHomeFareChangeSent => 'किराया बदलाव भेजा गया';
 
   @override
-  String get brokerHomeFareChangesUsed => 'किराया Changes Used';
+  String get brokerHomeFareChangesUsed => 'उपयोग किए गए किराया बदलाव';
 
   @override
-  String get brokerHomeHelloPrefix => 'Hello Prefix';
+  String get brokerHomeHelloPrefix => 'नमस्ते';
 
   @override
-  String get brokerHomeJustNow => 'Just Now';
+  String get brokerHomeJustNow => 'अभी-अभी';
 
   @override
-  String get brokerHomePickupUnavailable => 'पिकअप उपलब्ध नहीं';
+  String get brokerHomePickupUnavailable => 'पिकअप स्थान उपलब्ध नहीं';
 
   @override
-  String get brokerHomeRequestAccepted => 'रिक्वेस्ट Accepted';
+  String get brokerHomeRequestAccepted => 'रिक्वेस्ट स्वीकार हो गई';
 
   @override
-  String get brokerHomeRequestDeclined => 'रिक्वेस्ट अस्वीकृत';
+  String get brokerHomeRequestDeclined => 'रिक्वेस्ट अस्वीकार हो गई';
 
   @override
-  String get brokerHomeSendAssignment => 'भेजें Assignment';
+  String get brokerHomeSendAssignment => 'असाइनमेंट भेजें';
 
   @override
-  String get brokerHomeSending => 'भेज रहे हैं';
+  String get brokerHomeSending => 'भेजा जा रहा है...';
 
   @override
-  String get brokerHomeTryClearingSearch => 'कोशिश करें Clearing खोजें';
+  String get brokerHomeTryClearingSearch => 'अपनी खोज हटाकर देखें';
 
   @override
-  String get brokerHomeYouAcceptedWaiting => 'You Accepted प्रतीक्षा';
+  String get brokerHomeYouAcceptedWaiting =>
+      'आपने स्वीकार किया। ग्राहक की पुष्टि की प्रतीक्षा है।';
 
   @override
-  String get brokerHomeYouOffered => 'You Offered';
+  String get brokerHomeYouOffered => 'आपने ऑफर दिया';
 
   @override
-  String get brokerKycCompleteTitle => 'Complete शीर्षक';
+  String get brokerKycCompleteTitle => 'KYC पूरा हुआ';
 
   @override
   String get brokerKycContinue => 'जारी रखें';
@@ -3441,221 +3444,231 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brokerKycFinish => 'समाप्त करें';
 
   @override
-  String get brokerKycNotAvailable => 'Not उपलब्ध';
+  String get brokerKycNotAvailable => 'उपलब्ध नहीं';
 
   @override
-  String get brokerKycNotProvided => 'Not Provided';
+  String get brokerKycNotProvided => 'दिया नहीं गया';
 
   @override
-  String get brokerKycPendingReviewStatus => 'पेंडिंग रिव्यू स्टेटस';
+  String get brokerKycPendingReviewStatus => 'समीक्षा बाकी है';
 
   @override
   String get brokerKycSubmitKyc => 'सबमिट करें KYC';
 
   @override
-  String get brokerKycSubmittedBadge => 'Submitted बैज';
+  String get brokerKycSubmittedBadge => 'सबमिट किया गया';
 
   @override
-  String get brokerKycSubmittedDesc => 'Submitted Desc';
+  String get brokerKycSubmittedDesc =>
+      'आपका KYC सबमिट हो गया है और समीक्षा की प्रतीक्षा में है।';
 
   @override
-  String get brokerKycSubmittedTitle => 'Submitted शीर्षक';
+  String get brokerKycSubmittedTitle => 'KYC सबमिट हो गया';
 
   @override
-  String get brokerKycVerifiedBadge => 'सत्यापित बैज';
+  String get brokerKycVerifiedBadge => 'सत्यापित';
 
   @override
-  String get brokerKycVerifiedDesc => 'सत्यापित Desc';
+  String get brokerKycVerifiedDesc =>
+      'आपका KYC सत्यापित है। अब आप बुकिंग स्वीकार कर सकते हैं।';
 
   @override
-  String get brokerKycVerifiedStatus => 'सत्यापित स्टेटस';
+  String get brokerKycVerifiedStatus => 'सत्यापित';
 
   @override
   String get brokerKycVerifyCarefullyWarning =>
-      'सत्यापित करें Carefully Warning';
+      'कृपया सारी जानकारी ध्यान से जांचें। गलत जानकारी से KYC स्वीकृति में देरी हो सकती है।';
 
   @override
-  String get brokerReqAcceptAssign => 'Accept Assign';
+  String get brokerReqAcceptAssign => 'स्वीकार करें और असाइन करें';
 
   @override
-  String get brokerReqAcceptedNoCard => 'Accepted नहीं कार्ड';
+  String get brokerReqAcceptedNoCard => 'स्वीकार किया गया';
 
   @override
-  String get brokerReqAcceptedPickDriver => 'Accepted Pick ड्राइवर';
+  String get brokerReqAcceptedPickDriver =>
+      'स्वीकार हो गया। जारी रखने के लिए ड्राइवर चुनें।';
 
   @override
-  String get brokerReqAssignmentTitle => 'Assignment शीर्षक';
+  String get brokerReqAssignmentTitle => 'ड्राइवर और ट्रक असाइन करें';
 
   @override
-  String get brokerReqAutoSelectedDetails => 'Auto Selected डिटेल्स';
+  String get brokerReqAutoSelectedDetails =>
+      'हमने यह आपके लिए चुना है। आप इसे बदल सकते हैं।';
 
   @override
-  String get brokerReqAwaitingOtherSide => 'Awaiting Other Side';
+  String get brokerReqAwaitingOtherSide => 'जवाब की प्रतीक्षा';
 
   @override
-  String get brokerReqChangeFareOrReject => 'बदलें किराया or Reject';
+  String get brokerReqChangeFareOrReject => 'किराया बदलें या अस्वीकार करें';
 
   @override
-  String get brokerReqClientAcceptedFinalize => 'क्लाइंट Accepted Finalize';
+  String get brokerReqClientAcceptedFinalize =>
+      'ग्राहक ने स्वीकार कर लिया। असाइनमेंट पूरा करें।';
 
   @override
-  String get brokerReqConfirmAssign => 'कन्फर्म करें Assign';
+  String get brokerReqConfirmAssign => 'असाइनमेंट की पुष्टि करें';
 
   @override
-  String get brokerReqConfirmBookingTitle => 'कन्फर्म करें बुकिंग शीर्षक';
+  String get brokerReqConfirmBookingTitle => 'बुकिंग की पुष्टि करें';
 
   @override
-  String get brokerReqCustomerFallback => 'Customer Fallback';
+  String get brokerReqCustomerFallback => 'ग्राहक';
 
   @override
-  String get brokerReqDeclinedNoActions => 'अस्वीकृत नहीं Actions';
+  String get brokerReqDeclinedNoActions =>
+      'अस्वीकार हो गया। अब किसी कार्रवाई की जरूरत नहीं।';
 
   @override
-  String get brokerReqFareChangeWaiting => 'किराया बदलें प्रतीक्षा';
+  String get brokerReqFareChangeWaiting => 'किराया बदलाव का जवाब बाकी है';
 
   @override
-  String get brokerReqGeneralFallback => 'General Fallback';
+  String get brokerReqGeneralFallback => 'बुकिंग';
 
   @override
-  String get brokerReqNoDriversFound => 'नहीं ड्राइवर मिला';
+  String get brokerReqNoDriversFound => 'कोई ड्राइवर नहीं मिला';
 
   @override
-  String get brokerReqNoTrucksFound => 'नहीं ट्रक मिला';
+  String get brokerReqNoTrucksFound => 'कोई ट्रक नहीं मिला';
 
   @override
-  String get brokerReqSaving => 'Saving';
+  String get brokerReqSaving => 'सेव हो रहा है...';
 
   @override
   String get brokerReqUnavailable => 'उपलब्ध नहीं';
 
   @override
-  String get changePasswordAllFieldsRequired => 'सभी Fields Required';
+  String get changePasswordAllFieldsRequired => 'सभी फ़ील्ड ज़रूरी हैं';
 
   @override
-  String get changePasswordConfirmHint => 'कन्फर्म करें संकेत';
+  String get changePasswordConfirmHint => 'अपना नया पासवर्ड दोबारा दर्ज करें';
 
   @override
-  String get changePasswordConfirmLabel => 'कन्फर्म करें लेबल';
+  String get changePasswordConfirmLabel => 'नया पासवर्ड की पुष्टि करें';
 
   @override
-  String get changePasswordCurrentHint => 'मौजूदा संकेत';
+  String get changePasswordCurrentHint => 'अपना मौजूदा पासवर्ड दर्ज करें';
 
   @override
-  String get changePasswordCurrentLabel => 'मौजूदा लेबल';
+  String get changePasswordCurrentLabel => 'मौजूदा पासवर्ड';
 
   @override
-  String get changePasswordMismatch => 'Mismatch';
+  String get changePasswordMismatch => 'दोनों पासवर्ड मेल नहीं खाते';
 
   @override
-  String get changePasswordNewHint => 'नया संकेत';
+  String get changePasswordNewHint => 'कम से कम 8 अक्षर';
 
   @override
-  String get changePasswordNewLabel => 'नया लेबल';
+  String get changePasswordNewLabel => 'नया पासवर्ड';
 
   @override
-  String get changePasswordScreenTitle => 'Screen शीर्षक';
+  String get changePasswordScreenTitle => 'पासवर्ड बदलें';
 
   @override
-  String get changePasswordStrengthEmptyHint => 'Strength Empty संकेत';
+  String get changePasswordStrengthEmptyHint =>
+      'मजबूती जांचने के लिए पासवर्ड दर्ज करें';
 
   @override
-  String get changePasswordStrengthFair => 'Strength Fair';
+  String get changePasswordStrengthFair => 'ठीक';
 
   @override
-  String get changePasswordStrengthGood => 'Strength Good';
+  String get changePasswordStrengthGood => 'अच्छा';
 
   @override
-  String get changePasswordStrengthLowercase => 'Strength Lowercase';
+  String get changePasswordStrengthLowercase => 'एक छोटा अक्षर जोड़ें';
 
   @override
-  String get changePasswordStrengthMinLength => 'Strength Min Length';
+  String get changePasswordStrengthMinLength =>
+      'कम से कम 8 अक्षर इस्तेमाल करें';
 
   @override
-  String get changePasswordStrengthNumber => 'Strength नंबर';
+  String get changePasswordStrengthNumber => 'एक अंक जोड़ें';
 
   @override
-  String get changePasswordStrengthStrong => 'Strength Strong';
+  String get changePasswordStrengthStrong => 'मजबूत';
 
   @override
-  String get changePasswordStrengthStrongHint => 'Strength Strong संकेत';
+  String get changePasswordStrengthStrongHint => 'बहुत अच्छा पासवर्ड';
 
   @override
-  String get changePasswordStrengthSymbol => 'Strength Symbol';
+  String get changePasswordStrengthSymbol => 'एक चिह्न जोड़ें';
 
   @override
-  String get changePasswordStrengthTitle => 'Strength शीर्षक';
+  String get changePasswordStrengthTitle => 'पासवर्ड की मजबूती';
 
   @override
-  String get changePasswordStrengthUppercase => 'Strength Uppercase';
+  String get changePasswordStrengthUppercase => 'एक बड़ा अक्षर जोड़ें';
 
   @override
-  String get changePasswordStrengthWeak => 'Strength Weak';
+  String get changePasswordStrengthWeak => 'कमजोर';
 
   @override
-  String get changePasswordSubmitButton => 'सबमिट करें बटन';
+  String get changePasswordSubmitButton => 'पासवर्ड अपडेट करें';
 
   @override
-  String get changePasswordSuccessLoggedOut => 'सफल Logged Out';
+  String get changePasswordSuccessLoggedOut =>
+      'पासवर्ड अपडेट हो गया। कृपया दोबारा साइन इन करें।';
 
   @override
-  String get chatAssistantName => 'Assistant नाम';
+  String get chatAssistantName => 'सहायता';
 
   @override
-  String get chatClosedChip => 'Closed Chip';
+  String get chatClosedChip => 'बंद';
 
   @override
-  String get chatDetailBookingTitle => 'Detail बुकिंग शीर्षक';
+  String get chatDetailBookingTitle => 'बुकिंग';
 
   @override
-  String get chatDetailClientTitle => 'Detail क्लाइंट शीर्षक';
+  String get chatDetailClientTitle => 'ग्राहक';
 
   @override
-  String get chatDetailDirectTitle => 'Detail Direct शीर्षक';
+  String get chatDetailDirectTitle => 'सीधा संदेश';
 
   @override
-  String get chatDirectMessageChip => 'Direct मैसेज Chip';
+  String get chatDirectMessageChip => 'सीधा';
 
   @override
-  String get chatDirectMessageFallback => 'Direct मैसेज Fallback';
+  String get chatDirectMessageFallback => 'सीधी बातचीत';
 
   @override
-  String get chatListEmpty => 'List Empty';
+  String get chatListEmpty => 'अभी कोई बातचीत नहीं';
 
   @override
-  String get chatListLoadError => 'List लोड त्रुटि';
+  String get chatListLoadError => 'चैट लोड नहीं हो सकीं';
 
   @override
-  String get chatListRetry => 'List फिर कोशिश करें';
+  String get chatListRetry => 'फिर कोशिश करें';
 
   @override
-  String get chatListTitle => 'List शीर्षक';
+  String get chatListTitle => 'चैट';
 
   @override
-  String get chatMessageFallback => 'मैसेज Fallback';
+  String get chatMessageFallback => 'संदेश';
 
   @override
-  String get chatMessageNotSent => 'मैसेज Not Sent';
+  String get chatMessageNotSent => 'संदेश नहीं भेजा गया';
 
   @override
-  String get chatNoMessagesYet => 'नहीं Messages Yet';
+  String get chatNoMessagesYet => 'अभी कोई संदेश नहीं';
 
   @override
-  String get chatNotConnectedChip => 'Not Connected Chip';
+  String get chatNotConnectedChip => 'ऑफ़लाइन';
 
   @override
-  String get chatReadReceipt => 'Read Receipt';
+  String get chatReadReceipt => 'पढ़ा गया';
 
   @override
-  String get chatThreadLoadError => 'Thread लोड त्रुटि';
+  String get chatThreadLoadError => 'यह बातचीत लोड नहीं हो सकी';
 
   @override
-  String get chatTripClosedNotice => 'ट्रिप Closed Notice';
+  String get chatTripClosedNotice =>
+      'यह ट्रिप बंद हो गई है। आप संदेश पढ़ सकते हैं।';
 
   @override
-  String get chatTypeMessageHint => 'प्रकार मैसेज संकेत';
+  String get chatTypeMessageHint => 'संदेश लिखें';
 
   @override
-  String get chatTypingIndicator => 'Typing Indicator';
+  String get chatTypingIndicator => 'लिख रहे हैं...';
 
   @override
   String get clientAddressAddTitle => 'पता जोड़ें';
@@ -3670,283 +3683,293 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clientAddressRemoved => 'पता हटा दिया गया';
 
   @override
-  String get clientBookingLoadingPointHint => 'लोडिंग Point संकेत';
+  String get clientBookingLoadingPointHint => 'लोडिंग पॉइंट खोजें';
 
   @override
-  String get clientBookingUnloadingPointHint => 'Unloading Point संकेत';
+  String get clientBookingUnloadingPointHint => 'अनलोडिंग पॉइंट खोजें';
 
   @override
-  String get clientBookingWeightError => 'वजन त्रुटि';
+  String get clientBookingWeightError => 'कृपया सही वजन दर्ज करें';
 
   @override
   String get clientCheckoutCancel => 'रद्द करें';
 
   @override
-  String get clientCheckoutChooseMethod => 'चुनें तरीका';
+  String get clientCheckoutChooseMethod => 'पेमेंट तरीका चुनें';
 
   @override
-  String get clientCheckoutEnterPin => 'दर्ज करें Pin';
+  String get clientCheckoutEnterPin => '4 अंकों का UPI पिन दर्ज करें';
 
   @override
-  String get clientCheckoutMethodCards => 'तरीका कार्ड्स';
+  String get clientCheckoutMethodCards => 'कार्ड';
 
   @override
-  String get clientCheckoutMethodNetbanking => 'तरीका Netbanking';
+  String get clientCheckoutMethodNetbanking => 'नेट बैंकिंग';
 
   @override
-  String get clientCheckoutMethodRecommended => 'तरीका Recommended';
+  String get clientCheckoutMethodRecommended => 'अनुशंसित';
 
   @override
-  String get clientCheckoutMethodUpi => 'तरीका UPI';
+  String get clientCheckoutMethodUpi => 'UPI';
 
   @override
-  String get clientCheckoutMethodWallet => 'तरीका वॉलेट';
+  String get clientCheckoutMethodWallet => 'वॉलेट';
 
   @override
-  String get clientCheckoutTestTitle => 'Test शीर्षक';
+  String get clientCheckoutTestTitle => 'टेस्ट पेमेंट';
 
   @override
-  String get clientChooseTrucks => 'क्लाइंट चुनें ट्रक';
+  String get clientChooseTrucks => 'ट्रक चुनें';
 
   @override
-  String get clientFindingBrokers => 'क्लाइंट Finding Brokers';
+  String get clientFindingBrokers => 'आस-पास के ब्रोकर खोज रहे हैं';
 
   @override
-  String get clientHomeBookAnyTruck => 'Book Any ट्रक';
+  String get clientHomeBookAnyTruck => 'कोई भी ट्रक बुक करें';
 
   @override
-  String get clientHomeLoadingHint => 'लोडिंग संकेत';
+  String get clientHomeLoadingHint => 'लोडिंग स्थान खोजें';
 
   @override
-  String get clientHomeUnloadingHint => 'Unloading संकेत';
+  String get clientHomeUnloadingHint => 'अनलोडिंग स्थान खोजें';
 
   @override
-  String get clientNotificationsAllCaughtUp => 'सभी Caught Up';
+  String get clientNotificationsAllCaughtUp => 'आप पूरी तरह अपडेट हैं';
 
   @override
-  String get clientNotificationsAllCaughtUpHint => 'सभी Caught Up संकेत';
+  String get clientNotificationsAllCaughtUpHint =>
+      'अभी कोई नई नोटिफिकेशन नहीं है।';
 
   @override
-  String get clientNotificationsEmpty => 'Empty';
+  String get clientNotificationsEmpty => 'कोई नोटिफिकेशन नहीं';
 
   @override
-  String get clientNotificationsEmptyHint => 'Empty संकेत';
+  String get clientNotificationsEmptyHint =>
+      'बुकिंग अपडेट और इनवॉइस अलर्ट यहां दिखेंगे।';
 
   @override
-  String get clientNotificationsFallbackMessage => 'Fallback मैसेज';
+  String get clientNotificationsFallbackMessage =>
+      'पूरी जानकारी के लिए अपनी बुकिंग खोलें।';
 
   @override
-  String get clientNotificationsFallbackTitle => 'Fallback शीर्षक';
+  String get clientNotificationsFallbackTitle => 'बुकिंग अपडेट';
 
   @override
-  String get clientNotificationsFilterAll => 'फिल्टर सभी';
+  String get clientNotificationsFilterAll => 'सभी';
 
   @override
-  String get clientNotificationsFilterUnread => 'फिल्टर Unread';
+  String get clientNotificationsFilterUnread => 'अपठित';
 
   @override
-  String get clientNotificationsGotIt => 'Got It';
+  String get clientNotificationsGotIt => 'समझ गया';
 
   @override
-  String get clientNotificationsKindBooking => 'Kind बुकिंग';
+  String get clientNotificationsKindBooking => 'बुकिंग';
 
   @override
-  String get clientNotificationsKindOffer => 'Kind Offer';
+  String get clientNotificationsKindOffer => 'ऑफर';
 
   @override
-  String get clientNotificationsKindPayment => 'Kind पेमेंट';
+  String get clientNotificationsKindPayment => 'पेमेंट';
 
   @override
-  String get clientNotificationsKindUpdate => 'Kind Update';
+  String get clientNotificationsKindUpdate => 'अपडेट';
 
   @override
-  String get clientNotificationsLoadError => 'लोड त्रुटि';
+  String get clientNotificationsLoadError => 'नोटिफिकेशन लोड नहीं हो सकीं';
 
   @override
-  String get clientNotificationsMarkAllRead => 'Mark सभी Read';
+  String get clientNotificationsMarkAllRead => 'सभी को पढ़ा मानें';
 
   @override
-  String get clientNotificationsMarkedRead => 'Marked Read';
+  String get clientNotificationsMarkedRead => 'पढ़ा माना गया';
 
   @override
-  String get clientNotificationsSaving => 'Saving';
+  String get clientNotificationsSaving => 'सेव हो रहा है...';
 
   @override
-  String get clientNotificationsTitle => 'शीर्षक';
+  String get clientNotificationsTitle => 'नोटिफिकेशन';
 
   @override
-  String get clientNotificationsTryAgain => 'कोशिश करें Again';
+  String get clientNotificationsTryAgain => 'फिर कोशिश करें';
 
   @override
-  String get clientPaymentAddAccountInvalid => 'अकाउंट Invalid';
+  String get clientPaymentAddAccountInvalid => 'सही अकाउंट नंबर दर्ज करें';
 
   @override
-  String get clientPaymentAddAccountLabel => 'अकाउंट लेबल';
+  String get clientPaymentAddAccountLabel => 'अकाउंट नंबर';
 
   @override
-  String get clientPaymentAddBankLabel => 'बैंक लेबल';
+  String get clientPaymentAddBankLabel => 'अपना बैंक चुनें';
 
   @override
-  String get clientPaymentAddBankRequired => 'बैंक Required';
+  String get clientPaymentAddBankRequired => 'बैंक चुनें';
 
   @override
-  String get clientPaymentAddBankSearchHint => 'बैंक खोजें संकेत';
+  String get clientPaymentAddBankSearchHint => 'बैंक खोजें';
 
   @override
-  String get clientPaymentAddBrandLabel => 'Brand लेबल';
+  String get clientPaymentAddBrandLabel => 'कार्ड ब्रांड';
 
   @override
-  String get clientPaymentAddBrandRequired => 'Brand Required';
+  String get clientPaymentAddBrandRequired => 'कार्ड ब्रांड दर्ज करें';
 
   @override
-  String get clientPaymentAddCardNote => 'कार्ड Note';
+  String get clientPaymentAddCardNote =>
+      'हम इसे सिर्फ सेव किए गए तरीकों में कार्ड दिखाने के लिए इस्तेमाल करते हैं।';
 
   @override
-  String get clientPaymentAddDefaultOption => 'डिफॉल्ट Option';
+  String get clientPaymentAddDefaultOption => 'डिफॉल्ट बनाएं';
 
   @override
-  String get clientPaymentAddIfscInvalid => 'IFSC Invalid';
+  String get clientPaymentAddIfscInvalid => 'सही IFSC कोड दर्ज करें';
 
   @override
-  String get clientPaymentAddIfscLabel => 'IFSC लेबल';
+  String get clientPaymentAddIfscLabel => 'IFSC कोड';
 
   @override
-  String get clientPaymentAddLast4Label => 'Last4 लेबल';
+  String get clientPaymentAddLast4Label => 'आखिरी 4 अंक';
 
   @override
-  String get clientPaymentAddLast4Required => 'Last4 Required';
+  String get clientPaymentAddLast4Required => 'आखिरी 4 अंक दर्ज करें';
 
   @override
-  String get clientPaymentAddMethod => 'तरीका';
+  String get clientPaymentAddMethod => 'तरीका जोड़ें';
 
   @override
-  String get clientPaymentAddNoteLabel => 'Note लेबल';
+  String get clientPaymentAddNoteLabel => 'नोट';
 
   @override
-  String get clientPaymentAddPrivacyNote => 'Privacy Note';
+  String get clientPaymentAddPrivacyNote =>
+      'आपके कार्ड विवरण एन्क्रिप्टेड हैं और किसी के साथ साझा नहीं किए जाते।';
 
   @override
-  String get clientPaymentAddSaveButton => 'सेव करें बटन';
+  String get clientPaymentAddSaveButton => 'तरीका सेव करें';
 
   @override
-  String get clientPaymentAddSignInRequired => 'साइन In Required';
+  String get clientPaymentAddSignInRequired =>
+      'तरीका जोड़ने के लिए साइन इन करें।';
 
   @override
-  String get clientPaymentAddTileSubtitle => 'Tile सबटाइटल';
+  String get clientPaymentAddTileSubtitle => 'कार्ड, UPI, नेट बैंकिंग या वॉलेट';
 
   @override
-  String get clientPaymentAddTileTitle => 'Tile शीर्षक';
+  String get clientPaymentAddTileTitle => 'पेमेंट तरीका जोड़ें';
 
   @override
-  String get clientPaymentAddTitle => 'शीर्षक';
+  String get clientPaymentAddTitle => 'पेमेंट तरीका जोड़ें';
 
   @override
-  String get clientPaymentAddTypeLabel => 'प्रकार लेबल';
+  String get clientPaymentAddTypeLabel => 'पेमेंट का प्रकार';
 
   @override
-  String get clientPaymentAddUpiInvalid => 'UPI Invalid';
+  String get clientPaymentAddUpiInvalid => 'सही UPI ID दर्ज करें';
 
   @override
-  String get clientPaymentAddUpiLabel => 'UPI लेबल';
+  String get clientPaymentAddUpiLabel => 'UPI ID';
 
   @override
-  String get clientPaymentAddWalletLabel => 'वॉलेट लेबल';
+  String get clientPaymentAddWalletLabel => 'वॉलेट चुनें';
 
   @override
-  String get clientPaymentAddWalletRequired => 'वॉलेट Required';
+  String get clientPaymentAddWalletRequired => 'वॉलेट चुनें';
 
   @override
-  String get clientPaymentAddWalletSearchHint => 'वॉलेट खोजें संकेत';
+  String get clientPaymentAddWalletSearchHint => 'वॉलेट खोजें';
 
   @override
-  String get clientPaymentCardSaved => 'कार्ड सेव्ड';
+  String get clientPaymentCardSaved => 'कार्ड सेव है';
 
   @override
-  String get clientPaymentDefaultBadge => 'डिफॉल्ट बैज';
+  String get clientPaymentDefaultBadge => 'डिफॉल्ट';
 
   @override
-  String get clientPaymentDeleteTooltip => 'Delete tooltip';
+  String get clientPaymentDeleteTooltip => 'पेमेंट तरीका हटाएं';
 
   @override
-  String get clientPaymentEmptySubtitle => 'Empty सबटाइटल';
+  String get clientPaymentEmptySubtitle =>
+      'तेज़ चेकआउट के लिए कार्ड, UPI ID या बैंक अकाउंट सेव करें।';
 
   @override
-  String get clientPaymentEmptyTitle => 'Empty शीर्षक';
+  String get clientPaymentEmptyTitle => 'कोई पेमेंट तरीका नहीं';
 
   @override
-  String get clientPaymentLoadError => 'लोड त्रुटि';
+  String get clientPaymentLoadError => 'तरीके लोड नहीं हो सके';
 
   @override
-  String get clientPaymentLoadErrorHint => 'लोड त्रुटि संकेत';
+  String get clientPaymentLoadErrorHint =>
+      'कृपया थोड़ी देर में फिर कोशिश करें।';
 
   @override
-  String get clientPaymentMethodsTitle => 'Methods शीर्षक';
+  String get clientPaymentMethodsTitle => 'पेमेंट तरीके';
 
   @override
-  String get clientPaymentRemoved => 'Removed';
+  String get clientPaymentRemoved => 'पेमेंट तरीका हटा दिया गया';
 
   @override
   String get clientPaymentRetry => 'फिर कोशिश करें';
 
   @override
-  String get clientPaymentSetDefault => 'Set डिफॉल्ट';
+  String get clientPaymentSetDefault => 'डिफॉल्ट बनाएं';
 
   @override
-  String get clientPaymentSignInSubtitle => 'साइन In सबटाइटल';
+  String get clientPaymentSignInSubtitle =>
+      'अपने सेव किए कार्ड, UPI ID और बैंक अकाउंट देखने के लिए साइन इन करें।';
 
   @override
-  String get clientPaymentSignInTitle => 'साइन In शीर्षक';
+  String get clientPaymentSignInTitle => 'जारी रखने के लिए साइन इन करें';
 
   @override
-  String get clientPaymentTypeBank => 'प्रकार बैंक';
+  String get clientPaymentTypeBank => 'बैंक';
 
   @override
-  String get clientPaymentTypeCard => 'प्रकार कार्ड';
+  String get clientPaymentTypeCard => 'कार्ड';
 
   @override
-  String get clientPaymentTypeMethod => 'प्रकार तरीका';
+  String get clientPaymentTypeMethod => 'पेमेंट तरीका';
 
   @override
-  String get clientPaymentTypeUpi => 'प्रकार UPI';
+  String get clientPaymentTypeUpi => 'UPI';
 
   @override
-  String get clientPaymentTypeWallet => 'प्रकार वॉलेट';
+  String get clientPaymentTypeWallet => 'वॉलेट';
 
   @override
-  String get clientPaymentUpiFallback => 'UPI Fallback';
+  String get clientPaymentUpiFallback => 'UPI';
 
   @override
-  String get clientPaymentWalletFallback => 'वॉलेट Fallback';
+  String get clientPaymentWalletFallback => 'वॉलेट';
 
   @override
-  String get clientPlacesSuggestionsError => 'Suggestions त्रुटि';
+  String get clientPlacesSuggestionsError => 'सुझाव लोड नहीं हो सके';
 
   @override
-  String get clientPublicAssignedDriver => 'असाइन किया गया ड्राइवर';
+  String get clientPublicAssignedDriver => 'असाइन होना बाकी';
 
   @override
-  String get clientPublicDriverLabel => 'ड्राइवर लेबल';
+  String get clientPublicDriverLabel => 'ड्राइवर';
 
   @override
-  String get clientPublicDropLabel => 'ड्रॉप लेबल';
+  String get clientPublicDropLabel => 'ड्रॉप';
 
   @override
-  String get clientPublicExpressSuffix => 'Express Suffix';
+  String get clientPublicExpressSuffix => 'एक्सप्रेस';
 
   @override
-  String get clientPublicIncidentActive => 'Incident सक्रिय';
+  String get clientPublicIncidentActive => 'घटना की सूचना';
 
   @override
-  String get clientPublicPickupLabel => 'पिकअप लेबल';
+  String get clientPublicPickupLabel => 'पिकअप';
 
   @override
-  String get clientPublicTrackingInvalidLink => 'ट्रैकिंग Invalid Link';
+  String get clientPublicTrackingInvalidLink =>
+      'यह ट्रैकिंग लिंक मान्य नहीं है।';
 
   @override
   String get clientPublicTrackingUnavailable => 'ट्रैकिंग उपलब्ध नहीं';
 
   @override
-  String get clientPublicTruckLabel => 'ट्रक लेबल';
+  String get clientPublicTruckLabel => 'ट्रक';
 
   @override
   String get clientSavedAddAddress => 'पता जोड़ें';
@@ -3992,286 +4015,303 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clientSearchRetry => 'फिर कोशिश करें';
 
   @override
-  String get clientSelectVehicle => 'क्लाइंट चुनें वाहन';
+  String get clientSelectVehicle => 'वाहन चुनें';
 
   @override
-  String get clientTrackingGpsPending => 'Gps पेंडिंग';
+  String get clientTrackingGpsPending => 'GPS की प्रतीक्षा';
 
   @override
-  String get clientTrackingLivePendingSubtitle => 'लाइव पेंडिंग सबटाइटल';
+  String get clientTrackingLivePendingSubtitle =>
+      'वाहन चलना शुरू करते ही उसकी लोकेशन यहां दिखने लगेगी।';
 
   @override
-  String get clientTrackingLivePendingTitle => 'लाइव पेंडिंग शीर्षक';
+  String get clientTrackingLivePendingTitle => 'लाइव लोकेशन बाकी है';
 
   @override
-  String get clientTrackingLivePosition => 'लाइव Position';
+  String get clientTrackingLivePosition => 'लाइव स्थिति';
 
   @override
   String get clientTrackingLoading => 'लोडिंग';
 
   @override
-  String get clientTrackingMapEmptyHint => 'मैप Empty संकेत';
+  String get clientTrackingMapEmptyHint => 'लाइव ट्रैकिंग मैप पर दिखेगी।';
 
   @override
-  String get clientTrackingMapLoading => 'मैप लोडिंग';
+  String get clientTrackingMapLoading => 'मैप लोड हो रहा है...';
 
   @override
-  String get clientTrackingPayNow => 'Pay Now';
+  String get clientTrackingPayNow => 'अभी भुगतान करें';
 
   @override
-  String get clientTrackingPayRemaining => 'Pay Remaining';
+  String get clientTrackingPayRemaining => 'बाकी रकम भुगतान करें';
 
   @override
-  String get clientTrackingRateDelivery => 'Rate डिलीवरी';
+  String get clientTrackingRateDelivery => 'डिलीवरी को रेट करें';
 
   @override
-  String get clientTrackingSubmitting => 'सबमिट हो रहा है';
+  String get clientTrackingSubmitting => 'सबमिट हो रहा है...';
 
   @override
-  String get clientTrackingUnloading => 'Unloading';
+  String get clientTrackingUnloading => 'अनलोडिंग';
 
   @override
-  String get clientVehicleSelected => 'Selected';
+  String get clientVehicleSelected => 'चुना गया';
 
   @override
-  String get coreDigilockerAadhaarFallbackNote => 'आधार Fallback Note';
+  String get coreDigilockerAadhaarFallbackNote =>
+      'DigiLocker यह आधार नहीं पढ़ सका। नंबर खुद दर्ज करें।';
 
   @override
-  String get coreDigilockerBankAccountHint => 'बैंक अकाउंट संकेत';
+  String get coreDigilockerBankAccountHint => 'बैंक अकाउंट नंबर';
 
   @override
-  String get coreDigilockerBrokerIntro => 'ब्रोकर Intro';
+  String get coreDigilockerBrokerIntro =>
+      'बुकिंग पाने के लिए अपना PAN, आधार और व्यापारिक दस्तावेज सत्यापित करें।';
 
   @override
-  String get coreDigilockerBusinessDetails => 'Business डिटेल्स';
+  String get coreDigilockerBusinessDetails => 'व्यापारिक विवरण';
 
   @override
-  String get coreDigilockerBusinessRegHint => 'Business Reg संकेत';
+  String get coreDigilockerBusinessRegHint => 'व्यापार पंजीकरण संख्या';
 
   @override
-  String get coreDigilockerCheckStatus => 'Check स्टेटस';
+  String get coreDigilockerCheckStatus => 'स्थिति जांचें';
 
   @override
-  String get coreDigilockerChecking => 'Checking';
+  String get coreDigilockerChecking => 'जांच हो रही है...';
 
   @override
-  String get coreDigilockerDidntMatch => 'Didnt Match';
+  String get coreDigilockerDidntMatch =>
+      'ये विवरण आपके DigiLocker रिकॉर्ड से मेल नहीं खाए।';
 
   @override
-  String get coreDigilockerDocAadhaar => 'Doc आधार';
+  String get coreDigilockerDocAadhaar => 'आधार';
 
   @override
-  String get coreDigilockerDocLicense => 'Doc लाइसेंस';
+  String get coreDigilockerDocLicense => 'ड्राइविंग लाइसेंस';
 
   @override
-  String get coreDigilockerDocPan => 'Doc PAN';
+  String get coreDigilockerDocPan => 'पैन कार्ड';
 
   @override
-  String get coreDigilockerDriverIntro => 'ड्राइवर Intro';
+  String get coreDigilockerDriverIntro =>
+      'ट्रिप पाने के लिए अपना PAN, आधार और लाइसेंस सत्यापित करें।';
 
   @override
-  String get coreDigilockerGstHint => 'GST संकेत';
+  String get coreDigilockerGstHint => 'GST संख्या';
 
   @override
-  String get coreDigilockerInfoNote => 'Info Note';
+  String get coreDigilockerInfoNote =>
+      'DigiLocker सरकारी पोर्टल से आपके दस्तावेज सुरक्षित रूप से लाता है।';
 
   @override
-  String get coreDigilockerNoLoginLink => 'नहीं लॉगिन Link';
+  String get coreDigilockerNoLoginLink =>
+      'DigiLocker लॉगिन उपलब्ध नहीं है। कृपया साइन इन करके फिर कोशिश करें।';
 
   @override
-  String get coreDigilockerNotComplete => 'Not Complete';
+  String get coreDigilockerNotComplete => 'सत्यापन अधूरा है';
 
   @override
-  String get coreDigilockerNotFound => 'Not मिला';
+  String get coreDigilockerNotFound => 'कोई दस्तावेज नहीं मिला';
 
   @override
-  String get coreDigilockerNotVerifiedYet => 'Not सत्यापित Yet';
+  String get coreDigilockerNotVerifiedYet => 'अभी सत्यापित नहीं';
 
   @override
-  String get coreDigilockerOpenBrowserFailed => 'Open Browser Failed';
+  String get coreDigilockerOpenBrowserFailed =>
+      'DigiLocker के लिए ब्राउज़र नहीं खुल सका।';
 
   @override
-  String get coreDigilockerOptionalNote => 'वैकल्पिक Note';
+  String get coreDigilockerOptionalNote => 'वैकल्पिक';
 
   @override
-  String get coreDigilockerPendingRetry => 'पेंडिंग फिर कोशिश करें';
+  String get coreDigilockerPendingRetry =>
+      'सत्यापन अभी बाकी है। कृपया थोड़ी देर में फिर कोशिश करें।';
 
   @override
-  String get coreDigilockerUnreachable => 'Unreachable';
+  String get coreDigilockerUnreachable => 'DigiLocker अभी उपलब्ध नहीं है';
 
   @override
-  String get coreDigilockerVehicleDetails => 'वाहन डिटेल्स';
+  String get coreDigilockerVehicleDetails => 'वाहन विवरण';
 
   @override
-  String get coreDigilockerVehicleInsuranceHint => 'वाहन Insurance संकेत';
+  String get coreDigilockerVehicleInsuranceHint => 'वाहन बीमा संख्या';
 
   @override
-  String get coreDigilockerVehicleRegHint => 'वाहन Reg संकेत';
+  String get coreDigilockerVehicleRegHint => 'वाहन पंजीकरण संख्या';
 
   @override
   String get coreDigilockerVerified => 'सत्यापित';
 
   @override
-  String get coreDigilockerVerifyButton => 'सत्यापित करें बटन';
+  String get coreDigilockerVerifyButton => 'DigiLocker से सत्यापित करें';
 
   @override
-  String get coreDigilockerVerifyLicense => 'सत्यापित करें लाइसेंस';
+  String get coreDigilockerVerifyLicense => 'ड्राइविंग लाइसेंस सत्यापित करें';
 
   @override
-  String get coreDigilockerVerifyPan => 'सत्यापित करें PAN';
+  String get coreDigilockerVerifyPan => 'पैन सत्यापित करें';
 
   @override
-  String get coreDigilockerWorking => 'Working';
+  String get coreDigilockerWorking => 'प्रक्रिया जारी है...';
 
   @override
-  String get coreKycCompleteAction => 'Complete Action';
+  String get coreKycCompleteAction => 'KYC पूरा करें';
 
   @override
-  String get coreKycIncompleteBody => 'Incomplete Body';
+  String get coreKycIncompleteBody =>
+      'बुकिंग और ट्रिप स्वीकार करने के लिए दस्तावेज सत्यापित करना पूरा करें।';
 
   @override
-  String get coreKycIncompleteTitle => 'Incomplete शीर्षक';
+  String get coreKycIncompleteTitle => 'अपना KYC पूरा करें';
 
   @override
-  String get coreKycNotNow => 'Not Now';
+  String get coreKycNotNow => 'अभी नहीं';
 
   @override
-  String get coreKycRejectedBody => 'अस्वीकृत Body';
+  String get coreKycRejectedBody =>
+      'हमारी टीम आपके दस्तावेज सत्यापित नहीं कर सकी। कृपया जांचकर दोबारा सबमिट करें।';
 
   @override
-  String get coreKycRejectedTitle => 'अस्वीकृत शीर्षक';
+  String get coreKycRejectedTitle => 'KYC अस्वीकार';
 
   @override
-  String get coreKycResubmitAction => 'Resubmit Action';
+  String get coreKycResubmitAction => 'दोबारा सबमिट करें';
 
   @override
-  String get coreKycUnderReviewBody => 'Under रिव्यू Body';
+  String get coreKycUnderReviewBody =>
+      'हम आपके दस्तावेज की समीक्षा कर रहे हैं। इसमें आमतौर पर 24-48 घंटे लगते हैं।';
 
   @override
-  String get coreKycUnderReviewTitle => 'Under रिव्यू शीर्षक';
+  String get coreKycUnderReviewTitle => 'KYC समीक्षा में है';
 
   @override
-  String get coreKycViewStatusAction => 'देखें स्टेटस Action';
+  String get coreKycViewStatusAction => 'स्थिति देखें';
 
   @override
-  String get coreMapDropTitle => 'ड्रॉप शीर्षक';
+  String get coreMapDropTitle => 'ड्रॉप';
 
   @override
-  String get coreMapExpressLabel => 'Express लेबल';
+  String get coreMapExpressLabel => 'एक्सप्रेस';
 
   @override
-  String get coreMapPickupTitle => 'पिकअप शीर्षक';
+  String get coreMapPickupTitle => 'पिकअप';
 
   @override
-  String get coreMapRouteNotFound => 'रूट Not मिला';
+  String get coreMapRouteNotFound => 'रूट नहीं मिला';
 
   @override
-  String get deliveryFlowChoosePhoto => 'चुनें फोटो';
+  String get deliveryFlowChoosePhoto => 'फोटो चुनें';
 
   @override
-  String get deliveryFlowCompany => 'Company';
+  String get deliveryFlowCompany => 'कंपनी';
 
   @override
-  String get deliveryFlowContactUnavailable => 'Contact उपलब्ध नहीं';
+  String get deliveryFlowContactUnavailable => 'संपर्क उपलब्ध नहीं';
 
   @override
-  String get deliveryFlowMaxItems => 'Max Items';
+  String get deliveryFlowMaxItems => 'आप अधिकतम 5 फोटो अपलोड कर सकते हैं।';
 
   @override
-  String get deliveryFlowMyQr => 'My QR';
+  String get deliveryFlowMyQr => 'मेरा QR';
 
   @override
-  String get deliveryFlowPersonal => 'Personal';
+  String get deliveryFlowPersonal => 'व्यक्तिगत';
 
   @override
-  String get deliveryFlowPhotosUploaded => 'फोटो अपलोडेड';
+  String get deliveryFlowPhotosUploaded => 'फोटो अपलोड हो गईं';
 
   @override
-  String get deliveryFlowRecordVideo => 'रिकॉर्ड करें वीडियो';
+  String get deliveryFlowRecordVideo => 'वीडियो रिकॉर्ड करें';
 
   @override
-  String get deliveryFlowSignInContinue => 'साइन In जारी रखें';
+  String get deliveryFlowSignInContinue => 'जारी रखने के लिए साइन इन करें।';
 
   @override
-  String get deliveryFlowSignInUploadPhotos => 'साइन In अपलोड फोटो';
+  String get deliveryFlowSignInUploadPhotos =>
+      'फोटो अपलोड करने के लिए साइन इन करें।';
 
   @override
-  String get deliveryFlowTakePhoto => 'Take फोटो';
+  String get deliveryFlowTakePhoto => 'फोटो लें';
 
   @override
   String get deliveryFlowVerified => 'सत्यापित';
 
   @override
-  String get driverEarningsCurrentBalance => 'मौजूदा Balance';
+  String get driverEarningsCurrentBalance => 'मौजूदा बैलेंस';
 
   @override
-  String get driverEarningsLastMonth => 'Last महीना';
+  String get driverEarningsLastMonth => 'पिछला महीना';
 
   @override
-  String get driverEarningsNoDeliveries => 'नहीं Deliveries';
+  String get driverEarningsNoDeliveries => 'अभी कोई डिलीवरी नहीं';
 
   @override
-  String get driverEarningsReadyPayout => 'तैयार Payout';
+  String get driverEarningsReadyPayout => 'भुगतान के लिए तैयार';
 
   @override
   String get driverEarningsThisMonth => 'यह महीना';
 
   @override
-  String get driverEarningsTrips => 'ट्रिप्स';
+  String get driverEarningsTrips => 'ट्रिप';
 
   @override
-  String get driverEarningsViewAll => 'देखें सभी';
+  String get driverEarningsViewAll => 'सभी देखें';
 
   @override
-  String get driverHomeTripAccepted => 'ट्रिप Accepted';
+  String get driverHomeTripAccepted => 'ट्रिप स्वीकार हो गई';
 
   @override
-  String get driverHomeTripDeclined => 'ट्रिप अस्वीकृत';
+  String get driverHomeTripDeclined => 'ट्रिप अस्वीकार हो गई';
 
   @override
-  String get driverKycEdit => 'एडिट';
+  String get driverKycEdit => 'बदलें';
 
   @override
-  String get driverKycPickFailed => 'Pick Failed';
+  String get driverKycPickFailed =>
+      'अभी यह नहीं खुल सका। कृपया फिर कोशिश करें।';
 
   @override
-  String get driverKycSignInToSubmit => 'साइन In to सबमिट करें';
+  String get driverKycSignInToSubmit => 'KYC सबमिट करने के लिए साइन इन करें।';
 
   @override
-  String get driverKycSignInToUpload => 'साइन In to अपलोड';
+  String get driverKycSignInToUpload =>
+      'दस्तावेज अपलोड करने के लिए साइन इन करें।';
 
   @override
   String get driverKycView => 'देखें';
 
   @override
-  String get driverPaymentCompany => 'Company';
+  String get driverPaymentCompany => 'कंपनी';
 
   @override
-  String get driverPaymentPersonal => 'Personal';
+  String get driverPaymentPersonal => 'व्यक्तिगत';
 
   @override
-  String get driverPaymentQrUploaded => 'QR अपलोडेड';
+  String get driverPaymentQrUploaded => 'QR अपलोड हो गया';
 
   @override
-  String get driverPaymentSignInRecord => 'साइन In रिकॉर्ड करें';
+  String get driverPaymentSignInRecord =>
+      'यह भुगतान दर्ज करने के लिए साइन इन करें।';
 
   @override
-  String get driverPaymentSignInUploadQr => 'साइन In अपलोड QR';
+  String get driverPaymentSignInUploadQr =>
+      'अपना भुगतान QR अपलोड करने के लिए साइन इन करें।';
 
   @override
   String get driverPaymentVerified => 'सत्यापित';
 
   @override
-  String get gpsAbout => 'About';
+  String get gpsAbout => 'ऐप के बारे में';
 
   @override
-  String get gpsAboutSubtitle => 'About सबटाइटल';
+  String get gpsAboutSubtitle => 'वर्जन, लाइसेंस और ऐप विवरण';
 
   @override
-  String get gpsAccountDetails => 'अकाउंट डिटेल्स';
+  String get gpsAccountDetails => 'अकाउंट विवरण';
 
   @override
-  String get gpsAccountDetailsSubtitle => 'अकाउंट डिटेल्स सबटाइटल';
+  String get gpsAccountDetailsSubtitle => 'अपनी अकाउंट जानकारी देखें';
 
   @override
   String get gpsAccountSection => 'अकाउंट';
@@ -4280,97 +4320,97 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gpsActive => 'सक्रिय';
 
   @override
-  String get gpsAllFleet => 'सभी फ्लीट';
+  String get gpsAllFleet => 'पूरी फ्लीट';
 
   @override
-  String get gpsAllVehiclesLiveMap => 'सभी वाहन लाइव मैप';
+  String get gpsAllVehiclesLiveMap => 'सभी वाहन लाइव मैप पर';
 
   @override
   String get gpsAppearance => 'दिखावट';
 
   @override
-  String get gpsAppearanceSubtitle => 'Appearance सबटाइटल';
+  String get gpsAppearanceSubtitle => 'लाइट, डार्क या डिवाइस के अनुसार';
 
   @override
-  String get gpsBackToFleet => 'वापस to फ्लीट';
+  String get gpsBackToFleet => 'फ्लीट पर वापस जाएं';
 
   @override
-  String get gpsCached => 'Cached';
+  String get gpsCached => 'कैश किया गया';
 
   @override
-  String get gpsChangePassword => 'बदलें पासवर्ड';
+  String get gpsChangePassword => 'पासवर्ड बदलें';
 
   @override
-  String get gpsChangePasswordSubtitle => 'बदलें पासवर्ड सबटाइटल';
+  String get gpsChangePasswordSubtitle => 'अपना अकाउंट पासवर्ड अपडेट करें';
 
   @override
-  String get gpsCompleted => 'पूरी';
+  String get gpsCompleted => 'पूर्ण';
 
   @override
-  String get gpsCreateGeofence => 'बनाएं Geofence';
+  String get gpsCreateGeofence => 'जियोफेंस बनाएं';
 
   @override
-  String get gpsCustom => 'Custom';
+  String get gpsCustom => 'कस्टम';
 
   @override
-  String get gpsDashboardWelcome => 'डैशबोर्ड Welcome';
+  String get gpsDashboardWelcome => 'वापसी पर स्वागत है';
 
   @override
-  String get gpsDeducted => 'Deducted';
+  String get gpsDeducted => 'काटा गया';
 
   @override
-  String get gpsDefineZones => 'Define Zones';
+  String get gpsDefineZones => 'ज़ोन तय करें';
 
   @override
-  String get gpsDuration => 'Duration';
+  String get gpsDuration => 'अवधि';
 
   @override
-  String get gpsDurationSubtitle => 'Duration सबटाइटल';
+  String get gpsDurationSubtitle => 'चलाने या रुकने में बीताआ समय';
 
   @override
   String get gpsExpired => 'समाप्त';
 
   @override
-  String get gpsExpiredTokensRemoved => 'Expired tokens Removed';
+  String get gpsExpiredTokensRemoved => 'समाप्त टोकन हटा दिए गए';
 
   @override
-  String get gpsFilter => 'फिल्टर';
+  String get gpsFilter => 'फ़िल्टर';
 
   @override
-  String get gpsFilterAll => 'फिल्टर सभी';
+  String get gpsFilterAll => 'सभी';
 
   @override
   String get gpsFleet => 'फ्लीट';
 
   @override
-  String get gpsFleetStatus => 'फ्लीट स्टेटस';
+  String get gpsFleetStatus => 'फ्लीट स्थिति';
 
   @override
-  String get gpsFrom => 'From';
+  String get gpsFrom => 'से';
 
   @override
-  String get gpsFuelSummary => 'Fuel Summary';
+  String get gpsFuelSummary => 'ईंधन सारांश';
 
   @override
-  String get gpsGenerateReport => 'Generate रिपोर्ट';
+  String get gpsGenerateReport => 'रिपोर्ट बनाएं';
 
   @override
   String get gpsGeofences => 'जियोफेंस';
 
   @override
-  String get gpsGeofencesSubtitle => 'Geofences सबटाइटल';
+  String get gpsGeofencesSubtitle => 'प्रवेश और निकास पर अपने-आप अलर्ट';
 
   @override
-  String get gpsHelpSupport => 'Help Support';
+  String get gpsHelpSupport => 'सहायता';
 
   @override
-  String get gpsHelpSupportSubtitle => 'Help Support सबटाइटल';
+  String get gpsHelpSupportSubtitle => 'मदद पाएं या हमारी टीम से संपर्क करें';
 
   @override
   String get gpsInvoices => 'इनवॉइस';
 
   @override
-  String get gpsList => 'List';
+  String get gpsList => 'सूची';
 
   @override
   String get gpsLiveFleetTracking => 'लाइव फ्लीट ट्रैकिंग';
@@ -4380,13 +4420,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gpsLiveTrackingUnavailableFleet =>
-      'लाइव ट्रैकिंग उपलब्ध नहीं फ्लीट';
+      'इस फ्लीट के लिए लाइव ट्रैकिंग उपलब्ध नहीं है।';
 
   @override
-  String get gpsLogout => 'लॉगआउट';
+  String get gpsLogout => 'लॉग आउट';
 
   @override
-  String get gpsLogoutSubtitle => 'लॉगआउट सबटाइटल';
+  String get gpsLogoutSubtitle => 'इस डिवाइस से साइन आउट करें';
 
   @override
   String get gpsMap => 'मैप';
@@ -4395,16 +4435,16 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gpsModules => 'मॉड्यूल';
 
   @override
-  String get gpsMonthlyPlan => 'मासिक Plan';
+  String get gpsMonthlyPlan => 'मासिक प्लान';
 
   @override
-  String get gpsMyFleet => 'मेरा फ्लीट';
+  String get gpsMyFleet => 'मेरी फ्लीट';
 
   @override
-  String get gpsMyVehicles => 'My वाहन';
+  String get gpsMyVehicles => 'मेरे वाहन';
 
   @override
-  String get gpsMyVehiclesSubtitle => 'My वाहन सबटाइटल';
+  String get gpsMyVehiclesSubtitle => 'आपके अकाउंट से जुड़े डिवाइस';
 
   @override
   String get gpsNavDashboard => 'डैशबोर्ड';
@@ -4413,52 +4453,54 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gpsNavProfile => 'प्रोफाइल';
 
   @override
-  String get gpsNavReports => 'रिपोर्ट्स';
+  String get gpsNavReports => 'रिपोर्ट';
 
   @override
   String get gpsNavVehicles => 'वाहन';
 
   @override
-  String get gpsNoData => 'नहीं Data';
+  String get gpsNoData => 'कोई डेटा नहीं';
 
   @override
-  String get gpsNoGeofencesSubtitle => 'नहीं Geofences सबटाइटल';
+  String get gpsNoGeofencesSubtitle =>
+      'ज़ोन में वाहन के प्रवेश या निकास पर अलर्ट पाने के लिए जियोफेंस बनाएं।';
 
   @override
-  String get gpsNoGeofencesYet => 'नहीं Geofences Yet';
+  String get gpsNoGeofencesYet => 'अभी कोई जियोफेंस नहीं';
 
   @override
-  String get gpsNoMoreTransactions => 'नहीं More Transactions';
+  String get gpsNoMoreTransactions => 'और कोई लेन-देन नहीं';
 
   @override
   String get gpsNotifications => 'नोटिफिकेशन';
 
   @override
-  String get gpsNotificationsSubtitle => 'नोटिफिकेशन सबटाइटल';
+  String get gpsNotificationsSubtitle => 'आपके वाहनों से जुड़े अलर्ट';
 
   @override
-  String get gpsOffline => 'ऑफलाइन';
+  String get gpsOffline => 'ऑफ़लाइन';
 
   @override
   String get gpsOnline => 'ऑनलाइन';
 
   @override
-  String get gpsProfileSubtitle => 'प्रोफाइल सबटाइटल';
+  String get gpsProfileSubtitle => 'अपना अकाउंट और पसंद देखें';
 
   @override
-  String get gpsRecentActivity => 'Recent Activity';
+  String get gpsRecentActivity => 'हाल की गतिविधि';
 
   @override
   String get gpsReportType => 'रिपोर्ट प्रकार';
 
   @override
-  String get gpsReportTypeSubtitle => 'रिपोर्ट प्रकार सबटाइटल';
+  String get gpsReportTypeSubtitle => 'चुनें कि आप क्या देखना चाहते हैं';
 
   @override
-  String get gpsReportsSecureNote => 'रिपोर्ट्स Secure Note';
+  String get gpsReportsSecureNote =>
+      'रिपोर्ट आपके अकाउंट डेटा से बनती है और निजी रहती है।';
 
   @override
-  String get gpsReportsSubtitle => 'रिपोर्ट्स सबटाइटल';
+  String get gpsReportsSubtitle => 'उपयोग, रूट और खर्च पर नजर रखें';
 
   @override
   String get gpsRetry => 'फिर कोशिश करें';
@@ -4467,91 +4509,92 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gpsRouteHistory => 'रूट इतिहास';
 
   @override
-  String get gpsRunning => 'Running';
+  String get gpsRunning => 'चल रहा है';
 
   @override
-  String get gpsSearchGeofences => 'खोजें Geofences';
+  String get gpsSearchGeofences => 'जियोफेंस खोजें';
 
   @override
-  String get gpsSearchTransactions => 'खोजें Transactions';
+  String get gpsSearchTransactions => 'लेन-देन खोजें';
 
   @override
-  String get gpsSearchVehiclesHint => 'खोजें वाहन संकेत';
+  String get gpsSearchVehiclesHint => 'नंबर या नाम से खोजें';
 
   @override
-  String get gpsSelectFromFleet => 'चुनें From फ्लीट';
+  String get gpsSelectFromFleet => 'अपनी फ्लीट से चुनें';
 
   @override
-  String get gpsSelectVehicle => 'चुनें वाहन';
+  String get gpsSelectVehicle => 'वाहन चुनें';
 
   @override
-  String get gpsSelectVehicleOrFleet => 'चुनें वाहन or फ्लीट';
+  String get gpsSelectVehicleOrFleet => 'एक वाहन या पूरी फ्लीट चुनें';
 
   @override
   String get gpsSettings => 'सेटिंग्स';
 
   @override
-  String get gpsSettingsSubtitle => 'Settings सबटाइटल';
+  String get gpsSettingsSubtitle => 'अपनी ट्रैकिंग पसंद सेट करें';
 
   @override
-  String get gpsSignInForFleetDevices => 'साइन In For फ्लीट Devices';
+  String get gpsSignInForFleetDevices =>
+      'अपने फ्लीट डिवाइस देखने के लिए साइन इन करें।';
 
   @override
-  String get gpsSignInForLiveFleet => 'साइन In For लाइव फ्लीट';
+  String get gpsSignInForLiveFleet => 'लाइव फ्लीट देखने के लिए साइन इन करें।';
 
   @override
-  String get gpsSignInForVehicle => 'साइन In For वाहन';
+  String get gpsSignInForVehicle => 'यह वाहन देखने के लिए साइन इन करें।';
 
   @override
-  String get gpsStopped => 'Stopped';
+  String get gpsStopped => 'रुका हुआ';
 
   @override
-  String get gpsSubscriptionPayment => 'Subscription पेमेंट';
+  String get gpsSubscriptionPayment => 'सब्सक्रिप्शन भुगतान';
 
   @override
-  String get gpsThisWeek => 'यह Week';
+  String get gpsThisWeek => 'इस सप्ताह';
 
   @override
-  String get gpsTimeEightMinsAgo => 'Time Eight Mins Ago';
+  String get gpsTimeEightMinsAgo => '8 मिनट पहले';
 
   @override
-  String get gpsTimeTwoMinsAgo => 'Time Two Mins Ago';
+  String get gpsTimeTwoMinsAgo => '2 मिनट पहले';
 
   @override
-  String get gpsTo => 'से';
+  String get gpsTo => 'तक';
 
   @override
-  String get gpsToday => 'Today';
+  String get gpsToday => 'आज';
 
   @override
-  String get gpsTokenBalance => 'Token Balance';
+  String get gpsTokenBalance => 'टोकन बैलेंस';
 
   @override
-  String get gpsTokenExpiry => 'Token समाप्ति';
+  String get gpsTokenExpiry => 'टोकन समाप्ति';
 
   @override
-  String get gpsTokenPurchase => 'Token Purchase';
+  String get gpsTokenPurchase => 'टोकन खरीद';
 
   @override
   String get gpsTokens => 'टोकन';
 
   @override
-  String get gpsTokensAdded => 'Tokens जोड़ा गया';
+  String get gpsTokensAdded => 'टोकन जोड़े गए';
 
   @override
   String get gpsTotalVehicles => 'कुल वाहन';
 
   @override
-  String get gpsTotalVehiclesCenter => 'कुल वाहन Center';
+  String get gpsTotalVehiclesCenter => 'लोकेशन भेजने वाले वाहन';
 
   @override
   String get gpsTransactions => 'लेन-देन';
 
   @override
-  String get gpsTripSummary => 'ट्रिप Summary';
+  String get gpsTripSummary => 'ट्रिप सारांश';
 
   @override
-  String get gpsUsageSummary => 'Usage Summary';
+  String get gpsUsageSummary => 'उपयोग सारांश';
 
   @override
   String get gpsVehicle => 'वाहन';
@@ -4560,31 +4603,31 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gpsVehicleLiveMap => 'वाहन लाइव मैप';
 
   @override
-  String get gpsVehicleNotFound => 'वाहन Not मिला';
+  String get gpsVehicleNotFound => 'वाहन नहीं मिला';
 
   @override
-  String get gpsViaRazorpay => 'Via Razorpay';
+  String get gpsViaRazorpay => 'Razorpay के माध्यम से';
 
   @override
-  String get gpsViewAll => 'देखें सभी';
+  String get gpsViewAll => 'सभी देखें';
 
   @override
-  String get gpsVsLastWeek => 'Vs Last Week';
+  String get gpsVsLastWeek => 'पिछले सप्ताह से';
 
   @override
   String get gpsWalletBilling => 'वॉलेट और बिलिंग';
 
   @override
-  String get gpsWelcomeBonus => 'Welcome Bonus';
+  String get gpsWelcomeBonus => 'वेलकम बोनस';
 
   @override
-  String get gpsYesterday => 'Yesterday';
+  String get gpsYesterday => 'कल';
 
   @override
   String get historyDetailsCancel => 'रद्द करें';
 
   @override
-  String get historyDetailsEmailInvoice => 'ईमेल इनवॉइस';
+  String get historyDetailsEmailInvoice => 'इनवॉइस ईमेल करें';
 
   @override
   String get historyDetailsRetry => 'फिर कोशिश करें';
@@ -4593,233 +4636,245 @@ class AppLocalizationsHi extends AppLocalizations {
   String get historyDetailsSend => 'भेजें';
 
   @override
-  String get historySegmentCompleted => 'पूरी';
+  String get historySegmentCompleted => 'पूर्ण';
 
   @override
-  String get historySegmentPending => 'पेंडिंग';
+  String get historySegmentPending => 'बाकी';
 
   @override
-  String get locationFlowAddLoading => 'जोड़ें लोडिंग';
+  String get locationFlowAddLoading => 'लोडिंग पॉइंट जोड़ें';
 
   @override
-  String get locationFlowAddLoadingHint => 'जोड़ें लोडिंग संकेत';
+  String get locationFlowAddLoadingHint => 'माल कहां लोड करना है?';
 
   @override
-  String get locationFlowAddUnloading => 'जोड़ें Unloading';
+  String get locationFlowAddUnloading => 'अनलोडिंग पॉइंट जोड़ें';
 
   @override
-  String get locationFlowAddUnloadingHint => 'जोड़ें Unloading संकेत';
+  String get locationFlowAddUnloadingHint => 'माल कहां पहुंचाना है?';
 
   @override
-  String get locationFlowDropHint => 'ड्रॉप संकेत';
+  String get locationFlowDropHint => 'ड्रॉप स्थान खोजें';
 
   @override
-  String get locationFlowDropSubtitle => 'ड्रॉप सबटाइटल';
+  String get locationFlowDropSubtitle => 'माल कहां जाना है?';
 
   @override
-  String get locationFlowDropTitle => 'ड्रॉप शीर्षक';
+  String get locationFlowDropTitle => 'ड्रॉप स्थान';
 
   @override
-  String get locationFlowFetching => 'Fetching';
+  String get locationFlowFetching => 'आपकी लोकेशन खोज रहे हैं...';
 
   @override
-  String get locationFlowMovePin => 'Move Pin';
+  String get locationFlowMovePin => 'पॉइंट बदलने के लिए पिन खींचें';
 
   @override
-  String get locationFlowOwnUnavailable => 'Own उपलब्ध नहीं';
+  String get locationFlowOwnUnavailable =>
+      'हम आपकी मौजूदा लोकेशन नहीं पढ़ सके।';
 
   @override
-  String get locationFlowPermissionNeeded => 'Permission Needed';
+  String get locationFlowPermissionNeeded =>
+      'जारी रखने के लिए लोकेशन की अनुमति चाहिए।';
 
   @override
-  String get locationFlowPickupHint => 'पिकअप संकेत';
+  String get locationFlowPickupHint => 'पिकअप स्थान खोजें';
 
   @override
-  String get locationFlowPickupSubtitle => 'पिकअप सबटाइटल';
+  String get locationFlowPickupSubtitle => 'माल कहां से आ रहा है?';
 
   @override
-  String get locationFlowPickupTitle => 'पिकअप शीर्षक';
+  String get locationFlowPickupTitle => 'पिकअप स्थान';
 
   @override
-  String get locationFlowPinHint => 'Pin संकेत';
+  String get locationFlowPinHint => 'पिन को सही जगह पर खींचें';
 
   @override
-  String get locationFlowPinLoading => 'Pin लोडिंग';
+  String get locationFlowPinLoading => 'लोडिंग पिन लगाएं';
 
   @override
-  String get locationFlowPinUnloading => 'Pin Unloading';
+  String get locationFlowPinUnloading => 'ड्रॉप पिन लगाएं';
 
   @override
-  String get locationFlowResolveCurrent => 'Resolve मौजूदा';
+  String get locationFlowResolveCurrent =>
+      'हम आपकी मौजूदा लोकेशन तय नहीं कर सके।';
 
   @override
-  String get locationFlowResolvePoint => 'Resolve Point';
+  String get locationFlowResolvePoint => 'हम उस जगह को मैप पर ढूंढ नहीं सके।';
 
   @override
-  String get locationFlowSavedTitle => 'सेव्ड शीर्षक';
+  String get locationFlowSavedTitle => 'स्थान सेव हो गया';
 
   @override
-  String get locationFlowSuggestionsError => 'Suggestions त्रुटि';
+  String get locationFlowSuggestionsError => 'स्थान सुझाव लोड नहीं हो सके';
 
   @override
-  String get locationFlowTurnOnLocation => 'Turn On लोकेशन';
+  String get locationFlowTurnOnLocation => 'कृपया लोकेशन सेवा चालू करें।';
 
   @override
-  String get locationFlowUseCurrent => 'उपयोग करें मौजूदा';
+  String get locationFlowUseCurrent => 'मौजूदा लोकेशन इस्तेमाल करें';
 
   @override
-  String get locationFlowUseCurrentPickup => 'उपयोग करें मौजूदा पिकअप';
+  String get locationFlowUseCurrentPickup => 'मेरी मौजूदा लोकेशन इस्तेमाल करें';
 
   @override
-  String get manageAccountActiveLabel => 'सक्रिय लेबल';
+  String get manageAccountActiveLabel => 'सक्रिय';
 
   @override
-  String get manageAccountActiveNo => 'सक्रिय नहीं';
+  String get manageAccountActiveNo => 'नहीं';
 
   @override
-  String get manageAccountActiveYes => 'सक्रिय Yes';
+  String get manageAccountActiveYes => 'हाँ';
 
   @override
-  String get manageAccountBasicDetails => 'बेसिक डिटेल्स';
+  String get manageAccountBasicDetails => 'बुनियादी विवरण';
 
   @override
-  String get manageAccountBusinessAddressLabel => 'Business पता लेबल';
+  String get manageAccountBusinessAddressLabel => 'व्यापारिक पता';
 
   @override
-  String get manageAccountBusinessDetails => 'Business डिटेल्स';
+  String get manageAccountBusinessDetails => 'व्यापारिक विवरण';
 
   @override
-  String get manageAccountChangePhoto => 'बदलें फोटो';
+  String get manageAccountChangePhoto => 'फोटो बदलें';
 
   @override
-  String get manageAccountEditProfileSubtitle => 'एडिट प्रोफाइल सबटाइटल';
+  String get manageAccountEditProfileSubtitle =>
+      'अपना नाम, ईमेल, फोन और फोटो अपडेट करें';
 
   @override
-  String get manageAccountEditProfileTitle => 'एडिट प्रोफाइल शीर्षक';
+  String get manageAccountEditProfileTitle => 'प्रोफाइल बदलें';
 
   @override
-  String get manageAccountEmailLabel => 'ईमेल लेबल';
+  String get manageAccountEmailLabel => 'ईमेल';
 
   @override
-  String get manageAccountEnterEmail => 'दर्ज करें ईमेल';
+  String get manageAccountEnterEmail => 'अपना ईमेल दर्ज करें';
 
   @override
-  String get manageAccountEnterName => 'दर्ज करें नाम';
+  String get manageAccountEnterName => 'अपना नाम दर्ज करें';
 
   @override
-  String get manageAccountEnterServiceCity => 'दर्ज करें सेवा City';
+  String get manageAccountEnterServiceCity => 'अपना सेवा शहर दर्ज करें';
 
   @override
-  String get manageAccountEnterValidEmail => 'दर्ज करें Valid ईमेल';
+  String get manageAccountEnterValidEmail => 'सही ईमेल पता दर्ज करें';
 
   @override
-  String get manageAccountFullNameLabel => 'पूरा नाम लेबल';
+  String get manageAccountFullNameLabel => 'पूरा नाम';
 
   @override
-  String get manageAccountOptionalTag => 'वैकल्पिक Tag';
+  String get manageAccountOptionalTag => 'वैकल्पिक';
 
   @override
-  String get manageAccountPhoneLabel => 'फोन लेबल';
+  String get manageAccountPhoneLabel => 'फोन';
 
   @override
   String get manageAccountProfileUpdated => 'प्रोफाइल अपडेटेड';
 
   @override
-  String get manageAccountSaveChanges => 'सेव करें Changes';
+  String get manageAccountSaveChanges => 'बदलाव सेव करें';
 
   @override
-  String get manageAccountServiceCityLabel => 'सेवा City लेबल';
+  String get manageAccountServiceCityLabel => 'सेवा शहर';
 
   @override
-  String get manageAccountYourNameFallback => 'आपका नाम Fallback';
+  String get manageAccountYourNameFallback => 'आपका नाम';
 
   @override
-  String get negotiationAccept => 'Accept';
+  String get negotiationAccept => 'स्वीकार करें';
 
   @override
   String get negotiationBack => 'वापस';
 
   @override
-  String get negotiationBrokerConfirmBody => 'ब्रोकर कन्फर्म करें Body';
+  String get negotiationBrokerConfirmBody =>
+      'नए किराये की पुष्टि ब्रोकर से होनी बाकी है।';
 
   @override
-  String get negotiationBrokerConfirmTitle => 'ब्रोकर कन्फर्म करें शीर्षक';
+  String get negotiationBrokerConfirmTitle => 'ब्रोकर से पुष्टि हो रही है';
 
   @override
-  String get negotiationBrokerOfferBody => 'ब्रोकर Offer Body';
+  String get negotiationBrokerOfferBody =>
+      'ब्रोकर ने नया किराया भेजा है। नीचे देखें।';
 
   @override
-  String get negotiationBrokerOfferLabel => 'ब्रोकर Offer लेबल';
+  String get negotiationBrokerOfferLabel => 'ब्रोकर का ऑफर';
 
   @override
-  String get negotiationBrokerOfferTitle => 'ब्रोकर Offer शीर्षक';
+  String get negotiationBrokerOfferTitle => 'ब्रोकर का नया ऑफर';
 
   @override
-  String get negotiationConfirm => 'कन्फर्म करें';
+  String get negotiationConfirm => 'पुष्टि करें';
 
   @override
   String get negotiationDecline => 'अस्वीकार करें';
 
   @override
-  String get negotiationDriverAcceptedTitle => 'ड्राइवर Accepted शीर्षक';
+  String get negotiationDriverAcceptedTitle => 'ड्राइवर ने स्वीकार किया';
 
   @override
-  String get negotiationDriverConfirmBody => 'ड्राइवर कन्फर्म करें Body';
+  String get negotiationDriverConfirmBody =>
+      'नए किराये की पुष्टि ड्राइवर से होनी बाकी है।';
 
   @override
-  String get negotiationDriverConfirmNowTitle =>
-      'ड्राइवर कन्फर्म करें Now शीर्षक';
+  String get negotiationDriverConfirmNowTitle => 'ड्राइवर से पुष्टि करें';
 
   @override
-  String get negotiationDriverFallback => 'ड्राइवर Fallback';
+  String get negotiationDriverFallback => 'ड्राइवर';
 
   @override
-  String get negotiationDriverResponseBody => 'ड्राइवर Response Body';
+  String get negotiationDriverResponseBody =>
+      'ड्राइवर ने आपके किराया बदलाव का जवाब दिया है।';
 
   @override
-  String get negotiationDriverResponseTitle => 'ड्राइवर Response शीर्षक';
+  String get negotiationDriverResponseTitle => 'ड्राइवर ने जवाब दिया';
 
   @override
-  String get negotiationFareChangeBody => 'किराया बदलें Body';
+  String get negotiationFareChangeBody =>
+      'हमने आपका नया किराया भेज दिया है। जवाब की प्रतीक्षा है।';
 
   @override
-  String get negotiationFareChangeTitle => 'किराया बदलें शीर्षक';
+  String get negotiationFareChangeTitle => 'किराया बदलाव भेजा गया';
 
   @override
-  String get negotiationHandshakeProgress => 'Handshake प्रगति';
+  String get negotiationHandshakeProgress =>
+      'दोनों पक्ष नए किराये की पुष्टि कर रहे हैं';
 
   @override
-  String get negotiationOfferCaption => 'Offer Caption';
+  String get negotiationOfferCaption => 'इस बुकिंग का किराया';
 
   @override
-  String get negotiationOfferSentBody => 'Offer Sent Body';
+  String get negotiationOfferSentBody =>
+      'आपका ऑफर भेज दिया गया है। दूसरे पक्ष की प्रतीक्षा है।';
 
   @override
-  String get negotiationOfferSentTitle => 'Offer Sent शीर्षक';
+  String get negotiationOfferSentTitle => 'ऑफर भेजा गया';
 
   @override
-  String get negotiationPillActionNeeded => 'Pill Action Needed';
+  String get negotiationPillActionNeeded => 'कार्रवाई ज़रूरी';
 
   @override
-  String get negotiationPillLiveOffer => 'Pill लाइव Offer';
+  String get negotiationPillLiveOffer => 'लाइव ऑफर';
 
   @override
-  String get negotiationPillNewCounter => 'Pill नया Counter';
+  String get negotiationPillNewCounter => 'नया काउंटर ऑफर';
 
   @override
-  String get negotiationPillWithBroker => 'Pill साथ ब्रोकर';
+  String get negotiationPillWithBroker => 'ब्रोकर के साथ';
 
   @override
-  String get negotiationWaitingBrokerBody => 'प्रतीक्षा ब्रोकर Body';
+  String get negotiationWaitingBrokerBody =>
+      'हमने आपका किराया भेज दिया है। ब्रोकर के जवाब की प्रतीक्षा है।';
 
   @override
-  String get negotiationWaitingBrokerTitle => 'प्रतीक्षा ब्रोकर शीर्षक';
+  String get negotiationWaitingBrokerTitle => 'ब्रोकर की प्रतीक्षा';
 
   @override
-  String get negotiationWaitingDriverBody => 'प्रतीक्षा ड्राइवर Body';
+  String get negotiationWaitingDriverBody =>
+      'हमने ड्राइवर को नया किराया भेज दिया है।';
 
   @override
-  String get negotiationWaitingDriverTitle => 'प्रतीक्षा ड्राइवर शीर्षक';
+  String get negotiationWaitingDriverTitle => 'ड्राइवर की प्रतीक्षा';
 
   @override
   String get onboardingFastSubtitle =>
@@ -4852,241 +4907,247 @@ class AppLocalizationsHi extends AppLocalizations {
   String get onboardingTrackingTitle => 'लाइव ट्रैकिंग';
 
   @override
-  String get orderAcceptedAssignedTitle => 'असाइन किया गया शीर्षक';
+  String get orderAcceptedAssignedTitle => 'ट्रिप असाइन हो गई';
 
   @override
-  String get orderAcceptedOfferUnavailable => 'Offer उपलब्ध नहीं';
+  String get orderAcceptedOfferUnavailable => 'यह ऑफर अब उपलब्ध नहीं है।';
 
   @override
-  String get orderAcceptedRequestTitle => 'रिक्वेस्ट शीर्षक';
+  String get orderAcceptedRequestTitle => 'नई रिक्वेस्ट';
 
   @override
-  String get orderAcceptedRequestUpdated => 'रिक्वेस्ट अपडेटेड';
+  String get orderAcceptedRequestUpdated =>
+      'यह रिक्वेस्ट अपडेट हुई है। नीचे खींचकर रिफ्रेश करें।';
 
   @override
-  String get orderAcceptedSignInContinue => 'साइन In जारी रखें';
+  String get orderAcceptedSignInContinue => 'जारी रखने के लिए साइन इन करें।';
 
   @override
-  String get photoUploadChoosePhoto => 'चुनें फोटो';
+  String get photoUploadChoosePhoto => 'फोटो चुनें';
 
   @override
-  String get photoUploadMaxItems => 'Max Items';
+  String get photoUploadMaxItems => 'आप अधिकतम 5 फोटो अपलोड कर सकते हैं।';
 
   @override
-  String get photoUploadRecordVideo => 'रिकॉर्ड करें वीडियो';
+  String get photoUploadRecordVideo => 'वीडियो रिकॉर्ड करें';
 
   @override
-  String get photoUploadSignInUpload => 'साइन In अपलोड';
+  String get photoUploadSignInUpload => 'फोटो अपलोड करने के लिए साइन इन करें।';
 
   @override
-  String get photoUploadTakePhoto => 'Take फोटो';
+  String get photoUploadTakePhoto => 'फोटो लें';
 
   @override
-  String get podWaitingCouldNotComplete => 'नहीं हो सका Not Complete';
+  String get podWaitingCouldNotComplete => 'पूरा नहीं हो सका';
 
   @override
-  String get podWaitingFinishing => 'Finishing';
+  String get podWaitingFinishing => 'पूरा किया जा रहा है...';
 
   @override
-  String get podWaitingNewPhotosFallback => 'नया फोटो Fallback';
+  String get podWaitingNewPhotosFallback => 'नई डिलीवरी फोटो';
 
   @override
-  String get podWaitingPhotosUp => 'फोटो Up';
+  String get podWaitingPhotosUp => 'फोटो अपलोड हो रही हैं...';
 
   @override
-  String get podWaitingRejectedTitle => 'अस्वीकृत शीर्षक';
+  String get podWaitingRejectedTitle => 'डिलीवरी प्रूफ अस्वीकार';
 
   @override
-  String get podWaitingTitle => 'शीर्षक';
+  String get podWaitingTitle => 'डिलीवरी प्रूफ';
 
   @override
-  String get podWaitingTryAgain => 'कोशिश करें Again';
+  String get podWaitingTryAgain => 'फिर कोशिश करें';
 
   @override
-  String get podWaitingUploadNew => 'अपलोड नया';
+  String get podWaitingUploadNew => 'नई फोटो अपलोड करें';
 
   @override
-  String get podWaitingWaitingReview => 'प्रतीक्षा रिव्यू';
+  String get podWaitingWaitingReview => 'समीक्षा की प्रतीक्षा';
 
   @override
-  String get sessionExpiredEmailHint => 'ईमेल संकेत';
+  String get sessionExpiredEmailHint => 'you@example.com';
 
   @override
-  String get sessionExpiredEmailLabel => 'ईमेल लेबल';
+  String get sessionExpiredEmailLabel => 'ईमेल';
 
   @override
-  String get sessionExpiredEnterEmailPassword => 'दर्ज करें ईमेल पासवर्ड';
+  String get sessionExpiredEnterEmailPassword =>
+      'जारी रखने के लिए अपना ईमेल और पासवर्ड दर्ज करें।';
 
   @override
-  String get sessionExpiredPasswordHint => 'पासवर्ड संकेत';
+  String get sessionExpiredPasswordHint => 'अपना पासवर्ड दर्ज करें';
 
   @override
-  String get sessionExpiredPasswordLabel => 'पासवर्ड लेबल';
+  String get sessionExpiredPasswordLabel => 'पासवर्ड';
 
   @override
-  String get sessionExpiredSignInButton => 'साइन In बटन';
+  String get sessionExpiredSignInButton => 'साइन इन करें';
 
   @override
-  String get sessionExpiredSubtitle => 'सबटाइटल';
+  String get sessionExpiredSubtitle =>
+      'जहां छोड़ा था वहीं से जारी रखने के लिए दोबारा साइन इन करें।';
 
   @override
-  String get sessionExpiredTitle => 'शीर्षक';
+  String get sessionExpiredTitle => 'सेशन समाप्त';
 
   @override
   String get sharedExpressLabel => 'एक्सप्रेस';
 
   @override
-  String get sharedHaltingChargeApplied => 'Charge Applied';
+  String get sharedHaltingChargeApplied => 'रुकने का शुल्क लागू';
 
   @override
-  String get sharedHaltingExceededTitle => 'Exceeded शीर्षक';
+  String get sharedHaltingExceededTitle => 'मुफ्त समय पार हो गया';
 
   @override
-  String get sharedHaltingFreeWindowTitle => 'Free Window शीर्षक';
+  String get sharedHaltingFreeWindowTitle => 'मुफ्त प्रतीक्षा समय';
 
   @override
-  String get sharedHaltingRemainingTitle => 'Remaining शीर्षक';
+  String get sharedHaltingRemainingTitle => 'शेष समय';
 
   @override
-  String get signupAccountCreated => 'अकाउंट Created';
+  String get signupAccountCreated => 'आपका अकाउंट बन गया है।';
 
   @override
-  String get signupAgreeTerms => 'Agree शर्तें';
+  String get signupAgreeTerms => 'मैं नियम और गोपनीयता नीति से सहमत हूं';
 
   @override
-  String get signupAllFieldsRequired => 'सभी Fields Required';
+  String get signupAllFieldsRequired => 'सभी फ़ील्ड ज़रूरी हैं';
 
   @override
-  String get signupAlreadyHaveAccount => 'Already Have अकाउंट';
+  String get signupAlreadyHaveAccount => 'पहले से अकाउंट है?';
 
   @override
-  String get signupBackToLogin => 'वापस to लॉगिन';
+  String get signupBackToLogin => 'लॉगिन पर वापस जाएं';
 
   @override
-  String get signupCreateAccount => 'बनाएं अकाउंट';
+  String get signupCreateAccount => 'अकाउंट बनाएं';
 
   @override
-  String get signupEmailHint => 'ईमेल संकेत';
+  String get signupEmailHint => 'you@example.com';
 
   @override
-  String get signupEmailLabel => 'ईमेल लेबल';
+  String get signupEmailLabel => 'ईमेल';
 
   @override
-  String get signupFullNameHint => 'पूरा नाम संकेत';
+  String get signupFullNameHint => 'अपना पूरा नाम दर्ज करें';
 
   @override
-  String get signupFullNameLabel => 'पूरा नाम लेबल';
+  String get signupFullNameLabel => 'पूरा नाम';
 
   @override
-  String get signupLoginAction => 'लॉगिन Action';
+  String get signupLoginAction => 'लॉग इन करें';
 
   @override
-  String get signupPasswordHelper => 'पासवर्ड Helper';
+  String get signupPasswordHelper => 'कम से कम 8 अक्षर इस्तेमाल करें';
 
   @override
-  String get signupPasswordHint => 'पासवर्ड संकेत';
+  String get signupPasswordHint => 'कम से कम 8 अक्षर';
 
   @override
-  String get signupPasswordLabel => 'पासवर्ड लेबल';
+  String get signupPasswordLabel => 'पासवर्ड';
 
   @override
-  String get signupPhoneHint => 'फोन संकेत';
+  String get signupPhoneHint => '10 अंकों का मोबाइल नंबर';
 
   @override
-  String get signupPhoneLabel => 'फोन लेबल';
+  String get signupPhoneLabel => 'फोन';
 
   @override
-  String get signupSubtitle => 'सबटाइटल';
+  String get signupSubtitle => 'बुकिंग शुरू करने के लिए अकाउंट बनाएं';
 
   @override
-  String get signupTermsRequired => 'शर्तें Required';
+  String get signupTermsRequired => 'जारी रखने के लिए शर्तें स्वीकार करें।';
 
   @override
-  String get signupTitle => 'शीर्षक';
+  String get signupTitle => 'अपना अकाउंट बनाएं';
 
   @override
-  String get thankYouBackToTrips => 'वापस to ट्रिप्स';
+  String get thankYouBackToTrips => 'ट्रिप पर वापस जाएं';
 
   @override
-  String get thankYouDeliveryComplete => 'डिलीवरी Complete';
+  String get thankYouDeliveryComplete => 'डिलीवरी पूरी हुई';
 
   @override
-  String get thankYouForCompleting => 'For Completing';
+  String get thankYouForCompleting => 'इस डिलीवरी पूरी करने के लिए';
 
   @override
-  String get thankYouPaid => 'Paid';
+  String get thankYouPaid => 'भुगतान हो गया';
 
   @override
-  String get thankYouTripCompleted => 'ट्रिप पूरी';
+  String get thankYouTripCompleted => 'ट्रिप पूरी हुई';
 
   @override
-  String get tripSummaryCargo => 'Cargo';
+  String get tripSummaryCargo => 'माल';
 
   @override
   String get tripSummaryDelivered => 'डिलीवर';
 
   @override
-  String get tripSummaryInProgress => 'In प्रगति';
+  String get tripSummaryInProgress => 'जारी है';
 
   @override
   String get tripSummaryLocationUnavailable => 'लोकेशन उपलब्ध नहीं';
 
   @override
-  String get truckSearchAllDeclinedHint => 'सभी अस्वीकृत संकेत';
+  String get truckSearchAllDeclinedHint =>
+      'आस-पास के ड्राइवरों ने मना कर दिया। खोज का दायरा बढ़ाकर देखें।';
 
   @override
   String get truckSearchBack => 'वापस';
 
   @override
-  String get truckSearchCancel => 'रद्द करें';
+  String get truckSearchCancel => 'खोज रद्द करें';
 
   @override
-  String get truckSearchCloseTooltip => 'बंद करें tooltip';
+  String get truckSearchCloseTooltip => 'बंद करें';
 
   @override
-  String get truckSearchConfirmTurn => 'कन्फर्म करें Turn';
+  String get truckSearchConfirmTurn => 'आपकी स्वीकृति की पुष्टि हो रही है';
 
   @override
-  String get truckSearchConfirmed => 'Confirmed';
+  String get truckSearchConfirmed => 'पुष्ट हो गया';
 
   @override
-  String get truckSearchDriverFallback => 'ड्राइवर Fallback';
+  String get truckSearchDriverFallback => 'ड्राइवर';
 
   @override
-  String get truckSearchFindingDrivers => 'Finding ड्राइवर';
+  String get truckSearchFindingDrivers => 'ड्राइवर खोज रहे हैं';
 
   @override
-  String get truckSearchFindingNearby => 'Finding Nearby';
+  String get truckSearchFindingNearby => 'पिकअप के पास ड्राइवर खोज रहे हैं';
 
   @override
-  String get truckSearchGoBack => 'Go वापस';
+  String get truckSearchGoBack => 'वापस जाएं';
 
   @override
-  String get truckSearchKeepSearching => 'Keep Searching';
+  String get truckSearchKeepSearching => 'खोज जारी रखें';
 
   @override
-  String get truckSearchNewFare => 'नया किराया';
+  String get truckSearchNewFare => 'नया किराया मिला';
 
   @override
-  String get truckSearchNoDriverAccepted => 'नहीं ड्राइवर Accepted';
+  String get truckSearchNoDriverAccepted =>
+      'अभी किसी ड्राइवर ने स्वीकार नहीं किया';
 
   @override
-  String get truckSearchNoResponse => 'नहीं Response';
+  String get truckSearchNoResponse => 'कोई जवाब नहीं';
 
   @override
-  String get truckSearchNotifyingDrivers => 'Notifying ड्राइवर';
+  String get truckSearchNotifyingDrivers =>
+      'आस-पास के ड्राइवरों को सूचना भेज रहे हैं';
 
   @override
   String get truckSearchRetry => 'फिर कोशिश करें';
 
   @override
-  String get truckSearchSearching => 'Searching';
+  String get truckSearchSearching => 'खोज रहे हैं';
 
   @override
-  String get truckSearchWaitingConfirm => 'प्रतीक्षा कन्फर्म करें';
+  String get truckSearchWaitingConfirm => 'पुष्टि की प्रतीक्षा';
 
   @override
-  String get truckSearchWaitingResponse => 'प्रतीक्षा Response';
+  String get truckSearchWaitingResponse => 'जवाबों की प्रतीक्षा';
 
   @override
   String get negotiationContinuePrice => 'किराया जारी रखें';
@@ -5491,4 +5552,628 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vehicleTruckPooling => 'ट्रक पूलिंग';
+
+  @override
+  String get historyDetailsTripDetails => 'ट्रिप विवरण';
+
+  @override
+  String get historyDetailsEarnings => 'कमाई';
+
+  @override
+  String get historyDetailsOpenInMaps => 'मैप्स में खोलें';
+
+  @override
+  String get historyDetailsMissingBookingId => 'बुकिंग आईडी नहीं मिली।';
+
+  @override
+  String get historyDetailsSignInToView =>
+      'डिलीवरी विवरण देखने के लिए साइन इन करें।';
+
+  @override
+  String get historyDetailsLoadFailed => 'डिलीवरी विवरण लोड नहीं हो सके।';
+
+  @override
+  String get historyDetailsSignInToDownload =>
+      'इनवॉइस डाउनलोड करने के लिए साइन इन करें।';
+
+  @override
+  String get historyDetailsSignInToEmail =>
+      'इनवॉइस ईमेल करने के लिए साइन इन करें।';
+
+  @override
+  String get historyDetailsSignInToNotify =>
+      'ग्राहक को सूचना देने के लिए साइन इन करें।';
+
+  @override
+  String historyDetailsEmailBody(Object bookingRef) {
+    return 'बुकिंग $bookingRef का इनवॉइस संलग्न है।';
+  }
+
+  @override
+  String get historyDetailsPreviousDriver => 'पिछला ड्राइवर';
+
+  @override
+  String get historyDetailsNewDriver => 'नया ड्राइवर';
+
+  @override
+  String historyDetailsDriverChanged(Object count) {
+    return 'ड्राइवर बदला ($count)';
+  }
+
+  @override
+  String deliveryDetailsStopLabel(Object stop) {
+    return '$stop पॉइंट';
+  }
+
+  @override
+  String get deliveryDetailsStopsTitle => 'लोडिंग और अनलोडिंग पॉइंट';
+
+  @override
+  String get deliveryDetailsConfirmDropReached =>
+      'ड्रॉप पॉइंट पर पहुंचते ही पुष्टि करें।';
+
+  @override
+  String get deliveryDetailsLoadingEllipsis => 'लोड हो रहा है...';
+
+  @override
+  String get deliveryDetailsEnterPickupCode => 'पिकअप कोड दर्ज करें';
+
+  @override
+  String get deliveryDetailsConfirmPickup => 'पिकअप की पुष्टि करें';
+
+  @override
+  String get deliveryDetailsOpenPickupInMaps => 'पिकअप Google मैप्स में खोलें';
+
+  @override
+  String get deliveryDetailsOpenDropInMaps => 'ड्रॉप Google मैप्स में खोलें';
+
+  @override
+  String get deliveryDetailsDropLocationMissing => 'ड्रॉप स्थान नहीं दिया गया';
+
+  @override
+  String get deliveryDetailsSignInToContinue =>
+      'जारी रखने के लिए साइन इन करें।';
+
+  @override
+  String get driverKycUploadDocumentsTitle => 'दस्तावेज अपलोड करें';
+
+  @override
+  String get driverKycUploadDocumentsSubtitle =>
+      'नीचे दिए दस्तावेजों के साफ फोटो अपलोड करें।';
+
+  @override
+  String get driverKycVerifyIdentityTitle => 'अपनी पहचान सत्यापित करें';
+
+  @override
+  String get driverKycRequiredBadge => 'ज़रूरी';
+
+  @override
+  String get driverKycNoActiveSession => 'कोई सक्रिय सेशन नहीं मिला।';
+
+  @override
+  String get driverKycConfirmAccuracy =>
+      'कृपया पुष्टि करें कि सारी जानकारी सही है।';
+
+  @override
+  String get driverKycSubmittedDocuments => 'सबमिट किए गए दस्तावेज';
+
+  @override
+  String get driverKycVerifyCarefully =>
+      'कृपया सारी जानकारी ध्यान से जांचें। गलत जानकारी से KYC स्वीकृति में देरी हो सकती है।';
+
+  @override
+  String get driverKycSubmitForReview => 'समीक्षा के लिए सबमिट करें';
+
+  @override
+  String get driverKycSourceLabelSubmittedUrl => 'सबमिट की गई लिंक';
+
+  @override
+  String get addVehicleInsuranceExpiryHelp => 'बीमा समाप्ति तारीख चुनें';
+
+  @override
+  String get addVehicleEditTruckTitle => 'ट्रक बदलें';
+
+  @override
+  String get addVehicleAddTruckTitle => 'ट्रक जोड़ें';
+
+  @override
+  String get addVehicleEditTruckSubtitle =>
+      'ट्रक की जानकारी अपडेट करें और बदलाव सेव करें।';
+
+  @override
+  String get addVehicleAddTruckSubtitle =>
+      'ट्रक का प्रकार चुनें और फ्लीट विवरण भरें।';
+
+  @override
+  String get addVehicleErrRegistration => 'पंजीकरण संख्या दर्ज करें';
+
+  @override
+  String get addVehicleErrCapacity => 'क्षमता दर्ज करें';
+
+  @override
+  String get addVehicleErrSelectDriver => 'ड्राइवर चुनें';
+
+  @override
+  String get addVehicleErrMake => 'ट्रक का मेक दर्ज करें';
+
+  @override
+  String get addVehicleErrYear => 'सही साल दर्ज करें';
+
+  @override
+  String get addVehicleErrInsuranceExpiry => 'बीमा समाप्ति तारीख दर्ज करें';
+
+  @override
+  String get addVehicleUpdateTruck => 'ट्रक अपडेट करें';
+
+  @override
+  String get addDriverEditTitle => 'ड्राइवर बदलें';
+
+  @override
+  String get addDriverAddTitle => 'ड्राइवर जोड़ें';
+
+  @override
+  String get addDriverEditSubtitle => 'ड्राइवर अकाउंट अपडेट करें';
+
+  @override
+  String get addDriverAddSubtitle => 'अपनी फ्लीट में नया ड्राइवर जोड़ें';
+
+  @override
+  String get addDriverUpdateAction => 'ड्राइवर अपडेट करें';
+
+  @override
+  String get addDriverAddPhotoTitle => 'ड्राइवर फोटो जोड़ें';
+
+  @override
+  String get addDriverErrName => 'पूरा नाम दर्ज करें';
+
+  @override
+  String get addDriverErrEmail => 'ईमेल दर्ज करें';
+
+  @override
+  String get addDriverEmailHelper =>
+      'सही ईमेल दर्ज करें — ड्राइवर ईमेल और पासवर्ड से लॉग इन करता है।';
+
+  @override
+  String get addDriverErrMobile => 'मोबाइल नंबर दर्ज करें';
+
+  @override
+  String get addDriverMobileHelper => 'सही 10 अंकों का फोन नंबर दर्ज करें।';
+
+  @override
+  String get addDriverErrLicense => 'लाइसेंस नंबर दर्ज करें';
+
+  @override
+  String get brokerNotificationsRetry => 'फिर कोशिश करें';
+
+  @override
+  String get brokerNotificationsEmptyTitle => 'अभी कोई नोटिफिकेशन नहीं';
+
+  @override
+  String get brokerNotificationsGenericTitle => 'नोटिफिकेशन';
+
+  @override
+  String get brokerNotificationsToday => 'आज';
+
+  @override
+  String get brokerNotificationsYesterday => 'कल';
+
+  @override
+  String get brokerNotificationsEarlier => 'पहले';
+
+  @override
+  String get brokerNotificationsViewDetails => 'विवरण देखें';
+
+  @override
+  String get brokerNotificationsViewTrip => 'ट्रिप देखें';
+
+  @override
+  String get brokerNotificationsOpenChat => 'चैट खोलें';
+
+  @override
+  String get clientSavedSearchHintField => 'सेव किए गए पते खोजें...';
+
+  @override
+  String get clientSavedTooltipOpenMap => 'मैप चयनकर्ता खोलें';
+
+  @override
+  String get clientSavedTooltipSetDefault => 'डिफॉल्ट बनाएं';
+
+  @override
+  String get clientSavedTooltipEdit => 'बदलें';
+
+  @override
+  String get clientSavedTooltipRemove => 'हटाएं';
+
+  @override
+  String get clientSavedDropoffTag => 'ड्रॉप-ऑफ';
+
+  @override
+  String get clientSavedPickupTag => 'पिकअप';
+
+  @override
+  String get clientSavedErrorLoadOne => 'यह पता लोड नहीं हो सका';
+
+  @override
+  String get clientSavedBackToAddresses => 'सेव किए गए पतों पर वापस जाएं';
+
+  @override
+  String get clientSavedSaveChanges => 'बदलाव सेव करें';
+
+  @override
+  String get clientSavedSaveAddress => 'पता सेव करें';
+
+  @override
+  String get clientSavedMapPickerHint =>
+      'खोजें, मैप पर टैप करें, या पिन लगने के बाद उसे खींचें।';
+
+  @override
+  String get clientSavedCurrentLocationError =>
+      'आपकी मौजूदा लोकेशन नहीं मिल सकी।';
+
+  @override
+  String get clientSavedSignInToSave => 'यह पता सेव करने के लिए साइन इन करें।';
+
+  @override
+  String get clientBookingStepNext => 'अगला';
+
+  @override
+  String get clientBookingStepContinue => 'जारी रखें';
+
+  @override
+  String get clientBookingChooseTrucks => 'ट्रक चुनें';
+
+  @override
+  String get clientBookingChooseTrucksSubtitle =>
+      'ट्रक का प्रकार और खोज का दायरा चुनें';
+
+  @override
+  String get clientBookingCancelling => 'रद्द किया जा रहा है...';
+
+  @override
+  String get clientBookingCancelSearch => 'खोज रद्द करें';
+
+  @override
+  String get clientBookingEnterLoading => 'लोडिंग स्थान दर्ज करें';
+
+  @override
+  String get clientBookingEnterUnloading => 'अनलोडिंग स्थान दर्ज करें';
+
+  @override
+  String get clientBookingConfirmToPay => 'भुगतान की पुष्टि करें';
+
+  @override
+  String get clientBookingConfirmBilling => 'बिलिंग की पुष्टि करें';
+
+  @override
+  String get clientBookingChoosePayment => 'भुगतान चुनें';
+
+  @override
+  String get clientBookingNoDriverInWindow =>
+      'खोज क्षेत्र में कोई ड्राइवर नहीं मिला';
+
+  @override
+  String get clientBookingBookNowTooltip => 'अभी बुक करें';
+
+  @override
+  String get checkoutStatusBookingConfirmedTitle => 'बुकिंग पक्की हो गई';
+
+  @override
+  String get checkoutStatusBookingConfirmedMessage =>
+      'आपकी बुकिंग सफलतापूर्वक हो गई है।';
+
+  @override
+  String get clientNegotiationRefreshBrokerOfferFailed =>
+      'ब्रोकर का लाइव ऑफर रिफ्रेश नहीं हो सका।';
+
+  @override
+  String get clientNegotiationRefreshRequestFailed =>
+      'लाइव रिक्वेस्ट रिफ्रेश नहीं हो सकी।';
+
+  @override
+  String get clientNegotiationRefreshDriverOfferFailed =>
+      'ड्राइवर का लाइव ऑफर रिफ्रेश नहीं हो सका।';
+
+  @override
+  String get clientTrackingProofLoadFailed => 'डिलीवरी प्रूफ लोड नहीं हो सका।';
+
+  @override
+  String get clientTrackingVideoPlayFailed => 'डिलीवरी वीडियो नहीं चला।';
+
+  @override
+  String get clientTrackingCancelTitle => 'यह बुकिंग रद्द करें?';
+
+  @override
+  String get clientTrackingYesCancel => 'हाँ, रद्द करें';
+
+  @override
+  String get clientTrackingChatLoadFailed => 'यह चैट लोड नहीं हो सकी।';
+
+  @override
+  String get clientTrackingNegotiationLoadFailed =>
+      'सामंजस्य का डेटा लोड नहीं हो सका।';
+
+  @override
+  String get clientTrackingConfirmedDriver => 'पुष्ट ड्राइवर';
+
+  @override
+  String get clientTrackingConfirmed => 'पुष्ट';
+
+  @override
+  String get clientTrackingNoLongerAvailable => 'अब उपलब्ध नहीं';
+
+  @override
+  String get clientBookingRemoveStopTooltip => 'पॉइंट हटाएं';
+
+  @override
+  String get clientTrackingLiveLocationLabel => 'लाइव लोकेशन';
+
+  @override
+  String get clientTrackingLocationPendingTitle => 'लोकेशन बाकी है';
+
+  @override
+  String get locationFlowSelectOnMap => 'मैप पर चुनें';
+
+  @override
+  String get brokerFlowVehicleIdleLocation => 'स्थान';
+
+  @override
+  String get brokerFlowVehicleHeadingTo => 'आगे';
+
+  @override
+  String get brokerFlowVehicleLastKnown => 'अंतिम ज्ञात';
+
+  @override
+  String get brokerFlowNoVehicleAssigned => 'कोई वाहन असाइन नहीं';
+
+  @override
+  String get brokerFlowCtaViewMap => 'मैप देखें';
+
+  @override
+  String get brokerFlowCtaViewDetails => 'विवरण देखें';
+
+  @override
+  String get brokerFlowLastSeenUnavailable => 'उपलब्ध नहीं';
+
+  @override
+  String get coreDigilockerAadhaarMaskHint => 'XXXX XXXX XXXX';
+
+  @override
+  String get coreDigilockerPanMaskHint => 'ABCDE1234F';
+
+  @override
+  String get coreDigilockerVehicleRegMaskHint => 'MH-2020123456789';
+
+  @override
+  String get coreDigilockerDateMaskHint => 'YYYY-MM-DD';
+
+  @override
+  String get statusInProgress => 'जारी है';
+
+  @override
+  String get statusDelivered => 'डिलीवर हो गई';
+
+  @override
+  String get statusCompleted => 'पूर्ण';
+
+  @override
+  String get statusCancelled => 'रद्द';
+
+  @override
+  String get statusPending => 'बाकी';
+
+  @override
+  String get statusConfirmed => 'पुष्ट';
+
+  @override
+  String get statusRouteUnavailable => 'रूट उपलब्ध नहीं';
+
+  @override
+  String get historyDetailsInvoiceDownloaded => 'इनवॉइस डाउनलोड हो गई।';
+
+  @override
+  String historyDetailsInvoiceDownloadedBytes(Object size) {
+    return 'इनवॉइस डाउनलोड हो गई ($size बाइट)।';
+  }
+
+  @override
+  String historyDetailsEmailSubject(Object bookingRef) {
+    return 'बुकिंग $bookingRef का इनवॉइस';
+  }
+
+  @override
+  String get historyDetailsInvoiceEmailed => 'इनवॉइस ईमेल हो गई।';
+
+  @override
+  String get historyDetailsClientNotified => 'ग्राहक को सूचना दी गई।';
+
+  @override
+  String get timePeriodAm => 'पूर्वाह्न';
+
+  @override
+  String get timePeriodPm => 'अपराह्न';
+
+  @override
+  String get addDriverCreateAccountSubtitle => 'ड्राइवर अकाउंट बनाएं';
+
+  @override
+  String brokerNotificationsMinsAgo(Object minutes) {
+    return '$minutes मि';
+  }
+
+  @override
+  String get brokerNotifRetryAction => 'पुनः प्रयास करें';
+
+  @override
+  String get brokerNotifEmptySubtitle => 'अभी तक कोई सूचना नहीं';
+
+  @override
+  String brokerNotifUnreadCount(Object count) {
+    return '$count अपठित';
+  }
+
+  @override
+  String brokerNotifTotalCount(Object count) {
+    return '$count सूचनाएं';
+  }
+
+  @override
+  String bookingRadiusKm(Object radius) {
+    return '$radius किमी';
+  }
+
+  @override
+  String get bookingBookNowTooltip => 'अभी बुक करें';
+
+  @override
+  String get savedAddressCouldNotLoad => 'यह पता लोड नहीं हो सका';
+
+  @override
+  String get savedAddressMapPickerTooltip => 'मैप पिकर खोलें';
+
+  @override
+  String get savedAddressSetDefaultTooltip => 'डिफ़ॉल्ट बनाएं';
+
+  @override
+  String get savedAddressEditTooltip => 'संपादित करें';
+
+  @override
+  String get savedAddressRemoveTooltip => 'हटाएं';
+
+  @override
+  String get savedAddressDropoffLabel => 'ड्रॉप-ऑफ़';
+
+  @override
+  String get savedAddressPickupLabel => 'पिकअप';
+
+  @override
+  String get trackingAssignedDriver => 'असाइन किया गया ड्राइवर';
+
+  @override
+  String get trackingPackageInformation => 'पैकेज की जानकारी';
+
+  @override
+  String get trackingDeliveryTypeLabel => 'डिलीवरी का प्रकार:';
+
+  @override
+  String get trackingExpressDelivery => 'एक्सप्रेस डिलीवरी';
+
+  @override
+  String get trackingStandardDelivery => 'स्टैंडर्ड डिलीवरी';
+
+  @override
+  String get trackingPackageWeightLabel => 'पैकेज का वज़न:';
+
+  @override
+  String get trackingDriverNotAssigned => 'ड्राइवर असाइन नहीं है';
+
+  @override
+  String get trackingPickupCodeTitle => 'पिकअप कोड';
+
+  @override
+  String get trackingPickupVerifiedBadge => 'सत्यापित';
+
+  @override
+  String get trackingPickupConfirmedText =>
+      'आपके कोड से पिकअप की पुष्टि हो गई।';
+
+  @override
+  String get trackingPickupCodeShareHint =>
+      'जब आपका ड्राइवर पहुंचेगा तो पिकअप की पुष्टि के लिए यह उसके साथ साझा करें।';
+
+  @override
+  String get trackingLiveBadge => 'लाइव';
+
+  @override
+  String get trackingTimelineTitle => 'शिपमेंट टाइमलाइन';
+
+  @override
+  String get trackingPodTitle => 'डिलीवरी का प्रमाण';
+
+  @override
+  String get trackingPodApprovalPrompt =>
+      'क्या यह सही है? ट्रिप बंद करने के लिए स्वीकृत करें, या नई फ़ोटो मांगने के लिए अस्वीकार करें।';
+
+  @override
+  String get trackingPodApproving => 'स्वीकृत किया जा रहा है...';
+
+  @override
+  String get trackingPodApprove => 'स्वीकृत करें';
+
+  @override
+  String get trackingPodApproved => 'स्वीकृत';
+
+  @override
+  String trackingPodRejectionWithReason(Object reason) {
+    return 'आपने ड्राइवर से दोबारा अपलोड करने के लिए कहा: \"$reason\" नई फ़ोटो की प्रतीक्षा है।';
+  }
+
+  @override
+  String get trackingPodRejection =>
+      'आपने ड्राइवर से दोबारा अपलोड करने के लिए कहा है। नई फ़ोटो की प्रतीक्षा है।';
+
+  @override
+  String get trackingPodLoadFailed => 'डिलीवरी का प्रमाण लोड नहीं हो सका।';
+
+  @override
+  String get trackingPodPlayFailed => 'डिलीवरी वीडियो नहीं चलाया जा सका।';
+
+  @override
+  String get bookingScheduled => 'बुकिंग शेड्यूल हो गई';
+
+  @override
+  String get bookingScheduledNotifyMessage =>
+      'हम आपके पिकअप समय के करीब ड्राइवरों या ब्रोकर को सूचित करेंगे।';
+
+  @override
+  String get checkoutOpeningActivity => 'गतिविधि खोली जा रही है';
+
+  @override
+  String get checkoutBookLater => 'बाद में बुक करें';
+
+  @override
+  String get checkoutWhereIsYourDrop => 'आपकी ड्रॉप लोकेशन कहाँ है?';
+
+  @override
+  String get weightStepAddLocation => 'लोकेशन जोड़ें';
+
+  @override
+  String get weightStepTapToAddDetails => 'विवरण जोड़ने के लिए + पर टैप करें';
+
+  @override
+  String get deliveryDetailsLoadingPoint => 'लोडिंग पॉइंट';
+
+  @override
+  String get deliveryDetailsUnloadingPoint => 'अनलोडिंग पॉइंट';
+
+  @override
+  String get deliveryDetailsStartTripToPickup => 'पिकअप के लिए ट्रिप शुरू करें';
+
+  @override
+  String get deliveryDetailsReachedPickup => 'मैं पिकअप पर पहुंच गया/गई हूं';
+
+  @override
+  String get deliveryDetailsStartDelivery => 'डिलीवरी शुरू करें';
+
+  @override
+  String get deliveryDetailsMarkAsDelivered => 'डिलीवर हो गया चिह्नित करें';
+
+  @override
+  String get driverKycVerificationCompleteTitle => 'KYC सत्यापन पूर्ण';
+
+  @override
+  String get driverKycSubmittedSuccessTitle => 'KYC सफलतापूर्वक जमा किया गया';
+
+  @override
+  String get driverKycVerifiedBadgeUpper => 'सत्यापित';
+
+  @override
+  String get driverKycSubmittedBadgeUpper => 'जमा किया गया';
+
+  @override
+  String get driverKycVerifiedDescription =>
+      'आपका KYC सत्यापित हो गया है। आपका ड्राइवर अकाउंट अब सक्रिय है।';
+
+  @override
+  String get driverKycSubmittedDescription =>
+      'आपका KYC सफलतापूर्वक जमा कर दिया गया है। हमारी सत्यापन टीम आपके दस्तावेजों की समीक्षा करेगी। इसमें आमतौर पर 24-48 घंटे लगते हैं।';
 }
